@@ -130,10 +130,13 @@ bool IOUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
 }
 
 std::vector<std::pair<KernelAttr, IOUCpuKernelMod::IOULaunchFunc>> IOUCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &IOUCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &IOUCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &IOUCpuKernelMod::LaunchKernel<float16>}};
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &IOUCpuKernelMod::LaunchKernel<double>},
+};
 
 std::vector<KernelAttr> IOUCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

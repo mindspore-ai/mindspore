@@ -885,7 +885,7 @@ class Shard(Shard_):
         self.device = None
         self.level = None
 
-    def __call__(self, fn, in_strategy, out_strategy, parameter_plan=None, device="Ascend", level=0):
+    def __call__(self, fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
         if context.get_context("mode") != context.PYNATIVE_MODE or \
                 context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
             raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
@@ -895,8 +895,8 @@ class Shard(Shard_):
             raise AssertionError(f"'search_mode' must be 'sharding_propagation' for 'Shard'")
         if not isinstance(in_strategy, tuple):
             raise TypeError(f"For 'Shard', the 'in_strategy' should be a tuple, but got {type(in_strategy).__name__}")
-        if not isinstance(out_strategy, tuple):
-            raise TypeError(f"For 'Shard', the 'out_strategy' should be a tuple, "
+        if not isinstance(out_strategy, (type(None), tuple)):
+            raise TypeError(f"For 'Shard', the 'out_strategy' should be None or tuple, "
                             f"but got {type(out_strategy).__name__}")
         if not isinstance(parameter_plan, (dict, type(None))):
             raise TypeError(f"For 'Shard', the 'parameter_plan' should be a dict or None, "

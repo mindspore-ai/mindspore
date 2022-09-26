@@ -79,11 +79,11 @@ identity = P.identity()
 shard_fn = Shard()
 
 
-def shard(fn, in_strategy, out_strategy, parameter_plan=None, device="Ascend", level=0):
+def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
     """Apply distributed process for fn"""
     if not isinstance(fn, (ms.nn.Cell)):
-        logger.warning("'fn' is not a mindspore.nn.Cell, and when it derivable contains parameters, "
-                       "the gradient calculation may be incorrect.")
+        logger.warning("'fn' is not a mindspore.nn.Cell, and its definition cannot involve Parameter; "
+                       "otherwise, the result may be incorrect.")
     return shard_fn(fn, in_strategy, out_strategy, parameter_plan, device, level)
 
 

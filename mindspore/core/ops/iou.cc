@@ -66,7 +66,7 @@ class IOUInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
     (void)types.emplace("y", input_args[kInputIndex1]->BuildType());

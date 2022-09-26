@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 
-import mindspore
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -35,7 +35,8 @@ class NetIOU(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_iou_cpu():
+@pytest.mark.parametrize("data_type", [np.float32, np.float64])
+def test_iou_cpu(data_type):
     """
     Feature: test iou op in cpu.
     Description: test iou in cpu.
@@ -44,9 +45,9 @@ def test_iou_cpu():
     pos1 = [[101, 169, 246, 429], [107, 150, 277, 400], [103, 130, 220, 400]]
     pos2 = [[121, 138, 304, 374], [97, 130, 250, 400]]
     mode = "iou"
-    pos1_box = Tensor(np.array(pos1), mindspore.float32)
-    pos2_box = Tensor(np.array(pos2), mindspore.float32)
-    expect_result = np.array([[0.46551168, 0.6898875, 0.4567706], [0.73686045, 0.74506813, 0.76623374]], np.float32)
+    pos1_box = Tensor(np.array(pos1, data_type))
+    pos2_box = Tensor(np.array(pos2, data_type))
+    expect_result = np.array([[0.46551168, 0.6898875, 0.4567706], [0.73686045, 0.74506813, 0.76623374]], data_type)
 
     error = np.ones(shape=[1]) * 1.0e-6
 
@@ -75,13 +76,13 @@ def test_iou_cpu_dynamic_shape():
     pos1 = [[101, 169, 246, 429], [107, 150, 277, 400], [103, 130, 220, 400]]
     pos2 = [[121, 138, 304, 374], [97, 130, 250, 400]]
     mode = "iou"
-    pos1_box = Tensor(np.array(pos1), mindspore.float32)
-    pos2_box = Tensor(np.array(pos2), mindspore.float32)
+    pos1_box = Tensor(np.array(pos1, np.float32))
+    pos2_box = Tensor(np.array(pos2, np.float32))
     expect_result = np.array([[0.46551168, 0.6898875, 0.4567706], [0.73686045, 0.74506813, 0.76623374]], np.float32)
     error = np.ones(shape=[1]) * 1.0e-6
 
-    pos1_dyn = Tensor(shape=[None, 4], dtype=mindspore.float32)
-    pos2_dyn = Tensor(shape=[None, 4], dtype=mindspore.float32)
+    pos1_dyn = Tensor(shape=[None, 4], dtype=ms.float32)
+    pos2_dyn = Tensor(shape=[None, 4], dtype=ms.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     dynamic_overlaps = NetIOU(mode)
