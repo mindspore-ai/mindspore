@@ -82,8 +82,8 @@ int ActivationCPUKernel::DoActivation(int task_id) {
 int ActivationCPUKernel::DoActivationInt32(int task_id) {
   auto input_addr = reinterpret_cast<int32_t *>(in_tensors_.at(0)->data());
   auto output_addr = reinterpret_cast<int32_t *>(out_tensors_.at(0)->data());
-  MS_ASSERT(input_addr != nullptr);
-  MS_ASSERT(output_addr != nullptr);
+  CHECK_NULL_RETURN(input_addr);
+  CHECK_NULL_RETURN(output_addr);
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_num_);
@@ -111,8 +111,8 @@ int ActivationCPUKernel::DoActivationInt32(int task_id) {
 int ActivationCPUKernel::DoActivationFp32(int task_id) {
   auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(input_addr != nullptr);
-  MS_ASSERT(output_addr != nullptr);
+  CHECK_NULL_RETURN(input_addr);
+  CHECK_NULL_RETURN(output_addr);
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_num_);

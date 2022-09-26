@@ -25,7 +25,7 @@ using mindspore::schema::PrimitiveType_EmbeddingLookupFusion;
 
 namespace mindspore::kernel {
 int EmbeddingLookupCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(param_);
   if (!InferShapeDone()) {

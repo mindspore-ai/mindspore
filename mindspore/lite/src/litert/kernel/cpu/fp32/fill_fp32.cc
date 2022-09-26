@@ -106,6 +106,7 @@ int FillCPUKernel::Run() {
     CHECK_NULL_RETURN(int32_out_ptr_);
   } else if (fill_input->data_type() == kNumberTypeBool) {
     auto fill_data = reinterpret_cast<bool *>(fill_input->data());
+    CHECK_NULL_RETURN(fill_data);
     bool_src_data_ = fill_data[0];
     bool_out_ptr_ = reinterpret_cast<bool *>(output->MutableData());
     CHECK_NULL_RETURN(bool_out_ptr_);

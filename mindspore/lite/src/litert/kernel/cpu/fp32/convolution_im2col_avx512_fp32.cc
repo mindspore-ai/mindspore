@@ -69,6 +69,7 @@ int ConvolutionIm2ColAVX512CPUKernel::InitTmpBuffer() {
 
 int ConvolutionIm2ColAVX512CPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
+  CHECK_NULL_RETURN(ori_input_data);
   if (out_tensors_[0]->format() != NC4HW4) {
     if (use_batch_cut_flag_) {
       ConvIm2ColAVX512Fp32CutByBatch(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
@@ -93,6 +94,7 @@ int ConvolutionIm2ColAVX512CPUKernel::Run() {
     return RET_ERROR;
   }
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  CHECK_NULL_RETURN(output_addr);
   if (!output_need_align_) {
     tmp_output_ = output_addr;
   }

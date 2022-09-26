@@ -61,6 +61,10 @@ void GluCPUKernel::FreeTmpBuffer() {
 }
 
 int GluCPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -114,6 +118,8 @@ int GluCPUKernel::Split(int task_id) const {
 int GluCPUKernel::Sigmoid(int task_id) const {
   auto input_addr = reinterpret_cast<float *>(split_ptr_.at(1));
   auto output_addr = reinterpret_cast<float *>(sigmoid_ptr_);
+  CHECK_NULL_RETURN(input_addr);
+  CHECK_NULL_RETURN(output_addr);
   auto length = in_tensors_.at(0)->ElementsNum() / kGluBranchNum;
   MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
   int stride = UP_DIV(length, op_parameter_->thread_num_);
@@ -129,6 +135,9 @@ int GluCPUKernel::Mul(int task_id) const {
   auto input_addr0 = reinterpret_cast<float *>(split_ptr_.at(0));
   auto input_addr1 = reinterpret_cast<float *>(sigmoid_ptr_);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+  CHECK_NULL_RETURN(input_addr0);
+  CHECK_NULL_RETURN(input_addr1);
+  CHECK_NULL_RETURN(output_addr);
   auto length = in_tensors_.at(0)->ElementsNum() / kGluBranchNum;
   MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
   int stride = UP_DIV(length, op_parameter_->thread_num_);
