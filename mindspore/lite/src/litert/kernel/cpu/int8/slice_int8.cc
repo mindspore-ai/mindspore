@@ -35,6 +35,12 @@ int SliceInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
   CHECK_NULL_RETURN(param_);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
 
   auto in_quant_args = input->quant_params();
   MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");

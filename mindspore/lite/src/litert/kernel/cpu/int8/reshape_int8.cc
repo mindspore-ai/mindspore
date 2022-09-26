@@ -32,6 +32,8 @@ namespace mindspore::kernel {
 int ReshapeInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
   if (in_quant_args.empty()) {
