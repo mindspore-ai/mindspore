@@ -29,14 +29,6 @@ namespace {
 constexpr size_t kTransposeInputsNum = 1;
 constexpr size_t kDynamicPermInputNum = 2;
 constexpr size_t kTransposeOutputsNum = 1;
-constexpr size_t kIndex0 = 0;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
-constexpr size_t kIndex4 = 4;
-constexpr size_t kIndex5 = 5;
-constexpr size_t kIndex6 = 6;
-constexpr size_t kIndex7 = 7;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 // kMaxTransposeSerialSize = 64 * 3 * 512 * 512

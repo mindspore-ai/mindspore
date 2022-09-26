@@ -86,8 +86,8 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
   for (size_t i = 0; i < paddings_arg.size(); i = i + kPaddingsSecondDim) {
     paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));
   }
-  (void)CheckAndConvertUtils::CheckInteger("paddings_size", paddings_attr.size(), kEqual, x_shape.size(), prim_name);
   size_t size = x_shape.size();
+  (void)CheckAndConvertUtils::CheckInteger("paddings_size", paddings_attr.size(), kEqual, SizeToLong(size), prim_name);
   if (size > kMaxPaddings) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the dimension of input only supports less than or equal to 5 dims, but got " << size
