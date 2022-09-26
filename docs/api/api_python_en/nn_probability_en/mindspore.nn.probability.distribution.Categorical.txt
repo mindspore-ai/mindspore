@@ -22,7 +22,7 @@
 
 .. py:method:: cross_entropy(dist, probs_b, probs)
 
-    Compute the cross entropy of two distribution 
+    Compute the cross entropy of two distribution.
 
     **Parameters**
 

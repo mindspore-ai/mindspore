@@ -32,7 +32,7 @@
 
 .. py:method:: cross_entropy(dist, mean_b, sd_b, mean, sd)
 
-    Compute the cross entropy of two distribution 
+    Compute the cross entropy of two distribution.
 
     **Parameters**
 
