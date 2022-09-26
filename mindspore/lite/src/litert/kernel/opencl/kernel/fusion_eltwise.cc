@@ -528,6 +528,7 @@ std::string FusionEltwiseOpenCLKernel::CodegenCore(FusionEltwiseParameter *param
     } else if (param->operator_ == Operator_Act_TANH) {
       std::string exp0 = GetFormatVarName();
       std::string exp1 = GetFormatVarName();
+      code << cl_prefix << var0 + " = clamp(" + var0 + ", (FLT)(-10.0f), (FLT)(10.0f));\n";
       code << cl_prefix << "FLT4 " << exp0 << " =  exp(" + var0 + ");\n";
       code << cl_prefix << "FLT4 " << exp1 << " =  exp(-" + var0 + ");\n";
       code << cl_prefix << "FLT4 " << out_name << " =  (" << exp0 << " - " << exp1 << ") / (" << exp0 << " + " << exp1
