@@ -72,7 +72,7 @@ TEST_F(MindDataTestSlicePatches, TestSlicePatchesPipeline) {
   auto slice_patches = std::make_shared<vision::SlicePatches>(2, 2);
 
   // Create a Map operation on ds
-  ds = ds->Map({slice_patches}, {"image"}, {"img0", "img1", "img2", "img3"}, {"img0", "img1", "img2", "img3"});
+  ds = ds->Map({slice_patches}, {"image"}, {"img0", "img1", "img2", "img3"});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -82,7 +82,8 @@ TEST_F(MindDataTestSlicePatches, TestSlicePatchesPipeline) {
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project({"img0", "img1", "img2", "img3"});
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row

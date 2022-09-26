@@ -205,7 +205,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail1num_ops) {
     std::vector<std::shared_ptr<TensorTransform>>{random_crop_op, center_crop_op}, 0);
 
   // Create a Map operation on ds
-  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -234,7 +234,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail2num_ops) {
     std::vector<std::shared_ptr<TensorTransform>>{random_crop_op, center_crop_op}, 3);
 
   // Create a Map operation on ds
-  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -263,7 +263,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail3transforms) {
     std::vector<std::shared_ptr<TensorTransform>>{random_crop_op}, 1);
 
   // Create a Map operation on ds
-  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -291,7 +291,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail4transforms) {
     std::vector<std::shared_ptr<TensorTransform>>{random_crop_op, nullptr}, 2);
 
   // Create a Map operation on ds
-  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -316,7 +316,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail5transforms) {
   auto uniform_aug_op = std::make_shared<vision::UniformAugment>(list, 1);
 
   // Create a Map operation on ds
-  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

@@ -44,8 +44,7 @@ def test_spectral_centroid_pipeline():
     wav = [[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]]
     dataset = ds.NumpySlicesDataset(wav, column_names=["audio"], shuffle=False)
     out = audio.SpectralCentroid(sample_rate=44100, n_fft=8)
-    dataset = dataset.map(operations=out, input_columns=["audio"], output_columns=["SpectralCentroid"],
-                          column_order=['SpectralCentroid'])
+    dataset = dataset.map(operations=out, input_columns=["audio"], output_columns=["SpectralCentroid"])
     result = np.array([[[4436.1182, 3580.0718, 2902.4917, 3334.8962, 5199.8350, 6284.4814,
                          3580.0718, 2895.5659]]])
     for data1 in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):

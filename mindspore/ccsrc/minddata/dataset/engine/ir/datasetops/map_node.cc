@@ -34,13 +34,11 @@ namespace dataset {
 
 MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
                  std::vector<std::string> input_columns, std::vector<std::string> output_columns,
-                 const std::vector<std::string> &project_columns, std::shared_ptr<DatasetCache> cache,
-                 std::vector<std::shared_ptr<DSCallback>> callbacks, ManualOffloadMode offload,
-                 std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
+                 std::shared_ptr<DatasetCache> cache, std::vector<std::shared_ptr<DSCallback>> callbacks,
+                 ManualOffloadMode offload, std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
     : operations_(operations),
       input_columns_(input_columns),
       output_columns_(output_columns),
-      project_columns_(project_columns),
       DatasetNode(std::move(cache)),
       callbacks_(callbacks),
       offload_(offload),
@@ -50,8 +48,8 @@ MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr
 
 std::shared_ptr<DatasetNode> MapNode::Copy() {
   std::vector<std::shared_ptr<TensorOperation>> operations = operations_;
-  auto node = std::make_shared<MapNode>(nullptr, operations, input_columns_, output_columns_, project_columns_, cache_,
-                                        callbacks_, offload_, python_mp_);
+  auto node = std::make_shared<MapNode>(nullptr, operations, input_columns_, output_columns_, cache_, callbacks_,
+                                        offload_, python_mp_);
   (void)node->SetNumWorkers(num_workers_);
   (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
@@ -59,7 +57,7 @@ std::shared_ptr<DatasetNode> MapNode::Copy() {
 
 void MapNode::Print(std::ostream &out) const {
   out << (Name() + "(<ops>" + ",input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) +
-          ",<project_cols>" + ",num_tensor_ops:")
+          ",num_tensor_ops:")
       << operations_.size() << ",...)";
 }
 
@@ -91,12 +89,6 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
     map_op->AddCallbacks(callbacks_);
   }
 
-  if (!project_columns_.empty()) {
-    auto project_op = std::make_shared<ProjectOp>(project_columns_);
-    project_op->SetTotalRepeats(GetTotalRepeats());
-    project_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
-    node_ops->push_back(project_op);
-  }
   map_op->SetTotalRepeats(GetTotalRepeats());
   map_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   if (python_mp_ != nullptr) {
@@ -126,10 +118,6 @@ Status MapNode::ValidateParams() {
 
   if (!output_columns_.empty()) {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("Map", "output_columns", output_columns_));
-  }
-
-  if (!project_columns_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("Map", "project_columns", project_columns_));
   }
 
   return Status::OK();
@@ -165,7 +153,6 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   args["connector_queue_size"] = connector_que_size_;
   args["input_columns"] = input_columns_;
   args["output_columns"] = output_columns_;
-  args["project_columns"] = project_columns_;
   if (cache_ != nullptr) {
     nlohmann::json cache_args;
     RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
@@ -202,14 +189,12 @@ Status MapNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> 
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kMapNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "input_columns", kMapNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "output_columns", kMapNode));
-  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "project_columns", kMapNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "operations", kMapNode));
   std::vector<std::string> input_columns = json_obj["input_columns"];
   std::vector<std::string> output_columns = json_obj["output_columns"];
-  std::vector<std::string> project_columns = json_obj["project_columns"];
   std::vector<std::shared_ptr<TensorOperation>> operations;
   RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(json_obj["operations"], &operations));
-  *result = std::make_shared<MapNode>(ds, operations, input_columns, output_columns, project_columns);
+  *result = std::make_shared<MapNode>(ds, operations, input_columns, output_columns);
   (void)(*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
   (void)(*result)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();

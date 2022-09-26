@@ -191,19 +191,19 @@ PYBIND_REGISTER(FilterNode, 2, ([](const py::module *m) {
 
 PYBIND_REGISTER(MapNode, 2, ([](const py::module *m) {
                   (void)py::class_<MapNode, DatasetNode, std::shared_ptr<MapNode>>(*m, "MapNode", "to create a MapNode")
-                    .def(py::init(
-                      [](const std::shared_ptr<DatasetNode> &self, const py::list &operations,
-                         const py::list &input_columns, const py::list &output_columns, const py::list &project_columns,
-                         std::vector<std::shared_ptr<PyDSCallback>> py_callbacks, int64_t max_rowsize,
-                         const ManualOffloadMode offload, std::shared_ptr<PythonMultiprocessingRuntime> python_mp) {
-                        auto map = std::make_shared<MapNode>(
-                          self, std::move(toTensorOperations(operations)), toStringVector(input_columns),
-                          toStringVector(output_columns), toStringVector(project_columns), nullptr,
-                          std::vector<std::shared_ptr<DSCallback>>(py_callbacks.begin(), py_callbacks.end()), offload,
-                          python_mp);
-                        THROW_IF_ERROR(map->ValidateParams());
-                        return map;
-                      }));
+                    .def(py::init([](const std::shared_ptr<DatasetNode> &self, const py::list &operations,
+                                     const py::list &input_columns, const py::list &output_columns,
+                                     std::vector<std::shared_ptr<PyDSCallback>> &py_callbacks, int64_t max_rowsize,
+                                     const ManualOffloadMode &offload,
+                                     std::shared_ptr<PythonMultiprocessingRuntime> &python_mp) {
+                      auto map = std::make_shared<MapNode>(
+                        self, std::move(toTensorOperations(operations)), toStringVector(input_columns),
+                        toStringVector(output_columns), nullptr,
+                        std::vector<std::shared_ptr<DSCallback>>(py_callbacks.begin(), py_callbacks.end()), offload,
+                        python_mp);
+                      THROW_IF_ERROR(map->ValidateParams());
+                      return map;
+                    }));
                 }));
 
 PYBIND_REGISTER(PythonMultiprocessingRuntime, 1, ([](const py::module *m) {

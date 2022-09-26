@@ -209,7 +209,8 @@ TEST_F(MindDataTestPipeline, TestIMDBIteratorOneColumn) {
   // Create an iterator over the result of the above dataset
   // Only select "text" column and drop others
   std::vector<std::string> columns = {"text"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project(columns);
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
@@ -245,7 +246,8 @@ TEST_F(MindDataTestPipeline, TestIMDBIteratorWrongColumn) {
 
   // Pass wrong column name
   std::vector<std::string> columns = {"digital"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project(columns);
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
 

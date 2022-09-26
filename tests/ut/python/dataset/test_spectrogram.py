@@ -45,8 +45,7 @@ def test_spectrogram_pipeline():
     wav = [[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]]
     dataset = ds.NumpySlicesDataset(wav, column_names=["audio"], shuffle=False)
     out = audio.Spectrogram(n_fft=8)
-    dataset = dataset.map(operations=out, input_columns=["audio"], output_columns=["Spectrogram"],
-                          column_order=['Spectrogram'])
+    dataset = dataset.map(operations=out, input_columns=["audio"], output_columns=["Spectrogram"])
     result = np.array([[[2.8015e+01, 1.2100e+02, 3.1354e+02, 1.6900e+02, 2.5000e+01,
                          1.0843e+01, 1.2100e+02, 3.3150e+02],
                         [3.2145e+00, 3.3914e+01, 9.4728e+01, 4.5914e+01, 9.9142e+00,

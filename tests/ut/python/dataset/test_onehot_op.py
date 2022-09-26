@@ -51,7 +51,8 @@ def test_one_hot():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     one_hot_op = data_trans.OneHot(num_classes=depth)
-    data1 = data1.map(operations=one_hot_op, input_columns=["label"], column_order=["label"])
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
+    data1 = data1.project(["label"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["label"], shuffle=False)

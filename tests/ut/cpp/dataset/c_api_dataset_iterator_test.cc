@@ -80,7 +80,8 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   // Create an iterator over the result of the above dataset
   // Only select "image" column and drop others
   std::vector<std::string> columns = {"image"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project(columns);
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
@@ -121,7 +122,8 @@ TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
   // Create an iterator over the result of the above dataset
   // Reorder "image" and "label" column
   std::vector<std::string> columns = {"label", "image"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project(columns);
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
@@ -165,7 +167,8 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   // Create an iterator over the result of the above dataset
   // Only select "image" and "bbox" column
   std::vector<std::string> columns = {"image", "bbox"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project(columns);
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
@@ -204,7 +207,8 @@ TEST_F(MindDataTestPipeline, TestIteratorWrongColumn) {
 
   // Pass wrong column name
   std::vector<std::string> columns = {"digital"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project(columns);
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
 
@@ -220,7 +224,7 @@ TEST_F(MindDataTestPipeline, TestIteratorNumEpoch) {
   ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
   std::shared_ptr<Dataset> ds = RandomData(random_data_num_row, schema)->SetNumWorkers(1);
 
-  std::shared_ptr<Iterator> iter = ds->CreateIterator({}, num_epochs);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(num_epochs);
   ASSERT_NE(iter, nullptr);  // should terminate test case if iterator is null
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
@@ -253,6 +257,6 @@ TEST_F(MindDataTestPipeline, TestIteratorNumEpochFail) {
   ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema)->SetNumWorkers(1);
   // expect nullptr due to incorrect num_epochs value.
-  EXPECT_EQ(ds->CreateIterator({}, 0), nullptr);
-  EXPECT_EQ(ds->CreateIterator({}, -2), nullptr);
+  EXPECT_EQ(ds->CreateIterator(0), nullptr);
+  EXPECT_EQ(ds->CreateIterator(-2), nullptr);
 }

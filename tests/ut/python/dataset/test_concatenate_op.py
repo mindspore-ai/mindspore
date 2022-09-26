@@ -94,8 +94,8 @@ def test_concatenate_op_multi_input_string():
 
     concatenate_op = data_trans.Concatenate(0, prepend=prepend_tensor, append=append_tensor)
 
-    data = data.map(operations=concatenate_op, input_columns=["col1", "col2"], column_order=["out1"],
-                    output_columns=["out1"])
+    data = data.map(operations=concatenate_op, input_columns=["col1", "col2"], output_columns=["out1"])
+    data = data.project(["out1"])
     expected = np.array(["dw", "df", "1", "2", "d", "3", "4", "e", "dwsdf", "df"])
     for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)
@@ -114,8 +114,8 @@ def test_concatenate_op_multi_input_numeric():
 
     concatenate_op = data_trans.Concatenate(0, prepend=prepend_tensor)
 
-    data = data.map(operations=concatenate_op, input_columns=["col1", "col2"], column_order=["out1"],
-                    output_columns=["out1"])
+    data = data.map(operations=concatenate_op, input_columns=["col1", "col2"], output_columns=["out1"])
+    data = data.project(["out1"])
     expected = np.array([3, 5, 1, 2, 3, 4])
     for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)

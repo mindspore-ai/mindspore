@@ -882,7 +882,7 @@ def test_imagefolder_exception():
         data = ds.ImageFolderDataset(DATA_DIR)
         data = data.map(operations=exception_func2, input_columns=["image", "label"],
                         output_columns=["image", "label", "label1"],
-                        column_order=["image", "label", "label1"], num_parallel_workers=1)
+                        num_parallel_workers=1)
         for _ in data.__iter__():
             pass
         assert False

@@ -72,9 +72,7 @@ TEST_F(MindDataTestPipeline, TestLibriTTSBasicWithPipeline) {
   auto op = transforms::PadEnd({1, 500000});
   std::vector<std::string> input_columns = {"waveform"};
   std::vector<std::string> output_columns = {"waveform"};
-  std::vector<std::string> project_columns = {"sample_rate", "original_text", "normalized_text", "speaker_id",
-                                              "chapter_id",  "utterance_id",  "waveform"};
-  ds = ds->Map({op}, input_columns, output_columns, project_columns);
+  ds = ds->Map({op}, input_columns, output_columns);
   EXPECT_NE(ds, nullptr);
   ds = ds->Repeat(5);
   EXPECT_NE(ds, nullptr);

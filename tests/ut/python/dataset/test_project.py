@@ -204,7 +204,7 @@ def test_case_map_project_map_project():
     save_and_check_tuple(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_column_order():
+def test_project_operation():
     """
     Feature: Project op
     Description: Test Project op where the output dict should maintain the insertion order
@@ -228,4 +228,4 @@ def test_column_order():
 
 
 if __name__ == '__main__':
-    test_column_order()
+    test_project_opreation()

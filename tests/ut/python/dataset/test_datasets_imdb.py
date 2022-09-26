@@ -692,7 +692,7 @@ def test_imdb_exception():
         data = ds.IMDBDataset(DATA_DIR)
         data = data.map(operations=exception_func2, input_columns=["text", "label"],
                         output_columns=["text", "label", "label1"],
-                        column_order=["text", "label", "label1"], num_parallel_workers=1)
+                        num_parallel_workers=1)
         for _ in data.__iter__():
             pass
         assert False

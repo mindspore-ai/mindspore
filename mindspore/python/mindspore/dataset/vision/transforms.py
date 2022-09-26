@@ -581,8 +581,7 @@ class BoundingBoxAugment(ImageTensorOperation):
         >>> # map to apply ops
         >>> image_folder_dataset = image_folder_dataset.map(operations=[bbox_aug_op],
         ...                                                 input_columns=["image", "bbox"],
-        ...                                                 output_columns=["image", "bbox"],
-        ...                                                 column_order=["image", "bbox"])
+        ...                                                 output_columns=["image", "bbox"])
     """
 
     @check_bounding_box_augment_cpp
@@ -3834,7 +3833,7 @@ class SlicePatches(ImageTensorOperation):
         >>> cols = ['img' + str(x) for x in range(num_h*num_w)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"],
-        ...                                                 output_columns=cols, column_order=cols)
+        ...                                                 output_columns=cols)
     """
 
     @check_slice_patches

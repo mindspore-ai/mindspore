@@ -548,7 +548,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
     std::vector<int32_t>{128, 128});
 
   // Create a Map operation on ds
-  ds = ds->Map({random_crop}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({random_crop}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -688,7 +688,7 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxSuccess) {
     std::make_shared<vision::RandomHorizontalFlipWithBBox>(0.5);
 
   // Create a Map operation on ds
-  ds = ds->Map({random_horizontal_flip_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({random_horizontal_flip_op}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -1767,7 +1767,7 @@ TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
   std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlipWithBBox>(0.4);
 
   // Create a Map operation on ds
-  ds = ds->Map({random_vertical_flip_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({random_vertical_flip_op}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

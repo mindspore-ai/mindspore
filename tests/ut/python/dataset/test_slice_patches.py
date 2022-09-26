@@ -93,7 +93,7 @@ def slice_to_patches(ori_size, num_h, num_w, pad_or_drop, fill_value=0, plot=Fal
     dataset1 = dataset1.map(operations=decode_op, input_columns=["image"])
     dataset1 = dataset1.map(operations=resize_op, input_columns=["image"])
     dataset1 = dataset1.map(operations=slice_patches_op,
-                            input_columns=["image"], output_columns=cols, column_order=cols)
+                            input_columns=["image"], output_columns=cols)
     # Second dataset
     dataset2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     dataset2 = dataset2.map(operations=decode_op, input_columns=["image"])
@@ -101,7 +101,7 @@ def slice_to_patches(ori_size, num_h, num_w, pad_or_drop, fill_value=0, plot=Fal
     func_slice_patches = functools.partial(
         slice_patches, num_h=num_h, num_w=num_w, pad_or_drop=pad_or_drop, fill_value=fill_value)
     dataset2 = dataset2.map(operations=func_slice_patches,
-                            input_columns=["image"], output_columns=cols, column_order=cols)
+                            input_columns=["image"], output_columns=cols)
 
     num_iter = 0
     patches_c = []
@@ -186,7 +186,6 @@ def test_slice_patches_08():
     dataset = ds.NumpySlicesDataset(np_data, column_names=["image"])
     slice_patches_op = vision.SlicePatches(2, 2)
     dataset = dataset.map(input_columns=["image"], output_columns=["img0", "img1", "img2", "img3"],
-                          column_order=["img0", "img1", "img2", "img3"],
                           operations=slice_patches_op)
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         patch_shape = item['img0'].shape
@@ -226,7 +225,7 @@ def skip_test_slice_patches_11():
     slice_patches_op = vision.SlicePatches(10, 13, mode.SliceMode.DROP)
     cols = ['img' + str(x) for x in range(10*13)]
     dataset = dataset.map(input_columns=["image"], output_columns=cols,
-                          column_order=cols, operations=slice_patches_op)
+                          operations=slice_patches_op)
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         patch_shape = item['img0'].shape
         assert patch_shape == (700, 538, 256)

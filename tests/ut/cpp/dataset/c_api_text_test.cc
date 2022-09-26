@@ -980,8 +980,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess2) {
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Create Map operation on ds
-  ds = ds->Map({jieba_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"},
-               {"token", "offsets_start", "offsets_limit"});
+  ds = ds->Map({jieba_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -2804,8 +2803,7 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess1) {
   EXPECT_NE(regex_tokenizer, nullptr);
 
   // Create Map operation on ds
-  ds = ds->Map({regex_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"},
-               {"token", "offsets_start", "offsets_limit"});
+  ds = ds->Map({regex_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -2939,8 +2937,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess1) {
   EXPECT_NE(unicodechar_tokenizer, nullptr);
 
   // Create Map operation on ds
-  ds = ds->Map({unicodechar_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"},
-               {"token", "offsets_start", "offsets_limit"});
+  ds = ds->Map({unicodechar_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -3570,8 +3567,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess2) {
   EXPECT_NE(unicodescript_tokenizer, nullptr);
 
   // Create Map operation on ds
-  ds = ds->Map({unicodescript_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"},
-               {"token", "offsets_start", "offsets_limit"});
+  ds = ds->Map({unicodescript_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -3642,8 +3638,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess3) {
   EXPECT_NE(unicodescript_tokenizer, nullptr);
 
   // Create Map operation on ds
-  ds = ds->Map({unicodescript_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"},
-               {"token", "offsets_start", "offsets_limit"});
+  ds = ds->Map({unicodescript_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -3766,8 +3761,7 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess1) {
   EXPECT_NE(white_tokenizer, nullptr);
 
   // Create Map operation on ds
-  ds = ds->Map({white_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"},
-               {"token", "offsets_start", "offsets_limit"});
+  ds = ds->Map({white_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

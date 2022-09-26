@@ -126,8 +126,7 @@ def test_lambdas():
 
     def test_config(arr, input_columns, output_columns, op_list):
         data = ds.NumpySlicesDataset(arr, column_names=input_columns, shuffle=False)
-        data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_columns,
-                        column_order=output_columns)
+        data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_columns)
         res = []
         for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             for col_name in output_columns:
@@ -158,8 +157,7 @@ def test_c_py_compose_transforms_module():
 
     def test_config(arr, input_columns, output_cols, op_list):
         data = ds.NumpySlicesDataset(arr, column_names=input_columns, shuffle=False)
-        data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_cols,
-                        column_order=output_cols)
+        data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_cols)
         res = []
         for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             for col_name in output_cols:

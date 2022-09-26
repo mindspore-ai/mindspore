@@ -131,8 +131,7 @@ class JiebaTokenizer(TextTensorOperation):
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP, with_offsets=True)
         >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
-        ...                                               output_columns=["token", "offsets_start", "offsets_limit"],
-        ...                                               column_order=["token", "offsets_start", "offsets_limit"])
+        ...                                               output_columns=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_jieba_init
@@ -629,8 +628,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=True)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-        ...                                           output_columns=["token", "offsets_start", "offsets_limit"],
-        ...                                           column_order=["token", "offsets_start", "offsets_limit"])
+        ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_with_offsets
@@ -679,8 +677,7 @@ class WordpieceTokenizer(TextTensorOperation):
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
         ...                                       max_bytes_per_token=100, with_offsets=True)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-        ...                                           output_columns=["token", "offsets_start", "offsets_limit"],
-        ...                                           column_order=["token", "offsets_start", "offsets_limit"])
+        ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_wordpiece_tokenizer
@@ -766,9 +763,7 @@ if platform.system().lower() != 'windows':
             ...                                    with_offsets=True)
             >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
             ...                                               output_columns=["token", "offsets_start",
-            ...                                                               "offsets_limit"],
-            ...                                               column_order=["token", "offsets_start",
-            ...                                                             "offsets_limit"])
+            ...                                                               "offsets_limit"])
         """
 
         @check_basic_tokenizer
@@ -862,9 +857,7 @@ if platform.system().lower() != 'windows':
             ...                                   with_offsets=True)
             >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
             ...                                               output_columns=["token", "offsets_start",
-            ...                                                               "offsets_limit"],
-            ...                                               column_order=["token", "offsets_start",
-            ...                                                             "offsets_limit"])
+            ...                                                               "offsets_limit"])
         """
 
         @check_bert_tokenizer
@@ -1054,9 +1047,7 @@ if platform.system().lower() != 'windows':
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=True)
             >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
             ...                                               output_columns=["token", "offsets_start",
-            ...                                                               "offsets_limit"],
-            ...                                               column_order=["token", "offsets_start",
-            ...                                                             "offsets_limit"])
+            ...                                                               "offsets_limit"])
         """
 
         @check_regex_tokenizer
@@ -1097,8 +1088,7 @@ if platform.system().lower() != 'windows':
             >>> #                                                  ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=True)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                           output_columns=["token", "offsets_start", "offsets_limit"],
-            ...                                           column_order=["token", "offsets_start", "offsets_limit"])
+            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
 
         """
 
@@ -1139,8 +1129,7 @@ if platform.system().lower() != 'windows':
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=True)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                           output_columns=["token", "offsets_start", "offsets_limit"],
-            ...                                           column_order=["token", "offsets_start", "offsets_limit"])
+            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_with_offsets

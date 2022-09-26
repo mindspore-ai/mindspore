@@ -371,8 +371,7 @@ def test_process_string_pipeline():
         data = np.array([["apple"], ["orange"], ["banana"], ["1"], ["2"], ["3"], ["a"], ["b"], ["c"]], dtype=dtype)
         dataset = ds.NumpySlicesDataset(data, column_names=["text"])
         assert dataset.output_types()[0].type == dtype
-        dataset = dataset.map(lambda e: (e, e), input_columns=["text"], output_columns=["text1", "text2"],
-                              column_order=["text1", "text2"])
+        dataset = dataset.map(lambda e: (e, e), input_columns=["text"], output_columns=["text1", "text2"])
         for i, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
             item["text1"] = data[i]
             item["text2"] = data[i]

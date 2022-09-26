@@ -52,6 +52,7 @@ def test_bounding_box_augment_with_rotation_op(plot_vis=False):
 
     # map to apply ops
     data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
+    data_voc2 = data_voc2.project(["image", "bbox"])
 
     filename = "bounding_box_augment_rotation_c_result.npz"
     save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -84,6 +85,7 @@ def test_bounding_box_augment_with_crop_op(plot_vis=False):
 
     # map to apply ops
     data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
+    data_voc2 = data_voc2.project(["image", "bbox"])
 
     filename = "bounding_box_augment_crop_c_result.npz"
     save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -116,6 +118,7 @@ def test_bounding_box_augment_valid_ratio_c(plot_vis=False):
 
     # map to apply ops
     data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
+    data_voc2 = data_voc2.project(["image", "bbox"])
 
     filename = "bounding_box_augment_valid_ratio_c_result.npz"
     save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -170,6 +173,7 @@ def test_bounding_box_augment_valid_edge_c(plot_vis=False):
     data_voc1 = helper_perform_ops_bbox_edgecase_float(data_voc1)
     data_voc2 = helper_perform_ops_bbox_edgecase_float(data_voc2)
     data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
+    data_voc2 = data_voc2.project(["image", "bbox"])
     filename = "bounding_box_augment_valid_edge_c_result.npz"
     save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
 

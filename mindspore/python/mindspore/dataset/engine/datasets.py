@@ -839,9 +839,6 @@ class Dataset:
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in the whole
-                dataset (default=None). The parameter is required when len(input_column) != len(output_column).
-                Caution: the list here is not just the columns specified in parameter input_columns and output_columns.
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
                 parallel (default=None, the value from the configuration will be used).
             **kwargs:
@@ -871,6 +868,8 @@ class Dataset:
 
         Examples:
             >>> # dataset is an instance of Dataset which has 2 columns, "image" and "label".
+            >>> # image is of type bytes type which can be decoded to RGB
+            >>> # label is of type int32
             >>>
             >>> # Define two operations, where each operation accepts 1 input column and outputs 1 column.
             >>> decode_op = c_vision.Decode(rgb=True)
@@ -879,30 +878,15 @@ class Dataset:
             >>>
             >>> # 1) Simple map example.
             >>>
-            >>> # Apply decode_op on column "image". This column will be replaced by the outputted
-            >>> # column of decode_op. Since column_order is not provided, both columns "image"
-            >>> # and "label" will be propagated to the child node in their original order.
+            >>> # Apply decode_op on column "image".
             >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"])
             >>>
             >>> # Decode and rename column "image" to "decoded_image".
             >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"], output_columns=["decoded_image"])
             >>>
-            >>> # Specify the order of the output columns.
-            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
-            ...                       output_columns=None, column_order=["label", "image"])
-            >>>
-            >>> # Rename column "image" to "decoded_image" and also specify the order of the output columns.
-            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
-            ...                       output_columns=["decoded_image"], column_order=["label", "decoded_image"])
-            >>>
-            >>> # Rename column "image" to "decoded_image" and keep only this column.
-            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
-            ...                       output_columns=["decoded_image"], column_order=["decoded_image"])
-            >>>
-            >>> # A simple example for mapping pyfunc. Renaming columns and specifying column order
-            >>> # work in the same way as the previous examples.
+            >>> # A simple example for user defined python function transform.
             >>> dataset = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
-            >>> dataset = dataset.map(operations=[(lambda x: x + 1)], input_columns=["data"])
+            >>> dataset = dataset.map(operations=[(lambda x: x - 1)], input_columns=["data"])
             >>>
             >>> # 2) Map example with more than one operation.
             >>>
@@ -911,17 +895,14 @@ class Dataset:
             >>> # outputted by decode_op is passed as input to random_jitter_op.
             >>> # random_jitter_op will output one column. Column "image" will be replaced by
             >>> # the column outputted by random_jitter_op (the very last operation). All other
-            >>> # columns are unchanged. Since column_order is not specified, the order of the
-            >>> # columns will remain the same.
+            >>> # columns are unchanged.
             >>> dataset = dataset.map(operations=[decode_op, random_jitter_op], input_columns=["image"])
             >>>
             >>> # Rename the column outputted by random_jitter_op to "image_mapped".
-            >>> # Specifying column order works in the same way as examples in 1).
             >>> dataset = dataset.map(operations=[decode_op, random_jitter_op], input_columns=["image"],
             ...                       output_columns=["image_mapped"])
             >>>
-            >>> # Map with multiple operations using pyfunc. Renaming columns and specifying column order
-            >>> # work in the same way as examples in 1).
+            >>> # Map with multiple operations using pyfunc and rename column's name
             >>> dataset = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
             >>> dataset = dataset.map(operations=[(lambda x: x * x), (lambda x: x - 1)], input_columns=["data"],
             ...                                   output_columns=["data_mapped"])
@@ -938,22 +919,9 @@ class Dataset:
             >>> operations = [(lambda x, y: (x, x + y, x + y + 1)),
             ...               (lambda x, y, z: x * y * z),
             ...               (lambda x: (x % 2, x % 3, x % 5, x % 7))]
-            >>>
-            >>> # Note: Since the number of input columns is not the same as the number of
-            >>> # output columns, the output_columns and column_order parameters must be
-            >>> # specified. Otherwise, this map call will also result in an error.
-            >>>
             >>> dataset = ds.NumpySlicesDataset(data=([[0, 1, 2]], [[3, 4, 5]]), column_names=["x", "y"])
-            >>>
-            >>> # Propagate all columns to the child node in this order:
             >>> dataset = dataset.map(operations, input_columns=["x", "y"],
-            ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
-            ...                       column_order=["mod2", "mod3", "mod5", "mod7"])
-            >>>
-            >>> # Propagate some columns to the child node in this order:
-            >>> dataset = dataset.map(operations, input_columns=["x", "y"],
-            ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
-            ...                       column_order=["mod7", "mod3", "col2"])
+            ...                       output_columns=["mod2", "mod3", "mod5", "mod7"])
         """
         if hasattr(self, 'operator_mixed') and getattr(self, 'operator_mixed') is True:
             num_parallel_workers = 1
@@ -962,12 +930,7 @@ class Dataset:
                 "mindspore.numpy module and etc, which do not support multi-thread compiling, recommend to replace it "
                 "with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' into 1.")
 
-        if column_order is not None:
-            logger.warning("The parameter column_order will be deprecated in the future. "
-                           "Please use '.project' operation instead.")
-
-        return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
-                          **kwargs)
+        return MapDataset(self, operations, input_columns, output_columns, num_parallel_workers, **kwargs)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=None):
@@ -3330,9 +3293,6 @@ class MapDataset(UnionBaseDataset):
             The size of the list should match the number of outputs of the last operator
             (default=None, output columns will be the input columns, i.e., the columns will
             be replaced).
-        column_order (list[str], optional): Specifies the list of all the columns you need in the whole
-            dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
-            is not just the columns specified in parameter input_columns and output_columns.
         num_parallel_workers (int, optional): Number of workers to process the dataset
             in parallel (default=None).
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
@@ -3343,12 +3303,9 @@ class MapDataset(UnionBaseDataset):
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True (default=16).
         offload (bool, optional): Flag to indicate whether offload is used (Default=None).
-
-    Raises:
-        ValueError: If len(input_columns) != len(output_columns) and column_order is not specified.
     """
 
-    def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None, column_order=None,
+    def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None,
                  num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16,
                  offload=None):
         super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers, cache=cache)
@@ -3367,16 +3324,9 @@ class MapDataset(UnionBaseDataset):
 
         self.input_columns = to_list(input_columns)
         self.output_columns = to_list(output_columns)
-        self.column_order = replace_none(column_order, [])
 
         #  If output_columns were not provided then use input_columns
         self.output_columns = self.input_columns if not self.output_columns else self.output_columns
-
-        if self.input_columns and self.output_columns \
-                and len(self.input_columns) != len(self.output_columns) \
-                and not self.column_order:
-            raise ValueError("When length of input_columns and output_columns are not equal,"
-                             " column_order must be specified.")
 
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
@@ -3410,7 +3360,7 @@ class MapDataset(UnionBaseDataset):
         self.prepare_multiprocessing()
 
         callbacks = [cb.create_runtime_obj() for cb in self.callbacks]
-        return cde.MapNode(children[0], self.operations, self.input_columns, self.output_columns, self.column_order,
+        return cde.MapNode(children[0], self.operations, self.input_columns, self.output_columns,
                            callbacks, self.max_rowsize, OffloadToManualOffloadMode.get(self.offload), self.process_pool)
 
     def __deepcopy__(self, memodict):

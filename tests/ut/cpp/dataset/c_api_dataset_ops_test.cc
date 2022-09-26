@@ -1087,7 +1087,7 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
   EXPECT_NE(random_vertical_flip_op, nullptr);
 
   // Create a Map operation on ds
-  ds = ds->Map({random_vertical_flip_op}, {}, {}, {"image", "label"});
+  ds = ds->Map({random_vertical_flip_op}, {}, {});
   EXPECT_NE(ds, nullptr);
 
   // Create a Project operation on ds
@@ -1139,7 +1139,7 @@ TEST_F(MindDataTestPipeline, TestProjectDuplicateColumnFail) {
   EXPECT_NE(random_vertical_flip_op, nullptr);
 
   // Create a Map operation on ds
-  ds = ds->Map({random_vertical_flip_op}, {}, {}, {"image", "label"});
+  ds = ds->Map({random_vertical_flip_op}, {}, {});
   EXPECT_NE(ds, nullptr);
 
   // Create a Project operation on ds
@@ -1171,7 +1171,7 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
   EXPECT_NE(random_vertical_flip_op, nullptr);
 
   // Create a Map operation on ds
-  auto ds1 = ds->Map({random_vertical_flip_op}, {"image", "image"}, {}, {});
+  auto ds1 = ds->Map({random_vertical_flip_op}, {"image", "image"}, {});
   EXPECT_NE(ds1, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -1180,7 +1180,7 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
   EXPECT_EQ(iter1, nullptr);
 
   // Create a Map operation on ds
-  auto ds2 = ds->Map({random_vertical_flip_op}, {}, {"label", "label"}, {});
+  auto ds2 = ds->Map({random_vertical_flip_op}, {}, {"label", "label"});
   EXPECT_NE(ds2, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -1189,13 +1189,8 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
   EXPECT_EQ(iter2, nullptr);
 
   // Create a Map operation on ds
-  auto ds3 = ds->Map({random_vertical_flip_op}, {}, {}, {"image", "image"});
+  auto ds3 = ds->Map({random_vertical_flip_op}, {}, {});
   EXPECT_NE(ds3, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
-  // Expect failure: duplicate Map op project column name
-  EXPECT_EQ(iter3, nullptr);
 }
 
 /// Feature: Map op
@@ -1211,7 +1206,7 @@ TEST_F(MindDataTestPipeline, TestMapNullOperation) {
 
   // Create a Map operation on ds
   std::shared_ptr<TensorTransform> operation = nullptr;
-  auto ds1 = ds->Map({operation}, {"image"}, {}, {});
+  auto ds1 = ds->Map({operation}, {"image"}, {});
   EXPECT_NE(ds1, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -1241,13 +1236,13 @@ TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   EXPECT_NE(resize_op, nullptr);
 
   // Create a Map operation on ds
-  // {"image"} is the project columns. This will trigger auto injection of ProjectOp after MapOp.
-  ds = ds->Map({resize_op}, {}, {}, {"image"});
+  ds = ds->Map({resize_op}, {}, {});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project({"image"});
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
   // iterate over the dataset and get each row
@@ -2470,13 +2465,13 @@ TEST_F(MindDataTestPipeline, TestTFRecordDecodeRepeatResize) {
   EXPECT_NE(resize_op, nullptr);
 
   // Create a Map operation on ds
-  // {"image"} is the project columns. This will trigger auto injection of ProjectOp after MapOp.
-  ds = ds->Map({decode_op, resize_op}, {}, {}, {"image"});
+  ds = ds->Map({decode_op, resize_op}, {}, {});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project({"image"});
+  std::shared_ptr<Iterator> iter = project_ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
   // iterate over the dataset and get each row
@@ -2756,8 +2751,10 @@ TEST_F(MindDataTestPipeline, Test1to3) {
   EXPECT_NE(one_to_three_op, nullptr);
 
   // Create a Map operation on ds
-  ds = ds->Map({one_to_three_op}, {"image"}, {"X", "Y", "Z"}, {"X", "Y", "Z", "label", "A", "B"});
+  ds = ds->Map({one_to_three_op}, {"image"}, {"X", "Y", "Z"});
   EXPECT_NE(ds, nullptr);
+
+  ds = ds->Project({"X", "Y", "Z", "label", "A", "B"});
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.

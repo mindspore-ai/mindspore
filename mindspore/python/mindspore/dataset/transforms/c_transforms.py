@@ -430,8 +430,7 @@ class Duplicate(TensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["x"])
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=c_transforms.Duplicate(),
         ...                                                 input_columns=["x"],
-        ...                                                 output_columns=["x", "y"],
-        ...                                                 column_order=["x", "y"])
+        ...                                                 output_columns=["x", "y"])
         >>> # Data after
         >>> # |  x      |  y      |
         >>> # +---------+---------+
@@ -477,8 +476,7 @@ class Unique(TensorOperation):
         >>> dataset = ds.NumpySlicesDataset(data, ["x"])
         >>> dataset = dataset.map(operations=c_transforms.Unique(),
         ...                       input_columns=["x"],
-        ...                       output_columns=["x", "y", "z"],
-        ...                       column_order=["x", "y", "z"])
+        ...                       output_columns=["x", "y", "z"])
         >>> # Data after
         >>> # |  x      |  y              |z        |
         >>> # +---------+-----------------+---------+

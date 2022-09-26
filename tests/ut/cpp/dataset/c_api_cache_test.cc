@@ -71,7 +71,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiNestedCache) {
   EXPECT_NE(decode_op, nullptr);
 
   // Create a Map operation on ds
-  ds = ds->Map({decode_op}, {}, {}, {"image"}, some_cache);
+  ds = ds->Map({decode_op}, {}, {}, some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
