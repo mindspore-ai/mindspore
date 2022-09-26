@@ -101,6 +101,7 @@
 #include "tools/converter/adapter/acl/acl_pass.h"
 #endif
 #include "src/common/log_util.h"
+#include "src/common/string_utils.h"
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
 #include "tools/converter/import/cast_op_adjust.h"
@@ -117,6 +118,55 @@ using std::string;
 namespace mindspore::lite {
 namespace {
 constexpr auto kOriginalFmkType = "original_fmk_type";
+constexpr auto kConverterInputShape = "converter_input_shape";
+
+std::string TransInputShapesToString(const std::map<std::string, std::vector<int64_t>> &shapes) {
+  std::stringstream str_stream;
+  size_t shape_index = 0;
+  for (auto &item : shapes) {
+    str_stream << item.first << ":";
+    auto &shape = item.second;
+    for (size_t d = 0; d < shape.size(); d++) {
+      str_stream << shape[d];
+      if (d + 1 != shape.size()) {
+        str_stream << ",";
+      }
+    }
+    if (shape_index + 1 != shapes.size()) {
+      str_stream << ";";
+    }
+    shape_index++;
+  }
+  return str_stream.str();
+}
+
+std::map<std::string, std::vector<int64_t>> TransStringToInputShapes(const std::string &shapes_str) {
+  std::map<std::string, std::vector<int64_t>> shapes;
+  auto shapes_pairs = lite::SplitStringToVector(shapes_str, ';');
+  constexpr size_t name_shape_pair_size = 2;
+  for (auto &kv_str : shapes_pairs) {
+    auto kv_pair_strs = lite::SplitStringToVector(kv_str, ':');
+    if (kv_pair_strs.size() != name_shape_pair_size) {
+      MS_LOG_ERROR << "Invalid input shapes string: " << shapes_str;
+      return {};
+    }
+    auto &name = kv_pair_strs[0];
+    auto &shape_str = kv_pair_strs[1];
+    auto shape_dims_str = lite::SplitStringToVector(shape_str, ',');
+    std::vector<int64_t> shape;
+    shape.reserve(shape_dims_str.size());
+    for (auto &dim_str : shape_dims_str) {
+      int dim = 0;
+      if (!lite::ConvertIntNum(dim_str, &dim)) {
+        MS_LOG_ERROR << "Invalid input shapes string: " << shapes_str;
+        return {};
+      }
+      shape.push_back(dim);
+    }
+    shapes[name] = shape;
+  }
+  return shapes;
+}
 }  // namespace
 
 AnfTransform::AnfTransform() = default;
@@ -606,6 +656,9 @@ STATUS AnfTransform::ProcOnlineTransform(const FuncGraphPtr &old_graph, const st
     return lite::RET_ERROR;
   }
   old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
+  if (!param->input_shape.empty()) {
+    old_graph->set_attr(kConverterInputShape, MakeValue(TransInputShapesToString(param->input_shape)));
+  }
   return lite::RET_OK;
 }
 
@@ -768,6 +821,14 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::
     auto val_ptr = main_graph->get_attr(kOriginalFmkType);
     MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");
     param->fmk_type = static_cast<converter::FmkType>(GetValue<int32_t>(val_ptr));
+  }
+  if (main_graph->has_attr(kConverterInputShape)) {
+    auto val_ptr = main_graph->get_attr(kConverterInputShape);
+    MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");
+    param->input_shape = TransStringToInputShapes(GetValue<std::string>(val_ptr));
+    for (auto &kv : param->input_shape) {
+      lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(kv.first, kv.second);
+    }
   }
   if (!StoreBuiltinPass(param)) {
     MS_LOG(ERROR) << "store pass failed.";

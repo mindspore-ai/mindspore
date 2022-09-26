@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/split_tensorrt.h"
 #include <numeric>
 #include <algorithm>
-#include "src/extendrt/delegate/tensorrt/op/split_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/split.h"
 #include "ops/unstack.h"
@@ -109,7 +109,7 @@ int SplitTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::Dims one_dims = lite::ConvertCudaDims(1, input_nbdims);
   nvinfer1::ISliceLayer *slice_layer = nullptr;
 
-  for (int i = 0; i != output_num_; ++i) {
+  for (int i = 0; i < output_num_; ++i) {
     nvinfer1::Dims start_dims = lite::ConvertCudaDims(0, input_nbdims);
     start_dims.d[axis_] = axis_dim_index;
     nvinfer1::Dims size_dims{-1};
@@ -160,12 +160,9 @@ int SplitTensorRT::ParseParams(const ITensorHelper &helper) {
       size_splits_.resize(size_splits_ptr.size());
       std::copy(size_splits_ptr.begin(), size_splits_ptr.end(), size_splits_.begin());
     } else if (in_tensors_.size() == INPUT_SIZE2 && in_tensors_[1].IsConst() &&
-               in_tensors_[1].DataType() == DataType::kNumberTypeInt32) {
-      size_splits_.resize(in_tensors_[1].ElementNum());
-      auto split_out_ptr = static_cast<const int *>(in_tensors_[1].Data());
-      for (int i = 0; i < in_tensors_[1].ElementNum(); i++) {
-        size_splits_[i] = split_out_ptr[i];
-      }
+               (in_tensors_[1].DataType() == DataType::kNumberTypeInt32 ||
+                in_tensors_[1].DataType() == DataType::kNumberTypeInt64)) {
+      size_splits_ = ConvertTensorAsIntVector(in_tensors_[1]);
     } else {
       MS_LOG(INFO) << op_name_ << " has invalid input size and size_splits: " << in_tensors_.size();
     }

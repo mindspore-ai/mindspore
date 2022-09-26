@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/spacetobatch_tensorrt.h"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
@@ -22,8 +23,7 @@
 #include <unordered_map>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
-#include "src/extendrt/delegate/tensorrt/op/spacetobatch_tensorrt.h"
-#include "spacetobatch_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/spacetobatch_impl.cuh"
 #include "ops/space_to_batch_nd.h"
 
 namespace mindspore::lite {
@@ -43,18 +43,28 @@ int SpaceToBatchTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const 
 
 int SpaceToBatchTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *input_tensor = input(ctx, 0).trt_tensor_;
-  const int *block_size_ptr = reinterpret_cast<const int *>(in_tensors_[1].Data());
-  int bh = *(block_size_ptr + 0);
-  int bw = *(block_size_ptr + 1);
+  auto block_size_vec = ConvertTensorAsIntVector(in_tensors_[1]);
+  constexpr size_t block_input_elem_count = 2;
+  if (block_size_vec.size() != block_input_elem_count) {
+    MS_LOG(ERROR) << "Failed to get block input, block size " << block_size_vec.size() << ", node: " << op_name_;
+    return RET_ERROR;
+  }
+  int bh = block_size_vec[0];
+  int bw = block_size_vec[1];
   if (bh != bw) {
     MS_LOG(ERROR) << "block_h not equal block_w " << op_name_;
     return RET_ERROR;
   }
-  const int *pad_ptr = reinterpret_cast<const int *>(in_tensors_[INPUT_SIZE2].Data());
-  int ph0 = *(pad_ptr + 0);
-  int ph1 = *(pad_ptr + 1);
-  int pw0 = *(pad_ptr + INPUT_SIZE2);
-  int pw1 = *(pad_ptr + INPUT_SIZE3);
+  auto pad_vec = ConvertTensorAsIntVector(in_tensors_[INPUT_SIZE2]);
+  constexpr size_t pad_input_elem_count = 4;
+  if (pad_vec.size() != pad_input_elem_count) {
+    MS_LOG(ERROR) << "Failed to get pad input, pad size " << pad_vec.size() << ", node: " << op_name_;
+    return RET_ERROR;
+  }
+  int ph0 = pad_vec[0];
+  int ph1 = pad_vec[1];
+  int pw0 = pad_vec[INPUT_SIZE2];
+  int pw1 = pad_vec[INPUT_SIZE3];
 
   auto plugin = std::make_shared<SpaceToBatchPlugin>(input_tensor->getName(), bh, ph0, ph1, pw0, pw1, device_id_);
   if (plugin == nullptr) {

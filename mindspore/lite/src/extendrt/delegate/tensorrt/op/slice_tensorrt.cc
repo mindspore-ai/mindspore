@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/slice_tensorrt.h"
 #include <algorithm>
 #include <utility>
-#include "src/extendrt/delegate/tensorrt/op/slice_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/strided_slice.h"
 #include "ops/fusion/slice_fusion.h"
@@ -44,6 +44,43 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
     }
     return true;
   }
+
+  bool GetConstInputValue(const std::vector<TensorInfo> &in_tensors, int *axis_val, int *start_val, int *end_val,
+                          int *stride_val) {
+    int64_t axis_index = in_tensors.size() == HAS_AXIS ? AXIS_INDEX : -1;
+
+    const auto &begin = in_tensors.at(BEGINS_INDEX);
+    const auto &stride = in_tensors.back();
+    const auto &end = in_tensors.at(ENDS_INDEX);
+
+    if (begin.ElementNum() != 1 || end.ElementNum() != 1 || stride.ElementNum() != 1) {
+      MS_LOG(ERROR)
+        << "Only support element number of begin, end and stride to be 1 when this number < input dims number, op: "
+        << op_name_;
+      return false;
+    }
+    *axis_val = 0;
+    if (axis_index != -1) {
+      auto axis_vec = ConvertTensorAsIntVector(in_tensors[axis_index]);
+      if (axis_vec.size() != 1) {
+        MS_LOG(ERROR) << "Failed to get axis input, node: " << op_name_ << ", axis count: " << axis_vec.size();
+        return false;
+      }
+      *axis_val = axis_vec[0];
+    }
+    auto start_vec = ConvertTensorAsIntVector(begin);
+    auto end_vec = ConvertTensorAsIntVector(end);
+    auto stride_vec = ConvertTensorAsIntVector(stride);
+    if (start_vec.size() != 1 || end_vec.size() != 1 || stride_vec.size() != 1) {
+      MS_LOG(ERROR) << "Failed to get start, end or stride input, node: " << op_name_;
+      return {};
+    }
+    *start_val = start_vec[0];
+    *end_val = end_vec[0];
+    *stride_val = stride_vec[0];
+    return true;
+  }
+
   std::tuple<nvinfer1::Dims, nvinfer1::Dims, nvinfer1::Dims> GetSliceParams(const BaseOperatorPtr &base_operator,
                                                                             const std::vector<TensorInfo> &in_tensors,
                                                                             const std::vector<TensorInfo> &out_tensors,
@@ -55,7 +92,6 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
     nvinfer1::Dims size_dims;
     nvinfer1::Dims stride_dims;
 
-    int64_t axis_index = in_tensors.size() == HAS_AXIS ? AXIS_INDEX : -1;
     if (begin.ElementNum() == helper.trt_tensor_->getDimensions().nbDims) {
       start_dims = lite::ConvertCudaDims(begin);
       size_dims.nbDims = start_dims.nbDims;
@@ -65,14 +101,13 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
       }
       stride_dims = lite::ConvertCudaDims(stride);
     } else {
-      if (axis_index == -1 || in_tensors.at(axis_index).ElementNum() != 1) {
-        MS_LOG(ERROR) << "invalid input params for " << op_name_;
+      int axis_value = 0;
+      int start_value = 0;
+      int end_value = 0;
+      int stride_value = 0;
+      if (!GetConstInputValue(in_tensors, &axis_value, &start_value, &end_value, &stride_value)) {
         return {};
       }
-      int axis_value = *(static_cast<const int *>(in_tensors.at(axis_index).Data()));
-      int start_value = *(static_cast<const int *>(begin.Data()));
-      int end_value = *(static_cast<const int *>(end.Data()));
-      int stride_value = *(static_cast<const int *>(stride.Data()));
       auto input_dims = helper.trt_tensor_->getDimensions();
       start_dims.nbDims = input_dims.nbDims;
       size_dims.nbDims = input_dims.nbDims;
@@ -105,7 +140,7 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
                                  const std::vector<TensorInfo> &out_tensors) override {
     if (shrink_axis_ != 0) {
       auto shape = ConvertMSShape(input->getDimensions());
-      for (int i = shape.size() - 1; i >= 0; --i) {
+      for (int i = SizeToInt(shape.size()) - 1; i >= 0; --i) {
         int mask = 1 << i;
         if ((shrink_axis_ & mask) != 0) {
           shape.erase(shape.begin() + i);
@@ -146,7 +181,7 @@ class SliceFusionTensorRTUtil final : public SliceTensorRTUtil {
 
     auto start_dims = lite::ConvertCudaDims(begin);
     auto size_dims = lite::ConvertCudaDims(size);
-    for (int i = 0; i != size_dims.nbDims; ++i) {
+    for (int i = 0; i < size_dims.nbDims; ++i) {
       if (size_dims.d[i] == -1) {
         size_dims.d[i] = helper.trt_tensor_->getDimensions().d[i];
       }

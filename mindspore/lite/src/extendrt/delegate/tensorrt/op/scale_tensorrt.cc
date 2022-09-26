@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/scale_tensorrt.h"
 #include <numeric>
 #include <functional>
-#include "src/extendrt/delegate/tensorrt/op/scale_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/fusion/scale_fusion.h"

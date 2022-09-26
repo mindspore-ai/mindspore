@@ -172,12 +172,7 @@ int ConverterImpl::FuncGraphConvert(const std::shared_ptr<ConverterPara> &param,
 
   // export protobuf
   if (param->export_mindir == kMindIR) {
-    auto status = ReplaceShapeWithDynamicShape(graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Replace shape node with dynamic shape node failed";
-      return RET_ERROR;
-    }
-    status = UpdateFuncGraphInputAndOutputNames(graph);
+    auto status = UpdateFuncGraphInputAndOutputNames(graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
       return RET_ERROR;

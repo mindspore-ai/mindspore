@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/resize_tensorrt.h"
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include "src/extendrt/delegate/tensorrt/op/resize_tensorrt.h"
 #include "nnacl/nnacl_common.h"
-#include "resize_bilinear_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 #include "ops/resize.h"
 
 namespace mindspore::lite {
@@ -82,10 +82,7 @@ nvinfer1::ITensor *ResizeTensorRT::RunPlugin(TensorRTContext *ctx, nvinfer1::ITe
       resize_shape.push_back(static_cast<float>(resize_op_->get_new_height()));
       resize_shape.push_back(static_cast<float>(resize_op_->get_new_width()));
     } else {
-      const int *resize_ptr = reinterpret_cast<const int *>(in_tensors_[1].Data());
-      for (int i = 0; i != in_tensors_[1].ElementNum(); ++i) {
-        resize_shape.push_back(*(resize_ptr + i));
-      }
+      resize_shape = ConvertTensorAsIntVector(in_tensors_[1]);
       if (resize_shape.size() != INPUT_SIZE2) {
         MS_LOG(ERROR) << "Do not support resize number more than 2";
         return nullptr;
@@ -211,22 +208,29 @@ void ResizeTensorRT::ParseValueFromShapeTensor(TensorRTContext *ctx, const Tenso
   switch (shape_value_tensor.DataType()) {
     case DataType::kNumberTypeFloat32: {
       const float *shape_data_fp32 = static_cast<const float *>(shape_value_tensor.Data());
-      for (int i = 0; i < shape_value_tensor.ElementNum(); i++) {
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
         out_shape->push_back(*(shape_data_fp32 + i));
       }
       break;
     }
     case DataType::kNumberTypeFloat16: {
       const uint16_t *shape_data_fp16 = static_cast<const uint16_t *>(shape_value_tensor.Data());
-      for (int i = 0; i < shape_value_tensor.ElementNum(); i++) {
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
         out_shape->push_back(ShortToFloat32(*(shape_data_fp16 + i)));
       }
       break;
     }
     case DataType::kNumberTypeInt32: {
       const int *shape_data_int32 = static_cast<const int *>(shape_value_tensor.Data());
-      for (int i = 0; i < shape_value_tensor.ElementNum(); i++) {
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
         out_shape->push_back(*(shape_data_int32 + i));
+      }
+      break;
+    }
+    case DataType::kNumberTypeInt64: {
+      auto shape_data_int = static_cast<const int64_t *>(shape_value_tensor.Data());
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(LongToFloat(shape_data_int[i]));
       }
       break;
     }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/mha_tensorrt.h"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
@@ -23,7 +24,6 @@
 #include <algorithm>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
-#include "src/extendrt/delegate/tensorrt/op/mha_tensorrt.h"
 #include "ops/attention.h"
 #include "src/fastertransformer/kernels/unfused_attention_kernels.h"
 #include "src/fastertransformer/kernels/activation_kernels.h"

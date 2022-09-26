@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ nvinfer1::ITensor *SliceFusionTensorRT::GetDynamicSliceSize(TensorRTContext *ctx
   std::vector<nvinfer1::ITensor *> shape_tensors;
   auto input_dims = input->getDimensions();
   std::vector<int> input_shape_vec;
-  for (int i = 0; i != input_dims.nbDims; ++i) {
+  for (int i = 0; i < input_dims.nbDims; ++i) {
     if (input_dims.d[i] == -1) {
       if (!input_shape_vec.empty()) {
         shape_tensors.push_back(ctx->ConvertTo1DTensor(input_shape_vec));
@@ -99,7 +99,7 @@ int SliceFusionTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto start_dims = lite::ConvertCudaDims(begin);
   auto size_dims = lite::ConvertCudaDims(size);
   nvinfer1::ITensor *size_tensor = nullptr;
-  for (int i = 0; i != size_dims.nbDims; ++i) {
+  for (int i = 0; i < size_dims.nbDims; ++i) {
     if (size_dims.d[i] == -1 && !IsDynamicInput(ctx, 0)) {
       size_dims.d[i] = slice_input.trt_tensor_->getDimensions().d[i];
     }

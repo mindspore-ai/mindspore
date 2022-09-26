@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <numeric>
 #include "src/extendrt/delegate/tensorrt/op/prelu_tensorrt.h"
+#include <numeric>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/fusion/prelu_fusion.h"
 

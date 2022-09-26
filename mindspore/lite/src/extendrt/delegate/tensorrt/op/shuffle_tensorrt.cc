@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   std::vector<int64_t> new_shape(squeeze_shape.d, squeeze_shape.d + squeeze_shape.nbDims);
   if (param_axis_.empty()) {
     MS_LOG(WARNING) << op_name_ << " has null axis.";
-    for (int i = new_shape.size() - 1; i >= 0; i--) {
+    for (int i = SizeToInt(new_shape.size()) - 1; i >= 0; i--) {
       if (new_shape[i] == 1) {
         new_shape.erase(new_shape.begin() + i);
       }
@@ -228,16 +228,14 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 
   nvinfer1::Permutation perm{};
   if (perm_ternsor.DataType() == DataType::kNumberTypeInt64) {
-    int64_t *perm_data = reinterpret_cast<int64_t *>(perm_ternsor.MutableData());
-    for (int i = 0; i < perm_ternsor.ElementNum(); i++) {
-      perm.order[i] = *perm_data;
-      perm_data++;
+    auto perm_data = reinterpret_cast<const int64_t *>(perm_ternsor.Data());
+    for (int64_t i = 0; i < perm_ternsor.ElementNum(); i++) {
+      perm.order[i] = perm_data[i];
     }
   } else if (perm_ternsor.DataType() == DataType::kNumberTypeInt32) {
-    int *perm_data = reinterpret_cast<int *>(perm_ternsor.MutableData());
-    for (int i = 0; i < perm_ternsor.ElementNum(); i++) {
-      perm.order[i] = *perm_data;
-      perm_data++;
+    auto perm_data = reinterpret_cast<const int32_t *>(perm_ternsor.Data());
+    for (int64_t i = 0; i < perm_ternsor.ElementNum(); i++) {
+      perm.order[i] = perm_data[i];
     }
   } else {
     MS_LOG(ERROR) << op_name_ << " perm tensor data type is " << static_cast<int>(perm_ternsor.DataType());
@@ -286,17 +284,12 @@ int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     shuffler_output_ = shuffler_input_;
     return RET_OK;
   }
-  int axis;
-  if (in_tensors_[1].DataType() == DataType::kNumberTypeInt64) {
-    auto axis_data = static_cast<const int64_t *>(in_tensors_[1].Data());
-    axis = axis_data[0];
-  } else if (in_tensors_[1].DataType() == DataType::kNumberTypeInt32) {
-    auto axis_data = static_cast<const int32_t *>(in_tensors_[1].Data());
-    axis = axis_data[0];
-  } else {
-    MS_LOG(WARNING) << op_name_ << " axis tensor data type is " << static_cast<int>(in_tensors_[1].DataType());
+  auto axis_vec = ConvertTensorAsIntVector(in_tensors_[1]);
+  if (axis_vec.size() != 1) {
+    MS_LOG(ERROR) << "Failed to get axis input, dim count " << axis_vec.size() << ", node: " << op_name_;
     return RET_ERROR;
   }
+  int axis = axis_vec[0];
   shuffler_output_ = ExpandDim(ctx_, shuffler_input_, axis);
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }
@@ -306,10 +299,10 @@ int ShuffleTensorRT::AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     auto input_shape_tensor = input(ctx_, 1).trt_tensor_;
     shuffler_output_ = Broadcast(ctx_, shuffler_input_, input_shape_tensor);
   } else {
-    std::vector<int> input_shape;
-    const int *shape_ptr = reinterpret_cast<const int *>(in_tensors_[1].Data());
-    for (int i = 0; i != in_tensors_[1].ElementNum(); ++i) {
-      input_shape.push_back(*(shape_ptr + i));
+    std::vector<int> input_shape = ConvertTensorAsIntVector(in_tensors_[1]);
+    if (input_shape.empty()) {
+      MS_LOG(ERROR) << "Failed to get input shape from const input 1, node: " << op_name_;
+      return RET_ERROR;
     }
 
     nvinfer1::Dims in_tensor_dims = shuffler_input_->getDimensions();

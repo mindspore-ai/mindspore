@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,17 +79,54 @@ int StrideSliceTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const s
   return RET_OK;
 }
 
+bool StrideSliceTensorRT::GetConstInputValue(int *axis_val, int *start_val, int *end_val, int *stride_val) {
+  int64_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
+  const auto &begin = in_tensors_.at(BEGINS_INDEX);
+  const auto &stride = in_tensors_.back();
+  const auto &end = in_tensors_.at(ENDS_INDEX);
+
+  if (begin.ElementNum() != 1 || end.ElementNum() != 1 || stride.ElementNum() != 1) {
+    MS_LOG(ERROR)
+      << "Only support element number of begin, end and stride to be 1 when this number < input dims number, op: "
+      << op_name_;
+    return false;
+  }
+  *axis_val = 0;
+  if (axis_index != -1) {
+    auto axis_vec = ConvertTensorAsIntVector(in_tensors_[axis_index]);
+    if (axis_vec.size() != 1) {
+      MS_LOG(ERROR) << "Failed to get axis input, node: " << op_name_ << ", axis count: " << axis_vec.size();
+      return false;
+    }
+    *axis_val = axis_vec[0];
+  }
+  auto start_vec = ConvertTensorAsIntVector(begin);
+  auto end_vec = ConvertTensorAsIntVector(end);
+  auto stride_vec = ConvertTensorAsIntVector(stride);
+  if (start_vec.size() != 1 || end_vec.size() != 1 || stride_vec.size() != 1) {
+    MS_LOG(ERROR) << "Failed to get start, end or stride input, node: " << op_name_;
+    return {};
+  }
+  *start_val = start_vec[0];
+  *end_val = end_vec[0];
+  *stride_val = stride_vec[0];
+  return true;
+}
+
 nvinfer1::ILayer *StrideSliceTensorRT::MakeLayer(TensorRTContext *ctx, const ITensorHelper &slice_input) {
   const auto &begin = in_tensors_.at(BEGINS_INDEX);
   const auto &stride = in_tensors_.back();
   const auto &end = in_tensors_.at(ENDS_INDEX);
 
   auto input_dims = slice_input.trt_tensor_->getDimensions();
+  if (input_dims.nbDims <= 0) {
+    MS_LOG_ERROR << "Not support input dims to be dynamic, dim number " << input_dims.nbDims;
+    return nullptr;
+  }
   nvinfer1::Dims start_dims{input_dims};
   nvinfer1::Dims size_dims{input_dims};
   nvinfer1::Dims stride_dims{input_dims};
 
-  int64_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
   nvinfer1::ITensor *size_tensor = nullptr;
   if (begin.ElementNum() == input_dims.nbDims) {
     start_dims = lite::ConvertCudaDims(begin);
@@ -99,16 +136,13 @@ nvinfer1::ILayer *StrideSliceTensorRT::MakeLayer(TensorRTContext *ctx, const ITe
     }
     stride_dims = lite::ConvertCudaDims(stride);
   } else {
-    if (begin.ElementNum() != 1 || end.ElementNum() != 1 || stride.ElementNum() != 1) {
-      MS_LOG(ERROR)
-        << "Only support element number of begin, end and stride to be 1 when this number < input dims number, op: "
-        << op_name_;
+    int axis_value = 0;
+    int start_value = 0;
+    int end_value = 0;
+    int stride_value = 0;
+    if (!GetConstInputValue(&axis_value, &start_value, &end_value, &stride_value)) {
       return nullptr;
     }
-    int axis_value = axis_index == -1 ? 0 : *(static_cast<const int *>(in_tensors_.at(axis_index).Data()));
-    int start_value = *(static_cast<const int *>(begin.Data()));
-    int end_value = *(static_cast<const int *>(end.Data()));
-    int stride_value = *(static_cast<const int *>(stride.Data()));
     std::fill(start_dims.d, start_dims.d + start_dims.nbDims, 0);
     std::fill(stride_dims.d, stride_dims.d + stride_dims.nbDims, 1);
     size_dims = slice_input.trt_tensor_->getDimensions();
@@ -165,7 +199,7 @@ int StrideSliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   shrink_axis_ = AsOps<ops::StridedSlice>()->get_shrink_axis_mask();
   if (shrink_axis_ != 0) {
-    for (int i = shape.size() - 1; i >= 0; --i) {
+    for (int i = SizeToInt(shape.size()) - 1; i >= 0; --i) {
       int mask = 1 << i;
       if ((shrink_axis_ & mask) != 0) {
         shape.erase(shape.begin() + i);

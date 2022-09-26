@@ -610,7 +610,9 @@ STATUS UpdateFuncGraphInputAndOutputNames(const FuncGraphPtr &func_graph) {
   for (auto &input : func_graph->get_inputs()) {
     auto abstract = input->abstract();
     MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "Abstract is nullptr.");
-    abstract->set_name(input->fullname_with_scope());
+    if (abstract->name().empty()) {
+      abstract->set_name(input->fullname_with_scope());
+    }
   }
   // update graph output names
   std::vector<std::pair<AnfNodePtr, int64_t>> outputs;

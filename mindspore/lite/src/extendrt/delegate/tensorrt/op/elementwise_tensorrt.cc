@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include <unordered_map>
 #include <unordered_set>
-#include "src/extendrt/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
 #include "ops/fusion/sub_fusion.h"
