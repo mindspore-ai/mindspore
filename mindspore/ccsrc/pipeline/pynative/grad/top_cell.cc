@@ -163,9 +163,25 @@ void TopCellInfo::SaveOpInfo(const std::string &op_info, const std::vector<tenso
 
 void TopCellInfo::RecordGradOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
+  std::string input_args_info;
+  auto is_param_require_grad = [](const BaseOpRunInfo &op_run_info, const size_t &idx) -> bool {
+    if (op_run_info.input_tensor[idx]->param_info() != nullptr && op_run_info.input_tensor[idx]->is_parameter()) {
+      return op_run_info.input_tensor[idx]->param_info()->requires_grad();
+    }
+    return false;
+  };
+
+  // Record input args info (weight or data)
+  for (size_t i = 0; i < op_run_info->base_op_run_info.input_mask.size(); i++) {
+    if (is_param_require_grad(op_run_info->base_op_run_info, i)) {
+      input_args_info += "w";
+      continue;
+    }
+    input_args_info += "d";
+  }
   // Record op name and index
   op_run_info->op_info.clear();
-  op_run_info->op_info += op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_num_);
+  op_run_info->op_info += op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_num_) + "-" + input_args_info;
   const auto &out_abs = op_run_info->base_op_run_info.abstract;
   if (is_dynamic_structure_ && out_abs != nullptr) {
     auto shape = out_abs->BuildShape();
