@@ -34,7 +34,8 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
     kEnvironDestroyAllOpName,      kPriorityReplayBufferCreate, kPriorityReplayBufferPush,
     kPriorityReplayBufferSample,   kPriorityReplayBufferUpdate, kPriorityReplayBufferDestroy,
     kReservoirReplayBufferCreate,  kReservoirReplayBufferPush,  kReservoirReplayBufferSample,
-    kReservoirReplayBufferDestroy, kGatherDGradV2OpName,        kRandomShuffle};
+    kReservoirReplayBufferDestroy, kGatherDGradV2OpName,        kRandomShuffle,
+    kDeformableOffsetsGradOpName};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
 
   if (!node->isa<CNode>()) {

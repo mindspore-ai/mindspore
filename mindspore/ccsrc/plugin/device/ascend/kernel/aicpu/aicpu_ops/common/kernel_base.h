@@ -104,6 +104,8 @@ inline size_t LongToSize(int64_t u) {
   return static_cast<size_t>(u);
 }
 
+inline float SizeToFloat(size_t v) { return static_cast<float>(v); }
+
 inline int32_t LongToInt(int64_t u) {
   if (u > static_cast<int64_t>((std::numeric_limits<int32_t>::max)())) {
     AICPU_LOGE("The size_t value [%ld] exceeds the maximum value of int.", u);

@@ -211,6 +211,7 @@ constexpr auto kGatherDGradV2OpName = "GatherDGradV2";
 constexpr auto kGatherDOpName = "GatherD";
 constexpr auto kGatherOpName = "Gather";
 constexpr auto kGatherV2OpName = "Gather";
+constexpr auto kDeformableOffsetsGradOpName = "DeformableOffsetsGrad";
 constexpr auto kGetNextOpName = "GetNext";
 constexpr auto kGreaterEqualOpName = "GreaterEqual";
 constexpr auto kGreaterOpName = "Greater";

@@ -161,3 +161,4 @@ from .reservoir_replay_buffer import _rrb_create_op_cpu
 from .reservoir_replay_buffer import _rrb_push_op_cpu
 from .reservoir_replay_buffer import _rrb_sample_op_cpu
 from .reservoir_replay_buffer import _rrb_destroy_op_cpu
+from .deformable_offsets_grad import _deformable_offsets_grad_op_info_aicpu
