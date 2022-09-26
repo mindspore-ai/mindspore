@@ -40,6 +40,7 @@ using mindspore::lite::Tensor;
 namespace mindspore {
 namespace opt {
 namespace {
+bool IsInferInRunning(const CNodePtr &cnode) { return CheckPrimitiveType(cnode, prim::kPrimWhere); }
 ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(tensor != nullptr);
@@ -81,7 +82,7 @@ kernel::KernelExec *GetKernelExec(std::vector<Tensor *> inputs, std::vector<Tens
   }
   parameter->thread_num_ = 1;
   ret = KernelInferShape(inputs, *outputs, parameter);
-  if (ret != lite::RET_OK) {
+  if (ret != lite::RET_OK && (ret != lite::RET_INFER_INVALID || !IsInferInRunning(cnode))) {
     if (parameter->destroy_func_ != nullptr) {
       parameter->destroy_func_(parameter);
     }
