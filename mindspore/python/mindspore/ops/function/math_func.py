@@ -602,45 +602,62 @@ def mul(x, y):
     return tensor_mul(x, y)
 
 
-def div(x, y):
+def div(input, other, rounding_mode=None):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
+    When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     .. math::
 
-        out_{i} = x_{i} / y_{i}
+        out_{i} = input_{i} / other_{i}
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
         y (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        rounding_mode (str, optional): Type of rounding applied to the result. Three types are defined as,
+            None: Default behavior. Equivalent to true division in Python or `true_divide` in NumPy.
+            `floor`: Rounds the results of the division down. Equivalent to floor division in Python
+                or `floor_divide` in NumPy.
+            `trunc`: Rounds the results of the division towards zero. Equivalent to C-style integer division.
+            Default: None.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+        ValueError: If `rounding_mode` value is not None, `floor` or `trunc`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
         >>> output = ops.div(x, y)
         >>> print(output)
-        [0.25 0.4  0.5 ]
+        [0.25 0.4 0.5]
     """
-    return tensor_div(x, y)
+    if rounding_mode is not None and rounding_mode not in ['floor', 'trunc']:
+        raise ValueError("For ops.div, rounding_mode value should be None, 'floor' or 'trunc'.")
+
+    output = _get_cache_prim(P.Div)()(input, other)
+
+    if rounding_mode == 'floor':
+        output = _get_cache_prim(P.Floor)()(output)
+
+    if rounding_mode == 'trunc':
+        output = _get_cache_prim(P.Trunc)()(output)
+
+    return output
 
 
 def floor_div(x, y):
@@ -6519,6 +6536,44 @@ def less_equal(input, other):
     return _get_cache_prim(P.LessEqual)()(input, other)
 
 
+def cumprod(input, dim, dtype=None):
+    r"""
+    Computes the cumulative product of the `input` tensor along dimension `dim`.
+    For example, if `input` is a vector of size `N`, the result will also be a vector of size `N`, with elements.
+
+    .. math::
+
+        y_i = x_1 * x_2 * x_3 * ... * x_i
+
+    Args:
+        input (Tensor[Number]): The input tensor.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        dim (int): The dimensions to compute the cumulative product. Only constant value is allowed.
+        dtype: The desired data type of output. Default: None.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `input` unless `dtype` is specified.
+
+    Raises:
+        TypeError: If `dim` is not an int.
+        TypeError: If `dtype` conversion is not acceptable.
+        ValueError: If `dim` is None.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    >>> x = Tensor(np.array([1, 2, 3], np.float32))
+    >>> output = ops.cumprod(x, 0)
+    >>> print(output)
+    [1. 2. 6.]
+    """
+    cumprod_op = _get_cache_prim(P.CumProd)()
+    output = cumprod_op(input, dim)
+    if dtype:
+        output = _get_cache_prim(P.Cast)()(output, dtype)
+    return output
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -6674,5 +6729,6 @@ __all__ = [
     'cross',
     'erfinv',
     'less_equal',
+    'cumprod',
 ]
 __all__.sort()

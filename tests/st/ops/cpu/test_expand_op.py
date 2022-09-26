@@ -48,5 +48,34 @@ def test_expand_functional_modes():
     test_expand_functional()
 
 
+def test_expand_tensor_api():
+    """
+    Feature: test expand tensor API.
+    Description: testcase for expand tensor API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([[1], [2], [3]]), mstype.float32)
+    size = Tensor(np.array([3, 4]), mstype.int32)
+    output = x.expand(size)
+    expected = np.array([[1., 1., 1., 1.], [2., 2., 2., 2.], [3., 3., 3., 3.]], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_expand_tensor_modes():
+    """
+    Feature: test expand tensor API in PyNative and Graph modes.
+    Description: test case for expand tensor API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_expand_tensor_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_expand_tensor_api()
+
+
 if __name__ == '__main__':
     test_expand_functional_modes()
+    test_expand_tensor_modes()

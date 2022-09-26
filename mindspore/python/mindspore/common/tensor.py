@@ -6270,6 +6270,188 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('unfold')(self, kernel_size, dilation, padding, stride)
 
 
+    def expand(self, size):
+        r"""
+        Note:
+            Passing -1 as the `size` for a dimension means not changing the size of that dimension. Tensor can be
+            also expanded to a larger number of dimensions, and the new ones will be appended at the front.
+            For the new dimensions, the `size` cannot be set to -1.
+
+        Args:
+            size (Tensor): The new shape of tensor.
+
+        Returns:
+            Tensor, after expansion.
+
+        Raises:
+            TypeError: If the type of `size` is not one of the following dtype: int16, int32, int64.
+            ValueError: If `size` is not a 1-D tensor.
+            ValueError: If the size of `size` is less than the size of `input_x.shape`.
+            ValueError: If the expanded `size` is not equal to the existing shape of `input_x` at a dimension
+                that is not 1.
+            ValueError: If the expanded `size` < 0 and it is in a leading, non-existing dimension.
+            ValueError: If the number of elements of output is more than 1000000.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+            >>> size = Tensor(np.array([3,4]), mindspore.int32)
+            >>> y = x.expand(size)
+            >>> print(y)
+            [[1. 1. 1. 1.]
+             [2. 2. 2. 2.]
+             [3. 3. 3. 3.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('expand')(self, size)
+
+
+    def cumprod(self, dim, dtype=None):
+        r"""
+        Computes the cumulative product of the tensor along dimension `dim`. For example, if input tensor is a
+        vector of size `N`, the result will also be a vector of size `N`, with elements.
+
+        .. math::
+            y_i = x_1 * x_2 * x_3 * ... * x_i
+
+        Args:
+            dim (int): The dimensions to compute the cumulative product. Only constant value is allowed.
+            dtype: The desired data type of output. Default: None.
+
+        Outputs:
+            Tensor, has the same shape and dtype as the input tensor unless `dtype` is specified.
+
+        Raises:
+            TypeError: If `dim` is not an int.
+            TypeError: If `dtype` conversion is not acceptable.
+            ValueError: If `dim` is None.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        >>> x = Tensor(np.array([1, 2, 3], np.float32))
+        >>> output = x.cumprod(0)
+        >>> print(output)
+        [1. 2. 6.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cumprod')(self, dim, dtype)
+
+
+    def div(self, other, rounding_mode=None):
+        r"""
+        Divides the tensor `input` by the given input tensor `other` in floating-point type element-wise.
+        Tensors `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+        The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors, dtypes of
+        them cannot be bool at the same time, and the shapes of them could be broadcast. When the inputs are one
+        tensor and one scalar, the scalar could only be a constant.
+
+        .. math::
+
+            out_{i} = input_{i} / other_{i}
+
+        Args:
+            other (Union[Tensor, Number, bool]): The second input is a number or a bool when the first input is a tensor
+                or a tensor whose data type is number or bool.
+            rounding_mode (string, optional): Type of rounding applied to the result. Three types are defined as,
+                None: Default behavior. Equivalent to true division in Python or `true_divide` in NumPy.
+                `floor`: Rounds the results of the division down. Equivalent to floor division in Python
+                    or `floor_divide` in NumPy.
+                `trunc`: Rounds the results of the division towards zero. Equivalent to C-style integer division.
+                Default: None.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is the one with higher
+            precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: `other` is not one of the following: Tensor, Number, bool.
+            ValueError: If `rounding_mode` value is not None, `floor` or `trunc`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+            >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
+            >>> output = x.div(y)
+            [0.25 0.4 0.5]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('div')(self, other, rounding_mode)
+
+
+    def equal(self, other):
+        r"""
+        Computes the equivalence between the tensor input tensor `input` and the
+        given input tensor `other` element-wise.
+
+        .. math::
+
+            out_{i} =\begin{cases}
+                & \text{True,    if } input_{i} = other_{i} \\
+                & \text{False,   if } input_{i} \ne other_{i}
+                \end{cases}
+
+        Note:
+            - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+            - `input` and `other` must be two tensors or one tensor and one scalar.
+            - When `input` and `other` are two tensors, the shapes of them could be broadcast.
+            - When `input` and `yother` are one tensor and one scalar, the scalar could only be a constant.
+
+        Args:
+            other (Union[Tensor, Number]): A number when the input tensor is a tensor or a tensor whose data type
+                is number. The data type is the same as the input tensor.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If `other` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> y = Tensor(np.array([1, 2, 4]), mindspore.int32)
+            >>> output = x.equal(y)
+            >>> print(output)
+            [True True False]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('equal')(self, other)
+
+
+    def expm1(self):
+        r"""
+        Returns exponential then minus 1 of a tensor element-wise.
+
+        .. math::
+
+            out_i = e^{x_i} - 1
+
+        Returns:
+            Tensor, has the same shape as the input tensor.
+
+        Raises:
+            TypeError: If dtype of input tensor is neither float16 nor float32.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
+            >>> output = x.expm1()
+            >>> print(output)
+            [0. 1.718282 6.389056 53.598152]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('expm1')(self)
+
+
 class RowTensor(RowTensor_):
     """
     A sparse representation of a set of tensor slices at given indices.

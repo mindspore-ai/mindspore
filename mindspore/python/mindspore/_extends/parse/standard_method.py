@@ -3329,3 +3329,38 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     Extracts sliding local blocks from a batched input tensor.
     """
     return F.unfold(input, kernel_size, dilation, padding, stride)
+
+
+def expand(input, size):
+    r"""
+    Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
+    """
+    return F.expand(input, size)
+
+
+def cumprod(input, dim, dtype=None):
+    r"""
+    Computes the cumulative product of the `input` tensor along dimension `dim`.
+    """
+    return F.cumprod(input, dim, dtype)
+
+
+def div(input, other, rounding_mode=None):
+    r"""
+    Divides the tensor `input` by the given input tensor `other` in floating-point type element-wise.
+    """
+    return F.div(input, other, rounding_mode)
+
+
+def equal(x, y):
+    r"""
+    Computes the equivalence between the tensor `x` and the given input tensor `y` element-wise.
+    """
+    return F.equal(x, y)
+
+
+def expm1(input_x):
+    r"""
+    Computes exponential then minus 1 of a tensor element-wise.
+    """
+    return F.expm1(input_x)

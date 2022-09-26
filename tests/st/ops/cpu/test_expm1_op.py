@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import dtype
-import mindspore as ms
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -45,9 +45,9 @@ def test_expm1_dshape():
     Expectation: Success.
     """
     net = NetExpm1()
-    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    input_x_dyn = Tensor(shape=[3, None], dtype=mstype.float32)
     net.set_inputs(input_x_dyn)
-    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=mstype.float32)
     output = net(input_x)
     expect_shape = (3, 10)
     assert output.asnumpy().shape == expect_shape
@@ -70,3 +70,30 @@ def test_expm1_op():
     expect_y = np.expm1(y)
     tol_y = 1e-3
     assert (np.abs(output_y.asnumpy() - expect_y) < tol_y).all()
+
+
+def test_expm1_tensor_api():
+    """
+    Feature: test expm1 tensor API.
+    Description: testcase for expm1 tensor API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mstype.float32)
+    output = x.expm1()
+    expected = np.array([0., 1.718282, 6.389056, 53.598152])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_expm1_tensor_modes():
+    """
+    Feature: test expm1 tensor API in PyNative and Graph modes.
+    Description: test case for expm1 tensor API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_expm1_tensor_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_expm1_tensor_api()

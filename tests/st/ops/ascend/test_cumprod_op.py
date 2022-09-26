@@ -13,44 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import pytest
+import numpy as np
 
-import mindspore.nn as nn
 from mindspore import dtype
 from mindspore import Tensor
 import mindspore.context as context
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-
-class Net(nn.Cell):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.op = P.CumProd()
-
-    def construct(self, x):
-        return self.op(x, 0)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cumprod_dshape():
-    """
-    Feature: Test cumprod dynamic shape.
-    Description: Test cumprod dynamic shape.
-    Expectation: Success.
-    """
-    net = Net()
-    input_x_dyn = Tensor(shape=[3, None], dtype=dtype.float32)
-    net.set_inputs(input_x_dyn)
-    input_x = Tensor(np.random.random(([3, 10])), dtype=dtype.float32)
-    output = net(input_x)
-    expect_shape = (3, 10)
-    assert output.asnumpy().shape == expect_shape
 
 
 def test_cumprod_functional_api():
@@ -82,7 +52,8 @@ def test_cumprod_tensor_api():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_cumprod_functional_tensor_modes():
     """
@@ -90,9 +61,9 @@ def test_cumprod_functional_tensor_modes():
     Description: test case for cumprod functional and tensor APIs.
     Expectation: the result match with expected result.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_cumprod_functional_api()
     test_cumprod_tensor_api()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     test_cumprod_functional_api()
     test_cumprod_tensor_api()
