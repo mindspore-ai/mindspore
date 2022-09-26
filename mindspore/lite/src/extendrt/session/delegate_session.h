@@ -25,6 +25,7 @@
 #include "runtime/hardware/device_context.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 #include "extendrt/session/lite_graph_executor.h"
+#include "extendrt/delegate/ascend_ge/ge_device_context.h"
 namespace mindspore {
 // TODO(zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
 // class GraphSinkDelegateSession
@@ -34,7 +35,7 @@ class GraphSinkSession : public InferSession {
   explicit GraphSinkSession(std::shared_ptr<device::GraphExecutor> graph_executor) {
     graph_executor_ = std::dynamic_pointer_cast<mindspore::LiteGraphExecutor>(graph_executor);
   }
-  virtual ~GraphSinkSession() = default;
+  ~GraphSinkSession() override;
 
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
@@ -51,6 +52,8 @@ class GraphSinkSession : public InferSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
+  Status GeDeviceContextInit();
+
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
   bool is_use_kernel_graph_ = true;
@@ -62,6 +65,7 @@ class GraphSinkSession : public InferSession {
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
+  std::shared_ptr<GeDeviceContext> ge_context_;
 
   Status InitGraphInputsOutputs();
 };

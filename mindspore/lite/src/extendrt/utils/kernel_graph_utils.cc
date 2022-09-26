@@ -954,7 +954,11 @@ void KernelGraphUtils::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor:
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
       auto abstract = parameter->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      ms_tensor->set_name(abstract->name());
+      if (!abstract->name().empty()) {
+        ms_tensor->set_name(abstract->name());
+      } else {
+        ms_tensor->set_name(parameter->fullname_with_scope());
+      }
       inputs->push_back(ms_tensor);
       inputs_name->push_back(abstract->name());
     }
@@ -971,6 +975,7 @@ void KernelGraphUtils::GetOutputNames(const std::vector<AnfNodePtr> &outputs,
     MS_EXCEPTION_IF_NULL(real_output);
     MS_LOG(DEBUG) << " Real output info: " << real_output->DebugString();
     AbstractBasePtr abstract = real_output->abstract();
+    std::string output_idx;
     if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
       auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
       MS_EXCEPTION_IF_NULL(abstract_tuple);
@@ -981,9 +986,16 @@ void KernelGraphUtils::GetOutputNames(const std::vector<AnfNodePtr> &outputs,
         return;
       }
       abstract = abstract_list[idx];
+      output_idx = std::to_string(idx);
     }
     MS_EXCEPTION_IF_NULL(abstract);
-    output_names->emplace_back(abstract->name());
+    std::string output_name;
+    if (abstract->name().empty()) {
+      output_name = real_output->fullname_with_scope() + output_idx;
+    } else {
+      output_name = abstract->name();
+    }
+    output_names->emplace_back(output_name);
   }
 }
 

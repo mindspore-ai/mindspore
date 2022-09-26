@@ -34,6 +34,19 @@ const char *const kExecutionPlan = "execution_plan";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 }  // namespace
+void ModelImpl::SetMsContext() {
+  if (MsContext::GetInstance() == nullptr) {
+    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
+    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
+      auto back_policy_env = std::getenv("MSLITE_ENABLE_HELPER");
+      if (back_policy_env != nullptr) {
+        device_type_seter.reset(new (std::nothrow) MsContext("ge", kAscendDevice));
+      } else {
+        device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
+      }
+    });
+  }
+}
 
 Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
@@ -44,6 +57,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
     // user does not set mindir_path, convert from model_path
     mindir_path = model_path.substr(0, model_path.rfind("/"));
   }
+  SetMsContext();
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
@@ -54,13 +68,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
     MS_LOG(ERROR) << "Init session failed.";
     return ret;
   }
-  if (MsContext::GetInstance() == nullptr) {
-    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
-    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
-      device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
-    });
-  }
-  if (infer::mindir::MindirModelUtil::NeedRuntimeConvert(model_data, data_size)) {
+  if (infer::mindir::MindirModelUtil::NeedRuntimeConvert(model_data, data_size, model_context)) {
     return CompileGraphOnline(model_data, data_size, model_context);
   }
   graph_ = std::make_shared<Graph>();
