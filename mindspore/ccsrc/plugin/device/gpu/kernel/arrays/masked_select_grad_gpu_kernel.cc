@@ -89,7 +89,6 @@ void MaskedSelectGradGpuKernelMod::ResetResource() noexcept {
   input_size_ = 0;
   mask_size_ = 0;
   broadcast_size_ = 0;
-  // real_output_size_ = 0;
   input_broadcast_ = false;
   mask_broadcast_ = false;
   for (size_t i = 0; i < MAX_DIMS; i++) {
@@ -163,7 +162,6 @@ int MaskedSelectGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (mask_broadcast_) {
     workspace_size_list_.push_back(broadcast_size_ * mask_type_size_);  // save broadcast result of mask
   }
-  // output_size_list_.push_back(broadcast_size_ * input_type_size_);
   input_size_list_.push_back(broadcast_size_ * input_type_size_);
   output_size_list_.push_back(input_size_ * input_type_size_);
   return KRET_OK;
@@ -198,7 +196,6 @@ bool MaskedSelectGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
     mask_broadcast_ptr = GetDeviceAddress<bool>(workspace, kIndex1);
     MS_EXCEPTION_IF_NULL(mask_broadcast_ptr);
   }
-  // auto output_ptr = GetDeviceAddress<T>(outputs, kIndex0);
   auto output_grad_ptr = GetDeviceAddress<T>(inputs, kIndexOutputGrad);
   if (output_grad_ptr == nullptr) {
     auto input_grad_ptr = GetDeviceAddress<T>(outputs, kIndex0);
