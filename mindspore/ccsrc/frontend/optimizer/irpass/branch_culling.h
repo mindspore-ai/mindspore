@@ -127,6 +127,9 @@ class CompareSwitchSimplify : public OptimizerCaller {
             return true;
           }
           auto value = GetValue<tensor::TensorPtr>(GetValueNode(node));
+          if (value->device_address() != nullptr) {
+            return true;
+          }
           if (value->DataSize() > 1) {
             return true;
           }
