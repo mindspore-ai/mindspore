@@ -19,85 +19,43 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename S, typename T>
-class CastGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CastGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CastGpuKernelMod() { ResetResource(); }
-  ~CastGpuKernelMod() = default;
+  CastGpuKernelMod() = default;
+  ~CastGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    S *input_addr = GetPossiblyNullDeviceAddress<S>(inputs, 0);
-    T *output_addr = GetPossiblyNullDeviceAddress<T>(outputs, 0);
-
-    if (input_addr == nullptr && output_addr == nullptr) {
-      return true;
-    } else if (input_addr != nullptr && output_addr != nullptr) {
-      Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the input and output device addresses must be both null or both not null";
-    }
-
-    return true;
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shapes = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shapes = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    kernel_node_ = kernel_node;
-    is_null_input_ =
-      CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = 1;
-    for (size_t i = 0; i < input_shapes.size(); i++) {
-      input_size_ *= input_shapes[i];
-    }
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-    output_size_ = 1;
-    for (size_t j = 0; j < output_shapes.size(); j++) {
-      output_size_ *= output_shapes[j];
-    }
-
-    if (input_size_ != output_size_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the size of input and output must be the same, but got the size of input: "
-                        << input_size_ << ", the size of output: " << output_size_;
-    }
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_size_ = 1;
-    output_size_ = 1;
-    is_null_input_ = false;
-    kernel_name_ = "Cast";
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(output_size_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename S, typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using CastFunc = std::function<bool(CastGpuKernelMod *, const std::vector<AddressPtr> &,
+                                      const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, CastFunc>> func_list_;
+  CastFunc kernel_func_;
   int64_t input_size_;
   int64_t output_size_;
   bool is_null_input_;

@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
@@ -26,76 +27,32 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class BinaryCrossEntropyGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class BinaryCrossEntropyGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BinaryCrossEntropyGradGpuKernelMod()
-      : input_size_(1),
-        reduction_(ReductionMode::kMean),
-        weight_defined_(false),
-        is_null_input_(false),
-        kernel_name_("BinaryCrossEntropyGrad") {}
+  BinaryCrossEntropyGradGpuKernelMod() = default;
   ~BinaryCrossEntropyGradGpuKernelMod() override = default;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input_x = GetDeviceAddress<T>(inputs, 0);
-    T *input_y = GetDeviceAddress<T>(inputs, 1);
-    T *dloss = GetDeviceAddress<T>(inputs, 2);
-    T *weight = nullptr;
-    if (weight_defined_) {
-      weight = GetDeviceAddress<T>(inputs, 3);
-    }
-    T *dx = GetDeviceAddress<T>(outputs, 0);
-    if (input_size_ > 0) {
-      BinaryCrossEntropyLossGrad(input_size_, reduction_, input_x, input_y, weight, dloss, dx,
-                                 reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    kernel_node_ = kernel_node;
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-    if (is_null_input_ || IsDynamic(input_shape)) {
-      InitSizeLists();
-      return true;
-    }
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    weight_defined_ = (input_num == 4);
-    input_size_ *= SizeOf(input_shape);
-    string reduction = GetAttr<string>(kernel_node, "reduction");
-    reduction_ = kReductionModeMap[reduction];
-    InitSizeLists();
-    return true;
-  }
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    if (reduction_ == ReductionMode::kNone) {
-      input_size_list_.push_back(input_size_ * sizeof(T));
-    } else {
-      input_size_list_.push_back(sizeof(T));
-    }
-    if (weight_defined_) {
-      input_size_list_.push_back(input_size_ * sizeof(T));
-    }
-    output_size_list_.push_back(input_size_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  std::string kernel_name_;
   size_t input_size_;
   ReductionMode reduction_;
   bool weight_defined_;  // true: there are 4 inputs, false: there are 3 inputs(no [weight])
   bool is_null_input_;
-  std::string kernel_name_;
+  TypeId dtype_;
 };
 }  // namespace kernel
 }  // namespace mindspore

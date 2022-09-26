@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 template <typename S, typename T>
-class CastCpuKernelFunc : public DeprecatedCpuKernelFunc {
+class CastCpuKernelFunc : public CpuKernelFunc {
  public:
   CastCpuKernelFunc() = default;
   ~CastCpuKernelFunc() override = default;
@@ -62,10 +62,10 @@ bool CastCpuKernelFunc<S, T>::RunFunc(const std::vector<AddressPtr> &inputs, con
 }
 
 template <typename S, typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> CreateCastFunc() {
+std::shared_ptr<CpuKernelFunc> CreateCastFunc() {
   return std::make_shared<CastCpuKernelFunc<S, T>>();
 }
-using CastCpuKernelFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+using CastCpuKernelFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 
 static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_lists = {
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateCastFunc<uint8_t, uint8_t>},
@@ -213,14 +213,13 @@ static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64), CreateCastFunc<bool, double>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateCastFunc<bool, bool>}};
 }  // namespace
+bool CastCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  source_dtype_ = inputs[kIndex0]->GetDtype();
+  target_dtype_ = outputs[kIndex0]->GetDtype();
 
-void CastCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  source_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  target_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, CastCpuKernelFuncCreator> &pair) { return pair.first; });
@@ -230,6 +229,7 @@ void CastCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   kernel_func_ = kernel_attr_lists[index].second();
+  return true;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Cast, CastCpuKernelMod);
