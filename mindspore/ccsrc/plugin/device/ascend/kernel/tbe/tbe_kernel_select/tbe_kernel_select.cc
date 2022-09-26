@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <iterator>
+#include <algorithm>
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
@@ -45,6 +46,7 @@ constexpr char kParamTypeDynamic[] = "dynamic";
 constexpr char kParamTypeRequre[] = "required";
 constexpr char kParamTypeOptional[] = "optional";
 constexpr int64_t kDynamicInvalidNum = -1;
+constexpr size_t kDynamicFirstInputIndex = 0;
 
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   auto tbe_selector = TbeKernelSelect(kernel_node, kernel_info_list);
@@ -337,7 +339,7 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
   auto dynamic_inputs = GetNodeDynamicInputs();
   for (const auto &kernel_build_info : *kernel_info_list_) {
-    if (!FilterInvalidShape(kernel_build_info, !dynamic_inputs.empty())) {
+    if (!FilterInvalidShape(kernel_build_info, dynamic_inputs)) {
       continue;
     }
     if (!TbeCheckSupported(kernel_build_info)) {
@@ -351,15 +353,21 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
   (*kernel_info_list_).swap(kernel_info_list);
 }
 
-bool TbeKernelSelect::FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info, bool is_dynamic_input) {
+bool TbeKernelSelect::FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info,
+                                         const std::vector<int64_t> &dynamic_inputs) {
   MS_EXCEPTION_IF_NULL(kernel_build_info);
   const auto &kernel_build_info_inputs_format = kernel_build_info->GetAllInputFormats();
   // dynamic input just need to check first input, because other inputs copy from 1th input;
-  auto iter_num =
-    is_dynamic_input && !kernel_build_info_inputs_format.empty() ? 1 : kernel_build_info_inputs_format.size();
+  auto iter_num = dynamic_inputs.empty() ? kernel_build_info_inputs_format.size() : dynamic_inputs.size();
+  size_t input_index = kDynamicFirstInputIndex;
   for (size_t i = 0; i < iter_num; ++i) {
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
-    const auto &format = kernel_build_info_inputs_format.at(i);
+    if (dynamic_inputs.empty()) {
+      input_index = i;
+    } else if (i > 0) {
+      input_index += dynamic_inputs[i - 1] > 0 ? dynamic_inputs[i - 1] : 1;
+    }
+    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, input_index);
+    const auto &format = kernel_build_info_inputs_format.at(input_index);
     if (!IsShapeMatchFormat(shape, format)) {
       return false;
     }
@@ -478,9 +486,6 @@ std::vector<int64_t> TbeKernelSelect::GetNodeDynamicInputs() {
   std::vector<int64_t> dyn_input_sizes = {};
   if (primitive->HasAttr(kAttrDynInputSizes)) {
     dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
-    if (dyn_input_sizes.size() != 1) {
-      MS_LOG(EXCEPTION) << "Now dynamic input only support one in ascend.";
-    }
   }
   return dyn_input_sizes;
 }
@@ -820,7 +825,6 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
   }
 
   auto select_support_num = support_format_dtype.output_dtypes.at(0).size();
-  auto dynamic_input_num = dyn_input_sizes.empty() ? kDynamicInvalidNum : dyn_input_sizes.at(0);
   for (size_t support_index = 0; support_index < select_support_num; ++support_index) {
     KernelBuildInfoItem input_kernel_build_info;
     KernelBuildInfoItem output_kernel_build_info;
@@ -828,6 +832,14 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
       auto op_io_info = op_info_->inputs_ptr().at(io_index);
       auto support_dtype = support_format_dtype.input_dtypes.at(io_index).at(support_index);
       auto support_format = support_format_dtype.input_formats.at(io_index).at(support_index);
+      int64_t dynamic_input_num = kDynamicInvalidNum;
+      if (!dyn_input_sizes.empty()) {
+        if (io_index >= dyn_input_sizes.size()) {
+          MS_LOG(EXCEPTION) << "Io index should be less than the dynamic input's size, node name: " << full_name_;
+        } else {
+          dynamic_input_num = dyn_input_sizes[io_index] > 0 ? dyn_input_sizes[io_index] : 1;
+        }
+      }
       ConstructIOKernelBuildInfo(op_io_info, support_dtype, support_format, dynamic_input_num, &input_kernel_build_info,
                                  &io_index, &real_put_index);
     }
@@ -835,7 +847,7 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
       auto op_io_info = op_info_->outputs_ptr().at(io_index);
       auto support_dtype = support_format_dtype.output_dtypes.at(io_index).at(support_index);
       auto support_format = support_format_dtype.output_formats.at(io_index).at(support_index);
-      int64_t dynamic_output_num = dynamic_input_num;
+      int64_t dynamic_output_num = kDynamicInvalidNum;
       if (op_io_info->param_type() == kParamTypeDynamic) {
         if (op_info_->outputs_ptr().size() != 1) {
           MS_LOG(EXCEPTION) << "Dynamic output num only support 1, output name: " << op_io_info->name()

@@ -388,10 +388,10 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
         std::string input_name = item->name() + "_dynamic_" + std::to_string(k);
         input_names_.emplace_back(input_name);
       }
-      dynamic_input_index++;
     } else {
       input_names_.emplace_back(item->name());
     }
+    dynamic_input_index++;
   }
 
   // output io names

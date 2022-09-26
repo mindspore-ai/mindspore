@@ -42,11 +42,11 @@ bool TbeJsonUtils::GetInputsRealNum(const AnfNodePtr &anf_node, const std::vecto
         return false;
       } else {
         (*inputs_num).emplace_back(LongToSize(dyn_input_sizes[dyn_input_index]));
-        dyn_input_index++;
       }
     } else {
       (*inputs_num).emplace_back(1);
     }
+    dyn_input_index++;
   }
   return true;
 }

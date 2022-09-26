@@ -27,6 +27,7 @@ constexpr size_t kInputIndex_0 = 0;
 constexpr size_t kChannelN = 0;
 constexpr size_t kChannelC = 1;
 constexpr int64_t kAlignmented16 = 16;
+constexpr size_t kDynamicInputSize = 1;
 // 1. all shape no scalar and same
 // 2. part scalar : no_scalar (shape size > xxx && alig xxx)
 // 3. all no_scalar and not same (broad cast xxx dim)
@@ -47,6 +48,9 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
       MS_LOG(EXCEPTION) << "Node [" << common::AnfAlgo::GetCNodeName(cnode_ptr_)
                         << "]'s attr [dyn_input_sizes] value less than " << DYNAMIC_INPUT_NUM
                         << trace::DumpSourceLines(cnode_ptr_);
+    }
+    if (dynamic_size_vec.size() > kDynamicInputSize) {
+      MS_LOG(EXCEPTION) << "Broadcast pattern kernel only support one dynamic input.";
     }
     auto dynamic_input_shape0_ = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
     PadScalarShape(&dynamic_input_shape0_);

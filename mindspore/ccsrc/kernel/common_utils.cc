@@ -345,7 +345,6 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
         inputs_device_type.push_back(type_id);
         inputs_format.push_back(formats[builder_idex]);
       }
-      dyn_input_idx++;
     } else if (param_type == "required") {
       kernel_info_index++;
       auto type_id = DtypeToTypeId(dtypes[builder_idex]);
@@ -360,6 +359,7 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
         inputs_format.push_back(formats[builder_idex]);
       }
     }
+    dyn_input_idx++;
   }
 
   builder->SetInputsDeviceType(inputs_device_type);
