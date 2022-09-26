@@ -89,7 +89,7 @@ int InitCalVec(size_t *in_strides, size_t *out_strides, size_t *pos, const size_
     }                                                                                                                  \
     for (size_t i = 0; i < output_shape[cur_dim]; ++i) {                                                               \
       pos[cur_dim] = i;                                                                                                \
-      if (cur_dim == output_shape_size - 1) {                                                                          \
+      if (cur_dim == (int)output_shape_size - 1) {                                                                     \
         size_t input_offset = 0;                                                                                       \
         size_t out_offset = 0;                                                                                         \
         for (size_t j = 0; j < output_shape_size; ++j) {                                                               \

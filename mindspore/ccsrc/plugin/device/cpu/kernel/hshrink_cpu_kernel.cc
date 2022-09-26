@@ -64,10 +64,10 @@ int HShrinkCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
   input_elements_ = input_size_list_[0] / unit_size_;
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
-bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                  const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHShrinkInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHShrinkOutputsNum, kernel_name_);
@@ -77,11 +77,8 @@ bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   auto task = [input, output, this](size_t start, size_t end) {
-    auto input_tmp = input + start;
-    auto output_tmp = output + start;
-
-    auto ret = HShrink(input_tmp, (end - start), output_tmp, this->lambd_);
-    if (ret != static_cast<int>(NNACL_OK)) {
+    auto ret = HardShrink(input + start, SizeToInt(end - start), output + start, this->lambd_);
+    if (ret != NNACL_OK) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', call NNACL HShrink function failed. Error code: " << ret;
       return false;
     }
