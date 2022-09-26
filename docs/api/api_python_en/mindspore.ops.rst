@@ -48,20 +48,15 @@ Neural Network
 
     mindspore.ops.AvgPool
     mindspore.ops.AvgPool3D
-    mindspore.ops.BasicLSTMCell
     mindspore.ops.BatchNorm
     mindspore.ops.Conv2D
-    mindspore.ops.Conv2DBackpropInput
     mindspore.ops.Conv2DTranspose
     mindspore.ops.Conv3D
     mindspore.ops.Conv3DTranspose
     mindspore.ops.CTCGreedyDecoder
-    mindspore.ops.DepthwiseConv2dNative
     mindspore.ops.Dropout
     mindspore.ops.Dropout2D
     mindspore.ops.Dropout3D
-    mindspore.ops.DropoutDoMask
-    mindspore.ops.DropoutGenMask
     mindspore.ops.DynamicGRUV2
     mindspore.ops.DynamicRNN
     mindspore.ops.Flatten
@@ -118,7 +113,6 @@ Activation Function
     mindspore.ops.PReLU
     mindspore.ops.ReLU
     mindspore.ops.ReLU6
-    mindspore.ops.ReLUV2
     mindspore.ops.SeLU
     mindspore.ops.Sigmoid
     mindspore.ops.Softmax
@@ -136,7 +130,6 @@ Optimizer
     :template: classtemplate.rst
 
     mindspore.ops.Adam
-    mindspore.ops.AdamNoUpdateParam
     mindspore.ops.AdamWeightDecay
     mindspore.ops.AdaptiveAvgPool2D
     mindspore.ops.ApplyAdadelta
@@ -153,10 +146,6 @@ Optimizer
     mindspore.ops.ApplyProximalAdagrad
     mindspore.ops.ApplyProximalGradientDescent
     mindspore.ops.ApplyRMSProp
-    mindspore.ops.FusedSparseAdam
-    mindspore.ops.FusedSparseFtrl
-    mindspore.ops.FusedSparseLazyAdam
-    mindspore.ops.FusedSparseProximalAdagrad
     mindspore.ops.LARSUpdate
     mindspore.ops.SparseApplyAdagrad
     mindspore.ops.SparseApplyAdagradV2
@@ -390,7 +379,6 @@ Random Generation Operator
 
     mindspore.ops.Gamma
     mindspore.ops.Multinomial
-    mindspore.ops.Poisson
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
     mindspore.ops.Randperm
@@ -417,7 +405,6 @@ Array Operation
     mindspore.ops.DataFormatDimMap
     mindspore.ops.DepthToSpace
     mindspore.ops.DType
-    mindspore.ops.DynamicShape
     mindspore.ops.ExpandDims
     mindspore.ops.FloatStatus
     mindspore.ops.Gather
@@ -446,12 +433,10 @@ Array Operation
     mindspore.ops.Size
     mindspore.ops.Slice
     mindspore.ops.Sort
-    mindspore.ops.SpaceToBatch
     mindspore.ops.SpaceToBatchND
     mindspore.ops.SpaceToDepth
     mindspore.ops.SparseGatherV2
     mindspore.ops.Split
-    mindspore.ops.SplitV
     mindspore.ops.Squeeze
     mindspore.ops.Stack
     mindspore.ops.StridedSlice
@@ -571,7 +556,7 @@ Sparse Operator
     mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 
-Other Operators
+Frame Operators
 ---------------
 
 .. msplatformautosummary::

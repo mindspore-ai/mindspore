@@ -3,7 +3,7 @@ mindspore.ops.NPUGetFloatStatus
 
 .. py:class:: mindspore.ops.NPUGetFloatStatus
 
-    更新标识，通过执行 :class:`NPUAllocFloatStatus` 或取最新溢出状态。
+    更新标识，通过执行 :class:`mindspore.ops.NPUAllocFloatStatus` 或取最新溢出状态。
 
     标志是一个Tensor，其shape为 :math:`(8,)` ，数据类型为 `mindspore.dtype.float32` 。如果标志的和等于0，则没有发生溢出。如果标志之和大于0，则发生溢出。此外，使用有严格的顺序要求，即在使用 :class:`NPUGetFloatStatus` 算子之前，需要确保 :class:`NPUClearFloatStatus` 和需执行的计算已执行。使用 :class:`mindspore.ops.Depend` 确保执行顺序。
 
