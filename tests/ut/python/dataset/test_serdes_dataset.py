@@ -524,7 +524,7 @@ def test_serdes_pyfunc_exception(remove_json_files=True):
     """
     Feature: Serialize and Deserialize Support
     Description: Test serialize on pipeline with user-defined Python function
-    Expectation: Exception is raised as expected
+    Expectation: Exception is raised as expected on re-serialization
     """
     data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -536,9 +536,14 @@ def test_serdes_pyfunc_exception(remove_json_files=True):
         np.array(z).flatten().reshape(10, 1)
     )))
 
-    with pytest.raises(ValueError) as error_info:
-        ds.serialize(data1, "pyfunc_dataset_pipeline.json")
-    assert "Serialization of user-defined Python functions is not supported" in str(error_info.value)
+    # Note: Serialization of a dataset pipeline with Python UDF is not supported, and
+    #       it is not valid to deserialize the JSON output nor re-serialize the deserialize output.
+    ds.serialize(data1, "pyfunc_dataset_pipeline.json")
+    data2 = ds.deserialize(input_dict="pyfunc_dataset_pipeline.json")
+
+    with pytest.raises(RuntimeError) as error_info:
+        ds.serialize(data2, "pyfunc_dataset_pipeline2.json")
+    assert "Failed to find key 'tensor_op_params' in PyFuncOp' JSON file or input dict" in str(error_info.value)
 
     if remove_json_files:
         delete_json_files("pyfunc_dataset_pipeline")
@@ -548,7 +553,7 @@ def test_serdes_pyfunc_exception2(remove_json_files=True):
     """
     Feature: Serialize and Deserialize Support
     Description: Test serialize on pipeline with user-defined Python function
-    Expectation: Exception is raised as expected
+    Expectation: Exception is raised as expected on re-serialization
     """
 
     def chwtohwc(x):
@@ -573,9 +578,14 @@ def test_serdes_pyfunc_exception2(remove_json_files=True):
         num += 1
     assert num == 5
 
-    with pytest.raises(ValueError) as error_info:
-        ds.serialize(data1, "pyfunc2_dataset_pipeline.json")
-    assert "Serialization of user-defined Python functions is not supported" in str(error_info.value)
+    # Note: Serialization of a dataset pipeline with Python UDF is not supported, and
+    #       it is not valid to deserialize the JSON output nor re-serialize the deserialize output.
+    ds.serialize(data1, "pyfunc2_dataset_pipeline.json")
+    data2 = ds.deserialize(input_dict="pyfunc2_dataset_pipeline.json")
+
+    with pytest.raises(RuntimeError) as error_info:
+        ds.serialize(data2, "pyfunc2_dataset_pipeline2.json")
+    assert "Failed to find key 'tensor_op_params' in PyFuncOp' JSON file or input dict" in str(error_info.value)
 
     if remove_json_files:
         delete_json_files("pyfunc2_dataset_pipeline")
