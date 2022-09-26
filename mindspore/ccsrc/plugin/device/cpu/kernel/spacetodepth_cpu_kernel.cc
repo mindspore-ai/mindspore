@@ -74,7 +74,7 @@ int SpaceToDepthCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 template <typename T>
 bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &workspace,
+                                            const std::vector<kernel::AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSpaceToDepthInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSpaceToDepthOutputsNum, kernel_name_);

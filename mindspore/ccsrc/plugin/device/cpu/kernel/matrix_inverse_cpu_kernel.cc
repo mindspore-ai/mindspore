@@ -92,7 +92,7 @@ void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr
   // Output length
   size_t input_num = 1;
   for (size_t i = 0; i < input_shape_.size(); i++) {
-    input_num *= input_shape_[i];
+    input_num *= LongToSize(input_shape_[i]);
   }
   auto matrix_size = last_dimsize * last_dimsize;
   // Number of matrices

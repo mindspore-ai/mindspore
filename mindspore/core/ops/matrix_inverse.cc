@@ -48,8 +48,8 @@ class MatrixInverseInfer : public abstract::OpInferBase {
     const constexpr int64_t kNumber2 = 2;
     if (!x_shape_ptr->IsDynamic()) {
       (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
-      CheckAndConvertUtils::Check("row size", x_shape[x_rank - kNumber1], kEqual, x_shape[x_rank - kNumber2],
-                                  prim_name);
+      CheckAndConvertUtils::Check("row size", x_shape[LongToSize(x_rank - kNumber1)], kEqual,
+                                  x_shape[LongToSize(x_rank - kNumber2)], prim_name);
       (void)CheckAndConvertUtils::CheckInteger("row size", x_shape[LongToSize(x_rank - kNumber1)], kGreaterEqual,
                                                kNumber2, prim_name);
       (void)CheckAndConvertUtils::CheckInteger("column size", x_shape[LongToSize(x_rank - kNumber2)], kGreaterEqual,

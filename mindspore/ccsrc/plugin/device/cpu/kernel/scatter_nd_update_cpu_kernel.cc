@@ -102,7 +102,7 @@ int ScatterUpdateArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 
 template <typename T, typename S>
 bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &workspace,
+                                                       const std::vector<kernel::AddressPtr> &,
                                                        const std::vector<kernel::AddressPtr> &outputs) {
   T *x = nullptr;
   if (kernel_type_ == "ScatterNdUpdate") {
