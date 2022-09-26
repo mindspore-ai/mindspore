@@ -14,7 +14,7 @@ mindspore.ops.linspace
     参数：
         - **start** (Tensor) - 0维Tensor，数据类型必须为float32。区间的起始值。
         - **stop** (Tensor) - 0维Tensor，数据类型必须为float32。区间的末尾值。
-        - **num** (int) - 间隔中的包含的数值数量，包括区间端点。必须为正数。
+        - **num** (Union[Tensor, int]) - 间隔中的包含的数值数量，包括区间端点。必须为正数。
 
     返回：
         Tensor，具有与 `start` 相同的dtype，shape为 :math:`(num)` 。

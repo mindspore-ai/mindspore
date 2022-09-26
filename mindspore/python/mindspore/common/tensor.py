@@ -748,7 +748,7 @@ class Tensor(Tensor_):
             alpha (scalar[int, float, bool], optional): Multiplier for `vec1` @ `vec2` (α). The `alpha` must
                 be int or float or bool, Default: 1.
 
-        Outputs:
+        Returns:
             Tensor, the shape of the output tensor is :math:`(N, M)`, has the same dtype as `x`.
 
         Raises:
@@ -1639,7 +1639,8 @@ class Tensor(Tensor_):
         Returns the matrix norm or vector norm of a given tensor.
 
         Args:
-            axis (Union[int,list,tuple]): Specifies which dimension or dimensions of input to calculate the norm across.
+            axis (Union[int, list, tuple]): Specifies which dimension or dimensions of input to
+                calculate the norm across.
             p (int): The order of norm. Default: 2. `p` is greater than or equal to 0.
             keep_dims (bool): Whether the output tensors have dim retained or not. Default: False.
             epsilon (float): A value added to the denominator for numerical stability. Default: 1e-12.
@@ -1679,7 +1680,7 @@ class Tensor(Tensor_):
         divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
         Args:
-            p (float): Power of norm calculation.
+            p (int): Power of norm calculation.
             dim (int): The dimension that expected to get the slice-tensor.
             maxnorm (float): Max norm.
 
@@ -2832,7 +2833,7 @@ class Tensor(Tensor_):
             keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
                             the output will reduce dimension if false. Default: False.
 
-        Outputs:
+        Returns:
             tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
             tensor.
 
@@ -2877,7 +2878,7 @@ class Tensor(Tensor_):
             keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
                             the output will reduce dimension if false. Default: False.
 
-        Outputs:
+        Returns:
             tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
             tensor.
 
@@ -3051,7 +3052,7 @@ class Tensor(Tensor_):
                 a Tensor, it must be a 0-dimensional Tensor and has the same dtype as self Tensor. Otherwise,
                 the `value` will be cast to a 0-dimensional Tensor with the same data type as self Tensor.
 
-        Outputs:
+        Returns:
             Tensor, has the same dtype and shape as self Tensor.
 
         Raises:
@@ -3616,12 +3617,13 @@ class Tensor(Tensor_):
         r"""
         Computes the minimum of self and input tensor element-wise.
 
-        `self` and `other` comply with the implicit type conversion rules to make the data types consistent.
-        `other` must be tensor or scalar.
-        When `other` is also tensor, dtypes of `self` and `other` cannot be bool at the same time.
-        When `other` is scalar, the scalar could only be a constant.
-        Shapes of `self` and `other` are supposed to be broadcast.
-        If one of the elements being compared is a NaN, then that element is returned.
+        Note:
+            - `self` and `other` comply with the implicit type conversion rules to make the data types consistent.
+            - `other` must be tensor or scalar.
+            - When `other` is also tensor, dtypes of `self` and `other` cannot be bool at the same time.
+            - When `other` is scalar, the scalar could only be a constant.
+            - Shapes of `self` and `other` are supposed to be broadcast.
+            - If one of the elements being compared is a NaN, then that element is returned.
 
         .. math::
             output_i = min(x_i, y_i)
@@ -4034,15 +4036,15 @@ class Tensor(Tensor_):
             indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
             axis (int, optional): The axis over which to select values. By default,
                 the flattened input tensor is used. Default: `None`.
-            mode ('raise', 'wrap', 'clip', optional): Default: "clip".
+            mode ('raise', 'wrap', 'clip', optional):
 
-                'raise' – Raises an error;
+                - raise: Raises an error;
 
-                'wrap' – Wraps around;
+                - wrap: Wraps around;
 
-                'clip' – Clips to the range. 'clip' mode means that all indices that are
-                too large are replaced by the index that addresses the last element
-                along that axis. Note that this disables indexing with negative numbers.
+                - clip: Clips to the range. 'clip' mode means that all indices that are
+                  too large are replaced by the index that addresses the last element
+                  along that axis. Note that this disables indexing with negative numbers.
 
                 Default: 'clip'.
 
@@ -4105,12 +4107,12 @@ class Tensor(Tensor_):
             mode ('raise', 'wrap', 'clip', optional): Specifies how indices outside
                 ``[0, n-1]`` will be treated:
 
-                'raise' – Raises an error;
+                - raise: Raises an error;
 
-                'wrap' – Wraps around;
+                - wrap: Wraps around;
 
-                'clip' – Clips to the range. 'clip' mode means that values greater than n-1 are mapped to n-1.
-                Note that this disables indexing with negative numbers.
+                - clip: Clips to the range. 'clip' mode means that values greater than n-1 are mapped to n-1.
+                  Note that this disables indexing with negative numbers.
 
                 Default: 'clip'.
 
@@ -5535,7 +5537,7 @@ class Tensor(Tensor_):
             global_median (bool): Whether the output tensor is the global median of all input tensor elements or not.
                 Default: False.
             axis (int): The dimension need to reduce. Default: 0.
-            keepdim (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
+            keep_dims (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
         Returns:
             y (Tensor), has the same dtype as the self Tensor. If `global_median` is true, the `y` has only one

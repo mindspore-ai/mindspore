@@ -11,7 +11,7 @@ mindspore.export
 
     参数：
         - **net** (Cell) - MindSpore网络结构。
-        - **inputs** (Union[Tensor, Dasaset, List, Tuple, Number, Bool]) - 网络的输入，如果网络有多个输入，需要一同传入。当传入的类型为 `Dataset` 时，将会把数据预处理行为同步保存起来。需要手动调整batch的大小，当前仅支持获取 `Dataset` 的 `image` 列。
+        - **inputs** (Union[Tensor, Dataset, List, Tuple, Number, Bool]) - 网络的输入，如果网络有多个输入，需要一同传入。当传入的类型为 `Dataset` 时，将会把数据预处理行为同步保存起来。需要手动调整batch的大小，当前仅支持获取 `Dataset` 的 `image` 列。
         - **file_name** (str) - 导出模型的文件名称。
         - **file_format** (str) - MindSpore目前支持导出"AIR"，"ONNX"和"MINDIR"格式的模型。
 
