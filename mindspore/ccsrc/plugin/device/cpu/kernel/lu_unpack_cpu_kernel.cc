@@ -372,41 +372,6 @@ std::vector<std::pair<KernelAttr, LuUnpackCpuKernelMod::LuUnpackFunc>> LuUnpackC
      .AddOutputAttr(kNumberTypeInt32),
    &LuUnpackCpuKernelMod::LaunchKernel<int32_t, uint8_t>},
   {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &LuUnpackCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &LuUnpackCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt16)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &LuUnpackCpuKernelMod::LaunchKernel<int32_t, int16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt8)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &LuUnpackCpuKernelMod::LaunchKernel<int32_t, int8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &LuUnpackCpuKernelMod::LaunchKernel<int32_t, uint8_t>},
-  {KernelAttr()
      .AddInputAttr(kNumberTypeInt16)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt16)
