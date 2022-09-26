@@ -685,6 +685,12 @@ class NeighborExchange(Primitive):
         recv_type (type): Data type which received from recv_rank_ids
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
+    Inputs:
+        - **input_x** (tuple[Tensor]) - Shapes are same as args of send_shapes.
+
+    Outputs:
+        Tuple tensor, shapes are same as args of recv_shapes.
+
     Supported Platforms:
         ``Ascend``
 
@@ -733,7 +739,7 @@ class NeighborExchange(Primitive):
 
 
 class AlltoAll(PrimitiveWithInfer):
-    """
+    r"""
     AlltoAll is a collective operation.
 
     AlltoAll sends data from the all processes to the all processes in the specified group. It has two phases:
@@ -757,6 +763,19 @@ class AlltoAll(PrimitiveWithInfer):
         split_dim (int): On each process, split blocks along the split_dim.
         concat_dim (int): On each process, gather the received blocks along the concat_dimension.
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor. If the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`, then the shape of output tensor is
+        :math:`(y_1, y_2, ..., y_R), where:
+
+        :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
+
+        :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
+
+        :math:`y_other = x_other`.
 
     Raises:
         TypeError: If group is not a string.
