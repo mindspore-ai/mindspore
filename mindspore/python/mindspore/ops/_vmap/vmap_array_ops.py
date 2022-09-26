@@ -1303,6 +1303,19 @@ def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
     if hasattr(prim, 'dim'):
         dim = prim.dim
 
+    @constexpr
+    def _update_attr(x_rank, batch_dim):
+        pdim = dim
+        if pdim < 0:
+            pdim += x_rank
+        if pdim < 0 or pdim >= x_rank:
+            _raise_value_error(
+                "The `dim` in `GatherDGradV2` must be in range [{}, {}], but got {}.".format(-x_rank, x_rank - 1, dim))
+        if pdim >= batch_dim:
+            _vmap_update_prim_attr(prim, 'dim', pdim + 1)
+        elif dim < 0:
+            _vmap_update_prim_attr(prim, 'dim', pdim)
+
     def vmap_rule(x_bdim, index_bdim, grad_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, index_bdim, grad_bdim)
         if is_all_none:
@@ -1326,16 +1339,7 @@ def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
 
         # Adjust dim-attr if needed
         x_rank = F.rank(x) - 1
-        pdim = dim
-        if pdim < 0:
-            pdim += x_rank
-        if pdim < 0 or pdim >= x_rank:
-            _raise_value_error(
-                "The `dim` in `GatherDGradV2` must be in range [{}, {}], but got {}.".format(-x_rank, x_rank - 1, dim))
-        if pdim >= batch_dim:
-            _vmap_update_prim_attr(prim, 'dim', pdim + 1)
-        elif dim < 0:
-            _vmap_update_prim_attr(prim, 'dim', pdim)
+        _update_attr(x_rank, batch_dim)
 
         out = prim(x, index, grad)
         return (out, batch_dim)
