@@ -325,7 +325,7 @@ int PropagateQuantParamPass::BackwardPerNode(const CNodePtr &post_cnode, const C
   size_t input_index = 0;
   auto iter = std::find(post_cnode->inputs().cbegin(), post_cnode->inputs().cend(), cnode);
   if (iter == post_cnode->inputs().cend()) {
-    MS_LOG(ERROR) << cnode->fullname_with_scope() << "find backward node failed!";
+    MS_LOG(INFO) << cnode->fullname_with_scope() << "find backward node failed!";
     return RET_ERROR;
   } else {
     input_index = std::distance(post_cnode->inputs().cbegin(), iter) - kPrimOffset;

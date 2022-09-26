@@ -38,6 +38,12 @@ OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->block_size_ = value->block_size();
+
+  if (param->block_size_ < C2NUM) {
+    MS_LOG(ERROR) << "invalid block_size value: " << param->block_size_;
+    free(param);
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace
