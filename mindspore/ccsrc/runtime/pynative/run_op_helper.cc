@@ -255,13 +255,10 @@ void UpdateOutputAddrSize(const AnfNodePtr &node, const std::shared_ptr<OpRuntim
     auto output_address = runtime_info->GetOutputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(output_address);
     auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(node, i);
-    auto host_shape = output_address->host_shape();
-    if (std::any_of(host_shape.begin(), host_shape.end(), [](int64_t s) { return s < 0; })) {
-      output_address->set_host_shape(trans::GetRuntimePaddingShape(node, 0));
-    }
     if (output_addr_size != output_address->GetSize()) {
       output_address->SetSize(output_addr_size);
     }
+    output_address->set_host_shape(trans::GetRuntimePaddingShape(node, 0));
   }
 }
 
