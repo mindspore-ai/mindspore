@@ -1834,7 +1834,7 @@ class Tensor(Tensor_):
             ValueError: If either of `atol` and `rtol` is less than zero.
 
         Supported Platforms:
-            ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)

@@ -14,11 +14,10 @@
 # ============================================================================
 import numpy as np
 
-import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell
 import mindspore.nn as nn
-from mindspore.ops import operations as P, functional as F
+from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 import mindspore.common.dtype as mstype
 from mindspore.common.api import _cell_graph_executor
@@ -63,11 +62,14 @@ class LayerNorm(nn.Cell):
         self.mul = P.Mul()
         self.div = P.RealDiv()
         self.square = P.Square()
+        self.sqrt = P.Sqrt()
 
     def construct(self, x):
         mean = self.mean(x, -1)
         variance = self.mean(self.square(self.sub(x, mean)))
-        output = self.div(self.sub(x, mean), F.sqrt(self.add(variance, self.eps)))
+        add_variance = self.add(variance, self.eps)
+        sqrt_variance = self.sqrt(add_variance)
+        output = self.div(self.sub(x, mean), sqrt_variance)
         rescaled_output = self.add(self.mul(output, self.gamma), self.beta)
         return rescaled_output
 
@@ -77,7 +79,7 @@ class SubNet(Cell):
         super().__init__()
         self.matmul = P.MatMul()
         self.relu = P.ReLU()
-        self.weight = Parameter(Tensor(np.ones([128, 128]), dtype=ms.float32), "matmul_w"+str(index))
+        self.weight = Parameter(Tensor(np.ones([128, 128]), dtype=mstype.float32), "matmul_w" + str(index))
         self.layernorm1 = LayerNorm((128,)).to_float(mstype.float32)
 
     def construct(self, x):
@@ -118,9 +120,9 @@ class Full(Cell):
         return out
 
 
-_x = Tensor(np.ones([512, 128]), dtype=ms.float32)
-_b = Tensor(np.ones([32]), dtype=ms.int32)
-_w1 = Tensor(np.ones([512, 128]), dtype=ms.float32)
+_x = Tensor(np.ones([512, 128]), dtype=mstype.float32)
+_b = Tensor(np.ones([32]), dtype=mstype.int32)
+_w1 = Tensor(np.ones([512, 128]), dtype=mstype.float32)
 
 
 def test_auto_parallel():
