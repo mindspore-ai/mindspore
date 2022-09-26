@@ -421,6 +421,8 @@ tensor_operator_registry.register('conj', conj)
 tensor_operator_registry.register('cross', cross)
 tensor_operator_registry.register('erfinv', erfinv)
 tensor_operator_registry.register('less_equal', less_equal)
+tensor_operator_registry.register('fold', fold)
+tensor_operator_registry.register('unfold', unfold)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)

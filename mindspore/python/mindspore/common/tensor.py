@@ -6178,6 +6178,96 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('less_equal')(self, other)
 
 
+    def fold(self, output_size, kernel_size, dilation=1, padding=0, stride=1):
+        r"""
+        Combines an array of sliding local blocks into a large containing tensor.
+
+        .. warning::
+            - Currently, only 4-D input tensors (batched image-like tensors) are supported.
+
+        Args:
+            output_size (Tensor): 1D tensor with `2` elements of data type int.
+            kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+                for height and width. If type is int, it means that height equal with width. Must be specified.
+            dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 1.
+            padding (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 0.
+            stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 1.
+
+        Returns:
+            A Tensor, with same type as input tensor.
+
+        Raises:
+            TypeError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` data type is not in
+                Union[int, tuple[int], list[int]].
+            ValueError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` value is not
+                greater than zero or elements number more than `2`.
+            ValueError: If :attr:`padding` value is less than zero or elements number more than `2`.
+            ValueError: If `(input tensor).shape[2] != kernel_size[0] * kernel_size[1]`.
+            ValueError: If `(input tensor).shape[3]` does not match the calculated number of sliding blocks.
+
+        Supported Platforms:
+            ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
+            >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
+            >>> output = ops.fold(x, output_size, [2, 2], [2, 2], [2, 2], [2, 2])
+            >>> print(output.shape)
+            (16, 16, 8, 8)
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fold')(self, output_size, kernel_size, dilation, padding, stride)
+
+
+    def unfold(self, kernel_size, dilation=1, padding=0, stride=1):
+        r"""
+        Extracts sliding local blocks from a batched input tensor.
+
+        .. warning::
+            - Currently, only 4-D input tensors (batched image-like tensors) are supported.
+
+        Args:
+            kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+                for height and width. If type is int, it means that height equal with width. Must be specified.
+            dilation (Union[int, tuple[int], list[int]]): The dilation of the window, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 1.
+            padding (Union[int, tuple[int], list[int]]): The pad of the window, that must be
+                a tuple of one or two or four `int` for height and width.
+                If one int, pad_height = pad_width.
+                If two int, pad_height = padding[0], pad_width = padding[1].
+                If four int, padding = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]
+                Default: 0.
+            stride (Union[int, tuple[int], list[int]]): The stride of the window, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 1.
+
+        Returns:
+            A Tensor, with same type as input tensor.
+
+        Raises:
+            TypeError: If :attr:`kernel_size` data type is not in Union[int, tuple[int], list[int]].
+            TypeError: If :attr:`stride` data type is not in Union[int, tuple[int], list[int]].
+            TypeError: If :attr:`dilation` data type is not in Union[int, tuple[int], list[int]].
+            ValueError: If :attr:`kernel_size` value is not greater than zero or elements number more than `2`.
+            ValueError: If :attr:`stride` value is not greater than zero or elements number more than `2`.
+            ValueError: If :attr:`dilation` value is not greater than zero or elements number more than `2`.
+            ValueError: If :attr:`padding` value is not greater than zero.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
+            >>> output = x.unfold(kernel_size=3, dilation=1, stride=1)
+            >>> print(output.shape)
+            (4, 36, 30, 30)
+        """
+        self._init_check()
+        return tensor_operator_registry.get('unfold')(self, kernel_size, dilation, padding, stride)
+
+
 class RowTensor(RowTensor_):
     """
     A sparse representation of a set of tensor slices at given indices.

@@ -3297,4 +3297,17 @@ def less_equal(input, other):
     Computes the boolean value of :math:`input\_x <= other` element-wise.
     """
     return F.less_equal(input, other)
- 
+
+
+def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
+    r"""
+    Combines an array of sliding local blocks into a large containing tensor.
+    """
+    return F.fold(input, output_size, kernel_size, dilation, padding, stride)
+
+
+def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
+    r"""
+    Extracts sliding local blocks from a batched input tensor.
+    """
+    return F.unfold(input, kernel_size, dilation, padding, stride)

@@ -114,7 +114,9 @@ from .array_func import (
     min,
     population_count,
     top_k,
-    expand
+    expand,
+    fold,
+    unfold,
 )
 from .parameter_func import (
     assign,

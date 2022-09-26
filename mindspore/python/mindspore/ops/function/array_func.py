@@ -34,11 +34,14 @@ from ..operations.array_ops import (
     ScatterNdMul,
     IndexFill,
     AffineGrid,
+    Im2Col,
 )
 from ..operations.nn_ops import AdaptiveMaxPool2D
 from ..operations.array_ops import TensorScatterElements
 from ...common import Tensor
 from .._primitive_cache import _get_cache_prim
+from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 
 eye_ = P.Eye()
 fill_ = P.Fill()
@@ -4505,6 +4508,141 @@ def expand(input_x, size):
     return expand_op(input_x, size)
 
 
+def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
+    """
+    Combines an array of sliding local blocks into a large containing tensor.
+
+    .. warning::
+        - Currently, only 4-D input tensors (batched image-like tensors) are supported.
+
+    Args:
+        input (Tensor): a tensor with data type float16 or float.
+        output_size (Tensor): 1D tensor with `2` elements of data type int.
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+            for height and width. If type is int, it means that height equal with width. Must be specified.
+        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        padding (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 0.
+        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+
+    Returns:
+        A Tensor, with same type as 'input'.
+
+    Raises:
+        TypeError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` data type is not in
+            Union[int, tuple[int], list[int]].
+        ValueError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` value is not
+            greater than zero or elements number more than `2`.
+        ValueError: If :attr:`padding` value is less than zero or elements number more than `2`.
+        ValueError: If `input.shape[2] != kernel_size[0] * kernel_size[1]`.
+        ValueError: If `input.shape[3]` does not match the calculated number of sliding blocks.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
+        >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
+        >>> output = ops.fold(x, output_size, [2, 2], [2, 2], [2, 2], [2, 2])
+        >>> print(output.shape)
+        (16, 16, 8, 8)
+    """
+    validator.check_value_type('kernel_size', kernel_size, [int, list, tuple], 'fold')
+    validator.check_value_type('dilation', dilation, [int, list, tuple], 'fold')
+    validator.check_value_type('padding', padding, [int, list, tuple], 'fold')
+    validator.check_value_type('stride', stride, [int, list, tuple], 'fold')
+
+    kernel_size = (kernel_size, kernel_size) if isinstance(kernel_size, int) else kernel_size
+    dilation = (dilation, dilation) if isinstance(dilation, int) else dilation
+    padding = (padding, padding) if isinstance(padding, int) else padding
+    stride = (stride, stride) if isinstance(stride, int) else stride
+
+    validator.check("kernel_size size", len(kernel_size), "", 2, Rel.EQ, 'fold')
+    validator.check_positive_int_sequence(kernel_size, "kernel_size", 'fold')
+    validator.check("dilation size", len(dilation), "", 2, Rel.EQ, 'fold')
+    validator.check_positive_int_sequence(dilation, "dilation", 'fold')
+    validator.check("padding size", len(padding), "", 2, Rel.EQ, 'fold')
+    validator.check_non_negative_int_sequence(padding, "padding", 'fold')
+    validator.check("stride size", len(stride), "", 2, Rel.EQ, 'fold')
+    validator.check_positive_int_sequence(stride, "stride", 'fold')
+
+    fold_op = _get_cache_prim(Col2Im)(kernel_size, dilation, padding, stride)
+    return fold_op(input, output_size)
+
+
+def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
+    """
+    Extracts sliding local blocks from a batched input tensor.
+
+    .. warning::
+        - Currently, only 4-D input tensors (batched image-like tensors) are supported.
+
+    Args:
+        input (Tensor): input tensor. Support all real number data type.
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+            for height and width. If type is int, it means that height equal with width. Must be specified.
+        dilation (Union[int, tuple[int], list[int]]): The dilation of the window, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        padding (Union[int, tuple[int], list[int]]): The pad of the window, that must be
+            a tuple of one or two or four `int` for height and width.
+            If one int, pad_height = pad_width.
+            If two int, pad_height = padding[0], pad_width = padding[1].
+            If four int, padding = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]
+            Default: 0.
+        stride (Union[int, tuple[int], list[int]]): The stride of the window, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+
+    Returns:
+        A Tensor, with same type as 'input'.
+
+    Raises:
+        TypeError: If :attr:`kernel_size` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`stride` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`dilation` data type is not in Union[int, tuple[int], list[int]].
+        ValueError: If :attr:`kernel_size` value is not greater than zero or elements number more than `2`.
+        ValueError: If :attr:`stride` value is not greater than zero or elements number more than `2`.
+        ValueError: If :attr:`dilation` value is not greater than zero or elements number more than `2`.
+        ValueError: If :attr:`padding` value is not greater than zero.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
+        >>> output = ops.unfold(x, kernel_size=3, dilation=1, stride=1)
+        >>> print(output.shape)
+        (4, 36, 30, 30)
+    """
+    validator.check_value_type('ksizes', kernel_size, [int, tuple, list], 'unfold')
+    validator.check_value_type('stride', stride, [int, tuple, list], 'unfold')
+    validator.check_value_type('dilation', dilation, [int, tuple, list], 'unfold')
+    validator.check_value_type('padding', padding, [int, tuple, list], 'unfold')
+
+    kernel_size = (kernel_size, kernel_size) if isinstance(kernel_size, int) else kernel_size
+    stride = (stride, stride) if isinstance(stride, int) else stride
+    dilation = (dilation, dilation) if isinstance(dilation, int) else dilation
+    padding = (padding, padding, padding, padding) if isinstance(padding, int) else padding
+
+    validator.check("ksizes size", len(kernel_size), "", [1, 2], Rel.IN, 'unfold')
+    validator.check_positive_int_sequence(kernel_size, "ksizes", 'unfold')
+    validator.check("stride size", len(stride), "", [1, 2], Rel.IN, 'unfold')
+    validator.check_positive_int_sequence(stride, "stride", 'unfold')
+    validator.check("dilation size", len(dilation), "", [1, 2], Rel.IN, 'unfold')
+    validator.check_positive_int_sequence(dilation, "dilation", 'unfold')
+
+    validator.check("padding size", len(padding), "", [1, 2, 4], Rel.IN, 'unfold')
+    validator.check_non_negative_int_sequence(padding, "padding", 'unfold')
+
+    unfold_op = _get_cache_prim(Im2Col)(ksizes=kernel_size,
+                                        strides=stride,
+                                        dilations=dilation,
+                                        padding_mode="CALCULATED",
+                                        pads=padding)
+    return unfold_op(input)
+
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -4594,6 +4732,8 @@ __all__ = [
     'unsorted_segment_sum',
     'population_count',
     'top_k',
-    'expand'
+    'expand',
+    'fold',
+    'unfold',
 ]
 __all__.sort()
