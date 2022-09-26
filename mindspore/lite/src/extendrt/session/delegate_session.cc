@@ -23,15 +23,26 @@
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
+#include "extendrt/session/optimizer/tensorrt_optimizer.h"
+
 namespace mindspore {
 Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "GraphSinkSession::Init";
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
+  context_ = context;
   return kSuccess;
 }
 
 Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
+  // kernel graph will be removed from GraphSinkSession, and this code will be moved to TensorRT plugin
+  if (context_ && !context_->MutableDeviceInfo().empty()) {
+    auto device_info = context_->MutableDeviceInfo()[0];
+    if (device_info && device_info->GetDeviceType() == DeviceType::kGPU && device_info->GetProvider() == "tensorrt") {
+      TensorRtOptimizer optimizer;
+      optimizer.RunOptimizer(graph);
+    }
+  }
   func_graph_ = graph;
   std::vector<KernelGraphPtr> all_out_graph;
   kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);

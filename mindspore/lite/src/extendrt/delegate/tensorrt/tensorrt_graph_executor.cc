@@ -565,9 +565,9 @@ bool TensorRTExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<st
   if (ret != RET_OK) {
     return false;
   }
-  auto kernel_graph_ = dyn_cast<session::KernelGraph>(graph);
-  MS_EXCEPTION_IF_NULL(kernel_graph_);
-  Status build_ret = BuildSubGraph(kernel_graph_);
+  auto kernel_graph = dyn_cast<session::KernelGraph>(graph);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  Status build_ret = BuildSubGraph(kernel_graph);
   if (build_ret != kSuccess) {
     MS_LOG(INFO) << "BuildSubGraph failed";
     return false;
