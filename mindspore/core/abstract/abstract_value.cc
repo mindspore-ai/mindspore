@@ -1668,20 +1668,23 @@ const AbstractTensorPtr AbstractCSRTensor::values() const {
 AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor)
     : AbstractBase(map_tensor, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
                    std::make_shared<Shape>(map_tensor->value_shape())),
-      ref_key_value_(kAnyValue) {}
+      ref_key_value_(kAnyValue),
+      default_value_(map_tensor->default_value()) {}
 
 AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value)
     : AbstractBase(kAnyValue, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
                    std::make_shared<Shape>(map_tensor->value_shape())),
-      ref_key_value_(ref_key_value) {}
+      ref_key_value_(ref_key_value),
+      default_value_(map_tensor->default_value()) {}
 
 AbstractMapTensor::AbstractMapTensor(const AbstractMapTensor &other)
     : AbstractBase(other.GetValueTrack(), other.GetTypeTrack(), other.GetShapeTrack()),
-      ref_key_value_(other.ref_key_value_) {}
+      ref_key_value_(other.ref_key_value_),
+      default_value_(other.default_value_) {}
 
 AbstractMapTensor::AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
-                                     const ValuePtr &ref_key_value)
-    : AbstractBase(value, type, value_shape), ref_key_value_(ref_key_value) {}
+                                     const ValuePtr &ref_key_value, const ValuePtr &default_value)
+    : AbstractBase(value, type, value_shape), ref_key_value_(ref_key_value), default_value_(default_value) {}
 
 AbstractBasePtr AbstractMapTensor::Clone() const { return std::make_shared<AbstractMapTensor>(*this); }
 
@@ -1716,7 +1719,15 @@ AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
   // Join the ref_key_value.
   auto joined_ref_key = ValueJoin(ref_key_value_, other_abs->ref_key_value_);
 
-  return std::make_shared<AbstractMapTensor>(joined_type, joined_shape, joined_value, joined_ref_key);
+  // Join the ref_key_value.
+  auto joined_default_value = ValueJoin(default_value_, other_abs->default_value_);
+  if (joined_default_value == kAnyValue) {
+    MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << default_value_->ToString()
+                             << " != " << other_abs->default_value_->ToString();
+  }
+
+  return std::make_shared<AbstractMapTensor>(joined_type, joined_shape, joined_value, joined_ref_key,
+                                             joined_default_value);
 }
 
 bool AbstractMapTensor::operator==(const AbstractBase &other) const {
@@ -1743,16 +1754,19 @@ bool AbstractMapTensor::operator==(const AbstractMapTensor &other) const {
     return false;
   }
   return common::IsEqual(GetTypeTrack(), other.GetTypeTrack()) &&
-         common::IsEqual(GetShapeTrack(), other.GetShapeTrack());
+         common::IsEqual(GetShapeTrack(), other.GetShapeTrack()) &&
+         common::IsEqual(default_value(), other.default_value());
 }
 
 std::size_t AbstractMapTensor::hash() const {
   const auto &type = GetTypeTrack();
-  MS_EXCEPTION_IF_NULL(type);
-  std::size_t hash_value = hash_combine(tid(), type->hash());
   const auto &value_shape = GetShapeTrack();
+  MS_EXCEPTION_IF_NULL(type);
   MS_EXCEPTION_IF_NULL(value_shape);
-  return hash_combine(hash_value, value_shape->hash());
+  MS_EXCEPTION_IF_NULL(default_value_);
+  std::size_t hash_value = hash_combine(tid(), type->hash());
+  hash_value = hash_combine(hash_value, value_shape->hash());
+  return hash_combine(hash_value, default_value_->hash());
 }
 
 std::string AbstractMapTensor::ToString() const {

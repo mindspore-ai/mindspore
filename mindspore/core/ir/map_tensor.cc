@@ -45,7 +45,16 @@ abstract::AbstractBasePtr MapTensor::ToAbstract() {
   }
 }
 
-TensorPtr MapTensor::Get(const TensorPtr &key_tensor, const TensorPtr &default_value) {
+std::string MapTensor::ToString() const {
+  auto key_dtype = KeyDtype();
+  auto value_dtype = ValueDtype();
+  return "MapTensor(key_dtype=" + (key_dtype == nullptr ? "<null>" : key_dtype->ToString()) +
+         ", value_dtype=" + (value_dtype == nullptr ? "<null>" : value_dtype->ToString()) +
+         ", value_shape=" + tensor::ShapeToString(value_shape_) +
+         ", deault_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) + ")";
+}
+
+TensorPtr MapTensor::Get(const TensorPtr &key_tensor, const ValuePtr &default_value) {
   MS_EXCEPTION_IF_NULL(key_tensor);
   MS_EXCEPTION_IF_NULL(default_value);
   // Check input.
@@ -56,18 +65,10 @@ TensorPtr MapTensor::Get(const TensorPtr &key_tensor, const TensorPtr &default_v
   ShapeVector result_shape = ConcatShape(key_tensor->shape(), value_shape());
   // Make the result tensor.
   TensorPtr result_tensor = std::make_shared<Tensor>(value_dtype(), result_shape);
-  // Note: this is the fake implementation that fill result tensor by copy default values.
-  const size_t num_of_rows = static_cast<size_t>(result_shape[0]);
-  const size_t default_value_bytes = static_cast<size_t>(default_value->data().nbytes());
-  const uint8_t *default_value_data = static_cast<const uint8_t *>(default_value->data_c());
+  // Note: this is the fake implementation that fill result tensor with zeros.
+  size_t nbytes = static_cast<size_t>(result_tensor->data().nbytes());
   auto data_ptr = static_cast<uint8_t *>(result_tensor->data_c());
-  for (size_t i = 0; i < num_of_rows; ++i) {
-    auto ret = common::huge_memcpy(data_ptr, default_value_bytes, default_value_data, default_value_bytes);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Copy tensor data failed!";
-    }
-    data_ptr += default_value_bytes;
-  }
+  (void)std::fill(data_ptr, data_ptr + nbytes, 0);
   return result_tensor;
 }
 

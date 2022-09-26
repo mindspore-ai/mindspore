@@ -1560,7 +1560,7 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   explicit AbstractMapTensor(const MapTensorPtr &map_tensor);
   AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value);
   AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
-                    const ValuePtr &ref_key_value);
+                    const ValuePtr &ref_key_value, const ValuePtr &default_value);
   AbstractMapTensor(const AbstractMapTensor &other);
   ~AbstractMapTensor() override = default;
 
@@ -1569,6 +1569,7 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   MapTensorTypePtr map_tensor_type() const { return dyn_cast<MapTensorType>(GetTypeTrack()); }
   ShapePtr value_shape() const { return dyn_cast<Shape>(GetShapeTrack()); }
   const ValuePtr &ref_key_value() const { return ref_key_value_; }
+  const ValuePtr &default_value() const { return default_value_; }
   TypePtr BuildType() const override { return GetTypeTrack(); }
   BaseShapePtr BuildShape() const override { return GetShapeTrack(); };
 
@@ -1582,6 +1583,8 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
  private:
   // The reference key value, can be a string value or kAnyValue.
   ValuePtr ref_key_value_;
+  // The default value, a scalar or string with initializer name.
+  ValuePtr default_value_;
 };
 using AbstractMapTensorPtr = std::shared_ptr<AbstractMapTensor>;
 

@@ -17,10 +17,10 @@ from __future__ import absolute_import
 
 __all__ = ['MapParameter']
 
+from copy import copy
 import numbers
 import mindspore as ms
 from mindspore.common.parameter import Tensor, Parameter
-from mindspore.common.initializer import initializer
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import MapTensor_
 
@@ -39,7 +39,7 @@ class MapParameter(Parameter):
             be defined in `mindspore.dtype`. Default: float32.
         value_shape (Union[tuple, list, int]): Used to indicate the shape of the value Tensor. The argument should be
             a list of integers, a tuple of integers or an integer. Default: 1.
-        default_value (Union[Tensor, str]): The default value Tensor or initializer name. Default: 'zeros'.
+        default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: 'normal'.
         name (str): Name of the map parameter. Default: None.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
 
@@ -60,15 +60,15 @@ class MapParameter(Parameter):
         [[1. 1. 1.]
          [2. 2. 2.]
          [0. 0. 0.]]
-        >>> m.del(Tensor([2, 3], dtype=ms.int32))
-        >>> t = m.get(Tensor([1, 2, 3], dtype=ms.int32))
+        >>> m.erase(Tensor([2, 3], dtype=ms.int32))
+        >>> t = m.get(Tensor([1, 2, 3], dtype=ms.int32), 3)
         >>> print(t)
         [[1. 1. 1.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
+         [3. 3. 3.]
+         [3. 3. 3.]]
     """
 
-    def __new__(cls, key_dtype=ms.int32, value_dtype=ms.float32, value_shape=1, default_value='zeros', **kwargs):
+    def __new__(cls, key_dtype=ms.int32, value_dtype=ms.float32, value_shape=1, default_value='normal', **kwargs):
         if isinstance(value_shape, numbers.Number):
             value_shape = (value_shape,)
         data = Tensor_(value_dtype, value_shape)
@@ -82,13 +82,53 @@ class MapParameter(Parameter):
         obj.key_dtype = key_dtype
         obj.value_dtype = value_dtype
         obj.value_shape = value_shape
-        obj.default_value = default_value if isinstance(default_value, Tensor) else \
-            initializer(default_value, shape=value_shape, dtype=value_dtype).init_data()
+        obj.default_value = default_value
         return obj
 
     def __init__(self, name=None, requires_grad=True, **kwargs):
         Parameter.__init__(self, self, name=name, requires_grad=requires_grad)
-        self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape)
+        self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape, self.default_value)
+
+    def __getitem__(self, key_tensor):
+        return self.get(key_tensor)
+
+    def __setitem__(self, key_tensor, value_tensor):
+        return self.put(key_tensor, value_tensor)
+
+    def __str__(self):
+        return 'MapParameter(' + str(self._map_tensor) + ')'
+
+    def __copy__(self):
+        x = type(self)()
+        x.__dict__.update(self.__dict__)
+        return x
+
+    def clone(self, init='same'):
+        """
+        Clone the MapParameter.
+
+        Args:
+            init (Union[str, numbers.Number]): Initialize the default value of the new map parameter.
+                If `init` is a `numbers.Number`, clone a new map parameter with the same key value shape
+                and dtype, and the default value of the new map parameter will be set according to `init`.
+                If `init` is a `str`, the `init` should be the alias of the class inheriting from `Initializer`.
+                If `init` is 'same', clone a new map parameter with the same default value. Default: 'same'.
+
+        Returns:
+            MapParameter, the new map parameter.
+        """
+        x = copy(self)
+        x.param_info = self.param_info.clone()
+        info = self.param_info
+        if hasattr(info, "cloned_obj"):
+            info.cloned_obj.append(x)
+        else:
+            info.cloned_obj = [x]
+        self.param_info = info
+        if init != 'same':
+            x.default_value = init  # pylint: disable=W0201
+        x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value)  # pylint: disable=W0212
+        return x
 
     def get(self, key_tensor, default_value=None):
         """
@@ -96,7 +136,7 @@ class MapParameter(Parameter):
 
         Args:
             key_tensor (Tensor): The key tensor.
-            default_value (Tensor): The default value tensor. Default: None
+            default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: None
 
         Returns:
             Tensor, the value tensor for the key tensor.

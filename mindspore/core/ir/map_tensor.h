@@ -53,8 +53,9 @@ class MS_CORE_API MapTensor final : public Value {
   /// \param[in] key_dtype [TypeId] The key data type id.
   /// \param[in] value_dtype [TypeId] The value data type id.
   /// \param[in] value_shape [TypeId] The value shape.
-  MapTensor(TypeId key_dtype, TypeId value_dtype, const ShapeVector &value_shape)
-      : key_dtype_(key_dtype), value_dtype_(value_dtype), value_shape_(value_shape) {}
+  /// \param[in] default_value [ValuePtr] the default value.
+  MapTensor(TypeId key_dtype, TypeId value_dtype, const ShapeVector &value_shape, const ValuePtr &default_value)
+      : key_dtype_(key_dtype), value_dtype_(value_dtype), value_shape_(value_shape), default_value_(default_value) {}
 
   ~MapTensor() override = default;
 
@@ -81,19 +82,15 @@ class MS_CORE_API MapTensor final : public Value {
 
   const ShapeVector &value_shape() const { return value_shape_; }
 
+  const ValuePtr &default_value() const { return default_value_; }
+
   TypePtr KeyDtype() const { return TypeIdToType(key_dtype_); }
 
   TypePtr ValueDtype() const { return TypeIdToType(value_dtype_); }
 
   abstract::AbstractBasePtr ToAbstract() override;
 
-  std::string ToString() const override {
-    auto key_dtype = KeyDtype();
-    auto value_dtype = ValueDtype();
-    return "MapTensor(key_dtype=" + (key_dtype == nullptr ? "<null>" : key_dtype->ToString()) +
-           ", value_dtype=" + (value_dtype == nullptr ? "<null>" : value_dtype->ToString()) +
-           ", value_shape=" + tensor::ShapeToString(value_shape_) + ")";
-  }
+  std::string ToString() const override;
 
   /// \brief Get tensor's param_info info.
   ///
@@ -113,9 +110,9 @@ class MS_CORE_API MapTensor final : public Value {
   /// \brief Get or create values.
   ///
   /// \param[in] key_tensor [Tensor] The key tensor.
-  /// \param[in] default_value [Tensor] The default value tensor.
+  /// \param[in] default_value [Value] The default value.
   /// \return The value tensor according the key tensor.
-  TensorPtr Get(const TensorPtr &key_tensor, const TensorPtr &default_value);
+  TensorPtr Get(const TensorPtr &key_tensor, const ValuePtr &default_value);
 
   /// \brief Put or insert key value pairs.
   ///
@@ -148,6 +145,9 @@ class MS_CORE_API MapTensor final : public Value {
 
   // Shape of the value.
   ShapeVector value_shape_;
+
+  // Default value. should be a scalar as the initial value or a string as the initializer name.
+  ValuePtr default_value_;
 
   // Parameter information.
   ParamInfoPtr param_info_;

@@ -339,6 +339,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimRowTensorGetIndices, R{InferImplRowTensorGetIndices, nullptr, true}},
     {prim::kPrimRowTensorGetDenseShape, R{InferImplRowTensorGetDenseShape, nullptr, true}},
     {prim::kPrimRowTensorAdd, R{InferImplRowTensorAdd, nullptr, false}},
+    // MapTensor
+    {prim::kPrimMapTensorGetDefaultValue, R{InferImplMapTensorGetDefaultValue, nullptr, true}},
     // Comm Ops
     {prim::kPrimAllSwap, R{InferImplAllSwap, nullptr, true}},
     {prim::kPrimMemCpyAsync, R{InferImplMemCpyAsync, nullptr, true}},
