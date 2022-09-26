@@ -3,7 +3,7 @@ mindspore.ops.Conv3D
 
 .. py:class:: mindspore.ops.Conv3D(out_channel, kernel_size, mode=1, stride=1, pad_mode='valid', pad=0, dilation=1, group=1, data_format='NCDHW')
 
-    3维卷积操作。
+    三维卷积操作。
 
     对输入Tensor进行3维卷积操作。输入Tensor的shape通常为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` ，输出的shape为 :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})` ，其中 :math:`N` 为batch size，:math:`C` 是通道数， :math:`D` 、 :math:`H` 、 :math:`W` 分别为特征层的深度、高度和宽度。公式定义如下：
 

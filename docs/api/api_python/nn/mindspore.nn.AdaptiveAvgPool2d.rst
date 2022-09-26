@@ -3,7 +3,7 @@ mindspore.nn.AdaptiveAvgPool2d
 
 .. py:class:: mindspore.nn.AdaptiveAvgPool2d(output_size)
 
-    2维自适应平均池化。
+    二维自适应平均池化。
 
     对输入Tensor，提供2维的自适应平均池化操作。也就是说，对于输入任何尺寸，指定输出的尺寸都为H * W。但是输入和输出特征的数目不会变化。
 
