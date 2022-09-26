@@ -206,18 +206,7 @@ bool EmbeddingLookupGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     MS_LOG(INFO) << " EmbeddingLookup running in Dynamic Mode.";
   } else if (inputs.size() == kEmbeddingLookupInputsNum) {
     MS_LOG(INFO) << " EmbeddingLookup running in Normal Mode.";
-    PrimitivePtr prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    if (prim->HasAttr("offset")) {
-      auto value_ptr = prim->GetAttr("offset");
-      if (value_ptr->isa<tensor::Tensor>()) {
-        auto off_vec = CheckAndConvertUtils::CheckTensorIntValue("offset", value_ptr, kernel_name_);
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', offset must be int, bug got " << off_vec;
-        attr_ptr_->offset = off_vec[0];
-      } else {
-        attr_ptr_->offset = GetValue<int64_t>(value_ptr);
-      }
-    }
+    attr_ptr_->offset = kernel_ptr->get_offset();
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << inputs.size();
   }

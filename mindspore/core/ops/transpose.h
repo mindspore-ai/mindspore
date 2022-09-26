@@ -34,6 +34,7 @@ class MIND_API Transpose : public BaseOperator {
   Transpose() : BaseOperator(kNameTranspose) { InitIOName({"x", "perm"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
+  std::vector<int64_t> get_perm();
 };
 }  // namespace ops
 }  // namespace mindspore

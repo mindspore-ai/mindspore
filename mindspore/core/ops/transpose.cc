@@ -25,10 +25,26 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
+
+std::vector<int64_t> Transpose::get_perm() {
+  PrimitivePtr prim = this->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  std::vector<int64_t> perm = {};
+  if (prim->HasAttr(kAttrPerm)) {
+    auto value_ptr = prim->GetAttr(kAttrPerm);
+    if (value_ptr->isa<tensor::Tensor>()) {
+      perm = CheckAndConvertUtils::CheckTensorIntValue(kAttrPerm, value_ptr, prim->name());
+    } else {
+      perm = CheckAndConvertUtils::CheckIntOrTupleInt(kAttrPerm, value_ptr, prim->name());
+    }
+  }
+  return perm;
+}
 
 bool CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, ShapeVector *perm_value,
                           const PrimitivePtr &primitive) {

@@ -20,6 +20,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -31,12 +32,19 @@ void Reduce::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }
 
 void Reduce::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
-std::vector<int64_t> Reduce::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  if (value_ptr->isa<api::Int64Imm>()) {
-    return {GetValue<int64_t>(value_ptr)};
+std::vector<int64_t> Reduce::get_axis() {
+  PrimitivePtr prim = this->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  std::vector<int64_t> axis = {};
+  if (prim->HasAttr(kAttrAxis)) {
+    auto value_ptr = prim->GetAttr(kAttrAxis);
+    if (value_ptr->isa<tensor::Tensor>()) {
+      axis = CheckAndConvertUtils::CheckTensorIntValue(kAttrAxis, value_ptr, prim->name());
+    } else {
+      axis = CheckAndConvertUtils::CheckIntOrTupleInt(kAttrAxis, value_ptr, prim->name());
+    }
   }
-  return GetValue<std::vector<int64_t>>(value_ptr);
+  return axis;
 }
 
 MIND_API_OPERATOR_IMPL(Reduce, BaseOperator);
