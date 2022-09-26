@@ -46,7 +46,7 @@ class LRUCache {
     }
     cache_items_map_[key] = cache_items_list_.begin();
 
-    if (IsFull()) {
+    if (cache_items_map_.size() > capacity_) {
       auto last = cache_items_list_.end();
       last--;
       cache_items_map_.erase(last->first);
@@ -64,11 +64,19 @@ class LRUCache {
     return it->second->second;
   }
 
+  const Item Back() const {
+    if (cache_items_list_.empty()) {
+      MS_LOG(EXCEPTION) << "Cache is empty.";
+    }
+
+    return cache_items_list_.back();
+  }
+
   bool Exists(const K &key) const { return cache_items_map_.find(key) != cache_items_map_.end(); }
 
   size_t Size() const { return cache_items_map_.size(); }
 
-  bool IsFull() const { return Size() > capacity_; }
+  bool IsFull() const { return Size() >= capacity_; }
 
  private:
   std::list<Item> cache_items_list_;
@@ -80,21 +88,24 @@ class LRUCache {
 template <typename K, typename V>
 class BACKEND_EXPORT EmbeddingLRUCache : public EmbeddingCache {
  public:
-  explicit EmbeddingLRUCache(size_t capacity) : capacity_(capacity) {}
+  explicit EmbeddingLRUCache(size_t capacity, size_t value_size) : capacity_(capacity), value_size_(value_size) {}
   ~EmbeddingLRUCache() = default;
 
-  bool Initialize();
-  bool Finalize() { return true; }
+  bool Initialize() override;
+  bool Finalize() override { return true; }
 
-  bool Get(void *input, size_t key_num, const void *keys, void *values) override { return true; }
-  bool Put(void *input, size_t key_num, const void *keys, const void *values, size_t evicted_num, void *evicted_keys,
-           void *evicted_values) override {
-    return true;
-  }
-  bool IsFull() override { return true; }
+  bool Get(const void *input, size_t key_num, const void *keys, void *values, size_t *miss_num, void *miss_keys,
+           size_t *miss_indices) override;
+  bool Put(void *input, size_t key_num, const void *keys, const void *values, size_t *evicted_num, void *evicted_keys,
+           void *evicted_values) override;
+  bool IsFull() override;
 
  private:
   size_t capacity_;
+
+  size_t value_size_;
+
+  size_t curr_index_{0};
 
   // Cache the index of saved value in the Parameter of embedding.
   std::unique_ptr<LRUCache<K, size_t>> keys_lru_cache_;

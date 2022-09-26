@@ -54,7 +54,6 @@ void LocalFile::Initialize() {
   MS_EXCEPTION_IF_ZERO("feature_size_", feature_size_);
   MS_EXCEPTION_IF_ZERO("page_size_", page_size_);
 
-  page_size_ = DEFAULT_PAGE_SIZE;
   num_features_per_page_ = page_size_ / feature_size_;
   num_pages_per_block_file_ = DEFAULT_BLOCK_FILE_SIZE / page_size_;
   num_features_per_block_file_ = num_features_per_page_ * num_pages_per_block_file_;
@@ -308,19 +307,20 @@ bool LocalFile::LoadBlocksInfo() {
   return true;
 }
 
-void LocalFile::Read(const std::vector<int> &ids, void *output, std::vector<int> *missing) {
-  MS_EXCEPTION_IF_NULL(missing);
+void LocalFile::Read(size_t ids_num, const int32_t *ids, void *output, size_t *miss_num, size_t *miss_indices) {
+  MS_EXCEPTION_IF_NULL(miss_indices);
 
-  size_t num_ids = ids.size();
-  offsets_buf_.resize(num_ids);
-  pages_buf_.resize(num_ids * page_size_);
+  offsets_buf_.resize(ids_num);
+  pages_buf_.resize(ids_num * page_size_);
   void *pages_ptr = pages_buf_.data();
 
-  ReadPages(num_ids, ids, pages_ptr, offsets_buf_.data());
+  ReadPages(ids_num, ids, pages_ptr, offsets_buf_.data());
 
-  for (uint32_t i = 0; i < num_ids; ++i) {
+  size_t miss_count = 0;
+  for (uint32_t i = 0; i < ids_num; ++i) {
     if (offsets_buf_.at(i) == page_size_) {
-      missing->emplace_back(i);
+      miss_indices[miss_count] = i;
+      miss_count++;
       continue;
     }
     auto ret = memcpy_s(AddressOffset(output, i * feature_size_), feature_size_,
@@ -329,16 +329,18 @@ void LocalFile::Read(const std::vector<int> &ids, void *output, std::vector<int>
       MS_LOG(EXCEPTION) << "Failed to copy output when read block, ret = " << ret;
     }
   }
+
+  *miss_num = miss_count;
 }
 
-void LocalFile::ReadPages(size_t num_ids, const std::vector<int> &ids, void *pages_ptr, size_t *offsets) {
+void LocalFile::ReadPages(size_t ids_num, const int32_t *ids, void *pages_ptr, size_t *offsets) {
   MS_EXCEPTION_IF_NULL(pages_ptr);
   MS_EXCEPTION_IF_NULL(offsets);
   MS_EXCEPTION_IF_ZERO("num_features_per_page_", num_features_per_page_);
   MS_EXCEPTION_IF_ZERO("num_pages_per_block_file_", num_pages_per_block_file_);
 
-  for (size_t i = 0; i < num_ids; ++i) {
-    const int id = ids[i];
+  for (size_t i = 0; i < ids_num; ++i) {
+    const int32_t id = ids[i];
     auto it = id_to_page_loc_.find(id);
     if (it == id_to_page_loc_.end()) {
       offsets[i] = page_size_;
@@ -357,35 +359,34 @@ void LocalFile::ReadPages(size_t num_ids, const std::vector<int> &ids, void *pag
   }
 }
 
-void LocalFile::Write(const void *input, const std::vector<int> &ids) {
+void LocalFile::Write(const void *input, size_t ids_num, const int32_t *ids) {
   MS_EXCEPTION_IF_NULL(input);
 
-  size_t num_ids = ids.size();
-  pages_buf_.resize(num_ids * page_size_);
+  pages_buf_.resize(ids_num * page_size_);
 
   // Copy data at input to pages buf, page by page.
-  for (size_t i = 0; i < num_ids; i += num_features_per_page_) {
+  for (size_t i = 0; i < ids_num; i += num_features_per_page_) {
     const size_t page_id = i / num_features_per_page_;
-    const size_t copy_size = (num_ids - i) < num_features_per_page_ ? (num_ids - i) * feature_size_ : page_size_;
+    const size_t copy_size = (ids_num - i) < num_features_per_page_ ? (ids_num - i) * feature_size_ : page_size_;
     auto ret = memcpy_s(AddressOffset(pages_buf_.data(), page_id * page_size_), copy_size,
                         AddressOffset(const_cast<void *>(input), i * feature_size_), copy_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "Failed to copy input when write block, ret = " << ret;
     }
   }
-  WritePages(num_ids, ids);
+  WritePages(ids_num, ids);
 }
 
 // This function write page buf to a block file, a block have many pages, a page have many feature, a feature is a
 // one-dim tensor. Block file is append only, so need use curr_storage_size_ to record the write pos at block file.
-void LocalFile::WritePages(size_t num_ids, const std::vector<int> &ids) {
+void LocalFile::WritePages(size_t ids_num, const int32_t *ids) {
   MS_EXCEPTION_IF_ZERO("num_features_per_page_", num_features_per_page_);
   MS_EXCEPTION_IF_ZERO("num_pages_per_block_file_", num_pages_per_block_file_);
 
   const void *pages_ptr = pages_buf_.data();
 
   // 1. Calculate how many pages will be written, we need aligned by features per page.
-  const size_t num_pages = RoundUp(num_ids, num_features_per_page_) / num_features_per_page_;
+  const size_t num_pages = RoundUp(ids_num, num_features_per_page_) / num_features_per_page_;
   const size_t num_padded_ids = num_pages * num_features_per_page_;
   const size_t start_index = curr_storage_size_;
   curr_storage_size_ += num_padded_ids;
@@ -427,7 +428,7 @@ void LocalFile::WritePages(size_t num_ids, const std::vector<int> &ids) {
   }
 
   // 4. Record the index of page in block file of a feature.
-  for (size_t i = 0; i < num_ids; ++i) {
+  for (size_t i = 0; i < ids_num; ++i) {
     id_to_page_loc_[ids[i]] = start_index + i;
   }
 }

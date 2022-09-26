@@ -27,12 +27,16 @@ class EmbeddingCache {
   EmbeddingCache() = default;
   virtual ~EmbeddingCache() = default;
 
+  virtual bool Initialize() = 0;
+  virtual bool Finalize() = 0;
+
   // Get values which is indexed by keys at input. Input is a tensor data address from Parameter of embedding.
-  virtual bool Get(void *input, size_t key_num, const void *keys, void *values) = 0;
+  virtual bool Get(const void *input, size_t key_num, const void *keys, void *values, size_t *miss_num, void *miss_keys,
+                   size_t *miss_indices) = 0;
 
   // Put values which is indexed by keys to input. Input is a tensor data address from Parameter of embedding.
   // When input is full, save the evicted values and keys.
-  virtual bool Put(void *input, size_t key_num, const void *keys, const void *values, size_t evicted_num,
+  virtual bool Put(void *input, size_t key_num, const void *keys, const void *values, size_t *evicted_num,
                    void *evicted_keys, void *evicted_values) = 0;
 
   // Check if cache is full.

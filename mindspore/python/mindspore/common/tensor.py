@@ -3841,7 +3841,7 @@ class Tensor(Tensor_):
             shape = self.shape
         # At embedding cache scenes, we need limit the size of memory for tensor.
         # And save out of range data to persistent storage to support TB-Level size of tensor.
-        data_shape = shape
+        data_shape = list(shape)
         slice_num_of_persistent_data = split_to_slice_if_need(self.dtype, shape)
         if slice_num_of_persistent_data > 1:
             slice_first_dim = math.ceil(shape[0] / slice_num_of_persistent_data)
