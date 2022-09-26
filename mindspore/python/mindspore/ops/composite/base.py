@@ -629,8 +629,6 @@ class _Vmap(VmapOperation_):
 
 class MultitypeFuncGraph(MultitypeFuncGraph_):
     """
-    Generates overloaded functions.
-
     MultitypeFuncGraph is a class used to generate overloaded functions, considering different types as inputs.
     Initialize an `MultitypeFuncGraph` object with name, and use `register` with input types as the decorator
     for the function to be registered. And the object can be called with different types of inputs,
@@ -638,7 +636,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
 
     Args:
         name (str): Operator name.
-        read_value (bool): If the registered function not need to set value on Parameter,
+        read_value (bool, optional): If the registered function do not need to set value on Parameter,
             and all inputs will pass by value, set `read_value` to True. Default: False.
 
     Raises:
