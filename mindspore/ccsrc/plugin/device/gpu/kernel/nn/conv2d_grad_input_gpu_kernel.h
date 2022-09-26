@@ -155,7 +155,7 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void SetDilaA(int dilaA[]) {
+  void SetDilaA(int *dilaA) {
     if (data_format_ == kOpFormat_NHWC) {
       dilaA[kIndex0] = dilation_[kHeight2DDilationIndex - 1];
       dilaA[kIndex1] = dilation_[kWidth2DDilationIndex - 1];
