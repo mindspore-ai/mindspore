@@ -44,6 +44,17 @@ OpParameter *PopulateRelu6Parameter(const void *prim) {
   param->min_val_ = value->min_val();
   param->max_val_ = value->max_val();
   param->approximate_ = value->approximate();
+
+  std::set<int> activation_types = {
+    schema::ActivationType_RELU,    schema::ActivationType_RELU6,    schema::ActivationType_LEAKY_RELU,
+    schema::ActivationType_SIGMOID, schema::ActivationType_TANH,     schema::ActivationType_SWISH,
+    schema::ActivationType_HSWISH,  schema::ActivationType_HSIGMOID, schema::ActivationType_HARD_TANH,
+    schema::ActivationType_GELU,    schema::ActivationType_SOFTPLUS, schema::ActivationType_ELU};
+  if (activation_types.find(param->type_) == activation_types.end()) {
+    MS_LOG(ERROR) << "invalid activation type: " << param->type_;
+    free(param);
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 

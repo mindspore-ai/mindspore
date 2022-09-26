@@ -40,6 +40,11 @@ OpParameter *PopulateFusedBatchNorm(const void *prim) {
   param->momentum_ = value->momentum();
   param->fused_ = true;
   param->is_training_ = static_cast<bool>(value->mode());
+
+  if (param->momentum_ < static_cast<float>(C0NUM) || param->momentum_ > static_cast<float>(C1NUM)) {
+    MS_LOG(ERROR) << "invalid momentum value: " << param->momentum_;
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_FusedBatchNorm, PopulateFusedBatchNorm, SCHEMA_CUR)
