@@ -768,7 +768,7 @@ bool IrExportBuilder::SetAbstractToNodeProto(const CNodePtr &node, mind_ir::Node
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
   if (!SetAbstractToNodeProto(abs, attr_proto)) {
     MS_LOG(WARNING) << "Set shape to NodeProto for " << node->DebugString() << " failed. abs: " << abs->ToString();
-    return true;
+    return false;
   }
   attr_proto->set_name("shape");
   return true;
@@ -811,9 +811,8 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   }
   node_proto->set_op_type(type_name);
   last_node_ = node_proto;
-  // Maybe Tensor or Function or nullptr
   if (!SetAbstractToNodeProto(node, node_proto)) {
-    return false;
+    MS_LOG(DEBUG) << "Fail to export abstract of the node: " << node->DebugString();
   }
 
   (void)std::for_each(input_names.begin(), input_names.end(),
