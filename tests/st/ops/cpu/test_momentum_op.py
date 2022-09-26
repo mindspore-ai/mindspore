@@ -23,6 +23,7 @@ from mindspore.nn import Dense
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
+from mindspore import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -70,3 +71,53 @@ def test_momentum():
 #     0.00874167 0.00874167 0.00874167 0.00874167 0.00874167]]
 
     return losses
+
+
+class DynamicShapeNet(nn.Cell):
+    def __init__(self, variable, accumulation):
+        super(DynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.variable = Parameter(variable, name="variable")
+        self.accumulation = Parameter(accumulation, name="accumulation")
+        self.apply_momentum = P.ApplyMomentum()
+
+    def construct(self, learning_rate, gradient, momentum, indices):
+        unique_indices, _ = self.unique(indices)
+        gradient = self.gather(gradient, unique_indices, 0)
+        return self.apply_momentum(self.variable, self.accumulation, learning_rate, gradient, momentum)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_momentum_dynamic_shape():
+    """
+    Feature: test ApplyMomentum dynamic_shape feature.
+    Description: test ApplyMomentum dynamic_shape feature.
+    Expectation: success.
+    """
+    # dynamic inputs
+    indices_np = np.random.randint(0, 3, size=6)
+    indices_ms = Tensor(indices_np)
+
+    # data preparation
+    unique_indices, _ = P.Unique()(indices_ms)
+    variable = Tensor(np.arange(20).reshape(4, 5).astype(np.float32) / 10)
+    variable = P.Gather()(variable, unique_indices, 0)
+    accumulation = Tensor(np.arange(20).reshape(4, 5).astype(np.float32) / 10)
+    accumulation = P.Gather()(accumulation, unique_indices, 0)
+    learning_rate = Tensor(np.array([0.0001]).astype(np.float32))
+    gradient = Tensor(np.arange(24, 44).reshape(4, 5).astype(np.float32))
+    momentum = Tensor(np.array([0.0001]).astype(np.float32))
+
+    # dynamic shape
+    gradient_dyn = Tensor(shape=[None for _ in gradient.shape], dtype=gradient.dtype)
+    dynamic_shape_net = DynamicShapeNet(variable, accumulation)
+    dynamic_shape_net.set_inputs(learning_rate, gradient_dyn, momentum, indices_ms)
+
+    # run in graph mode
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    outputs = dynamic_shape_net(learning_rate, gradient, momentum, indices_ms)
+    expect_shape = variable.asnumpy().shape
+    assert outputs.asnumpy().shape == expect_shape
