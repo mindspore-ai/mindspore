@@ -46,7 +46,7 @@ KernelRuntimeManager &KernelRuntimeManager::Instance() {
   return instance;
 }
 
-void KernelRuntimeManager::Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator) {
+void KernelRuntimeManager::Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator) const {
   if (runtime_creators_.find(device_name) == runtime_creators_.end()) {
     (void)runtime_creators_.emplace(device_name, runtime_creator);
   }
