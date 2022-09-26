@@ -580,7 +580,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
                                        VectorRef *outputs) {
   WaitTaskFinish();
   auto &op_executor = runtime::OpExecutor::GetInstance();
-  op_executor.Register([this]() { BatchBuildCallback(); });
+  op_executor.Register([]() { BatchBuildCallback(); });
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   const auto &graphs = graph_compiler_info.graphs_;
@@ -687,7 +687,7 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_ten
   graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
 }
 
-void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks) const {
+void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks) {
   if (build_tasks.empty()) {
     return;
   }
@@ -806,7 +806,7 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
     run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallback(ctx); },
     std::move(future)));
 
-  op_executor.Register([this]() { BatchBuildCallback(); });
+  op_executor.Register([]() { BatchBuildCallback(); });
   if (op_executor.BuildQueueFull()) {
     WaitTaskFinish();
   }
