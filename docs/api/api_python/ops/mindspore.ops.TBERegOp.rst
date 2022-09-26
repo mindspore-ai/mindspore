@@ -48,6 +48,16 @@
         参数：
             - **dynamic_compile_static** (bool) - 表示静合一的标识。默认值：False。
 
+    .. py:method:: dynamic_rank_support(dynamic_rank_support)
+
+        定义算子是否支持 DynamicRank（动态维度）。
+
+        参数：
+            - **dynamic_rank_support** (bool) - 表示算子是否支持 DynamicRank（动态维度）。
+              True：表示支持 DynamicRank，算子支持Shape（-2），用于判断是否进行动态。
+              False：表示算子不支持DynamicRank。
+              默认值：False。
+
     .. py:method:: dynamic_shape(dynamic_shape=False)
 
         表示算子是否支持动态shape。
@@ -74,23 +84,6 @@
 
         参数：
             - **input_to_attr_index** (list) - 索引。默认值：()。
-
-    .. py:method:: unknown_shape_formats(unknown_shape_formats)
-
-        动态Shape场景下算子输入/输出Tensor的数据排布。
-
-        参数：
-            - **unknown_shape_formats** (list) - 表示动态Shape场景下算子输入/输出Tensor的数据排布。默认值：()，不支持动态Shape。
-
-    .. py:method:: dynamic_rank_support(dynamic_rank_support)
-
-        定义算子是否支持 DynamicRank（动态维度）。
-
-        参数：
-            - **dynamic_rank_support** (bool) - 表示算子是否支持 DynamicRank（动态维度）。
-              True：表示支持 DynamicRank，算子支持Shape（-2），用于判断是否进行动态。
-              False：表示算子不支持DynamicRank。
-              默认值：False。
 
     .. py:method:: is_dynamic_format(is_dynamic_format=False)
 
@@ -152,3 +145,10 @@
 
         参数：
             - **reshape_type** (str) - 指定算子补维方式的值。例如：输入的shape为 :math:`(2, 3)` ，指定reshape_type="CH"，则补维之后的shape为 :math:`(1, 2, 3, 1)` ，即保留CH轴，NW轴补1。
+
+    .. py:method:: unknown_shape_formats(unknown_shape_formats)
+
+        动态Shape场景下算子输入/输出Tensor的数据排布。
+
+        参数：
+            - **unknown_shape_formats** (list) - 表示动态Shape场景下算子输入/输出Tensor的数据排布。默认值：()，不支持动态Shape。
