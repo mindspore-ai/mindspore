@@ -62,7 +62,7 @@ void MatmulDoubleCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
   trans_b_ = kernel_ptr->get_transpose_b();
 }
 
-int MatmulDoubleCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+int MatmulDoubleCpuKernelFunc::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs,
                                       const std::map<uint32_t, tensor::TensorPtr> &) {
   auto a_shape = inputs[kIndex0]->GetShapeVector();

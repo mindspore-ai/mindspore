@@ -32,8 +32,8 @@ class LayerNormGradGradInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputNum8,
-                                             op_name);
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
+                                             SizeToLong(kInputNum8), op_name);
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);  // x
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);  // dy
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex4]);  // gamma
