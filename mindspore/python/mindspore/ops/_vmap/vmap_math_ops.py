@@ -97,6 +97,32 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Addcdiv)
+@vmap_rules_getters.register(P.Addcmul)
+def get_addcxxx_vmap_rule(prim, axis_size):
+    """VmapRule for addcxxx, such as `Addcdiv` and `Addcmul`."""
+
+    def vmap_rule(input_data_bdim, x1_bdim, x2_bdim, value_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_data_bdim, x1_bdim, x2_bdim, value_bdim)
+        if is_all_none:
+            return result
+
+        input_data, input_data_dim = input_data_bdim
+        x1, x1_dim = x1_bdim
+        x2, x2_dim = x2_bdim
+        value, value_dim = value_bdim
+
+        input_data = _bdim_at_front(input_data, input_data_dim, axis_size)
+        x1 = _bdim_at_front(x1, x1_dim, axis_size)
+        x2 = _bdim_at_front(x2, x2_dim, axis_size)
+        value = _bdim_at_front(value, value_dim, axis_size)
+
+        out = prim(input_data, x1, x2, value)
+        return out, 0
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Cdist)
 def get_cdist_vmap_rule(prim, axis_size):
     """VmapRule for `cdist` operation."""
