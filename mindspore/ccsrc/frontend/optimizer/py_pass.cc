@@ -224,6 +224,7 @@ void ReflectParamBackToPython(const AnfNodePtr &param, const string &param_name,
 }
 
 void Reset(const PatternPtr &pattern) {
+  MS_EXCEPTION_IF_NULL(pattern);
   if (pattern->isa<Prim>()) {
     auto prim_pattern = pattern->cast_ptr<Prim>();
     prim_pattern->reset();
