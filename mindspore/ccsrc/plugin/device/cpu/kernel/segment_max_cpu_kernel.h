@@ -52,9 +52,6 @@ class SegmentMaxCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, SegmentMaxFunc>> func_list_;
   SegmentMaxFunc kernel_func_;
 
-  template <typename T>
-  std::vector<int64_t> CalcSegmentIds(const T *segment_ids_data_addr);
-
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);

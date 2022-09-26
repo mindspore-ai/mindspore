@@ -41,9 +41,6 @@ class SparseTensorDenseMatmulCpuKernelMod : public DeprecatedNativeCpuKernelMod 
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  template <typename T, typename S>
-  bool LaunchKernelComplex(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &outputs);
   using SparseTensorDenseMatmulFunc =
     std::function<bool(SparseTensorDenseMatmulCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &)>;
