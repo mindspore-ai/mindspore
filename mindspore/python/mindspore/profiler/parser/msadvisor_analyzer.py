@@ -44,21 +44,11 @@ class Msadvisor:
         logger.info("MSAdvisor is running. Log and result files are saved in %s", output_path)
 
         try:
-            running_result = subprocess.run(["msadvisor", "-d", output_path, "-c", "all"],
-                                            capture_output=True, check=True)
-        except FileNotFoundError as err:
-            logger.warning("MSAdvisor: command not found,"
-                           "please check if installed ascend-toolkit and set environment path correctly.")
-            raise err
-        except OSError as err:
-            logger.warning("Cannot execute binary file: Exec format error.")
-            raise err
-        finally:
-            pass
-
-        if running_result.returncode == 0:
+            subprocess.run(["msadvisor", "-d", output_path, "-c", "all"],
+                           capture_output=True, check=True)
             logger.info("MSAdvisor process finished.")
 
+            # Modified recommendation file permission, only Owner can read and write.
             recommendation_path = os.path.join(output_path, "recommendation")
             recommendation_path = validate_and_normalize_path(recommendation_path)
             os.chmod(recommendation_path, stat.S_IRWXU)
@@ -66,11 +56,21 @@ class Msadvisor:
             file_list.sort(key=lambda fn: os.path.getmtime(os.path.join(recommendation_path, fn)))
             recommendation_path = os.path.join(recommendation_path, file_list[-1])
             recommendation_path = validate_and_normalize_path(recommendation_path)
-            os.chmod(recommendation_path, stat.S_IRUSR | stat.S_IRUSR)
-        else:
+            os.chmod(recommendation_path, stat.S_IRUSR | stat.S_IWUSR)
+        except FileNotFoundError as err:
+            logger.warning("MSAdvisor: command not found,"
+                           "please check if installed ascend-toolkit and set environment path correctly.")
+            raise err
+        except OSError as err:
+            logger.warning("Cannot execute binary file: Exec format error.")
+            raise err
+        except subprocess.CalledProcessError:
             logger.warning("MSAdvisor running failed,"
                            "please check MSAdvisor running log.")
+        finally:
+            pass
 
+        # Modified log file permission, only Owner can read and write.
         log_path = os.path.join(output_path, "log")
         log_path = validate_and_normalize_path(log_path)
         os.chmod(log_path, stat.S_IRWXU)
@@ -82,7 +82,7 @@ class Msadvisor:
         file_list = os.listdir(log_path)
         log_path = os.path.join(log_path, file_list[0])
         log_path = validate_and_normalize_path(log_path)
-        os.chmod(log_path, stat.S_IRUSR | stat.S_IRUSR)
+        os.chmod(log_path, stat.S_IRUSR | stat.S_IWUSR)
 
     def analyse(self):
         """
