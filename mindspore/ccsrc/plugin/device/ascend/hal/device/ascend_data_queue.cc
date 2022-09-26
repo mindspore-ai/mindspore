@@ -191,12 +191,17 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 
   // create acl tdt handle
   if (!channel_name_.empty()) {
-    acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
+    const size_t capacity = 128;
+    acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), capacity);
     if (acl_handle_ == nullptr) {
-      MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
-                           "Please check DEVICE ID setting, DEVICE ID that passed into dataset"
-                           "(from context) and training process should be the same."
-                        << ascend::GetErrorMessage(true);
+      MS_LOG(INFO) << "Select the TDT process.";
+      acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
+      if (acl_handle_ == nullptr) {
+        MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
+                             "Please check DEVICE ID setting, DEVICE ID that passed into dataset"
+                             "(from context) and training process should be the same."
+                          << ascend::GetErrorMessage(true);
+      }
     }
     tdt_handle::AddHandle(&acl_handle_, nullptr);
   }

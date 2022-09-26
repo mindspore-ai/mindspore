@@ -101,7 +101,8 @@ int DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     }
   }
 
-  if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE) {
+  if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE ||
+      common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
     for (uint32_t i = 0; i < output_num; ++i) {
       if (!ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode))) {
         MS_LOG(EXCEPTION) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
