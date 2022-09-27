@@ -35,24 +35,29 @@ std::string OpAdaptationInfoRegister::GenerateKey(const std::string &op_name, co
   return std::string(op_name + device_name + flag_str);
 }
 
+std::map<std::string, OpAdaptationInfo *> &OpAdaptationInfoRegister::GetOpInfoMap() {
+  static std::map<std::string, OpAdaptationInfo *> op_info_map;
+  return op_info_map;
+}
+
 void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
   MS_EXCEPTION_IF_NULL(reg_info);
   auto key = GenerateKey(reg_info->GetOriginOpName(), reg_info->GetDeviceName(), reg_info->GetFlag());
-  auto find = op_info_map_.find(key);
-  if (find != op_info_map_.end()) {
+  auto find = GetOpInfoMap().find(key);
+  if (find != GetOpInfoMap().end()) {
     MS_LOG(ERROR) << "This key (" << key << ")"
                   << " has been registered in origin op info map.";
     return;
   }
   MS_LOG(DEBUG) << "Reg op adaptation info to factory, key: " << key;
-  op_info_map_[key] = reg_info;
+  GetOpInfoMap()[key] = reg_info;
 }
 
 OpAdaptationInfo *OpAdaptationInfoRegister::GetOpAdaptationInfo(const std::string &origin_op_name,
                                                                 const std::string &device_name, bool flag) {
   auto key = GenerateKey(origin_op_name, device_name, flag);
-  auto iter = op_info_map_.find(key);
-  if (iter == op_info_map_.end()) {
+  auto iter = GetOpInfoMap().find(key);
+  if (iter == GetOpInfoMap().end()) {
     MS_LOG(DEBUG) << "Can't find op adaptation for op " << origin_op_name << " on " << device_name << " when flag is "
                   << flag;
     return nullptr;
