@@ -44,15 +44,6 @@ Activation Function
     mindspore.Tensor.hardshrink
     mindspore.Tensor.soft_shrink
 
-Mathematical Methods
-^^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: Tensor
-    :nosignatures:
-
-    mindspore.Tensor.bmm
-
 Element-wise Methods
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -61,15 +52,8 @@ Element-wise Methods
     :nosignatures:
 
     mindspore.Tensor.abs
-    mindspore.Tensor.add
     mindspore.Tensor.addcdiv
     mindspore.Tensor.addcmul
-    mindspore.Tensor.addr
-    mindspore.Tensor.asin
-    mindspore.Tensor.addmv
-    mindspore.Tensor.asinh
-    mindspore.Tensor.atan
-    mindspore.Tensor.atanh
     mindspore.Tensor.atan2
     mindspore.Tensor.bernoulli
     mindspore.Tensor.bitwise_and

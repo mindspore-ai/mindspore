@@ -39,15 +39,6 @@ mindspore.Tensor
     mindspore.Tensor.hardshrink
     mindspore.Tensor.soft_shrink
 
-数学运算方法
-^^^^^^^^^^^^^^^
-
-.. mscnplatformautosummary::
-    :toctree: Tensor
-    :nosignatures:
-
-    mindspore.Tensor.bmm
-
 逐元素运算
 ^^^^^^^^^^^^^
 
@@ -56,15 +47,8 @@ mindspore.Tensor
     :nosignatures:
 
     mindspore.Tensor.abs
-    mindspore.Tensor.add
-    mindspore.Tensor.addr
     mindspore.Tensor.addcdiv
     mindspore.Tensor.addcmul
-    mindspore.Tensor.asin
-    mindspore.Tensor.addmv
-    mindspore.Tensor.asinh
-    mindspore.Tensor.atan
-    mindspore.Tensor.atanh
     mindspore.Tensor.atan2
     mindspore.Tensor.bernoulli
     mindspore.Tensor.bitwise_and

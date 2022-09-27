@@ -44,14 +44,10 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.adaptive_avg_pool1d
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
-    mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
-    mindspore.ops.batch_norm
-    mindspore.ops.bias_add
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.conv2d
     mindspore.ops.deformable_conv2d
@@ -77,7 +73,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.binary_cross_entropy
     mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.cross_entropy
     mindspore.ops.nll_loss
@@ -126,16 +121,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 
     mindspore.ops.cdist
 
-数学运算函数
-^^^^^^^^^^^^^^^^^
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.bmm
-
 逐元素运算
 ^^^^^^^^^^^^^
 
@@ -145,7 +130,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :template: classtemplate.rst
 
     mindspore.ops.abs
-    mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.acosh
     mindspore.ops.add
@@ -259,7 +243,6 @@ Reduction函数
 
     mindspore.ops.amax
     mindspore.ops.amin
-    mindspore.ops.argmax
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin

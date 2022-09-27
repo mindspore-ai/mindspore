@@ -44,14 +44,10 @@ Neural Network
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.adaptive_avg_pool1d
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
-    mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
-    mindspore.ops.batch_norm
-    mindspore.ops.bias_add
     mindspore.ops.conv2d
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
@@ -78,7 +74,6 @@ Loss Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.binary_cross_entropy
     mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.cross_entropy
     mindspore.ops.nll_loss
@@ -127,16 +122,6 @@ Distance Functions
 
     mindspore.ops.cdist
 
-Mathematical Functions
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.bmm
-
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -146,7 +131,6 @@ Element-by-Element Operations
     :template: classtemplate.rst
 
     mindspore.ops.abs
-    mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.acosh
     mindspore.ops.add
@@ -259,7 +243,6 @@ Reduction Functions
 
     mindspore.ops.amax
     mindspore.ops.amin
-    mindspore.ops.argmax
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
