@@ -1117,6 +1117,7 @@ Status ModelPool::InitByPath(const std::string &model_path, const std::shared_pt
     MS_LOG(ERROR) << "init failed.";
     return kLiteError;
   }
+  is_initialized_ = true;
   return kSuccess;
 }
 
@@ -1201,6 +1202,16 @@ Strategy ModelPool::UpdateStrategy() {
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  if (inputs.size() == 0) {
+    MS_LOG(ERROR) << "inputs is invalid. input size: " << inputs.size();
+    return kLiteInputTensorError;
+  }
+  for (auto &tensor : inputs) {
+    if (tensor.Shape().empty()) {
+      MS_LOG(ERROR) << "tensor shape is invalid, input tensor shape is empty";
+      return kLiteInputTensorError;
+    }
+  }
   std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   predict_task_mutex_.lock();
   int max_wait_worker_node_id = 0;
@@ -1210,11 +1221,6 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     strategy = UpdateStrategy();
   }
   auto available_worker = GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num, strategy);
-  if (inputs.size() == 0) {
-    predict_task_mutex_.unlock();
-    MS_LOG(ERROR) << "inputs is invalid. input size: " << inputs.size();
-    return kLiteError;
-  }
   if (available_worker != nullptr) {
     model_pool_info_[strategy].predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     // dispatch tasks directly to workers
