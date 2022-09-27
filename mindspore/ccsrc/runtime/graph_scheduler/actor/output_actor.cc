@@ -257,7 +257,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     auto node_with_index = device_tensor->GetNodeIndex();
     tensor_device_address->SetNodeIndex(node_with_index.first, node_with_index.second);
     tensor_device_address->set_from_persistent_mem(device_tensor->from_persistent_mem());
-    tensor_device_address->set_host_shape(device_tensor->host_shape());
+    tensor_device_address->set_host_shape(tensor->shape());
     // The outputs may have the same output node, so need skip when the node has been done.
     if (tensor_device_address->GetPtr() != nullptr) {
       continue;
