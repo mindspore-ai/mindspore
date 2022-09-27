@@ -410,7 +410,7 @@ class GradOperation(GradOperation_):
         """ Pynative forward run to build grad graph. """
         new_kwargs = kwargs
         if self.sens_param:
-            if not 'sens' in kwargs.keys():
+            if 'sens' not in kwargs.keys():
                 args = args[:-1]
             else:
                 new_kwargs = kwargs.copy()

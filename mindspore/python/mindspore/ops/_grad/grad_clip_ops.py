@@ -15,13 +15,13 @@
 
 
 """Define the grad rules of clip operations."""
-from .grad_base import bprop_getters
-from .. import operations as P
-from ..operations import _inner_ops as inner
-from ..operations import _grad_ops as G
-from ...common import dtype as mstype
-from .._grad.grad_math_ops import _sum_grad
-from .._grad.grad_math_ops import binop_grad_common
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations import _grad_ops as G
+import mindspore.common.dtype as mstype
+from mindspore.ops._grad.grad_math_ops import _sum_grad
+from mindspore.ops._grad.grad_math_ops import binop_grad_common
 
 
 @bprop_getters.register(inner.ClipByNorm)
