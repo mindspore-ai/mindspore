@@ -75,7 +75,7 @@ void AicpuTask::Distribute() {
     MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret;
   }
 
-  SetAicpuParamHead(args_size_, io_addrs_num);
+  SetAicpuParamHead(SizeToUint(args_size_), io_addrs_num);
   SetInputOutputAddrs(io_addrs, io_addr_offset);
   SetNodeDef(node_def_len_offset, node_def_addr_offset);
 
@@ -89,7 +89,7 @@ void AicpuTask::Distribute() {
                << ", dump_flag = " << dump_flag;
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_;
-  argsInfo.argsSize = args_size_;
+  argsInfo.argsSize = SizeToUint(args_size_);
   rt_ret = rtCpuKernelLaunchWithFlag(static_cast<const void *>(task_info_->so_name().data()),
                                      static_cast<const void *>(task_info_->kernel_name().data()), 1, &argsInfo, nullptr,
                                      stream_, cpu_flag);
