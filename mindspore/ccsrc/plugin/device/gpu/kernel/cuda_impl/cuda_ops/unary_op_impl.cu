@@ -1703,7 +1703,8 @@ template CUDA_LIB_EXPORT void Tanh<Complex<float>>(const Complex<float> *input, 
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Logarithm<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                         const size_t count, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT void Negative<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                       const size_t count, cudaStream_t cuda_stream);
 // complex128
 template CUDA_LIB_EXPORT void Exponential<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                            const size_t count, cudaStream_t cuda_stream);
@@ -1729,7 +1730,8 @@ template CUDA_LIB_EXPORT void Tanh<Complex<double>>(const Complex<double> *input
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Logarithm<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                          const size_t count, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT void Negative<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                        const size_t count, cudaStream_t cuda_stream);
 // bool
 template CUDA_LIB_EXPORT void Real<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);

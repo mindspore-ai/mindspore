@@ -80,3 +80,20 @@ def test_neg_float32():
 @pytest.mark.env_onecard
 def test_neg_float64():
     neg(np.float64)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_neg_complex():
+    """
+    Feature: Test neg in complex dtype.
+    Description: Test neg in complex dtype.
+    Expectation: the result match given one.
+    """
+    x0_np = P.Complex()(Tensor(3.0), Tensor(5.0))
+    x0 = Tensor(x0_np)
+    neg_net = NetNeg()
+    output0 = neg_net(x0)
+    expect0 = np.asarray(np.complex(-3.0 - 5.0j), dtype=np.complex64)
+    assert np.allclose(output0.asnumpy(), expect0)

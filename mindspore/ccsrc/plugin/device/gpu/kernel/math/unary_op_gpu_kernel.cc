@@ -109,7 +109,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
       {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
        &UnaryOpGpuKernelMod::LaunchKernel<uchar>},
       {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-       &UnaryOpGpuKernelMod::LaunchKernel<int>}}},
+       &UnaryOpGpuKernelMod::LaunchKernel<int>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kReciprocal,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
@@ -388,7 +392,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   if constexpr (is_t_complex) {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_complex = {
       {kTan, Tan<T>}, {kCosh, Cosh<T>},     {kAtanh, Atanh<T>},     {kReciprocal, Reciprocal<T>},
-      {kInv, Inv<T>}, {kLog, Logarithm<T>}, {kExp, Exponential<T>},
+      {kInv, Inv<T>}, {kLog, Logarithm<T>}, {kExp, Exponential<T>}, {kNeg, Negative<T>},
     };
     copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
   } else {

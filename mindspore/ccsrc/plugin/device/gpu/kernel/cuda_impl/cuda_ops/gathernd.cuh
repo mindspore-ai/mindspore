@@ -22,4 +22,14 @@ template <typename T, typename S>
 CUDA_LIB_EXPORT void GatherNd(T *input, S *indices, T *output, const size_t &output_dim0, const size_t &output_dim1,
                               const size_t &indices_dim1, S *batch_indices, S *batch_strides, cudaStream_t stream);
 
+template <typename S>
+CUDA_LIB_EXPORT void GatherNd(cuComplex *input, S *indices, cuComplex *output, const size_t &output_dim0,
+                              const size_t &output_dim1, const size_t &indices_dim1, S *batch_indices, S *batch_strides,
+                              cudaStream_t stream);
+
+template <typename S>
+CUDA_LIB_EXPORT void GatherNd(cuDoubleComplex *input, S *indices, cuDoubleComplex *output, const size_t &output_dim0,
+                              const size_t &output_dim1, const size_t &indices_dim1, S *batch_indices, S *batch_strides,
+                              cudaStream_t stream);
+
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHERND_CUH_
