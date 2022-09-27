@@ -57,6 +57,7 @@ def run_dynamic_rank():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_dynamic_matrix_diag_v3_cpu():
     """
     Feature: MatrixDiagV3 Grad DynamicShape.
@@ -71,6 +72,7 @@ def test_dynamic_matrix_diag_v3_cpu():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_dynamic_matrix_diag_v3_gpu():
     """
     Feature: MatrixDiagV3 Grad DynamicShape.
