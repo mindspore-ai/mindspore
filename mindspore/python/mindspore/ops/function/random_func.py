@@ -391,15 +391,13 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     return value
 
 
-def random_shuffle(x, seed=0, seed2=0):
+def shuffle(x, seed=None):
     r"""
     Randomly shuffles a Tensor along its first dimension.
 
     Args:
         x (Tensor): The Tensor need be shuffled.
         seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
-        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-            final generated random number, must be non-negative. Default: 0.
 
     Returns:
         Tensor. The shape and type are the same as the input `x`.
@@ -412,11 +410,11 @@ def random_shuffle(x, seed=0, seed2=0):
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
-        >>> shuffle = ops.RandomShuffle(seed=1, seed2=1)
-        >>> output = shuffle(x)
+        >>> output = ops.shuffle(x, seed=1)
         >>> print(output.shape)
         (4,)
     """
+    seed, seed2 = _get_seed(seed, "shuffle")
     random_shuffle_ = _get_cache_prim(RandomShuffle)(seed=seed, seed2=seed2)
     output = random_shuffle_(x)
     return output
@@ -475,7 +473,7 @@ __all__ = [
     'random_gamma',
     'uniform_candidate_sampler',
     'random_poisson',
-    'random_shuffle',
+    'shuffle',
     'choice_with_mask'
 ]
 __all__.sort()

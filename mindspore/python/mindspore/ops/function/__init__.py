@@ -368,7 +368,7 @@ from .random_func import (
     random_gamma,
     uniform_candidate_sampler,
     random_poisson,
-    random_shuffle,
+    shuffle,
     choice_with_mask
 )
 from .grad import (
