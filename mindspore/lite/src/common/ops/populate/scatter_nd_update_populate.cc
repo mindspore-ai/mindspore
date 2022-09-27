@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/base/scatter_nd_base.h"
+#include "nnacl/scatter_nd_parameter.h"
+
 using mindspore::schema::PrimitiveType_ScatterNdUpdate;
+using mindspore::schema::PrimitiveType_TensorScatterAdd;
 
 namespace mindspore {
 namespace lite {
@@ -33,6 +36,8 @@ OpParameter *PopulateScatterNDUpdateParameter(const void *prim) {
   param->op_parameter.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_ScatterNdUpdate, PopulateScatterNDUpdateParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_TensorScatterAdd, PopulateScatterNDUpdateParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore
