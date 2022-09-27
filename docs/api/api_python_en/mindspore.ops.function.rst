@@ -281,6 +281,7 @@ Randomly Generating Functions
     mindspore.ops.random_poisson
     mindspore.ops.random_categorical
     mindspore.ops.random_gamma
+    mindspore.ops.shuffle
     mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
     mindspore.ops.uniform
