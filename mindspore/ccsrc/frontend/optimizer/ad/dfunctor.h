@@ -146,6 +146,8 @@ class KPrim {
   // current_primal_fg is the specialized and AutoMonaded primal_fg.
   FuncGraphPtr KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg);
 
+  bool CheckCustomVjp(const FuncGraphPtr &bprop_fg) const;
+  FuncGraphPtr GetCustomVjpBprop(const FuncGraphPtr &bprop_fg);
   void clear() {
     bprop_registry_meta_.clear();
     bprop_registry_.clear();

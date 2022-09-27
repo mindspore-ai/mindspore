@@ -921,5 +921,33 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
   func_graph->set_output(func_graph->NewCNode(outputs));
   return func_graph;
 }
+
+bool KPrim::CheckCustomVjp(const FuncGraphPtr &bprop_fg) const {
+  MS_EXCEPTION_IF_NULL(bprop_fg);
+  int parameters_size = bprop_fg->parameters().size();
+  if (bprop_fg->has_flag("custom_vjp") && parameters_size == 1) {
+    return true;
+  }
+  return false;
+}
+
+FuncGraphPtr KPrim::GetCustomVjpBprop(const FuncGraphPtr &bprop_fg) {
+  MS_EXCEPTION_IF_NULL(bprop_fg);
+  auto bprop_fg_output = dyn_cast<CNode>(bprop_fg->output());
+  MS_EXCEPTION_IF_NULL(bprop_fg_output);
+  // Check the definition of the bprop function
+  if (IsValueNode<None>(bprop_fg_output->input(1))) {
+    MS_EXCEPTION(TypeError)
+      << "The bprop function of @custom_vjp is undefined. Please use 'defbwd(bprop)' to define the 'bprop' function.";
+  }
+
+  auto custom_vjp_bprop_fg = GetValueNode<FuncGraphPtr>(bprop_fg_output->input(1));
+  if (custom_vjp_bprop_fg != nullptr) {
+    custom_vjp_bprop_fg->set_transforms(bprop_fg->transforms());
+    return custom_vjp_bprop_fg;
+  } else {
+    MS_EXCEPTION(TypeError) << "The 'bprop' function defined by @custom_vjp defbwd(bprop) is illegal.";
+  }
+}
 }  // namespace ad
 }  // namespace mindspore

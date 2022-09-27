@@ -379,6 +379,7 @@ from .grad import (
     derivative,
     jvp,
     vjp,
+    custom_vjp,
     jacfwd,
     linearize
 )

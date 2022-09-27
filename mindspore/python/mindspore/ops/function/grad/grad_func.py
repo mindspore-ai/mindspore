@@ -20,6 +20,7 @@ import numpy as np
 from mindspore.common import ms_function
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.nn.cell import Cell
 from mindspore.nn.grad.cell_grad import _LinearizeInner
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose
@@ -1044,6 +1045,74 @@ def jacfwd(fn, grad_position=0, has_aux=False):
     return wrapped
 
 
+def custom_vjp(fn=None):
+    """
+    Support vjp to custom bprop for function.
+
+    Args:
+        fn (function): The `fn` that need to define custom bprop. Default: None.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore.ops import custom_vjp
+        >>> from mindspore.ops import vjp
+        >>> from mindspore import Tensor
+        >>> def bprop_fn(x, y, out, dout):
+        ...     dx = x + 1
+        ...     dy = y + 2
+        ...     return dx, dy
+        >>> @custom_vjp
+        ... def fn(x, y):
+        ...     return x**3 + y
+        >>> fn.defbwd(bprop_fn)
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+        >>> output, grad_fn = vjp(fn, x, y)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.00000000e+00,  1.00000000e+01],
+         [ 3.00000000e+01,  6.80000000e+01]])
+        >>> grads = grad_fn(v)
+        >>> print(grads)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.00000000e+00,  3.00000000e+00],
+         [ 4.00000000e+00,  5.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.00000000e+00,  4.00000000e+00],
+         [ 5.00000000e+00,  6.00000000e+00]]))
+    """
+
+    def deco(fn):
+        class CustomVjp(Cell):
+            """
+            The CustomVjp decorates function into cell to support custom bprop.
+            """
+
+            def __init__(self, fwd):
+                super(CustomVjp, self).__init__()
+                self.fwd = fwd
+                self.bwd = None
+                self.add_flags(custom_vjp=True)
+
+            def construct(self, *args):
+                return self.fwd(*args)
+
+            def defbwd(self, bwd):
+                self.bwd = bwd
+
+            def bprop(self, *args):
+                return self.bwd(*args)
+
+        return CustomVjp(fn)
+
+    if fn is not None:
+        return deco(fn)
+    return deco
+
+
 __all__ = [
     'grad',
     'value_and_grad',
@@ -1051,6 +1120,7 @@ __all__ = [
     'derivative',
     'jvp',
     'vjp',
+    'custom_vjp',
     'jacfwd',
     'linearize'
 ]

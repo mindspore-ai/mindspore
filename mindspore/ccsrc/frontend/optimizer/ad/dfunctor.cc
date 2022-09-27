@@ -545,6 +545,12 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
                         << " does not support using Parameter.\n"
                         << trace::GetDebugInfo(bprop_graph->debug_info());
     }
+    // Check the func decorated by @custom_vjp.
+    if (g_k_prims.CheckCustomVjp(bprop_graph)) {
+      bprop_graph = g_k_prims.GetCustomVjpBprop(bprop_graph);
+      bprop->second = FuncGraphTransform(bprop_graph);
+    }
+
     bprop_graph->set_flag(mindspore::kFuncGraphFlagBackPropEntry, true);
     bprop_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
 
