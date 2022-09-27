@@ -235,8 +235,6 @@ endif()
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
     add_compile_definitions(SUPPORT_GPU)
-    add_compile_definitions(ENABLE_RUNTIME_NCX_PASS)
-    set(ENABLE_RUNTIME_NCX_PASS on)
 endif()
 
 if(MSLITE_ENABLE_ACL AND MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
