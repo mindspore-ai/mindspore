@@ -133,6 +133,8 @@ MSTensorVec RowToVec(const TensorRow &v);
 MSTensorVec Predicate1(MSTensorVec in);
 
 MSTensorVec Predicate2(MSTensorVec in);
+
+MSTensorVec Predicate3(MSTensorVec in);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // TESTS_UT_CPP_DATASET_COMMON_COMMON_H_

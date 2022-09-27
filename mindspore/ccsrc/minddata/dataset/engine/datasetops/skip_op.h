@@ -50,13 +50,13 @@ class SkipOp : public PipelineOp {
   std::string Name() const override { return kSkipOp; }
   Status GetNextRow(TensorRow *row) override;
 
-  void SetFirstEpochOnly(bool first_epoch_only) { first_epoch_only_ = first_epoch_only; }
+  void SetOnceOnly(bool once_only) { once_only_ = once_only; }
 
  private:
   int32_t max_skips_;   // The number of skips that the user requested
   int32_t skip_count_;  // A counter for the current number of executed skips
 
-  bool first_epoch_only_ = false;
+  bool once_only_ = false;  // skip for skip_count_ steps only once
 
   std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
 };

@@ -100,14 +100,24 @@ Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const 
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  int32_t new_num_epochs = num_epochs - static_cast<int32_t>(step / dataset_size);
-  int64_t skip_num = step % dataset_size;
+  if (step == 0) {
+    return Status::OK();
+  }
+  // in fast recovery, we start from current epoch and skip remaining steps (skip node will also be pushed down)
+  if (GlobalContext::config_manager()->fast_recovery()) {
+    int32_t new_num_epochs = num_epochs - static_cast<int32_t>(step / dataset_size);
+    int64_t skip_num = step % dataset_size;
 
-  root_ir->SetNumEpochs(new_num_epochs);
+    root_ir->SetNumEpochs(new_num_epochs);
 
-  auto skip_node = std::make_shared<SkipNode>(skip_num);
-  skip_node->SetFirstEpochOnly(true);
-  RETURN_IF_NOT_OK(node->InsertAbove(skip_node));
+    auto skip_node = std::make_shared<SkipNode>(skip_num);
+    skip_node->SetOnceOnly(true);
+    RETURN_IF_NOT_OK(node->InsertAbove(skip_node));
+  } else {  // in non-fast we only add a skip node on top of the tree (to get same augmentations)
+    auto skip_node = std::make_shared<SkipNode>(step);
+    skip_node->SetOnceOnly(true);
+    RETURN_IF_NOT_OK(node->InsertAbove(skip_node));
+  }
 
   MS_LOG(INFO) << "Pre pass: AddSkipPass complete.";
   return Status::OK();

@@ -97,14 +97,14 @@ class SkipNode : public DatasetNode {
   static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                           std::shared_ptr<DatasetNode> *result);
 
-  void SetFirstEpochOnly(bool flag) { first_epoch_only_ = flag; }
+  void SetOnceOnly(bool flag) { once_only_ = flag; }
 
   /// \brief Getter functions
-  const bool FirstEpochOnly() const { return first_epoch_only_; }
+  const bool OnceOnly() const { return once_only_; }
 
  private:
   int32_t skip_count_;
-  bool first_epoch_only_ = false;
+  bool once_only_ = false;
 };
 }  // namespace dataset
 }  // namespace mindspore

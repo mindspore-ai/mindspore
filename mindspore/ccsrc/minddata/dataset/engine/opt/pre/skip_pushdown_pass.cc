@@ -32,7 +32,7 @@ SkipPushdownPass::SkipNodes::SkipNodes() : skip_count_(0) {}
 
 // activate the optimization steps, and increase skip_count_ (if not the first skip node in the pipeline)
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<SkipNode> node, bool *const modified) {
-  if (node->FirstEpochOnly() == false) {
+  if (node->OnceOnly() == false) {
     return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
   }
   skip_count_ += node->Count();
@@ -41,7 +41,7 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<SkipNode> node, bool *
 }
 
 Status SkipPushdownPass::SkipNodes::VisitAfter(std::shared_ptr<SkipNode> node, bool *const modified) {
-  if (node->FirstEpochOnly() == false) {
+  if (node->OnceOnly() == false) {
     return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
   }
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ == 0, "The skip_count_ cannot be non-zero here.");
@@ -177,7 +177,7 @@ Status SkipPushdownPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *c
   for (auto iter : skip_nodes->insert_skip_above()) {
     MS_LOG(INFO) << "Inserting a Skip(" << iter.second << ") node above this node: " << iter.first->Name();
     auto new_skip_node = std::make_shared<SkipNode>(iter.second);
-    new_skip_node->SetFirstEpochOnly(true);
+    new_skip_node->SetOnceOnly(true);
     RETURN_IF_NOT_OK(iter.first->InsertAbove(new_skip_node));
   }
 

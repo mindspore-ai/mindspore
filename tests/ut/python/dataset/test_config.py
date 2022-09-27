@@ -19,6 +19,7 @@ import os
 import filecmp
 import glob
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
@@ -52,6 +53,7 @@ def test_basic():
     prefetch_size_original = ds.config.get_prefetch_size()
     seed_original = ds.config.get_seed()
     monitor_sampling_interval_original = ds.config.get_monitor_sampling_interval()
+    fast_recovery_original = ds.config.get_fast_recovery()
 
     ds.config.load('../data/dataset/declient.cfg')
 
@@ -60,24 +62,28 @@ def test_basic():
     assert ds.config.get_prefetch_size() == 16
     assert ds.config.get_seed() == 5489
     assert ds.config.get_monitor_sampling_interval() == 15
+    assert ds.config.get_fast_recovery()
 
     ds.config.set_num_parallel_workers(2)
     # ds.config.set_worker_connector_size(3)
     ds.config.set_prefetch_size(4)
     ds.config.set_seed(5)
     ds.config.set_monitor_sampling_interval(45)
+    ds.config.set_fast_recovery(False)
 
     assert ds.config.get_num_parallel_workers() == 2
     # assert ds.config.get_worker_connector_size() == 3
     assert ds.config.get_prefetch_size() == 4
     assert ds.config.get_seed() == 5
     assert ds.config.get_monitor_sampling_interval() == 45
+    assert not ds.config.get_fast_recovery()
 
     # Restore original configuration values
     ds.config.set_num_parallel_workers(num_parallel_workers_original)
     ds.config.set_prefetch_size(prefetch_size_original)
     ds.config.set_seed(seed_original)
     ds.config.set_monitor_sampling_interval(monitor_sampling_interval_original)
+    ds.config.set_fast_recovery(fast_recovery_original)
 
 
 def test_get_seed():
@@ -490,6 +496,26 @@ def test_config_bool_type_error():
     config_error_func(ds.config.set_multiprocessing_timeout_interval, True, TypeError, "interval isn't of type int")
 
 
+def test_fast_recovery():
+    """
+    Feature: Test the get_fast_recovery function
+    Description: This function only accepts a boolean as input and outputs error otherwise
+    Expectation: TypeError will be raised when input argument is missing or is not a boolean
+    """
+    # set_fast_recovery will raise TypeError if input is an integer
+    config_error_func(ds.config.set_fast_recovery, 0, TypeError, "fast_recovery must be a boolean dtype")
+    # set_fast_recovery will raise TypeError if input is a string
+    config_error_func(ds.config.set_fast_recovery, "True", TypeError, "fast_recovery must be a boolean dtype")
+    # set_fast_recovery will raise TypeError if input is a tuple
+    config_error_func(ds.config.set_fast_recovery, (True,), TypeError, "fast_recovery must be a boolean dtype")
+    # set_fast_recovery will raise TypeError if input is None
+    config_error_func(ds.config.set_fast_recovery, None, TypeError, "fast_recovery must be a boolean dtype")
+    # set_fast_recovery will raise TypeError if no input is provided
+    with pytest.raises(TypeError) as error_info:
+        ds.config.set_fast_recovery()
+    assert "set_fast_recovery() missing 1 required positional argument: 'fast_recovery'" in str(error_info.value)
+
+
 if __name__ == '__main__':
     test_basic()
     test_get_seed()
@@ -505,3 +531,4 @@ if __name__ == '__main__':
     test_enable_watchdog()
     test_multiprocessing_timeout_interval()
     test_config_bool_type_error()
+    test_fast_recovery()

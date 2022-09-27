@@ -45,6 +45,7 @@ __all__ = ['set_sending_batches', 'load', '_init_device_info',
            'set_autotune_interval', 'get_autotune_interval',
            'set_auto_offload', 'get_auto_offload',
            'set_enable_watchdog', 'get_enable_watchdog',
+           'set_fast_recovery', 'get_fast_recovery',
            'set_multiprocessing_timeout_interval', 'get_multiprocessing_timeout_interval']
 
 INT32_MAX = 2147483647
@@ -799,3 +800,34 @@ def get_dynamic_shape():
         >>> is_dynamic_shape = ds.config.get_dynamic_shape()
     """
     return _config.get_dynamic_shape()
+
+
+def set_fast_recovery(fast_recovery):
+    """
+    Set whether dataset pipeline should recover in fast mode during failover
+    (yet with slightly different random augmentations).
+
+    Args:
+        fast_recovery (bool): Whether the dataset pipeline recovers in fast mode. Default: True
+
+    Raises:
+        TypeError: If `fast_recovery` is not a boolean data type.
+
+    Examples:
+        >>> ds.config.set_fast_recovery(False)
+    """
+    if not isinstance(fast_recovery, bool):
+        raise TypeError("fast_recovery must be a boolean dtype.")
+    _config.set_fast_recovery(fast_recovery)
+
+
+def get_fast_recovery():
+    """
+    Get the fast_recovery flag of the dataset pipeline
+    Returns:
+        bool, whether the dataset recovers fast in failover reset
+
+    Examples:
+        >>> is_fast_recovery = ds.config.get_fast_recovery()
+    """
+    return _config.get_fast_recovery()

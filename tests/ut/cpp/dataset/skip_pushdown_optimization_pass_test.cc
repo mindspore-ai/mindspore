@@ -476,20 +476,19 @@ TEST_F(MindDataSkipPushdownTestOptimizationPass, SkipPushdownUnsupported_Filter)
   std::shared_ptr<Dataset> root;
   std::shared_ptr<Dataset> root_target;
 
-  root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(1)->Filter(Predicate1, {"label"});
+  root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(1)->Filter(Predicate3, {"label"});
   root_target =
-    ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(1)->Filter(Predicate1, {"label"});
+    ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(1)->Filter(Predicate3, {"label"});
+  EXPECT_OK(prepare_trees(root, root_target, 0));
+  root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Filter(Predicate3, {"label"})->Skip(1);
+  root_target =
+    ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Filter(Predicate3, {"label"})->Skip(1);
   EXPECT_OK(prepare_trees(root, root_target, 0));
 
-  root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Filter(Predicate1, {"label"})->Skip(1);
-  root_target =
-    ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Filter(Predicate1, {"label"})->Skip(1);
-  EXPECT_OK(prepare_trees(root, root_target, 0));
-
-  root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(1)->Filter(Predicate1, {"label"});
+  root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(1)->Filter(Predicate3, {"label"});
   root_target = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())
                   ->Skip(1)
-                  ->Filter(Predicate1, {"label"})
+                  ->Filter(Predicate3, {"label"})
                   ->Skip(1);
   EXPECT_OK(prepare_trees(root, root_target, 1));
 }

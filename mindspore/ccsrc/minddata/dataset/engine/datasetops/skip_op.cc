@@ -50,18 +50,20 @@ Status SkipOp::GetNextRow(TensorRow *row) {
   bool eoe_received = false;
   while (skip_count_ < max_skips_) {
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
-    if (row->eoe()) {
+    if (row->eoe() && !once_only_) {
       eoe_received = true;
       break;
     }
-    skip_count_++;
+    if (!row->eoe()) {
+      skip_count_++;
+    }
   }
   if (!eoe_received) {
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
   }
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
-    if (!first_epoch_only_) {
+    if (!once_only_) {
       skip_count_ = 0;
     }
   }

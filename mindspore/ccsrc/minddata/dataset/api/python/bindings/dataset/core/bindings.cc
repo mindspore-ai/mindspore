@@ -75,6 +75,8 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_multiprocessing_timeout_interval", &ConfigManager::multiprocessing_timeout_interval)
                     .def("set_dynamic_shape", &ConfigManager::set_dynamic_shape)
                     .def("get_dynamic_shape", &ConfigManager::dynamic_shape)
+                    .def("set_fast_recovery", &ConfigManager::set_fast_recovery)
+                    .def("get_fast_recovery", &ConfigManager::fast_recovery)
                     .def("load", [](ConfigManager &c, const std::string &s) { THROW_IF_ERROR(c.LoadFile(s)); });
                 }));
 
