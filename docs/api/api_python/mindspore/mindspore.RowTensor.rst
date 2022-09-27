@@ -25,11 +25,11 @@ mindspore.RowTensor
     参数：
         - **indices** (Tensor) - 形状为[D0]的一维整数张量。默认值：None。
         - **values** (Tensor) - 形状为[D0, D1, ..., Dn]中任意类型的张量。默认值：None。
-        - **dense_shape** (tuple(int)) - 包含相应稠密张量形状的整数元组。默认值：None。
+        - **shape** (tuple(int)) - 包含相应稠密张量形状的整数元组。默认值：None。
         - **row_tensor** (RowTensor) - RowTensor对象，用来初始化新的RowTensor。默认值：None。
 
     返回：
-        RowTensor，由 `indices` 、 `values` 和 `dense_shape` 组成。
+        RowTensor，由 `indices` 、 `values` 和 `shape` 组成。
 
     .. py:method:: dense_shape
         :property:
