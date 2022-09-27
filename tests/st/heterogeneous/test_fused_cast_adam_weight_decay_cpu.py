@@ -115,11 +115,12 @@ class GlobalNorm(nn.Cell):
         super(GlobalNorm, self).__init__()
         self.norm = nn.Norm()
         self.hyper_map = C.HyperMap()
+        self.sqrt = P.Sqrt()
 
     def construct(self, grads):
         """Calculate global norm construct"""
         square_sum = self.hyper_map(get_square_sum, grads)
-        global_norms = F.sqrt(F.addn(square_sum))
+        global_norms = self.sqrt(F.addn(square_sum))
         return global_norms
 
 
