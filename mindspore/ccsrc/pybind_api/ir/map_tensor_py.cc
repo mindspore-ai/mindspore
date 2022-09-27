@@ -58,7 +58,14 @@ void RegMapTensor(py::module *m) {
     .def(py::init(&MapTensorPy::MakeMapTensor), py::arg("key_dtype"), py::arg("value_dtype"), py::arg("value_shape"))
     .def_property_readonly("key_dtype", &MapTensor::KeyDtype)
     .def_property_readonly("value_dtype", &MapTensor::ValueDtype)
-    .def_property_readonly("value_shape", &MapTensor::value_shape);
+    .def_property_readonly("value_shape", &MapTensor::value_shape)
+    .def("get", &MapTensor::Get)
+    .def("put", &MapTensor::Put)
+    .def("erase", &MapTensor::Erase)
+    .def("export", &MapTensorPy::ExportAsNumpy)
+    .def("update", &MapTensorPy::UpdateFromNumpy)
+    .def("__str__", &MapTensor::ToString)
+    .def("__repr__", &MapTensor::ToString);
 }
 }  // namespace tensor
 }  // namespace mindspore
