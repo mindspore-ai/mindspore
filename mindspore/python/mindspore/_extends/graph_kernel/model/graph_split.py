@@ -792,8 +792,46 @@ class GraphSplitByPattern:
         self.pattern_fuse()
         if self.enable_recompute:
             self.recompute_fuse()
+        # The reshape should not be output node
+        # Note: after this function, the input output relation is not maintained.
+        self.split_output_reshapes()
         subgraphs, graphmodes = self.to_subgraphs()
         return subgraphs, graphmodes
+
+    def split_output_reshapes(self):
+        """Force split the output Reshapes into other new area"""
+
+        def _remove_output_reshape(reshape_ops, other_ops):
+            def _run():
+                for op in reshape_ops:
+                    if any((to_op in other_ops for to_op in op.output.to_ops)):
+                        reshape_ops.remove(op)
+                        other_ops.append(op)
+                        return True
+                return False
+
+            while _run():
+                pass
+
+        new_areas = []
+        for area in self.areas:
+            reshape_ops = list(op for op in area.ops if PrimLib.iter_type(op) == PrimLib.RESHAPE)
+            other_ops = list(op for op in area.ops if op not in reshape_ops)
+            if not other_ops or not reshape_ops:
+                continue
+            # remove the output reshape from "reshape_ops" and add it into "other_ops"
+            _remove_output_reshape(reshape_ops, other_ops)
+            if not reshape_ops:
+                continue
+            for op in reshape_ops:
+                a = self.Area(op, False, 0, self.reach_tab)
+                self.set_default_mode(a)
+                new_areas.append(a)
+            area.ops = other_ops
+            if len(other_ops) == 1:
+                self.set_default_mode(area)
+        if new_areas:
+            self.areas += new_areas
 
     def recompute_fuse(self):
         """find recompute regions and copy them out to new Areas"""
