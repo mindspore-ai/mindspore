@@ -1,7 +1,7 @@
 mindspore.dataset.text.WordpieceTokenizer
 =========================================
 
-.. py:class:: mindspore.dataset.text.WordpieceTokenizer(vocab, suffix_indicator='##', max_bytes_per_token=100,unknown_token='[UNK]', with_offsets=False)
+.. py:class:: mindspore.dataset.text.WordpieceTokenizer(vocab, suffix_indicator='##', max_bytes_per_token=100, unknown_token='[UNK]', with_offsets=False)
 
     将输入的字符串切分为子词。
 

@@ -6054,7 +6054,7 @@ class RowTensor(RowTensor_):
     The dense tensor dense represented by an RowTensor slices has
     `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
 
-    For example, if indices is [0], values is [[1, 2]], dense_shape is
+    For example, if indices is [0], values is [[1, 2]], shape is
     (3, 2), then the dense representation of the row tensor will be:
 
     .. code-block::
@@ -6069,12 +6069,12 @@ class RowTensor(RowTensor_):
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0]. Default: None.
         values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn]. Default: None.
-        dense_shape (tuple(int)): An integer tuple which contains the shape
+        shape (tuple(int)): An integer tuple which contains the shape
             of the corresponding dense tensor. Default: None.
         row_tensor (RowTensor): A RowTensor object. Default: None.
 
     Returns:
-        RowTensor, composed of `indices`, `values`, and `dense_shape`.
+        RowTensor, composed of `indices`, `values`, and `shape`.
 
     Examples:
         >>> import mindspore as ms
@@ -6087,7 +6087,7 @@ class RowTensor(RowTensor_):
         [[1. 2.]]
         >>> print(x.indices)
         [0]
-        >>> print(x.dense_shape)
+        >>> print(x.shape)
         (3, 2)
     """
 
