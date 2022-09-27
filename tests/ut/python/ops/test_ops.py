@@ -102,7 +102,9 @@ from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.math_ops import SelfAdjointEig
+from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations._grad_ops import MedianGrad
+from mindspore.ops.operations._grad_ops import LogitGrad
 from mindspore.ops.operations._grad_ops import MinimumGradGrad
 from mindspore.ops.operations._grad_ops import CholeskyGrad
 from mindspore.ops.operations.math_ops import RaggedRange
@@ -1722,6 +1724,15 @@ test_case_math_ops = [
         'block': P.Reciprocal(),
         'desc_inputs': [[2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
+    ('Logit', {
+        'block': Logit(),
+        'desc_inputs': [Tensor(np.array([0.6, 0.6, 0.7, 0.8]), mstype.float32)],
+        'desc_bprop': [Tensor(np.array([0.6, 0.6, 0.7, 0.8]), mstype.float32)]}),
+    ('LogitGrad', {
+        'block': LogitGrad(),
+        'desc_inputs': [Tensor(np.array([0.6, 0.6, 0.7, 0.8]), mstype.float32),
+                        Tensor(np.array([0.6, 0.6, 0.7, 0.8]), mstype.float32)],
+        'skip': ['backward']}),
     ('Minimum_0', {
         'block': P.Minimum(),
         'desc_inputs': [[2, 3, 3, 5], [3, 3, 5]],

@@ -2684,7 +2684,7 @@ def logit(x, eps=None):
         eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: None.
 
     Returns:
-        Tensor, with the same shape as the `x`.
+        Tensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `eps` is not a float.
@@ -2692,7 +2692,7 @@ def logit(x, eps=None):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
