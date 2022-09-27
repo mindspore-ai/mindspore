@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Abstract class, observer of observer design pattern."""
-
+from __future__ import absolute_import
 import abc
 from .event import Event
 

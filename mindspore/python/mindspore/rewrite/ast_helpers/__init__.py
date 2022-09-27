@@ -16,7 +16,7 @@
 `ast_helpers` package of MindSpore Rewrite package.
 Define some ast helpers for manipulating python ast.
 """
-
+from __future__ import absolute_import
 from .ast_finder import AstFinder, StrChecker
 from .ast_replacer import AstReplacer
 from .ast_modifier import AstModifier

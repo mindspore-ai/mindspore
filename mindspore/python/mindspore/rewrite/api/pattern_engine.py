@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """PatternEngine for modifying SymbolTree by pattern."""
+from __future__ import absolute_import
 from collections import OrderedDict
 from typing import Tuple, Union, List, Type
 import abc

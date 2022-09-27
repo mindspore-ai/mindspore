@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Define the namespace of MindSpore op definition."""
+from __future__ import absolute_import
 from .._extends.parse.namespace import CellNamespace
 
 

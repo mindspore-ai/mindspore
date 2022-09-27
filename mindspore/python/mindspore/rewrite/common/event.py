@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Event Enum as type of event."""
-
+from __future__ import absolute_import
 from enum import Enum
 
 

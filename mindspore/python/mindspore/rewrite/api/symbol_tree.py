@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Rewrite module api: SymbolTree."""
+from __future__ import absolute_import
 from typing import Optional
 
 from mindspore.nn import Cell

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.If in construct function to node of SymbolTree."""
-
+from __future__ import absolute_import
 import ast
 import astunparse
 

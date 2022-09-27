@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Replacing specific symbol name with another symbol name in specific scope."""
-
+from __future__ import absolute_import
 from typing import Any
 import ast
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree topological-relationship manager."""
+from __future__ import absolute_import
 from typing import Tuple
 
 from .api.scoped_value import ScopedValue

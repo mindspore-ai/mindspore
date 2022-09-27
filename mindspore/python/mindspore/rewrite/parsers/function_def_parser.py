@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
+from __future__ import absolute_import
 import ast
 
 from ..parser_register import ParserRegister, reg_parser

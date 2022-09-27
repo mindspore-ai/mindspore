@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Ast optimizer for flatten recursive call."""
+from __future__ import absolute_import
 from typing import Any, Tuple
 import ast
 from ast import FunctionDef

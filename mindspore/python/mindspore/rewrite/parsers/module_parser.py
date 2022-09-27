@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.Module to SymbolTrees."""
+from __future__ import absolute_import
 from typing import Any
 import os
 import ast

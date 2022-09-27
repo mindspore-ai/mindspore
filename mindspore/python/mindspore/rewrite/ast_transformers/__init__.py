@@ -13,5 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Transformers for optimizing ast."""
+from __future__ import absolute_import
 from .flatten_recursive_stmt import FlattenRecursiveStmt
 from .remove_return_out_of_if import RemoveReturnOutOfIf

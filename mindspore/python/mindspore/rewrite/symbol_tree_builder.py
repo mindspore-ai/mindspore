@@ -13,19 +13,19 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree builder."""
+from __future__ import absolute_import
 from copy import copy
 from typing import Optional
 import ast
 import inspect
 
 from mindspore.nn import Cell
-from .symbol_tree import SymbolTree
-from .node import TreeNode
-from .parser_register import ParserRegister
-from .parser import Parser
-from .ast_transformers import FlattenRecursiveStmt
-from .ast_helpers import AstModifier
-from .ast_helpers import AstFinder
+from mindspore.rewrite.symbol_tree import SymbolTree
+from mindspore.rewrite.node import TreeNode
+from mindspore.rewrite.parser_register import ParserRegister
+from mindspore.rewrite.parser import Parser
+from mindspore.rewrite.ast_transformers import FlattenRecursiveStmt
+from mindspore.rewrite.ast_helpers import AstFinder, AstModifier
 
 
 class SymbolTreeBuilder:

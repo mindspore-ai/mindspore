@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Unique name producer for target, name of node, class name, etc."""
-
+from __future__ import absolute_import
 from typing import Union
 
 from .node import Node
