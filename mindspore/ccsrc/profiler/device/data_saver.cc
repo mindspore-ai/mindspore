@@ -200,9 +200,10 @@ void DataSaver::WriteFrameWork(const std::string &base_dir, const std::vector<Cu
   for (auto kernel_info : all_kernel_info) {
     auto op_name = kernel_info.op_name;
     auto op_type = kernel_info.op_type;
+    auto graph_id = kernel_info.graph_id;
     auto cur_kernel_all_inputs_info = kernel_info.cur_kernel_all_inputs_info;
     try {
-      ofs << op_type << ";" << op_name << ";";
+      ofs << op_type << ";" << op_name << ";" << graph_id << ";";
       for (auto cur_kernel_input_info : cur_kernel_all_inputs_info) {
         ofs << "input_" << cur_kernel_input_info.input_id << ":" << cur_kernel_input_info.shape << ";";
       }
