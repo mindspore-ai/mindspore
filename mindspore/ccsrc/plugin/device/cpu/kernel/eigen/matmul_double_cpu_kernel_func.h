@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_MATMUL_DOULE_CPU_KERNEL_FUNC_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_MATMUL_DOULE_CPU_KERNEL_FUNC_H_
 
+#include <complex>
 #include <string>
 #include <vector>
 #include <map>
@@ -24,6 +25,9 @@
 
 namespace mindspore {
 namespace kernel {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelMod {
  public:
   MatmulDoubleCpuKernelFunc() = default;
@@ -51,6 +55,9 @@ class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelM
     return true;
   }
 
+  template <typename T>
+  void MatMul(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
   size_t a_row_{0};
   size_t b_row_{0};
   size_t out_row_{0};
@@ -60,6 +67,7 @@ class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelM
   bool trans_a_{false};
   bool trans_b_{false};
   std::string kernel_name_;
+  TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore
