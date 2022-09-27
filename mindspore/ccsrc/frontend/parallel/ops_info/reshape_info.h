@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "utils/hash_map.h"
 #include "frontend/parallel/ops_info/operator_info.h"
@@ -58,9 +59,10 @@ class ReshapeInfo : public OperatorInfo {
   void set_next_operator_name(const std::string &next_name) { next_operator_name_ = next_name; }
   void set_pre_operator_index(int64_t pre_index) { pre_operator_index_ = pre_index; }
   void set_next_operator_index(int64_t next_index) { next_operator_index_ = next_index; }
-  Status GenerateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
-                               const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs, int64_t out_index,
-                               int64_t in_index, bool is_prev_param, bool is_next_reshape);
+  Status GenerateStrategyCosts(
+    const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
+    std::vector<std::pair<std::vector<std::shared_ptr<StrategyWithCost>>, int64_t>> next_costs_index, int64_t out_index,
+    bool is_prev_param, bool is_next_reshape);
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::string pre_operator_name() const { return pre_operator_name_; }
