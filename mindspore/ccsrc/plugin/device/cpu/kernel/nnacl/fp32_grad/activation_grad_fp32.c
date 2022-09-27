@@ -138,29 +138,13 @@ int SoftplusGrad(const float *src0, const float *src1, int length, float *dst) {
   return NNACL_OK;
 }
 
-int HShrinkGrad(const float *src0, const float *src1, int length, float *dst, float lambd) {
+int HardShrinkGrad(const float *src0, const float *src1, int length, float *dst, float lambd) {
   int i = 0;
   const float neg_lambd = -1 * lambd;
-#if defined(ENABLE_AVX)
-  for (; i <= length - C8NUM; i += C8NUM) {
-    MS_FLOAT256_F32 src_tmp = MS_LD256_F32(src1 + i);
-    MS_MASK256_TYPE mask = MS_AND256_MASK(MS_CMPLE256_F32(src_tmp, MS_MOV256_F32(lambd)),
-                                          MS_CMPLE256_F32(MS_MOV256_F32(neg_lambd), src_tmp));
-    MS_ST256_F32(dst + i, MS_BLEND256_F32(MS_LD256_F32(src0 + i), MS_MOV256_F32(0.0f), mask));
-  }
-#endif
-
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  for (; i <= length - C4NUM; i += C4NUM) {
-    MS_FLOAT128_F32 src_tmp = MS_LD128_F32(src1 + i);
-    MS_MASK128_TYPE mask = MS_AND128_MASK(MS_CMPLE128_F32(src_tmp, MS_MOV128_F32(lambd)),
-                                          MS_CMPLE128_F32(MS_MOV128_F32(neg_lambd), src_tmp));
-    MS_ST128_F32(dst + i, MS_BLEND128_F32(MS_LD128_F32(src0 + i), MS_MOV128_F32(0.0f), mask));
-  }
-#endif
+  SIMD_RUN_NO_SCALAR(ShrinkGrad, i, src0, src1, length, dst, lambd);
 
   for (; i < length; ++i) {
-    dst[i] = src1[i] >= neg_lambd && src1[i] <= lambd ? 0 : src0[i];
+    dst[i] = (src1[i] >= neg_lambd && src1[i] <= lambd) ? 0 : src0[i];
   }
   return NNACL_OK;
 }

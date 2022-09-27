@@ -63,10 +63,10 @@ int HShrinkGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
   input_elements_ = input_size_list_[0] / unit_size_;
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
-bool HShrinkGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool HShrinkGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHShrinkGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHShrinkGradOutputsNum, kernel_name_);
@@ -78,13 +78,9 @@ bool HShrinkGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
 
   auto task = [dy, x, dx, this](size_t start, size_t end) {
-    auto dy_tmp = dy + start;
-    auto x_tmp = x + start;
-    auto dx_tmp = dx + start;
-
-    auto ret = HShrinkGrad(dy_tmp, x_tmp, (end - start), dx_tmp, this->lambd_);
-    if (ret != static_cast<int>(NNACL_OK)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', call NNACL HShrinkGrad function failed. Error code: " << ret;
+    auto ret = HardShrinkGrad(dy + start, x + start, SizeToInt(end - start), dx + start, this->lambd_);
+    if (ret != NNACL_OK) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', call NNACL HShrinkGrad function failed.";
       return false;
     }
     return true;

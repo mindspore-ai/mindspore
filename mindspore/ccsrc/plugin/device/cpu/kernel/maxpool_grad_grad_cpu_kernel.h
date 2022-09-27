@@ -30,8 +30,8 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int kMaxPool2DGradGradDim = 2;
-constexpr int kMaxPool3DGradGradDim = 3;
+constexpr size_t kMaxPool2DGradGradDim = 2;
+constexpr size_t kMaxPool3DGradGradDim = 3;
 
 class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
  public:
@@ -46,18 +46,17 @@ class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckInputVaild();
+  void CheckInputVaild() const;
   void CalPad();
 
   std::vector<int64_t> kernels_;
@@ -67,7 +66,7 @@ class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> out_shapes_;
   PoolingParameter *param_ = nullptr;
 
-  int dim_ = 0;
+  size_t dim_ = 0;
   size_t depth_index_ = 0;
   size_t height_index_ = 0;
   size_t width_index_ = 0;

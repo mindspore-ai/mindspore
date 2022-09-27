@@ -30,7 +30,7 @@ namespace {
 constexpr size_t kMaxPoolGradGradInputsNum = 3;
 constexpr size_t kMaxPoolGradGradOutputsNum = 1;
 constexpr size_t kGradIndex = 2;
-constexpr size_t kPadHalf = 2;
+constexpr int64_t kPadHalf = 2;
 
 const std::vector<KernelAttr> kernel_attr = {
   {KernelAttr()
@@ -81,7 +81,7 @@ bool MaxPoolGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-void MaxPoolGradGradCpuKernelMod::CheckInputVaild() {
+void MaxPoolGradGradCpuKernelMod::CheckInputVaild() const {
   const size_t src_dim = in_shapes_.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "PoolingGrad only supports 4D/5D input, but got " << src_dim << "D";
@@ -107,20 +107,21 @@ void MaxPoolGradGradCpuKernelMod::CalPad() {
   }
 
   std::vector<int64_t> pad(in_shapes_.size(), 0);
-  for (int i = 0; i < dim_; i++) {
-    auto cur_dim = i + 2;
+  for (size_t i = 0; i < dim_; i++) {
+    size_t cur_dim = i + 2;
     MS_EXCEPTION_IF_ZERO("stride ", strides_[cur_dim]);
-    auto tmp_dim_size = (in_shapes_[cur_dim] / strides_[cur_dim]) * strides_[cur_dim] == in_shapes_[cur_dim]
-                          ? (in_shapes_[cur_dim] / strides_[cur_dim])
-                          : (in_shapes_[cur_dim] / strides_[cur_dim]) + 1;
-    auto pad_t = std::max<int>(0, (tmp_dim_size - 1) * strides_[cur_dim] + kernels_[cur_dim] - in_shapes_[cur_dim]);
+    int64_t tmp_dim_size = (in_shapes_[cur_dim] / strides_[cur_dim]) * strides_[cur_dim] == in_shapes_[cur_dim]
+                             ? (in_shapes_[cur_dim] / strides_[cur_dim])
+                             : (in_shapes_[cur_dim] / strides_[cur_dim]) + 1;
+    int64_t pad_t =
+      std::max<int64_t>(0, (tmp_dim_size - 1) * strides_[cur_dim] + kernels_[cur_dim] - in_shapes_[cur_dim]);
     pad[cur_dim] = pad_t / kPadHalf;
   }
 
-  param_->pad_u_ = pad[height_index_];
-  param_->pad_l_ = pad[width_index_];
+  param_->pad_u_ = LongToInt(pad[height_index_]);
+  param_->pad_l_ = LongToInt(pad[width_index_]);
   if (dim_ == kMaxPool3DGradGradDim) {
-    reinterpret_cast<Pooling3DParameter *>(param_)->pad_f_ = pad[depth_index_];
+    reinterpret_cast<Pooling3DParameter *>(param_)->pad_f_ = LongToInt(pad[depth_index_]);
   }
 }
 
@@ -151,16 +152,17 @@ int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     reinterpret_cast<Pooling3DParameter *>(param_)->input_d_ = LongToInt(in_shapes_[depth_index_]);
     reinterpret_cast<Pooling3DParameter *>(param_)->output_d_ = LongToInt(out_shapes_[depth_index_]);
   }
-  input_batch_stride_ = std::accumulate(in_shapes_.begin() + 1, in_shapes_.end(), 1, std::multiplies<size_t>());
-  output_batch_stride_ = std::accumulate(out_shapes_.begin() + 1, out_shapes_.end(), 1, std::multiplies<size_t>());
+  input_batch_stride_ =
+    LongToSize(std::accumulate(in_shapes_.begin() + 1, in_shapes_.end(), 1, std::multiplies<int64_t>()));
+  output_batch_stride_ =
+    LongToSize(std::accumulate(out_shapes_.begin() + 1, out_shapes_.end(), 1, std::multiplies<int64_t>()));
 
   CheckInputVaild();
   CalPad();
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
-bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
+bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradGradOutputsNum, kernel_name_);

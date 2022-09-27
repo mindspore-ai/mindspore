@@ -251,10 +251,10 @@ void Celu(const float *src, int length, float *dst, float alpha) {
   return;
 }
 
-int HShrink(const float *src, int length, float *dst, float lambd) {
+int HardShrink(const float *src, int length, float *dst, float lambd) {
   int i = 0;
   const float neg_lambd = -1 * lambd;
-  SIMD_RUN_NO_SCALAR(HShrink, i, src, length, dst, lambd);
+  SIMD_RUN_NO_SCALAR(HardShrink, i, src, length, dst, lambd);
 
   for (; i < length; ++i) {
     dst[i] = src[i] >= neg_lambd && src[i] <= lambd ? 0 : src[i];

@@ -188,14 +188,18 @@ static inline int Celu@SIMD_INSTRUCTION@(int index, const float *src, int length
     return index;
 }
 
-static inline int HShrink@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float lambd) {
-    const float neg_lambd = -1 * lambd;
+static inline int HardShrink@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float lambd) {
+    SIMD_F32 pos_lamdb_v = SIMD_MOV_F32(lambd);
+    SIMD_F32 neg_lamdb_v = SIMD_MOV_F32(-lambd);
+
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
-        SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
-        SIMD_MASK mask0 = SIMD_CMPLE_F32(src_tmp, SIMD_MOV_F32(lambd));
-        SIMD_MASK mask1 = SIMD_CMPLE_F32(SIMD_MOV_F32(neg_lambd), src_tmp);
-        SIMD_MASK mask = SIMD_AND_MASK(mask0, mask1);
-        SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MOV_F32(0.0f), mask));
+        SIMD_F32 src_t = SIMD_LD_F32(src + index);
+        /* v0 = (in > lamdb) & in */
+        SIMD_F32 value0 = SIMD_AND_MASK_F32(SIMD_CMPGT_F32(src_t, pos_lamdb_v), src_t);
+        /* v1 = (in < -lamdb) & in */
+        SIMD_F32 value1 = SIMD_AND_MASK_F32(SIMD_CMPLT_F32(src_t, neg_lamdb_v), src_t);
+        /* out = (v0 | v1) */
+        SIMD_ST_F32(dst + index, SIMD_OR_F32(value0, value1));
     }
     return index;
 }
