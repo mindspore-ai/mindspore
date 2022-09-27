@@ -74,11 +74,11 @@ TypePtr SparseSegmentSumInferType(const PrimitivePtr &prim, const std::vector<Ab
   auto segment_ids_type = input_args[kInputIndex2]->BuildType();
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
-  CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
@@ -88,7 +88,7 @@ AbstractBasePtr SparseSegmentSumInfer(const abstract::AnalysisEnginePtr &, const
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t input_num = kInputIndex3;
+  const int64_t input_num = static_cast<int64_t>(kInputIndex3);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = SparseSegmentSumInferType(prim, input_args);
   auto shapes = SparseSegmentSumInferShape(prim, input_args);

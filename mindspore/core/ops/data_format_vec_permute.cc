@@ -60,12 +60,12 @@ void DataFormatVecPermute::Init(const std::string &src_format, const std::string
 }
 
 void DataFormatVecPermute::set_src_format(const std::string &src_format) {
-  CheckAndConvertUtils::CheckString(kSrcFormat, src_format, {"NHWC", "NCHW"}, this->name());
+  (void)CheckAndConvertUtils::CheckString(kSrcFormat, src_format, {"NHWC", "NCHW"}, this->name());
   (void)this->AddAttr(kSrcFormat, api::MakeValue(src_format));
 }
 
 void DataFormatVecPermute::set_dst_format(const std::string &dst_format) {
-  CheckAndConvertUtils::CheckString(kSrcFormat, dst_format, {"NHWC", "NCHW"}, this->name());
+  (void)CheckAndConvertUtils::CheckString(kSrcFormat, dst_format, {"NHWC", "NCHW"}, this->name());
   (void)this->AddAttr(kDstFormat, api::MakeValue(dst_format));
 }
 
