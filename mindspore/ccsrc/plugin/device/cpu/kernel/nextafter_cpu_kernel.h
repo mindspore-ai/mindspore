@@ -42,7 +42,7 @@ class NextAfterCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TypeId input_dtype_;
   CNodeWeakPtr node_wpt_;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   using NextAfterFunc = std::function<bool(NextAfterCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, NextAfterFunc>> func_list_;

@@ -82,8 +82,7 @@ struct WeightsAndIndices {
   int64_t index_1;
   int64_t index_2;
   int64_t index_3;
-
-  int advance;
+  size_t advance;
 };
 
 struct HalfPixelScalerGrad {
@@ -227,63 +226,71 @@ const int64_t Calindex(const ResizerGradState &RGS, const int64_t &x1, const int
   }
 }
 template <typename T>
+void ResizeCommomCalc(const ResizerGradState &RGS, const bool half_pixel_centers,
+                      const std::vector<WeightsAndIndices> &x_wais, const bool flag, const float *input_grad,
+                      T *output_grad, int64_t b, int64_t y) {
+  WeightsAndIndices y_wai;
+  if (half_pixel_centers) {
+    GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(RGS.height_scale, y, RGS.original_height, &y_wai);
+  } else {
+    GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(RGS.height_scale, y, RGS.original_height, &y_wai);
+  }
+  for (int64_t x = 0; x < RGS.resized_width; ++x) {
+    const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
+    for (int64_t c = 0; c < RGS.channels; ++c) {
+      T curr_input_grad = input_grad[Calindex(RGS, b, y, x, c, flag)];
+      // row 0 of 0, 1, 2, 3
+      output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_0, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_0 * x_wai.weight_0);
+      output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_1, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_0 * x_wai.weight_1);
+      output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_2, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_0 * x_wai.weight_2);
+      output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_3, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_0 * x_wai.weight_3);
+
+      // row 1 of 0, 1, 2, 3
+      output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_0, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_1 * x_wai.weight_0);
+      output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_1, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_1 * x_wai.weight_1);
+      output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_2, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_1 * x_wai.weight_2);
+      output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_3, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_1 * x_wai.weight_3);
+      // row 2 of 0, 1, 2, 3
+      output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_0, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_2 * x_wai.weight_0);
+      output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_1, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_2 * x_wai.weight_1);
+      output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_2, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_2 * x_wai.weight_2);
+      output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_3, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_2 * x_wai.weight_3);
+      // row 3 of 0, 1, 2, 3
+      output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_0, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_3 * x_wai.weight_0);
+      output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_1, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_3 * x_wai.weight_1);
+      output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_2, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_3 * x_wai.weight_2);
+      output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_3, c, !flag)] +=
+        T(curr_input_grad * y_wai.weight_3 * x_wai.weight_3);
+    }
+  }
+}
+
+template <typename T>
 void CalNonUtil(const ResizerGradState &RGS, const bool half_pixel_centers,
                 const std::vector<WeightsAndIndices> &x_wais, const bool flag, const float *input_grad,
                 T *output_grad) {
   for (int64_t b = 0; b < RGS.batch_size; ++b) {
     for (int64_t y = 0; y < RGS.resized_height; ++y) {
-      WeightsAndIndices y_wai;
-      if (half_pixel_centers) {
-        GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(RGS.height_scale, y, RGS.original_height, &y_wai);
-      } else {
-        GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(RGS.height_scale, y, RGS.original_height, &y_wai);
-      }
-      for (int64_t x = 0; x < RGS.resized_width; ++x) {
-        const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
-        for (int64_t c = 0; c < RGS.channels; ++c) {
-          T curr_input_grad = input_grad[Calindex(RGS, b, y, x, c, flag)];
-          // row 0 of 0, 1, 2, 3
-          output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_0, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_0 * x_wai.weight_0);
-          output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_1, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_0 * x_wai.weight_1);
-          output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_2, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_0 * x_wai.weight_2);
-          output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_3, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_0 * x_wai.weight_3);
-
-          // row 1 of 0, 1, 2, 3
-          output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_0, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_1 * x_wai.weight_0);
-          output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_1, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_1 * x_wai.weight_1);
-          output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_2, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_1 * x_wai.weight_2);
-          output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_3, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_1 * x_wai.weight_3);
-          // row 2 of 0, 1, 2, 3
-          output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_0, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_2 * x_wai.weight_0);
-          output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_1, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_2 * x_wai.weight_1);
-          output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_2, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_2 * x_wai.weight_2);
-          output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_3, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_2 * x_wai.weight_3);
-          // row 3 of 0, 1, 2, 3
-          output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_0, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_3 * x_wai.weight_0);
-          output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_1, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_3 * x_wai.weight_1);
-          output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_2, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_3 * x_wai.weight_2);
-          output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_3, c, !flag)] +=
-            T(curr_input_grad * y_wai.weight_3 * x_wai.weight_3);
-        }
-      }
+      ResizeCommomCalc(RGS, half_pixel_centers, x_wais, flag, input_grad, output_grad, b, y);
     }
   }
 }
+
 template <typename T>
 inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &RGS, const bool half_pixel_centers,
                               T *output_grad) {
@@ -298,54 +305,7 @@ inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &R
     for (int64_t b = 0; b < RGS.batch_size; ++b) {
       auto task = [&](int64_t start, int64_t end) {
         for (int64_t y = start; y < end; ++y) {
-          WeightsAndIndices y_wai;
-          if (half_pixel_centers) {
-            GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(RGS.height_scale, y, RGS.original_height, &y_wai);
-          } else {
-            GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(RGS.height_scale, y, RGS.original_height, &y_wai);
-          }
-          for (int64_t x = 0; x < RGS.resized_width; ++x) {
-            const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
-            for (int64_t c = 0; c < RGS.channels; ++c) {
-              T curr_input_grad = input_grad[Calindex(RGS, b, y, x, c, flag)];
-              // row 0 of 0, 1, 2, 3
-              output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_0, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_0);
-              output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_1, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_1);
-              output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_2, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_2);
-              output_grad[Calindex(RGS, b, y_wai.index_0, x_wai.index_3, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_3);
-              // row 1 of 0, 1, 2, 3
-              output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_0, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_0);
-              output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_1, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_1);
-              output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_2, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_2);
-              output_grad[Calindex(RGS, b, y_wai.index_1, x_wai.index_3, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_3);
-              // row 2 of 0, 1, 2, 3
-              output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_0, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_0);
-              output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_1, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_1);
-              output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_2, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_2);
-              output_grad[Calindex(RGS, b, y_wai.index_2, x_wai.index_3, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_3);
-              // row 3 of 0, 1, 2, 3
-              output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_0, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_0);
-              output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_1, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_1);
-              output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_2, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_2);
-              output_grad[Calindex(RGS, b, y_wai.index_3, x_wai.index_3, c, !flag)] +=
-                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_3);
-            }
-          }
+          ResizeCommomCalc(RGS, half_pixel_centers, x_wais, flag, input_grad, output_grad, b, y);
         }
       };
       CPUKernelUtils::ParallelFor(task, static_cast<size_t>(RGS.resized_height));
