@@ -7,7 +7,7 @@ mindspore.rewrite
     SymbolTree通常对应于网络的forward方法。
 
     参数：
-        - **handler** ( Cell ) - 要重写的网络。现在只支持Cell类型的网络。
+        - **network** ( Cell ) - 要重写的网络。现在只支持Cell类型的网络。
 
     .. py:method:: mindspore.rewrite.SymbolTree.after(node: Node)
 
@@ -36,7 +36,7 @@ mindspore.rewrite
         异常：
             - **TypeError** - 如果参数不是Node类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.create(cls, network)
+    .. py:method:: mindspore.rewrite.SymbolTree.create(network)
 
         根据传入的 `network` 创建一个SymbolTree对象。
 
@@ -111,9 +111,6 @@ mindspore.rewrite
 
         获取SymbolTree中保存源代码的文件名。
 
-        返回：
-            当前SymbolTree保存源代码的文件名。
-
     .. py:method:: mindspore.rewrite.SymbolTree.insert(position, node: Node)
 
         在SymbolTree的 `position` 位置插入一个节点。 `position` 可以通过 `before` 或 `after` 来获得。
@@ -171,7 +168,7 @@ mindspore.rewrite
 
         参数：
             - **index** (int) - 指定要设置的输出索引。
-            - **new_nodes** (str) - 要设置的新输出值。
+            - **return_value** (str) - 要设置的新输出值。
 
         返回：
             当前SymbolTree的Retutn节点。
@@ -195,6 +192,9 @@ mindspore.rewrite
     在大多数情况下，Node表示一个向前计算的的运算，它可以是Cell的实例、Primitive的实例或可调用的方法。
 
     下面提到的NodeImpl是Node的实现，它不是Rewrite的接口。Rewrite建议调用Node的特定 `create` 方法来实例化Node的实例，例如 `create_call_cell`，而不是直接调用Node的构造函数，所以不要关心NodeImpl是什么，只需要看做一个句柄即可。
+
+    参数：
+        - **node** ( Node ) - SymbolTree中节点的具体实现类的实例。
 
     .. py:method:: mindspore.rewrite.Node.create_call_cell(cell: Cell, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = "", is_sub_net: bool = False)
         :staticmethod:
@@ -223,11 +223,10 @@ mindspore.rewrite
 
         获取当前节点的参数。
 
-        .. note:: 
-            - 当前节点的 `node_type` 为 `CallCell`、 `CallPrimitive` 或 `Tree` 时，返回值对应于 ast.Call 的 `args`，表示调用 `cell-op` 或 `primitive-op` 的 `forward` 方法的参数。
-            - 当前节点的 `node_type` 为 `Input` 时，返回值为函数参数的默认值。
-            - 当前节点的 `node_type` 为 `Output` 时，返回值对应网络的返回值。
-            - 当前节点的 `node_type` 为 `Python` 时，没有实际含义，可以忽略。
+        - 当前节点的 `node_type` 为 `CallCell`、 `CallPrimitive` 或 `Tree` 时，返回值对应于 ast.Call 的 `args`，表示调用 `cell-op` 或 `primitive-op` 的 `forward` 方法的参数。
+        - 当前节点的 `node_type` 为 `Input` 时，返回值为函数参数的默认值。
+        - 当前节点的 `node_type` 为 `Output` 时，返回值对应网络的返回值。
+        - 当前节点的 `node_type` 为 `Python` 时，没有实际含义，可以忽略。
 
         返回：
             `ScopedValue` 实例的列表。
@@ -375,6 +374,7 @@ mindspore.rewrite
             - **TypeError** - 如果参数 `src_node` 不是Node类型。
             - **TypeError** - 如果参数 `out_idx` 不是int类型。
             - **ValueError** - 如果参数 `out_idx` 超出了 `src_node` 的输出数量。
+            - **ValueError** - 如果参数 `src_node` 当 `out_idx` 为None或者没有给 `out_idx` 赋值时，有多个输出。
 
     .. py:method:: mindspore.rewrite.Node.set_attribute(key: str, value)
 
@@ -589,14 +589,9 @@ mindspore.rewrite
         获取PattenNode的类型。
 
 
-.. py:class:: mindspore.rewrite.VarNode
+.. py:class:: mindspore.rewrite.VarNode()
 
     VarNode是PatternNode的子类，其匹配方法始终返回True。
-
-    参数：
-        - **pattern_node_name** (str) - 节点名称。
-        - **match_type** (Type) - 当前节点的匹配类型。
-        - **inputs** (list[PatternNode]) - 当前节点的输入节点。
 
 .. py:class:: mindspore.rewrite.Replacement
 
@@ -636,5 +631,5 @@ mindspore.rewrite
             Tree节点中的SymbolTree对象。注意节点的 `symbol_tree` 可能是None，在这种情况下，方法将返回None。
 
         异常：
-            - **TypeError** - 如果参数 `node` 的 `node_type` 不是Tree类型。
+            - **RuntimeError** - 如果参数 `node` 的 `node_type` 不是Tree类型。
             - **TypeError** - 如果参数 `node` 不是Node类型实例。
