@@ -231,7 +231,7 @@ class Caltech101Dataset(GeneratorDataset):
                     An Incremental Bayesian Approach Tested on 101 Object Categories},
         journal   = {Computer Vision and Pattern Recognition Workshop},
         year      = {2004},
-        url       = {https://data.caltech.edu/records/20086},
+        url       = {https://data.caltech.edu/records/mzrjq-6wc02},
         }
     """
 

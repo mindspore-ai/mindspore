@@ -135,7 +135,9 @@ Status BuildVocabOp::CollectorThread() {
     RETURN_IF_NOT_OK(collector_queue_->PopFront(&wrkr_map));
     RETURN_UNEXPECTED_IF_NULL(wrkr_map);
     if (!wrkr_map->empty()) {
-      for (const auto &wd : *wrkr_map) word_cnt_[wd.first] += wd.second;
+      for (const auto &wd : *wrkr_map) {
+        word_cnt_[wd.first] += wd.second;
+      }
     } else {
       ++num_quited_worker;
     }
