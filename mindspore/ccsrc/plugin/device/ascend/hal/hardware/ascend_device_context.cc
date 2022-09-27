@@ -23,6 +23,12 @@
 #else
 #include "debug/debugger/proto_exporter_stub.h"
 #endif
+#ifndef ENABLE_SECURITY
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
+
+using mindspore::profiler::ascend::AscendProfiler;
+#endif
 
 namespace mindspore {
 namespace device {
@@ -33,6 +39,10 @@ void AscendDeviceContext::Initialize() {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     runtime_instance_->SetContext();
     return;
+  } else {
+#ifndef ENABLE_SECURITY
+    AscendProfiler::GetInstance()->MsprofInitProfiler();
+#endif
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();

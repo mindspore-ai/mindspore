@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ using mindspore::device::ascend::ProfilingUtils;
 namespace {
 constexpr Status PROF_SUCCESS = 0;
 constexpr Status PROF_FAILED = 0xFFFFFFFF;
+constexpr char MsprofSampleConfig[] = "PROFILER_SAMPLECONFIG";
 }  // namespace
 
 namespace mindspore {
@@ -105,6 +106,14 @@ Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) cons
     return PROF_FAILED;
   }
   return PROF_SUCCESS;
+}
+
+bool ProfilingManager::IsMsprofiling() {
+  const char *msprof_config = std::getenv(MsprofSampleConfig);
+  if (msprof_config != nullptr) {
+    msprof_enable_ = true;
+  }
+  return msprof_enable_;
 }
 
 bool ProfilingManager::InitProfiling(const std::string &profiling_path, uint32_t device_id) {

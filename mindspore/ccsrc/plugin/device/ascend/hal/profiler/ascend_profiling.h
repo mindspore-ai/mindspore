@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ class AscendProfiler : public Profiler {
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerEnd() override { return; }
   uint64_t GetOptionsMask() const;
+  void MsprofInitProfiler() const;
+  void MsprofStopProfiler() const;
   aclprofAicoreMetrics GetAicMetrics() const;
   void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, const KernelType kernel_type);
   std::map<std::thread::id, uint32_t> last_tid;

@@ -32,6 +32,8 @@ def construct_profiling_options():
     options["start"] = profiling_options.get('start', False)
     options["profile_memory"] = profiling_options.get("memory", False)
     options["profile_communication"] = profiling_options.get("hccl", False)
+    options["aicore_metrics"] = profiling_options.get("aicore_metrics", 0)
+    options["l2_cache"] = profiling_options.get("l2_cache", False)
     if not isinstance(options.get("start"), bool):
         raise ValueError(
             "The 'start' parameter of the environment variable MS_PROFILE_OPTIONS must be set to true or false.")
@@ -41,6 +43,12 @@ def construct_profiling_options():
     if not isinstance(options.get("profile_communication"), bool):
         raise ValueError(
             "The 'hccl' parameter of the environment variable MS_PROFILE_OPTIONS must be set to true or false.")
+    if not isinstance(options.get("aicore_metrics"), int):
+        raise ValueError(
+            "The 'aicore_metrics' parameter of the environment variable MS_PROFILE_OPTIONS must range from -1 to 5.")
+    if not isinstance(options.get("l2_cache"), bool):
+        raise ValueError(
+            "The 'l2_cache' parameter of the environment variable MS_PROFILE_OPTIONS must be set to true or false.")
     if options.get("start"):
         output_path = profiling_options.get("output_path")
         if not output_path:
@@ -63,7 +71,9 @@ def combine_profile_options():
         "output_path": "",
         "profiler_path": "",
         "profile_memory": False,
-        "profile_communication": False
+        "profile_communication": False,
+        "aicore_metrics": 0,
+        "l2_cache": False
     }
     return options
 
@@ -116,6 +126,8 @@ class EnvProfiler:
         self._process_name = ""
         self.memory = False
         self.hccl = False
+        self.aicore_metrics = 0
+        self.l2_cache = False
         self.has_end = False
         self.device_target = ""
         self.rank_id = ""
@@ -128,6 +140,8 @@ class EnvProfiler:
         self._output_path = options.get("profiler_path")
         self.memory = options.get("profile_memory")
         self.hccl = options.get("profile_communication")
+        self.aicore_metrics = options.get("aicore_metrics")
+        self.l2_cache = options.get("l2_cache")
         if not self._environ_enable:
             return
         env_options = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
@@ -139,6 +153,8 @@ class EnvProfiler:
             "output_path": self._output_path,
             "profile_memory": self.memory,
             "profile_communication": self.hccl,
+            "aicore_metrics": self.aicore_metrics,
+            "l2_cache": self.l2_cache,
             "start_time": self.start_time
         }
         profiler = Profiler(env_enable=options)
@@ -155,7 +171,9 @@ def profiler_init():
     os.environ["MS_PROFILER_RUN_CONFIG"] = json.dumps(config)
     Profiler(output_path=config.get("output_path"),
              profile_memory=config.get("profile_memory"),
-             profile_communication=config.get("profile_communication"))
+             profile_communication=config.get("profile_communication"),
+             aicore_metrics=config.get("aicore_metrics"),
+             l2_cache=config.get("l2_cache"))
 
 
 profiler_init()

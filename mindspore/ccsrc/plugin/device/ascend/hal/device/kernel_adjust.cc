@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -693,7 +693,8 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
 
 #ifndef ENABLE_SECURITY
 void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
-  if (!ascend::ProfilingManager::GetInstance().IsProfilingInitialized()) {
+  if (!ascend::ProfilingManager::GetInstance().IsProfilingInitialized() ||
+      ascend::ProfilingManager::GetInstance().IsMsprofiling()) {
     MS_LOG(INFO) << "No need to profiling";
     return;
   }

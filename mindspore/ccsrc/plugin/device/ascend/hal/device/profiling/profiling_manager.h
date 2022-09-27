@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ class ProfilingManager {
   static ProfilingManager &GetInstance();
   uint64_t GetJobId() const;
   bool ProfRegisterCtrlCallback() const;
+  bool IsMsprofiling();
   bool InitProfiling(const std::string &profiling_path, uint32_t device_id);
   bool IsProfilingInitialized() const { return cur_state_ >= kProfilingInit; }
   inline bool IsProfilingStart() const { return cur_state_ >= kProfilingStart; }
@@ -83,6 +84,7 @@ class ProfilingManager {
   MsprofCallback prof_cb_;
   ProfilingState cur_state_;
   std::string profiling_path_;
+  bool msprof_enable_{false};
 };
 
 Status ProfCommandHandle(ProfCommandHandleType type);

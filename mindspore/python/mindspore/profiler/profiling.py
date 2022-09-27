@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -460,6 +460,14 @@ class Profiler:
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
                             f"but got type {type(self.start_profile)}")
 
+        self._profile_communication = kwargs.pop("profile_communication", False)
+        if self._profile_communication:
+            logger.warning(f"The parameter profile_communication is not supported on CPU currently.")
+
+        self._profile_memory = kwargs.pop("profile_memory", False)
+        if self._profile_memory:
+            logger.warning(f"The parameter profile_memory is not supported on CPU currently.")
+
     def _gpu_profiler_init(self, kwargs):
         """Gpu profiler init."""
         # Setup and start MindData Profiling
@@ -540,18 +548,12 @@ class Profiler:
                             f"but got type {type(self.start_profile)}")
 
         self._profile_communication = kwargs.pop("profile_communication", False)
-        if not isinstance(self._profile_communication, bool):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_communication must be bool, "
-                            f"but got type {type(self._profile_communication)}")
         if self._profile_communication:
-            raise RuntimeError(f"The parameter profile_communication is not supported on GPU currently.")
+            logger.warning(f"The parameter profile_communication is not supported on GPU currently.")
 
         self._profile_memory = kwargs.pop("profile_memory", False)
-        if not isinstance(self._profile_memory, bool):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter _profile_memory must be bool, "
-                            f"but got type {type(self._profile_memory)}")
         if self._profile_memory:
-            raise RuntimeError(f"The parameter profile_memory is not supported on GPU currently.")
+            logger.warning(f"The parameter profile_memory is not supported on GPU currently.")
 
     def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""

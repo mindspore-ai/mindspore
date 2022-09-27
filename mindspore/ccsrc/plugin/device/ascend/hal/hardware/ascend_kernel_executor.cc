@@ -40,9 +40,11 @@
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "utils/anf_utils.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 
 using Adx::AdxRegDumpProcessCallBack;
+using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
@@ -420,12 +422,13 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
       return false;
     }
   }
+#ifndef ENABLE_SECURITY
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
-  if (ascend_instance->GetEnableFlag()) {
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
     ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type);
   }
-
+#endif
   return PySyncRuning();
 }
 
