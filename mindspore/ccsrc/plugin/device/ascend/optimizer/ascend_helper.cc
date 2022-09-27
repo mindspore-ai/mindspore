@@ -531,8 +531,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
     auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(cur_input, 0);
     auto real_input_node = kernel_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input_node);
-    if (kernel::IsWeightBoundary(real_input_node)) {
-      // weight
+    if (real_input_node->isa<Parameter>() || real_input_node->isa<ValueNode>()) {
       origin_type = common::AnfAlgo::GetPrevNodeOutputPrecision(cnode, input_index);
       if (origin_type == kTypeUnknown) {
         origin_type = AnfAlgo::GetOutputDeviceDataType(prev_node.first, prev_node.second);
