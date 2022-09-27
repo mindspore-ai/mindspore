@@ -46,6 +46,16 @@ void CalculateTableList(int8_t *table, const float input_scale, const int32_t in
 }
 
 int SigmoidInt8CPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C1NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
   MS_CHECK_TRUE_RET(!input->quant_params().empty() && !output->quant_params().empty(), RET_ERROR);

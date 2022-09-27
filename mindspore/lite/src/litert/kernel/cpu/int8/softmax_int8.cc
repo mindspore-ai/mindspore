@@ -41,6 +41,12 @@ int SoftmaxInt8CPUKernel::Prepare() {
   if (ret != RET_OK) {
     return ret;
   }
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   quant_param_ = reinterpret_cast<SoftmaxQuantArg *>(malloc(sizeof(SoftmaxQuantArg)));
   if (quant_param_ == nullptr) {
     MS_LOG(ERROR) << "Malloc SoftmaxQuantArg for Softmax int8 op failed!";

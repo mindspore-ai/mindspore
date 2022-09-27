@@ -125,6 +125,12 @@ int ReduceInt8CPUKernel::Prepare() {
   if (ret != RET_OK) {
     return ret;
   }
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   Match4DReducePattern();
   if (!this->in_tensors_[0]->shape().empty()) {
     this->valid_shape_ = true;

@@ -31,6 +31,12 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 namespace mindspore::kernel {
 int PoolingInt8CPUKernel::Prepare() {
   auto ret = PoolingBaseCPUKernel::Prepare();
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
     return RET_ERROR;

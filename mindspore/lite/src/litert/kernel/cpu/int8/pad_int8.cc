@@ -120,6 +120,12 @@ int PadInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[1]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(pad_param_);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   // param check, padding length must equal 2 * len(input_x)
   if (in_tensors_[kInputIndex]->shape().size() * 2 != static_cast<size_t>(pad_param_->padding_length)) {
     MS_LOG(ERROR) << "Input shape size not match padding length.";

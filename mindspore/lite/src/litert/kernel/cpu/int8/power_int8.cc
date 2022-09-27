@@ -30,10 +30,16 @@ namespace mindspore::kernel {
 int PowerInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  MSLITE_CHECK_PTR(input);
-  MSLITE_CHECK_PTR(output);
 
   auto in_quant_args = input->quant_params();
   CHECK_LESS_RETURN(in_quant_args.size(), 1);
