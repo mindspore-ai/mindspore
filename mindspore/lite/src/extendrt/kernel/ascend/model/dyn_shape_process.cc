@@ -23,28 +23,36 @@ namespace mindspore::kernel {
 namespace acl {
 namespace {
 constexpr auto kInputDimNum = 4;
+constexpr auto kNHWCNIdx = 0;
 constexpr auto kNHWCHeightIdx = 1;
 constexpr auto kNHWCWidthIdx = 2;
+constexpr auto kNHWCCIdx = 3;
+constexpr auto kNCHWNIdx = 0;
+constexpr auto kNCHWCIdx = 1;
 constexpr auto kNCHWHeightIdx = 2;
 constexpr auto kNCHWWidthIdx = 3;
 constexpr auto kImageSizeHwNum = 2;
 }  // namespace
 
-int DynShapeProcess::ProcDynamicInput(std::vector<KernelTensorPtr> *const inputs) {
+int DynShapeProcess::ProcDynamicInput(std::vector<KernelTensorPtr> *const original_datas,
+                                      std::vector<KernelTensorPtr> *const inputs) {
   MS_CHECK_TRUE_MSG(acl_options_ != nullptr, lite::RET_ERROR, "Acl options ptr is nullptr.");
   if (!acl_options_->batch_size.empty() && !acl_options_->image_size.empty()) {
     MS_LOG(ERROR) << "Batch size and image size can't be set at the same time.";
     return lite::RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(original_datas != nullptr, lite::RET_ERROR, "Original Data is nullptr.");
   MS_CHECK_TRUE_MSG(inputs != nullptr, lite::RET_ERROR, "Inputs is nullptr.");
+  MS_CHECK_TRUE_MSG((*original_datas).size() == (*inputs).size(), lite::RET_ERROR,
+                    "The size of Original Data and Input is not equal.");
   if (!acl_options_->batch_size.empty()) {
-    if (AddBatchSizeInput(inputs) != lite::RET_OK) {
+    if (AddBatchSizeInput(original_datas, inputs) != lite::RET_OK) {
       MS_LOG(ERROR) << "Add batch size input failed.";
       return lite::RET_ERROR;
     }
   }
   if (!acl_options_->image_size.empty()) {
-    if (AddImageSizeInput(inputs) != lite::RET_OK) {
+    if (AddImageSizeInput(original_datas, inputs) != lite::RET_OK) {
       MS_LOG(ERROR) << "Add Image size input failed.";
       return lite::RET_ERROR;
     }
@@ -52,10 +60,87 @@ int DynShapeProcess::ProcDynamicInput(std::vector<KernelTensorPtr> *const inputs
   return lite::RET_OK;
 }
 
-int DynShapeProcess::AddBatchSizeInput(std::vector<KernelTensorPtr> *const inputs) {
+std::string GenResultStr(const std::vector<int64_t> &input_vec) {
+  std::string res;
+  for (size_t i = 0; i < input_vec.size(); ++i) {
+    res += std::to_string(input_vec[i]);
+    if (i != input_vec.size() - 1) {
+      res += ",";
+    }
+  }
+  return res;
+}
+
+int DynShapeProcess::CheckBatchSize(std::vector<KernelTensorPtr> *const original_datas,
+                                    std::vector<KernelTensorPtr> *const inputs) {
+  if (input_data_idx_ >= inputs->size()) {
+    MS_LOG(ERROR) << " Input data index " << input_data_idx_ << " is larger than input size " << inputs->size();
+    return lite::RET_ERROR;
+  }
+  auto original_tensor = (*original_datas)[input_data_idx_];
+  auto cur_tensor = (*inputs)[input_data_idx_];
+  std::vector<int64_t> original_shape = original_tensor->GetShapeVector();
+  std::vector<int64_t> cur_shape = cur_tensor->GetShapeVector();
+  if (cur_shape.empty() || original_shape.empty()) {
+    MS_LOG(ERROR) << "Shape is empty, input index = " << input_data_idx_;
+    return lite::RET_ERROR;
+  }
+  for (uint32_t i = 1; i < cur_shape.size(); ++i) {
+    if (original_shape[i] != cur_shape[i]) {
+      MS_LOG(ERROR) << "Shape Conflict: Original Shape:[" << GenResultStr(original_shape) << "], Current Shape:["
+                    << GenResultStr(cur_shape) << "]";
+      return lite::RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
+int DynShapeProcess::CheckImageSize(std::vector<KernelTensorPtr> *const original_datas,
+                                    std::vector<KernelTensorPtr> *const inputs) {
+  if (input_data_idx_ >= inputs->size() || input_data_idx_ >= acl_options_->input_format.size()) {
+    MS_LOG(ERROR) << "Input data index " << input_data_idx_ << " is invalid, inputs size " << inputs->size()
+                  << " input formats size " << acl_options_->input_format.size();
+    return lite::RET_ERROR;
+  }
+  auto original_tensor = (*original_datas)[input_data_idx_];
+  auto cur_tensor = (*inputs)[input_data_idx_];
+  std::vector<int64_t> original_shape = original_tensor->GetShapeVector();
+  std::vector<int64_t> cur_shape = cur_tensor->GetShapeVector();
+  if (original_shape.size() != kInputDimNum) {
+    MS_LOG(ERROR) << "Shape size " << original_shape.size() << " is invalid, input index = " << input_data_idx_;
+    return lite::RET_ERROR;
+  }
+  if (cur_shape.size() != kInputDimNum) {
+    MS_LOG(ERROR) << "Shape size " << cur_shape.size() << " is invalid, input index = " << input_data_idx_;
+    return lite::RET_ERROR;
+  }
+  auto format = acl_options_->input_format[input_data_idx_];
+  if (format == mindspore::Format::NHWC) {
+    if (original_shape[kNHWCCIdx] != cur_shape[kNHWCCIdx] || original_shape[kNHWCNIdx] != cur_shape[kNHWCNIdx]) {
+      MS_LOG(ERROR) << "Shape Conflict: Original Shape:[" << GenResultStr(original_shape) << "], Current Shape:["
+                    << GenResultStr(cur_shape) << "]";
+      return lite::RET_ERROR;
+    }
+  } else {
+    if (original_shape[kNCHWCIdx] != cur_shape[kNCHWCIdx] || original_shape[kNCHWNIdx] != cur_shape[kNCHWNIdx]) {
+      MS_LOG(ERROR) << "Shape Conflict: Original Shape:[" << GenResultStr(original_shape) << "], Current Shape:["
+                    << GenResultStr(cur_shape) << "]";
+      return lite::RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
+int DynShapeProcess::AddBatchSizeInput(std::vector<KernelTensorPtr> *const original_datas,
+                                       std::vector<KernelTensorPtr> *const inputs) {
   int32_t *batch_size_addr = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
   if (batch_size_addr == nullptr) {
     MS_LOG(ERROR) << "Malloc batch size failed.";
+    return lite::RET_ERROR;
+  }
+  if (CheckBatchSize(original_datas, inputs) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Check dynamic batch size failed.";
+    free(batch_size_addr);
     return lite::RET_ERROR;
   }
   if (GetRealBatchSize(inputs, batch_size_addr) != lite::RET_OK) {
@@ -83,10 +168,16 @@ int DynShapeProcess::AddBatchSizeInput(std::vector<KernelTensorPtr> *const input
   return lite::RET_OK;
 }
 
-int DynShapeProcess::AddImageSizeInput(std::vector<KernelTensorPtr> *const inputs) {
+int DynShapeProcess::AddImageSizeInput(std::vector<KernelTensorPtr> *const original_datas,
+                                       std::vector<KernelTensorPtr> *const inputs) {
   int32_t *image_size_addr = reinterpret_cast<int32_t *>(malloc(kImageSizeHwNum * sizeof(int32_t)));
   if (image_size_addr == nullptr) {
     MS_LOG(ERROR) << "Malloc image size failed.";
+    return lite::RET_ERROR;
+  }
+  if (CheckImageSize(original_datas, inputs) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Check dynamic image size failed.";
+    free(image_size_addr);
     return lite::RET_ERROR;
   }
   if (GetRealImageSize(inputs, image_size_addr, kImageSizeHwNum) != lite::RET_OK) {
