@@ -140,6 +140,10 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
 }
 
 int DeConvInt8CPUKernel::InitParam() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_h_, conv_param_->kernel_w_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_h_ * conv_param_->kernel_w_, conv_param_->output_channel_,
+                                RET_ERROR);
   matmul_param_->row_ = conv_param_->input_h_ * conv_param_->input_w_;
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_ * conv_param_->kernel_h_ * conv_param_->kernel_w_;

@@ -92,6 +92,11 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
 
   InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_w_, conv_param_->stride_h_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_w_ * conv_param_->stride_h_, C4NUM, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_w_, conv_param_->dilation_h_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_w_ * conv_param_->dilation_h_, C4NUM, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->dilation_w_, C4NUM, RET_ERROR);
   sliding_->in_h_step_ = conv_param_->input_w_ * C4NUM;
   sliding_->in_sh_step_ = conv_param_->input_w_ * C4NUM * conv_param_->stride_h_;    // stride H
   sliding_->in_sw_step_ = C4NUM * conv_param_->stride_h_;                            // stride W
@@ -101,6 +106,10 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_batch_, conv_param_->input_h_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_batch_ * conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_,
+                                conv_param_->input_channel_, RET_ERROR);
   int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM *
                         UP_DIV(conv_param_->input_channel_, C4NUM);
   packed_input_ = reinterpret_cast<int16_t *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(int16_t)));

@@ -62,6 +62,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "get batch from filter tensor failed.";
     return RET_ERROR;
   }
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(filter_tensor->Height(), filter_tensor->Width(), RET_ERROR);
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
   conv_param_->input_channel_ = input_channel;
   conv_param_->output_channel_ = output_channel;
@@ -79,6 +80,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     up_round_deep = UP_ROUND(kernel_plane * input_channel, C16NUM);
   }
 #endif
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(up_round_oc, up_round_deep, RET_ERROR);
   int pack_weight_size = up_round_oc * up_round_deep;
   size_t bias_size = up_round_oc * sizeof(int32_t);
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
@@ -92,6 +94,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   (void)memset(packed_weight_sub_, 0, pack_weight_size);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, kernel_plane, RET_ERROR);
 #ifdef ENABLE_ARM32
   RowMajor2Row2x16MajorInt8(origin_weight, packed_weight_sub_, output_channel, input_channel * kernel_plane);
 #else
