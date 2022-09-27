@@ -277,7 +277,7 @@ bool RtModelZeroCopy::GenerateZeroCopyTaskForSubGraphSink(const session::KernelG
           zero_copy_tasks.emplace_back(
             std::make_shared<tasksink::CNodeZeroCopyTask>(ref_iter->second.first, ref_iter->second.second, task->Args(),
                                                           input_index * sizeof(void *), task->task_name()));
-          zero_copy_inputs.emplace(ref_iter->second.first, input_index);
+          zero_copy_inputs.emplace(node, input_index);
           zero_copy_ref_nodes.emplace(ref_iter->second);
         } else if (ref_iter->second.first->isa<Parameter>()) {
           // 6. Ref output of Parameter input.

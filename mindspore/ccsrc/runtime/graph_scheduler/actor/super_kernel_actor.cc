@@ -90,7 +90,7 @@ size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
 void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-
+  std::vector<DeviceTensor *> memory_free_list;
   const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
@@ -104,7 +104,11 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       input_device_tensors_[index] = input_data->data_;
+      if (input_data->data_->dynamic_ref_count() != INT32_MAX) {
+        memory_free_list.emplace_back(input_data->data_);
+      }
     }
+    memory_free_lists_.push(memory_free_list);
   }
 
   // Check device tensor store.
@@ -170,6 +174,7 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
       if (node_device_tensor != nullptr && (!node_device_tensor->is_ptr_persisted()) &&
           input_device_tensors_[i] != nullptr) {
         node_device_tensor->set_ptr(input_device_tensors_[i]->GetMutablePtr());
+        node_device_tensor->set_from_mem_pool(false);
       }
     }
 
@@ -292,18 +297,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
 
 void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-
-  // Collect the input device tensors.
-  std::vector<DeviceTensor *> memory_free_list;
-  for (auto &input_device_tensor : input_device_tensors_) {
-    if (input_device_tensor != nullptr && input_device_tensor->GetMutablePtr() != nullptr &&
-        input_device_tensor->dynamic_ref_count() != INT32_MAX) {
-      (void)memory_free_list.emplace_back(input_device_tensor);
-    }
-  }
-
-  if (memory_free_list.size() > 0) {
-    memory_free_lists_.push(memory_free_list);
+  if (memory_free_lists_.size() > 0 && memory_free_lists_.back().size() > 0) {
     if (ActorDispatcher::is_memory_free_sync()) {
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
                                 device_contexts_[0], context, GetAID());

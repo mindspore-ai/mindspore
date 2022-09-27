@@ -167,7 +167,7 @@ class BACKEND_EXPORT KernelRuntime {
  private:
   static TbeLaunchKernelModCallBack tbe_call_;
   void GetDeviceAddress(const AnfNodePtr &item, const std::map<AnfNodePtr, AnfNodePtr> shadow_backend_node_map,
-                        size_t index, uint32_t graph_id, DeviceAddressPtr *device_address);
+                        size_t index, const session::KernelGraph &graph, DeviceAddressPtr *device_address);
   void UseMemSchedulerIfNeeded(const session::KernelGraph &graph);
   bool LaunchKernel(const session::KernelGraph &graph, const AnfNodePtr &kernel,
                     const std::shared_ptr<MemScheduler> &mem_scheduler, bool mock = false);

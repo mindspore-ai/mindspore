@@ -199,7 +199,13 @@ void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device:
     auto output_type = AnfAlgo::GetOutputDeviceDataType(output, 0);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
       const_cast<void *>(ptr), size, output_format, output_type, trans::GetRuntimePaddingShape(output, 0));
-    device_address->set_is_ptr_persisted(true);
+    // If graph has the flag kFlagEnableZeroCopyInGraph, it means the graph should run in graph mode, the device
+    // address of graph output should not be persisted, and its output addr will be replaced after RunGraph.
+    // As we fetch the output device address of a nopnode, we can only get the input device address of it, so we
+    // have to prevent the ptr persist flag of the device address here.
+    if (!graph->has_flag(kFlagEnableZeroCopyInGraph)) {
+      device_address->set_is_ptr_persisted(true);
+    }
     device_address->set_host_shape(trans::GetRuntimePaddingShape(output, 0));
     AnfAlgo::SetOutputAddr(device_address, 0, output.get());
     common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(false), output);
