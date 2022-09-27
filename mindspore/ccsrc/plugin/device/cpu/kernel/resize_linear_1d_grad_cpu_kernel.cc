@@ -115,7 +115,7 @@ const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRu
 template <typename T>
 ResizeLinear1DGradCpuKernelMod::CoordinateTransformationFunc<T>
 ResizeLinear1DGradCpuKernelMod::ChooseCoordinateTransformationFunc(
-  CoordinateTransformationMode coordinate_transformation_mode) {
+  CoordinateTransformationMode coordinate_transformation_mode) const {
   const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
     {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}, {ASYMMETRIC, AsymmetricFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);

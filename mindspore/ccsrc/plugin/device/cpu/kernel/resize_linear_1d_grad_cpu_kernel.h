@@ -71,7 +71,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    CoordinateTransformationMode coordinate_transformation_mode);
+    CoordinateTransformationMode coordinate_transformation_mode) const;
 
   std::string kernel_type_{kUnknown};
   bool align_corners_{false};

@@ -91,8 +91,8 @@ bool RandomChoiceWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
   auto random_choice_with_mask_ptr = std::dynamic_pointer_cast<ops::RandomChoiceWithMask>(base_operator);
-  seed_ = random_choice_with_mask_ptr->get_seed();
-  seed2_ = random_choice_with_mask_ptr->get_seed2();
+  seed_ = LongToSize(random_choice_with_mask_ptr->get_seed());
+  seed2_ = LongToSize(random_choice_with_mask_ptr->get_seed2());
   count_ = random_choice_with_mask_ptr->get_count();
   return true;
 }
