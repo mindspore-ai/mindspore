@@ -48,6 +48,14 @@ class QuantParamHolder : public Value {
     output_quant_params_ = output_quant_params;
   }
 
+  QuantParamHolder(const QuantParamHolder &obj) {
+    input_quant_params_ = obj.input_quant_params_;
+    output_quant_params_ = obj.output_quant_params_;
+    quant_type_ = obj.quant_type_;
+    enable_huffman_code_ = obj.enable_huffman_code_;
+    quant_clusters = obj.quant_clusters;
+  }
+
   ~QuantParamHolder() override = default;
 
   MS_DECLARE_PARENT(QuantParamHolder, Value);

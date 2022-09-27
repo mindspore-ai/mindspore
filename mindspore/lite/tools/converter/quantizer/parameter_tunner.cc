@@ -67,22 +67,6 @@ static Status ExtendBatchSize(const std::shared_ptr<mindspore::Model> &model, st
   return model->Resize(*inputs, dims);
 }
 
-int ParameterOptimizer::CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
-                                       FuncGraphPtr *func_graph_bak) {
-  CHECK_NULL_RETURN(func_graph_bak);
-  CHECK_NULL_RETURN(param);
-  std::map<FuncGraphPtr, FuncGraphPtr> cloned_func_graph;
-  *func_graph_bak = lite::CloneFuncGraph(func_graph, param, &cloned_func_graph);
-  CHECK_NULL_RETURN(*func_graph_bak);
-  static auto root_func_manager = Manage(*func_graph_bak);
-  std::set<FuncGraphPtr> all_func_graphs = {};
-  lite::GetAllFuncGraph(*func_graph_bak, &all_func_graphs);
-  for (const auto &graph : all_func_graphs) {
-    graph->set_manager(root_func_manager);
-  }
-  return RET_OK;
-}
-
 int ParameterOptimizer::CopyDataAndRun(const std::shared_ptr<mindspore::Model> &origin_model,
                                        const std::shared_ptr<mindspore::Model> &quant_model) {
   auto weight_quant_inputs = quant_model->GetInputs();

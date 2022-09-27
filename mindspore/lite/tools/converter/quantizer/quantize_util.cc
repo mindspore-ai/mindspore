@@ -37,6 +37,8 @@
 #include "src/common/utils.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "ir/anf.h"
+#include "tools/converter/export_model.h"
+#include "tools/converter/parser/parser_utils.h"
 
 using std::string;
 using std::vector;
@@ -267,7 +269,12 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const std::shared_ptr<ConverterPara> &param, size_t *size) {
-  auto meta_graph = Export(func_graph, true, true);
+  FuncGraphPtr func_graph_clone;
+  if (CloneFuncGraph(func_graph, param, &func_graph_clone) != RET_OK) {
+    MS_LOG(ERROR) << "Clone func_graph failed";
+    return kLiteNullptr;
+  }
+  auto meta_graph = Export(func_graph_clone, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph failed";
     return kLiteNullptr;
@@ -615,5 +622,20 @@ bool CheckControlFlowType(const AnfNodePtr &node) {
     }
   }
   return false;
+}
+int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+                   FuncGraphPtr *func_graph_bak) {
+  CHECK_NULL_RETURN(func_graph_bak);
+  CHECK_NULL_RETURN(param);
+  std::map<FuncGraphPtr, FuncGraphPtr> cloned_func_graph;
+  *func_graph_bak = lite::CloneFuncGraph(func_graph, param, &cloned_func_graph);
+  CHECK_NULL_RETURN(*func_graph_bak);
+  static auto root_func_manager = Manage(*func_graph_bak);
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  lite::GetAllFuncGraph(*func_graph_bak, &all_func_graphs);
+  for (const auto &graph : all_func_graphs) {
+    graph->set_manager(root_func_manager);
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite::quant

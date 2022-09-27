@@ -118,6 +118,10 @@ int GetElementNumFromShape(const std::vector<int> &dims, int *total_size);
 
 int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
                       std::vector<std::vector<size_t>> *buckets_data_index);
+
 bool CheckControlFlowType(const AnfNodePtr &node);
+
+int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+                   FuncGraphPtr *func_graph_bak);
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
