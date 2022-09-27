@@ -32,7 +32,7 @@ namespace {
 constexpr size_t kInputDimSize = 4;
 constexpr size_t kRandomSamplesDimSize = 3;
 constexpr size_t kRandomSamplesDimIndex2 = 2;
-constexpr size_t kRandomSamplesLastDimSize = 2;
+constexpr int64_t kRandomSamplesLastDimSize = 2;
 constexpr size_t kInputsDimIndex0 = 0;
 constexpr size_t kInputsDimIndex1 = 1;
 constexpr size_t kInputsDimIndex2 = 2;
