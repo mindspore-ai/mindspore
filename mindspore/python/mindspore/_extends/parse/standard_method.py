@@ -2485,7 +2485,7 @@ def get_itemsize(x_type):
     return itemsize_map[x_type]
 
 
-@constexpr
+@constexpr(check=False)
 def check_is_tensor(x):
     """check whether x is tensor."""
     if isinstance(x, mstype.tensor_type):
