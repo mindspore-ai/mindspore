@@ -5901,30 +5901,9 @@ class TransShape(PrimitiveWithInfer):
 
 class Sort(Primitive):
     """
-    Sorts the elements of the input tensor along a given dimension in ascending order by value.
+    Sorts the elements of the input tensor along the given dimension in the specified order.
 
-    Args:
-        axis (int): The dimension to sort along. Default: -1.
-        descending (bool): Controls the sorting order. If descending is True then the elements
-            are sorted in descending order by value. Default: False.
-
-    .. warning::
-        Currently, only the data type of Float16 is supported. If use Float32, it may cause loss
-        of accuracy.
-
-    Inputs:
-        - **x** (Tensor) - The input to sort, with float16 or float32 data type.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-
-    Outputs:
-        - **y1** (Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
-        - **y2** (Tensor) - The indices of the elements in the original input tensor. Data type is int32.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If `descending` is not a bool.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        ValueError: If `axis` is not in range of [-len(x.shape), len(x.shape)).
+    Refer to :func:'mindspore.ops.sort' for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

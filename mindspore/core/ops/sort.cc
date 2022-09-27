@@ -26,13 +26,31 @@
 
 namespace mindspore {
 namespace ops {
+void Sort::Init(int64_t axis, bool descending) {
+  this->set_axis(axis);
+  this->set_descending(descending);
+}
+
+void Sort::set_axis(int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+int64_t Sort::get_axis() const {
+  auto axis = this->GetAttr(kAxis);
+  MS_EXCEPTION_IF_NULL(axis);
+  return GetValue<int64_t>(axis);
+}
+
+void Sort::set_descending(bool descending) { (void)this->AddAttr(kDescending, api::MakeValue(descending)); }
+
+bool Sort::get_descending() const {
+  auto descending = this->GetAttr(kDescending);
+  MS_EXCEPTION_IF_NULL(descending);
+  return GetValue<bool>(descending);
+}
+
 namespace {
 abstract::TupleShapePtr SortInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                           prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));
@@ -45,11 +63,11 @@ abstract::TupleShapePtr SortInferShape(const PrimitivePtr &primitive, const std:
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{shape_element, shape_element});
 }
 
-TuplePtr SortInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr SortInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto infer_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(infer_type);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto type = CheckAndConvertUtils::CheckTensorTypeValid("inputx", infer_type, valid_types, prim->name());
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kUInt8, kInt8, kInt16, kInt32, kInt64};
+  auto type = CheckAndConvertUtils::CheckTensorTypeValid("inputx", infer_type, valid_types, primitive->name());
   std::vector<TypePtr> type_tuple;
   type_tuple.push_back(type);
   type_tuple.push_back(kInt32);
@@ -57,24 +75,17 @@ TuplePtr SortInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(Sort, BaseOperator);
 AbstractBasePtr SortInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  auto infertype = SortInferType(primitive, input_args);
-  auto infershape = SortInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infershape, infertype);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kSortInputsNum = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSortInputsNum, primitive->name());
+  auto infer_type = SortInferType(primitive, input_args);
+  auto infer_shape = SortInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-int64_t Sort::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
-
-bool Sort::get_descending() const {
-  auto value_ptr = this->GetAttr(kDescending);
-  return GetValue<bool>(value_ptr);
-}
-
+MIND_API_OPERATOR_IMPL(Sort, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Sort, prim::kPrimSort, SortInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -2525,6 +2525,52 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
     return scatter_nd_min_inner(input_x, indices, updates)
 
 
+def sort(input_x, axis=-1, descending=False):
+    r"""
+    Sorts the elements of the input tensor along the given dimension in the specified order.
+
+    Args:
+        input_x(Tensor): The input tensor to sort.
+        The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        axis (int): The dimension to sort along. Default: -1.
+        descending (bool): Controls the sort order. If descending is True then the elements
+        are sorted in descending order by value. Default: False.
+
+    .. warning::
+        Currently, the data types of Float16, UInt8, Int8, Int16, Int32, Int64 are supported.
+        If use Float32, it may cause loss of accuracy.
+
+    Returns:
+        y1(Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
+        y2(Tensor) - The indices of the elements in the original input tensor. Data type is int32.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If `descending` is not a bool.
+        TypeError: If dtype of `x` is neither float16, float32, uint8, int8, int16, int32, int64.
+        ValueError: If `axis` is not in range of [-len(x.shape), len(x.shape)).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
+        >>> sort = ops.Sort()
+        >>> output = sort(x)
+        >>> # The output below is based on the Ascend platform.
+        >>> print(output)
+        (Tensor(shape=[3, 3], dtype=Float16, value=
+        [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
+        [ 3.0000e+00,  5.0000e+00,  9.0000e+00],
+        [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int32, value=
+        [[2, 1, 0],
+        [2, 0, 1],
+        [0, 1, 2]]))
+    """
+    _sort = _get_cache_prim(P.Sort)(axis, descending)
+    return _sort(input_x)
+
+
 def gather(input_params, input_indices, axis):
     r"""
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
