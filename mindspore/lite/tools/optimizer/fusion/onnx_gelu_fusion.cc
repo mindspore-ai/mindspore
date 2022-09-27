@@ -117,6 +117,7 @@ bool OnnxGeLUFusion::CheckPattern(const std::string &pattern_name, const EquivPt
   if (mul1_y < 0 || fabs(mul1_y - MUL1_y) > DIFF_THRESHOLD) {
     return false;
   }
+  approximate_ = false;
   return true;
 }
 }  // namespace opt

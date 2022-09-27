@@ -43,7 +43,7 @@ class GeLUFusion : public MultiplePatternProcessPass {
 
  protected:
   mutable VarPtr input_{nullptr};
-  mutable bool approximate_{true};
+  mutable bool approximate_{false};
 };
 }  // namespace opt
 }  // namespace mindspore

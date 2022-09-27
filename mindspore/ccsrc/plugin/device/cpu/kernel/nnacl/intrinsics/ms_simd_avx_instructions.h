@@ -63,6 +63,7 @@
 #define MS_MUL256_EPI32(src1, src2) _mm256_mullo_epi32(src1, src2)
 #define MS_FMADD256_F32(src1, src2, src3) _mm256_fmadd_ps(src1, src2, src3)
 #define MS_FMSUB256_F32(src1, src2, src3) _mm256_fmsub_ps(src1, src2, src3)
+#define MS_FSMUL256_F32(src1, src2, src3) _mm256_fnmadd_ps(src3, src2, src1)  // src1 - src2 * src3
 #define MS_DIV256_F32(src1, src2) _mm256_div_ps(src1, src2)
 #define MS_MUL256_N_F32(src1, src2) _mm256_mul_ps(src1, _mm256_set1_ps(src2))
 #define MS_MUL256_N_EPI32(src1, src2) _mm256_mullo_epi32(src1, _mm256_set1_epi32(src2))

@@ -166,6 +166,9 @@
 // fms (float/int) op
 #define SIMD_FMSUB_F32 MS_SIMD_INSTRUCTION_F32(MS_FMSUB)
 
+// fsm (float) op
+#define MS_FSMUL_F32 MS_SIMD_INSTRUCTION_F32(MS_FSMUL)
+
 // square (float/int) op
 #define SIMD_MUL_SQUARE_F32(val1) SIMD_MUL_F32(val1, val1)
 #define SIMD_MUL_SQUARE_EPI32(val1) SIMD_MUL_EPI32(val1, val1)

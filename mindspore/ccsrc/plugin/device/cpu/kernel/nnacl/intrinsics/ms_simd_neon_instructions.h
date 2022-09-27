@@ -63,6 +63,7 @@
 #define MS_MUL128_F32(src1, src2) vmulq_f32(src1, src2)
 #define MS_MUL128_EPI32(src1, src2) vmulq_s32(src1, src2)
 #define MS_FMADD128_F32(src1, src2, src3) vmlaq_f32(src3, src1, src2)
+#define MS_FSMUL128_F32(src1, src2, src3) vmlsq_f32(src1, src2, src3)
 #define MS_FMSUB128_EPI32(src1, src2, src3) vmlsq_s32(src3, src1, src2)
 #ifdef ENABLE_ARM64
 #define MS_DIVQ_F32(src1, src2) vdivq_f32(src1, src2)
