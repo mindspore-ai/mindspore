@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
 # limitations under the License.
 # ============================================================================
 
-"""Cholesky op"""
+"""InitCholeskyGrad op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-cholesky_op_info = AiCPURegOp("Cholesky") \
+choleskygrad_op_info = AiCPURegOp("CholeskyGrad") \
     .fusion_type("OPAQUE") \
-    .input(0, "input_x", "required") \
-    .output(0, "output", "required") \
-    .attr("upper", "bool") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F64_Default, DataType.F64_Default) \
+    .input(0, "x", "required") \
+    .input(1, "grad", "required") \
+    .output(0, "y", "required") \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.F64_Default) \
     .get_op_info()
 
 
-@op_info_register(cholesky_op_info)
-def _cholesky_aicpu():
-    """Cholesky aicpu register"""
+@op_info_register(choleskygrad_op_info)
+def _choleskygrad_aicpu():
+    """CholeskyGrad AiCPU register"""
     return

@@ -1254,6 +1254,8 @@ GVAR_DEF(PrimitivePtr, kPrimEig, std::make_shared<Primitive>("Eig"));
 GVAR_DEF(PrimitivePtr, kPrimGeqrf, std::make_shared<Primitive>("Geqrf"));
 GVAR_DEF(PrimitivePtr, kPrimSvd, std::make_shared<Primitive>("Svd"));
 
+GVAR_DEF(PrimitivePtr, kPrimCholeskyGrad, std::make_shared<Primitive>("CholeskyGrad"));
+
 // Image
 GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionV3, std::make_shared<Primitive>("NonMaxSuppressionV3"));
 GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionWithOverlaps,

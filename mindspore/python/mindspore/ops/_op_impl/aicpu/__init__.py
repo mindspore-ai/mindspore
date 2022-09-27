@@ -161,9 +161,3 @@ from .reservoir_replay_buffer import _rrb_create_op_cpu
 from .reservoir_replay_buffer import _rrb_push_op_cpu
 from .reservoir_replay_buffer import _rrb_sample_op_cpu
 from .reservoir_replay_buffer import _rrb_destroy_op_cpu
-from .sparse_reshape import _sparse_reshape_aicpu
-from .unsorted_segment_sum import _unsorted_segment_sum_aicpu
-from .unsorted_segment_prod import _unsorted_segment_prod_aicpu
-from .hard_sigmoid import _hard_sigmoid_aicpu
-from .hard_sigmoid_grad import _hard_sigmoid_grad_aicpu
-from .sparse_reorder import _sparse_reorder_aicpu

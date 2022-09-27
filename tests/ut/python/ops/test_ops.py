@@ -95,6 +95,7 @@ from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations._grad_ops import MedianGrad
 from mindspore.ops.operations._grad_ops import MinimumGradGrad
+from mindspore.ops.operations._grad_ops import CholeskyGrad
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.image_ops import ResizeBicubic
@@ -3225,6 +3226,11 @@ test_case_nn_ops = [
                         Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
                         Tensor(np.random.rand(1, 1, 2, 2), mstype.float16)],
         'desc_bprop': [],
+        'skip': ['backward']}),
+    ('CholeskyGrad', {
+        'block': CholeskyGrad(),
+        'desc_inputs': [Tensor(np.array([[4, 2], [2, 4]]).astype(np.float32)),
+                        Tensor(np.array([[2, 3], [3, 2]]).astype(np.float32))],
         'skip': ['backward']}),
     ('MaxPoolGradGradWithArgmax', {
         'block': G.MaxPoolGradGradWithArgmax(),

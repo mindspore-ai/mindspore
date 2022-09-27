@@ -44,7 +44,7 @@ abstract::ShapePtr CholeskyInferShape(const PrimitivePtr &primitive, const std::
   }
   if (x_shape_list[x_dim - kColIndex] != x_shape_list[x_dim - kRowIndex]) {
     MS_EXCEPTION(ValueError) << "For Cholesky, input x must be batch squares"
-                             << ", but got batch " << x_shape_list[x_dim - kRowIndex] << " × "
+                             << ", but got batch " << x_shape_list[x_dim - kRowIndex] << " x "
                              << x_shape_list[x_dim - kColIndex] << " matrices.";
   }
   return std::make_shared<abstract::Shape>(x_shape_list);

@@ -131,30 +131,6 @@ class SolveTriangular(PrimitiveWithInfer):
         return a_dtype
 
 
-class Cholesky(PrimitiveWithInfer):
-    """
-    Inner API Cholesky Compute the Cholesky decomposition of a matrix.
-    clean is a special args for mindspore.scipy to indicate whether clean useless triangular matrix data.
-    """
-
-    @prim_attr_register
-    def __init__(self, clean=True):
-        super().__init__("Cholesky")
-        self.init_prim_io_names(inputs=['a'], outputs=['l'])
-        self.clean = validator.check_value_type("clean", clean, [bool], self.name)
-        self.add_prim_attr('clean', self.clean)
-
-    def __infer__(self, a):
-        a_shape = a['shape']
-        out_shape = a_shape
-        output = {
-            'shape': tuple(out_shape),
-            'dtype': a['dtype'],
-            'value': None
-        }
-        return output
-
-
 class Eigh(PrimitiveWithInfer):
     """
     Eigh decomposition(Symmetric matrix)
@@ -260,6 +236,7 @@ class LU(PrimitiveWithInfer):
 
 class LinearSumAssignment(Primitive):
     """Solve the linear sum assignment problem."""
+
     @prim_attr_register
     def __init__(self):
         super().__init__("LinearSumAssignment")
@@ -268,4 +245,4 @@ class LinearSumAssignment(Primitive):
 
 
 # pylint: disable=C0413,W0611
-from .ops_grad import get_bprop_cholesky, get_bprpo_eigh, get_bprpo_trsm
+from .ops_grad import get_bprpo_eigh, get_bprpo_trsm
