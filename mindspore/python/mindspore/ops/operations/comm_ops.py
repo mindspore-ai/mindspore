@@ -768,7 +768,7 @@ class AlltoAll(PrimitiveWithInfer):
 
     Outputs:
         Tensor. If the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`, then the shape of output tensor is
-        :math:`(y_1, y_2, ..., y_R), where:
+        :math:`(y_1, y_2, ..., y_R)`, where:
 
         :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
 
