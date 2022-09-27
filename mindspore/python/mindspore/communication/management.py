@@ -82,7 +82,8 @@ def _check_parallel_envs():
 
 def init(backend_name=None):
     """
-    Initialize distributed backend, e.g. HCCL/NCCL, it is required before using the communication service.
+    Initialize distributed backend required by communication services, e.g. HCCL/NCCL. It is usually used in
+    distributed parallel scenarios and set before using communication services.
 
     Note:
         - The full name of HCCL is Huawei Collective Communication Library.
@@ -92,8 +93,9 @@ def init(backend_name=None):
         before running the following example, please see the docstring of the mindspore.communication.
 
     Args:
-        backend_name (str): Backend, using HCCL/NCCL/MCCL. If the `backend_name` is None, system will recognize
-            `device_target` by devices. Default: None.
+        backend_name (str): Backend, using HCCL/NCCL/MCCL. HCCL should be used for Ascend hardware platforms and
+                            NCCL for GPU hardware platform. If not set, inference is automatically made based on the
+                            hardware platform type (device_target). Default: None.
 
     Raises:
         TypeError: If `backend_name` is not a string.
