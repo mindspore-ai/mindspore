@@ -86,7 +86,7 @@ def scatternd_negative(nptype):
                        [-21.4, -3.1]]).astype(nptype)
     scatternd_net(arr_indices, arr_update, shape, expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_float64():
@@ -98,7 +98,7 @@ def test_scatternd_float64():
     scatternd_positive(np.float64)
     scatternd_negative(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_float32():
@@ -110,7 +110,7 @@ def test_scatternd_float32():
     scatternd_positive(np.float32)
     scatternd_negative(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_float16():
@@ -122,7 +122,7 @@ def test_scatternd_float16():
     scatternd_positive(np.float16)
     scatternd_negative(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_int64():
@@ -134,7 +134,7 @@ def test_scatternd_int64():
     scatternd_positive(np.int64)
     scatternd_negative(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_int32():
@@ -146,7 +146,7 @@ def test_scatternd_int32():
     scatternd_positive(np.int32)
     scatternd_negative(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_int16():
@@ -158,7 +158,7 @@ def test_scatternd_int16():
     scatternd_positive(np.int16)
     scatternd_negative(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_int8():
@@ -170,7 +170,7 @@ def test_scatternd_int8():
     scatternd_positive(np.int8)
     scatternd_negative(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_uint8():
@@ -182,7 +182,7 @@ def test_scatternd_uint8():
     scatternd_positive(np.uint8)
     scatternd_negative(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_uint16():
@@ -194,7 +194,7 @@ def test_scatternd_uint16():
     scatternd_positive(np.uint16)
     scatternd_negative(np.uint16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_uint32():
@@ -206,7 +206,7 @@ def test_scatternd_uint32():
     scatternd_positive(np.uint32)
     scatternd_negative(np.uint32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_uint64():

@@ -66,7 +66,7 @@ def einsum_test_cases(nptype, loss):
         ms_dx = grad_net(*ms_data, Tensor(np_out.astype(nptype)))
         print(ms_dx)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_einsum_graph_float16():
@@ -77,7 +77,7 @@ def test_einsum_graph_float16():
     """
     einsum_test_cases(np.float16, 1e-3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_einsum_graph_float32():
@@ -88,7 +88,7 @@ def test_einsum_graph_float32():
     """
     einsum_test_cases(np.float32, 1e-4)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_einsum_graph_float64():

@@ -92,7 +92,7 @@ def get_nc_inputs(np_type):
     return x, scale, dy, dout_dx, dout_dscale, dout_dbias
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nhwc():
@@ -121,7 +121,7 @@ def test_batchnorm_grad_grad_training_nhwc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nchw():
@@ -150,7 +150,7 @@ def test_batchnorm_grad_grad_training_nchw():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_inference_nhwc():
@@ -179,7 +179,7 @@ def test_batchnorm_grad_grad_inference_nhwc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_inference_nchw():
@@ -208,7 +208,7 @@ def test_batchnorm_grad_grad_inference_nchw():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nc():
@@ -233,7 +233,7 @@ def test_batchnorm_grad_grad_training_nc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_inference_nc():
@@ -258,7 +258,7 @@ def test_batchnorm_grad_grad_inference_nc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nchw_2():
@@ -311,7 +311,7 @@ def test_batchnorm_grad_grad_training_nchw_2():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nhwc_2():
@@ -356,7 +356,7 @@ def test_batchnorm_grad_grad_training_nhwc_2():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nchw_dynamic_shape():
@@ -415,7 +415,7 @@ def test_batchnorm_grad_grad_training_nchw_dynamic_shape():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nhwc_dynamic_shape():
@@ -466,7 +466,7 @@ def test_batchnorm_grad_grad_training_nhwc_dynamic_shape():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_training_nchw_vmap():
@@ -505,7 +505,7 @@ def test_batchnorm_grad_grad_training_nchw_vmap():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_grad_grad_inference_nhwc_vmap():

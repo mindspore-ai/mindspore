@@ -67,7 +67,7 @@ def test_gather_pynative_fp32_14():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp16_14():

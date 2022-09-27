@@ -61,7 +61,7 @@ def ger_pynative(x1, x2, ms_type, nptype):
     assert (ger_output.asnumpy() == ger_expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ger_pynative_fp16():
@@ -76,7 +76,7 @@ def test_ger_pynative_fp16():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ger_pynative_fp32():
@@ -90,7 +90,7 @@ def test_ger_pynative_fp32():
     ger_pynative(x1, x2, mindspore.float32, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ger_pynative_fp64():
@@ -104,7 +104,7 @@ def test_ger_pynative_fp64():
     ger_pynative(x1, x2, mindspore.float64, np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ger_graph_fp16():
@@ -119,7 +119,7 @@ def test_ger_graph_fp16():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ger_graph_fp32():
@@ -133,7 +133,7 @@ def test_ger_graph_fp32():
     ger_graph(x1, x2, mindspore.float32, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ger_graph_fp64():

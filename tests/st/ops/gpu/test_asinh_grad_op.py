@@ -32,7 +32,7 @@ def test_asinhgrad_fp32():
     output_np = dout_np / np.cosh(y_np)
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asinhgrad_fp16():

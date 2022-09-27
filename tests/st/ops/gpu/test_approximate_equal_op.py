@@ -41,7 +41,7 @@ class NetApproximateEqual(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_approximate_equal_fp16():
@@ -59,7 +59,7 @@ def test_approximate_equal_fp16():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_approximate_equal_fp32():

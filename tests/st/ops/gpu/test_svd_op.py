@@ -48,7 +48,7 @@ class SvdNet(nn.Cell):
         return self.svd(a)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_net1():
@@ -65,7 +65,7 @@ def test_svd_net1():
     assert np.allclose(n_s, s.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_net2():
@@ -83,7 +83,7 @@ def test_svd_net2():
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_net3():
@@ -99,7 +99,7 @@ def test_svd_net3():
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_net4():
@@ -115,7 +115,7 @@ def test_svd_net4():
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_net5():
@@ -132,7 +132,7 @@ def test_svd_net5():
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_net6():
@@ -148,7 +148,7 @@ def test_svd_net6():
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_vmap1():
@@ -169,7 +169,7 @@ def test_svd_vmap1():
     assert np.allclose(outs_expect[2].asnumpy(), outs[2].asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_svd_vmap2():

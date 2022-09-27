@@ -1102,7 +1102,7 @@ def pad_with_npfunc(vector, pad_width, iaxis, kwargs):
     vector[-pad_width[1]:] = pad_value
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_gpu():

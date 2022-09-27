@@ -19,7 +19,7 @@ from mindspore.ops.operations import math_ops as P
 import mindspore.common.dtype as ms
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_complex_abs_complex64_3x3():

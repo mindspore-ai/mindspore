@@ -28,7 +28,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 # pylint: disable=W0235
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ms_function_run_in_pynative():
@@ -58,7 +58,7 @@ def test_ms_function_run_in_pynative():
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_run_pynative_and_then_run_graph():
@@ -88,7 +88,7 @@ def test_run_pynative_and_then_run_graph():
     np.testing.assert_almost_equal(output1.asnumpy(), output2.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_continuous_cache():

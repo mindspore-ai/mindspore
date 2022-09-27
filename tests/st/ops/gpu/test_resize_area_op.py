@@ -16,7 +16,7 @@ class NetResizeArea(nn.Cell):
         return self.resize_area(images, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_area_float16():
@@ -50,7 +50,7 @@ def test_resize_area_float16():
                            equal_nan=False)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_area_float32():

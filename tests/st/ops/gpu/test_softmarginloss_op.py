@@ -68,7 +68,7 @@ def softmarginloss_testset():
                     expect_mean, expect_sum, epsilons[i])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softmarginloss_graph():
@@ -81,7 +81,7 @@ def test_softmarginloss_graph():
     softmarginloss_testset()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_soft_margin_loss_pynative():

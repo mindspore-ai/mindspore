@@ -69,7 +69,7 @@ class  SegmentProdNet(Cell):
         return self.segmentprod(x, segment_ids)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_segment_max_fp():
@@ -91,7 +91,7 @@ def test_segment_max_fp():
     np.testing.assert_almost_equal(output_py, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_segment_min_fp():
@@ -113,7 +113,7 @@ def test_segment_min_fp():
     np.testing.assert_almost_equal(output_py, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_segment_sum_fp():
@@ -131,7 +131,7 @@ def test_segment_sum_fp():
     np.testing.assert_array_almost_equal(output_gr, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_segment_mean_fp():
@@ -154,7 +154,7 @@ def test_segment_mean_fp():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_segment_prod_fp():

@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.op(dout, x, minq, maxq)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant_grad1():

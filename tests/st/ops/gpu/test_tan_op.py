@@ -47,7 +47,7 @@ def test_tan_float16():
     tan(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_float32():
@@ -59,7 +59,7 @@ def test_tan_float32():
     tan(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_float64():
@@ -71,7 +71,7 @@ def test_tan_float64():
     tan(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_int32():
@@ -83,7 +83,7 @@ def test_tan_int32():
     tan(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_int64():
@@ -95,7 +95,7 @@ def test_tan_int64():
     tan(np.int64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_tensor_func_check():
@@ -115,7 +115,7 @@ def test_tan_tensor_func_check():
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_functional_func_check():
@@ -146,7 +146,7 @@ class DynamicShapeTanNet(nn.Cell):
         return self.tan_func(data)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_dy_shape():
@@ -173,7 +173,7 @@ def tan_graph(x):
     return P.Tan()(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_vmap():

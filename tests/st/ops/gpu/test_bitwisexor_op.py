@@ -30,7 +30,7 @@ class NetBitwiseXor(nn.Cell):
         return self.bitwisexor(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bitwisexor_graph():
@@ -51,7 +51,7 @@ def test_bitwisexor_graph():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bitwisexor_graph1():
@@ -72,7 +72,7 @@ def test_bitwisexor_graph1():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bitwisexor_graph2():

@@ -31,7 +31,7 @@ class ResizeBilinearGradNet(nn.Cell):
         return self.rb1(dy, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bilinear_grad_align_corners():
@@ -93,7 +93,7 @@ def test_resize_bilinear_grad():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bilinear_grad_half_pixel_centers():
@@ -131,7 +131,7 @@ def test_resize_bilinear_grad_half_pixel_centers():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

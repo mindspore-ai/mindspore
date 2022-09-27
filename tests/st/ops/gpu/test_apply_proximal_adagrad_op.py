@@ -35,7 +35,7 @@ class ApplyProximalAdagradTEST(nn.Cell):
         return self.apply_proximal_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
@@ -86,7 +86,7 @@ class AdgradNetVmap(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_proximal_adagrad_op_vmap():
@@ -139,7 +139,7 @@ class AdgradNetVmap2(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_proximal_adagrad_op_vmap2():

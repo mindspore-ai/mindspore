@@ -164,7 +164,7 @@ def dynamic_concat_run(is_grad):
     assert compare(output, output_cmp)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_concat_forward():
@@ -176,7 +176,7 @@ def test_dynamic_concat_forward():
     dynamic_concat_run(False)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_concat_backward():
@@ -198,7 +198,7 @@ class BatchNormNet(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_bachnorm():
@@ -231,7 +231,7 @@ class ReshapeNet(nn.Cell):
         return ops.Reshape()(x, shape_of_y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_reshape():
@@ -267,7 +267,7 @@ class ReduceSumInputAxisNet(nn.Cell):
         return self.reduce(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_reduce_sum_input_axis():
@@ -303,7 +303,7 @@ class NopNet(nn.Cell):
         return ops.sub(y1, x1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_nop():
@@ -338,7 +338,7 @@ class ReduceSumNet(nn.Cell):
         return self.reduce(x, self.axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_reduce_sum():
@@ -369,7 +369,7 @@ class AddNet(nn.Cell):
         return ops.add(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_add():
@@ -447,7 +447,7 @@ class ResizeNearestNeighbor(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_batchnorm():
@@ -463,7 +463,7 @@ def test_dynamic_batchnorm():
     comm_func(dynamic_range, input_shape, data_type, net, output_compare_idx=0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_batchnorm2():
@@ -479,7 +479,7 @@ def test_dynamic_batchnorm2():
     comm_func(dynamic_range, input_shape, data_type, net, output_compare_idx=0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool1():
@@ -495,7 +495,7 @@ def test_dynamic_maxpool1():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool2():
@@ -511,7 +511,7 @@ def test_dynamic_maxpool2():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool3():
@@ -527,7 +527,7 @@ def test_dynamic_maxpool3():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool4():
@@ -543,7 +543,7 @@ def test_dynamic_maxpool4():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_sigmoid_cross_entropy_with_logits():
@@ -559,7 +559,7 @@ def test_dynamic_sigmoid_cross_entropy_with_logits():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_sigmoid_cross_entropy_with_logits_grad():
@@ -575,7 +575,7 @@ def test_dynamic_sigmoid_cross_entropy_with_logits_grad():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_sigmoid_grad():
@@ -591,7 +591,7 @@ def test_dynamic_sigmoid_grad():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_resize_nearest_neighbor():
@@ -607,7 +607,7 @@ def test_dynamic_resize_nearest_neighbor():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_resize_nearest_neighbor_grad():

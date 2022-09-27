@@ -97,7 +97,7 @@ class Expected3d(nn.Cell):
         return F.reshape(self.ops(F.reshape(x, (1, -1, shape[2], shape[3], shape[4]))), shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape", [(8, 4, 5)])
@@ -129,7 +129,7 @@ def test_instancenorm_1d(shape, data_type):
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape", [(8, 4, 3, 4)])
@@ -161,7 +161,7 @@ def test_instancenorm_2d(shape, data_type):
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape", [(8, 4, 3, 4, 7)])
@@ -193,7 +193,7 @@ def test_instancenorm_3d(shape, data_type):
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_instancenorm_2d_dynamic_shape():
@@ -229,7 +229,7 @@ def test_instancenorm_2d_dynamic_shape():
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_instancenorm_vmap():
@@ -286,7 +286,7 @@ def test_instancenorm_vmap():
     assert np.allclose(vmap_updated_moving_variance.asnumpy(), for_updated_moving_variance.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_instancenorm_grad_vmap():

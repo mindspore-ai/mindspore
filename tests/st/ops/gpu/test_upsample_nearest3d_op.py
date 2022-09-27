@@ -32,7 +32,7 @@ class UpsampleNearest3DNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -66,7 +66,7 @@ def test_upsample_nearest_3d_output_size_float(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -100,7 +100,7 @@ def test_upsample_nearest_3d_scales_float(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_upsample_nearest_3d_error():
@@ -147,7 +147,7 @@ def test_upsample_nearest_3d_error():
         net(input_tensor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_upsample_nearest3d():

@@ -75,7 +75,7 @@ def test_net_constant():
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_func():
@@ -90,7 +90,7 @@ def test_func():
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor():

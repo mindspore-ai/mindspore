@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_shape', [(10, 10), (3, 4, 5)])
@@ -68,7 +68,7 @@ class DynamicShapeNet(nn.Cell):
         return real_x, self.nonzero(real_x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dyn_net():

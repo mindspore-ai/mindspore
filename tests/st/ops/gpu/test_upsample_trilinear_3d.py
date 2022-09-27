@@ -32,7 +32,7 @@ class UpsampleTrilinear3DNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -81,7 +81,7 @@ def test_upsample_trilinear_3d_output_size(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -131,7 +131,7 @@ def test_upsample_trilinear_3d_output_size_align_corners(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -182,7 +182,7 @@ def test_upsample_trilinear_3d_scales(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -236,7 +236,7 @@ def test_upsample_trilinear_3d_scales_align_corners(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_upsample_trilinear_3d_error():
@@ -283,7 +283,7 @@ def test_upsample_trilinear_3d_error():
         net(input_tensor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_upsample_trilinear_3d():

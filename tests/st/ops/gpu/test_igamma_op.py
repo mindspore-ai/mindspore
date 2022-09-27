@@ -77,7 +77,7 @@ class IgammaGradANet(Cell):
         return self.igammagrada(a, x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_igamma_fp32():
@@ -102,7 +102,7 @@ def test_igamma_fp32():
     assert np.allclose(output_grad_ms[1].asnumpy(), expect_grad_x, 1e-4, 1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_igamma_fp64():
@@ -120,7 +120,7 @@ def test_igamma_fp64():
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-5, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_igammac_fp32():
@@ -145,7 +145,7 @@ def test_igammac_fp32():
     assert np.allclose(output_grad_ms[1].asnumpy(), expect_grad_x, 1e-4, 1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_igammac_fp64():
@@ -163,7 +163,7 @@ def test_igammac_fp64():
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-5, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_igammagrada_fp32():
@@ -181,7 +181,7 @@ def test_igammagrada_fp32():
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-4, 1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_igammagrada_fp64():

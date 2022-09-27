@@ -60,7 +60,7 @@ class NetMaxUnpool2DGradFourDNHWC(nn.Cell):
         return self.maxunpool2d_grad(x, grad, indices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxunpool2d_4dinput_graph():

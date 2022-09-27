@@ -73,7 +73,7 @@ def np_all_close_with_loss(out, expect):
     return np.allclose(out, expect, 0.005, 0.005, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
@@ -97,7 +97,7 @@ def test_fast_gelu_grad(shape, dtype):
     assert np_all_close_with_loss(output[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
@@ -127,7 +127,7 @@ def test_fast_gelu(shape, dtype):
     assert np_all_close_with_loss(y_np, y_nn.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
@@ -167,7 +167,7 @@ def test_fast_gelu_grad_vmap(dtype, shape=(100, 2)):
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])

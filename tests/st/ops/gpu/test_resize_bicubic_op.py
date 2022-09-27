@@ -33,7 +33,7 @@ class NetResizeBicubic(nn.Cell):
         return self.resize_bicubic(images, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bicubic_graph():
@@ -65,7 +65,7 @@ def test_resize_bicubic_graph():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bicubic_pynative():

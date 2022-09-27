@@ -30,7 +30,7 @@ class NetDilation2D(nn.Cell):
         return self.dilation2d(x, fil)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dilation2d_graph():
@@ -55,7 +55,7 @@ def test_dilation2d_graph():
         assert output.shape == expect_output.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dilation2d_pynative():

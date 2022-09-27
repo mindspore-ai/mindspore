@@ -64,7 +64,7 @@ def compare_with_numpy(x, dim, index, value):
     return np.allclose(ms_result_graph, np_result) and np.allclose(ms_result_pynative, np_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.bool, np.int8, np.int16, np.int32, np.float16, np.float64])
@@ -82,7 +82,7 @@ def test_index_fill_data_type(data_type):
     assert compare_with_numpy(x_np, dim, index_np, value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dim_type', [np.int32, np.int64])
@@ -100,7 +100,7 @@ def test_index_fill_dim_type(dim_type):
     assert compare_with_numpy(x_np, dim, index_np, value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dim', [0, 1])
@@ -131,7 +131,7 @@ class IndexFillVmapNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_fill_vmap():

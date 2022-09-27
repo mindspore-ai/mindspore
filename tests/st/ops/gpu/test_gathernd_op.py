@@ -46,7 +46,7 @@ def gathernd0(nptype):
 def test_gathernd0_float64():
     gathernd0(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gathernd0_float32():

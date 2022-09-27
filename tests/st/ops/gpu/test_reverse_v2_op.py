@@ -97,7 +97,7 @@ def test_reverse_v2_int64():
     reverse_v2_1d(np.int64)
     reverse_v2_3d(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_invalid_axis():

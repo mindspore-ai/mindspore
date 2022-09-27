@@ -77,7 +77,7 @@ def test_rsqrt():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])

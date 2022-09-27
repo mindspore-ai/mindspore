@@ -31,7 +31,7 @@ class NetDilation2DBackpropInput(nn.Cell):
         return self.dilation2dbackpropinput(x, fil, out_backprop)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dilation2dbackpropinput_graph():
@@ -68,7 +68,7 @@ def test_dilation2dbackpropinput_graph():
         assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dilation2dbackpropinput_pynative():

@@ -34,7 +34,7 @@ class NetDeformableOffsetsGrad(nn.Cell):
         return self.grad_op(grad, input_x, offsets)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
@@ -68,7 +68,7 @@ def test_deformable_offsets_grad_nchw(dtype):
     assert np.allclose(output[1].asnumpy(), expect_grad_offset, rtol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])

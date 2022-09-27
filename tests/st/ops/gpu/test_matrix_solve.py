@@ -30,7 +30,7 @@ class MatrixSolveNet(nn.Cell):
         return ops.matrix_solve(matrix, rhs, self.adjoint)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('adjoint', [True, False])
@@ -62,7 +62,7 @@ def test_matrix_solve(adjoint, rhs_shape, dtype, error):
     assert np.allclose(result, expected, atol=error, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('adjoint', [True, False])
@@ -92,7 +92,7 @@ def test_matrix_solve_complex(adjoint, m, k, dtype, error):
     assert np.allclose(result, expected, atol=error, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('adjoint', [True, False])
@@ -119,7 +119,7 @@ def test_matrix_solve_vmap(adjoint, dtype, error):
     assert np.allclose(result, expected, atol=error, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_matrix_solve_dynamic_shape():

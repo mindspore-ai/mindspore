@@ -35,7 +35,7 @@ class Col2ImTest(nn.Cell):
         return self.c2i(x, output_size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode, input_type",

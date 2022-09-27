@@ -32,7 +32,7 @@ class BucketizeNet(Cell):
         return self.bucketize(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bucketize_4x5_float64():
@@ -55,7 +55,7 @@ def test_bucketize_4x5_float64():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bucketize_4x5x6_int32():

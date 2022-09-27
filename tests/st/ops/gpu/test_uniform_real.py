@@ -53,7 +53,7 @@ class DynamicShapeNet(nn.Cell):
         return self.uniformreal(input_shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_dynamic_shape():

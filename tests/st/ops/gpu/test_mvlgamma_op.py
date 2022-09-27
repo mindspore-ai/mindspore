@@ -56,7 +56,7 @@ def mvlgamma_pynative(nptype, p):
     assert np.allclose(mvlgamma_output, mvlgamma_expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mvlgamma_graph_float32():
@@ -68,7 +68,7 @@ def test_mvlgamma_graph_float32():
     mvlgamma(np.float32, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mvlgamma_pynative_float64():

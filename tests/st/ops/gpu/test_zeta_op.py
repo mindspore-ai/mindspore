@@ -31,7 +31,7 @@ class NetZeta(nn.Cell):
         return self.zeta(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeta_1d_input_float32_output_float32():
@@ -51,7 +51,7 @@ def test_zeta_1d_input_float32_output_float32():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float32), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeta_1d_input_float64_output_float64():

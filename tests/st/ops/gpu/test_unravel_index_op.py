@@ -15,7 +15,7 @@ class UnravelIndex(nn.Cell):
         return self.unravel_index(indices, dims)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unravel_index_0d_graph():
@@ -33,7 +33,7 @@ def test_unravel_index_0d_graph():
     assert (output_ms.asnumpy() == output_np).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unravel_index_1d_pynative():

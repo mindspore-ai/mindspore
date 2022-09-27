@@ -77,7 +77,7 @@ def lp_norm_vmap_case(data_type):
     assert np.allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
@@ -104,7 +104,7 @@ def test_lp_norm_op(data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
@@ -118,7 +118,7 @@ def test_lp_norm_vmap_gpu(data_type):
     lp_norm_vmap_case(data_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])

@@ -29,7 +29,7 @@ class NetAddcmul(nn.Cell):
         return self.addcmul(input_data, x1, x2, value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_addcmul_float32_graph(type_s=np.float32):
@@ -55,7 +55,7 @@ def test_addcmul_float32_graph(type_s=np.float32):
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_addcmul_float64_pynative_value(type_s=np.float64):
