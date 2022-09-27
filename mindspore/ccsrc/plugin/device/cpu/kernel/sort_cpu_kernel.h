@@ -18,17 +18,22 @@
 
 #include <vector>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class SortCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SortCpuKernelMod : public NativeCpuKernelMod {
  public:
   SortCpuKernelMod() = default;
   ~SortCpuKernelMod() = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -37,8 +42,14 @@ class SortCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
- protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  void ResetResource() noexcept {
+    descending_ = false;
+    axisIterator_.SetOffset(0);
+    axisIterator_.SetOffset(0, 0);
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
 
  private:
   template <typename T>

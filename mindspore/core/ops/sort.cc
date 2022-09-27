@@ -64,6 +64,17 @@ AbstractBasePtr SortInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto infershape = SortInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
+
+int64_t Sort::get_axis() const {
+  auto value_ptr = this->GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
+}
+
+bool Sort::get_descending() const {
+  auto value_ptr = this->GetAttr(kDescending);
+  return GetValue<bool>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(Sort, prim::kPrimSort, SortInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

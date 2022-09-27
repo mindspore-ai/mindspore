@@ -31,6 +31,9 @@ class MIND_API Sort : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Sort);
   Sort() : BaseOperator(kNameSort) { InitIOName({"x"}, {"y1", "y2"}); }
+
+  int64_t get_axis() const;
+  bool get_descending() const;
 };
 abstract::AbstractBasePtr SortInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<abstract::AbstractBasePtr> &input_args);

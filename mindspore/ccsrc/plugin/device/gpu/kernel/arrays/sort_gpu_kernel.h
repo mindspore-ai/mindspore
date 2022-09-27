@@ -21,7 +21,10 @@
 #include <limits>
 #include <utility>
 #include <vector>
+#include <memory>
+#include <map>
 
+#include "mindspore/core/ops/sort.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"
@@ -30,105 +33,36 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+constexpr int kSortInputsNum = 1;
+constexpr int kSortOutputsNum = 2;
+
+class SortGpuKernelMod : public NativeGpuKernelMod {
  public:
   SortGpuKernelMod() { ResetResource(); }
   ~SortGpuKernelMod() = default;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input_device = GetDeviceAddress<T>(inputs, 0);
-
-    T *output_device = GetDeviceAddress<T>(outputs, 0);
-    int32_t *indices_device = GetDeviceAddress<int32_t>(outputs, 1);
-
-    T *temp_output_device = GetDeviceAddress<T>(workspace, 0);
-    int32_t *temp_indices_device = GetDeviceAddress<int32_t>(workspace, 1);
-    size_t *input_shape_device = GetDeviceAddress<size_t>(workspace, 2);
-    size_t *perm_device = GetDeviceAddress<size_t>(workspace, 3);
-    size_t *transposed_shape_device = GetDeviceAddress<size_t>(workspace, 4);
-
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(input_shape_device, &input_shape_[0], workspace_size_list_[2],
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync for input_shape_ failed");
-
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(perm_device, &perm_[0], workspace_size_list_[3], cudaMemcpyHostToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync for perm_ failed");
-
-    // Sort is implemented using a combination of Neg, Transpose, and TopK. It's
-    // Not safe to treat Transpose and TopK as inplace operators, so we alternate
-    // between using temp_output_device and output_device for intermediate calculations,
-    // this way only a constant number of allocations is needed instead of needing to
-    // allocate once for each intermediate calculation.
-    T *intermediate_input_device = input_device;
-    T *intermediate_output_device = output_device;
-
-    // if sort not in descending order, negate input and negate back after sorting
-    if (!descending_) {
-      Negative(intermediate_input_device, intermediate_output_device, input_size_,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
-      intermediate_input_device = output_device;
-      intermediate_output_device = temp_output_device;
-    }
-
-    // transpose so that desired dimension to sort along becomes the last one
-    CalTranspose(input_size_, intermediate_input_device, input_shape_device, perm_device, input_rank_,
-                 intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
-    intermediate_input_device = intermediate_output_device;
-    intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
-
-    // topk sorts the input along the last dimension
-    FastTopK(outer_size_, inner_size_, intermediate_input_device, static_cast<int32_t>(input_shape_[axis_]),
-             intermediate_output_device, temp_indices_device, topk_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    std::swap(intermediate_input_device, intermediate_output_device);
-
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(transposed_shape_device, &transposed_shape_[0], workspace_size_list_[4],
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync for transposed_shape_ failed");
-
-    // transpose the sorted output back to the original input shape
-    CalTranspose(input_size_, intermediate_input_device, transposed_shape_device, perm_device, input_rank_,
-                 intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    // transpose the indices back to the original input shape
-    CalTranspose(input_size_, temp_indices_device, transposed_shape_device, perm_device, input_rank_, indices_device,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    // negate back the sorted values if we negated prior to sorting
-    if (!descending_) {
-      std::swap(intermediate_input_device, intermediate_output_device);
-      Negative(intermediate_input_device, intermediate_output_device, input_size_,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_count != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_count;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    auto kernel_name = base_operator->GetPrim()->name();
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSortInputsNum, kernel_name);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSortOutputsNum, kernel_name);
+    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      return false;
     }
 
-    size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_count != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_count;
-    }
-
-    input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    input_shape_ = inputs[0]->GetShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (is_null_input_) {
-      InitSizeLists();
       return true;
     }
 
@@ -140,13 +74,10 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     input_size_ = 1;
-    for (size_t i = 0; i < input_rank_; i++) {
-      input_size_ *= static_cast<size_t>(input_shape_[i]);
-    }
+    auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
 
-    descending_ = GetAttr<bool>(kernel_node, "descending");
-    axis_ = GetAttr<int64_t>(kernel_node, "axis");
-
+    descending_ = static_cast<bool>(kernel_ptr->get_descending());
+    axis_ = static_cast<int64_t>(kernel_ptr->get_axis());
     if (axis_ < 0) {
       axis_ += input_rank_;
     }
@@ -166,19 +97,25 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     inner_size_ = static_cast<size_t>(input_shape_[axis_]);
     outer_size_ = input_size_ / inner_size_;
 
-    if (std::is_same<T, half>::value) {
-      // min value representable by float16, std::numeric_limits doesn't support half
-      topk_init_ = static_cast<half>(-65504.);
-    } else {
-      topk_init_ = std::numeric_limits<T>::lowest();
+    MS_LOG(DEBUG) << "In gpu kernel sort Init, axis_=" << axis_ << " descending_=" << descending_
+                  << " input_rank_=" << input_rank_ << " input_size_=" << input_size_ << " inner_size_=" << inner_size_
+                  << " outer_size_=" << outer_size_;
+    (void)KernelMod::Resize(base_operator, inputs, outputs);
+    if (input_size_list_.size() > 0) {
+      size_t input_bytes = input_size_list_.at(kIndex0);
+      size_t indices_bytes = input_size_ * sizeof(int32_t);
+      workspace_size_list_.push_back(input_bytes);
+      workspace_size_list_.push_back(indices_bytes);
+      workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
+      workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
+      workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
     }
 
-    InitSizeLists();
-
+    kernel_func_ = func_list_[index].second;
     return true;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     input_size_ = 0;
     axis_ = 0;
     descending_ = false;
@@ -189,29 +126,15 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     perm_.clear();
     outer_size_ = 0;
     inner_size_ = 0;
-    topk_init_ = static_cast<T>(0.);
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
  protected:
-  void InitSizeLists() override {
-    size_t input_bytes = input_size_ * sizeof(T);
-    size_t indices_bytes = input_size_ * sizeof(int32_t);
-    input_size_list_.push_back(input_bytes);
-
-    // outputs: sorted values, indices
-    output_size_list_.push_back(input_bytes);
-    output_size_list_.push_back(indices_bytes);
-
-    // workspace: temp output, temp indices, input shape, perm, transposed_shape
-    workspace_size_list_.push_back(input_bytes);
-    workspace_size_list_.push_back(indices_bytes);
-    workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
-    workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
-    workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
-  }
+  std::vector<KernelTensorPtr> outputs_{};
+  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   size_t input_size_;
@@ -228,7 +151,16 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   // for topk
   size_t outer_size_;
   size_t inner_size_;
-  T topk_init_;
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using SortLaunchFunc = std::function<bool(SortGpuKernelMod *, const std::vector<AddressPtr> &,
+                                            const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, SortLaunchFunc>> func_list_;
+  SortLaunchFunc kernel_func_;
+  cudaStream_t cuda_stream_;
 };
 }  // namespace kernel
 }  // namespace mindspore

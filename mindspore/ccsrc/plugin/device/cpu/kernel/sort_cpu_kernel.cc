@@ -16,49 +16,31 @@
 #include "plugin/device/cpu/kernel/sort_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <map>
+#include <memory>
 #include "include/common/thread_pool.h"
+#include "mindspore/core/ops/sort.h"
 
 namespace mindspore {
 namespace kernel {
-void SortCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_count != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_count
-                      << " input(s).";
-  }
+constexpr int kSortInputsNum = 1;
+constexpr int kSortOutputsNum = 2;
 
-  size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_count != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 2, but got " << output_count
-                      << " output(s).";
-  }
+bool SortCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSortInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSortOutputsNum, kernel_name_);
 
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  descending_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "descending");
-  auto axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
-  if (axis_t >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "
-                      << input_shape.size() << "D, but got " << axis_t;
-  }
-
-  axisIterator_.Init(input_shape, axis_t);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
+  descending_ = static_cast<bool>(kernel_ptr->get_descending());
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Sort does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-}
-
-void SortCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
-  // id
-  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+  return true;
 }
 
 template <typename T>
@@ -118,6 +100,28 @@ bool SortCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   ParallelLaunchAutoSearch(task, axisIterator_.OuterSize() * axisIterator_.InnerSize(), this, &parallel_search_info_);
 
   return true;
+}
+
+int SortCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs[0]->GetShapeVector();
+  auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
+  auto axis = static_cast<int64_t>(kernel_ptr->get_axis());
+  size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
+  if (axis_t >= input_shape.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "
+                      << input_shape.size() << "D, but got " << axis_t;
+  }
+
+  axisIterator_.Init(input_shape, axis_t);
+  size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
+  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+  return KRET_OK;
 }
 
 std::vector<std::pair<KernelAttr, SortCpuKernelMod::SortFunc>> SortCpuKernelMod::func_list_ = {
