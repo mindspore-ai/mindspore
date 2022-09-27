@@ -59,9 +59,9 @@ class MatMulInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
     }
 
-    const int mat_rank = 2;
-    (void)CheckAndConvertUtils::CheckInteger("rank of a", a_shape.size(), kEqual, mat_rank, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("rank of b", b_shape.size(), kEqual, mat_rank, prim_name);
+    const int64_t mat_rank = 2;
+    (void)CheckAndConvertUtils::CheckInteger("rank of a", SizeToLong(a_shape.size()), kEqual, mat_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of b", SizeToLong(b_shape.size()), kEqual, mat_rank, prim_name);
 
     const int dim0 = 0;
     const int dim1 = 1;

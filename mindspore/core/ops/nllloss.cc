@@ -42,8 +42,8 @@ class NLLLossInfer : public abstract::OpInferBase {
 
     (void)CheckAndConvertUtils::CheckInteger("rank of target", SizeToLong(target_shape.size()), kEqual, 1, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("rank of weight", SizeToLong(weight_shape.size()), kEqual, 1, prim_name);
-    (void)CheckAndConvertUtils::CheckInRange("rank of logits", SizeToLong(logits_shape.size()), kIncludeBoth, {1, 2},
-                                             prim_name);
+    CheckAndConvertUtils::CheckInRange("rank of logits", SizeToLong(logits_shape.size()), kIncludeBoth, {1, 2},
+                                       prim_name);
 
     if (!logits_shape_ptr->IsDynamic()) {
       if (!target_shape_ptr->IsDynamic() && logits_shape[kInputIndex0] != target_shape[kInputIndex0]) {
@@ -52,7 +52,7 @@ class NLLLossInfer : public abstract::OpInferBase {
                                  << logits_shape[kInputIndex0] << " and " << target_shape[kInputIndex0] << ".";
       }
 
-      int64_t weight_dim = logits_shape.size() - 1;
+      size_t weight_dim = logits_shape.size() - 1;
       if (!weight_shape_ptr->IsDynamic() && logits_shape[weight_dim] != weight_shape[kInputIndex0]) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', the last dim of 'logits' and the shape of 'weight' should be equal, but got "
