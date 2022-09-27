@@ -78,7 +78,13 @@ int StackBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(stack_param_);
-  data_type_size_ = sizeof(float);
+  auto data_type = in_tensors_.at(FIRST_INPUT)->data_type();
+  if (data_type == kNumberTypeFloat32 || data_type == kNumberTypeInt32) {
+    data_type_size_ = sizeof(float);
+  } else {
+    MS_LOG(ERROR) << "stack not support data type: " << data_type;
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
