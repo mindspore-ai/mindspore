@@ -34,6 +34,7 @@ constexpr int kNumDims = 5;
 constexpr int kConvDims = 3;
 constexpr int kStaticInputNum = 2;
 constexpr int kDynamicInputNum = 3;
+constexpr int kOutputNum = 1;
 constexpr size_t kInDimIdxForN = 0;
 constexpr size_t kInDimIdxForC = 1;
 constexpr size_t kInDimIdxForD = 2;
@@ -41,26 +42,26 @@ constexpr size_t kInDimIdxForH = 3;
 constexpr size_t kInDimIdxForW = 4;
 
 constexpr size_t k3DPadSize = 6;
-constexpr size_t kHead3DPadIndex = 0;
-constexpr size_t kTail3DPadIndex = 1;
-constexpr size_t kTop3DPadIndex = 2;
-constexpr size_t kBottom3DPadIndex = 3;
-constexpr size_t kLeft3DPadIndex = 4;
-constexpr size_t kRight3DPadIndex = 5;
+constexpr size_t kHead3DPadIdx = 0;
+constexpr size_t kTail3DPadIdx = 1;
+constexpr size_t kTop3DPadIdx = 2;
+constexpr size_t kBottom3DPadIdx = 3;
+constexpr size_t kLeft3DPadIdx = 4;
+constexpr size_t kRight3DPadIdx = 5;
 
-constexpr size_t kPadIdxDepth = 0;
-constexpr size_t kPadIdxHeight = 1;
-constexpr size_t kPadIdxWidth = 2;
+constexpr size_t kPadDepthIdx = 0;
+constexpr size_t kPadHeightIdx = 1;
+constexpr size_t kPadWidthIdx = 2;
 
 constexpr size_t k3DStrideSize = 5;
-constexpr size_t kDepth3DStrideIndex = 2;
-constexpr size_t kHeight3DStrideIndex = 3;
-constexpr size_t kWidth3DStrideIndex = 4;
+constexpr size_t kDepth3DStrideIdx = 2;
+constexpr size_t kHeight3DStrideIdx = 3;
+constexpr size_t kWidth3DStrideIdx = 4;
 
 constexpr size_t k3DDilationSize = 5;
-constexpr size_t kDepth3DDilationIndex = 2;
-constexpr size_t kHeight3DDilationIndex = 3;
-constexpr size_t kWidth3DDilationIndex = 4;
+constexpr size_t kDepth3DDilationIdx = 2;
+constexpr size_t kHeight3DDilationIdx = 3;
+constexpr size_t kWidth3DDilationIdx = 4;
 
 template <typename T>
 class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
@@ -70,9 +71,6 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     T *w = GetDeviceAddress<T>(inputs, 0);
     T *dy = GetDeviceAddress<T>(inputs, 1);
     T *dx = GetDeviceAddress<T>(outputs, 0);
@@ -81,7 +79,6 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
     const float alpha = 1;
     if (use_pad_) {
       T *padded = GetDeviceAddress<T>(workspace, 1);
-
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnConvolutionBackwardData(cudnn_handle_, &alpha, w_desc_, w, dy_desc_, dy, conv_desc_, algo_, work_space,
                                      workspace_size_, &beta_, padded_descriptor_, padded),
@@ -120,21 +117,12 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
     }
     size_t output_num = outputs.size();
-    if (output_num != 1) {
+    if (output_num != kOutputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
 
-    SetStrideAndDilation(kernel_ptr->get_dilation(), kernel_ptr->get_stride());
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
-    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
-                                          "cudnnSetConvolutionMathType failed.")
-    }
-    compute_format_ = CUDNN_TENSOR_NCHW;
     data_format_ = kOpFormat_NCDHW;
-    group_ = kernel_ptr->get_group();
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
-                                        "cudnnSetConvGroupCount failed");
     return true;
   }
 
@@ -149,18 +137,16 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
     if (ret != KRET_OK) {
       return ret;
     }
+    workspace_size_list_.clear();
+    input_size_list_.clear();
+    output_size_list_.clear();
 
     auto filter_shape = inputs[kIndex0]->GetShapeVector();
     auto dy_shape = inputs[kIndex1]->GetShapeVector();
-    is_null_input_ =
-      CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight") || CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy");
-    if (is_null_input_) {
-      InitSizeLists();
-      return KRET_RESIZE_FAILED;
-    }
     auto input_shape = outputs[kIndex0]->GetShapeVector();
+    compute_format_ = CUDNN_TENSOR_NCHW;
     CheckTensorSize({input_shape});
-    (void)CheckSize(input_shape.size(), kNumDims, "input size");
+    (void)CheckSize(input_shape.size(), kNumDims, "input shape");
 
     n_ = LongToInt(input_shape[kInDimIdxForN]);
     c_ = LongToInt(input_shape[kInDimIdxForC]);
@@ -168,18 +154,25 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
     old_height_ = LongToInt(input_shape[kInDimIdxForH]);
     old_width_ = LongToInt(input_shape[kInDimIdxForW]);
     SetNDDesc(dy_shape, input_shape, filter_shape);
-
+    group_ = kernel_ptr->get_group();
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
+                                        "cudnnSetConvGroupCount failed");
     std::vector<int> pad_list;
     std::vector<int64_t> pad_list_me = kernel_ptr->get_pad_list();
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
     SetPad(pad_list);
     pad_mode_ = kernel_ptr->get_pad_mode();
+    SetStrideAndDilation(kernel_ptr->get_stride(), kernel_ptr->get_dilation());
     auto dx_desc_real = GetDxDescReal(pad_list);
+    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
+                                          "cudnnSetConvolutionMathType failed.")
+    }
     SelectAlgorithm(dx_desc_real);
     auto inplace_algo_ptr = base_operator->GetAttr("inplace_algo");
     if (inplace_algo_ptr == nullptr) {
-      beta_ = 1;
+      beta_ = 0;
     } else {
       beta_ = GetValue<std::string>(inplace_algo_ptr) == "cover" ? 0 : 1;
     }
@@ -209,14 +202,13 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
     n_ = 0;
     c_ = 0;
     group_ = 1;
-    is_null_input_ = false;
     kernel_name_ = "Conv3dGradInput";
     dy_size_ = 0;
     w_size_ = 0;
     output_size_ = 0;
     padded_size_ = 0;
     workspace_size_ = 0;
-    use_pad_ = true;
+    use_pad_ = false;
     beta_ = 0;
   }
 
@@ -243,30 +235,28 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dy_desc_, &dy_size_),
-                                          "cudnnGetTensorSizeInBytes failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetFilterSizeInBytes(w_desc_, &w_size_),
-                                          "cudnnGetTensorSizeInBytes failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dx_desc_, &output_size_),
-                                          "cudnnGetTensorSizeInBytes failed");
-    }
-    if (use_pad_ && !is_null_input_) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dy_desc_, &dy_size_),
+                                        "cudnnGetTensorSizeInBytes failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetFilterSizeInBytes(w_desc_, &w_size_),
+                                        "cudnnGetTensorSizeInBytes failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dx_desc_, &output_size_),
+                                        "cudnnGetTensorSizeInBytes failed");
+    input_size_list_.push_back(dy_size_);
+    input_size_list_.push_back(w_size_);
+    output_size_list_.push_back(output_size_);
+    if (use_pad_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(padded_descriptor_, &padded_size_),
                                           "cudnnGetTensorSizeInBytes failed");
-
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, padded_descriptor_,
                                                      algo_, &workspace_size_),
         "cudnnGetConvolutionBackwardDataWorkspaceSize failed");
       workspace_size_list_.push_back(padded_size_);
     } else {
-      if (!is_null_input_) {
-        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-          cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_, algo_,
-                                                       &workspace_size_),
-          "cudnnGetConvolutionBackwardDataWorkspaceSize failed");
-      }
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_, algo_,
+                                                     &workspace_size_),
+        "cudnnGetConvolutionBackwardDataWorkspaceSize failed");
     }
     (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size_);
   }
@@ -306,7 +296,7 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
                                         "cudnnSetTensorNdDescriptor failed");
   }
 
-  void SetStrideAndDilation(std::vector<int64_t> dilation_me, std::vector<int64_t> stride_me) {
+  void SetStrideAndDilation(std::vector<int64_t> stride_me, std::vector<int64_t> dilation_me) {
     (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
@@ -329,30 +319,27 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void SetPad(const std::vector<int> &pad_list) {
-    if (pad_list.size() != k3DPadSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 6, but got " << pad_list.size();
-    }
-    pad_depth_ = pad_list[kHead3DPadIndex];
-    pad_height_ = pad_list[kTop3DPadIndex];
-    pad_width_ = pad_list[kLeft3DPadIndex];
-    use_pad_ = !((pad_depth_ == pad_list[kTail3DPadIndex]) && (pad_height_ == pad_list[kBottom3DPadIndex]) &&
-                 (pad_width_ == pad_list[kRight3DPadIndex]));
+    (void)CheckSize(pad_list.size(), k3DPadSize, "pad");
+    pad_depth_ = pad_list[kHead3DPadIdx];
+    pad_height_ = pad_list[kTop3DPadIdx];
+    pad_width_ = pad_list[kLeft3DPadIdx];
+    use_pad_ = !((pad_depth_ == pad_list[kTail3DPadIdx]) && (pad_height_ == pad_list[kBottom3DPadIdx]) &&
+                 (pad_width_ == pad_list[kRight3DPadIdx]));
   }
 
   cudnnTensorDescriptor_t GetDxDescReal(const std::vector<int> &pad_list) {
     cudnnTensorDescriptor_t dx_desc_real = nullptr;
     int padA[kConvDims];
-    int strideA[kConvDims] = {stride_[kDepth3DStrideIndex], stride_[kHeight3DStrideIndex],
-                              stride_[kWidth3DStrideIndex]};
-    int dilaA[kConvDims] = {dilation_[kDepth3DDilationIndex], dilation_[kHeight3DDilationIndex],
-                            dilation_[kWidth3DDilationIndex]};
+    int strideA[kConvDims] = {stride_[kDepth3DStrideIdx], stride_[kHeight3DStrideIdx], stride_[kWidth3DStrideIdx]};
+    int dilaA[kConvDims] = {dilation_[kDepth3DDilationIdx], dilation_[kHeight3DDilationIdx],
+                            dilation_[kWidth3DDilationIdx]};
     if (use_pad_) {
-      pad_depth_ = pad_list[kHead3DPadIndex] + pad_list[kTail3DPadIndex];
-      pad_height_ = pad_list[kTop3DPadIndex] + pad_list[kBottom3DPadIndex];
-      pad_width_ = pad_list[kLeft3DPadIndex] + pad_list[kRight3DPadIndex];
-      pad_head_ = pad_list[kHead3DPadIndex];
-      pad_top_ = pad_list[kTop3DPadIndex];
-      pad_left_ = pad_list[kLeft3DPadIndex];
+      pad_depth_ = pad_list[kHead3DPadIdx] + pad_list[kTail3DPadIdx];
+      pad_height_ = pad_list[kTop3DPadIdx] + pad_list[kBottom3DPadIdx];
+      pad_width_ = pad_list[kLeft3DPadIdx] + pad_list[kRight3DPadIdx];
+      pad_head_ = pad_list[kHead3DPadIdx];
+      pad_top_ = pad_list[kTop3DPadIdx];
+      pad_left_ = pad_list[kLeft3DPadIdx];
       int dimA[kNumDims];
       int strideApadded[kNumDims];
       if (data_format_ != kOpFormat_NCDHW) {
@@ -365,9 +352,9 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, kNumDims, dimA, strideApadded),
         "cudnnSetTensorNdDescriptor failed");
-      padA[kPadIdxDepth] = 0;
-      padA[kPadIdxHeight] = 0;
-      padA[kPadIdxWidth] = 0;
+      padA[kPadDepthIdx] = 0;
+      padA[kPadHeightIdx] = 0;
+      padA[kPadWidthIdx] = 0;
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionNdDescriptor(conv_desc_, kConvDims, padA, strideA, dilaA,
                                                                           CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
                                           "cudnnSetConvolutionNdDescriptor failed");
@@ -378,12 +365,12 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
         pad_height_ = 0;
         pad_width_ = 0;
       }
-      padA[kPadIdxDepth] = pad_depth_;
-      padA[kPadIdxHeight] = pad_height_;
-      padA[kPadIdxWidth] = pad_width_;
+      padA[kPadDepthIdx] = pad_depth_;
+      padA[kPadHeightIdx] = pad_height_;
+      padA[kPadWidthIdx] = pad_width_;
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionNdDescriptor(conv_desc_, kConvDims, padA, strideA, dilaA,
                                                                           CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-                                          "cudnnSetConvolution2dDescriptor failed");
+                                          "cudnnSetConvolutionNdDescriptor failed");
       dx_desc_real = dx_desc_;
     }
 
@@ -416,10 +403,9 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int> stride_;
   std::vector<int> dilation_;
   int group_;
-  bool is_null_input_;
   std::string kernel_name_;
-  size_t dy_size_;
   size_t w_size_;
+  size_t dy_size_;
   size_t output_size_;
   size_t padded_size_;
   size_t workspace_size_;
