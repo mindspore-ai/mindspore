@@ -176,6 +176,7 @@ class Profiler:
         self._has_started_twice = False
         self.start_profile = True
         self._profile_memory = False
+        self._sync_enable = True
         self._stop_time = 0
         self._dynamic_status = False
         self._decide_device_target(kwargs)
@@ -221,6 +222,7 @@ class Profiler:
         """Initialize variables when profiler is enabled by environment variables."""
         options = kwargs.get("env_enable")
         self._filt_optype_names = ''
+        self._stop_time = 0
         self._has_started = True
         self._start_time = options.get("start_time")
         self._output_path = options.get('output_path')
@@ -498,6 +500,7 @@ class Profiler:
         gpu_profiler = c_expression.Profiler
         self._gpu_profiler = gpu_profiler.get_instance("GPU")
         self._gpu_profiler.init(self._output_path)
+        self._gpu_profiler.sync_enable(self._sync_enable)
         if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
             self._dev_id = str(get_rank())
         os.environ['DEVICE_ID'] = self._dev_id
@@ -574,6 +577,10 @@ class Profiler:
         self._profile_memory = kwargs.pop("profile_memory", False)
         if self._profile_memory:
             logger.warning(f"The parameter profile_memory is not supported on GPU currently.")
+
+        self._sync_enable = kwargs.pop("sync_enable", True)
+        if not isinstance(self._sync_enable, bool):
+            logger.warning("The parameter sync_enable is an invalid value, it will be set to True.")
 
     def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""
@@ -916,8 +923,6 @@ class Profiler:
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.') from err
-        if self._dynamic_status:
-            raise RuntimeError('Profiler does not support dynamic shape network on CPU platform currently.')
 
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
                             is_gpu_kernel_async_launch_flag=False):

@@ -124,7 +124,6 @@ class GPU_EXPORT GPUProfiler : public Profiler {
   void Stop() override;
   void StopCUPTI();
   void StepProfilingEnable(const bool enable_flag) override;
-  void SyncEnable(const bool enable_flag);
   bool GetSyncEnableFlag() const { return sync_enable_flag_; }
   void EventHandleProcess(CUpti_CallbackId cbid, const CUpti_CallbackData *cbdata, const std::string &typestring,
                           uint64_t startTimestamp, uint64_t endTimestamp);
@@ -152,7 +151,6 @@ class GPU_EXPORT GPUProfiler : public Profiler {
   void SetRunTimeData(const std::string &op_name, void *stream);
   void FixOpNameByCorrelationId(Event *event);
 
-  bool sync_enable_flag_ = true;
   std::unordered_map<uint32_t, std::string> op_name_map_;
   std::vector<Event> events_;
   BaseTime base_time_;

@@ -276,11 +276,6 @@ std::shared_ptr<GPUProfiler> GPUProfiler::GetInstance() {
   return std::dynamic_pointer_cast<GPUProfiler>(instance);
 }
 
-void GPUProfiler::SyncEnable(const bool enable_flag) {
-  MS_LOG(INFO) << "GPU Profiler synchronous enable flag:" << enable_flag;
-  sync_enable_flag_ = enable_flag;
-}
-
 void GPUProfiler::StepProfilingEnable(const bool enable_flag) {
   MS_LOG(INFO) << "GPU Profiler enable flag:" << enable_flag;
   CHECK_CUPTI_RET_WITH_ERROR(CuptiActivityFlushAll(0), "CuptiActivityFlushAll");

@@ -471,7 +471,7 @@ class FlopsParser:
         _step_trace_file_path = os.path.join(self._output_dir, self._step_trace_filename)
 
         if not os.path.exists(_step_trace_file_path):
-            logger.critical(f'The {_step_trace_file_path} file does not exist.')
+            logger.warning(f'The {_step_trace_file_path} file does not exist.')
             return op_all_step_time, op_all_step_comp
         try:
             with open(_step_trace_file_path, 'r') as f:
