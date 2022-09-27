@@ -36,13 +36,32 @@ constexpr size_t kZero = 0;
 constexpr size_t kMemMaxLen = 1e8;
 }  // namespace
 
-void LayerNormGradGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIdx0);
-  mean_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIdx3);
-  g_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIdx4);
+bool LayerNormGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs[kIndex0]->GetDtype();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' it does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+
+  return true;
+}
+
+int LayerNormGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  mean_shape_ = inputs[kIndex3]->GetDeviceShapeAdaptively();
+  g_shape_ = inputs[kIndex4]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename DATA_T>
