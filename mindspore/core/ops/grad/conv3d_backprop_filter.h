@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_CONV3D_BACKPROP_FILTER_H_
 #define MINDSPORE_CORE_OPS_CONV3D_BACKPROP_FILTER_H_
-#include <string>
 #include <vector>
+#include <string>
 #include <memory>
 
 #include "ops/base_operator.h"
@@ -31,7 +31,7 @@ class MIND_API Conv3DBackpropFilter : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv3DBackpropFilter);
   Conv3DBackpropFilter() : BaseOperator(kNameConv3DBackpropFilter) {
-    InitIOName({"out_backprop", "input", "filter_sizes"}, {"output"});
+    InitIOName({"input", "out_backprop", "filter_sizes"}, {"output"});
   }
   void Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0, 0, 0},
@@ -39,26 +39,28 @@ class MIND_API Conv3DBackpropFilter : public BaseOperator {
             const std::vector<int64_t> &dilation = {1, 1, 1, 1, 1}, int64_t group = 1, const Format &format = NCDHW);
   void set_out_channel(const int64_t out_channel);
   void set_kernel_size(const std::vector<int64_t> &kernel_size);
-  void set_pad_mode(const PadMode &pad_mode);
-  void set_pad_list(const std::vector<int64_t> &pad_list);
   void set_mode(const int64_t mode);
+  void set_pad_mode(const PadMode &pad_mode);
+  void set_pad(const std::vector<int64_t> &pad);
   void set_stride(const std::vector<int64_t> &stride);
   void set_dilation(const std::vector<int64_t> &dilation);
   void set_group(const int64_t group);
   void set_format(const Format &format);
+  void set_pad_list(const std::vector<int64_t> &pad_list);
 
   int64_t get_out_channel() const;
   std::vector<int64_t> get_kernel_size() const;
-  PadMode get_pad_mode() const;
-  std::vector<int64_t> get_pad_list() const;
-  std::vector<int64_t> get_pad() const;
   int64_t get_mode() const;
+  PadMode get_pad_mode() const;
+  std::vector<int64_t> get_pad() const;
   std::vector<int64_t> get_stride() const;
   std::vector<int64_t> get_dilation() const;
   int64_t get_group() const;
   Format get_format() const;
+  std::vector<int64_t> get_pad_list() const;
 };
+void SetConv3DBackpropPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
+                              const std::vector<int64_t> &x_size_v);
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_Conv3DBackpropFilter_H_
