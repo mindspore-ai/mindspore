@@ -70,7 +70,7 @@ bool ErfinvCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
       if (input[i] > 1.0 || input[i] < -1.0) {
         // special case when abs(y)>1, erfinv(y)=None
         output[i] = std::numeric_limits<T>::quiet_NaN();
-      } else if (input[i] == 1.0 || input[i] == -1.0) {
+      } else if (std::abs(input[i]) == 1) {
         // spaecail case when abs(y)=1: erfinv(y)=inf, y=1; erfinv(y)=-inf, y=-1.
         output[i] = std::copysign(std::numeric_limits<T>::infinity(), input[i]);
       } else {

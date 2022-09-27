@@ -17,10 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ERFINV_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ERFINV_CPU_KERNEL_H_
 
-#include <algorithm>
-#include <complex>
 #include <map>
-#include <string>
 #include <utility>
 #include <vector>
 
