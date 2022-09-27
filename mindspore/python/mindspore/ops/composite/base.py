@@ -18,7 +18,7 @@
 """Basic composite operations."""
 from __future__ import absolute_import
 from functools import partial
-from types import FunctionType
+from types import FunctionType, MethodType
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -415,7 +415,7 @@ class GradOperation(GradOperation_):
             else:
                 new_kwargs = kwargs.copy()
                 new_kwargs.pop('sens')
-        if isinstance(fn, FunctionType):
+        if isinstance(fn, (FunctionType, MethodType)):
             if not _pynative_executor.check_run(grad, fn, self.weights_id, *args, **new_kwargs):
                 _pynative_executor.set_grad_flag(True)
                 _pynative_executor.new_graph(fn, *args, **new_kwargs)
@@ -576,7 +576,7 @@ class _Grad(GradOperation_):
                 new_kwargs.pop('sens')
             else:
                 args = args[:-1]
-        if isinstance(fn, FunctionType):
+        if isinstance(fn, (FunctionType, MethodType)):
             if not _pynative_executor.check_run(grad, fn, self.grad_hash_id, *args, **new_kwargs):
                 _pynative_executor.set_grad_flag(True)
                 _pynative_executor.new_graph(fn, *args, **new_kwargs)
