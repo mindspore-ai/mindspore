@@ -15,11 +15,13 @@
 """
 Built-in py_transforms_utils functions.
 """
+import json
 import random
 from enum import IntEnum
 from types import FunctionType
 import numpy as np
 
+from mindspore import log as logger
 from ..core.py_util_helpers import is_numpy, ExceptionHandler
 
 
@@ -199,7 +201,17 @@ class FuncWrapper:
         return result
 
     def to_json(self):
+        """ Serialize to JSON format """
         if isinstance(self.transform, FunctionType):
-            # User-defined Python functions cannot be fully nor correctly serialized
-            raise ValueError('Serialization of user-defined Python functions is not supported.')
+            # User-defined Python functions cannot be fully nor correctly serialized.
+            # Log a warning, and produce minimal info for the Python UDF, so that serialization of the
+            # dataset pipeline can continue.
+            # Note that the serialized JSON output is not valid to be deserialized.
+            logger.warning("Serialization of user-defined Python functions is not supported. "
+                           "Any produced serialized JSON file output for this dataset pipeline is not valid "
+                           "to be deserialized.")
+            json_obj = {}
+            json_obj["tensor_op_name"] = self.transform.__name__
+            json_obj["python_module"] = self.__class__.__module__
+            return json.dumps(json_obj)
         return self.transform.to_json()
