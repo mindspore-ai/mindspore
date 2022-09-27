@@ -28,6 +28,7 @@ from mindspore._checkparam import Rel
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
 from mindspore.nn.optim._dist_optimizer_registry import _register_dist_optimizer
+from mindspore.common._decorator import deprecated
 
 _lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 
@@ -332,6 +333,7 @@ class LazyAdam(Optimizer):
         >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
     """
 
+    @deprecated("2.0", "Adam", False)
     @opt_init_args_register
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
