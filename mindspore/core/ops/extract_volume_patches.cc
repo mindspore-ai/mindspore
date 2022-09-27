@@ -63,16 +63,14 @@ abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
     for (int i = d; i <= w; ++i) {
       (void)CheckAndConvertUtils::CheckInteger(
         "padding = VALID, input[" + std::to_string(i) + "] - kernel_size[" + std::to_string(i) + "]",
-        SizeToLong(x_shape[IntToSize(i)]) - kernel_size[IntToSize(i)], kGreaterEqual, 0, primitive->name());
-      y_shape[IntToSize(i)] =
-        1 + (SizeToLong(x_shape[IntToSize(i)]) - kernel_size[IntToSize(i)]) / strides[IntToSize(i)];
+        x_shape[IntToSize(i)] - kernel_size[IntToSize(i)], kGreaterEqual, 0, primitive->name());
+      y_shape[IntToSize(i)] = 1 + (x_shape[IntToSize(i)] - kernel_size[IntToSize(i)]) / strides[IntToSize(i)];
     }
   } else {
     for (int i = d; i <= w; ++i) {
-      y_shape[IntToSize(i)] = (SizeToLong(x_shape[IntToSize(i)]) + strides[IntToSize(i)] - 1) / strides[IntToSize(i)];
-      int64_t output_size = SizeToLong(y_shape[IntToSize(i)]);
-      padding_needed =
-        (output_size - 1) * strides[IntToSize(i)] + kernel_size[IntToSize(i)] - SizeToLong(x_shape[IntToSize(i)]);
+      y_shape[IntToSize(i)] = (x_shape[IntToSize(i)] + strides[IntToSize(i)] - 1) / strides[IntToSize(i)];
+      int64_t output_size = y_shape[IntToSize(i)];
+      padding_needed = (output_size - 1) * strides[IntToSize(i)] + kernel_size[IntToSize(i)] - x_shape[IntToSize(i)];
       (void)CheckAndConvertUtils::CheckInteger("padding = ((input[" + std::to_string(i) + "] + strides[" +
                                                  std::to_string(i) + "] - 1) / strides[" + std::to_string(i) +
                                                  "]) - 1) * strides[" + std::to_string(i) + "] + kernel_size[" +
