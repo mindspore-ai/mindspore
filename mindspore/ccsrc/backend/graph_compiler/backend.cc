@@ -774,7 +774,7 @@ void MindRTBackend::BatchBuildCallback() {
   }
 }
 
-void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
+void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *const outputs,
                                    const OpCompilerInfoPtr &op_compiler_info,
                                    const session::BackendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_compiler_info);
