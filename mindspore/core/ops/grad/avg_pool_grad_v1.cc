@@ -63,8 +63,8 @@ TypePtr AvgPoolGradV1InferType(const PrimitivePtr &prim, const std::vector<Abstr
   const std::set<TypePtr> orig_input_shape_valid_type = {kInt32};
   const std::set<TypePtr> input_grad_valid_type = {kFloat16, kFloat32, kFloat64};
 
-  CheckAndConvertUtils::CheckTensorTypeValid("orig_input_shape", orig_input_shape_type, orig_input_shape_valid_type,
-                                             name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("orig_input_shape", orig_input_shape_type,
+                                                   orig_input_shape_valid_type, name);
   auto inferred_type = CheckAndConvertUtils::CheckTensorTypeValid("grad", input_grad_type, input_grad_valid_type, name);
   return inferred_type;
 }
