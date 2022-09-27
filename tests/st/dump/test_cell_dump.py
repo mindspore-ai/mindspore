@@ -103,6 +103,7 @@ def test_ascend_cell_dump():
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
 
         # make sure 2 relu dump files are generated with correct name prefix
+        time.sleep(5)
         assert len(os.listdir(dump_file_path)) == 3
         relu_file_name = "ReLU.Default_network-WithLossCell__backbone-ReluReduceMeanDenseRelu_ReLU-op*.*.*.*"
         relu_file1 = glob.glob(os.path.join(dump_file_path, relu_file_name))[0]
@@ -255,5 +256,6 @@ def test_ascend_cell_dump_with_operate_symbol():
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
 
         # make sure directory has dumped files with enabled=True
+        time.sleep(2)
         assert len(os.listdir(dump_file_path)) == 3
         del os.environ['MINDSPORE_DUMP_CONFIG']
