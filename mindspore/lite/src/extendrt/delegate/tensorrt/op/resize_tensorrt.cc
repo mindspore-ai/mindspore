@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <memory>
 #include "nnacl/nnacl_common.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 #include "ops/resize.h"
 
 namespace mindspore::lite {
@@ -72,41 +71,6 @@ int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
-nvinfer1::ITensor *ResizeTensorRT::RunPlugin(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor) {
-  std::vector<int> resize_shape;
-  if (ReadyInputsNumber(ctx) == INPUT_SIZE2) {
-    MS_LOG(ERROR) << "dynamic input is not support!";
-    return nullptr;
-  } else {
-    if (in_tensors_.size() == 1) {
-      resize_shape.push_back(static_cast<float>(resize_op_->get_new_height()));
-      resize_shape.push_back(static_cast<float>(resize_op_->get_new_width()));
-    } else {
-      resize_shape = ConvertTensorAsIntVector(in_tensors_[1]);
-      if (resize_shape.size() != INPUT_SIZE2) {
-        MS_LOG(ERROR) << "Do not support resize number more than 2";
-        return nullptr;
-      }
-    }
-    bool using_half_pixel = (resize_op_->get_coordinate_transform_mode() == CoordinateTransformMode::HALF_PIXEL);
-    auto plugin = std::make_shared<ResizeLinear2DPlugin>(resize_in_tensor->getName(), resize_shape[0], resize_shape[1],
-                                                         using_half_pixel, device_id_);
-    if (plugin == nullptr) {
-      MS_LOG(ERROR) << "add ResizeLinear2D plugin failed for " << op_name_;
-      return nullptr;
-    }
-    nvinfer1::ITensor *inputTensors[] = {resize_in_tensor};
-    nvinfer1::IPluginV2Layer *resize_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
-    if (resize_layer == nullptr) {
-      MS_LOG(ERROR) << "add resize op failed for TensorRT.";
-      return nullptr;
-    }
-    resize_layer->setName(op_name_.c_str());
-    this->layer_ = resize_layer;
-    return resize_layer->getOutput(0);
-  }
-}
-
 nvinfer1::ITensor *ResizeTensorRT::RunTensorRT(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor) {
   nvinfer1::IResizeLayer *resize_layer = ctx->network()->addResize(*resize_in_tensor);
   if (resize_layer == nullptr) {
@@ -135,6 +99,18 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
     nvinfer1::Dims4 new_dims(in_dims.d[0], in_dims.d[1], resize_op_->get_new_height(),
                              resize_op_->get_new_width());  // nchw
     resize_layer->setOutputDimensions(new_dims);            // static shape
+  } else if (resize_op_->HasAttr(kAttrScales)) {
+    auto scales = resize_op_->GetAttr(kAttrScales);
+    if (!scales) {
+      return RET_ERROR;
+    }
+    auto scales_val = GetValue<std::vector<float>>(scales);
+    if (SizeToInt(scales_val.size()) != in_dims.nbDims) {
+      MS_LOG(ERROR) << "Size " << scales_val.size() << " of scales get from attr != input dims count " << in_dims.nbDims
+                    << ", op: " << op_name_;
+      return RET_ERROR;
+    }
+    resize_layer->setScales(scales_val.data(), scales_val.size());
   } else {
     auto shape_value_tensor = in_tensors_[1];
     if (!shape_value_tensor.IsConst() && in_tensors_.size() >= INPUT_SIZE2) {
@@ -241,24 +217,6 @@ void ResizeTensorRT::ParseValueFromShapeTensor(TensorRTContext *ctx, const Tenso
   }
 }
 
-bool ResizeTensorRT::IsScaleOutputDim(const std::vector<int64_t> &in_shape, const std::vector<int64_t> &out_shape,
-                                      const std::vector<float> &shape_tensor_val) {
-  if (out_shape.size() != DIMENSION_4D) {
-    MS_LOG(WARNING) << "dims count needs check for " << op_name_;
-    return false;
-  }
-  if (in_shape.size() != out_shape.size() || shape_tensor_val.size() != in_shape.size()) {
-    MS_LOG(WARNING) << "tensor shape is not same for " << op_name_;
-    return false;
-  }
-  for (size_t i = 0; i < in_shape.size(); i++) {
-    if (std::abs(in_shape[i] * shape_tensor_val[i] - out_shape[i]) > 1e-6) {
-      return false;
-    }
-  }
-  return true;
-}
-
 int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
   auto method = resize_op_->get_method();
   std::map<ResizeMethod, nvinfer1::ResizeMode> method_map = {{ResizeMethod::LINEAR, nvinfer1::ResizeMode::kLINEAR},
@@ -289,62 +247,6 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
   }
 #endif
   return RET_OK;
-}
-
-REGISTER_TENSORRT_PLUGIN(ResizeLinear2DPluginCreater);
-template class TensorRTPluginCreater<ResizeLinear2DPlugin>;
-template <class T>
-nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
-template <class T>
-std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
-
-int ResizeLinear2DPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
-                                  const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs,
-                                  void *const *outputs, void *workspace, cudaStream_t stream) noexcept {
-  return RunCudaResizeLinear2D(inputDesc, inputs, outputs, stream);
-}
-
-int ResizeLinear2DPlugin::RunCudaResizeLinear2D(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs,
-                                                void *const *outputs, cudaStream_t stream) {
-  auto &dims = inputDesc[0].dims;
-  float h_scale = dims.d[kNCHW_H] / static_cast<float>(resize_h_);
-  float w_scale = dims.d[kNCHW_W] / static_cast<float>(resize_w_);
-  CalResizeBilinear(static_cast<const float *>(inputs[0]), dims.d[0], dims.d[1], dims.d[kNCHW_H], dims.d[kNCHW_W],
-                    resize_h_, resize_w_, h_scale, w_scale, using_half_pixel_, static_cast<float *>(outputs[0]),
-                    device_id_, stream);
-  return RET_OK;
-}
-
-nvinfer1::IPluginV2DynamicExt *ResizeLinear2DPlugin::clone() const noexcept {
-  auto *plugin = new (std::nothrow) ResizeLinear2DPlugin(*this);
-  if (plugin == nullptr) {
-    MS_LOG(ERROR) << "new plugin failed!";
-    return nullptr;
-  }
-  plugin->setPluginNamespace(name_space_.c_str());
-  return plugin;
-}
-
-size_t ResizeLinear2DPlugin::getSerializationSize() const noexcept { return sizeof(int) * INPUT_SIZE2 + sizeof(bool); }
-
-nvinfer1::DimsExprs ResizeLinear2DPlugin::getOutputDimensions(int32_t index, const nvinfer1::DimsExprs *inputs,
-                                                              int nbInputDims,
-                                                              nvinfer1::IExprBuilder &exprBuilder) noexcept {
-  nvinfer1::DimsExprs dims;
-  dims.nbDims = inputs[0].nbDims;
-  dims.d[0] = inputs[0].d[0];
-  dims.d[1] = inputs[0].d[1];
-  auto nh = exprBuilder.constant(resize_h_);
-  dims.d[2] = nh;
-  auto nw = exprBuilder.constant(resize_w_);
-  dims.d[3] = nw;
-  return dims;
-}
-
-void ResizeLinear2DPlugin::serialize(void *buffer) const noexcept {
-  SerializeValue(&buffer, &resize_h_, sizeof(int));
-  SerializeValue(&buffer, &resize_w_, sizeof(int));
-  SerializeValue(&buffer, &using_half_pixel_, sizeof(bool));
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameResize, ResizeTensorRT)
 }  // namespace mindspore::lite

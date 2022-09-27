@@ -32,6 +32,7 @@
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/lite_graph_executor.h"
 #include "ccsrc/backend/common/session/kernel_graph.h"
+#include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore::lite {
 struct TrtGraphContext {
@@ -93,6 +94,8 @@ class TensorRTExecutor : public LiteGraphExecutor {
   std::shared_ptr<TensorRTSubGraph> tensorrt_graph_ = nullptr;
   std::vector<TensorInfo> inputs_;
   std::vector<TensorInfo> outputs_;
+
+  KernelGraphUtilsPtr kernel_graph_utils_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

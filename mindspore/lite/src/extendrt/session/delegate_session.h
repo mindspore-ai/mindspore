@@ -53,6 +53,7 @@ class GraphSinkSession : public InferSession {
   std::map<std::string, std::string> options_;
   bool is_use_kernel_graph_ = true;
   KernelGraphUtilsPtr kernel_graph_utils_;
+  std::shared_ptr<Context> context_;
   KernelGraphPtr kernel_graph_;
   FuncGraphPtr func_graph_;
   std::vector<MutableTensorImplPtr> inputs_;
