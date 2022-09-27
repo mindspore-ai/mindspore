@@ -104,6 +104,13 @@ inline size_t LongToSize(int64_t u) {
   return static_cast<size_t>(u);
 }
 
+inline int64_t UlongToLong(uint64_t u) {
+  if (u > static_cast<uint64_t>((std::numeric_limits<int64_t>::max)())) {
+    AICPU_LOGE("The uint64_t value [%ld] exceeds the maximum value of int64_t.", u);
+  }
+  return static_cast<int64_t>(u);
+}
+
 inline float SizeToFloat(size_t v) { return static_cast<float>(v); }
 
 inline int32_t LongToInt(int64_t u) {

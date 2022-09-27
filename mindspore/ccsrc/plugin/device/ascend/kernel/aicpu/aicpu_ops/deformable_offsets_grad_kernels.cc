@@ -264,7 +264,7 @@ template <typename T>
 void DeformableOffsetsGradKernel::DeformableOffsetGradNHWCKernel(size_t num_kernels,
                                                                  const DeformableOffsetGradDims &dims, const T *input_x,
                                                                  const T *input_offset, const T *input_grad,
-                                                                 T *output_grad_x, T *output_grad_offset) {
+                                                                 T *output_grad_x, T *output_grad_offset) const {
   OffsetStride offset_stride;
   offset_stride.kernel_w_stride = 1;
   offset_stride.kernel_h_stride = dims.kernel_w * offset_stride.kernel_w_stride;
@@ -310,15 +310,15 @@ void DeformableOffsetsGradKernel::DeformableOffsetGradNHWCKernel(size_t num_kern
                                  input_grad, output_grad_x, output_grad_offset);
     }
   };
-  const int64_t per_unit_size = num_kernels / std::thread::hardware_concurrency();
-  SharderNonBlock::GetInstance().ParallelFor(num_kernels, per_unit_size, task);
+  const int64_t per_unit_size = UlongToLong(num_kernels / std::thread::hardware_concurrency());
+  SharderNonBlock::GetInstance().ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
 }
 
 template <typename T>
 void DeformableOffsetsGradKernel::DeformableOffsetGradNCHWKernel(size_t num_kernels,
                                                                  const DeformableOffsetGradDims &dims, const T *input_x,
                                                                  const T *input_offset, const T *input_grad,
-                                                                 T *output_grad_x, T *output_grad_offset) {
+                                                                 T *output_grad_x, T *output_grad_offset) const {
   OffsetStride offset_stride;
   offset_stride.offset_w_stride = 1;
   offset_stride.offset_h_stride = dims.offset_w * offset_stride.offset_w_stride;
@@ -365,8 +365,8 @@ void DeformableOffsetsGradKernel::DeformableOffsetGradNCHWKernel(size_t num_kern
                                  input_grad, output_grad_x, output_grad_offset);
     }
   };
-  const int64_t per_unit_size = num_kernels / std::thread::hardware_concurrency();
-  SharderNonBlock::GetInstance().ParallelFor(num_kernels, per_unit_size, task);
+  const int64_t per_unit_size = UlongToLong(num_kernels / std::thread::hardware_concurrency());
+  SharderNonBlock::GetInstance().ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
 }
 
 uint32_t DeformableOffsetsGradKernel::ParseKernelParam() {
@@ -407,8 +407,8 @@ uint32_t DeformableOffsetsGradKernel::DeformableOffsetsGradTask() {
   T *output_grad_x = reinterpret_cast<T *>(io_addrs_[kGradXIndex + kOutputAddressOffsets]);
   T *output_grad_offset = reinterpret_cast<T *>(io_addrs_[kGradOffsetIndex + kOutputAddressOffsets]);
 
-  auto grad_x_size = index_output_size_ * sizeof(T);
-  auto grad_offset_size = grad_output_size_ * sizeof(T);
+  auto grad_x_size = LongToSize(index_output_size_ * sizeof(T));
+  auto grad_offset_size = LongToSize(grad_output_size_ * sizeof(T));
   // Reset output initial value to 0.
   auto ret = memset_s(output_grad_x, grad_x_size, 0, grad_x_size);
   if (ret != 0) {
@@ -442,12 +442,12 @@ void DeformableOffsetsGradKernel::CheckInOutNum(size_t inputs_num, size_t output
 void DeformableOffsetsGradKernel::SetDims() {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
 
-  dims_.deformable_group = attrs[kDeformableGroups].i();
+  dims_.deformable_group = LongToSize(attrs[kDeformableGroups].i());
   if (dims_.deformable_group == 0) {
     AICPU_LOGE("Get the kernel name %s failed, deformable group must be greater than 0, but got 0", kernel_name_);
   }
   aicpuops::AttrValue_ArrayValue pad = attrs[kPads].array();
-  if (pad.s_size() != kPadNum) {
+  if (pad.s_size() != UlongToLong(kPadNum)) {
     AICPU_LOGE("Get the kernel name %s failed, the length of 'pad' must be %d but got %d", kernel_name_, kPadNum,
                pad.s_size());
   }
@@ -455,7 +455,7 @@ void DeformableOffsetsGradKernel::SetDims() {
   dims_.pad_left = LongToSize(pad.i(kPadLeftIndex));
 
   aicpuops::AttrValue_ArrayValue stride = attrs[kStrides].array();
-  if (stride.s_size() != kStrideNum) {
+  if (stride.s_size() != UlongToLong(kStrideNum)) {
     AICPU_LOGE("Get the kernel name %s failed, the length of 'stride' must be %d but got %d", kernel_name_, kStrideNum,
                stride.s_size());
   }
@@ -463,7 +463,7 @@ void DeformableOffsetsGradKernel::SetDims() {
   dims_.stride_w = LongToSize(stride.i(kStrideWIndex));
 
   aicpuops::AttrValue_ArrayValue dilation = attrs[kDilations].array();
-  if (dilation.s_size() != kDilationNum) {
+  if (dilation.s_size() != UlongToLong(kDilationNum)) {
     AICPU_LOGE("Get the kernel name %s failed, the length of 'dilation' must be %d but got %d", kernel_name_,
                kDilationNum, dilation.s_size());
   }
@@ -471,7 +471,7 @@ void DeformableOffsetsGradKernel::SetDims() {
   dims_.dilation_w = LongToSize(dilation.i(kDilationWIndex));
 
   aicpuops::AttrValue_ArrayValue ksize = attrs[kSize].array();
-  if (ksize.s_size() != kKernelSizeNum) {
+  if (ksize.s_size() != UlongToLong(kKernelSizeNum)) {
     AICPU_LOGE("Get the kernel name %s failed, the length of 'ksize' must be %d but got %d", kernel_name_,
                kKernelSizeNum, ksize.s_size());
   }
