@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <random>
+
 #include "common/common.h"
 #include "common/cvop_common.h"
-#include <random>
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "utils/log_adapter.h"
 

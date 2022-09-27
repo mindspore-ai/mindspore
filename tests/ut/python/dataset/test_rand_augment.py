@@ -18,8 +18,8 @@ Testing RandAugment in DE
 import numpy as np
 
 import mindspore.dataset as ds
-from mindspore.dataset.vision.transforms import Decode, RandAugment, Resize
-from mindspore.dataset.vision.utils import Inter
+from mindspore.dataset.vision import Decode, RandAugment, Resize
+from mindspore.dataset.vision import Inter
 from mindspore import log as logger
 from util import visualize_image, visualize_list, diff_mse
 
