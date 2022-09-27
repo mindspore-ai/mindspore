@@ -380,7 +380,7 @@ class GeneralMode : public DistributedExecutionMode {
   ~GeneralMode() = default;
 };
 
-// The mode applied when AutoParallel feature is enabled.
+// The mode applied when AutoParallel/SemiAutoParallel feature is enabled.
 class ParallelMode : public DistributedExecutionMode {
  public:
   explicit ParallelMode(const FuncGraphPtr &func_graph, NodeLabels *node_labels, uint32_t rank_id,

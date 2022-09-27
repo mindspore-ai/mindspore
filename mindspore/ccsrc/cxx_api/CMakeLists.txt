@@ -108,9 +108,8 @@ if(BUILD_LITE)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
     add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
 elseif(MODE_ASCEND_ACL)
-    target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
-            $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>
-            $<TARGET_OBJECTS:_mindspore_debug_obj> mindspore_backend_static)
+    target_link_libraries(mindspore_shared_lib PRIVATE _mindspore_transform_graph_ir_obj
+            _mindspore_backend_graph_compiler_obj _mindspore_debug_obj mindspore_backend_static)
     if(MS_BUILD_GRPC)
         target_link_libraries(mindspore_shared_lib PRIVATE mindspore::grpc++)
     endif()
