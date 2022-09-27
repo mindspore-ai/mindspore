@@ -35,7 +35,7 @@ class NetUpsampleTrilinear3DGrad(nn.Cell):
         return self.upsample_trilinear_3d_grad(grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -153,7 +153,7 @@ def test_upsample_trilinear_3d_grad_main(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -271,7 +271,7 @@ def test_upsample_trilinear_3d_grad_align_corners(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_upsample_trilinear_3d_grad():

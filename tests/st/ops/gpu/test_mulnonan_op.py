@@ -29,7 +29,7 @@ class MulNoNanNet(nn.Cell):
         return self.mulnonan(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_trainingg
 @pytest.mark.env_onecard
 def test_mulnonan_graph():
@@ -46,7 +46,7 @@ def test_mulnonan_graph():
     assert(res.asnumpy() == res_expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_trainingg
 @pytest.mark.env_onecard
 def test_mulnonan_pynative():

@@ -48,7 +48,7 @@ class HyperMapNet(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -71,7 +71,7 @@ def test_single_element_hypermap_with_tensor_input():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -95,7 +95,7 @@ def test_double_elements_hypermap_tensor_tuple_inputs():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -119,7 +119,7 @@ def test_double_elements_hypermap_tensor_list_inputs():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -145,7 +145,7 @@ def test_doubel_elements_hypermap_correct_mix_inputs():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -162,7 +162,7 @@ def test_double_elements_hypermap_inputs_length_mismatch():
         common_map((x, y))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

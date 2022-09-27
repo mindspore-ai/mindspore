@@ -177,7 +177,7 @@ def test_index_add_uint8():
     index_add_forward(np.uint8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_float64():
@@ -393,7 +393,7 @@ def test_index_add_grad_uint8():
     index_add_grad_with_type(np.uint8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_dynamic():

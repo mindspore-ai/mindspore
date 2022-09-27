@@ -34,7 +34,7 @@ class UnsortedSegmentSumNet(nn.Cell):
         return self.unsorted_segment_sum(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1D():
@@ -313,7 +313,7 @@ def test_dyn_b():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

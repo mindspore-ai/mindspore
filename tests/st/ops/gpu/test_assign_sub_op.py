@@ -33,7 +33,7 @@ class AssignSub(nn.Cell):
         return res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign_sub():
@@ -76,7 +76,7 @@ def test_assign_sub():
     assert (output2.asnumpy() == expect2).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign_sub_float16():

@@ -61,7 +61,7 @@ def gen_np_input(data_shape, data_type):
     return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('run_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -82,7 +82,7 @@ def test_fills_data_type_and_shape(run_mode, data_shape, data_type):
     compare_with_numpy(data_shape, data_type, value, out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('run_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -103,7 +103,7 @@ def test_fills_with_value_type(run_mode, value):
     compare_with_numpy(data_shape, data_type, value, out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('run_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -124,7 +124,7 @@ def test_fills_dyn_with_dynamic_shape(run_mode, data_shape):
     compare_with_numpy(data_shape, data_type, value, out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('run_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -144,7 +144,7 @@ def test_fills_with_nan(run_mode, data_type):
     assert np.isnan(out.asnumpy()).any()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
@@ -163,7 +163,7 @@ def test_fills_with_inf(data_type, value):
     compare_with_numpy(data_shape, data_type, value, out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('run_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -184,7 +184,7 @@ def test_fills_with_overflow(run_mode, data_type):
         model(input_x, value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.int8, np.int16, np.int32])
@@ -203,7 +203,7 @@ def test_fills_except_with_inf_nan(data_type, value):
         input_x.fills(value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fills_except_with_invalid_type():

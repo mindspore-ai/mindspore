@@ -95,7 +95,7 @@ class UnsortedSegmentProdNet(nn.Cell):
         return self.unsorted_segment_prod(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['prod'])
@@ -118,7 +118,7 @@ def test_1D(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['prod'])
@@ -141,7 +141,7 @@ def test_2D(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['prod'])
@@ -220,7 +220,7 @@ def test_dyn_ab(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['prod'])
@@ -258,7 +258,7 @@ def test_dyn_a(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['prod'])
@@ -296,7 +296,7 @@ def test_dyn_b(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_check():
@@ -315,7 +315,7 @@ def test_tensor_check():
     np.testing.assert_allclose(output_ms.asnumpy(), expected, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_functional_check():
@@ -334,7 +334,7 @@ def test_functional_check():
     np.testing.assert_allclose(output_ms.asnumpy(), expected, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap():

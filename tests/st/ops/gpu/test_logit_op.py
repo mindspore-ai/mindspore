@@ -15,7 +15,7 @@ class Net(nn.Cell):
         return self.logit(x, eps)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logit_graph():
@@ -35,7 +35,7 @@ def test_logit_graph():
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logit_pynative():

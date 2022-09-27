@@ -48,7 +48,7 @@ def test_gpu_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_2():

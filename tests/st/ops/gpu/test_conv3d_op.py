@@ -44,7 +44,7 @@ class NetConv3d(nn.Cell):
         return self.conv(x, w)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv3d_dshape_1():
@@ -65,7 +65,7 @@ def test_conv3d_dshape_1():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv3d_dshape_2():
@@ -86,7 +86,7 @@ def test_conv3d_dshape_2():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv3d():
@@ -153,7 +153,7 @@ class MSGradNet(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv3d_grad():

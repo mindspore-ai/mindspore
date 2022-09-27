@@ -64,7 +64,7 @@ def test_select():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_functional_select_scalar():
@@ -95,7 +95,7 @@ def select_ops_fn(condition, x, y):
     return ops.select(condition, x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_select_input_tensor():
@@ -113,7 +113,7 @@ def test_tensor_select_input_tensor():
     assert np.all(output2.asnumpy() == np.array([2, 2]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_select_input_number():
@@ -131,7 +131,7 @@ def test_tensor_select_input_number():
     assert np.all(output2.asnumpy() == np.array([2, 5]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_select_fn_vmap():
@@ -151,7 +151,7 @@ def test_select_fn_vmap():
     assert np.all(output2.asnumpy() == np.array([[2, 5], [3, 1]]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_select_tensor_vmap():

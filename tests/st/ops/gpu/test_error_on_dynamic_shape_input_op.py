@@ -18,7 +18,7 @@ import pytest
 from mindspore.ops.operations import _inner_ops as inner
 import mindspore.context as context
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_error_on_dynamic_shape_input_is_dynamic():

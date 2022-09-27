@@ -46,7 +46,7 @@ class PriorityReplayBuffer(nn.Cell):
         return self.destroy_op()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
 def test_priority_replay_buffer_ops():

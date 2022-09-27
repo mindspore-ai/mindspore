@@ -44,7 +44,7 @@ class SinhGradNet(nn.Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sinh_fp16():
@@ -66,7 +66,7 @@ def test_sinh_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sinh_fp32():
@@ -88,7 +88,7 @@ def test_sinh_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sinh_fp64():

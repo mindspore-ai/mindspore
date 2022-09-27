@@ -35,7 +35,7 @@ class NetMaxPoolGradGradWithArgmax(nn.Cell):
         return self.maxpool_grad_grad_argmax_fun(x, grad, argmax)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("argmax_type", [np.int32, np.int64])
@@ -62,7 +62,7 @@ def test_maxpool_grad_grad_argmax_fp16(argmax_type):
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("argmax_type", [np.int32, np.int64])

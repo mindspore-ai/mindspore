@@ -29,7 +29,7 @@ def generate_data(datatype="float32", indicetype="int32"):
     return data
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "int8"),
                                                   ("int32", "int16"),
                                                   ("int32", "int32"),

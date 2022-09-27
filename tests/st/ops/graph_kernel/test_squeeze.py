@@ -43,7 +43,7 @@ def test_squeeze(shape, dtype, axis=()):
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_squeeze_gpu():

@@ -30,7 +30,7 @@ def np_all_close_with_loss(out, expect):
     return np.allclose(out, expect, 0.0005, 0.0005, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.int32, np.int64])
@@ -54,7 +54,7 @@ def test_data_formata_dim_map_gpu(data_type):
     assert np.allclose(output_3_gpu.asnumpy(), output_3_expect_gpu)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.int32, np.int64])

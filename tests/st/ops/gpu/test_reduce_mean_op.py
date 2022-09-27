@@ -33,7 +33,7 @@ class ReduceMean(nn.Cell):
         return self.reduce_mean(x, axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -78,7 +78,7 @@ class ReduceMeanDynamic(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32])
@@ -114,7 +114,7 @@ class ReduceMeanNegativeNet(nn.Cell):
         return self.mean1(t, (-1,))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduce_mean_negative():

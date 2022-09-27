@@ -31,7 +31,7 @@ class NetHistogramFixedWidth(nn.Cell):
         return self.histogramfixedwidth(x, range_)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_histogramfixedwidth_1d():
@@ -53,7 +53,7 @@ def test_histogramfixedwidth_1d():
     assert np.allclose(except_output_np, output_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_histogramfixedwidth_2d():

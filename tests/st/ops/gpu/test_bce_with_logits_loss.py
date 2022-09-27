@@ -86,7 +86,7 @@ def test_reduction_mean_testcases():
     assert math.isclose(output.asnumpy().tolist(), expected, abs_tol=0.00001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduction_sum_testcases():

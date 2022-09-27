@@ -31,7 +31,7 @@ class NetMaskedSelectGrad(nn.Cell):
         return self.masked_select_grad_fun(x, mask, output_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_masked_select_grad():

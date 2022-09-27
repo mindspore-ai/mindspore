@@ -24,7 +24,7 @@ import mindspore.context as context
 def sequence_mask(x, maxlen):
     return C.sequence_mask(Tensor(x.astype(np.int32)), maxlen)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sequence_mask_1d():
@@ -37,7 +37,7 @@ def test_sequence_mask_1d():
                                     [True, False, False, False]]))
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sequence_mask_2d():
@@ -55,7 +55,7 @@ def test_sequence_mask_2d():
                                      [True, True, False, False, False, False]]]))
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sequence_mask_3d():

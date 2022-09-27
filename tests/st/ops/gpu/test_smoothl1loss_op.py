@@ -44,7 +44,7 @@ def verify_forward(reduction, loss, expect):
         np.testing.assert_array_almost_equal(loss, expect_mean)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("reduction", ['none', 'mean', 'sum'])
@@ -96,7 +96,7 @@ def smoothl1loss_grad(beta):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_smoothl1loss_grad_no_reduce():
@@ -147,7 +147,7 @@ def smoothl1loss_grad_2(beta, reduction):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("reduction", ['mean', 'sum'])

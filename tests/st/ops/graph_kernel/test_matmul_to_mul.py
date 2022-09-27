@@ -83,7 +83,7 @@ def test_matmul_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_matmul()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_gpu():

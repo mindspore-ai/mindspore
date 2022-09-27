@@ -248,7 +248,7 @@ def test_broadcast_diff_dims():
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maximum_int():

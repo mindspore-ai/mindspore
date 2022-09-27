@@ -116,7 +116,7 @@ def vmap_case_nested():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_masked_select_vmap_gpu():
@@ -129,7 +129,7 @@ def test_masked_select_vmap_gpu():
     vmap_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_masked_select_vmap_nested_gpu():
@@ -142,7 +142,7 @@ def test_masked_select_vmap_nested_gpu():
     vmap_case_nested()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedselect():
@@ -157,7 +157,7 @@ def test_maskedselect():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedselect_dynamic_shape():
@@ -172,7 +172,7 @@ def test_maskedselect_dynamic_shape():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedselect_bool_type():
@@ -189,7 +189,7 @@ def test_maskedselect_bool_type():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedselect_complex64_type():
@@ -206,7 +206,7 @@ def test_maskedselect_complex64_type():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedselect_complex128_type():
@@ -223,7 +223,7 @@ def test_maskedselect_complex128_type():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedselect_func():
@@ -238,7 +238,7 @@ def test_maskedselect_func():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedselect_tensor():

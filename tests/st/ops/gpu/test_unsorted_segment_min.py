@@ -136,7 +136,7 @@ def test_3d_float32():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_single_init():
@@ -400,7 +400,7 @@ def test_3d_float32_b_dyn():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1d_int32_dynamic_shape():

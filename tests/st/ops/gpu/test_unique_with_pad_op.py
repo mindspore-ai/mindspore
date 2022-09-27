@@ -74,7 +74,7 @@ def test_unique_with_pad_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_with_pad_float32():
@@ -92,7 +92,7 @@ def test_unique_with_pad_float32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_with_pad_dynamic_shape():

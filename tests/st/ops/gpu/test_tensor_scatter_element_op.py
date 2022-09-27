@@ -68,7 +68,7 @@ class TestTensorScatterElements(nn.Cell):
         return self.scatter_elements(self.input_x, self.indices, self.updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32])
@@ -94,7 +94,7 @@ def test_scatter_elements(dtype, index_dtype, axis, reduction):
     assert np.allclose(ms_output.asnumpy(), np_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32])

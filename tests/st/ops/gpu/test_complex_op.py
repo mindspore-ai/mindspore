@@ -47,7 +47,7 @@ def complex_compare(complex1, complex2):
     return np.allclose(real1, real2, rtol=5e-03, atol=5e-03) and np.allclose(imag1, imag2, rtol=5e-03, atol=5e-03)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_complex_elemwise():
@@ -89,7 +89,7 @@ def test_complex_elemwise():
     assert complex_compare(res_ms, res_to)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_complex_broadcast():

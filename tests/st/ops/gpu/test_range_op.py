@@ -176,7 +176,7 @@ def test_range_float64():
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_invalid_max_output_length():
@@ -212,7 +212,7 @@ def test_range_invalid_input():
     assert "delta cannot be negative when limit > start" in str(info.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_functional():
@@ -233,7 +233,7 @@ def range_fn(x, y, z, a):
     return ops.range(x, y, z) + a
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_vmap():
@@ -251,7 +251,7 @@ def test_range_vmap():
     assert np.all(output.asnumpy() == np.array([[1, 5, 9], [1, 5, 9]]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_vmap_wrong_in_axis():

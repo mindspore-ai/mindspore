@@ -32,7 +32,7 @@ def generate_data(input_type="float32"):
     return data
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.parametrize('input_type', ["int8", "uint8", "int16", "uint16",
                                         "int32", "int64", "float16", "float32", "float64"])
 @pytest.mark.platform_x86_gpu_training

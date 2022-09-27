@@ -32,7 +32,7 @@ class Net(nn.Cell):
     def construct(self, indices, data):
         return self.stitch(indices, data)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_int32():
@@ -57,7 +57,7 @@ def test_net_int32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_1():
@@ -79,7 +79,7 @@ def test_net_1():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_2():

@@ -44,7 +44,7 @@ class NetAsinhGradGrad(nn.Cell):
         return backward_net(y, grad, dout)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def asinh_grad_grad_base(dtype, loss):
