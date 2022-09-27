@@ -6,7 +6,7 @@ MindSpore lite is a high-performance, lightweight open source reasoning framewor
 
 <img src="../../docs/MindSpore-Lite-architecture.png" alt="MindSpore Lite Architecture" width="600"/>
 
-For more details please check out our [MindSpore Lite Architecture Guide](https://www.mindspore.cn/lite/docs/en/master/architecture_lite.html).
+For more details please check out our [MindSpore Lite Architecture Guide](https://www.mindspore.cn/lite/docs/en/r1.9/architecture_lite.html).
 
 ### MindSpore Lite features
 
@@ -41,7 +41,7 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
 2. Model converter and optimization
 
-   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/lite/docs/en/master/use/converter_tool.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
+   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/lite/docs/en/r1.9/use/converter_tool.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
 
    MindSpore also provides a tool to convert models running on IoT devices .
 
@@ -51,7 +51,7 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
 4. Inference
 
-   Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/docs/en/master/use/runtime.html) is the process of running input data through the model to get output.
+   Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/docs/en/r1.9/use/runtime.html) is the process of running input data through the model to get output.
 
    MindSpore provides pre-trained model that can be deployed on mobile device [example](https://www.mindspore.cn/lite/examples/en).
 

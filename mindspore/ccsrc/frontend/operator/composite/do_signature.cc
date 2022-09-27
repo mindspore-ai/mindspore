@@ -386,7 +386,7 @@ void RaiseExceptionForConvertRefDtype(const ValuePtr &func, const std::string &r
   MS_LOG(EXCEPTION) << "Data type conversion of 'Parameter' is not supported," << buffer.str() << ref_type
                     << ", which cannot be converted to data type " << target_type << " automatically.\n"
                     << "For more details, please refer at "
-                    << "https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html.";
+                    << "https://www.mindspore.cn/docs/zh-CN/r1.9/note/operator_list_implicit.html.";
 }
 void RaiseExceptionForCheckParameter(const std::string &func_name, size_t i, const std::string &source_type) {
   MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter, but "

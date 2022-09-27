@@ -15,24 +15,24 @@ The objective of MDP is to integrate deep learning with Bayesian learning. On th
 
 ### Layer 1-1: Statistical distributions classes used to generate stochastic tensors
 
-- Distributions ([mindspore.nn.probability.distribution](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/distribution)): A large collection of probability distributions.
-- Bijectors([mindspore.nn.probability.bijectors](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/bijector)): Reversible and composable transformations of random variables.
+- Distributions ([mindspore.nn.probability.distribution](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/nn/probability/distribution)): A large collection of probability distributions.
+- Bijectors([mindspore.nn.probability.bijectors](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/nn/probability/bijector)): Reversible and composable transformations of random variables.
 
 ### Layer 1-2: Probabilistic inference algorithms
 
-- SVI([mindspore.nn.probability.infer.variational](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/infer/variational)): A unified interface for stochastic variational inference.
+- SVI([mindspore.nn.probability.infer.variational](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/nn/probability/infer/variational)): A unified interface for stochastic variational inference.
 - MC: Algorithms for approximating integrals via sampling.
 
 ## Layer 2: Deep Probabilistic Programming (DPP) aims to provide composable BNN modules
 
-- Layers([mindspore.nn.probability.bnn_layers](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/bnn_layers)): BNN layers, which are used to construct BNN.
-- Dpn([mindspore.nn.probability.dpn](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/dpn)): A bunch of BNN models that allow to be integrated into DNN;
-- Transform([mindspore.nn.probability.transforms](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/transforms)): Interfaces for the transformation between BNN and DNN;
+- Layers([mindspore.nn.probability.bnn_layers](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/nn/probability/bnn_layers)): BNN layers, which are used to construct BNN.
+- Dpn([mindspore.nn.probability.dpn](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/nn/probability/dpn)): A bunch of BNN models that allow to be integrated into DNN;
+- Transform([mindspore.nn.probability.transforms](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/nn/probability/transforms)): Interfaces for the transformation between BNN and DNN;
 - Context: context managers for models and layers.
 
 ## Layer 3: Toolbox provides a set of BNN tools for some specific applications
 
-- Uncertainty Estimation([mindspore.nn.probability.toolbox.uncertainty_evaluation](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/toolbox/uncertainty_evaluation.py)): Interfaces to estimate epistemic uncertainty and aleatoric uncertainty.
+- Uncertainty Estimation([mindspore.nn.probability.toolbox.uncertainty_evaluation](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/nn/probability/toolbox/uncertainty_evaluation.py)): Interfaces to estimate epistemic uncertainty and aleatoric uncertainty.
 - OoD detection: Interfaces to detect out of distribution samples.
 
 ![Structure of MDP](https://images.gitee.com/uploads/images/2020/0820/115117_2a20da64_7825995.png "MDP.png")
@@ -42,7 +42,7 @@ MDP requires MindSpore version 0.7.0-beta or later. MDP is actively evolving. In
 
 ### Bayesian Neural Network
 
-1. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorials/en/master/beginner/quick_start.html) in Tutorial.
+1. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorials/en/r1.9/beginner/quick_start.html) in Tutorial.
 
 2. Define a Bayesian Neural Network. The bayesian LeNet is used in this example.
 
@@ -227,7 +227,7 @@ optimizer = nn.Adam(params=vae.trainable_params(), learning_rate=0.001)
 net_with_loss = nn.WithLossCell(vae, net_loss)
 ```
 
-3. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorials/en/master/beginner/quick_start.html) in Tutorial.
+3. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorials/en/r1.9/beginner/quick_start.html) in Tutorial.
 4. Use SVI interface to train VAE network. vi.run can return the trained network, get_train_loss can get the loss after training.
 
 ```python
@@ -437,7 +437,7 @@ if __name__ == "__main__":
 
 The uncertainty estimation toolbox is based on MindSpore Deep Probabilistic Programming (MDP), and it is suitable for mainstream deep learning models, such as regression, classification, target detection and so on. In the inference stage, with the uncertainy estimation toolbox, developers only need to pass in the trained model and training dataset, specify the task and the samples to be estimated, then can obtain the aleatoric uncertainty and epistemic uncertainty. Based the uncertainty information, developers can understand the model and the dataset better.
 
-In classification task, for example, the model is lenet model. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorials/en/master/beginner/quick_start.html) in Tutorial. For evaluating the uncertainty of test examples, the use of the toolbox is as follows:
+In classification task, for example, the model is lenet model. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorials/en/r1.9/beginner/quick_start.html) in Tutorial. For evaluating the uncertainty of test examples, the use of the toolbox is as follows:
 
 ```python
 from mindspore.nn.probability.toolbox.uncertainty_evaluation import UncertaintyEvaluation
@@ -465,15 +465,15 @@ for eval_data in ds_eval.create_dict_iterator():
 
 ## Examples
 
-Examples in [mindspore/tests/st/probability](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability) are as follows:
+Examples in [mindspore/tests/st/probability](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability) are as follows:
 
-- [Bayesian LeNet](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability/bnn_layers/test_bnn_layer.py). How to construct and train a LeNet by bnn layers.
-- [Transform whole DNN model to BNN](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability/transforms/test_transform_bnn_model.py): How to transform whole DNN model to BNN.
-- [Transform DNN layer to BNN](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability/transforms/test_transform_bnn_layer.py): How to transform one certainty type of layer in DNN model to corresponding Bayesian layer.
-- [Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability/dpn/test_gpu_svi_vae.py): Variational Auto-Encoder (VAE) model trained with MNIST to generate sample images.
-- [Conditional Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability/dpn/test_gpu_svi_cvae.py): Conditional Variational Auto-Encoder (CVAE) model trained with MNIST to generate sample images.
-- [VAE-GAN](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability/dpn/test_gpu_vae_gan.py): VAE-GAN model trained with MNIST to generate sample images.
-- [Uncertainty Estimation](https://gitee.com/mindspore/mindspore/blob/master/tests/st/probability/toolbox/test_uncertainty.py): Evaluate uncertainty of model and data.
+- [Bayesian LeNet](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability/bnn_layers/test_bnn_layer.py). How to construct and train a LeNet by bnn layers.
+- [Transform whole DNN model to BNN](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability/transforms/test_transform_bnn_model.py): How to transform whole DNN model to BNN.
+- [Transform DNN layer to BNN](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability/transforms/test_transform_bnn_layer.py): How to transform one certainty type of layer in DNN model to corresponding Bayesian layer.
+- [Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability/dpn/test_gpu_svi_vae.py): Variational Auto-Encoder (VAE) model trained with MNIST to generate sample images.
+- [Conditional Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability/dpn/test_gpu_svi_cvae.py): Conditional Variational Auto-Encoder (CVAE) model trained with MNIST to generate sample images.
+- [VAE-GAN](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability/dpn/test_gpu_vae_gan.py): VAE-GAN model trained with MNIST to generate sample images.
+- [Uncertainty Estimation](https://gitee.com/mindspore/mindspore/blob/r1.9/tests/st/probability/toolbox/test_uncertainty.py): Evaluate uncertainty of model and data.
 
 ## Community
 

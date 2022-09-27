@@ -109,7 +109,7 @@ class _CellListBase:
 class SequentialCell(Cell):
     """
     Sequential Cell container. For more details about Cell, please refer to
-    `Cell <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
+    `Cell <https://www.mindspore.cn/docs/en/r1.9/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
 
     A list of Cells will be added to it in the order they are passed in the constructor.
     Alternatively, an ordered dict of cells can also be passed in.
@@ -283,7 +283,7 @@ class SequentialCell(Cell):
 class CellList(_CellListBase, Cell):
     """
     Holds Cells in a list. For more details about Cell, please refer to
-    `Cell <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
+    `Cell <https://www.mindspore.cn/docs/en/r1.9/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
 
     CellList can be used like a regular Python list, the Cells it contains have been initialized.
 

@@ -814,7 +814,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to True, acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/tutorials/experts/en/master/debug/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/r1.9/debug/graph_fusion_engine.html>`_.
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -849,7 +849,7 @@ def set_context(**kwargs):
 
             For more information about the enable operator tuning tool settings, please check
             `Enable the operator optimization tool
-            <https://www.mindspore.cn/tutorials/experts/en/master/debug/auto_tune.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/r1.9/debug/auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.

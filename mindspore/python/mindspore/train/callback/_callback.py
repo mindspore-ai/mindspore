@@ -93,7 +93,7 @@ class Callback:
     recording current attributes. Users can add custimized attributes to the information.
     Training process can also be stopped by calling `request_stop` method. For details
     of custom Callback, please check
-    `Callback <https://www.mindspore.cn/tutorials/experts/en/master/debug/custom_debug.html>`_.
+    `Callback <https://www.mindspore.cn/tutorials/experts/en/r1.9/debug/custom_debug.html>`_.
 
     Examples:
         >>> import numpy as np
@@ -437,7 +437,7 @@ class RunContext:
     `RunContext.original_args()` and add extral attributes to the information, but also can stop the
     training process by calling `request_stop` method. For details of custom Callback,
     please check
-    `Callback <:https//www.mindspore.cn/tutorials/experts/en/master/debug/custom_debug.html>`_.
+    `Callback <:https//www.mindspore.cn/tutorials/experts/en/r1.9/debug/custom_debug.html>`_.
 
     `RunContext.original_args()` holds the model context information as a dictionary variable, and
     different attributes of the dictionary are stored in training or eval process. Details are as follows:

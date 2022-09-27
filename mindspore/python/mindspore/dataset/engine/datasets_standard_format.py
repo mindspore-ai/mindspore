@@ -73,7 +73,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r1.9/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -145,7 +145,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all samples).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r1.9/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -277,7 +277,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             When the number of samples of per TFRecord file are not equal, it is suggested to set to true.
             This argument should only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r1.9/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:

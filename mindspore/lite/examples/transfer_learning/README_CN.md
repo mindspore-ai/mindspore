@@ -47,8 +47,8 @@ places
 
 - 服务端
     - [MindSpore Framework](https://www.mindspore.cn/install/en) - 建议使用安装docker环境
-    - [MindSpore ToD Download](https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html)
-    - [MindSpore ToD Build](https://www.mindspore.cn/lite/docs/zh-CN/master/use/build.html)
+    - [MindSpore ToD Download](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/downloads.html)
+    - [MindSpore ToD Build](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/build.html)
     - [Android NDK r20b](https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip)
     - [Android SDK](https://developer.android.com/studio?hl=zh-cn#cmdline-tools)
     - [ImageMagick convert tool](https://imagemagick.org/)

@@ -85,7 +85,7 @@ name: Softmax-7, DataType: 43, Size: 40, Shape: [1 10], Data:
 ```
 
 outputFile 指定micro代码生成目录，当前脚本目录下将生成source_code目录，其中包含了可编译构建的mnist分类模型的代码src和benchmark用例。
-> 关于codegen的更多使用命令说明，可参见[codegen使用说明](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html#自动生成的代码部署时依赖的头文件和lib的目录结构)。
+> 关于codegen的更多使用命令说明，可参见[codegen使用说明](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/micro.html#自动生成的代码部署时依赖的头文件和lib的目录结构)。
 
 ### 部署应用
 
@@ -178,7 +178,7 @@ outputFile 指定micro代码生成目录，当前脚本目录下将生成source_
 #### 编写推理代码示例
 
 本教程中的`benchmark`内部实现主要用于指导用户如何编写以及调用codegen编译的模型推理代码接口。以下为接口调用的详细介绍，
-详情代码可以参见[examples/quick_start_micro/mnist_x86](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/examples/quick_start_micro/mnist_x86)下的示例代码示例：
+详情代码可以参见[examples/quick_start_micro/mnist_x86](https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/lite/examples/quick_start_micro/mnist_x86)下的示例代码示例：
 
 1. **构建推理的上下文以及会话**
 
@@ -261,6 +261,6 @@ outputFile 指定micro代码生成目录，当前脚本目录下将生成source_
 
 ## 更多详情
 
-### [Android平台编译部署](https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64/README.md)
+### [Android平台编译部署](https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64/README.md)
 
-### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html)
+### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/micro.html)

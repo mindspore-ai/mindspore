@@ -544,7 +544,7 @@ def derivative(fn, primals, order):
 def jvp(fn, inputs, v):
     """
     Compute the jacobian-vector-product of the given network. `jvp` matches
-    `forward-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#forward-mode-ad>`_.
+    `forward-mode differentiation <https://www.mindspore.cn/docs/en/r1.9/design/auto_gradient.html#forward-mode-ad>`_.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
@@ -667,7 +667,7 @@ def linearize(fn, inputs):
 def vjp(fn, inputs, v):
     """
     Compute the vector-jacobian-product of the given network. `vjp` matches
-    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#reverse-mode-ad>`_.
+    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/r1.9/design/auto_gradient.html#reverse-mode-ad>`_.
 
     Note:
         This function is subjected to change in the future.
