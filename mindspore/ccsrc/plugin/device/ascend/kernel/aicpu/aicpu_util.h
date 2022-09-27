@@ -58,6 +58,8 @@ constexpr auto kStackInit = "StackInit";
 constexpr auto kStackPush = "StackPush";
 constexpr auto kStackPop = "StackPop";
 constexpr auto kStackDestroy = "StackDestroy";
+constexpr auto kStridedSliceV2 = "StridedSliceV2";
+constexpr auto kStridedSliceV2Grad = "StridedSliceV2Grad";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kGather = "Gather";
@@ -299,7 +301,9 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kHSigmoid, "HardSigmoid"},
   {kHSigmoidGrad, "HardSigmoidGrad"},
   {kArgmax, "ArgMax"},
-  {kArgmin, "ArgMin"}};
+  {kArgmin, "ArgMin"},
+  {kStridedSliceV2, "StridedSlice"},
+  {kStridedSliceV2Grad, "StridedSliceGrad"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number

@@ -2197,6 +2197,36 @@ class SoftMarginLossGrad(Primitive):
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
+class StridedSliceV2Grad(Primitive):
+    """
+    Performs grad of StridedSliceV2 operation.
+
+    Inputs:
+        - **shapex** (Tensor) - StridedSliceV2 shape of input
+        - **begin** (tuple[int]) - A tuple which represents the location where to start. Only
+          constant value is allowed.
+        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
+          Only constant value is allowed.
+        - **strides** (tuple[int]) - A tuple which represents the stride is continuously added
+          before reaching the maximum location. Only constant value is allowed.
+        - **dy** (Tensor) - The output of StridedSliceV2
+
+    Outputs:
+        Tensor, the shape same as the input of StridedSliceV2
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 begin_mask=0,
+                 end_mask=0,
+                 ellipsis_mask=0,
+                 new_axis_mask=0,
+                 shrink_axis_mask=0):
+        """Initialize StridedSliceV2Grad"""
+        self.set_const_input_indexes([0])
+        self.init_prim_io_names(inputs=['shapex', 'begin', 'end', 'strides', 'dy'], outputs=['output'])
+
+
 class StridedSliceGrad(Primitive):
     """
     Performs grad of StridedSlice operation.
