@@ -154,7 +154,6 @@ class GradExecutor {
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
                              const std::vector<AnfNodePtr> &weights, const std::vector<size_t> &grad_position,
                              size_t arg_size, const py::args &args);
-  AnfNodePtr GetSingleWeightArg(const py::object &param, const FuncGraphPtr &df_builder) const;
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder) const;
   void CheckParamShapeAndType(const AnfNodePtr &param, const ParameterPtr &param_node,
                               const abstract::AbstractBasePtr &input_abs,
