@@ -78,6 +78,15 @@ int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, Sp
     for (int i = 0; i < param->num_split_; i++) {
       param->split_sizes_[i] = split_size;
     }
+  } else {
+    int64_t split_sizes_sum = 0;
+    for (int i = 0; i < param->num_split_; i++) {
+      split_sizes_sum += param->split_sizes_[i];
+    }
+    if (split_sizes_sum > input_shape[param->split_dim_]) {
+      MS_LOG(ERROR) << "Customer-based split sizes is not usable.";
+      return RET_ERROR;
+    }
   }
 
   if (param->split_sizes_[param->num_split_ - 1] == -1) {
