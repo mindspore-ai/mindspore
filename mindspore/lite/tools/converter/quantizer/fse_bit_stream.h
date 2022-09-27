@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_BIT_STREAM_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_BIT_STREAM_H_
 #include <cstdint>
+#include <cstring>
 
 namespace mindspore::lite::quant {
 class FSEBitStream {
@@ -29,10 +30,10 @@ class FSEBitStream {
   int Create(uint64_t bit_capacity);
   void Free();
   void Empty();
-  int64_t Pop(uint8_t bit_count);
+  uint64_t Pop(uint8_t bit_count);
   void Push(int64_t state, uint8_t bit_count);
   void Flush();
-  static int CountBits(int32_t x);
+  static size_t CountBits(int32_t x);
 
   int32_t GetCurrChunkIndex() { return this->curr_chunk_index_; }
   uint64_t GetCurrChunk() { return this->curr_chunk_; }
