@@ -173,6 +173,17 @@ Status DataQueueOp::operator()() {
 #endif
   } else if (device_type_ == DeviceType::GPU) {
 #ifdef WITH_BACKEND
+    if (create_data_info_queue_) {
+      // This place has a race condition with GetDataInfo, so the first one
+      // arrive here will do the initialize work.
+      {
+        std::unique_lock<std::mutex> lock(data_info_mutex_);
+        if (data_info_queue_ptr_ == nullptr) {
+          data_info_queue_ptr_ = std::make_unique<DATA_INFO_QUEUE>(kDataInfoQueueCapacity);
+          RETURN_IF_NOT_OK(data_info_queue_ptr_->Register(tree_->AllTasks()));
+        }
+      }
+    }
     RETURN_IF_NOT_OK(SendDataToGPU());
 #endif
   } else if (device_type_ == DeviceType::CPU) {
@@ -408,10 +419,6 @@ Status DataQueueOp::CheckPushStatus(DataQueueStatus status, bool stop_send, bool
 Status DataQueueOp::GetDataInfo(DATA_INFO *data_info) {
 #ifdef WITH_BACKEND
   RETURN_UNEXPECTED_IF_NULL(MsContext::GetInstance());
-  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
-    RETURN_STATUS_UNEXPECTED("'GetDataInfo' only supported on Ascend.");
-  }
-
   if (!create_data_info_queue_) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] DataInfo queue is not created.");
   }
@@ -638,6 +645,14 @@ Status DataQueueOp::SendDataToGPU() {
 #ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
 #endif
+
+      if (create_data_info_queue_) {
+        DATA_INFO data_info;
+        (void)std::transform(current_row.begin(), current_row.end(), std::back_inserter(data_info),
+                             [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
+        RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
+      }
+
       PrintBeginInfoWhenFirstBatch(first_push_flag_);
       RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(current_row)));
       PrintEndInfoWhenFirstBatch(&first_push_flag_);
