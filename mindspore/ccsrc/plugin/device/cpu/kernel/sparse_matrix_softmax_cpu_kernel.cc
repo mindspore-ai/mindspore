@@ -92,7 +92,9 @@ void SparseMatrixSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   for (int i = 1; i <= row_index; i++) {
     int single_index = (input_logits_col_indices[i] - input_logits_col_indices[i - 1]);
     for (int k = 0; k < single_index; k++) {
-      if (input_logits_values[k + start] > MAX) MAX = input_logits_values[k + start];
+      if (input_logits_values[k + start] > MAX) {
+        MAX = input_logits_values[k + start];
+      }
     }
     for (int k = 0; k < single_index; k++) {
       total = total + exp(input_logits_values[k + start] - MAX);
