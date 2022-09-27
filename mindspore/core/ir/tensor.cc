@@ -1046,6 +1046,8 @@ size_t Tensor::GetFusionSize(const TensorPtrList &flat_tensors) {
   return fusion_size;
 }
 
+bool Tensor::is_persistent_data() const { return this->data().is_persistent_data(); }
+
 CSRTensor::CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)
     : MetaSparseTensor(values->data_type(), shape), indptr_(indptr), indices_(indices), values_(values) {}
 

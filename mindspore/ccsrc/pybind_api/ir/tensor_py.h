@@ -105,9 +105,20 @@ class TensorPy {
   // param input [py::array] Data value of the tensor.
   static TensorPtr MakeTensorOfNumpy(const py::array &input);
 
+  // brief Create Tensor from a numpy array without copy, use persistent tensor data.
+  //
+  // param input [py::array] Data value of the tensor.
+  // param input [py::int_] slice num of data.
+  static TensorPtr MakePersistentDataTensorOfNumpy(const py::array &input, const py::int_ slice_num);
+
   static py::array SyncAsNumpy(const Tensor &tensor);
 
   static py::array AsNumpy(const Tensor &tensor);
+
+  // brief Get slice data as numpy of tensor which use persistent tensor data.
+  //
+  // return [py::array] Slice Data of the tensor at slice_index.
+  static py::array AsNumpyOfSlice(const Tensor &tensor, const int32_t param_key, int slice_index);
 
   static py::tuple GetPyTupleShape(const Tensor &tensor);
 

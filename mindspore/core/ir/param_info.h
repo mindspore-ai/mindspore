@@ -94,8 +94,16 @@ class ParamInfo {
     parallel_optimizer_comm_recompute_ = parallel_optimizer_comm_recompute;
   }
 
-  std::vector<int64_t> parameter_shape() const { return parameter_shape_; }
+  const std::vector<int64_t> &parameter_shape() const { return parameter_shape_; }
   void set_parameter_shape(const std::vector<int64_t> &tensor_shape) { parameter_shape_ = tensor_shape; }
+
+  bool use_persistent_storage() const { return use_persistent_storage_; }
+  void set_use_persistent_storage(bool use_persistent_storage) { use_persistent_storage_ = use_persistent_storage; }
+
+  const std::vector<int64_t> &parameter_persistent_slice_shape() const { return parameter_persistent_slice_shape_; }
+  void set_parameter_persistent_slice_shape(const std::vector<int64_t> &parameter_persistent_slice_shape) {
+    parameter_persistent_slice_shape_ = parameter_persistent_slice_shape;
+  }
 
   bool cache_enable() const { return cache_enable_; }
   void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
@@ -126,6 +134,9 @@ class ParamInfo {
   ParameterWeakPtr parameter_;
   bool requires_aggr_{true};
   std::vector<int64_t> parameter_shape_;
+  // Used at embedding cache. The slice after cut huge parameter to a small one.
+  std::vector<int64_t> parameter_persistent_slice_shape_;
+  bool use_persistent_storage_;
   // Used to identify the same Parameter for Worker and Server in the embedding cache scenario.
   int32_t key_{-1};
 };

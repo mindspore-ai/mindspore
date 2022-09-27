@@ -18,6 +18,7 @@ from __future__ import absolute_import
 
 from copy import copy
 import sys
+import math
 import numbers
 import numpy as np
 from mindspore import log as logger
@@ -26,6 +27,7 @@ from mindspore._c_expression import ParamInfo
 from mindspore.common import dtype as mstype
 from mindspore import context
 from mindspore.parallel._utils import _get_parallel_mode
+from mindspore.common._utils import split_to_slice_if_need
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator
@@ -224,6 +226,17 @@ class Parameter(Tensor_):
             raise ValueError(f"All shape elements of the Parameter must be positive. But got None.")
         if isinstance(default_input, (Tensor_, Tensor)):
             Tensor_.__init__(self, default_input.dtype, default_input.shape)
+
+            # At embedding cache scenes, we need limit the size of memory for parameter.
+            # And save out range data to persistent storage to support TB-Level size parameter.
+            slice_num_of_persistent_data = split_to_slice_if_need(default_input.dtype, default_input.shape)
+            if slice_num_of_persistent_data > 1:
+                data_shape = default_input.shape
+                slice_first_dim = math.ceil(data_shape[0] / slice_num_of_persistent_data)
+                data_shape[0] = slice_first_dim
+                self.param_info.parameter_persistent_slice_shape = data_shape
+                self.param_info.use_persistent_storage = True
+
         elif isinstance(default_input, int):
             Tensor_.__init__(self, mstype.int64, ())
         elif isinstance(default_input, float):
@@ -234,6 +247,7 @@ class Parameter(Tensor_):
             raise TypeError(f"The type of the argument 'default_input' must be in ['Tensor', 'int', 'float',"
                             f" 'numpy.ndarray', 'list']. But got type {type(default_input)}.")
         self.param_info.parameter_shape = self.shape
+
         import mindspore.ops.operations.other_ops as other_ops
         self.load = other_ops.Load()
 
