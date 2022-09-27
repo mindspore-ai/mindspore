@@ -24,7 +24,7 @@ mindspore.SummaryLandscape
         参数：
             - **callback_fn** (python function) - Python函数对象，用户需要写一个没有输入的函数，返回值要求如下。
 
-              - mindspore.Model：用户的模型。
+              - mindspore.train.Model：用户的模型。
               - mindspore.nn.Cell：用户的网络。
               - mindspore.dataset：创建loss所需要的用户数据集。
               - mindspore.train.Metrics：用户的评估指标。

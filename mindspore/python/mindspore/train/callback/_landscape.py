@@ -262,7 +262,7 @@ class SummaryLandscape:
             callback_fn (python function): A python function object. User needs to write a function,
                 it has no input, and the return requirements are as follows.
 
-                - mindspore.Model: User's model object.
+                - mindspore.train.Model: User's model object.
                 - mindspore.nn.Cell: User's network object.
                 - mindspore.dataset: User's dataset object for create loss landscape.
                 - mindspore.train.Metrics: User's metrics object.

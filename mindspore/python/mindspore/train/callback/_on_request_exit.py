@@ -87,7 +87,7 @@ class OnRequestExit(Callback):
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         if os.path.isfile(f"{self.train_file_path}.ckpt"):
             cb_params = run_context.original_args()
@@ -101,7 +101,7 @@ class OnRequestExit(Callback):
 
         Args:
             run_context (RunContext): Include some information of the model.  For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         if self.stop:
             run_context.request_stop()
@@ -112,7 +112,7 @@ class OnRequestExit(Callback):
 
         Args:
             run_context (RunContext): Include some information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         if self.stop:
             run_context.request_stop()
@@ -123,7 +123,7 @@ class OnRequestExit(Callback):
 
         Args:
             run_context (RunContext): Include some information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         if not self.stop:
             return
@@ -141,7 +141,7 @@ class OnRequestExit(Callback):
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
         eval_net = cb_params.eval_network
@@ -157,7 +157,7 @@ class OnRequestExit(Callback):
 
         Args:
             run_context (RunContext): Include some information of the model.  For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         if self.stop:
             run_context.request_stop()
@@ -168,7 +168,7 @@ class OnRequestExit(Callback):
 
         Args:
             run_context (RunContext): Include some information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         if not self.stop:
             return

@@ -5,7 +5,7 @@ mindspore.train.LambdaCallback
 
     用于自定义简单的callback。
 
-    使用匿名函数构建callback，定义的匿名函数将在 `mindspore.Model.{train | eval | fit}` 的对应阶段被调用。
+    使用匿名函数构建callback，定义的匿名函数将在 `mindspore.train.Model.{train | eval | fit}` 的对应阶段被调用。
 
     请注意，callback的每个阶段都需要一个位置参数：`run_context`。
 

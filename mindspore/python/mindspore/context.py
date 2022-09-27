@@ -464,7 +464,7 @@ def set_auto_parallel_context(**kwargs):
     Note:
         Attribute name is required for setting attributes.
         If a program has tasks on different parallel modes, before setting a new parallel mode for the
-        next task, interface mindspore.reset_auto_parallel_context() should be called to reset
+        next task, interface :func:`mindspore.reset_auto_parallel_context` should be called to reset
         the configuration.
         Setting or changing parallel modes must be called before creating any Initializer, otherwise,
         it may have RuntimeError when compiling the network.

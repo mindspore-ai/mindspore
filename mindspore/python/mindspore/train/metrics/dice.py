@@ -72,8 +72,8 @@ class Dice(Metric):
         Updates the internal evaluation result :math:`y_pred` and :math:`y`.
 
         Args:
-            inputs: Input `y_pred` and `y`. `y_pred` and `y` are Tensor, list or numpy.ndarray. `y_pred` is the
-                    predicted value, `y` is the true value. The shape of `y_pred` and `y` are both :math:`(N, ...)`.
+            inputs (tuple): Input `y_pred` and `y`. `y_pred` and `y` are Tensor, list or numpy.ndarray. `y_pred` is the
+                predicted value, `y` is the true value. The shape of `y_pred` and `y` are both :math:`(N, ...)`.
 
         Raises:
             ValueError: If the number of the inputs is not 2.

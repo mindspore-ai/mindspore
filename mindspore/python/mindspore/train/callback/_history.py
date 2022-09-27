@@ -31,7 +31,7 @@ class History(Callback):
     outputs will be recorded.
 
     Note:
-        Normally used in `mindspore.Model.train` or `mindspore.Model.fit`.
+        Normally used in `mindspore.train.Model.train` or `mindspore.train.Model.fit`.
 
     Examples:
         >>> import numpy as np
@@ -61,8 +61,8 @@ class History(Callback):
         Initialize the `epoch` property at the begin of training.
 
         Args:
-            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+            run_context (RunContext): Context of the `mindspore.train.Model.{train | eval}`. For more details,
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         self.epoch = {"epoch": []}
 
@@ -71,8 +71,8 @@ class History(Callback):
         Records the first element of network outputs and metrics information at the end of epoch.
 
         Args:
-            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`.  For more details,
-                    please refer to :class:`mindspore.RunContext`.
+            run_context (RunContext): Context of the `mindspore.train.Model.{train | eval}`.  For more details,
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
         epoch = cb_params.get("cur_epoch_num", 1)

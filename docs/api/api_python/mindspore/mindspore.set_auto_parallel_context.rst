@@ -7,7 +7,7 @@ mindspore.set_auto_parallel_context
     配置自动并行，当前CPU仅支持数据并行。
 
     .. note::
-        配置时，必须输入配置的名称。如果某个程序具有不同并行模式下的任务，需要提前调用reset_auto_parallel_context()为下一个任务设置新的并行模式。若要设置或更改并行模式，必须在创建任何Initializer之前调用接口，否则，在编译网络时，可能会出现RuntimeError。
+        配置时，必须输入配置的名称。如果某个程序具有不同并行模式下的任务，需要提前调用 :func:`mindspore.reset_auto_parallel_context` 为下一个任务设置新的并行模式。若要设置或更改并行模式，必须在创建任何Initializer之前调用接口，否则，在编译网络时，可能会出现RuntimeError。
 
     某些配置适用于特定的并行模式，有关详细信息，请参见下表：
 

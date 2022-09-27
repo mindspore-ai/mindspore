@@ -1088,7 +1088,7 @@ class Model:
 
         Evaluation process will be performed during training process if `valid_dataset` is provided.
 
-        More details please refer to `mindspore.Model.train` and `mindspore.Model.eval`.
+        More details please refer to `mindspore.train.Model.train` and `mindspore.train.Model.eval`.
 
         Args:
             epoch (int): Total training epochs. Generally, train network will be trained on complete dataset per epoch.
@@ -1231,7 +1231,7 @@ class Model:
 
     def _eval_in_fit(self, valid_dataset, callbacks=None, dataset_sink_mode=True, cb_params=None):
         """
-        Evaluation process in `mindspore.Model.fit`.
+        Evaluation process in `mindspore.train.Model.fit`.
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model. If `valid_dataset` is provided, evaluation process

@@ -76,7 +76,7 @@
 
 #### FrontEnd
 
-- [BETA]  提供`mindspore.Model.fit` API，增加两种callback方法 `mindspore.train.callback.EarlyStopping` 和 `mindspore.train.callback.ReduceLROnPlateau`。
+- [BETA]  提供`mindspore.train.Model.fit` API，增加两种callback方法 `mindspore.train.callback.EarlyStopping` 和 `mindspore.train.callback.ReduceLROnPlateau`。
 - [BETA] 自定义算子支持Julia算子。
 - [BETA] 自定义算子支持Hybrid DSL算子。
 - [STABLE] export()接口支持自定义加密算法导出模型，load()接口支持自定义解密算法导入模型。
@@ -229,7 +229,7 @@
 ##### Python API
 
 - 不再支持DVPP模拟算法，删除 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` 和 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` 接口。
-- LossMonitor中增加`on_train_epoch_end` 方法，实现在 `mindspore.Model.fit` 中使用时，打印epoch级别的metric信息。
+- LossMonitor中增加`on_train_epoch_end` 方法，实现在 `mindspore.train.Model.fit` 中使用时，打印epoch级别的metric信息。
 - TimeMonitor打印内容变更，打印内容加入"train"或"eval"用于区分训练和推理阶段。
 - load_checkpoint 接口的`filter_prefix`：不再支持空字符串("")，匹配规则由强匹配修改为模糊匹配。
 
@@ -242,7 +242,7 @@ mindspore.context、mindspore.parallel、mindspore.profiler、mindspore.train模
 - `mindspore.context.set_context`可简化为`mindspore.set_context`。
 - `mindspore.parallel.set_algo_parameters`可简化为`mindspore.set_algo_parameters`。
 - `mindspore.profiler.Profiler`可简化为`mindspore.Profiler`。
-- `mindspore.train.callback.Callback`可简化为`mindspore.Callback`。
+- `mindspore.train.callback.Callback`可简化为`mindspore.train.Callback`。
 
 API页面统一汇总至：<https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html>。
 

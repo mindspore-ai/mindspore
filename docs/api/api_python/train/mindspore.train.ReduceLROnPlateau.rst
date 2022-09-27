@@ -30,11 +30,11 @@ mindspore.train.ReduceLROnPlateau
         训练开始时初始化相关的变量。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_epoch_end(run_context)
 
         训练过程中，若监控指标在等待 `patience` 个epoch后仍没有改善，则改变学习率。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。

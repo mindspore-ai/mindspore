@@ -83,7 +83,7 @@
 
         如果 `valid_dataset` 不为None，在训练过程中同时执行推理。
 
-        更多详细信息请参考 `mindspore.Model.train` 和 `mindspore.Model.eval`。
+        更多详细信息请参考 `mindspore.train.Model.train` 和 `mindspore.train.Model.eval`。
 
         参数：
             - **epoch** (int) - 训练执行轮次。通常每个epoch都会使用全量数据集进行训练。当 `dataset_sink_mode` 设置为True且 `sink_size` 大于零时，则每个epoch训练次数为 `sink_size` 而不是数据集的总步数。如果 `epoch` 与 `initial_epoch` 一起使用，它表示训练的最后一个 `epoch` 是多少。

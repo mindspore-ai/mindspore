@@ -58,7 +58,7 @@ class TimeMonitor(Callback):
 
         Args:
             run_context (RunContext): Context of the process running.  For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         self.epoch_time = time.time()
 
@@ -68,7 +68,7 @@ class TimeMonitor(Callback):
 
         Args:
            run_context (RunContext): Context of the process running.  For more details,
-                   please refer to :class:`mindspore.RunContext`.
+                   please refer to :class:`mindspore.train.RunContext`.
         """
         epoch_seconds = (time.time() - self.epoch_time) * 1000
         step_size = self.data_size

@@ -76,7 +76,7 @@
 
 #### FrontEnd
 
-- [BETA] Add `mindspore.Model.fit` API, add `mindspore.train.callback.EarlyStopping` and `mindspore.train.callback.ReduceLROnPlateau` in Callback.
+- [BETA] Add `mindspore.train.Model.fit` API, add `mindspore.train.callback.EarlyStopping` and `mindspore.train.callback.ReduceLROnPlateau` in Callback.
 - [BETA] Support custom operator implemented by Julia.
 - [BETA] Support custom operator implemented by MindSpore Hybrid DSL.
 - [STABLE] The export() interface supports the export of a model using a custom encryption algorithm, and the load() interface supports the import of a model using a custom decryption algorithm.
@@ -229,7 +229,7 @@
 ##### Python API
 
 - DVPP simulation algorithm is no longer supported. Remove `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` and `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` interfaces.
-- Add `on_train_epoch_end` method in LossMonitor, which implements printing metric information in the epoch level when it is used in `mindspore.Model.fit`.
+- Add `on_train_epoch_end` method in LossMonitor, which implements printing metric information in the epoch level when it is used in `mindspore.train.Model.fit`.
 - TimeMonitor printing content changes, and the printed content is added to "train" or "eval" to distinguish between training and inference phases.
 - `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
 
@@ -242,7 +242,7 @@ For examples:
 - `mindspore.context.set_context` can be simplified to `mindspore.set_context`.
 - `mindspore.parallel.set_algo_parameters` can be simplified to `mindspore.set_algo_parameters`.
 - `mindspore.profiler.Profiler` can be simplified to `mindspore.Profiler`.
-- `mindspore.train.callback.Callback` can be simplified to `mindspore.Callback`.
+- `mindspore.train.callback.Callback` can be simplified to `mindspore.train.Callback`.
 
 The API pages are aggregated to <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html>.
 
