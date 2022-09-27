@@ -2844,8 +2844,7 @@ class Tensor(Tensor_):
             >>> print(a.argmax())
             5
         """
-        # P.Argmax only supports float
-        a = self.astype(mstype.float32)
+        a = self
         if axis is None:
             a = a.ravel()
             axis = 0

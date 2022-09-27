@@ -4246,10 +4246,6 @@ def argmax(x, axis=-1, output_type=mstype.int32):
 
     Args:
         x (Tensor): Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Support data type list as follows:
-          Ascend: Float16, Float32.
-          CPU: Float16, Float32, Float64.
-          GPU: Float16, Float32.
         axis (int): Axis where the Argmax operation applies to. Default: -1.
         output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
           Default: `mindspore.dtype.int32`.

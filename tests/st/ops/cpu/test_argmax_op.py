@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -76,22 +76,6 @@ def test_argmax_2d():
     output = argmax_axis_1(tensor_x)
     expect = np.array([1, 0, 0]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
-    # test dynamic shape of argmax.
-    dy_shape_argmax_axis_0 = NetArgmax(axis=0)
-    input_x_dyn = Tensor(shape=[3, None], dtype=mstype.float32)
-    dy_shape_argmax_axis_0.set_inputs(input_x_dyn)
-    output = dy_shape_argmax_axis_0(tensor_x)
-    expect = np.array([2, 2, 2]).astype(np.float32)
-    assert (output.asnumpy() == expect).all()
-    # test dynamic_rank
-    dyn_rank_net = DynRankNet()
-    input_x_dyn = Tensor(shape=[3, None, 1], dtype=mstype.float32)
-    dyn_reduce_axis = Tensor(shape=[None], dtype=mstype.int64)
-    dyn_rank_net.set_inputs(input_x_dyn, dyn_reduce_axis)
-
-    reduce_axis = Tensor(np.array([-1], dtype=np.int64))
-    output = dyn_rank_net(Tensor(np.expand_dims(x, -1)), reduce_axis)
-    assert (output.asnumpy() == expect).all()
 
 
 @pytest.mark.level0
@@ -130,3 +114,104 @@ def test_argmax_float32_functional():
     adaptive_argmax_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     adaptive_argmax_functional(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmax_dynamic_shape():
+    """
+    Feature: test ops.argmax.
+    Description: test dynamic shape of ops.argmax.
+    Expectation: the result match with expected result.
+    """
+    x = np.array([[1., 20., 5.],
+                  [67., 8., 9.],
+                  [130., 24., 15.]]).astype(np.float32)
+    tensor_x = Tensor(x)
+    # test dynamic shape of argmax.
+    dy_shape_argmax_axis_0 = NetArgmax(axis=0)
+    input_x_dyn = Tensor(shape=[3, None], dtype=mstype.float32)
+    dy_shape_argmax_axis_0.set_inputs(input_x_dyn)
+    output = dy_shape_argmax_axis_0(tensor_x)
+    expect = np.array([2, 2, 2]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
+    # test dynamic_rank
+    dyn_rank_net = DynRankNet()
+    input_x_dyn = Tensor(shape=[3, None, 1], dtype=mstype.float32)
+    dyn_reduce_axis = Tensor(shape=[None], dtype=mstype.int64)
+    dyn_rank_net.set_inputs(input_x_dyn, dyn_reduce_axis)
+
+    reduce_axis = Tensor(np.array([-1], dtype=np.int64))
+    output = dyn_rank_net(Tensor(np.expand_dims(x, -1)), reduce_axis)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmax_support_types():
+    """
+    Feature: test ops.argmax.
+    Description: test ops.argmax with different types.
+    Expectation: the result match with expected result.
+    """
+    x_fp16 = Tensor([1., 3., 2.], mstype.float16)
+    x_fp32 = Tensor([1., 3., 2.], mstype.float32)
+    x_fp64 = Tensor([1., 3., 2.], mstype.float64)
+    x_int8 = Tensor([1, 3, 2], mstype.int8)
+    x_int16 = Tensor([1, 3, 2], mstype.int16)
+    x_int32 = Tensor([1, 3, 2], mstype.int32)
+    x_int64 = Tensor([1, 3, 2], mstype.int64)
+    x_uint8 = Tensor([1, 3, 2], mstype.uint8)
+    x_uint16 = Tensor([1, 3, 2], mstype.uint16)
+    x_uint32 = Tensor([1, 3, 2], mstype.uint32)
+    x_uint64 = Tensor([1, 3, 2], mstype.uint64)
+
+    out1_fp16 = ops.argmax(x_fp16, axis=0, output_type=mstype.int32)
+    out1_fp32 = ops.argmax(x_fp32, axis=0, output_type=mstype.int32)
+    out1_fp64 = ops.argmax(x_fp64, axis=0, output_type=mstype.int32)
+    out1_int8 = ops.argmax(x_int8, axis=0, output_type=mstype.int32)
+    out1_int16 = ops.argmax(x_int16, axis=0, output_type=mstype.int32)
+    out1_int32 = ops.argmax(x_int32, axis=0, output_type=mstype.int32)
+    out1_int64 = ops.argmax(x_int64, axis=0, output_type=mstype.int32)
+    out1_uint8 = ops.argmax(x_uint8, axis=0, output_type=mstype.int32)
+    out1_uint16 = ops.argmax(x_uint16, axis=0, output_type=mstype.int32)
+    out1_uint32 = ops.argmax(x_uint32, axis=0, output_type=mstype.int32)
+    out1_uint64 = ops.argmax(x_uint64, axis=0, output_type=mstype.int32)
+
+    out2_fp16 = ops.argmax(x_fp16, axis=0, output_type=mstype.int64)
+    out2_fp32 = ops.argmax(x_fp32, axis=0, output_type=mstype.int64)
+    out2_fp64 = ops.argmax(x_fp64, axis=0, output_type=mstype.int64)
+    out2_int8 = ops.argmax(x_int8, axis=0, output_type=mstype.int64)
+    out2_int16 = ops.argmax(x_int16, axis=0, output_type=mstype.int64)
+    out2_int32 = ops.argmax(x_int32, axis=0, output_type=mstype.int64)
+    out2_int64 = ops.argmax(x_int64, axis=0, output_type=mstype.int64)
+    out2_uint8 = ops.argmax(x_uint8, axis=0, output_type=mstype.int64)
+    out2_uint16 = ops.argmax(x_uint16, axis=0, output_type=mstype.int64)
+    out2_uint32 = ops.argmax(x_uint32, axis=0, output_type=mstype.int64)
+    out2_uint64 = ops.argmax(x_uint64, axis=0, output_type=mstype.int64)
+
+    assert out1_fp16 == 1 and out1_fp16.dtype == mstype.int32
+    assert out1_fp32 == 1 and out1_fp32.dtype == mstype.int32
+    assert out1_fp64 == 1 and out1_fp64.dtype == mstype.int32
+    assert out1_int8 == 1 and out1_int8.dtype == mstype.int32
+    assert out1_int16 == 1 and out1_int16.dtype == mstype.int32
+    assert out1_int32 == 1 and out1_int32.dtype == mstype.int32
+    assert out1_int64 == 1 and out1_int64.dtype == mstype.int32
+    assert out1_uint8 == 1 and out1_uint8.dtype == mstype.int32
+    assert out1_uint16 == 1 and out1_uint16.dtype == mstype.int32
+    assert out1_uint32 == 1 and out1_uint32.dtype == mstype.int32
+    assert out1_uint64 == 1 and out1_uint64.dtype == mstype.int32
+
+    assert out2_fp16 == 1 and out2_fp16.dtype == mstype.int64
+    assert out2_fp32 == 1 and out2_fp32.dtype == mstype.int64
+    assert out2_fp64 == 1 and out2_fp64.dtype == mstype.int64
+    assert out2_int8 == 1 and out2_int8.dtype == mstype.int64
+    assert out2_int16 == 1 and out2_int16.dtype == mstype.int64
+    assert out2_int32 == 1 and out2_int32.dtype == mstype.int64
+    assert out2_int64 == 1 and out2_int64.dtype == mstype.int64
+    assert out2_uint8 == 1 and out2_uint8.dtype == mstype.int64
+    assert out2_uint16 == 1 and out2_uint16.dtype == mstype.int64
+    assert out2_uint32 == 1 and out2_uint32.dtype == mstype.int64
+    assert out2_uint64 == 1 and out2_uint64.dtype == mstype.int64

@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -41,14 +42,17 @@ class ArgmaxCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
-  template <typename T>
+  template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
   using ArgmaxFunc =
     std::function<bool(ArgmaxCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   ArgmaxFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, ArgmaxFunc>> func_list_;
 
   std::vector<int64_t> shape_;
   int64_t num_before_axis_{0};

@@ -2015,11 +2015,6 @@ class Argmax(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Support data type list as follows:
-
-          - Ascend: Float16, Float32, Float64, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64.
-          - GPU: Float16, Float32.
-          - CPU: Float16, Float32, Float64.
 
     Outputs:
         Tensor, whose dtype is determined by `output_type`.
