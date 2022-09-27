@@ -33,6 +33,11 @@ def test_allreduce():
     if sys.platform != 'linux':
         return
     return_code = os.system("bash build_allreduce_net_cluster.sh run_allreduce.py 8119")
+    if return_code != 0:
+        os.system(f"echo '\n**************** Worker Log ****************'")
+        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./worker*.log")
+        os.system(f"echo '\n**************** Scheduler Log ****************'")
+        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./scheduler.log")
     assert return_code == 0
 
 

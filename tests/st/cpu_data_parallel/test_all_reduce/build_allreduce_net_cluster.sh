@@ -17,10 +17,11 @@
 export MS_WORKER_NUM=8
 export MS_SCHED_HOST=127.0.0.1
 export MS_SCHED_PORT=$2
+export GLOG_v=1
 
 # Launch 1 scheduler.
 export MS_ROLE=MS_SCHED
-python3 $1 >scheduler.txt 2>&1 &
+python3 $1 >scheduler.log 2>&1 &
 sched_pid=${!}
 echo "scheduler start success!"
 
@@ -29,7 +30,7 @@ export MS_ROLE=MS_WORKER
 process_pid=()
 for((i=0;i<8;i++));
 do
-    python3 $1 >worker_$i.txt 2>&1 &
+    python3 $1 >worker_$i.log 2>&1 &
     echo "worker ${i} start success with pid ${!}"
     process_pid[${i}]=${!}
 done
