@@ -16,7 +16,7 @@
 import numpy as np
 from numpy.linalg import inv
 import pytest
-
+import torch
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -55,3 +55,25 @@ def test_matrix_inverse():
     diff0 = output0.asnumpy() - expect0
     assert np.all(diff0 < error0)
     assert output0.shape == expect0.shape
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_complex_matrix_inverse():
+    """
+    Feature: test MatrixInverse in complex.
+    Description: Test case of MatrixInverse complex on GPU.
+    Expectation: success.
+    """
+    # PyNative mode
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    shape = (32, 32)
+    input_x = np.random.randn(*shape).astype(np.complex64)
+    matrix_inverse = NetMatrixInverse()
+    output0 = matrix_inverse(Tensor(input_x))
+    error0 = np.ones(shape=shape) * 1.0e-3
+    input_t = torch.from_numpy(input_x)
+    output1 = torch.linalg.inv(torch.tensor(input_t))
+    diff0 = output1.numpy() - output0.asnumpy()
+    assert np.all(diff0 < error0)

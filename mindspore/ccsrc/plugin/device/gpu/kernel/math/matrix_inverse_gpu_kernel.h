@@ -50,7 +50,14 @@ class MatrixInverseGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr);
-
+  template <typename T>
+  void LaunchKernel_Cublas(const std::vector<kernel::AddressPtr> &inputs,
+                           const std::vector<kernel::AddressPtr> &workspace,
+                           const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr);
+  template <typename T>
+  void LaunchKernel_CuSolve(const std::vector<kernel::AddressPtr> &inputs,
+                            const std::vector<kernel::AddressPtr> &workspace,
+                            const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr);
   using MatrixInverseFunc =
     std::function<bool(MatrixInverseGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
@@ -63,6 +70,7 @@ class MatrixInverseGpuKernelMod : public NativeGpuKernelMod {
   size_t input_size_{1};
   bool adjoint_{false};
   cublasHandle_t handle_;
+  cusolverDnHandle_t handle_cus;
   size_t batch_size_{1};
   size_t size_{1};
   size_t dtype_size_{1};

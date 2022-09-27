@@ -61,7 +61,7 @@ class MatrixInverseInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     const int64_t input_num = 1;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
-    const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+    const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
     auto infer_type = input_args[kInputIndex0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
     return infer_type;
