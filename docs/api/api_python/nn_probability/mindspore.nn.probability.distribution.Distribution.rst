@@ -210,7 +210,6 @@ mindspore.nn.probability.distribution.Distribution
         采样函数。
 
         参数：
-            - **shape** (tuple) - 样本的shape。
             - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
             - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 

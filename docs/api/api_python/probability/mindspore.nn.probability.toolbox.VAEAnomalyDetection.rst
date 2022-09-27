@@ -34,7 +34,7 @@ mindspore.nn.probability.toolbox.VAEAnomalyDetection
         返回：
             float，样本的预测异常值分数。
 
-    .. py:method:: train(train_dataset , epochs=5)
+    .. py:method:: train(train_dataset, epochs=5)
 
         训练 VAE 模型。
 
