@@ -19,14 +19,17 @@
 #include <stdio.h>
 #include <string>
 #include <memory>
+#include <map>
 #include "include/api/context.h"
 #include "mindapi/ir/func_graph.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+using ConfigInfos = std::map<std::string, std::map<std::string, std::string>>;
 mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t &buf_size,
-                                            const std::shared_ptr<mindspore::Context> &context);
+                                            const std::shared_ptr<mindspore::Context> &context,
+                                            const ConfigInfos &config_info);
 #ifdef __cplusplus
 }
 #endif
