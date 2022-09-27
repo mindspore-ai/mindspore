@@ -22,6 +22,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.communication.management import get_group_size
 from mindspore.context import ParallelMode
+import mindspore.common._monad as monad
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -354,6 +355,7 @@ class BertTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
+        self.load = P.Load()
 
     def construct(self,
                   input_ids,
@@ -399,7 +401,7 @@ class BertTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
         if not overflow:
             self.optimizer(grads)
-        return (loss, cond, scaling_sens)
+        return loss, cond, self.load(scaling_sens, monad.U)
 
 
 class BertTrainOneStepWithLossScaleCellForAdam(nn.TrainOneStepWithLossScaleCell):

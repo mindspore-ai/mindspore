@@ -28,6 +28,7 @@
 #include "ir/param_info.h"
 #include "ir/cell.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/anfalgo.h"
 #include "abstract/abstract_value.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "include/common/utils/parallel_context.h"
