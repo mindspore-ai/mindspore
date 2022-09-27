@@ -113,7 +113,7 @@ class KernelAdjust {
                                      uint32_t *getnext_stream_id,
                                      const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) const;
   void SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, const std::vector<CNodePtr> &orders,
-                                size_t *order_index, CNodePtr getnext_cnode, uint32_t getnext_stream_id) const;
+                                size_t *order_index, CNodePtr *getnext_cnode, uint32_t getnext_stream_id) const;
   void InsertGetNextLoopFpBpStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                       std::vector<CNodePtr> *exec_order, uint32_t *fpbp_start_event_id,
                                       uint32_t getnext_stream_id) const;
