@@ -847,16 +847,7 @@ size_t AnfRuntimeAlgorithm::GetInputIndexInGraph(const mindspore::AnfNodePtr &an
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t ret = input_index_in_kernel;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
-  if (AnfAlgo::GetKernelType(anf_node) == ACL_KERNEL) {
-    auto find_dynamic = spec_dynamic_node_list.find(node_name);
-    if (find_dynamic != spec_dynamic_node_list.cend()) {
-      auto dyn_index_converter = find_dynamic->second;
-      ret = dyn_index_converter.first[input_index_in_kernel];
-      MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
-      return ret;
-    }
-  }
-  if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
+  if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL || AnfAlgo::GetKernelType(anf_node) == ACL_KERNEL) {
     if (common::AnfAlgo::IsDynamicShape(anf_node)) {
       auto find_dynamic = spec_dynamic_node_list.find(node_name);
       if (find_dynamic != spec_dynamic_node_list.cend()) {

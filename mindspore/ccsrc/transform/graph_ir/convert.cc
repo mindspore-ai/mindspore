@@ -117,7 +117,7 @@ bool IsDynamicShapeNode(const AnfNodePtr node) {
   return false;
 }
 
-void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
+void DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
   MS_EXCEPTION_IF_NULL(init_input);
   if (this->training_) {
     GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
@@ -1992,10 +1992,10 @@ void DfGraphConvertor::SetNodeInput(const AnfNodePtr node) {
   DfGraphConvertor::SetOpInput(adpt, cnode);
 }
 
-std::string DfGraphConvertor::GetGNodeName(const ge::GNode &node) const {
-  ge::AscendString name;
+std::string DfGraphConvertor::GetGNodeName(const ::ge::GNode &node) const {
+  ::ge::AscendString name;
   auto ret = node.GetName(name);
-  if (ret == ge::GRAPH_SUCCESS) {
+  if (ret == ::ge::GRAPH_SUCCESS) {
     return std::string(name.GetString());
   } else {
     MS_LOG(WARNING) << "Get GNode name failed, ret: " << ret;
@@ -2003,10 +2003,10 @@ std::string DfGraphConvertor::GetGNodeName(const ge::GNode &node) const {
   }
 }
 
-std::string DfGraphConvertor::GetGNodeType(const ge::GNode &node) const {
-  ge::AscendString node_type;
+std::string DfGraphConvertor::GetGNodeType(const ::ge::GNode &node) const {
+  ::ge::AscendString node_type;
   auto ret = node.GetType(node_type);
-  if (ret == ge::GRAPH_SUCCESS) {
+  if (ret == ::ge::GRAPH_SUCCESS) {
     return std::string(node_type.GetString());
   } else {
     MS_LOG(WARNING) << "Get GNode type failed, ret: " << ret;
@@ -2018,7 +2018,7 @@ std::string DfGraphConvertor::GetGNodeType(const ge::GNode &node) const {
 // 2) Identity or IdentityN is the subgraph(If) input, not delete
 // 3) Identity or IdentityN it the output, not delete
 // 4) Identity or IdentityN has multiple users, not delete
-bool DfGraphConvertor::IsIdentityRedundant(const ge::GNode &node) const {
+bool DfGraphConvertor::IsIdentityRedundant(const ::ge::GNode &node) const {
   auto node_type = GetGNodeType(node);
   if (node_type != kTypeIdentityN && node_type != kTypeIdentity) {
     MS_LOG(DEBUG) << "Node is not Identity or IdentityN, but is " << node_type << ", node name: " << GetGNodeName(node);
@@ -2046,7 +2046,7 @@ bool DfGraphConvertor::IsIdentityRedundant(const ge::GNode &node) const {
   return true;
 }
 
-void DfGraphConvertor::RemoveIdentity(ge::GNode identity_node) {
+void DfGraphConvertor::RemoveIdentity(::ge::GNode identity_node) {
   MS_LOG(INFO) << "Start Remove Identity or IdentityN, identity_node: " << GetGNodeName(identity_node);
   auto node_type = GetGNodeType(identity_node);
   if (node_type != kTypeIdentity && node_type != kTypeIdentityN) {
@@ -2206,17 +2206,17 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
   std::string name = op->GetOpType();
   if (name == prim::kPrimNonZeroWithValueShape->name()) {
     MS_EXCEPTION_IF_NULL(op);
-    auto op_desc = ge::OpDescUtils::GetOpDescFromOperator(*op);
+    auto op_desc = ::ge::OpDescUtils::GetOpDescFromOperator(*op);
     if (op_desc == nullptr) {
       return;
     }
     const auto output_desc0 = op_desc->MutableOutputDesc("out_value");
-    ge::TensorUtils::SetReuseInput(*output_desc0, true);
-    ge::TensorUtils::SetReuseInputIndex(*output_desc0, 0);
+    ::ge::TensorUtils::SetReuseInput(*output_desc0, true);
+    ::ge::TensorUtils::SetReuseInputIndex(*output_desc0, 0);
 
     const auto output_desc1 = op_desc->MutableOutputDesc("out_index");
-    ge::TensorUtils::SetReuseInput(*output_desc1, true);
-    ge::TensorUtils::SetReuseInputIndex(*output_desc1, 1);
+    ::ge::TensorUtils::SetReuseInput(*output_desc1, true);
+    ::ge::TensorUtils::SetReuseInputIndex(*output_desc1, 1);
   }
 }
 
@@ -2853,6 +2853,48 @@ void DfGraphConvertor::RegisterAdapter(const std::string &name, OpAdapterPtr adp
 }
 void DfGraphConvertor::RegisterAdapter(const std::string &name, OpAdapterPtr train_adpt, OpAdapterPtr infer_adpt) {
   OpAdapterMap::get()[name] = std::make_shared<OpAdapterDesc>(train_adpt, infer_adpt);
+}
+
+std::map<std::string, ValuePtr> GeOpConvertor::GetAttrAndValue(const AnfNodePtr &node, const bool training = true) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::map<std::string, ValuePtr> attr_list;
+  if (!node->isa<CNode>()) {
+    MS_LOG(INFO) << "Current node isn't a cnode! node info:" << node->DebugString();
+    return attr_list;
+  }
+
+  OpAdapterPtr adpt = FindAdapter(node, training);
+  if (adpt == nullptr) {
+    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
+    return attr_list;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  AnfNodePtr primitive = cnode->input(0);
+  if (IsValueNode<Primitive>(primitive)) {
+    auto prim = GetValueNode<PrimitivePtr>(primitive);
+    attr_list = adpt->GetNormalOpAttrList(prim);
+  }
+  return attr_list;
+}
+
+std::string GeOpConvertor::GetOpType(const AnfNodePtr &node, const bool training = true) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adpt = FindAdapter(node, training);
+  if (adpt == nullptr) {
+    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
+    return "";
+  }
+  return adpt->getOpType();
+}
+
+std::shared_ptr<GeTensorDesc> GeOpConvertor::GetTensorDesc(const ShapeVector &dev_shape, const TypeId &dev_type,
+                                                           const std::string &dev_format, const ShapeVector &ori_shape,
+                                                           const std::string &ori_format) {
+  auto tensor_desc = transform::TransformUtil::GetGeTensorDesc(dev_shape, dev_type, dev_format, ori_shape, ori_format);
+  MS_EXCEPTION_IF_NULL(tensor_desc);
+  return tensor_desc;
 }
 }  // namespace transform
 }  // namespace mindspore

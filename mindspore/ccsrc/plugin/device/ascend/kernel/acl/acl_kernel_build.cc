@@ -22,27 +22,29 @@
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-bool SetIOIputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
-                   std::vector<size_t> *input_size_list) {
+bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
+                    std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_size_list);
   for (size_t i = 0; i < input_num; i++) {
-    auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
-    if (AnfAlgo::GetInputDeviceDataType(anf_node, i) == kObjectTypeString) {
+    auto index = AnfAlgo::GetInputIndexInGraph(anf_node, i);
+    auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, index);
+    if (AnfAlgo::GetInputDeviceDataType(anf_node, index) == kObjectTypeString) {
       if (!anf_node->isa<CNode>()) {
         MS_LOG(EXCEPTION) << "anf_node is not CNode.";
       }
       auto cnode = anf_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode->inputs().size() < (i + 1)) {
+      if (cnode->inputs().size() < (index + 1)) {
         MS_LOG(ERROR) << "cnode inputs size " << cnode->inputs().size() << " is smaller than " << i + 1;
         return false;
       }
-      auto input_node = cnode->inputs()[i + 1];
+      auto input_node = cnode->inputs()[index + 1];
       MS_EXCEPTION_IF_NULL(input_node);
       if (input_node->isa<ValueNode>()) {
         auto value_ptr = GetValueNode(input_node);
@@ -50,7 +52,7 @@ bool SetIOIputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input
         input_size_list->push_back(value.size());
       }
     } else {
-      auto type_ptr = TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, i));
+      auto type_ptr = TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, index));
       int64_t size_i = 1;
       if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
         return false;
@@ -69,7 +71,7 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
 
-  if (!SetIOIputSize(anf_node, input_num, &input_size_list)) {
+  if (!SetIOInputSize(anf_node, input_num, &input_size_list)) {
     return false;
   }
   kernel_mod_ptr->SetInputSizeList(input_size_list);
@@ -88,19 +90,31 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
   kernel_mod_ptr->SetOutputSizeList(output_size_list);
   return true;
 }
+
+void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mode_ptr) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(kernel_mode_ptr);
+  auto op_type = GeOpConvertor::GetOpType(node, true);
+  kernel_mode_ptr->SetOpType(op_type);
+  const auto &input_desc_list = AclUtils::GetInputTensorDesc(node);
+  const auto &output_desc_list = AclUtils::GetOutputTensorDesc(node);
+  kernel_mode_ptr->SetInputDescList(input_desc_list);
+  kernel_mode_ptr->SetOutputDescList(output_desc_list);
+  auto attr_list = GeOpConvertor::GetAttrAndValue(node, true);
+  kernel_mode_ptr->SetAttrList(attr_list);
+}
 }  // namespace
 
 KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto kernel_mod_ptr = std::make_shared<AclKernelMod>(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
-  auto op_type = common::AnfAlgo::GetCNodeName(anf_node);
-  kernel_mod_ptr->SetNodeName(op_type);
 
   if (!SetIOSize(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "SetIOSize failed for node:" << anf_node->DebugString();
   }
 
+  SetGeInfo(anf_node, kernel_mod_ptr);
   return kernel_mod_ptr;
 }
 }  // namespace kernel

@@ -22,19 +22,23 @@
 #include "mindapi/base/type_id.h"
 #include "acl/acl_op_compiler.h"
 #include "acl/acl_base.h"
+#include "transform/graph_ir/convert.h"
 
 namespace mindspore {
 namespace kernel {
+using GeTensorDesc = transform::GeTensorDesc;
+using GeTensorDescPtr = std::shared_ptr<GeTensorDesc>;
+using GeOpConvertor = transform::GeOpConvertor;
+
 class AclOpDesc {
  public:
   explicit AclOpDesc(const std::string &op_type);
   ~AclOpDesc();
 
-  void AddInputTensor(const AnfNodePtr &anf_node, const size_t input_num, const std::vector<AddressPtr> &inputs,
-                      const std::vector<size_t> &input_size_list, const std::string &op_type);
-  void AddOutputTensor(const AnfNodePtr &anf_node, const size_t output_num, const std::vector<AddressPtr> &outputs,
-                       const std::vector<size_t> &output_size_list, const std::string &op_type);
-  void AddTensorAttr(const std::string &attr_name, const ValuePtr &value, const std::string &op_type);
+  void AddTensorDesc(const std::vector<GeTensorDescPtr> &inputs, const std::vector<GeTensorDescPtr> &outputs);
+  void AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
+                  const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list);
+  void AddTensorAttr(const std::string &attr_name, const ValuePtr &value);
 
   std::vector<aclTensorDesc *> input_tensor_desc() const { return input_tensor_desc_; }
   std::vector<aclTensorDesc *> output_tensor_desc() const { return output_tensor_desc_; }
@@ -43,6 +47,8 @@ class AclOpDesc {
   aclopAttr *acl_attr() const { return acl_attr_; }
 
  protected:
+  aclTensorDesc *CreateTensorDesc(const GeTensorDescPtr &tensor_desc);
+  aclDataBuffer *CreateDataBuf(const AddressPtr &address, const size_t op_size);
   void SetListAttr(const std::string &attr_name, const ValuePtr &value);
 
  private:
@@ -56,9 +62,16 @@ class AclOpDesc {
 
 class AclUtils {
  public:
-  static aclDataType ConvertTypeIdToAclType(const TypeId &type_id);
+  static aclDataType ConvertTypeIdToAclType(const ::ge::DataType &type);
 
-  static aclFormat ConvertFormatToAclFormat(const std::string &format);
+  static aclFormat ConvertFormatToAclFormat(const ::ge::Format &format);
+
+  static bool UpdateTensorDesc(const AnfNodePtr &anf_node, std::vector<GeTensorDescPtr> *inputs,
+                               std::vector<GeTensorDescPtr> *outputs);
+
+  static std::vector<GeTensorDescPtr> GetInputTensorDesc(const AnfNodePtr &anf_node);
+
+  static std::vector<GeTensorDescPtr> GetOutputTensorDesc(const AnfNodePtr &anf_node);
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -54,7 +54,7 @@ class TransformUtil {
    * Return：
    *     [GeFormat] the data format for ge tensor
    * */
-  static GeFormat ConvertFormat(const std::string &format);
+  static GeFormat ConvertFormat(const string &format, const size_t shape_size);
 
   /*
    * Parameters:
@@ -73,7 +73,8 @@ class TransformUtil {
    *     [shared_ptr<GeTensorDesc>] the shared pointer of ge tensor description
    * */
   static std::shared_ptr<GeTensorDesc> GetGeTensorDesc(const ShapeVector &shape, const MeDataType &me_type,
-                                                       const std::string &format);
+                                                       const std::string &format, const ShapeVector &ori_shape = {},
+                                                       const std::string &ori_format = {});
 
   /*
    * Parameters:
