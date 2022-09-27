@@ -41,6 +41,10 @@ class ExtractGlimpseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  std::pair<float, float> GetLocation(const float *ptr, const uint64_t seq,
+                                      const std::pair<uint64_t, uint64_t> image_size,
+                                      const std::pair<uint64_t, uint64_t> g_size, const bool normalized,
+                                      const bool centered);
   using ExtractGlimpseFunc = std::function<bool(ExtractGlimpseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                 const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, ExtractGlimpseFunc>> func_list_;

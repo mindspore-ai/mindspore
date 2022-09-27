@@ -40,28 +40,6 @@ void SegmentMinCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_func_ = func_list_[index].second;
 }
 
-template <typename T>
-std::vector<int64_t> SegmentMinCPUKernelMod::CalcSegmentIds(const T *segment_ids_data_addr) const {
-  std::vector<int64_t> segments;
-  int64_t seg_tmp = 1;
-  for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
-    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
-      seg_tmp++;
-    } else {
-      segments.push_back(seg_tmp);
-      seg_tmp = 1;
-    }
-    const size_t last_loc = 2;
-    if (i == segment_ids_num_ - last_loc) {
-      segments.push_back(seg_tmp);
-    }
-  }
-  if (segment_ids_num_ == 1) {
-    segments.push_back(seg_tmp);
-  }
-  return segments;
-}
-
 std::vector<std::pair<KernelAttr, SegmentMinCPUKernelMod::SegmentMinFunc>> SegmentMinCPUKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
    &SegmentMinCPUKernelMod::LaunchKernel<float16, int32_t>},
@@ -122,7 +100,7 @@ bool SegmentMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   T1 *input_x_data_addr = GetDeviceAddress<T1>(inputs, kIndex0);
   T2 *segment_ids_data_addr = GetDeviceAddress<T2>(inputs, kIndex1);
   T1 *output_data_addr = GetDeviceAddress<T1>(outputs, kIndex0);
-  std::vector<int64_t> segments = CalcSegmentIds(segment_ids_data_addr);
+  std::vector<int64_t> segments = CPUKernelUtils::CalcSegmentIds(segment_ids_data_addr, segment_ids_num_);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);
   }

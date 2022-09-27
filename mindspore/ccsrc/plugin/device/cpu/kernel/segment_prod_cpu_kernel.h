@@ -38,9 +38,6 @@ class SegmentProdCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  template <typename T1, typename T2>
-  bool LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 

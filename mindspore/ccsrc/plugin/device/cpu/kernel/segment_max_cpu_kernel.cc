@@ -40,28 +40,6 @@ void SegmentMaxCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_func_ = func_list_[index].second;
 }
 
-template <typename T>
-std::vector<int64_t> SegmentMaxCPUKernelMod::CalcSegmentIds(const T *segment_ids_data_addr) {
-  std::vector<int64_t> segments;
-  int64_t seg_tmp = 1;
-  for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
-    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
-      seg_tmp++;
-    } else {
-      segments.push_back(seg_tmp);
-      seg_tmp = 1;
-    }
-    const size_t last_loc = 2;
-    if (i == segment_ids_num_ - last_loc) {
-      segments.push_back(seg_tmp);
-    }
-  }
-  if (segment_ids_num_ == 1) {
-    segments.push_back(seg_tmp);
-  }
-  return segments;
-}
-
 std::vector<std::pair<KernelAttr, SegmentMaxCPUKernelMod::SegmentMaxFunc>> SegmentMaxCPUKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
    &SegmentMaxCPUKernelMod::LaunchKernel<float16, int32_t>},
@@ -122,7 +100,7 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
   auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
   auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
-  std::vector<int64_t> segments = CalcSegmentIds(segment_ids_data_addr);
+  std::vector<int64_t> segments = CPUKernelUtils::CalcSegmentIds(segment_ids_data_addr, segment_ids_num_);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);
   }
