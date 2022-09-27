@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ATOMIC_ADD_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ATOMIC_ADD_H_
 
+#include <stdint.h>
+
+#include "utils/log_adapter.h"
+
 namespace mindspore {
 namespace kernel {
 #ifndef _MSC_VER
