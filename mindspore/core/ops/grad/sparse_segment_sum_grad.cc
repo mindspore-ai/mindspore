@@ -60,13 +60,13 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
     auto output_dim0_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
-    size_t dim_zero = output_dim0_value_ptr_tensor[kInputIndex0];
+    size_t dim_zero = static_cast<size_t>(output_dim0_value_ptr_tensor[kInputIndex0]);
     if (dim_zero <= kInputIndex0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "' , tensor output_dim0 must > 0, "
                                << "but got [" << dim_zero << "].";
     } else {
       ShapeVector y_shape = grad_shape;
-      y_shape[kInputIndex0] = dim_zero;
+      y_shape[kInputIndex0] = static_cast<int64_t>(dim_zero);
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
@@ -85,12 +85,12 @@ TypePtr SparseSegmentSumGradInferType(const PrimitivePtr &prim, const std::vecto
   auto output_dim0_type = input_args[kInputIndex3]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
   (void)types.emplace("output_dim0", output_dim0_type);
-  CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
@@ -100,7 +100,7 @@ AbstractBasePtr SparseSegmentSumGradInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t input_num = kInputIndex4;
+  const int64_t input_num = static_cast<int64_t>(kInputIndex4);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = SparseSegmentSumGradInferType(prim, input_args);
   auto shapes = SparseSegmentSumGradInferShape(prim, input_args);

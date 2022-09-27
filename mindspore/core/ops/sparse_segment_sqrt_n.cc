@@ -60,13 +60,13 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);
     auto segment_ids_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr, prim->name());
-    size_t dim_zero = segment_ids_value_ptr_tensor.back() + kInputIndex1;
+    size_t dim_zero = static_cast<size_t>(segment_ids_value_ptr_tensor.back()) + kInputIndex1;
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids must be greater or equal to 0, "
                                << "but got [" << dim_zero << "].";
     } else {
       ShapeVector y_shape = x_shape;
-      y_shape[kInputIndex0] = dim_zero;
+      y_shape[kInputIndex0] = static_cast<int64_t>(dim_zero);
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
@@ -84,11 +84,11 @@ TypePtr SparseSegmentSqrtNInferType(const PrimitivePtr &prim, const std::vector<
   auto segment_ids_type = input_args[kInputIndex2]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
-  CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
@@ -98,7 +98,7 @@ AbstractBasePtr SparseSegmentSqrtNInfer(const abstract::AnalysisEnginePtr &, con
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t input_num = kInputIndex3;
+  const int64_t input_num = static_cast<int64_t>(kInputIndex3);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = SparseSegmentSqrtNInferType(prim, input_args);
   auto shapes = SparseSegmentSqrtNInferShape(prim, input_args);
