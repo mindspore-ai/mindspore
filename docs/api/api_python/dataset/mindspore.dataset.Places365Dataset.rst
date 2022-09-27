@@ -66,7 +66,7 @@ mindspore.dataset.Places365Dataset
     Places作者向公众发布了Places365-Standard数据集和Places365-Challenge数据集。
     Places365-Standard数据集是Places2数据库的核心集，该数据库已用于训练Places365-CNN。
     Places作者将在未来的Places365-Standard数据集上添加其他类型的标注。
-    Places365-Challenge数据集是Places2数据库的竞赛数据集，与Places365-Standard数据集相比，该数据库有620万张额外的图像，此数据集用于2016年的Places挑战赛。
+    Places365-Challenge数据集是Places2数据库的竞赛数据集，与Places365-Standard数据集相比，该数据库有620万张额外的图像。此数据集用于2016年的Places挑战赛。
 
     可以将原始的Places365数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 

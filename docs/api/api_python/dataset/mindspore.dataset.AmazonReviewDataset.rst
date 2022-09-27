@@ -31,9 +31,9 @@ mindspore.dataset.AmazonReviewDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
 
-    **关于AGNews数据集：**
+    **关于AmazonReview数据集：**
 
-    Amazon Review Full数据集包括来自亚马逊的评论数据，这些数据跨越18年，包括截止至2013年3月的约3500万条评论。评论数据包括产品和用户信息、产品评级和产品评论。
+    Amazon Review Full数据集包括来自亚马逊的评论数据。这些数据跨越18年，包括截止至2013年3月的约3500万条评论。评论数据包括产品和用户信息、产品评级和产品评论。
     数据集主要用于文本分类，给定内容和标题，预测正确的星级评定。
 
     Amazon Review Polarity数据集对产品评分进行了分级，评论分数1和2视为负面评论，4和5视为正面评论。

@@ -3872,7 +3872,7 @@ class SBDataset(GeneratorDataset):
 
     The Semantic Boundaries Dataset consists of 11355 color images. There are 8498 images' name in the train.txt,
     2857 images' name in the val.txt and 5623 images' name in the train_noval.txt. The category cls/
-    contains the Segmentation and Boundaries results of category-level, the category inst/ catains the
+    contains the Segmentation and Boundaries results of category-level, the category inst/ contains the
     Segmentation and Boundaries results of instance-level.
 
     You can unzip the dataset files into the following structure and read by MindSpore's API:
