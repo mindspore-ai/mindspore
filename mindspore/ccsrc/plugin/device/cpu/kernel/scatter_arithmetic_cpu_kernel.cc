@@ -81,6 +81,7 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *indices = reinterpret_cast<int *>(inputs[1]->addr);
   auto *updates = reinterpret_cast<T *>(inputs[2]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   auto func_iter = scatter_arithmetic_func_map.find(kernel_name_);
   if (func_iter == scatter_arithmetic_func_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
@@ -112,6 +113,18 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
       for (size_t j = 0; j < inner_size_; j++) {
         input[base_index_input + j] = func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
       }
+    }
+  }
+
+  // Scatter ops are registered as a ref type operator. The new runtime supports the ref mechanism with the same input
+  // and output addresses, but the old runtime does not support the ref mechanism, and the input and output addresses
+  // are different. Therefore, in order to adapt to the old runtime, the content of the input needs to be copied to
+  // output. After removing the old runtime, the following copy logic code can be deleted.
+  if (input != output) {
+    auto bufferSize = outputs[0]->size;
+    auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
     }
   }
   return true;
