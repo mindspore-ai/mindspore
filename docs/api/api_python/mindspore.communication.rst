@@ -18,7 +18,7 @@ mindspore.communication
 
 .. py:function:: mindspore.communication.init(backend_name=None)
 
-    初始化通信服务需要的分布式后端，例如 `HCCL` 或 `NCCL` 服务。
+    初始化通信服务需要的分布式后端，例如 `HCCL` 或 `NCCL` 服务。通常在分布式并行场景下使用，并在使用通信服务前设置。
 
     .. note::
         - HCCL的全称是华为集合通信库（Huawei Collective Communication Library）。
@@ -27,7 +27,7 @@ mindspore.communication
         - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     参数：
-        - **backend_name** (str) - 分布式后端的名称，可选HCCL或NCCL。如果未设置则根据硬件平台类型（device_target）进行推断，默认值为None。
+        - **backend_name** (str) - 分布式后端的名称，可选HCCL或NCCL。在Ascend硬件平台下，应使用HCCL，在GPU硬件平台下，应使用NCCL。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值为None。
 
     异常：
         - **TypeError** - 参数 `backend_name` 不是字符串。
