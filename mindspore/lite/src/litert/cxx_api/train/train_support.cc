@@ -20,7 +20,6 @@
 #include "include/api/types.h"
 #include "include/api/context.h"
 #include "include/api/dual_abi_helper.h"
-#include "include/context.h"
 #include "include/api/callback/callback.h"
 #include "include/api/metrics/metrics.h"
 #include "src/litert/lite_model.h"
@@ -41,7 +40,8 @@
 
 namespace mindspore {
 std::shared_ptr<lite::LiteSession> CreateTrainSession(std::shared_ptr<Graph::GraphData> graph_data,
-                                                      std::shared_ptr<TrainCfg> cfg, lite::InnerContext *context) {
+                                                      std::shared_ptr<TrainCfg> cfg,
+                                                      const std::shared_ptr<lite::InnerContext> &context) {
   MS_CHECK_TRUE_MSG(graph_data != nullptr, nullptr, "graph data cannot be nullptr");
   bool is_train_session = graph_data->IsTrainModel();
   if (is_train_session) {

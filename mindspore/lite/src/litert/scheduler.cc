@@ -203,7 +203,7 @@ int Scheduler::HandleBuildinCpuKernelWeight(const kernel::SubGraphType &belong_s
       kernel->desc().provider != kernel::kBuiltin) {
     return RET_OK;
   }
-  auto ret = CastKernelWeight(belong_subgraph_type, kernel, context_->device_and_pkg_support_fp16());
+  auto ret = CastKernelWeight(belong_subgraph_type, kernel, context_->device_and_pkg_support_fp16_);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "CastKernelWeight failed: " << ret;
     return RET_NOT_SUPPORT;
@@ -624,7 +624,7 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernel
   }
 
   /* set delegate spin count */
-  context_->thread_pool()->SetSpinCountMinValue();
+  context_->thread_pool_->SetSpinCountMinValue();
 
   /* external delegate */
   if (delegate_device_type_ == -1) {
@@ -1066,7 +1066,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 
   if (is_train_session_) {
     ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type,
-                               context_->device_and_pkg_support_fp16());
+                               context_->device_and_pkg_support_fp16_);
     if (ret != RET_OK) {
       MS_LOG(DEBUG) << "CastConstTensorsData failed: " << ret;
       return RET_NOT_SUPPORT;

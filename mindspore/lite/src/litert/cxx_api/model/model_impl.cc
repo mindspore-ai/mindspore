@@ -23,7 +23,6 @@
 #include <vector>
 #include "include/api/types.h"
 #include "include/api/context.h"
-#include "include/context.h"
 #include "src/litert/inner_allocator.h"
 #include "src/litert/cxx_api/converters.h"
 #include "src/litert/cxx_api/graph/graph_data.h"
@@ -133,7 +132,7 @@ Status ModelImpl::Build() {
     return kLiteNotSupport;
   }
 
-  auto *inner_context = ContextUtils::Convert(context_.get());
+  auto inner_context = ContextUtils::Convert(context_.get());
   if (inner_context == nullptr) {
     MS_LOG(ERROR) << "Failed to convert Context to Lite Context";
     return kLiteNullptr;
@@ -151,7 +150,6 @@ Status ModelImpl::Build() {
 
   auto model = graph_->graph_data_->lite_model();
   if (model == nullptr || model->buf == nullptr) {
-    delete inner_context;
     MS_LOG(ERROR) << "Lite model has been freed.";
     return kLiteError;
   }
@@ -745,11 +743,10 @@ float ModelImpl::GetLearningRate() {
   return session_->GetLearningRate();
 }
 
-lite::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
+lite::LiteSession *ModelImpl::CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context) {
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
-    delete context;
     return nullptr;
   }
   session->InitExecutionConfig(&execution_plan_);

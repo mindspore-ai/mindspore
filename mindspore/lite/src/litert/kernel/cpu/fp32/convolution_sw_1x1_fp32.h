@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_CONVOLUTION_SW_1X1_FP32_H_
 
 #include <vector>
-#include "include/context.h"
 #include "include/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_cpu_info.h"
 #include "nnacl/conv_parameter.h"

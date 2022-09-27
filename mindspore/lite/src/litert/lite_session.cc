@@ -533,8 +533,8 @@ int LiteSession::CompileGraph(Model *model) {
   InitGraphOutputTensors(model);
 
   // scheduler kernels
-  Scheduler scheduler(context_, ms_context_, model, &tensors_, &inputs_, &outputs_, is_train_session_, &is_infershape_,
-                      &is_control_flow_, execution_plan_, delegate_, delegate_device_type_);
+  Scheduler scheduler(context_.get(), ms_context_, model, &tensors_, &inputs_, &outputs_, is_train_session_,
+                      &is_infershape_, &is_control_flow_, execution_plan_, delegate_, delegate_device_type_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   scheduler.SetConfig(config_info_);
   ret = scheduler.Schedule(&kernels_);
@@ -724,7 +724,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   return ret;
 }
 
-int LiteSession::ContextInit(InnerContext *context) {
+int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
   if (context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr";
     return RET_NULL_PTR;
@@ -744,8 +744,8 @@ int LiteSession::ContextInit(InnerContext *context) {
   }
 
 #ifdef MS_COMPILE_IOS
-  context_->thread_pool()->SetMaxSpinCount(kDefaulLiteIosSpinCount);
-  context_->thread_pool()->SetMinSpinCount(kDefaulLiteIosSpinCount);
+  context_->thread_pool_->SetMaxSpinCount(kDefaulLiteIosSpinCount);
+  context_->thread_pool_->SetMinSpinCount(kDefaulLiteIosSpinCount);
 #endif
   return RET_OK;
 }
@@ -856,11 +856,9 @@ int LiteSession::DelegateInit() {
   return RET_OK;
 }
 
-int LiteSession::Init(InnerContext *context) {
+int LiteSession::Init(const std::shared_ptr<InnerContext> &context) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
-    delete context;
-    context = nullptr;
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
@@ -954,8 +952,6 @@ LiteSession::~LiteSession() {
 #endif
   delete ms_context_;
   ms_context_ = nullptr;
-  delete this->context_;
-  this->context_ = nullptr;
   delete (model_);
   model_ = nullptr;
   is_running_.store(false);
@@ -1255,7 +1251,7 @@ int LiteSession::InitExecutor() {
     return RET_ERROR;
   }
 
-  ret = executor_->Prepare(kernels_, inputs_, outputs_, context_);
+  ret = executor_->Prepare(kernels_, inputs_, outputs_, context_.get());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare executor failed: " << ret;
     return ret;
@@ -1456,7 +1452,7 @@ int LiteSession::RuntimeAllocatorSetData() {
 int LiteSession::InitGPURuntime() {
   if (context_->IsDeviceTypeEnabled(DT_CPU)) {
     CpuBindMode cpu_bind_mode = context_->GetDeviceInfo(DT_CPU).cpu_device_info_.cpu_bind_mode_;
-    ThreadPool *thread_pool = this->context_->thread_pool();
+    ThreadPool *thread_pool = this->context_->thread_pool_;
     if (thread_pool == nullptr) {
       MS_LOG(ERROR) << "thread pool is nullptr";
       is_running_.store(false);
@@ -1498,31 +1494,20 @@ int LiteSession::InitGPURuntime() {
 #endif
   // Setting the binding core will affect the opencl drive scheduling.
   if (context_->IsDeviceTypeEnabled(DT_CPU)) {
-    ThreadPool *thread_pool = this->context_->thread_pool();
+    ThreadPool *thread_pool = this->context_->thread_pool_;
     thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
   }
   return RET_OK;
 }
 }  // namespace lite
 
-lite::LiteSession *lite::LiteSession::CreateSession(const lite::Context *context) {
-  if (context == nullptr) {
-    return nullptr;
-  }
-
+lite::LiteSession *lite::LiteSession::CreateSession(const std::shared_ptr<InnerContext> &context) {
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
-
-  mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
-  if (inner_context == nullptr) {
-    MS_LOG(ERROR) << "new inner context failed";
-    delete session;
-    return nullptr;
-  }
-  auto ret = session->Init(inner_context);
+  auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
     delete session;
@@ -1531,7 +1516,8 @@ lite::LiteSession *lite::LiteSession::CreateSession(const lite::Context *context
   return session;
 }
 
-lite::LiteSession *lite::LiteSession::CreateSession(const char *model_buf, size_t size, const lite::Context *context) {
+lite::LiteSession *lite::LiteSession::CreateSession(const char *model_buf, size_t size,
+                                                    const std::shared_ptr<InnerContext> &context) {
   auto *session = lite::LiteSession::CreateSession(context);
   if (session == nullptr) {
     MS_LOG(ERROR) << "Create session failed";
@@ -1539,22 +1525,6 @@ lite::LiteSession *lite::LiteSession::CreateSession(const char *model_buf, size_
   }
   auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByBuf(
     model_buf, mindspore::ModelType::kMindIR_Lite, size);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init session failed";
-    delete session;
-    return nullptr;
-  }
-  return session;
-}
-
-lite::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
-  auto *session = lite::LiteSession::CreateSession(context);
-  if (session == nullptr) {
-    MS_LOG(ERROR) << "Create session failed";
-    return nullptr;
-  }
-  auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByPath(
-    model_path, mindspore::ModelType::kMindIR_Lite);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     delete session;

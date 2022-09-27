@@ -61,14 +61,20 @@ TEST_F(MindrtRuntimeTest, Runtime) {
   delete[](graph_buf);
   ASSERT_NE(model, nullptr);
 
-  auto context = std::make_shared<mindspore::lite::Context>();
+  auto context = std::make_shared<mindspore::lite::InnerContext>();
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
-  mindspore::lite::DeviceContext gpu_device_ctx{mindspore::lite::DT_GPU, {false}};
+  mindspore::lite::DeviceContext gpu_device_ctx;
+  gpu_device_ctx.device_type_ = mindspore::lite::DT_GPU;
   gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = false;
+  mindspore::lite::DeviceContext cpu_device_ctx;
+  cpu_device_ctx.device_type_ = mindspore::lite::DT_CPU;
+  gpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = false;
+  context->device_list_.clear();
   context->device_list_.push_back(gpu_device_ctx);
+  context->device_list_.push_back(cpu_device_ctx);
 
-  mindspore::lite::LiteSession *session = mindspore::lite::LiteSession::CreateSession(context.get());
+  mindspore::lite::LiteSession *session = mindspore::lite::LiteSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());
@@ -111,13 +117,13 @@ TEST_F(MindrtRuntimeTest, RuntimeFp16) {
   delete[](graph_buf);
   ASSERT_NE(model, nullptr);
 
-  auto context = std::make_shared<mindspore::lite::Context>();
+  auto context = std::make_shared<mindspore::lite::InnerContext>();
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
   auto &cpu_device_ctx = context->device_list_[0];
   cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = true;
 
-  mindspore::lite::LiteSession *session = mindspore::lite::LiteSession::CreateSession(context.get());
+  mindspore::lite::LiteSession *session = mindspore::lite::LiteSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());

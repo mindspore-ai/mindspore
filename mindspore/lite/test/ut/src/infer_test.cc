@@ -18,7 +18,6 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/litert/lite_session.h"
@@ -96,7 +95,7 @@ TEST_F(InferTest, TestConvNode) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  auto context = new lite::InnerContext;
+  auto context = std::make_shared<lite::InnerContext>();
   auto &device_list = context->device_list_;
   lite::DeviceContext device_ctx = {lite::DT_CPU, {false, lite::NO_BIND}};
   device_list.push_back(device_ctx);
@@ -192,7 +191,7 @@ TEST_F(InferTest, TestAddNode) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  auto context = new lite::InnerContext;
+  auto context = std::make_shared<lite::InnerContext>();
   auto &device_list = context->device_list_;
   lite::DeviceContext device_ctx = {lite::DT_CPU, {false, lite::NO_BIND}};
   device_list.push_back(device_ctx);
@@ -230,7 +229,7 @@ TEST_F(InferTest, TestModel) {
   auto model = lite::Model::Import(buff, model_size);
   ASSERT_NE(nullptr, model);
   delete[] buff;
-  auto context = new lite::InnerContext;
+  auto context = std::make_shared<lite::InnerContext>();
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());

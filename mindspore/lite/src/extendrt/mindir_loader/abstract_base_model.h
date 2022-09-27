@@ -36,7 +36,7 @@ class AbstractBaseModel : public Model {
   virtual std::string GetModelPath() const = 0;
   virtual mindspore::kernel::KernelExec *FindBackendKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
                                                            const std::vector<mindspore::lite::Tensor *> &out_tensors,
-                                                           const LiteGraph::Node *node, lite::Context *context,
+                                                           const LiteGraph::Node *node, lite::InnerContext *context,
                                                            TypeId prefer_data_type) = 0;
 };
 }  // namespace mindspore::infer

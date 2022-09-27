@@ -46,7 +46,7 @@ namespace mindspore {
 
 typedef std::shared_ptr<lite::LiteSession>(CreateTrainSessionProto)(std::shared_ptr<Graph::GraphData> graph_data,
                                                                     std::shared_ptr<TrainCfg> cfg,
-                                                                    lite::InnerContext *context);
+                                                                    const std::shared_ptr<lite::InnerContext> &context);
 CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
 
 using ExpressionLoader = std::function<Status(const char *, Graph *)>;
@@ -74,7 +74,7 @@ class ModelImpl {
 
   Status Predict(const MSKernelCallBack &before, const MSKernelCallBack &after);
 
-  lite::LiteSession *CreateLiteSession(lite::InnerContext *context);
+  lite::LiteSession *CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context);
 
   Status LoadConfig(const std::string &config_path);
   Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);

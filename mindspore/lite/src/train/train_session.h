@@ -43,18 +43,12 @@ class TrainSession : virtual public lite::LiteSession {
  public:
   TrainSession();
   ~TrainSession();
-
-  static LiteSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
-                                            const lite::Context *context, bool train_mode = false,
-                                            const lite::TrainCfg *cfg = nullptr);
-  static LiteSession *CreateTrainSession(const std::string &filename, const lite::Context *context,
-                                         bool train_mode = false, const lite::TrainCfg *cfg = nullptr);
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   int CompileGraph(lite::Model *model) override;
   virtual int CompileTrainGraph(std::shared_ptr<Model> model);
 
-  virtual int TrainInit(InnerContext *context, const TrainCfg *train_cfg);
+  virtual int TrainInit(const std::shared_ptr<InnerContext> &context, const TrainCfg *train_cfg);
 
   int Train() override;
   int Eval() override;

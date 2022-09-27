@@ -55,8 +55,8 @@ class CudaKernel : public InnerKernel {
 template <class T>
 kernel::InnerKernel *CudaKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                       const lite::Context *ctx, const kernel::KernelKey &desc) {
-  return new (std::nothrow) T(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+                                       const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  return new (std::nothrow) T(opParameter, inputs, outputs, ctx);
 }
 }  // namespace mindspore::kernel
 #endif

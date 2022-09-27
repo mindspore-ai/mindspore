@@ -336,7 +336,7 @@ kernel::LiteKernel *CpuNormDeconvFp32KernelCreator(const std::vector<lite::Tenso
 
 kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                               const InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_RET(op_parameter != nullptr, nullptr);
   MS_CHECK_TRUE_RET(ctx != nullptr, nullptr);
 

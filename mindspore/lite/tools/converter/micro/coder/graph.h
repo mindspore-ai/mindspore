@@ -24,7 +24,6 @@
 #include <string>
 #include "tools/converter/micro/coder/opcoders/op_coder.h"
 #include "tools/converter/micro/coder/config.h"
-#include "include/context.h"
 #include "include/model.h"
 #include "schema/inner/model_generated.h"
 #include "src/common/graph_util.h"

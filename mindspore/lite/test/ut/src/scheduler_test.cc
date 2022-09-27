@@ -165,7 +165,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   auto model = mindspore::lite::Model::Import(content, size);
-  auto context = new InnerContext();
+  auto context = std::make_shared<InnerContext>();
   context->Init();
   mindspore::lite::DeviceContext gpu_device_ctx = {mindspore::lite::DT_GPU, {false}};
   context->device_list_.emplace_back(gpu_device_ctx);
@@ -349,7 +349,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   auto model = mindspore::lite::Model::Import(content, size);
-  auto context = new InnerContext();
+  auto context = std::make_shared<InnerContext>();
   context->Init();
   mindspore::lite::DeviceContext gpu_device_ctx = {mindspore::lite::DT_GPU, {false}};
   context->device_list_.emplace_back(gpu_device_ctx);
@@ -429,7 +429,7 @@ TEST_F(SchedulerTest, TestScheduleInt32OpToFp16Subgraph) {
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   auto model = mindspore::lite::Model::Import(content, size);
-  auto context = new InnerContext();
+  auto context = std::make_shared<InnerContext>();
   context->Init();
   mindspore::lite::DeviceContext device_ctx = {mindspore::lite::DT_CPU, {true, mindspore::lite::NO_BIND}};
   context->device_list_.emplace_back(device_ctx);

@@ -35,82 +35,15 @@
 
 namespace mindspore::lite {
 namespace {
-const constexpr int kMaxLiteContextDeviceNums = 2;
 const constexpr int kMaxInnerContextDeviceNums = 3;
 const constexpr int kNumCoreNumTimes = 5;
 }  // namespace
 
-void InnerContext::InitDeviceFp16() {
+InnerContext::InnerContext() {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   CpuInfo cpu_info;
   device_and_pkg_support_fp16_ = cpu_info.ArmIsSupportFp16();
-#else
-  device_and_pkg_support_fp16_ = false;
 #endif
-}
-
-InnerContext::InnerContext(const Context *context) {
-  if (context != nullptr) {
-    this->allocator = context->allocator;
-    this->thread_num_ = context->thread_num_;
-    this->enable_parallel_ = context->enable_parallel_;
-    this->affinity_core_list_ = context->affinity_core_list_;
-    SetContextDevice(context);
-    this->delegate = context->delegate;
-    this->float_mode = context->float_mode;
-  }
-  InitDeviceFp16();
-}
-
-void InnerContext::SetContextDevice(const Context *context) {
-  this->device_list_.clear();
-
-  if (context->device_list_.size() > kMaxLiteContextDeviceNums || context->device_list_.size() <= 0) {
-    return;
-  }
-  if (context->device_list_.front().device_type_ != DT_CPU) {
-    return;
-  }
-
-  /* user set order for different device */
-  if (context->device_list_.size() < kMaxLiteContextDeviceNums) {
-    this->device_list_.push_back(context->device_list_.front());
-    return;
-  }
-
-  /* keep compatibility :
-   * if user set CPU & NPU/GPU
-   * NPU/GPU higher priority */
-  bool isUserSetNPU = context->device_list_.end() !=
-                      std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                                   [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
-  bool isUserSetGPU = context->device_list_.end() !=
-                      std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                                   [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
-  if (isUserSetGPU == false && isUserSetNPU == false) {
-    return;
-  }
-
-  /* add GPU/NPU first */
-  for (auto &device_ctx : context->device_list_) {
-    if (device_ctx.device_type_ != DT_CPU) {
-      this->device_list_.push_back(device_ctx);
-    }
-  }
-
-  /* add CPU */
-  for (auto &device_ctx : context->device_list_) {
-    if (device_ctx.device_type_ == DT_CPU) {
-      if (isUserSetNPU || (isUserSetGPU && enable_parallel_ == false)) {
-        auto cpu_ctx = device_ctx;
-        cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
-        this->device_list_.push_back(cpu_ctx);
-      } else {
-        this->device_list_.push_back(device_ctx);
-      }
-    }
-  }
-  return;
 }
 
 void InnerContext::InitExperimentalExecEnv() {
@@ -179,10 +112,6 @@ int InnerContext::Init() {
     }
 #endif
   }
-  if (IsDeviceTypeEnabled(DT_GPU)) {
-    MS_LOG(DEBUG) << "GPU enabled.";
-  }
-
   InitExperimentalExecEnv();
   return RET_OK;
 }
@@ -333,10 +262,6 @@ DeviceInfo InnerContext::GetDeviceInfo(DeviceType type) const {
   }
 }
 
-ThreadPool *InnerContext::thread_pool() const { return thread_pool_; }
-
-bool InnerContext::device_and_pkg_support_fp16() const { return this->device_and_pkg_support_fp16_; }
-
 std::set<void *> InnerContext::GetLinkInfo(void *pre) const {
   auto iter = link_info_.find(pre);
   if (iter == link_info_.end()) {
@@ -380,8 +305,8 @@ void InnerContext::ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_s
   }
 }
 
-int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
-  ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
+int ParallelLaunch(const InnerContext *context, const Func &func, Content content, int task_num) {
+  ThreadPool *pool = context->thread_pool_;
   if (pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     return RET_NULL_PTR;

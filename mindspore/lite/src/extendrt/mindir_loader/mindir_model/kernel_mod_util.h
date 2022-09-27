@@ -23,14 +23,13 @@
 #include "extendrt/mindir_loader/mindir_model/inner_kernel.h"
 #include "src/tensor.h"
 #include "include/model.h"
-#include "include/context.h"
 
 namespace mindspore::kernel {
 class KernelModUtil {
  public:
   static std::shared_ptr<mindspore::kernel::InnerKernel> GetInnerKernel(
     const std::vector<mindspore::lite::Tensor *> &in_tensors, const std::vector<mindspore::lite::Tensor *> &out_tensors,
-    const mindspore::lite::LiteGraph::Node *node, lite::Context *context);
+    const mindspore::lite::LiteGraph::Node *node, lite::InnerContext *context);
 };
 }  // namespace mindspore::kernel
 

@@ -220,18 +220,17 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
 /* creator func */
 kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
-    kernel = new (std::nothrow) kernel::ConvolutionDelegateFP16CPUKernel(opParameter, inputs, outputs,
-                                                                         static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) kernel::ConvolutionDelegateFP16CPUKernel(opParameter, inputs, outputs, ctx);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = CpuConvDwFp16KernelCreator(inputs, outputs, opParameter, static_cast<const lite::InnerContext *>(ctx));
+    kernel = CpuConvDwFp16KernelCreator(inputs, outputs, opParameter, ctx);
   } else {
-    kernel = CpuGroupConvFp16KernelCreator(inputs, outputs, opParameter, static_cast<const lite::InnerContext *>(ctx));
+    kernel = CpuGroupConvFp16KernelCreator(inputs, outputs, opParameter, ctx);
   }
 
   if (conv_param->group_ == 1 && kernel == nullptr) {

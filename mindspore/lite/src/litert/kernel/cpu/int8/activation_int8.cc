@@ -32,7 +32,7 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::kernel {
 kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::Context *ctx, const KernelKey &desc) {
+                                                   const lite::InnerContext *ctx, const KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr";
     return nullptr;
@@ -42,28 +42,22 @@ kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::Tenso
   kernel::LiteKernel *kernel = nullptr;
   switch (static_cast<schema::ActivationType>(type)) {
     case schema::ActivationType_RELU:
-      kernel =
-        new (std::nothrow) ReluInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) ReluInt8CPUKernel(parameter, inputs, outputs, ctx);
       break;
     case schema::ActivationType_RELU6:
-      kernel =
-        new (std::nothrow) Relu6Int8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) Relu6Int8CPUKernel(parameter, inputs, outputs, ctx);
       break;
     case schema::ActivationType_HSWISH:
-      kernel = new (std::nothrow)
-        HswishInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) HswishInt8CPUKernel(parameter, inputs, outputs, ctx);
       break;
     case schema::ActivationType_SIGMOID:
-      kernel = new (std::nothrow)
-        SigmoidInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) SigmoidInt8CPUKernel(parameter, inputs, outputs, ctx);
       break;
     case schema::ActivationType_LEAKY_RELU:
-      kernel = new (std::nothrow)
-        LeakyReluInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) LeakyReluInt8CPUKernel(parameter, inputs, outputs, ctx);
       break;
     case schema::ActivationType_TANH:
-      kernel =
-        new (std::nothrow) TanhInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) TanhInt8CPUKernel(parameter, inputs, outputs, ctx);
       break;
     default:
       break;

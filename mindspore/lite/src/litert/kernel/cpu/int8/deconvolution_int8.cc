@@ -320,7 +320,7 @@ int DeConvInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_RET(op_parameter != nullptr, nullptr);
   MS_CHECK_TRUE_RET(ctx != nullptr, nullptr);
 
@@ -330,11 +330,9 @@ kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *>
   kernel::LiteKernel *kernel = nullptr;
 
   if (conv_param->group_ == 1) {
-    kernel = new (std::nothrow)
-      kernel::DeConvInt8CPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(op_parameter, inputs, outputs, ctx);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(
-      op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(op_parameter, inputs, outputs, ctx);
   } else {
     MS_LOG(ERROR) << "deconv do not support group deconv!";
     kernel = nullptr;

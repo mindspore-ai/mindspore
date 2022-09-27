@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/l2_norm_parameter.h"
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"

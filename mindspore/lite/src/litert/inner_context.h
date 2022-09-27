@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_INNER_CONTEXT_H_
 #include <set>
 #include <string>
+#include <vector>
 #include <unordered_map>
-#include "include/context.h"
 #ifdef BFC_MEMORY
 #include "src/extendrt/dynamic_mem_allocator.h"
 #else
@@ -30,79 +30,96 @@
 #ifdef ENABLE_ARM
 #include "src/litert/cpu_info.h"
 #endif
+#include "include/lite_types.h"
 
 namespace mindspore::lite {
 #ifdef ENABLE_MINDRT
 constexpr int kDefaultParallelNum = 2;
 #endif
-struct InnerContext : public Context {
- public:
-  InnerContext() { InitDeviceFp16(); }
 
-  explicit InnerContext(const Context *context);
+typedef struct CpuDeviceInfo {
+  bool enable_float16_ = false; /**< prior enable float16 inference */
+  CpuBindMode cpu_bind_mode_ = MID_CPU;
+} CpuDeviceInfo;
 
-  int Init();
+typedef struct GpuDeviceInfo {
+  bool enable_float16_ = false; /**< prior enable float16 inference */
+  uint32_t gpu_device_id_ = 0;
+  int rank_id_ = 0;
+  int group_size_ = 0;
+  bool enable_gl_texture_ = false; /**<enable sharing OpenGL texture with OpenCL */
+  void *gl_context_ = nullptr;
+  void *gl_display_ = nullptr;
+} GpuDeviceInfo;
 
-  bool IsCpuFloat16Enabled() const;
+typedef struct NpuDeviceInfo {
+  int frequency_ = 3; /**< npu frequency inference, low 1, medium 2, high 3, extreme 4, other values will be set to 3 */
+} NpuDeviceInfo;
 
-  bool IsGpuFloat16Enabled() const;
+typedef struct AscendDeviceInfo {
+  uint32_t device_id_ = 0;
+  std::string batch_size_;
+  std::string image_size_;
+} AscendDeviceInfo;
 
-  bool IsGLTextureEnabled() const;
-
-  bool IsDeviceTypeEnabled(DeviceType type) const;
-
-  bool IsProviderEnabled() const;
-
-  std::set<std::string> GetProviders() const;
-
-  DeviceInfo GetDeviceInfo(DeviceType type) const;
-
-  int IsValid();
-
-  ThreadPool *thread_pool() const;
-
-  virtual ~InnerContext();
-
-  bool device_and_pkg_support_fp16() const;
-
-  std::set<void *> GetLinkInfo(void *pre) const;
-
-  std::unordered_map<void *, std::set<void *>> GetAllLinkInfo() const;
-
-  void SetLinkInfo(void *pre, void *suc);
-
-  void SetAllLinkInfo(const std::unordered_map<void *, std::set<void *>> &all_link_info);
-
-  void ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver);
-
-  void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
-
- private:
-  bool IsAllDeviceTypeValid() const;
-
-  bool IsCpuBindModeInvalid() const;
-
-  void SetContextDevice(const Context *context);
-
-  void InitDeviceFp16();
-
-  int CreateThreadPool();
-
-  void InitExperimentalExecEnv();
-
-  bool device_and_pkg_support_fp16_ = false;
-
-#ifdef BFC_MEMORY
-  int node_id_ = -1;
-#endif
-
-  ThreadPool *thread_pool_{nullptr};
-
-  // key is the precursor tensor's pointer, value is the group of successors' pointer.
-  std::unordered_map<void *, std::set<void *>> link_info_{};
+struct DeviceInfo {
+  CpuDeviceInfo cpu_device_info_;
+  GpuDeviceInfo gpu_device_info_;
+  NpuDeviceInfo npu_device_info_;
+  AscendDeviceInfo ascend_device_info_;
 };
 
-int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num);
+struct DeviceContext {
+  DeviceType device_type_ = DT_CPU;
+  DeviceInfo device_info_;
+  std::string provider_{};
+  std::string provider_device_{};
+  AllocatorPtr allocator_ = nullptr;
+};
+
+struct InnerContext {
+ public:
+  InnerContext();
+  virtual ~InnerContext();
+  int Init();
+  bool IsCpuFloat16Enabled() const;
+  bool IsGpuFloat16Enabled() const;
+  bool IsGLTextureEnabled() const;
+  bool IsDeviceTypeEnabled(DeviceType type) const;
+  bool IsProviderEnabled() const;
+  std::set<std::string> GetProviders() const;
+  DeviceInfo GetDeviceInfo(DeviceType type) const;
+  std::set<void *> GetLinkInfo(void *pre) const;
+  std::unordered_map<void *, std::set<void *>> GetAllLinkInfo() const;
+  void SetLinkInfo(void *pre, void *suc);
+  void SetAllLinkInfo(const std::unordered_map<void *, std::set<void *>> &all_link_info);
+  void ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver);
+  void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
+
+  std::string vendor_name_;
+  int thread_num_ = 2; /**< thread number config for thread pool */
+  int inter_op_parallel_num_ = 1;
+  bool enable_parallel_ = false;
+  std::vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
+  AllocatorPtr allocator = nullptr;
+  std::vector<DeviceContext> device_list_ = {{DT_CPU, {{false, MID_CPU}}}};
+  DelegatePtr delegate = nullptr;
+  bool float_mode = false; /**< convert full quant model to float model */
+
+  bool device_and_pkg_support_fp16_ = false;
+  ThreadPool *thread_pool_ = nullptr;
+  // key is the precursor tensor's pointer, value is the group of successors' pointer.
+  std::unordered_map<void *, std::set<void *>> link_info_{};
+
+ private:
+  int IsValid();
+  bool IsAllDeviceTypeValid() const;
+  bool IsCpuBindModeInvalid() const;
+  int CreateThreadPool();
+  void InitExperimentalExecEnv();
+};
+
+int ParallelLaunch(const InnerContext *context, const Func &func, Content content, int task_num);
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_INNER_CONTEXT_H_

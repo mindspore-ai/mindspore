@@ -58,7 +58,7 @@ TrainSession::TrainSession() {
   InitCallBack();
 }
 
-int TrainSession::TrainInit(InnerContext *context, const TrainCfg *train_cfg) {
+int TrainSession::TrainInit(const std::shared_ptr<InnerContext> &context, const TrainCfg *train_cfg) {
   if (train_cfg != nullptr) {
     if (train_cfg->mix_precision_cfg_.loss_scale_ <= 0) {
       MS_LOG(ERROR) << "illegal loss scale configuration";
@@ -460,7 +460,7 @@ int TrainSession::MixPrecisionPreProcess(kernel::KernelExec *kernel, float scale
     }
     // adjust tensor data type
     if (tensor->data_type() != kernel_type) {
-      auto restore_tensor = CastTensor(tensor, kernel_type, this->context_->device_and_pkg_support_fp16());
+      auto restore_tensor = CastTensor(tensor, kernel_type, this->context_->device_and_pkg_support_fp16_);
       if (restore_tensor != nullptr) {
         restored_origin_tensors_[tensor] = restore_tensor;
       }
@@ -533,7 +533,7 @@ int TrainSession::MixPrecisionExecKernels(const KernelCallBack &before, const Ke
   if (train_mode_ == false) {
     for (auto t : this->outputs_) {
       if (t->data_type() == kNumberTypeFloat16) {
-        auto restore = CastTensor(t, kNumberTypeFloat32, this->context_->device_and_pkg_support_fp16());
+        auto restore = CastTensor(t, kNumberTypeFloat32, this->context_->device_and_pkg_support_fp16_);
         delete restore;
       }
     }
@@ -1310,58 +1310,4 @@ size_t TrainSession::GetInplaceTensorOffset(kernel::KernelExec *kernel,
   return offset_map.at(tensor);
 }
 }  // namespace lite
-
-lite::LiteSession *lite::TrainSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
-                                                          bool train_mode, const lite::TrainCfg *cfg) {
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "context cannot be nullptr";
-    return nullptr;
-  }
-  auto session = std::make_unique<lite::TrainSession>();
-  if (session == nullptr) {
-    MS_LOG(ERROR) << "create session failed";
-    return nullptr;
-  }
-  if (context->allocator == nullptr) {
-    const_cast<lite::Context *>(context)->allocator = std::make_shared<StaticAllocator>();
-    if (context->allocator == nullptr) {
-      MS_LOG(ERROR) << " cannot convert to static allocation";
-    }
-  }
-
-  auto *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
-  auto ret = session->TrainInit(inner_context, cfg);
-  if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "init session failed";
-    return nullptr;
-  }
-
-  std::string filename = fn;
-  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
-    filename = filename + ".ms";
-  }
-
-  auto model = std::shared_ptr<lite::Model>(lite::Model::Import(filename.c_str()));
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "create model for train session failed " << filename;
-    return nullptr;
-  }
-
-  ret = session->CompileTrainGraph(model);
-  if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Compiling Train Graph session failed";
-    return nullptr;
-  }
-
-  if (train_mode) {
-    ret = session->Train();
-  } else {
-    ret = session->Eval();
-  }
-  if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Could not switch to Train Modei " << train_mode;
-    return nullptr;
-  }
-  return session.release();
-}
 }  // namespace mindspore

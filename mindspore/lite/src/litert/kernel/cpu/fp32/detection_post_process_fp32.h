@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "src/litert/kernel/cpu/base/detection_post_process_base.h"
 #include "nnacl/fp32/detection_post_process_fp32.h"
 

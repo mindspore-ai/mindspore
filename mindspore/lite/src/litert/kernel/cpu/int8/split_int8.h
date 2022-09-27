@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "src/litert/kernel/cpu/base/split_base.h"
 
 using mindspore::lite::InnerContext;

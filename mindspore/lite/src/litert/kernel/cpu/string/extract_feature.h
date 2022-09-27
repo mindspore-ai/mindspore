@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "src/common/string_utils.h"
 
 namespace mindspore::kernel {

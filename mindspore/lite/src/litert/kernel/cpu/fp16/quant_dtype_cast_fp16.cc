@@ -180,7 +180,7 @@ int QuantDTypeCastFp16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuQuantDTypeCastFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc) {
   auto in_tensor = inputs.front();
   auto out_tensor = outputs.front();
@@ -216,8 +216,7 @@ kernel::LiteKernel *CpuQuantDTypeCastFp16KernelCreator(const std::vector<lite::T
     return nullptr;
   }
 
-  kernel::LiteKernel *kernel = new (std::nothrow)
-    QuantDTypeCastFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  kernel::LiteKernel *kernel = new (std::nothrow) QuantDTypeCastFp16CPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new QuantDTypeCastFp16CPUKernel fail!";
     free(opParameter);

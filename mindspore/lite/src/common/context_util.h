@@ -16,17 +16,16 @@
 
 #ifndef MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_
 #define MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_
-
+#include <memory>
 #include <set>
 #include <string>
-#include "include/context.h"
 #include "include/api/context.h"
 #include "src/litert/kernel_exec.h"
 
 namespace mindspore {
 namespace lite {
-mindspore::Context *MSContextFromContext(const lite::Context *context);
-bool DeviceTypePriority(const lite::Context *context, int device_type1, int device_type2);
+mindspore::Context *MSContextFromContext(const std::shared_ptr<InnerContext> &context);
+bool DeviceTypePriority(const InnerContext *context, int device_type1, int device_type2);
 DeviceType KernelArchToDeviceType(kernel::KERNEL_ARCH kernel_arch);
 }  // namespace lite
 }  // namespace mindspore

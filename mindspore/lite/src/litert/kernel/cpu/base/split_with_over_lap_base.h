@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "include/context.h"
 #include "src/litert/kernel_exec.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/base/split_with_over_lap_base.h"

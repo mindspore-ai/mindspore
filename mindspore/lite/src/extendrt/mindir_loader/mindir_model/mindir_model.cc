@@ -78,7 +78,7 @@ std::string MindirModel::GetModelPath() const { return this->model_path_; }
 
 mindspore::kernel::KernelExec *MindirModel::FindBackendKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
                                                               const std::vector<mindspore::lite::Tensor *> &out_tensors,
-                                                              const LiteGraph::Node *node, lite::Context *context,
+                                                              const LiteGraph::Node *node, lite::InnerContext *context,
                                                               TypeId prefer_data_type) {
   if (select_lite_kernel_) {
     return FindLiteKernel(in_tensors, out_tensors, node, context, prefer_data_type);
@@ -94,7 +94,7 @@ mindspore::kernel::KernelExec *MindirModel::FindBackendKernel(const std::vector<
 
 mindspore::kernel::KernelExec *MindirModel::FindLiteKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
                                                            const std::vector<mindspore::lite::Tensor *> &out_tensors,
-                                                           const LiteGraph::Node *node, lite::Context *context,
+                                                           const LiteGraph::Node *node, lite::InnerContext *context,
                                                            TypeId prefer_data_type) {
   mindspore::kernel::KernelExec *kernel_exec = nullptr;
   auto op_type_str = node->op_type_;
@@ -106,13 +106,7 @@ mindspore::kernel::KernelExec *MindirModel::FindLiteKernel(const std::vector<min
   }
   OpParameter *op_parameter = parame_gen(node->base_operator_.get());
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, NHWC, op_type, "", kernel::kBuiltin};
-  auto inner_context = static_cast<mindspore::lite::InnerContext *>(context);
-  // mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
-  if (inner_context == nullptr) {
-    MS_LOG(ERROR) << "new inner context failed";
-    return nullptr;
-  }
-  auto ret = lite::KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, inner_context, nullptr, desc,
+  auto ret = lite::KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context, nullptr, desc,
                                                                 op_parameter, &kernel_exec, node->primitive_);
   if (ret != lite::RET_OK || kernel_exec == nullptr) {
     MS_LOG(ERROR) << "find lite kernel failed with code " << ret;

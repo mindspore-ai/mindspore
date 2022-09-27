@@ -35,14 +35,14 @@
 
 namespace mindspore {
 namespace lite {
-TransferSession::TransferSession(const char *model_buf_backbone, size_t size_backbone, const lite::Context *context)
+TransferSession::TransferSession(const char *model_buf_backbone, size_t size_backbone,
+                                 const std::shared_ptr<lite::InnerContext> &context)
     : is_valid_(false) {
   lite_model_ = reinterpret_cast<char *>(malloc(size_backbone));
   size_backbone_ = size_backbone;
   if (lite_model_ != nullptr) {
     std::copy(model_buf_backbone, model_buf_backbone + size_backbone, lite_model_);
-    backbone_session_ =
-      reinterpret_cast<LiteSession *>(LiteSession::CreateSession(lite_model_, size_backbone, context));
+    backbone_session_ = LiteSession::CreateSession(lite_model_, size_backbone, context);
     if (backbone_session_ != nullptr) {
       is_valid_ = true;
     } else {
@@ -247,8 +247,9 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
 }
 
 lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
-                                            const char *model_buf_head, size_t size_head, const lite::Context *context,
-                                            bool train_mode, const lite::TrainCfg *cfg) {
+                                            const char *model_buf_head, size_t size_head,
+                                            const std::shared_ptr<InnerContext> &context, bool train_mode,
+                                            const lite::TrainCfg *cfg) {
   auto ValidModelSize = [](size_t size) -> bool {
     constexpr size_t MaxModelSize = 1024 * 1024 * 1024ULL;  // 1G B
     return size < MaxModelSize && size > 0;
@@ -271,9 +272,7 @@ lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size
     delete session;
     return nullptr;
   }
-
-  mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
-  auto ret = session->TrainInit(inner_context, cfg);
+  auto ret = session->TrainInit(context, cfg);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init transfer session failed";
     delete session;
@@ -313,31 +312,4 @@ lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size
   return session;
 }
 }  // namespace lite
-
-lite::LiteSession *lite::TrainSession::CreateTransferSession(const std::string &filename_backbone,
-                                                             const std::string &filename_head,
-                                                             const lite::Context *ctxt, bool train_mode,
-                                                             const lite::TrainCfg *cfg) {
-  size_t size_head = 0;
-  size_t size_backbone = 0;
-  std::string filename = filename_head;
-  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
-    filename = filename + ".ms";
-  }
-
-  auto buf_head = lite::ReadFile(filename.c_str(), &size_head);
-  if (buf_head == nullptr) {
-    return nullptr;
-  }
-  filename = filename_backbone;
-  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
-    filename = filename + ".ms";
-  }
-
-  auto buf_backbone = lite::ReadFile(filename.c_str(), &size_backbone);
-  if (buf_backbone == nullptr) {
-    return nullptr;
-  }
-  return CreateTransferSessionInt(buf_backbone, size_backbone, buf_head, size_head, ctxt, train_mode, cfg);
-}
 }  // namespace mindspore

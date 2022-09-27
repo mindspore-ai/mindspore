@@ -16,7 +16,6 @@
 
 #include <iostream>
 #include "schema/inner/model_generated.h"
-#include "include/context.h"
 #include "src/tensor.h"
 #include "src/litert/tensor_category.h"
 #include "common/common_test.h"

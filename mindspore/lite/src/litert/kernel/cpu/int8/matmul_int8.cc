@@ -77,7 +77,7 @@ int MatmulInt8CPUKernel::ReSize() {
 
 kernel::LiteKernel *MatmulInt8CPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
@@ -85,19 +85,16 @@ kernel::LiteKernel *MatmulInt8CPUKernelCreator(const std::vector<lite::Tensor *>
 
   LiteKernel *kernel = nullptr;
   if (parameter->quant_type_ == schema::QuantType_QUANT_ALL) {
-    kernel =
-      new (std::nothrow) MatmulInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) MatmulInt8CPUKernel(parameter, inputs, outputs, ctx);
   } else if (parameter->quant_type_ == schema::QuantType_QUANT_DYNAMIC) {
     if (inputs.front()->IsConst()) {
       MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported A is const.";
       return nullptr;
     }
     if (lite::IsSupportSDot()) {
-      kernel = new (std::nothrow)
-        MatMulDynamicSdotInt8Kernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) MatMulDynamicSdotInt8Kernel(parameter, inputs, outputs, ctx);
     } else {
-      kernel = new (std::nothrow)
-        MatmulDynamicInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+      kernel = new (std::nothrow) MatmulDynamicInt8CPUKernel(parameter, inputs, outputs, ctx);
     }
   } else {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported quant type:" << parameter->quant_type_;

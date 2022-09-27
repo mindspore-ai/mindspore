@@ -144,7 +144,7 @@ int GatherInt8CPUKernel::Run() {
 
 kernel::LiteKernel *GatherInt8CPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
@@ -152,16 +152,14 @@ kernel::LiteKernel *GatherInt8CPUKernelCreator(const std::vector<lite::Tensor *>
 
   LiteKernel *kernel = nullptr;
   if (parameter->quant_type_ == schema::QuantType_QUANT_ALL) {
-    kernel =
-      new (std::nothrow) GatherInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) GatherInt8CPUKernel(parameter, inputs, outputs, ctx);
   } else if (parameter->quant_type_ == schema::QuantType_QUANT_DYNAMIC) {
     const int axis_index = 2;
     if (inputs.size() > axis_index + 1 && inputs.at(axis_index)) {
       MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported Axis is not const.";
       return nullptr;
     }
-    kernel = new (std::nothrow)
-      DynamicGatherInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) DynamicGatherInt8CPUKernel(parameter, inputs, outputs, ctx);
   } else {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported quant type:" << parameter->quant_type_;
     free(parameter);

@@ -205,7 +205,7 @@ bool ConstFoldProcessor::Init() {
     }
   }
   if (ms_context_ == nullptr) {
-    ms_context_ = std::shared_ptr<mindspore::Context>(lite::MSContextFromContext(context_.get()));
+    ms_context_ = std::shared_ptr<mindspore::Context>(lite::MSContextFromContext(context_));
     MS_CHECK_TRUE_RET(ms_context_ != nullptr, false);
   }
   return true;

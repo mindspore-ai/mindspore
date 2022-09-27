@@ -24,7 +24,6 @@
 
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "include/context.h"
 #include "include/errorcode.h"
 #include "include/train/train_cfg.h"
 #include "src/train/train_session.h"
@@ -94,30 +93,12 @@ int32_t NetworkTest::runNet(mindspore::lite::LiteSession *session, const std::st
   return lite::RET_ERROR;
 }
 
-TEST_F(NetworkTest, efficient_net) {
-  auto context = new lite::Context;
-  ASSERT_NE(context, nullptr);
-  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
-  context->thread_num_ = 1;
-
-  std::string net = "./nets/effnetb0_fwd_nofuse.ms";
-  auto session = lite::TrainSession::CreateTrainSession(net, context, false);
-  ASSERT_NE(session, nullptr);
-
-  std::string in = "./nets/effNet_input_x_1_3_224_224.bin";
-  std::string out = "./nets/effNet_output_y_1_1000.bin";
-  auto res = runNet(session, in, out, "650");
-  delete session;
-  delete context;
-  ASSERT_EQ(res, 0);
-}
-
 TEST_F(NetworkTest, mobileface_net) {
   size_t size = 0;
   char *buff = lite::ReadFile("./nets/mobilefacenet0924.ms", &size);
   auto model = lite::Model::Import(buff, size);
   delete[] buff;
-  auto context = new lite::Context;
+  auto context = std::make_shared<lite::InnerContext>();
   ASSERT_NE(context, nullptr);
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
@@ -135,47 +116,5 @@ TEST_F(NetworkTest, mobileface_net) {
   ASSERT_EQ(res, 0);
   delete model;
   delete session;
-  delete context;
 }
-
-TEST_F(NetworkTest, noname) {
-  std::string net = "./nets/lenet_train.ms";
-  lite::Context context;
-  context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
-  context.thread_num_ = 1;
-
-  lite::TrainCfg cfg;
-  cfg.loss_name_.clear();
-  cfg.loss_name_.emplace_back("nhwc");
-  auto session = mindspore::lite::TrainSession::CreateTrainSession(net, &context, true, &cfg);
-  ASSERT_NE(session, nullptr);
-  auto tensors_map = session->GetOutputs();
-  auto tensor_names = session->GetOutputTensorNames();
-  EXPECT_EQ(tensors_map.size(), 1);
-  EXPECT_EQ(tensors_map.begin()->first, "24");
-  EXPECT_EQ(tensor_names.size(), 1);
-  EXPECT_EQ(tensor_names.at(0), "Default/network-WithLossCell/_backbone-LeNet5/fc3-Dense/BiasAdd-op107");
-  delete session;
-}
-
-TEST_F(NetworkTest, setname) {
-  std::string net = "./nets/lenet_train.ms";
-  lite::Context context;
-  context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
-  context.thread_num_ = 1;
-
-  lite::TrainCfg train_cfg;
-  train_cfg.loss_name_.clear();
-  train_cfg.loss_name_.emplace_back("nhwc");
-
-  auto session = mindspore::lite::TrainSession::CreateTrainSession(net, &context, true, &train_cfg);
-  ASSERT_NE(session, nullptr);
-
-  auto tensors_map = session->GetOutputs();
-  auto tensor_names = session->GetOutputTensorNames();
-  EXPECT_EQ(tensors_map.begin()->first, "8");
-  EXPECT_EQ(tensor_names.at(0), "Default/network-WithLossCell/_backbone-LeNet5/max_pool2d-MaxPool2d/MaxPool-op88");
-  delete session;
-}
-
 }  // namespace mindspore

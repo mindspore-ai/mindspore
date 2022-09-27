@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SQUEEZE_INT8_H_
 
 #include <vector>
-#include "include/context.h"
 #include "include/errorcode.h"
 #include "src/litert/lite_kernel.h"
 #include "nnacl/int8/squeeze_int8.h"

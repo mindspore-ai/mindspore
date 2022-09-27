@@ -717,7 +717,7 @@ bool UseWinograd4x4To6x6(const ConvParameter *param, const std::vector<lite::Ten
 
 kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inputs,
                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                        const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);
@@ -729,8 +729,8 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
   kernel::OpenCLKernel *kernel = nullptr;
   // case 1: depthwise conv2d
   if (group == input_channel && group == output_channel) {
-    kernel = new (std::nothrow) DepthwiseConv2dOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs,
-                                                            outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel =
+      new (std::nothrow) DepthwiseConv2dOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx);
     auto ret = reinterpret_cast<DepthwiseConv2dOpenCLKernel *>(kernel)->StoreConstData();
     if (ret != mindspore::lite::RET_OK) {
       MS_LOG(ERROR) << "Store " << opParameter->name_ << " const data failed!";
@@ -752,11 +752,9 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
   bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();
   if (infer_shape_done && UseWinograd4x4To6x6(conv_param, inputs, outputs)) {
     MS_LOG(DEBUG) << "use Winograd algorithm.";
-    kernel = new (std::nothrow) WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
-                                                     static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx);
   } else {
-    kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
-                                                   static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create Convolution kernel failed.";

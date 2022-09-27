@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 
 namespace mindspore::kernel {
 class HashtableLookupCPUKernel : public LiteKernel {

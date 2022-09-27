@@ -416,7 +416,7 @@ int LiteOpActor::PrepareOutputData() {
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::KernelExec *> &kernels,
                                                         lite::InnerContext *ctx, const std::shared_ptr<ActorMgr> &mgr) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
-  ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool());
+  ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool_);
   if (thread_pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     return actors;

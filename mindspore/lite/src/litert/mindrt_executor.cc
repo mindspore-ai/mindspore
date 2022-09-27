@@ -304,7 +304,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
                         const std::vector<kernel::KernelExec *> &kernels, const KernelCallBack &before,
                         const KernelCallBack &after) {
   CHECK_NULL_RETURN(ctx_);
-  auto thread_pool = ctx_->thread_pool();
+  auto thread_pool = ctx_->thread_pool_;
   CHECK_NULL_RETURN(thread_pool);
   if (ctx_->delegate == nullptr) {
     thread_pool->SetSpinCountMaxValue();

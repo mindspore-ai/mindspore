@@ -112,11 +112,11 @@ TEST_F(MindrtParallelTest, offline1) {
   delete[](graph_buf);
   ASSERT_NE(model, nullptr);
 
-  auto context = std::make_shared<lite::Context>();
+  auto context = std::make_shared<lite::InnerContext>();
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
 
-  lite::LiteSession *session = lite::LiteSession::CreateSession(context.get());
+  lite::LiteSession *session = lite::LiteSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());
@@ -151,11 +151,11 @@ TEST_F(MindrtParallelTest, runtime1) {
   delete[](graph_buf);
   ASSERT_NE(model, nullptr);
 
-  auto context = std::make_shared<lite::Context>();
+  auto context = std::make_shared<lite::InnerContext>();
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
 
-  lite::LiteSession *session = lite::LiteSession::CreateSession(context.get());
+  lite::LiteSession *session = lite::LiteSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());

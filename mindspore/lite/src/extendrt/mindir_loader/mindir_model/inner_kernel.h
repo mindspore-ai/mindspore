@@ -38,7 +38,7 @@ class InnerKernel : public Abstractkernel {
 
   InnerKernel(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod,
               mindspore::kernel::BaseOperatorPtr base_operator, std::vector<lite::Tensor *> in_tensors,
-              std::vector<lite::Tensor *> out_tensors, const lite::Context *ctx)
+              std::vector<lite::Tensor *> out_tensors, const lite::InnerContext *ctx)
       : kernel_mod_(kernel_mod),
         base_operator_(base_operator),
         in_tensors_(std::move(in_tensors)),
@@ -100,7 +100,7 @@ class InnerKernel : public Abstractkernel {
   BaseOperatorPtr base_operator_ = nullptr;
   std::vector<lite::Tensor *> in_tensors_;
   std::vector<lite::Tensor *> out_tensors_;
-  const mindspore::lite::Context *ms_context_ = nullptr;
+  const mindspore::lite::InnerContext *ms_context_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -118,21 +118,19 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
 
 kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::LiteKernel *kernel = nullptr;
 
   if (conv_param->group_ == 1) {
-    kernel = CpuConvInt8KernelSelect(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx));
+    kernel = CpuConvInt8KernelSelect(inputs, outputs, op_parameter, ctx);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel =
-      CpuConvDwInt8KernelCreator(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx), desc);
+    kernel = CpuConvDwInt8KernelCreator(inputs, outputs, op_parameter, ctx, desc);
   } else {
     MS_ASSERT(conv_param->group_ > 1);
-    kernel = CpuGroupConvInt8KernelCreator(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx),
-                                           conv_param->group_);
+    kernel = CpuGroupConvInt8KernelCreator(inputs, outputs, op_parameter, ctx, conv_param->group_);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";

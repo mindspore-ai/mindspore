@@ -20,7 +20,6 @@
 #include "src/litert/lite_kernel.h"
 #include "nnacl/fp32/invert_permutation_fp32.h"
 #include "include/errorcode.h"
-#include "include/context.h"
 
 using mindspore::lite::InnerContext;
 
