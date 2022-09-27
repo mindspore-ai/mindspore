@@ -33,9 +33,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const size_t kTwo = 2;
+  const int64_t kTwo = 2;
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto ndim = a_shape.size();
+  auto ndim = SizeToLong(a_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("ndim", ndim, kEqual, kTwo, primitive->name());
   auto m = a_shape[ndim - 2];
   auto n = a_shape[ndim - 1];
