@@ -222,6 +222,7 @@ int MatmulDynamicBaseInt8CPUKernel::InitMatrixBBuffer() {
 
 int MatmulDynamicBaseInt8CPUKernel::CopyBias() {
   if (in_tensors_.size() == kHasBiasSize) {
+    CHECK_NULL_RETURN(in_tensors_[kBiasIndex]);
     auto bias_tensor = in_tensors_[kBiasIndex];
     fp32_bias_ptr_ = static_cast<float *>(malloc(bias_tensor->Size()));
     if (fp32_bias_ptr_ == nullptr) {
@@ -239,6 +240,16 @@ int MatmulDynamicBaseInt8CPUKernel::CopyBias() {
 int MatmulDynamicBaseInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kMinInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), kOutputSize);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      in_tensors_[1]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", input1 data_type is "
+                  << in_tensors_[1]->data_type() << ", output data_type is " << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   InitParameter();
   auto ret = MallocQuantParam();
   if (ret != RET_OK) {

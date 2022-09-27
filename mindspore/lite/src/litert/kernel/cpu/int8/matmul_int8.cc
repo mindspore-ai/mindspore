@@ -35,6 +35,9 @@ constexpr int min_matmul_output = 1;
 int MatmulInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), min_matmul_input);
   CHECK_LESS_RETURN(out_tensors_.size(), min_matmul_output);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   InitParameter();
 
   auto ret = MatmulBaseInt8CPUKernel::Prepare();
