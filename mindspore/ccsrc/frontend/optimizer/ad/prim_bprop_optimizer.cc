@@ -235,9 +235,10 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
   }
   FuncGraphPtr level_1_graph = BasicClone(level_1_graph_info->opt_func_graph_);
 
+  level_1_graph->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flags));
   // do step2 opt
   auto new_abs_list = AddOutToAbsList(out, abs_list);
-  level_2_graph_info = PrimBpropOptStep2(level_1_graph, new_abs_list);
+  level_2_graph_info = PrimBpropOptStep2(level_1_graph, new_abs_list, need_grad_flags);
   level_2_graph_info->TryFreeArgsValue(op_args, out);
   auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {

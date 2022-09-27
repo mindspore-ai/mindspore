@@ -720,8 +720,6 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
     cnode->EraseAttr(kAttrNeedGradFlagOfInputs);
   }
 
-  fg->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flag_of_inputs));
-
   // Optimize the bprop_fg based on value.
   // Clone op_args and out, so the address of tensor data can be reset to nullptr if the value of tensor
   // is not used in bprop_fg;
