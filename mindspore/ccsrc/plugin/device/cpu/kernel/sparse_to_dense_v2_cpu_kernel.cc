@@ -87,9 +87,9 @@ int SparseToDenseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 template <typename I, typename T>
-void SparseToDenseV2CpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &workspace,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+void SparseToDenseV2CpuKernelMod::CheckValidate(const std::vector<kernel::AddressPtr> &inputs,
+                                                const std::vector<kernel::AddressPtr> &workspace,
+                                                const std::vector<kernel::AddressPtr> &outputs, const bool dim_flag) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSize4, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSize1, kernel_name_);
   if (outputs[0]->size == 0) {
@@ -104,7 +104,12 @@ void SparseToDenseV2CpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::
   bool valid = true;
   bool different = false;
   bool increasing = true;
-  for (size_t k = 0; k < indices_shape_[1]; ++k) {
+  size_t indices_shape_dim0 = static_cast<size_t>(indices_shape_[0]);
+  size_t indices_shape_dim1 = static_cast<size_t>(1);
+  if (dim_flag) {
+    indices_shape_dim1 = static_cast<size_t>(indices_shape_[1]);
+  }
+  for (size_t k = 0; k < indices_shape_dim1; ++k) {
     size_t index = k;
     if (indices_addr[index] < 0 || indices_addr[index] >= output_shape_addr[index]) {
       valid = false;
@@ -113,10 +118,10 @@ void SparseToDenseV2CpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::
   if (!valid) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the indices is out of bounds.";
   }
-  for (size_t i = 1; i < indices_shape_[0]; ++i) {
-    for (size_t j = 0; j < indices_shape_[1]; ++j) {
-      size_t index1 = i * indices_shape_[1] + j;
-      size_t index2 = (i - 1) * indices_shape_[1] + j;
+  for (size_t i = 1; i < indices_shape_dim0; ++i) {
+    for (size_t j = 0; j < indices_shape_dim1; ++j) {
+      size_t index1 = i * indices_shape_dim1 + j;
+      size_t index2 = (i - 1) * indices_shape_dim1 + j;
       if (indices_addr[index1] < 0 || indices_addr[index1] >= output_shape_addr[j]) {
         valid = false;
       }
@@ -140,56 +145,13 @@ void SparseToDenseV2CpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::
   }
 }
 template <typename I, typename T>
-void SparseToDenseV2CpuKernelMod::CheckValidateOneDim(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &workspace,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSize4, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSize1, kernel_name_);
-  if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
-  }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
-  }
-  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
-  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);
-  bool valid = true;
-  bool different = false;
-  bool increasing = true;
-  if (indices_addr[0] < 0 || indices_addr[0] > output_shape_addr[0]) {
-    valid = false;
-  }
-  for (size_t i = 1; i < indices_shape_[0]; ++i) {
-    if (indices_addr[i] < 0 || indices_addr[i] >= output_shape_addr[0]) {
-      valid = false;
-    }
-    I diff = indices_addr[i] - indices_addr[i - 1];
-    if (diff > 0) {
-      different = true;
-    }
-    if (!different && diff < 0) {
-      increasing = false;
-    }
-    if (!valid) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the indices is out of bounds.";
-    }
-    if (!increasing) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the indices is out of order.";
-    }
-    if (!different) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the indices is repeated";
-    }
-  }
-}
-template <typename I, typename T>
 bool SparseToDenseV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &workspace,
                                                const std::vector<kernel::AddressPtr> &outputs) {
   if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2TwoDims) {
-    (void)SparseToDenseV2CpuKernelMod::CheckValidateTwoDim<I, T>(inputs, workspace, outputs);
+    (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, workspace, outputs, true);
   } else if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2OneDim) {
-    (void)SparseToDenseV2CpuKernelMod::CheckValidateOneDim<I, T>(inputs, workspace, outputs);
+    (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, workspace, outputs, false);
   }
   const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
   const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);
