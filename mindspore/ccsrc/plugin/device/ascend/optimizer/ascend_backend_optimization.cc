@@ -433,6 +433,8 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());

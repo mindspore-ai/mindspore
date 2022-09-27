@@ -908,6 +908,7 @@ class SyncBatchNorm(Primitive):
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
         self.add_prim_attr('side_effect_mem', True)
+        self.add_prim_attr('format', 'NCHW')
 
 
 class Centralization(PrimitiveWithInfer):
