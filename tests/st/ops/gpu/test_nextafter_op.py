@@ -31,7 +31,7 @@ def nextafter_pynative(x1, x2):
     return out_msp
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nextafter_float64_graph():
@@ -47,7 +47,7 @@ def test_nextafter_float64_graph():
     assert out_msp.asnumpy() == out_tf
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nextafter_float32_graph():
@@ -63,7 +63,7 @@ def test_nextafter_float32_graph():
     assert (out_msp.asnumpy() == out_tf).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nextafter_float64_pynative():
@@ -79,7 +79,7 @@ def test_nextafter_float64_pynative():
     assert out_msp.asnumpy() == out_tf
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nextafter_float32_pynative():

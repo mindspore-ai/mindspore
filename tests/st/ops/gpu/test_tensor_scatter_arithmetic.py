@@ -106,7 +106,7 @@ def tensor_scatter_np_benchmark(np_func, input_x, indices, updates):
     return result
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func_name', ["update", "min", "max", "add", "sub", "mul", "div"])
@@ -134,7 +134,7 @@ def test_tensor_scatter(func_name, input_data_type, index_data_type):
     np.testing.assert_allclose(out.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("func_name", ["mul", "div"])
@@ -164,7 +164,7 @@ def test_scatter_nd_dy_shape(func_name):
     np.testing.assert_allclose(np_result, ms_result.asnumpy(), atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("func_name", ["mul", "div"])
@@ -191,7 +191,7 @@ def test_tensor_scatter_mul_func_indices_vmap(func_name):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("func_name", ["mul", "div"])

@@ -65,7 +65,7 @@ class MultiMraginLossGrad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_multi_margin_loss_fp64():
@@ -99,7 +99,7 @@ def test_multi_margin_loss_fp64():
     assert np.allclose(output, expect_output, ertol_loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_multi_margin_loss_grad_fp64():

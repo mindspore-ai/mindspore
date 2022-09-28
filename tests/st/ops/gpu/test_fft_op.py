@@ -39,7 +39,7 @@ class FFTWithSizeNet(nn.Cell):
         return self.fft(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -73,7 +73,7 @@ def test_fft_1d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -107,7 +107,7 @@ def test_fft_2d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -141,7 +141,7 @@ def test_fft_3d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -175,7 +175,7 @@ def test_ifft_1d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -209,7 +209,7 @@ def test_ifft_2d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -243,7 +243,7 @@ def test_ifft_3d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -273,7 +273,7 @@ def test_fft_ifft_circle_call(dynamic, rank, norm, dtype_r, dtype_c):
     assert np.allclose(ms_x.asnumpy(), ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -331,7 +331,7 @@ def test_rfft_1d_bidrection(dynamic, norm, onesided, pass_signal_sizes, dtype_r,
     assert np.allclose(ms_x.asnumpy(), ms_x_recovered.asnumpy(), atol=atol_r)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -389,7 +389,7 @@ def test_rfft_2d_bidrection(dynamic, norm, onesided, pass_signal_sizes, dtype_r,
     assert np.allclose(ms_x.asnumpy(), ms_x_recovered.asnumpy(), atol=atol_r)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])

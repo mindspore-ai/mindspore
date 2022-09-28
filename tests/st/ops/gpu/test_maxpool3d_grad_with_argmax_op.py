@@ -54,7 +54,7 @@ class DynamicShapeMaxPool3DGradWithArgmaxNet(Cell):
         return self.net(x, dy, mask)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool3d_grad_withargmax_float32():
@@ -85,7 +85,7 @@ def test_maxpool3d_grad_withargmax_float32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool3d_grad_withargmax_float16():
@@ -116,7 +116,7 @@ def test_maxpool3d_grad_withargmax_float16():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool3d_grad_withargmax_vmap():
@@ -136,7 +136,7 @@ def test_maxpool3d_grad_withargmax_vmap():
     assert out.shape == (1, 1, 1, 3, 4, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool3d_grad_with_argmax():

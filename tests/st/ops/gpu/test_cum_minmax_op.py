@@ -60,7 +60,7 @@ def cum_minmax_compare(op, x, expected, axis, data_type, is_vmap=False):
     assert np.allclose(output[1].asnumpy(), expected[1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.uint8, np.int8, np.int32, np.float16])
@@ -86,7 +86,7 @@ def test_cummin_multi_dims(data_type):
     cum_minmax_compare(op, x, cummin_output, axis, data_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.uint8, np.uint32, np.int8, np.int32, np.int64, np.float16, np.float32])
@@ -114,7 +114,7 @@ def test_cummax_multi_dims(data_type):
     cum_minmax_compare(op, x, cummax_output, axis, data_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
@@ -145,7 +145,7 @@ class VmapNet(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cummin_vmap_net():
@@ -170,7 +170,7 @@ def test_cummin_vmap_net():
     cum_minmax_compare(op, x, cummin_output, axis, np.float32, is_vmap=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cummax_vmap_net():

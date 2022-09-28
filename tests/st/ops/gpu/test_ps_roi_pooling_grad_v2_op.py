@@ -149,7 +149,7 @@ def ps_roi_pooling_grad_case(data_type, dynamic_shape=False):
     assert np.allclose(output_ms, output_gt, atol=1e-4, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad():

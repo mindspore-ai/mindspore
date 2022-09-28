@@ -44,7 +44,7 @@ class NetAtanGradGrad(nn.Cell):
         return backward_net(x, grad, dout)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def atan_grad_grad_base(dtype, loss):

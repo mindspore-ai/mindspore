@@ -266,7 +266,7 @@ class BesselY1GradNet(Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_y0_fp32():
@@ -288,7 +288,7 @@ def test_bessel_y0_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_y0_fp16():
@@ -310,7 +310,7 @@ def test_bessel_y0_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_y1_fp32():
@@ -332,7 +332,7 @@ def test_bessel_y1_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_y1_fp16():
@@ -354,7 +354,7 @@ def test_bessel_y1_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_j0_fp32():
@@ -376,7 +376,7 @@ def test_bessel_j0_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_j0_fp16():
@@ -398,7 +398,7 @@ def test_bessel_j0_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_j1_fp32():
@@ -420,7 +420,7 @@ def test_bessel_j1_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_j1_fp16():
@@ -442,7 +442,7 @@ def test_bessel_j1_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k0_fp32():
@@ -463,7 +463,7 @@ def test_bessel_k0_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k0_fp16():
@@ -484,7 +484,7 @@ def test_bessel_k0_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k0e_fp32():
@@ -505,7 +505,7 @@ def test_bessel_k0e_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k0e_fp16():
@@ -526,7 +526,7 @@ def test_bessel_k0e_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k1_fp32():
@@ -547,7 +547,7 @@ def test_bessel_k1_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k1_fp16():
@@ -568,7 +568,7 @@ def test_bessel_k1_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k1e_fp32():
@@ -589,7 +589,7 @@ def test_bessel_k1e_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_k1e_fp16():
@@ -610,7 +610,7 @@ def test_bessel_k1e_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i0_fp32():
@@ -632,7 +632,7 @@ def test_bessel_i0_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i0_fp16():
@@ -654,7 +654,7 @@ def test_bessel_i0_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i0e_fp32():
@@ -676,7 +676,7 @@ def test_bessel_i0e_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i0e_fp16():
@@ -698,7 +698,7 @@ def test_bessel_i0e_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i1_fp32():
@@ -720,7 +720,7 @@ def test_bessel_i1_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i1_fp16():
@@ -742,7 +742,7 @@ def test_bessel_i1_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i1e_fp32():
@@ -764,7 +764,7 @@ def test_bessel_i1e_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bessel_i1e_fp16():

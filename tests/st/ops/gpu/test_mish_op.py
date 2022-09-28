@@ -35,7 +35,7 @@ def mish_compute(x):
     return x*np.tanh(np.log(1 + np.exp(x)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1e-3), (np.float32, 1e-4), (np.float64, 1e-5)])

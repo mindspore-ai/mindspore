@@ -33,7 +33,7 @@ class NetUpsampleNearest3DGrad(nn.Cell):
         return self.upsample_nearest_3d_grad(grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_upsample_nearest_3d_grad_output_size_fp32():
@@ -69,7 +69,7 @@ def test_upsample_nearest_3d_grad_output_size_fp32():
     assert np.all(np.abs(diff_x) < error_x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_upsample_nearest_3d_grad_scales_fp16():
@@ -105,7 +105,7 @@ def test_upsample_nearest_3d_grad_scales_fp16():
     assert np.all(np.abs(diff_x) < error_x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_upsample_nearest_3d_error():
@@ -157,7 +157,7 @@ def test_upsample_nearest_3d_error():
         net(grad_tensor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_upsample_nearest3d_grad():

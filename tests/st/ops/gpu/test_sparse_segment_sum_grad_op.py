@@ -77,7 +77,7 @@ def sparse_segment_sum_grad_pynative(loss):
     assert np.allclose(out_ms.asnumpy(), expected, loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_segment_sum_grad_graph_float32_int32_int32():
@@ -89,7 +89,7 @@ def test_sparse_segment_sum_grad_graph_float32_int32_int32():
     sparse_segment_sum_grad(loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_segment_sum_grad_pynative_float64_int64_int64():

@@ -33,7 +33,7 @@ class CeluTEST(nn.Cell):
         return self.celu(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
@@ -57,7 +57,7 @@ def test_celu_op(data_type):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
@@ -80,7 +80,7 @@ def test_celu_func(data_type):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_celu_vmap():

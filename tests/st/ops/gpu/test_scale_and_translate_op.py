@@ -28,7 +28,7 @@ class NetScaleAndTranslate(nn.Cell):
         return self.op(images, size, scale, translation)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scale_and_translate_lanczos3_true_graph_mode():
@@ -72,7 +72,7 @@ def test_scale_and_translate_lanczos3_true_graph_mode():
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scale_and_translate_lanczos1_true_pynative_mode():

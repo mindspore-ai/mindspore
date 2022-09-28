@@ -76,7 +76,7 @@ def test_jet_multiple_input_single_output_pynative_mode():
     assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -98,7 +98,7 @@ def test_derivative_multiple_input_single_output_pynative_mode():
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -120,7 +120,7 @@ def test_jet_single_input_single_output_pynative_mode():
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

@@ -42,7 +42,7 @@ class NetConv3dTranspose(nn.Cell):
         return self.conv_trans(x, w)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv3dtranspose_dshape_1():
@@ -63,7 +63,7 @@ def test_conv3dtranspose_dshape_1():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv3dtranspose_dshape_2():

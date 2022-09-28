@@ -31,7 +31,7 @@ class CholeskyNet(Cell):
         return self.cholesky(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cholesky_fp32():
@@ -48,7 +48,7 @@ def test_cholesky_fp32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cholesky_fp64():

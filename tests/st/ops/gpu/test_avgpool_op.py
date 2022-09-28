@@ -50,7 +50,7 @@ class AvgPoolGrad(nn.Cell):
         return self.grad(self.forward)(x, sens)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool2d_valid():
@@ -84,7 +84,7 @@ def test_avgpool2d_valid():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool2d_same():
@@ -118,7 +118,7 @@ def test_avgpool2d_same():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool3d_1():
@@ -163,7 +163,7 @@ def test_avgpool3d_1():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool3d_2():
@@ -208,7 +208,7 @@ def test_avgpool3d_2():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool3d_3():
@@ -250,7 +250,7 @@ def test_avgpool3d_3():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool3d_4():
@@ -307,7 +307,7 @@ def test_avgpool3d_4():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool_vmap():
@@ -324,7 +324,7 @@ def test_avgpool_vmap():
     assert out.shape == (6, 3, 1, 1, 3, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool_grad_vmap():
@@ -357,7 +357,7 @@ class DynamicShapeAvgPool3DGrad(nn.Cell):
         return self.net(x_shape, sens)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool3d_grad_dynamic_shape():

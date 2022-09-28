@@ -32,7 +32,7 @@ class TraceNet(nn.Cell):
         return self.trace(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trace_2d_int32():
@@ -51,7 +51,7 @@ def test_trace_2d_int32():
         assert (y.asnumpy() == trace_expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trace_2d_double():

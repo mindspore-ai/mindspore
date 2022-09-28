@@ -30,7 +30,7 @@ class NetScaleAndTranslateGrad(nn.Cell):
         return self.sclae_and_translate_grad_fun(grads, original_image, scale, translation)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
 def test_scale_and_translate_grad_graph():
@@ -60,7 +60,7 @@ def test_scale_and_translate_grad_graph():
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
 def test_scale_and_translate_grad_pynative():

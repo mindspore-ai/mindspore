@@ -118,7 +118,7 @@ def compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths
     assert np.allclose(loss.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("batch", [1, 10])
@@ -242,7 +242,7 @@ def test_ctc_loss_v2_un_padded_grad():
     np.allclose(grad.asnumpy(), expected_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("batch", [1, 10])

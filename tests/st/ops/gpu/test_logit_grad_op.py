@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return self.grad(dy, x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logit_grad_graph_float32():
@@ -51,7 +51,7 @@ def test_logit_grad_graph_float32():
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logit_grad_pynative_float32():

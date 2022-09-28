@@ -33,7 +33,7 @@ class SparseToDenseNet(nn.Cell):
         return self.sparsetodense(indices, output_shape, values, default_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparsetodense_2d_int32():
@@ -55,7 +55,7 @@ def test_sparsetodense_2d_int32():
         assert (output.asnumpy() == sparse_expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparsetodense_2d_double():

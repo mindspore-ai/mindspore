@@ -22,7 +22,7 @@ class Net2d(nn.Cell):
         return self.pad(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reflection_pad_1d():
@@ -65,7 +65,7 @@ def test_reflection_pad_1d():
     assert np.array_equal(output, expected_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reflection_pad_2d():

@@ -70,7 +70,7 @@ def tril_triu_pynative(nptype, diagonal):
     assert (triu_output.asnumpy() == triu_expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_uint8():
@@ -82,7 +82,7 @@ def test_tril_triu_graph_uint8():
     tril_triu(np.uint8, -5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_uint16():
@@ -94,7 +94,7 @@ def test_tril_triu_graph_uint16():
     tril_triu(np.uint16, -4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_uint32():
@@ -106,7 +106,7 @@ def test_tril_triu_graph_uint32():
     tril_triu(np.uint32, -3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_uint64():
@@ -118,7 +118,7 @@ def test_tril_triu_graph_uint64():
     tril_triu(np.uint64, -2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_int8():
@@ -130,7 +130,7 @@ def test_tril_triu_graph_int8():
     tril_triu(np.int8, -1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_int16():
@@ -142,7 +142,7 @@ def test_tril_triu_graph_int16():
     tril_triu(np.int16, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_int32():
@@ -154,7 +154,7 @@ def test_tril_triu_graph_int32():
     tril_triu(np.int32, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_int64():
@@ -166,7 +166,7 @@ def test_tril_triu_graph_int64():
     tril_triu(np.int64, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_float16():
@@ -178,7 +178,7 @@ def test_tril_triu_graph_float16():
     tril_triu(np.float16, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_float32():
@@ -190,7 +190,7 @@ def test_tril_triu_graph_float32():
     tril_triu(np.float32, 4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_float64():
@@ -202,7 +202,7 @@ def test_tril_triu_graph_float64():
     tril_triu(np.float64, 5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_graph_bool():
@@ -214,7 +214,7 @@ def test_tril_triu_graph_bool():
     tril_triu(np.bool, 6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_uint8():
@@ -226,7 +226,7 @@ def test_tril_triu_pynative_uint8():
     tril_triu_pynative(np.uint8, -5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_uint16():
@@ -238,7 +238,7 @@ def test_tril_triu_pynative_uint16():
     tril_triu_pynative(np.uint16, -4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_uint32():
@@ -250,7 +250,7 @@ def test_tril_triu_pynative_uint32():
     tril_triu_pynative(np.uint32, -3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_uint64():
@@ -262,7 +262,7 @@ def test_tril_triu_pynative_uint64():
     tril_triu_pynative(np.uint64, -2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_int8():
@@ -274,7 +274,7 @@ def test_tril_triu_pynative_int8():
     tril_triu_pynative(np.int8, -1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_int16():
@@ -286,7 +286,7 @@ def test_tril_triu_pynative_int16():
     tril_triu_pynative(np.int16, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_int32():
@@ -298,7 +298,7 @@ def test_tril_triu_pynative_int32():
     tril_triu_pynative(np.int32, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_int64():
@@ -310,7 +310,7 @@ def test_tril_triu_pynative_int64():
     tril_triu_pynative(np.int64, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_float16():
@@ -322,7 +322,7 @@ def test_tril_triu_pynative_float16():
     tril_triu_pynative(np.float16, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_float32():
@@ -334,7 +334,7 @@ def test_tril_triu_pynative_float32():
     tril_triu_pynative(np.float32, 4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_float64():
@@ -346,7 +346,7 @@ def test_tril_triu_pynative_float64():
     tril_triu_pynative(np.float64, 5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tril_triu_pynative_bool():

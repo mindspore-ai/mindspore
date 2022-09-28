@@ -30,7 +30,7 @@ class NetBitwiseOr(nn.Cell):
         return self.bitwiseor(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bitwiseor_graph():
@@ -51,7 +51,7 @@ def test_bitwiseor_graph():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bitwiseor_graph2():
@@ -72,7 +72,7 @@ def test_bitwiseor_graph2():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bitwiseor_graph3():

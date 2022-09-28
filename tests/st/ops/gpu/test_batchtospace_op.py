@@ -71,13 +71,13 @@ def BatchToSpace_pynative(nptype, block_size=2, input_shape=(4, 1, 2, 2)):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchtospace_graph_float32():
     BatchToSpace(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchtospace_graph_float16():

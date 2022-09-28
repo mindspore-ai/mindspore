@@ -40,7 +40,7 @@ def get_dy_shape(real_shape):
     return part_shape_list
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_matrix_set_diag_v3_function():
@@ -68,7 +68,7 @@ def test_matrix_set_diag_v3_function():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_matrix_set_diag_v3_ops():
@@ -100,7 +100,7 @@ def test_matrix_set_diag_v3_ops():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_matrix_set_diag_v3_ops_band():
@@ -136,7 +136,7 @@ def test_matrix_set_diag_v3_ops_band():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_matrix_set_diag_v3_ops_align():
@@ -173,7 +173,7 @@ def test_matrix_set_diag_v3_ops_align():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_matrix_set_diag_v3_vmap():
@@ -220,7 +220,7 @@ def test_matrix_set_diag_v3_vmap():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_matrix_set_diag_v3_dynamic_shape():

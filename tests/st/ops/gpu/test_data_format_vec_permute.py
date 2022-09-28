@@ -31,7 +31,7 @@ class DataFormatVecPermuteNet(nn.Cell):
         return self.op(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_data_format_vec_permute_1d_input_int32():
@@ -50,7 +50,7 @@ def test_data_format_vec_permute_1d_input_int32():
     assert (z_ms.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_data_format_vec_permute_2d_input_int64():

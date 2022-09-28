@@ -61,7 +61,7 @@ def test_round_float16():
     generate_testcases(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_round_functional():
@@ -80,7 +80,7 @@ def round_fn_graph(x):
     return x.round()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_round_graph():
@@ -99,7 +99,7 @@ def round_fn_pynative(x):
     return x.round()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_round_pynative():
@@ -114,7 +114,7 @@ def test_tensor_round_pynative():
     assert np.all(output.asnumpy() == np.array([1, 3, 4]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_round_vmap():

@@ -156,7 +156,7 @@ def test_if_after_if_in_if():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet, x, expect1, expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

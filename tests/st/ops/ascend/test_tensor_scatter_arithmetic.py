@@ -104,7 +104,7 @@ def test_tensor_scatter_arithmetic_small_float(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -124,7 +124,7 @@ def test_tensor_scatter_arithmetic_small_int(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -152,7 +152,7 @@ def test_tensor_scatter_arithmetic_multi_dims(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -176,7 +176,7 @@ def test_tensor_scatter_arithmetic_function_op(func, data_type, index_type):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -204,7 +204,7 @@ def test_tensor_scatter_arithmetic_tensor_op(func, data_type, index_type):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -60,7 +60,7 @@ class NetMaxUnpool3DGradFiveDNDHWC(nn.Cell):
         return self.maxunpool3d_grad(x, grad, indices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxunpool3d_5dinput_graph():
@@ -103,7 +103,7 @@ def test_maxunpool3d_5dinput_graph():
             assert output_grad_type == inout_type_i
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxunpool3d_5dinput_pynative():

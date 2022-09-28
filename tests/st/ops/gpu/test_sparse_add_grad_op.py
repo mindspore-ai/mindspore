@@ -31,7 +31,7 @@ class SparseAddGradNet(nn.Cell):
         return self.sparse_add_grad(val_grad, x1_indices, x2_indices, sum_indices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_add_grad_fp32():
@@ -52,7 +52,7 @@ def test_sparse_add_grad_fp32():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_add_grad_fp64():
@@ -73,7 +73,7 @@ def test_sparse_add_grad_fp64():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_add_grad_int8():
@@ -94,7 +94,7 @@ def test_sparse_add_grad_int8():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_add_grad_int16():
@@ -115,7 +115,7 @@ def test_sparse_add_grad_int16():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_add_grad_int32():
@@ -136,7 +136,7 @@ def test_sparse_add_grad_int32():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_add_grad_int64():
