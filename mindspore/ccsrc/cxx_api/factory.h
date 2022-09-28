@@ -30,7 +30,7 @@ namespace mindspore {
 constexpr auto Ascend310 = "Ascend310";
 constexpr auto Ascend910 = "Ascend910";
 constexpr auto kMS = "MS";
-MS_API inline enum DeviceType g_device_target = kInvalidDeviceType;
+inline enum DeviceType g_device_target = kInvalidDeviceType;
 
 static inline LogStream &operator<<(LogStream &stream, DeviceType device_type) {
   std::map<DeviceType, std::string> type_str_map = {
