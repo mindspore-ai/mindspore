@@ -973,7 +973,9 @@ CommInfo GetCommInfo() {
     world_group = NCCL_WORLD_GROUP;
     communication_backend = NCCL_BACKEND;
   } else {
-    MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend;
+    MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend
+                      << " for semi_auto_parallel/auto_parallel mode,"
+                         " currently only support Ascend/GPU backend.";
   }
   uint32_t world_rank_size = 0;
   if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
