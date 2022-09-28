@@ -72,6 +72,7 @@ class PrimitiveAdjust {
 
  protected:
   FmkType fmk_type_ = FmkType::kFmkTypeMs;
+  FuncGraphManagerPtr manager_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

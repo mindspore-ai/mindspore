@@ -84,8 +84,8 @@ int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (activation_type_ == ActivationType::NO_ACTIVATION) {
     activation_layer = this->layer_;
   } else {
-    activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_type_, 0, 0, 0, this->layer_->getOutput(0), device_id_);
+    activation_layer = ActivationTensorRT::AddActivation(ctx, activation_type_, 0, 0, 0, this->layer_->getOutput(0),
+                                                         op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for pool failed";
       return RET_ERROR;

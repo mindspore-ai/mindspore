@@ -74,7 +74,7 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // add activation
   if (activation_ != ActivationType::NO_ACTIVATION) {
     nvinfer1::ILayer *activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_, 0, 0, 0, out_tensor, device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_, 0, 0, 0, out_tensor, op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for matmul failed";
       return RET_ERROR;

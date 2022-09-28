@@ -843,6 +843,8 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_CHECK_TRUE_MSG(main_graph != nullptr, nullptr, "Input func_graph is nullptr");
   MS_CHECK_TRUE_MSG(param != nullptr, nullptr, "Input converter param is nullptr");
+  manager_ = Manage(main_graph, true);
+
   if (main_graph->has_attr(kOriginalFmkType)) {
     auto val_ptr = main_graph->get_attr(kOriginalFmkType);
     MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");

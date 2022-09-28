@@ -35,6 +35,41 @@ constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 }  // namespace
 
+ConverterPlugin::~ConverterPlugin() {
+#ifndef _WIN32
+  if (handle_ != nullptr) {
+    (void)dlclose(handle_);
+    handle_ = nullptr;
+  }
+#endif
+}
+
+ConverterPlugin &ConverterPlugin::Instance() {
+  static ConverterPlugin instance;
+  return instance;
+}
+
+ConverterFunc ConverterPlugin::GetConverterFunc() {
+#ifndef _WIN32
+  if (converter_func_ == nullptr) {
+    std::string plugin_path;
+    auto ret = DLSoPath("libmindspore-lite.so", "libruntime_convert_plugin.so", &plugin_path);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
+      return nullptr;
+    }
+    void *function = nullptr;
+    ret = DLSoOpen(plugin_path, "RuntimeConvert", &handle_, &function, true);
+    if (ret != kSuccess) {
+      MS_LOG(WARNING) << "DLSoOpen RuntimeConvert failed, so path: " << plugin_path;
+      return nullptr;
+    }
+    converter_func_ = reinterpret_cast<ConverterFunc>(function);
+  }
+#endif
+  return converter_func_;
+}
+
 Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
   const void *model_buff = model_data;
@@ -87,29 +122,19 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 Status ModelImpl::CompileGraphOnline(const void *model_data, size_t data_size,
                                      const std::shared_ptr<Context> &model_context) {
   MS_LOG(INFO) << "Need runtime convert";
-  std::string plugin_path;
-  auto ret = DLSoPath("libmindspore-lite.so", "libruntime_convert_plugin.so", &plugin_path);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
-    return kLiteError;
-  }
-  void *function = nullptr;
-  ret = DLSoOpen(plugin_path, "RuntimeConvert", &handle_, &function, true);
-  if (ret != kSuccess) {
-    MS_LOG(WARNING) << "DLSoOpen RuntimeConvert failed, so path: " << plugin_path;
-    return kLiteError;
-  }
-  auto convert = reinterpret_cast<mindspore::api::FuncGraphPtr (*)(
-    const char *, const size_t &, const std::shared_ptr<Context> &, const ConfigInfos &)>(function);
-  if (convert != nullptr) {
-    auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context, config_info_);
-    auto impl = api_graph->impl();
-    auto inner_graph = std::dynamic_pointer_cast<FuncGraph>(impl);
-    return session_->CompileGraph(inner_graph);
-  } else {
+  auto convert = ConverterPlugin::Instance().GetConverterFunc();
+  if (convert == nullptr) {
     MS_LOG(ERROR) << "convert is nullptr";
     return kLiteNullptr;
   }
+  auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context, config_info_);
+  if (api_graph == nullptr) {
+    MS_LOG(ERROR) << "Failed to converter graph";
+    return kLiteNullptr;
+  }
+  auto impl = api_graph->impl();
+  auto inner_graph = std::dynamic_pointer_cast<FuncGraph>(impl);
+  return session_->CompileGraph(inner_graph);
 }
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {

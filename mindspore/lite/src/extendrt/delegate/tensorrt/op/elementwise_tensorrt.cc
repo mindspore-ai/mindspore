@@ -266,7 +266,8 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
   if (activation != ActivationType::NO_ACTIVATION) {
-    auto activation_layer = ActivationTensorRT::AddActivation(ctx, activation, 0, 0, 0, in_tensor, device_id_);
+    auto activation_layer =
+      ActivationTensorRT::AddActivation(ctx, activation, 0, 0, 0, in_tensor, op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for element wise failed";
       return nullptr;
@@ -279,12 +280,12 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
 
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
-  auto expect_shape = in_tensors_[1 - const_tensor_index].Shape();
+  auto expect_shape = ConvertMSShape(input(ctx, 1 - const_tensor_index).trt_tensor_->getDimensions());
   auto &const_tensor = in_tensors_[const_tensor_index];
   nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(ctx, const_tensor, expect_shape, op_name_);
   CHECK_NULL_RETURN(constant_input);
   auto const_shape = const_tensor.Shape();
-  auto is_scalar = const_shape.empty() || (const_shape.size() == 1 && const_shape[0] == 1);
+  auto is_scalar = const_shape.empty();
   auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true, !is_scalar};
   ctx->RegisterTensor(const_helper, const_tensor.Name());
   return RET_OK;

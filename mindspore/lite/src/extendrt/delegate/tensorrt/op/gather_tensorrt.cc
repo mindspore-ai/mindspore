@@ -61,7 +61,8 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (ReadyInputsNumber(ctx) == 1) {
     int const_index = in_tensors_[0].IsConst() ? 0 : 1;
     auto const_input = ConvertConstantTensor(ctx, in_tensors_[const_index], op_name_);
-    ctx->RegisterTensor(ITensorHelper{const_input}, in_tensors_[const_index].Name());
+    auto is_scalar = in_tensors_[const_index].Shape().empty();
+    ctx->RegisterTensor(ITensorHelper{const_input, NCHW, true, !is_scalar}, in_tensors_[const_index].Name());
   }
 
   ITensorHelper gather_input = input(ctx, 0);
@@ -89,7 +90,7 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);
   auto old_shape = ConvertMSShape(op_output->getDimensions());
   // keep shape
-  if (indices_tensor.trt_tensor_->getDimensions().nbDims == 0 && old_shape.size() > 1) {
+  if (!indices_tensor.is_tensor && old_shape.size() > 1) {
     auto squeeze = ctx->network()->addShuffle(*op_output);
     if (squeeze == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed for " << op_name_;

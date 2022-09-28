@@ -109,7 +109,7 @@ int ConvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
     activation_layer = conv_layer;
   } else {
     activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, conv_layer->getOutput(0), device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, conv_layer->getOutput(0), op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for conv failed";
       return RET_ERROR;

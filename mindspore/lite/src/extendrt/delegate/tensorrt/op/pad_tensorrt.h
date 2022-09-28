@@ -37,6 +37,8 @@ class PadTensorRT : public TensorRTOp {
 
  private:
   float constant_value_ = 0.0f;
+  PaddingMode padding_mode_ = PaddingMode::CONSTANT;
+  int AddInnerOpOld(TensorRTContext *ctx);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_PAD_TENSORRT_H_

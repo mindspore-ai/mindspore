@@ -441,7 +441,17 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   if (flags_->device_ == "GPU") {
     std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
     gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
-
+    uint32_t device_id = 0;
+    auto device_id_env = std::getenv("GPU_DEVICE_ID");
+    if (device_id_env != nullptr) {
+      try {
+        device_id = static_cast<uint32_t>(std::stoul(device_id_env));
+      } catch (std::invalid_argument &e) {
+        MS_LOG(WARNING) << "Invalid device id env:" << device_id_env << ". Set default device id 0.";
+      }
+      MS_LOG(INFO) << "GPU device_id = " << device_id;
+    }
+    gpu_device_info->SetDeviceID(device_id);
     if (flags_->enable_gl_texture_) {
       gpu_device_info->SetEnableGLTexture(flags_->enable_gl_texture_);
 

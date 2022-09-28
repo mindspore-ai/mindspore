@@ -44,20 +44,103 @@ int PadTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vect
     MS_LOG(ERROR) << "convert PadFusion failed: " << op_name_;
     return RET_ERROR;
   }
-  PaddingMode padding_mode = pad_op->get_padding_mode();
-  if (padding_mode != PaddingMode::CONSTANT) {
-    MS_LOG(ERROR) << "Unsupported padding mode: " << PaddingMode(padding_mode) << ", for op: " << op_name_;
+  padding_mode_ = pad_op->get_padding_mode();
+#if TRT_VERSION_GE(8, 0)
+  if (padding_mode_ != PaddingMode::CONSTANT && padding_mode_ != PaddingMode::REFLECT) {
+    MS_LOG(ERROR) << "Unsupported padding mode: " << PaddingMode(padding_mode_) << ", for op: " << op_name_;
     return RET_ERROR;
   }
+#else
+  if (padding_mode_ != PaddingMode::CONSTANT) {
+    MS_LOG(ERROR) << "Unsupported padding mode: " << PaddingMode(padding_mode_) << ", for op: " << op_name_;
+    return RET_ERROR;
+  }
+#endif
   if (in_tensors[0].format() != Format::NHWC && in_tensors[0].format() != Format::NCHW) {
     MS_LOG(ERROR) << "Unsupported input tensor format of " << in_tensors[0].format();
     return RET_ERROR;
   }
-  constant_value_ = pad_op->get_constant_value();
+  if (pad_op->HasAttr(ops::kConstantValue)) {
+    constant_value_ = pad_op->get_constant_value();
+  }
+  dynamic_shape_params_.support_dynamic_ = false;
+  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 }
 
 int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  auto pad_input = input(ctx, 0).trt_tensor_;
+  if (pad_input == nullptr) {
+    MS_LOG(ERROR) << "TensorRt Tensor of input 0 of pad " << op_name_ << " is nullptr";
+    return RET_ERROR;
+  }
+  auto input_shape = ConvertMSShape(pad_input->getDimensions());
+  if (!in_tensors_[1].IsConst()) {
+    MS_LOG(ERROR) << "Input 1 of pad " << op_name_ << " is not constant";
+    return RET_ERROR;
+  }
+  auto pad_vec = ConvertTensorAsIntVector(in_tensors_[1]);
+  if (pad_vec.empty()) {
+    MS_LOG(ERROR) << "Failed to get pad input, node: " << op_name_;
+    return RET_ERROR;
+  }
+  constexpr size_t pad_multi_times = 2;
+  if (pad_vec.size() % 2 != 0 && pad_vec.size() != input_shape.size() * pad_multi_times) {
+    MS_LOG(ERROR) << "pad tensor is invalid, pad count: " << pad_vec.size()
+                  << ", input dims count: " << input_shape.size() << ", op: " << op_name_;
+    return RET_ERROR;
+  }
+  if (input_shape.size() == kDim4 && padding_mode_ == PaddingMode::CONSTANT) {
+    return AddInnerOpOld(ctx);
+  }
+#if TRT_VERSION_GE(8, 0)
+  std::vector<int64_t> start_values;
+  std::vector<int64_t> size_values;
+  std::vector<int64_t> stride_values;
+  for (size_t i = 0; i < pad_vec.size(); i += 2) {
+    start_values.push_back(-pad_vec[i]);
+    stride_values.push_back(1);
+    size_values.push_back(input_shape[i / 2] + pad_vec[i] + pad_vec[i + 1]);
+  }
+  auto slice_layer = ctx->network()->addSlice(*pad_input, ConvertCudaDims(start_values), ConvertCudaDims(size_values),
+                                              ConvertCudaDims(stride_values));
+  if (slice_layer == nullptr) {
+    MS_LOG(ERROR) << "Failed to add slice layer for op " << op_name_;
+    return RET_ERROR;
+  }
+  if (padding_mode_ == PaddingMode::REFLECT) {
+    slice_layer->setMode(nvinfer1::SliceMode::kREFLECT);
+  } else if (padding_mode_ == PaddingMode::CONSTANT) {
+    slice_layer->setMode(nvinfer1::SliceMode::kFILL);
+    auto const_input =
+      ConvertScalarToITensor(ctx, 1, &constant_value_, DataType::kNumberTypeFloat32, op_name_ + "_fill");
+    if (const_input == nullptr) {
+      MS_LOG(ERROR) << "Failed to create scalar tensor of constant value for op " << op_name_;
+      return RET_ERROR;
+    }
+    constexpr int fill_input_index = 4;
+    slice_layer->setInput(fill_input_index, *const_input);
+  } else {
+    MS_LOG(ERROR) << "Not support padding mode " << padding_mode_ << " for op " << op_name_;
+    return RET_ERROR;
+  }
+  slice_layer->setName(op_name_.c_str());
+  this->layer_ = slice_layer;
+  auto out_tensor = slice_layer->getOutput(0);
+  if (out_tensor == nullptr) {
+    MS_LOG(ERROR) << "Failed to get output tensor of op " << op_name_;
+    return RET_ERROR;
+  }
+  auto output_tensor = ITensorHelper{out_tensor, NCHW, true};
+  ctx->RegisterTensor(output_tensor, out_tensors_[0].Name());
+  return RET_OK;
+#else
+  MS_LOG(ERROR) << "Only support pad mode constant and input dims count 8 when trt version < 8.0, op:  " << op_name_;
+  return RET_ERROR;
+#endif
+}
+
+int PadTensorRT::AddInnerOpOld(TensorRTContext *ctx) {
   TensorInfo &pad_tensor = in_tensors_[1];
   int element_cnt = pad_tensor.ElementNum();
   if (element_cnt != input(ctx, 0).trt_tensor_->getDimensions().nbDims * INPUT_SIZE2) {
@@ -123,5 +206,6 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(output_helper);
   return RET_OK;
 }
+
 REGISTER_TENSORRT_CREATOR(ops::kNamePadFusion, PadTensorRT)
 }  // namespace mindspore::lite
