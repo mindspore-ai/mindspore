@@ -54,7 +54,7 @@ bool SparseAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_func_ = func_list_[index].second;
   indices_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex0).first);
   values_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex1).first);
-  threshold_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex2).first);
+  threshold_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex6).first);
   return true;
 }
 
@@ -166,7 +166,7 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto sum_values_ptr = GetDeviceAddress<S>(outputs, kSparseAddIndex1);
   MS_EXCEPTION_IF_NULL(sum_values_ptr);
   auto sum_shape_ptr = GetDeviceAddress<T>(outputs, kSparseAddIndex2);
-  MS_EXCEPTION_IF_NULL(sum_indices_ptr);
+  MS_EXCEPTION_IF_NULL(sum_shape_ptr);
 
   auto a_value_index_ptr = GetDeviceAddress<size_t>(workspace, kSparseAddIndex0);
   MS_EXCEPTION_IF_NULL(a_value_index_ptr);
