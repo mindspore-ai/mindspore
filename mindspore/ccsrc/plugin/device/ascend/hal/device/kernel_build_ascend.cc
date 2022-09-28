@@ -39,6 +39,7 @@ namespace ascend {
 using mindspore::kernel::tbe::TbeUtils;
 using std::make_shared;
 constexpr size_t kMaxAttrMemListSize = 192;
+static std::mutex compile_mtx;
 
 static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
   kernel::KernelModPtr kernel_mod_ptr = nullptr;
@@ -107,6 +108,7 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   auto bin_map = kernel::tbe::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
   if (!tbe_nodes.empty()) {
+    std::lock_guard<std::mutex> lock(compile_mtx);
     auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
     build_manager.TbeSingleOpCompile(tbe_nodes);
     auto config_path = TbeUtils::GetOpDebugPath();
