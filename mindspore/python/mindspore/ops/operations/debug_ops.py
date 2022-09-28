@@ -18,9 +18,11 @@ from types import FunctionType, MethodType
 from mindspore import context
 from mindspore import log as logger
 from mindspore._c_expression import security
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import dtype as mstype
+from mindspore.common.parameter import Parameter
 from mindspore.ops.primitive import prim_attr_register, Primitive, PrimitiveWithInfer
 
 
@@ -461,7 +463,12 @@ class Print(Primitive):
 
     def __call__(self, *args):
         for arg in args:
-            print(arg)
+            if isinstance(arg, Parameter):
+                print(Tensor_.__repr__(arg))
+            elif isinstance(arg, Tensor_):
+                print(arg.__repr__())
+            else:
+                print(arg)
 
 
 class Assert(PrimitiveWithInfer):

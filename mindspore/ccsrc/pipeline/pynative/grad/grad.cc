@@ -283,6 +283,7 @@ void GradExecutor::NewGraphInner(const py::object *ret, const py::object &cell, 
   MS_EXCEPTION_IF_NULL(ret);
   const auto &cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
+  bool pre_top_cell_is_dynamic_structure = false;
   if (top_cell_ != nullptr && cell_stack_.empty()) {
     // Already run top cell need distinguish high order; high order add "0" otherwise "1"
     const auto &already_run_cell_id = GetAlreadyRunCellId(cell_id);
@@ -291,8 +292,9 @@ void GradExecutor::NewGraphInner(const py::object *ret, const py::object &cell, 
       // Top cell forward run.
       const auto &pre_top_cell = top_it->second;
       MS_EXCEPTION_IF_NULL(pre_top_cell);
+      pre_top_cell_is_dynamic_structure = pre_top_cell->is_dynamic_structure();
       MS_LOG(DEBUG) << "Pre top cell, hook_changed " << pre_top_cell->hook_changed() << ", is_dynamic_structure "
-                    << pre_top_cell->is_dynamic_structure();
+                    << pre_top_cell_is_dynamic_structure;
       if (pre_top_cell->hook_changed()) {
         (void)already_run_top_cell_.erase(top_it);
         EraseTopCellFromTopCellList(pre_top_cell);
@@ -318,6 +320,9 @@ void GradExecutor::NewGraphInner(const py::object *ret, const py::object &cell, 
   // Make top graph and init resource for resource and df_builder
   InitResourceAndDfBuilder(cell_id, cell, args);
   // Check whether cell has dynamic construct
+  if (pre_top_cell_is_dynamic_structure) {
+    top_cell()->set_dynamic_structure(true);
+  }
   if (!top_cell()->is_dynamic_structure()) {
     bool is_dynamic_structure = parse::DynamicParser::IsDynamicCell(cell);
     MS_LOG(DEBUG) << "Current cell dynamic " << is_dynamic_structure;
