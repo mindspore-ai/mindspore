@@ -1315,8 +1315,7 @@ def squeeze(input_x, axis=()):
 
     Examples:
         >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> squeeze = ops.Squeeze(2)
-        >>> output = squeeze(input_x)
+        >>> output = ops.squeeze(input_x)
         >>> print(output)
         [[1. 1.]
          [1. 1.]
