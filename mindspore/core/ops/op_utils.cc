@@ -182,9 +182,9 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
       }
     }
   } else {
-    MS_LOG(EXCEPTION) << "For '" << op_name
-                      << "', the second input type should be tensor or scalar, but got invalid abstract type:"
-                      << input_args[kInputIndex1]->type_name() << ".";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the second input type should be tensor or scalar, but got invalid abstract type:"
+                             << input_args[kInputIndex1]->type_name() << ".";
   }
   return is_dynamic;
 }
@@ -199,7 +199,7 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   auto keep_dimis_value_ptr = primitive->GetAttr(kKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dimis_value_ptr);
   if (!keep_dimis_value_ptr->isa<BoolImm>()) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'keep_dims' must be Bool.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'keep_dims' must be Bool.";
   }
   bool keep_dims = GetValue<bool>(keep_dimis_value_ptr);
   std::vector<int64_t> axis_value;

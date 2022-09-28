@@ -49,7 +49,7 @@ class MIND_API EmbeddingLookup : public BaseOperator {
   bool get_setattr_flag() const;
   ///
   /// \return offset.
-  int64_t get_offset() const;
+  int64_t get_offset();
 };
 }  // namespace ops
 }  // namespace mindspore

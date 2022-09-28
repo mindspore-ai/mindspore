@@ -207,15 +207,9 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
                                    const std::vector<KernelTensorPtr> &,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  PrimitivePtr prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  if (prim->HasAttr(kAttrAxis)) {
-    auto value_ptr = prim->GetAttr(kAttrAxis);
-    if (value_ptr->isa<tensor::Tensor>()) {
-      axis_ = CheckAndConvertUtils::CheckTensorIntValue("axis", value_ptr, kernel_name_);
-    } else {
-      axis_ = CheckAndConvertUtils::CheckIntOrTupleInt("axis", value_ptr, kernel_name_);
-    }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
+  if (kernel_ptr->HasAttr(kAttrAxis)) {
+    axis_ = kernel_ptr->get_axis();
   }
   (void)GetDynamicAttrIntValue(inputs, kAxisIndex_, inputsOnHost, kernel_name_, &axis_);
   HandleInputAxis();

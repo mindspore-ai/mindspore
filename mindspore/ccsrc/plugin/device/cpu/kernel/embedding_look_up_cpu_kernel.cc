@@ -160,6 +160,7 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
 
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::EmbeddingLookup>(base_operator);
   if ((inputs.size() != kEmbeddingLookupInputsNum && inputs.size() != kEmbeddingLookupDynamicShapeInputsNum) ||
       outputs.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kEmbeddingLookupInputsNum
@@ -182,16 +183,7 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_indices_lens_ = SizeOf(input_indices_shape);
   input_indices_dtype_ = inputs[kIndex1]->GetDtype();
   if (inputs.size() == kEmbeddingLookupInputsNum) {
-    PrimitivePtr prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    auto value_ptr = prim->GetAttr(kAttrOffset);
-    if (value_ptr->isa<tensor::Tensor>()) {
-      auto off_vec = CheckAndConvertUtils::CheckTensorIntValue("offset", value_ptr, kernel_name_);
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', offset must be int, bug got " << off_vec;
-      offset_ = off_vec[0];
-    } else {
-      offset_ = GetValue<int64_t>(value_ptr);
-    }
+    offset_ = kernel_ptr->get_offset();
   }
   return KRET_OK;
 }
