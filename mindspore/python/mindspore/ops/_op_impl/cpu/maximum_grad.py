@@ -22,6 +22,8 @@ maximum_grad_op_info = CpuRegOp("MaximumGrad") \
     .input(2, "x2", "required") \
     .output(0, "y1", "required") \
     .output(1, "y2", "required") \
+    .dtype_format(DataType.U16_Default, DataType.U16_Default, DataType.U16_Default,
+                  DataType.U16_Default, DataType.U16_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
                   DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,6 +46,31 @@ def test_maximum_grad_random():
     dy = input_dout - dx
     assert np.allclose(result[0].asnumpy(), dx, rtol=1.e-4, atol=1.e-8, equal_nan=True)
     assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_broadcast_grad_cpu_type():
+    """
+    Feature: ALL To ALL
+    Description: test cases for broadcast_grad of two tensors
+    Expectation: the result match to numpy
+    """
+    np.random.seed(1)
+    input_x = np.arange(2 * 3 * 2).reshape((2, 3, 2))
+    input_y = np.arange(88, 2 * 3 * 2 + 88).reshape((2, 3, 2))
+    input_dout = np.maximum(input_x, input_y)
+    net = MaxmumGradNet()
+    dtypes = (np.int8, np.int16, np.int32, np.int64, np.float16,
+              np.float32, np.float64, np.uint16, np.uint32, np.uint64)
+    for dtype in dtypes:
+        result = net(Tensor(input_x.astype(dtype)), Tensor(input_y.astype(dtype)),
+                     Tensor(input_dout.astype(dtype)))
+        dx = input_dout * (input_x >= input_y)
+        dy = input_dout - dx
+        assert np.allclose(result[0].asnumpy(), dx, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+        assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
 @pytest.mark.level1

@@ -81,6 +81,10 @@ bool MaximumGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
     LaunchKernel<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt16) {
+    LaunchKernel<int16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt16) {
+    LaunchKernel<uint16_t>(inputs, outputs);
   }
   return true;
 }
