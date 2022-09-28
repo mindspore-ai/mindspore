@@ -68,6 +68,7 @@ int FusedBatchnormCPUKernel::InitScaleParam() {
   CHECK_LESS_RETURN(in_shape.size(), DIMENSION_5D);
   scale_param_->outer_size_ = 1;
   for (auto i = 0; i < scale_param_->axis_; i++) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(scale_param_->outer_size_, in_shape[i]), RET_ERROR, "mul overflow.");
     scale_param_->outer_size_ *= in_shape[i];
   }
   scale_param_->axis_size_ = in_shape[DIMENSION_3D];

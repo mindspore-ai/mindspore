@@ -44,6 +44,7 @@ int EmbeddingLookupCPUKernel::ReSize() {
   param_->layer_size_ = 1;
   auto in_shape = in_tensors_.front()->shape();
   for (size_t i = 1; i < in_shape.size(); ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->layer_size_, in_shape[i]), RET_ERROR, "mul overflow.");
     param_->layer_size_ *= in_shape[i];
   }
 
