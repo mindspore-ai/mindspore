@@ -219,10 +219,6 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \return  Const input indexes of the primitive.
   const std::vector<size_t> &get_const_input_indexes() const { return const_input_indexes_; }
-  /// \brief Get Primitive's id.
-  ///
-  /// \return primitive's Id.
-  uint64_t id() const { return id_; }
 
  protected:
   mindspore::HashMap<std::string, ValuePtr> attrs_;
@@ -236,7 +232,6 @@ class MS_CORE_API Primitive : public Named {
   bool record_evaluate_add_attr_;
   bool is_const_prim_;
   std::vector<size_t> const_input_indexes_;
-  uint64_t id_{0};
 };
 
 inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {

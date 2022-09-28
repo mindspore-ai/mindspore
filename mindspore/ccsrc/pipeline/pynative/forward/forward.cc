@@ -142,7 +142,7 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
 
   // Operator with hidden side effect.
   if (has_hidden_side_effect) {
-    buf << "_" << std::to_string(op_prim->id());
+    buf << "_" << std::to_string(op_run_info->py_prim_id);
   }
   op_run_info->base_op_run_info.graph_info = buf.str();
 }

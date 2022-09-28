@@ -21,20 +21,13 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore {
-static uint64_t MakeId() {
-  // Use atomic to make id generator thread safe.
-  static std::atomic<uint64_t> last_id{1};
-  return last_id.fetch_add(1, std::memory_order_relaxed);
-}
-
 Primitive::Primitive(const std::string &name, const bool is_base, const PrimType prim_type)
     : Named(name),
       is_base_(is_base),
       has_signature_(false),
       prim_type_(prim_type),
       record_evaluate_add_attr_(false),
-      is_const_prim_(false),
-      id_(MakeId()) {}
+      is_const_prim_(false) {}
 
 Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs)
     : Named(name),
@@ -43,8 +36,7 @@ Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::stri
       has_signature_(false),
       prim_type_(kPrimTypeBuiltIn),
       record_evaluate_add_attr_(false),
-      is_const_prim_(false),
-      id_(MakeId()) {}
+      is_const_prim_(false) {}
 
 Primitive::Primitive(const Primitive &prim)
     : Named(prim),
@@ -56,8 +48,7 @@ Primitive::Primitive(const Primitive &prim)
       prim_type_(prim.prim_type_),
       record_evaluate_add_attr_(false),
       is_const_prim_(false),
-      const_input_indexes_(prim.const_input_indexes_),
-      id_(prim.id_) {}
+      const_input_indexes_(prim.const_input_indexes_) {}
 
 Primitive &Primitive::operator=(const Primitive &other) {
   if (this == &other) {
@@ -72,7 +63,6 @@ Primitive &Primitive::operator=(const Primitive &other) {
   prim_type_ = other.prim_type_;
   record_evaluate_add_attr_ = false;
   is_const_prim_ = false;
-  id_ = other.id_;
   const_input_indexes_ = other.const_input_indexes_;
   return *this;
 }

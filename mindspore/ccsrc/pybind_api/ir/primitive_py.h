@@ -107,6 +107,7 @@ class PrimitivePyAdapter {
   PrimitivePyPtr attached_primitive() const { return attached_primitive_.lock(); }
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
+  uint64_t id() const { return id_; }
   const bool parse_info_ = true;
 
  private:
@@ -115,6 +116,8 @@ class PrimitivePyAdapter {
   int backward_hook_fn_key_{-1};
   std::string name_;
   std::string instance_name_;
+  // 'id_' is used to distinguish operator compilation cache in Pynative mode.
+  uint64_t id_{0};
   PrimType prim_type_{kPrimTypeBuiltIn};
   PrimitivePyWeakPtr attached_primitive_;
   mindspore::HashMap<std::string, ValuePtr> attrs_;

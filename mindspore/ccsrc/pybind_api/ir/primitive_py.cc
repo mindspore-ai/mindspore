@@ -40,6 +40,11 @@ std::map<std::string, std::string> kOpAttrNameReplaceMap = {
   {"data_format", "format"},
 };
 
+static uint64_t GenerateID() {
+  static uint64_t last_id = 0;
+  return ++last_id;
+}
+
 void SyncData(const py::object &arg) {
   if (py::isinstance<py::tuple>(arg)) {
     py::tuple arg_list = py::cast<py::tuple>(arg);
@@ -541,7 +546,7 @@ py::object PrimitivePy::RunInferValue(const py::tuple &args) {
 
 void PrimitivePy::ClearHookRes() { hook_grad_.clear(); }
 
-PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : name_(name) {}
+PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : name_(name), id_(GenerateID()) {}
 
 void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   std::string attr_name = name;
