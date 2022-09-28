@@ -25,19 +25,10 @@
 #include "include/api/status.h"
 
 namespace mindspore {
-inline Status DLSoPath(const std::string &benchmark_so, const std::string &target_so, std::string *target_so_path) {
+inline Status FindSoPath(const std::string &parent_dir, const std::string &target_so, std::string *target_so_path) {
   if (target_so_path == nullptr) {
-    return Status(kMEFailed, "Input so_path can not be nullptr.");
+    return Status(kMEFailed, "Input target_so_path is nullptr.");
   }
-  Dl_info dl_info;
-  dladdr(reinterpret_cast<void *>(DLSoPath), &dl_info);
-  std::string cur_so_path = dl_info.dli_fname;
-
-  auto pos = cur_so_path.find(benchmark_so);
-  if (pos == std::string::npos) {
-    return Status(kMEFailed, "Could not find benchmark so " + benchmark_so + " check path " + cur_so_path);
-  }
-  std::string parent_dir = cur_so_path.substr(0, pos);
   std::string found_target_so;
 
   DIR *dir = opendir(parent_dir.c_str());
@@ -66,6 +57,21 @@ inline Status DLSoPath(const std::string &benchmark_so, const std::string &targe
 
   *target_so_path = realpath.value();
   return kSuccess;
+}
+
+inline Status DLSoPath(const std::string &benchmark_so, const std::string &target_so, std::string *target_so_path) {
+  if (target_so_path == nullptr) {
+    return Status(kMEFailed, "Input so_path can not be nullptr.");
+  }
+  Dl_info dl_info;
+  dladdr(reinterpret_cast<void *>(DLSoPath), &dl_info);
+  std::string cur_so_path = dl_info.dli_fname;
+  auto pos = cur_so_path.find(benchmark_so);
+  if (pos == std::string::npos) {
+    return Status(kMEFailed, "Could not find benchmark so " + benchmark_so + " check path " + cur_so_path);
+  }
+  std::string parent_dir = cur_so_path.substr(0, pos);
+  return FindSoPath(parent_dir, target_so, target_so_path);
 }
 
 inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name, void **handle, void **function,
@@ -119,6 +125,12 @@ inline void DLSoClose(void *handle) {
   } while (false)
 }  // namespace mindspore
 #else
+inline Status FindSoPath(const std::string &benchmark_so_path, const std::string &target_so,
+                         std::string *target_so_path) {
+  MS_LOG(ERROR) << "Not support FindSoPath";
+  return kMEFailed;
+}
+
 inline Status DLSoPath(const std::string &benchmark_so, const std::string &target_so, std::string *target_so_path) {
   MS_LOG(ERROR) << "Not support dlopen so";
   return kMEFailed;

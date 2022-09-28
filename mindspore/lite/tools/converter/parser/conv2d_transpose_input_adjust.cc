@@ -16,6 +16,7 @@
 
 #include "tools/converter/parser/conv2d_transpose_input_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite {

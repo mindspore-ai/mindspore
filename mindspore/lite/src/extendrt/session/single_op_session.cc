@@ -113,8 +113,13 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
       TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
       size_t type_size = GetTypeByte(TypeIdToType(type_id));
       auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
-      size_t tensor_size =
-        shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+      size_t tensor_size;
+      if (std::any_of(shape.begin(), shape.end(), [](int64_t tmp) { return tmp < 0; })) {
+        tensor_size = type_size;
+      } else {
+        tensor_size =
+          shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+      }
       tensor_size = std::max(tensor_size, type_size);
       (void)input_size_list.emplace_back(tensor_size);
     }
@@ -220,8 +225,16 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::Tensor>
   }
   for (size_t i = 0; i < graph_inputs.size(); ++i) {
     auto graph_input = graph_inputs[i];
+    if (utils::isa<mindspore::abstract::AbstractTuplePtr>(graph_input->abstract())) {
+      MS_LOG(ERROR) << "The abstract of input is not support abstract tuple.";
+      return kLiteError;
+    }
     auto graph_input_addr = AnfAlgo::GetMutableOutputAddr(graph_input, 0);
-    auto type_id = graph_input_addr->type_id();
+    if (graph_input_addr == nullptr) {
+      MS_LOG(ERROR) << "Graph input addr is nullptr.";
+      return kLiteError;
+    }
+    TypeId type_id = graph_input_addr->type_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     size_t tensor_size = dims[i].empty()
                            ? type_size
@@ -248,6 +261,28 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::Tensor>
   }
   return kSuccess;
 }
+
+Status SingleOpInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
+                                    const std::vector<std::vector<int64_t>> &dims) {
+  if (ResizeGraphInputs(inputs, dims) != kSuccess) {
+    MS_LOG(EXCEPTION) << "Resize graph input error. ";
+  }
+  auto &kernel_nodes = kernel_graph_->execution_order();
+  for (const auto &kernel_node : kernel_nodes) {
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    MS_LOG(INFO) << "SingleOpInferSession::Resize " << kernel_name;
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
+    if (kernel_mod == nullptr) {
+      MS_LOG(EXCEPTION) << "Kernel mod is nullptr, kernel name: " << kernel_name;
+    }
+    auto args = kernel::AbstractArgsFromCNode(kernel_node);
+    if (kernel_mod->Resize(args.op, args.inputs, args.outputs) != kSuccess) {
+      MS_LOG(EXCEPTION) << "Kernel mod resize failed, kernel name: " << kernel_name;
+    }
+  }
+  return kSuccess;
+}
+
 std::vector<MutableTensorImplPtr> SingleOpInferSession::GetOutputs() { return outputs_; }
 std::vector<MutableTensorImplPtr> SingleOpInferSession::GetInputs() { return inputs_; }
 std::vector<std::string> SingleOpInferSession::GetOutputNames() { return output_names_; }

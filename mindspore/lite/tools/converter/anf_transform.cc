@@ -113,6 +113,8 @@
 #include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
+#include "tools/converter/parser/conv2d_transpose_input_adjust.h"
+#include "tools/converter/parser/parser_utils.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -438,6 +440,19 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
         return RET_ERROR;
       }
       opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
+    }
+  }
+  // adjust for conv2d_transpose
+  if (!(param->no_fusion && param->export_mindir == kMindIR)) {
+    std::set<FuncGraphPtr> all_func_graphs = {};
+    GetAllFuncGraph(old_graph, &all_func_graphs);
+    auto conv2d_transpose_adjust = std::make_shared<Conv2DTransposeInputAdjust>();
+    MS_CHECK_TRUE_MSG(conv2d_transpose_adjust != nullptr, RET_NULL_PTR, "conv2d_transpose_adjust is nullptr.");
+    for (auto sub_graph : all_func_graphs) {
+      if (!conv2d_transpose_adjust->Run(old_graph)) {
+        MS_LOG(ERROR) << "adjust conv2d_transpose failed";
+        return RET_ERROR;
+      }
     }
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
