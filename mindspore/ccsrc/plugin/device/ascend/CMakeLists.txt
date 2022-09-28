@@ -11,6 +11,10 @@ set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl
 set(MINDSPORE_RPATH
         ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(MINDSPORE_RPATH
+    ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp_arch64-linux/built-in/op_impl/ai_core/tbe/op_tiling)
+set(MINDSPORE_RPATH
+    ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp_arch64-linux/built-in/op_impl/ai_core/tbe/op_tiling)
 
 ### cxx api need file ###
 if(ENABLE_ACL)
@@ -85,7 +89,8 @@ if(MODE_ASCEND_ALL)
     find_library(PLATFORM platform ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPT_FEATURE opt_feature ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(adump_server libadump_server.a ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(OPTILING optiling ${ASCEND_CANN_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH})
+    find_library(OPTILING optiling ${ASCEND_CANN_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH}
+                    ${ASCEND_CANN_OPP_PATH_TEMP} ${ASCEND_TOOLKIT_OPP_PATH_TEMP})
     find_library(ACL_OP_COMPILER acl_op_compiler ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
     target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
