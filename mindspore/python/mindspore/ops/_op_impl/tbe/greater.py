@@ -23,6 +23,8 @@ greater_op_info = TBERegOp("Greater") \
     .compute_cost(10) \
     .kernel_name("greater") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
