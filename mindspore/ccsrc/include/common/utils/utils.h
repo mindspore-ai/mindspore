@@ -465,6 +465,7 @@ constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kAttrShapeGamma = "shape_gamma";
 constexpr auto kAttrPerm = "perm";
 constexpr auto kAttrTransposeFirst = "transpose_first";
+constexpr auto kAttrTbeFusionType = "tbe_fusion_type";
 constexpr auto kAttrAtomicAddMemSize = "automic_add_mem_size";
 constexpr auto kAttrAtomicOutputIndexs = "atomic_output_clean_indexs";
 constexpr auto kAttrNeedAtomic = "need_atomic";
