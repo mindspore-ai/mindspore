@@ -179,14 +179,14 @@ bool MaxUnpool2DGradGPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 
 bool MaxUnpool2DGradGPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2DGrad>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+  auto maxunpool2d_grad_kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2DGrad>(base_operator);
+  kernel_name_ = maxunpool2d_grad_kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->data_format = kernel_ptr->get_format();
+  attr_ptr_->data_format = maxunpool2d_grad_kernel_ptr->get_format();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;

@@ -80,17 +80,17 @@ bool Dilation2DGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
 
 bool Dilation2DGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dilation2D>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+  auto kernel_dilation2d_ptr = std::dynamic_pointer_cast<ops::Dilation2D>(base_operator);
+  kernel_name_ = kernel_dilation2d_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->stride = kernel_ptr->get_stride();
-  attr_ptr_->dilation = kernel_ptr->get_dilation();
-  attr_ptr_->pad_mode = kernel_ptr->get_pad_mode();
-  attr_ptr_->format = kernel_ptr->get_format();
+  attr_ptr_->stride = kernel_dilation2d_ptr->get_stride();
+  attr_ptr_->dilation = kernel_dilation2d_ptr->get_dilation();
+  attr_ptr_->pad_mode = kernel_dilation2d_ptr->get_pad_mode();
+  attr_ptr_->format = kernel_dilation2d_ptr->get_format();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
