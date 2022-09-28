@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for gradients."""
+from  __future__ import division
 from mindspore._checkparam import _check_3d_int_or_tuple
 
 from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
