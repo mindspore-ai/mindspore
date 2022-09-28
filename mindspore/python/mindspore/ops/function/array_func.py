@@ -3410,8 +3410,7 @@ def broadcast_to(x, shape):
     non-existing dimension.
 
     Args:
-        x (Tensor): The input tensor. The data type should be one of the following types:
-                    float16, float32, int32, int8, uint8, bool.
+        x (Tensor): The input tensor.
                     The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
                        where it will be substituted by the input tensor's shape in that position, see example.

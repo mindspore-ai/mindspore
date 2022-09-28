@@ -81,7 +81,7 @@ def broadcast_to_dtype(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_to_dtype():
@@ -146,23 +146,20 @@ def test_broadcast_dyn_invalid_init():
         P.BroadcastTo(ms_shape)(Tensor(x_np))
 
 
-class BroadcastToDynamicShapeNetMS(Cell):
+class BroadcastToNet(Cell):
     """
     Construct of dynamic input for BroadcastTo.
     """
+
     def __init__(self, shape):
         super().__init__()
-        self.unique = P.Unique()
-        self.gather = P.Gather()
         self.broadcastto = P.BroadcastTo(shape)
 
-    def construct(self, input_x, indices):
-        unique_indices, _ = self.unique(indices)
-        x = self.gather(input_x, unique_indices, 0)
-        return self.broadcastto(x)
+    def construct(self, input_x):
+        return self.broadcastto(input_x)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_to_dynamic_shape():
@@ -172,8 +169,11 @@ def test_broadcast_to_dynamic_shape():
     Expectation: success.
     """
     shape = (2, 2, 3)
-    input_x_np = np.random.randn(4, 3).astype(np.float32)
+    input_x_np = np.random.randn(2, 3).astype(np.float32)
     input_x = Tensor(input_x_np)
-    unique_indices = Tensor(np.array([0, 1, 0, 1]))
-    broadcast_to_net = BroadcastToDynamicShapeNetMS(shape)
-    broadcast_to_net(input_x, unique_indices)
+    input_dyn = Tensor(shape=[None, 3], dtype=input_x.dtype)
+    broadcast_to_net = BroadcastToNet(shape)
+    broadcast_to_net.set_inputs(input_dyn)
+    output = broadcast_to_net(input_x)
+    expect = np.broadcast_to(input_x_np, shape)
+    assert np.allclose(output.asnumpy(), expect)
