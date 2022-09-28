@@ -50,12 +50,36 @@ static inline T PdistOneNormalcompute(T diff, T grad, T dist, float p) {
 
 template <typename T>
 static inline T PdistInfNormalcompute(T diff, T grad, T dist, float p) {
-  return dist == abs(diff) ? sign(diff) * grad : T{0.f};
+  bool is_equal = false;
+  if constexpr (std::is_same_v<T, double>) {
+    is_equal = common::IsDoubleEqual(dist, abs(diff));
+  } else if constexpr (std::is_same_v<T, float>) {
+    is_equal = common::IsFloatEqual(dist, abs(diff));
+  } else if constexpr (std::is_same_v<T, float16>) {
+    is_equal = (dist == abs(diff));
+  }
+  if (is_equal) {
+    return sign(diff) * grad;
+  } else {
+    return T{0.f};
+  }
 }
 
 template <typename T>
 static inline T PdistNormalcompute(T diff, T grad, T dist, float p) {
-  return dist == T{0.f} ? T{0.f} : sign(diff) * pow(abs(diff), p - 1) * grad / pow(dist, p - 1);
+  bool is_equal = false;
+  if constexpr (std::is_same_v<T, double>) {
+    is_equal = common::IsDoubleEqual(dist, 0.0);
+  } else if constexpr (std::is_same_v<T, float>) {
+    is_equal = common::IsFloatEqual(dist, 0.0f);
+  } else if constexpr (std::is_same_v<T, float16>) {
+    is_equal = (dist == T{0.f});
+  }
+  if (is_equal) {
+    return T{0.f};
+  } else {
+    return sign(diff) * pow(abs(diff), p - 1) * grad / pow(dist, p - 1);
+  }
 }
 
 bool PdistGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -75,7 +99,7 @@ bool PdistGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   auto x_shape = inputs[1]->GetShapeVector();
   (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
-  x_dim_ = x_shape_.size();
+  x_dim_ = static_cast<int64_t>(x_shape_.size());
   x_size_ = std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>());
   auto x_dtype_ = inputs[1]->GetDtype();
   switch (x_dtype_) {
@@ -105,15 +129,15 @@ int PdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 template <typename T>
 bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &outputs) {
-  T *grad = reinterpret_cast<T *>(inputs[0]->addr);
-  T *x = reinterpret_cast<T *>(inputs[1]->addr);
-  T *dist = reinterpret_cast<T *>(inputs[2]->addr);
-  T *y = reinterpret_cast<T *>(outputs[0]->addr);
+  T *grad = static_cast<T *>(inputs[0]->addr);
+  T *x = static_cast<T *>(inputs[1]->addr);
+  T *dist = static_cast<T *>(inputs[2]->addr);
+  T *y = static_cast<T *>(outputs[0]->addr);
   memset(y, 0, x_size_ * sizeof(T));
   std::function<T(T diff, T grad, T dist, float p)> dist_func_ = PdistNormalcompute<T>;
-  if (p_ == 0.0) {
+  if (common::IsFloatEqual(p_, 0.0f)) {
     return true;
-  } else if (p_ == 1.0) {
+  } else if (common::IsFloatEqual(p_, 1.0f)) {
     dist_func_ = PdistOneNormalcompute<T>;
   } else if (std::isinf(p_)) {
     dist_func_ = PdistInfNormalcompute<T>;
@@ -126,7 +150,17 @@ bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
       for (int64_t i = m; i < temp; i += col) {
         for (int64_t j = i + col; j < temp; j += col) {
           T diff = x[i] - x[j];
-          if (diff == T{0.f}) {
+
+          bool is_equal = false;
+          if constexpr (std::is_same_v<T, double>) {
+            is_equal = common::IsDoubleEqual(diff, 0.0f);
+          } else if constexpr (std::is_same_v<T, float>) {
+            is_equal = common::IsFloatEqual(diff, 0.0f);
+          } else if constexpr (std::is_same_v<T, float16>) {
+            is_equal = (diff == T{0.f});
+          }
+
+          if (is_equal) {
             index++;
             continue;
           }
