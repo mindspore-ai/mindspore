@@ -43,8 +43,14 @@ int ConvolutionIm2ColBaseCPUKernel::InitTmpBuffer() {
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]->MutableData());
 
-  int unit_size =
-    conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * row_tile_ * thread_count_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_h_, conv_param_->kernel_w_, RET_ERROR);
+  int kernel_hw = conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_hw, conv_param_->input_channel_, RET_ERROR);
+  int kernel_chw = kernel_hw * conv_param_->input_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_chw, thread_count_, RET_ERROR);
+  int total_kernel_chw = kernel_chw * thread_count_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_kernel_chw, row_tile_, RET_ERROR);
+  int unit_size = total_kernel_chw * row_tile_;
   if (packed_input_ != nullptr) {
     ctx_->allocator->Free(packed_input_);
     packed_input_ = nullptr;
@@ -78,8 +84,12 @@ int ConvolutionIm2ColBaseCPUKernel::Prepare() {
     size_t in_channel = filter_tensor->Channel();
     size_t out_channel = filter_tensor->Batch();
     size_t oc_block_num = UP_ROUND(out_channel, oc_tile_);
-    size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
-    size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(filter_tensor->Height(), filter_tensor->Width(), RET_ERROR);
+    size_t kernel_hw = filter_tensor->Height() * filter_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(in_channel, kernel_hw, RET_ERROR);
+    size_t kernel_chw = in_channel * kernel_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(oc_block_num, kernel_chw, RET_ERROR);
+    size_t pack_weight_size = oc_block_num * kernel_chw;
     set_workspace_size(pack_weight_size * sizeof(float));
   }
   auto ret = InitConvWeightBias();

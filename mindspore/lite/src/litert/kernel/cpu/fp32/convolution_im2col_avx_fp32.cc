@@ -34,8 +34,14 @@ int ConvolutionIm2ColAVXCPUKernel::InitTmpBuffer() {
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]->MutableData());
 
-  int unit_size =
-    conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * row_tile_ * thread_count_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_h_, conv_param_->kernel_w_, RET_ERROR);
+  int kernel_hw = conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_hw, conv_param_->input_channel_, RET_ERROR);
+  int kernel_chw = kernel_hw * conv_param_->input_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_chw, thread_count_, RET_ERROR);
+  int total_kernel_chw = kernel_chw * thread_count_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_kernel_chw, row_tile_, RET_ERROR);
+  int unit_size = total_kernel_chw * row_tile_;
 
   if (packed_input_ != nullptr) {
     ctx_->allocator->Free(packed_input_);
@@ -60,8 +66,12 @@ int ConvolutionIm2ColAVXCPUKernel::InitTmpBuffer() {
   if (conv_param_->output_channel_ % oc_tile_ != 0 && out_tensors_[0]->format() == NC4HW4) {
     output_need_align_ = true;
     int oc_algin = UP_DIV(conv_param_->output_channel_, oc_tile_);
-    int pack_output_size =
-      conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc_tile_ * oc_algin;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
+    int output_hw = conv_param_->output_h_ * conv_param_->output_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_batch_, output_hw, RET_ERROR);
+    int output_bhw = conv_param_->output_batch_ * output_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc_tile_ * oc_algin, RET_ERROR);
+    int pack_output_size = output_bhw * oc_tile_ * oc_algin;
     if (tmp_output_ != nullptr) {
       ctx_->allocator->Free(tmp_output_);
       tmp_output_ = nullptr;

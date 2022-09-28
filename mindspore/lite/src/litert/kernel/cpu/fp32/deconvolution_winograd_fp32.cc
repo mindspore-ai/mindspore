@@ -101,12 +101,15 @@ void DeConvolutionWinogradCPUKernel::FreeDeconvParam() {
 }
 
 int DeConvolutionWinogradCPUKernel::InitParameter() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
   deconv_param_->input_plane_ = conv_param_->input_h_ * conv_param_->input_w_;
   deconv_param_->output_plane_ = conv_param_->output_h_ * conv_param_->output_w_;
 
   deconv_param_->in_tile_w_count_ = UP_DIV(conv_param_->input_w_, DECONV_WINOGRAD_DEFAULT_UNIT);
   deconv_param_->in_tile_h_count_ = UP_DIV(conv_param_->input_h_, DECONV_WINOGRAD_DEFAULT_UNIT);
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->in_tile_w_count_, deconv_param_->in_tile_h_count_, RET_ERROR);
   deconv_param_->in_tile_count_ =
     UP_DIV(deconv_param_->in_tile_w_count_ * deconv_param_->in_tile_h_count_, DECONV_WINOGRAD_DEFAULT_TILE);
   deconv_param_->thread_num_ = MSMAX(1, op_parameter_->thread_num_);
@@ -116,8 +119,13 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   MS_CHECK_TRUE_RET(thread_num_hw_ != 0, RET_ERROR);
   thread_stride_hw_ = UP_DIV(deconv_param_->output_plane_, thread_num_hw_);
 
-  int size = deconv_param_->thread_num_ * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
-             DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(
+    DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_TILE, deconv_param_->ic_up_,
+    RET_ERROR);
+  int total_ic_up =
+    DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->thread_num_, total_ic_up, RET_ERROR);
+  int size = deconv_param_->thread_num_ * total_ic_up;
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size * sizeof(float));
   tile_input_ = reinterpret_cast<float *>(malloc(size * sizeof(float)));
   if (tile_input_ == nullptr) {
@@ -126,6 +134,8 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   }
   (void)memset(tile_input_, 0, size * sizeof(float));
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((DECONV_WINOGRAD_DEFAULT_UNIT - 1), conv_param_->stride_w_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((DECONV_WINOGRAD_DEFAULT_UNIT - 1), conv_param_->stride_h_, RET_ERROR);
   deconv_param_->out_tile_w_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_w_ + conv_param_->kernel_w_;
   deconv_param_->out_tile_h_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_h_ + conv_param_->kernel_h_;
 
@@ -216,6 +226,7 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
   conv_param_->kernel_w_ = weight_tensor->Width();
   conv_param_->kernel_h_ = weight_tensor->Height();
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_w_, conv_param_->kernel_h_, RET_ERROR);
   deconv_param_->kernel_plane_ = conv_param_->kernel_w_ * conv_param_->kernel_h_;
   deconv_param_->ic_div_ = UP_DIV(conv_param_->input_channel_, tile_num_);
   deconv_param_->oc_div_ = UP_DIV(conv_param_->output_channel_, tile_num_);
@@ -376,7 +387,10 @@ int DeConvolutionWinogradCPUKernel::ReSize() {
     MS_LOG(ERROR) << "InitParameter error! ret: " << error_code;
     return error_code;
   }
-  if (conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_ <= kDeconvWinogradMaxPixel) {
+
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->output_plane_, conv_param_->output_channel_, RET_ERROR);
+  int output_chw = deconv_param_->output_plane_ * conv_param_->output_channel_;
+  if (output_chw <= kDeconvWinogradMaxPixel) {
     deconv_param_->thread_num_ = MSMIN(deconv_param_->thread_num_, C3NUM);
   }
   return RET_OK;
@@ -417,15 +431,27 @@ int DeConvolutionWinogradCPUKernel::Prepare() {
 }
 
 int DeConvolutionWinogradCPUKernel::DoDeconv(int task_id) {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(
+    task_id,
+    DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up_,
+    RET_ERROR);
   for (int tile_index = task_id; tile_index < deconv_param_->in_tile_count_; tile_index += deconv_param_->thread_num_) {
     float *tile_in = tile_input_ + task_id * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
                                      DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_, DECONV_WINOGRAD_DEFAULT_TILE,
+                                  RET_ERROR);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(
+      deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ * DECONV_WINOGRAD_DEFAULT_TILE,
+      deconv_param_->oc_div_ * tile_num_, RET_ERROR);
     int size = deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ * DECONV_WINOGRAD_DEFAULT_TILE *
                deconv_param_->oc_div_ * tile_num_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, size, RET_ERROR);
     float *tile_out = tile_output_ + task_id * size;
     (void)memset(tile_out, 0, size * sizeof(float));
 
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(tile_index, DECONV_WINOGRAD_DEFAULT_TILE, RET_ERROR);
     int start_index = tile_index * DECONV_WINOGRAD_DEFAULT_TILE;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->in_tile_w_count_, deconv_param_->in_tile_h_count_, RET_ERROR);
     int calculate_count = MSMIN(DECONV_WINOGRAD_DEFAULT_TILE,
                                 deconv_param_->in_tile_w_count_ * deconv_param_->in_tile_h_count_ - start_index);
 
@@ -446,20 +472,25 @@ int DeConvolutionWinogradCPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvolutionWinogradCPUKernel::DeDeconvPost(int task_id) {
-  int rest_plane = deconv_param_->output_plane_ - task_id * thread_stride_hw_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_stride_hw_, RET_ERROR);
+  int output_stride_plane = task_id * thread_stride_hw_;
+  int rest_plane = deconv_param_->output_plane_ - output_stride_plane;
   int current_plane = MSMIN(rest_plane, thread_stride_hw_);
   if (current_plane <= 0) {
     return RET_OK;
   }
 
-  WinogradPostConvFuncFp32CX(nc4hw4_output_ + task_id * thread_stride_hw_ * tile_num_,
-                             nhwc_output_ + task_id * thread_stride_hw_ * conv_param_->output_channel_,
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(output_stride_plane, tile_num_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(output_stride_plane, conv_param_->output_channel_, RET_ERROR);
+  WinogradPostConvFuncFp32CX(nc4hw4_output_ + output_stride_plane * tile_num_,
+                             nhwc_output_ + output_stride_plane * conv_param_->output_channel_,
                              reinterpret_cast<float *>(bias_data_), conv_param_->output_channel_, current_plane,
                              deconv_param_->output_plane_, conv_param_->act_type_);
   return RET_OK;
 }
 
 int DeConvolutionWinogradCPUKernel::InitRunBuf() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->oc_up_, deconv_param_->output_plane_, RET_ERROR);
   int size = deconv_param_->oc_up_ * deconv_param_->output_plane_;
   nc4hw4_output_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(size * sizeof(float)));
   if (nc4hw4_output_ == nullptr) {
@@ -467,8 +498,14 @@ int DeConvolutionWinogradCPUKernel::InitRunBuf() {
     return RET_MEMORY_FAILED;
   }
 
-  size = deconv_param_->thread_num_ * deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ *
-         DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->out_tile_w_, deconv_param_->out_tile_h_, RET_ERROR);
+  int out_tile_hw = deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->thread_num_, out_tile_hw, RET_ERROR);
+  int total_out_tile_hw = deconv_param_->thread_num_ * out_tile_hw;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(DECONV_WINOGRAD_DEFAULT_TILE, deconv_param_->oc_up_, RET_ERROR);
+  int tile_oc_up = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_out_tile_hw, tile_oc_up, RET_ERROR);
+  size = total_out_tile_hw * tile_oc_up;
   tile_output_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(size * sizeof(float)));
   if (tile_output_ == nullptr) {
     MS_LOG(ERROR) << "de conv wg Malloc tile_output_ error!";
@@ -522,9 +559,14 @@ int DeConvolutionWinogradCPUKernel::Run() {
   CHECK_NULL_RETURN(src_in);
   CHECK_NULL_RETURN(src_out);
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(deconv_param_->input_plane_, conv_param_->input_channel_, RET_ERROR);
+  int input_chw = deconv_param_->input_plane_ * conv_param_->input_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((conv_param_->input_batch_ - 1), input_chw, RET_ERROR);
+  int output_chw = deconv_param_->output_plane_ * conv_param_->output_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((conv_param_->input_batch_ - 1), output_chw, RET_ERROR);
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    nhwc_input_ = src_in + batch_index * deconv_param_->input_plane_ * conv_param_->input_channel_;
-    nhwc_output_ = src_out + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
+    nhwc_input_ = src_in + batch_index * input_chw;
+    nhwc_output_ = src_out + batch_index * output_chw;
 
     (void)memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div_ * tile_num_ * sizeof(float));
     ret = ParallelLaunch(this->ms_context_, DeConvWgFp32Run, this, deconv_param_->thread_num_);

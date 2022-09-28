@@ -61,6 +61,7 @@ int CropAndResizeCPUKernel::MallocTmpBuffer() {
   // Malloc buffer to save coordinate.
   // For mode CROP_AND_RESIZE, different output batches require different cache coordinates.
   int c = in_tensors_.at(0)->Channel();
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(new_height_, batch_, RET_ERROR);
   y_bottoms_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(sizeof(int) * new_height_ * batch_));
   if (y_bottoms_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
@@ -77,6 +78,7 @@ int CropAndResizeCPUKernel::MallocTmpBuffer() {
     return RET_NULL_PTR;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(new_width_, batch_, RET_ERROR);
   x_lefts_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(sizeof(int) * new_width_ * batch_));
   if (x_lefts_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
@@ -92,8 +94,13 @@ int CropAndResizeCPUKernel::MallocTmpBuffer() {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(new_width_, c, RET_ERROR);
+  int new_wc = new_width_ * c;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(new_wc, mapped_point_num_, RET_ERROR);
+  int total_point_num = new_wc * mapped_point_num_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_point_num, op_parameter_->thread_num_, RET_ERROR);
   line_buffer_ = reinterpret_cast<float *>(
-    ms_context_->allocator->Malloc(sizeof(float) * new_width_ * c * mapped_point_num_ * op_parameter_->thread_num_));
+    ms_context_->allocator->Malloc(sizeof(float) * total_point_num * op_parameter_->thread_num_));
   if (line_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
@@ -140,6 +147,7 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
   int unit = UP_DIV(new_height_, op_parameter_->thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(unit, task_id, RET_ERROR);
   int h_begin = unit * task_id;
   int h_end = MSMIN(h_begin + unit, new_height_);
   if (h_end <= h_begin) {

@@ -31,7 +31,10 @@ int ConvolutionDepthwiseCPUKernel::Prepare() {
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(weight_tensor);
-    int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_tensor->Height(), weight_tensor->Width(), RET_ERROR);
+    int weight_size_hw = weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_tensor->Batch(), weight_size_hw, RET_ERROR);
+    int pack_weight_size = weight_tensor->Batch() * weight_size_hw;
     if (pack_weight_size >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(float))) {
       MS_LOG(ERROR) << "pack_weight_size is invalid, pack_weight_size: " << pack_weight_size;
       return RET_ERROR;
@@ -86,6 +89,7 @@ int ConvolutionDepthwiseCPUKernel::InitConvDwCalcInfo() {
   int *out_w_start = reinterpret_cast<int *>(conv_dw_calc_param_->out_w_start_);
   int *out_w_end = reinterpret_cast<int *>(conv_dw_calc_param_->out_w_end_);
   conv_dw_calc_param_->first_calc_kw_ = -1;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->dilation_w_, (conv_param_->kernel_w_ - 1), RET_ERROR);
   for (int kw = 0; kw < conv_param_->kernel_w_; kw++) {
     out_w_start[kw] = MSMAX(
       0, (conv_param_->pad_l_ - conv_param_->dilation_w_ * kw + conv_param_->stride_w_ - 1) / conv_param_->stride_w_);

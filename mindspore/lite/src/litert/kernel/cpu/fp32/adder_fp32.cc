@@ -73,10 +73,13 @@ int AdderCPUKernel::InitWeightBias() {
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_h, kernel_w), RET_ERROR);
-  int kernel_plane = kernel_h * kernel_w;
+  int kernel_hw = kernel_h * kernel_w;
   const int oc_block = C4NUM;
   int oc_block_num = UP_DIV(out_channel, C4NUM);
-  int pack_weight_size = oc_block_num * oc_block * in_channel * kernel_plane;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(in_channel, kernel_hw, RET_ERROR);
+  int kernel_chw = in_channel * kernel_hw;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(oc_block_num * oc_block, kernel_chw, RET_ERROR);
+  int pack_weight_size = oc_block_num * oc_block * kernel_chw;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
   CHECK_NULL_RETURN(origin_weight);
@@ -87,7 +90,7 @@ int AdderCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "malloc packed weight failed.";
     return RET_ERROR;
   }
-  RowMajor2Col4Major(origin_weight, reinterpret_cast<float *>(packed_weight_), out_channel, in_channel * kernel_plane);
+  RowMajor2Col4Major(origin_weight, reinterpret_cast<float *>(packed_weight_), out_channel, in_channel * kernel_hw);
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, oc_block_num * oc_block * sizeof(float));
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {

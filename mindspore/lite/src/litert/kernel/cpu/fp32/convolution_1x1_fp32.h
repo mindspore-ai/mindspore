@@ -47,7 +47,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   int InitConv1x1Param();
-  void InitConv1x1MatmulParam();
+  int InitConv1x1MatmulParam();
   int MallocWeightBiasData() override;
   void PackWeight() override;
   void FreeTmpBuffer();
