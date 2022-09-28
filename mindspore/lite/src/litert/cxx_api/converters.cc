@@ -113,8 +113,9 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(Context *context) {
     MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
     return nullptr;
   }
-  if (context->GetInterOpParallelNum() <= 0) {
-    MS_LOG(ERROR) << "Invalid inter op parallel num : " << context->GetInterOpParallelNum();
+  if (context->GetInterOpParallelNum() <= 0 || context->GetInterOpParallelNum() > context->GetThreadNum()) {
+    MS_LOG(ERROR) << "Invalid inter op parallel num : " << context->GetInterOpParallelNum()
+                  << " | thread num: " << context->GetThreadNum();
     return nullptr;
   }
   SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetEnableParallel(),
