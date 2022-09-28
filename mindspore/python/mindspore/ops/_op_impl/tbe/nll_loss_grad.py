@@ -24,6 +24,7 @@ nll_loss_grad_op_info = TBERegOp("NLLLossGrad") \
     .kernel_name("nll_loss_grad") \
     .partial_flag(True) \
     .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .input(0, "x", False, "required", "all") \
     .input(1, "y_grad", False, "required", "all") \
     .input(2, "target", False, "required", "all") \
