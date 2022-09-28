@@ -1069,14 +1069,13 @@ CNodePtr SkipTrivialNodesMoveUp(CNodePtr node) {
     }
   }
   auto prev_node = node->input(1)->cast<CNodePtr>();
-  if (prev_node != nullptr) {
-    if (IsSomePrimitive(prev_node, DEPEND)) {
-      auto prev_prev_node = prev_node->input(1)->cast<CNodePtr>();
-      if (IsSomePrimitive(node, LOAD)) {
-        node = prev_prev_node;
-        MS_LOG(INFO) << "Moving to the Load node before Depend node.";
-      }
+  while (IsSomePrimitiveList(prev_node, {LOAD, DEPEND})) {
+    if (!prev_node->input(1)->isa<CNode>()) {
+      node = prev_node;
+      MS_LOG(INFO) << "Moving to the load node or Depend node.";
+      break;
     }
+    prev_node = prev_node->input(1)->cast<CNodePtr>();
   }
   return node;
 }

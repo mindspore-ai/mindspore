@@ -17,6 +17,7 @@
 #include "frontend/parallel/graph_util/node_info.h"
 
 #include <string>
+#include <utility>
 
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/param_info.h"
@@ -374,11 +375,12 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
 
 // Find next node of Reshape, then obtain its strategy_cost_ vector to get its layout vector.
 // if reshape's output connect to several primitive, return the first layout found
-bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
+void FindReshapeNextNodeStraCosts(const CNodePtr &cnode,
+                                  std::vector<std::pair<OperatorInfoPtr, int64_t>> *next_ops_index,
                                   bool *is_next_reshape, size_t curr_depth) {
   if (curr_depth > MAX_RECURSIVE_DEPTH) {
     MS_LOG(WARNING) << "When finding Reshape's next node, exceeded the max recursive depth: " << MAX_RECURSIVE_DEPTH;
-    return false;
+    return;
   }
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
@@ -406,18 +408,14 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
     if (IsParallelCareNode(use_apply) && (op_info != nullptr)) {
       MS_LOG(INFO) << "FindReshapeNextNodeStraCosts success prim " << node_prim->name();
       *is_next_reshape = false;
-      *next_operator_info = op_info;
-      *in_index = node_pair.second - 1;
-      return true;
+      next_ops_index->push_back(std::make_pair(op_info, node_pair.second - 1));
+      continue;
     }
     MS_LOG(DEBUG) << "FindReshapeNextNodeStraCosts failed prim " << node_prim->name() << "  "
                   << IsParallelCareNode(use_apply) << "   " << (op_info != nullptr);
 
-    if (FindReshapeNextNodeStraCosts(use_apply, next_operator_info, in_index, is_next_reshape, ++curr_depth)) {
-      return true;
-    }
+    FindReshapeNextNodeStraCosts(use_apply, next_ops_index, is_next_reshape, ++curr_depth);
   }
-  return false;
 }
 
 void SetUserAttrs(const mindspore::HashMap<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim) {
