@@ -32,6 +32,10 @@
 #include "tools/converter/quantizer/dynamic_quantizer.h"
 #include "tools/lite_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/cle_strategy.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
+#include "backend/common/optimizer/graph_optimizer.h"
+#include "tools/optimizer/graph/infershape_pass.h"
 
 namespace mindspore::lite::quant {
 int DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
@@ -268,6 +272,21 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
       return status;
     }
   }
+
+  {
+    auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    CHECK_NULL_RETURN(optimizer);
+    auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
+    CHECK_NULL_RETURN(fusion_pm);
+    fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
+    optimizer->AddPassManager(fusion_pm);
+    if (optimizer->Optimize(old_graph) == nullptr) {
+      MS_LOG(ERROR) << "run cast node fusion failed.";
+      return RET_ERROR;
+    }
+  }
+
   if (param->commonQuantParam.is_debug) {
     status = DoQuantDebug(old_graph, param, origin, origin_lite_model);
     if (status != RET_OK) {

@@ -133,16 +133,18 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
   MS_CHECK_TRUE_MSG(quant_cast_cnode != nullptr, RET_NULL_PTR, "quant_cast_cnode is nullptr.");
   quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast_" +
                                             std::to_string(input_index));
-  cnode->set_input(input_index, quant_cast_cnode);
+  auto manager = graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(graph, true);
+  }
+  MS_CHECK_TRUE_RET(manager != nullptr, RET_NULL_PTR);
+  manager->SetEdge(cnode, input_index, quant_cast_cnode);
   MS_LOG(INFO) << "InsertCastNode cnode name: " << quant_cast_cnode->fullname_with_scope()
                << " src_dtype: " << src_dtype << " dst_dtype: " << dst_dtype;
   return RET_OK;
 }
 
 int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const {
-  if (opt::CheckPrimitiveType(input_node, prim::kPrimQuantDTypeCast)) {
-    return RET_NO_CHANGE;
-  }
   bool is_graph_input = IsGraphInput(input_node);
   if (!input_node->isa<mindspore::CNode>() && !is_graph_input) {
     return RET_NO_CHANGE;
@@ -393,7 +395,12 @@ int InsertQuantNodeManager::InsertForwardQuantCastNode(const FuncGraphPtr &graph
     MS_LOG(ERROR) << "UpdateDataType failed, cnode name: " << quant_cast_cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  cnode->set_input(index, quant_cast_cnode);
+  auto manager = graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(graph, true);
+  }
+  MS_CHECK_TRUE_RET(manager != nullptr, RET_NULL_PTR);
+  manager->SetEdge(cnode, index, quant_cast_cnode);
   MS_LOG(INFO) << "InsertForwardQuantCastNode cnode name: " << cnode->fullname_with_scope()
                << " src dtype:" << src_dtype << " dst_type: " << dst_dtype;
   return RET_OK;
@@ -406,11 +413,12 @@ int InsertQuantNodeManager::InsertBackwardDeQuantCastNode(const FuncGraphPtr &gr
     MS_LOG(ERROR) << "Invalid cast dtype: " << cast_dtype;
     return RET_NOT_SUPPORT;
   }
-  // If cnode is QuantDTypeCast, do nothint.
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+  CHECK_NULL_RETURN(output_node);
+  // If cnode or outputnode is QuantDTypeCast, do nothing.
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast) ||
+      opt::CheckPrimitiveType(output_node, prim::kPrimQuantDTypeCast)) {
     return RET_NO_CHANGE;
   }
-  CHECK_NULL_RETURN(output_node);
   auto ret = CheckDataType(output_node, cast_dtype);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Check data type failed, cnode name: " << output_node->fullname_with_scope();

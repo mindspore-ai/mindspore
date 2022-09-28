@@ -106,7 +106,14 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
   if (data_info.data_type_ == kObjectTypeTensorType) {
     shape_vec = ShapeVector{static_cast<int64_t>(data_info.data_.size() / sizeof(int))};
   }
-  auto tensor_info = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), shape_vec);
+  std::shared_ptr<tensor::Tensor> tensor_info;
+  if (static_cast<TensorCompressionType>(data_info.compress_type_) == kNoCompression) {
+    tensor_info = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), shape_vec);
+  } else {
+    tensor_info =
+      std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), shape_vec, data_info.data_.size(),
+                                       static_cast<TensorCompressionType>(data_info.compress_type_));
+  }
   MS_CHECK_TRUE_RET(tensor_info != nullptr, nullptr);
   if (!data_info.data_.empty()) {
     auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
@@ -121,11 +128,10 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
   }
   auto mirror_parameter = mirror_graph->add_parameter();
   MS_CHECK_TRUE_RET(mirror_parameter != nullptr, nullptr);
-  if (node->abstract() != nullptr) {
-    mirror_parameter->set_abstract(node->abstract()->Clone());
-  }
+
   mirror_parameter->set_name(node->fullname_with_scope());
   mirror_parameter->set_default_param(tensor_info);
+  mirror_parameter->set_abstract(tensor_info->ToAbstract());
   return mirror_parameter;
 }
 
@@ -146,6 +152,10 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
     prim->set_instance_name(origin_prim->name());
   }
   prim->SetAttrs(origin_prim->attrs());
+  if (prim->GetAttr("quant_params") != nullptr) {
+    auto quant_holder = prim->GetAttr("quant_params")->cast<QuantParamHolderPtr>();
+    prim->AddAttr("quant_params", std::make_shared<QuantParamHolder>(*quant_holder));
+  }
   return prim;
 }
 }  // namespace
