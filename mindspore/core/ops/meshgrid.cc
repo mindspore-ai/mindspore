@@ -27,6 +27,8 @@
 
 namespace mindspore {
 namespace ops {
+MIND_API_OPERATOR_IMPL(Meshgrid, BaseOperator);
+
 void Meshgrid::Init(const std::string &indexing) { this->set_indexing(indexing); }
 
 void Meshgrid::set_indexing(const std::string &indexing) { (void)this->AddAttr(kIndexing, api::MakeValue(indexing)); }
@@ -45,7 +47,13 @@ abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+
     auto input_shape = shape_map[kShape];
+    if (IsDynamicRank(input_shape)) {
+      auto shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::TupleShape>(
+        std::vector<abstract::BaseShapePtr>(SizeToLong(elements.size()), shape_ptr));
+    }
     (void)CheckAndConvertUtils::CheckInteger("Each input dims", SizeToLong(input_shape.size()), kEqual, 1,
                                              primitive->name());
     output_shape.push_back(input_shape[0]);
@@ -74,7 +82,6 @@ TuplePtr MeshgridInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(Meshgrid, BaseOperator);
 AbstractBasePtr MeshgridInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

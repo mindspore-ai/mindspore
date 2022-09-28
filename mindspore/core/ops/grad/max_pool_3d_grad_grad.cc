@@ -25,6 +25,15 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const int kHalfNum = 2;
+void CalculatePad(const int64_t &shape, const int64_t &kernel, const int64_t &stride, int64_t *pad1, int64_t *pad2) {
+  int64_t tail = shape % stride;
+  int64_t pad = tail > 0 ? (kernel - tail) : (kernel - stride);
+  pad = IntToLong(std::max(LongToInt(pad), 0));
+  *pad1 = pad / kHalfNum;
+  *pad2 = pad / kHalfNum + pad % kHalfNum;
+}
+
 abstract::ShapePtr MaxPool3DGradGradInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_dim = 5;
@@ -42,6 +51,24 @@ abstract::ShapePtr MaxPool3DGradGradInferShape(const PrimitivePtr &primitive,
                                            primitive->name());
 
   CheckAndConvertUtils::Check("grad_shape", origin_input_shape, kEqual, grad_shape, primitive->name(), ValueError);
+
+  std::string pad_mode = GetValue<std::string>(primitive->GetAttr(kPadMode));
+  std::vector<int64_t> kernels = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
+  (void)CheckAndConvertUtils::CheckInteger("kernels size", SizeToLong(kernels.size()), kEqual, input_dim,
+                                           primitive->name());
+  std::vector<int64_t> strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
+  (void)CheckAndConvertUtils::CheckInteger("strides size", SizeToLong(strides.size()), kEqual, input_dim,
+                                           primitive->name());
+  std::vector<int64_t> pads = {0, 0, 0, 0, 0, 0};
+  if (pad_mode == "SAME") {
+    CalculatePad(origin_input_shape[kDim2], kernels[kDim2], strides[kDim2], &pads[kDim0], &pads[kDim1]);
+    CalculatePad(origin_input_shape[kDim3], kernels[kDim3], strides[kDim3], &pads[kDim2], &pads[kDim3]);
+    CalculatePad(origin_input_shape[kDim4], kernels[kDim4], strides[kDim4], &pads[kDim4], &pads[kDim5]);
+  }
+  for (size_t i = 0; i < pads.size(); i++) {
+    (void)CheckAndConvertUtils::CheckInteger("element of pad_list ", pads[i], kGreaterEqual, 0, primitive->name());
+  }
+  (void)primitive->SetAttrs({{kPadList, MakeValue(pads)}});
   return std::make_shared<abstract::Shape>(origin_output_shape);
 }
 
