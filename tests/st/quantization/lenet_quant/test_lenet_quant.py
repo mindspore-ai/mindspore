@@ -160,7 +160,7 @@ def export_lenet(optim_option="QAT", file_format="MINDIR"):
     export(network, inputs, file_name="lenet_quant", file_format=file_format, quant_mode='AUTO')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lenet_quant():
@@ -184,7 +184,7 @@ def test_lenet_quant_ascend():
     export_lenet(optim_option="LEARNED_SCALE", file_format="AIR")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

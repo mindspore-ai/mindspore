@@ -56,7 +56,7 @@ def basic_test(net, datatype):
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_fp16():
@@ -64,7 +64,7 @@ def test_gpu_fp16():
     basic_test(ErfNet, np.float16)
     basic_test(ErfcNet, np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_fp32():

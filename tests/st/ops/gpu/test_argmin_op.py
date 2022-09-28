@@ -34,7 +34,7 @@ class NetArgmin(nn.Cell):
         return self.argmin(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmin_1d():
@@ -54,7 +54,7 @@ def test_argmin_1d():
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmin_2d():
@@ -82,7 +82,7 @@ def test_argmin_2d():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmin_high_dims():

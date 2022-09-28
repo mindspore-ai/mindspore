@@ -32,7 +32,7 @@ class NetUniqueConsecutive(nn.Cell):
         return ops.unique_consecutive(x, self.return_idx, self.return_counts, self.axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive():
@@ -49,7 +49,7 @@ def test_unique_consecutive():
     assert (out.asnumpy() == exp_out).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_return_idx():
@@ -68,7 +68,7 @@ def test_unique_consecutive_return_idx():
     assert (idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_return_counts():
@@ -87,7 +87,7 @@ def test_unique_consecutive_return_counts():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_set_axis_0():
@@ -108,7 +108,7 @@ def test_unique_consecutive_set_axis_0():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_set_axis_1():
@@ -129,7 +129,7 @@ def test_unique_consecutive_set_axis_1():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_1d_int32():
@@ -150,7 +150,7 @@ def test_unique_consecutive_1d_int32():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_1d_int64():
@@ -171,7 +171,7 @@ def test_unique_consecutive_1d_int64():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_1d_half():
@@ -192,7 +192,7 @@ def test_unique_consecutive_1d_half():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_1d_float():
@@ -213,7 +213,7 @@ def test_unique_consecutive_1d_float():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_0d():
@@ -234,7 +234,7 @@ def test_unique_consecutive_0d():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_3d():
@@ -256,7 +256,7 @@ def test_unique_consecutive_3d():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_consecutive_3d_axis():
@@ -284,7 +284,7 @@ class NetTensor(nn.Cell):
         return x.unique_consecutive(return_idx, return_counts, axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_return_output():
@@ -301,7 +301,7 @@ def test_tensor_return_output():
     assert (out.asnumpy() == exp_out).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_return_idx():
@@ -320,7 +320,7 @@ def test_tensor_return_idx():
     assert (idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_return_counts():
@@ -339,7 +339,7 @@ def test_tensor_return_counts():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_return_all():
@@ -373,7 +373,7 @@ class NetDynamic(nn.Cell):
         return x_out, x_idx, x_counts, x_split
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic():

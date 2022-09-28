@@ -48,7 +48,7 @@ class NetGridSampler3DGrad(nn.Cell):
         return self.grid_sampler_3d_grad(grad, x, grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grid_sampler_2d_grad_float16():
@@ -81,7 +81,7 @@ def test_grid_sampler_2d_grad_float16():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grid_sampler_2d_grad_float32():
@@ -114,7 +114,7 @@ def test_grid_sampler_2d_grad_float32():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grid_sampler_2d_grad_float64():
@@ -146,7 +146,7 @@ def test_grid_sampler_2d_grad_float64():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grid_sampler_3d_grad_float16():
@@ -185,7 +185,7 @@ def test_grid_sampler_3d_grad_float16():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grid_sampler_3d_grad_float32():
@@ -224,7 +224,7 @@ def test_grid_sampler_3d_grad_float32():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grid_sampler_3d_grad_float64():
@@ -263,7 +263,7 @@ def test_grid_sampler_3d_grad_float64():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_grid_sampler_2d_grad():
@@ -297,7 +297,7 @@ def test_vmap_grid_sampler_2d_grad():
     assert np.all(abs(grid_vmap.asnumpy() - expect_grid) < error_grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_grid_sampler_3d_grad():

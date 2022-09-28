@@ -48,7 +48,7 @@ class MSGradNet(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lrn_ms():
@@ -74,7 +74,7 @@ def test_lrn_ms():
     assert np.allclose(output.asnumpy(), y_exp)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lrn_grad():
@@ -105,7 +105,7 @@ def test_lrn_grad():
     assert np.allclose(dx, dx_exp, atol=1.0e-4, rtol=1.0e-4, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lrn_grad_dynamic_shape():

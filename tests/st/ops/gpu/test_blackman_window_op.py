@@ -76,7 +76,7 @@ def blackman_window_pynative(periodic, dtype, loss):
     assert np.allclose(blackman_window_output.asnumpy(), blackman_window_expect.numpy().astype(nptype), loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_blackman_window_graph_int32_true_float32():
@@ -88,7 +88,7 @@ def test_blackman_window_graph_int32_true_float32():
     blackman_window(periodic=True, dtype="float32", loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_blackman_window_pynative_int64_false_float64():

@@ -41,7 +41,7 @@ def add_testcase(var, accum, lr, l1, l2, grad, indices):
     net = Net(var, accum, lr, l1, l2)
     return net(grad, indices)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_small_shape():

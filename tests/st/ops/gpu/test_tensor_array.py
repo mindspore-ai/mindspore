@@ -39,7 +39,7 @@ class TensorArrayNet(nn.Cell):
         self.ta.close()
         return v, s
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensorarray():
@@ -100,7 +100,7 @@ def test_tensorarray():
     assert np.allclose(s.asnumpy(), expect_s)
     td.close()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_static_tensorarray():

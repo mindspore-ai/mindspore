@@ -120,7 +120,7 @@ def test_pyfunc_no_output():
     assert np.allclose(net_output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pyfunc_scalar():

@@ -121,7 +121,7 @@ def compare_scatter_nd_func(func, inputx, indices, updates):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -142,7 +142,7 @@ def test_scatter_nd_func_small(func, data_type, index_type):
     compare_scatter_nd_func(func, inputx, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_nd_func_small_update():
@@ -158,7 +158,7 @@ def test_scatter_nd_func_small_update():
     compare_scatter_nd_func("update", inputx, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -187,7 +187,7 @@ def test_scatter_nd_func_multi_dims(func, data_type, index_type):
     compare_scatter_nd_func(func, inputx, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -208,7 +208,7 @@ def test_scatter_nd_func_one_value(func, data_type, index_type):
     compare_scatter_nd_func(func, inputx, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('data_type', [mstype.int64])
@@ -228,7 +228,7 @@ def test_scatter_nd_div_division_by_zero(data_type, index_type):
     compare_scatter_nd_func('div', inputx, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("func_name", ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -258,7 +258,7 @@ def test_scatter_nd_dy_shape(func_name):
     np.testing.assert_allclose(np_result, ms_result.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])
@@ -285,7 +285,7 @@ def test_scatter_func_indices_vmap(func):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])

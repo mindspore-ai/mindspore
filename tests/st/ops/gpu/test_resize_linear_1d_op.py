@@ -24,7 +24,7 @@ from mindspore.ops import functional as F
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -43,7 +43,7 @@ def test_resize_linear_1d_align_corners(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -63,7 +63,7 @@ def test_resize_linear_1d_half_pixel(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -82,7 +82,7 @@ def test_resize_linear_1d_size_not_change(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
@@ -100,7 +100,7 @@ def test_resize_linear_1d_half_pixel_functional_interface(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float64])

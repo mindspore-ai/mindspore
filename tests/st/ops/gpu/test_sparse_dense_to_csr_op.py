@@ -71,7 +71,7 @@ class DenseToCSRNet(nn.Cell):
         return self.to_csr(x, indices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "float32"),
                                                   ("int32", "float64"),
                                                   ("int32", "complex64"),
@@ -91,7 +91,7 @@ def test_2d_dense_to_csr(indicetype, datatype):
     compare_res(out, expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "float32"),
                                                   ("int32", "float64"),
                                                   ("int32", "complex64"),

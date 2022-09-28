@@ -63,7 +63,7 @@ def main_test(var_np, accum_np, accum_update_np, lr_np, rho_np, epsilon_np, grid
            (expect_var_np, res_var_mindspore)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_apply_adadelta_fff():
@@ -90,7 +90,7 @@ def test_apply_adadelta_fff():
     assert np.all(abs(var[0] - var[1]) < eps_f32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_apply_adadelta_ddd():

@@ -207,7 +207,7 @@ def test_layernorm2d_4():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm_dynamic_shape():
@@ -236,7 +236,7 @@ def test_layernorm_dynamic_shape():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm_double():

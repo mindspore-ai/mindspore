@@ -156,7 +156,7 @@ def test_cpu_e2e_dump():
     run_e2e_dump()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @security_off_wrap
@@ -178,7 +178,7 @@ def test_gpu_e2e_dump():
     run_e2e_dump()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap

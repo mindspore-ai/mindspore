@@ -18,7 +18,7 @@ class NetTripletMarginLoss(nn.Cell):
         return self.triplet_margin_loss(anchor, positive, negative, margin)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_triplet_margin_loss_float64():
@@ -64,7 +64,7 @@ def test_triplet_margin_loss_float64():
                            equal_nan=False)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_triplet_margin_loss_float32():

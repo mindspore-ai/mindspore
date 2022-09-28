@@ -87,7 +87,7 @@ class DynamicShapeCSRToCOONet(nn.Cell):
         return self.to_coo(shape, x_batch_pointers, x_row_pointers, unqie_col_indices, unique_values)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_2d_csr_to_coo():
@@ -103,7 +103,7 @@ def test_2d_csr_to_coo():
     compare_res(outputs, expects)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_csr_to_coo():
@@ -119,7 +119,7 @@ def test_3d_csr_to_coo():
     compare_res(outputs, expects)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_csr_to_coo_fp64():
@@ -135,7 +135,7 @@ def test_3d_csr_to_coo_fp64():
     compare_res(outputs, expects)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_csr_to_coo():

@@ -147,14 +147,14 @@ def test_basic3(net):
     assert np.allclose(expect0_np, output0_np, 1.e-3, 1.e-3)
     assert np.allclose(expect1_np, output1_np, 1.e-3, 1.e-3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic1(Net1)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_2():

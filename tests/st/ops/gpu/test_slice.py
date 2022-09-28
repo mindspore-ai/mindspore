@@ -79,7 +79,7 @@ class Slice5DNet(nn.Cell):
         return self.slice(x, (0, 11, 1, 2, 3), (32, 7, 14, 10, 221))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_slice_5d():

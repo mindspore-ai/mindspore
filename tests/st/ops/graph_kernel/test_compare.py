@@ -193,7 +193,7 @@ def test_less_gpu():
     test_less_net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_greater_gpu():
@@ -201,7 +201,7 @@ def test_greater_gpu():
     test_greater_net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_less_equal_gpu():
@@ -209,7 +209,7 @@ def test_less_equal_gpu():
     test_less_equal_net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_greater_equal_gpu():

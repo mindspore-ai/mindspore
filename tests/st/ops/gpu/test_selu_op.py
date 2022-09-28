@@ -61,7 +61,7 @@ def selu_op_np_bencmark(input_x):
     return result
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.int8, np.int32, np.float32, np.float16])
@@ -86,7 +86,7 @@ def test_selu_op(data_type, data_shape):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_selu_vmap_gpu():
@@ -108,7 +108,7 @@ def test_selu_vmap_gpu():
     assert np.allclose(output.asnumpy(), benchmark_output, rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_selu_dy_shape():

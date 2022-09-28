@@ -32,7 +32,7 @@ class PopulationCount(Cell):
         return self.populationcount(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_1x2_int8():
@@ -48,7 +48,7 @@ def test_populationcount_1x2_int8():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_2x2x2_uint8():
@@ -66,7 +66,7 @@ def test_populationcount_2x2x2_uint8():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_1x2_int16():
@@ -82,7 +82,7 @@ def test_populationcount_1x2_int16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_2x2x2_uint16():
@@ -100,7 +100,7 @@ def test_populationcount_2x2x2_uint16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_1x2_int32():
@@ -116,7 +116,7 @@ def test_populationcount_1x2_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_2x2x2_uint32():
@@ -134,7 +134,7 @@ def test_populationcount_2x2x2_uint32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_1x2_int64():
@@ -150,7 +150,7 @@ def test_populationcount_1x2_int64():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_populationcount_2x2x2_uint64():

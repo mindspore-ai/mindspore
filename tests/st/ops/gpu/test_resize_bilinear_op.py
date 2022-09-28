@@ -246,7 +246,7 @@ def test_resize_nn_grayscale_integer_ratio_float(datatype=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_not_integer_ratio_half(datatype=np.float16):
@@ -580,7 +580,7 @@ class NetResizeBilinearFunc(nn.Cell):
         return ops.interpolate(inputs, None, None, size, "half_pixel", "bilinear")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_func_half_pixel_centers(datatype=np.float32):

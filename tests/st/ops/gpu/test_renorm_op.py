@@ -33,7 +33,7 @@ class ReNormNet(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_renorm_op_float32(data_type=np.float32):
@@ -59,7 +59,7 @@ def test_renorm_op_float32(data_type=np.float32):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_renorm_op_float16(data_type=np.float16):
@@ -85,7 +85,7 @@ def test_renorm_op_float16(data_type=np.float16):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_renorm_op1_float32(data_type=np.float32):
@@ -111,7 +111,7 @@ def test_renorm_op1_float32(data_type=np.float32):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_renorm_op2_float16(data_type=np.float16):
@@ -217,7 +217,7 @@ def vmap_nested_case():
     np.testing.assert_allclose(output.asnumpy(), fornet_output.asnumpy(), rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_renorm_vmap_cpu():
@@ -230,7 +230,7 @@ def test_renorm_vmap_cpu():
     vmap_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_renorm_vmap_cpu_nested():
@@ -243,7 +243,7 @@ def test_renorm_vmap_cpu_nested():
     vmap_nested_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_renorm_op2_complex64(data_type=np.complex64):

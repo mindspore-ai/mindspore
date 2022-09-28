@@ -32,7 +32,7 @@ class NetHeaviside(nn.Cell):
         return self.heaviside(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_heaviside_fp16():
@@ -51,7 +51,7 @@ def test_heaviside_fp16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_heaviside_fp32():
@@ -70,7 +70,7 @@ def test_heaviside_fp32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_heaviside_fp64():

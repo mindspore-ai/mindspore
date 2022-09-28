@@ -97,7 +97,7 @@ def np_affine_grid_5d(theta, size, align_corners=False):
     return grid.reshape((n, d, h, w, 3))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("net", [AffineGridNet, AffineGridDynamicShapeNet])
@@ -130,7 +130,7 @@ def test_affine_grid_4d(net, align, dtype):
     assert np.allclose(np_grid, ms_grid.asnumpy(), atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("net", [AffineGridNet, AffineGridDynamicShapeNet])

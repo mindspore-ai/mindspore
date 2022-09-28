@@ -32,7 +32,7 @@ class NetUpperBound(nn.Cell):
         return self.upperbound(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_upperbound_2d_input_int32_output_int32():
@@ -52,7 +52,7 @@ def test_upperbound_2d_input_int32_output_int32():
     assert (z_ms.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_upperbound_2d_input_float16_output_int64():

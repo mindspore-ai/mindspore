@@ -33,7 +33,7 @@ class NetExpm1(nn.Cell):
         return self.expm1(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_expm1_fp32():
@@ -44,7 +44,7 @@ def test_expm1_fp32():
     tol = 1e-6
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_expm1_fp16():

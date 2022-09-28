@@ -83,7 +83,7 @@ c = [Tensor(np.array([[6, 6, 6, 6], [6, 6, 6, 6]]), ms.float32),
      Tensor(np.array([[6], [6]]), ms.int32),
      Tensor(np.array([[6, 6, 6, 6], [6, 6, 6, 6]]), ms.float32)]
 
-@ pytest.mark.level0
+@ pytest.mark.level1
 @ pytest.mark.platform_x86_gpu_training
 @ pytest.mark.env_onecard
 def test_BufferSample():
@@ -94,7 +94,7 @@ def test_BufferSample():
     print(ss, aa, rr, ss_)
 
 
-@ pytest.mark.level0
+@ pytest.mark.level1
 @ pytest.mark.platform_x86_gpu_training
 @ pytest.mark.env_onecard
 def test_BufferGet():

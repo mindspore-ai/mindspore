@@ -129,7 +129,7 @@ def test_diag_2d_int32():
     diag_2d(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_2d_int64():
@@ -141,7 +141,7 @@ def test_diag_2d_int64():
     diag_2d(np.int64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_with_dynamic_shape():
@@ -153,7 +153,7 @@ def test_diag_with_dynamic_shape():
     diag_with_dynamic_shape(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_functional():
@@ -171,7 +171,7 @@ def test_diag_functional():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_tensor():
@@ -189,7 +189,7 @@ def test_diag_tensor():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_vmap():

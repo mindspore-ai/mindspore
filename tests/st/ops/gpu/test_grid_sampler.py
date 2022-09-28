@@ -101,7 +101,7 @@ def run_net3d(dtype):
     assert np.all(np.abs(diff_out) < error_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gridsampler2d():
@@ -116,7 +116,7 @@ def test_gridsampler2d():
     run_net2d(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gridsampler3d():
@@ -131,7 +131,7 @@ def test_gridsampler3d():
     run_net3d(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gridsampler2d_neg_input():
@@ -161,7 +161,7 @@ def test_gridsampler2d_neg_input():
     assert np.all(np.abs(diff_out) < error_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gridsampler3d_neg_input():
@@ -195,7 +195,7 @@ def test_gridsampler3d_neg_input():
     assert np.all(np.abs(diff_out) < error_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_grid_sampler_2d():
@@ -258,7 +258,7 @@ def test_vmap_grid_sampler_2d():
     assert np.all(abs(out_vmap.asnumpy() - expect) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_vmap_grid_sampler_3d():

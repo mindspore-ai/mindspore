@@ -141,7 +141,7 @@ def ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type):
     return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float():
@@ -170,7 +170,7 @@ def test_apply_adagrad_da_float():
         np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float16():
@@ -201,7 +201,7 @@ def test_apply_adagrad_da_float16():
         np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float16_vmap():
@@ -231,7 +231,7 @@ def test_apply_adagrad_da_float16_vmap():
         np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float_vmap():
@@ -260,7 +260,7 @@ def test_apply_adagrad_da_float_vmap():
         np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float16_vmap2():
@@ -290,7 +290,7 @@ def test_apply_adagrad_da_float16_vmap2():
         np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float_vmap2():

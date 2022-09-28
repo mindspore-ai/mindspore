@@ -94,7 +94,7 @@ def test_list_comprehension_with_variable_input():
     assert np.all(res[2].asnumpy() == np.array([1, 2, 3]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -118,7 +118,7 @@ def test_list_comprehension_with_variable_input_2():
     assert np.all(res[2].asnumpy() == np.array([3, 4, 5]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -143,7 +143,7 @@ def test_list_comprehension_with_variable_input_3():
     assert np.all(res[2].asnumpy() == np.array([13, 14, 15]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -167,7 +167,7 @@ def test_list_comprehension_with_variable_input_and_condition():
     assert np.all(res[2].asnumpy() == np.array([1, 2, 3]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -191,7 +191,7 @@ def test_list_comprehension_with_variable_input_and_condition_2():
     assert np.all(res[2].asnumpy() == np.array([5, 6, 7]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

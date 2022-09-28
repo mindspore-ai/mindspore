@@ -116,7 +116,7 @@ def test_all_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_first_flatten():
@@ -150,7 +150,7 @@ def test_last_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_flatten_tensor_interface():
@@ -170,7 +170,7 @@ def test_flatten_tensor_interface():
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_flatten_functional_interface():
@@ -194,7 +194,7 @@ def flatten_graph(x):
     return P.Flatten()(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_flatten_vmap():
