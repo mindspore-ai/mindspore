@@ -234,6 +234,9 @@ int FindFixedPositionOfReshape(const ShapeVector &input_shape, const ShapeVector
 bool CheckPermAndShape(const std::vector<int> &input_shape, const std::vector<int> &output_shape,
                        const std::vector<int> &pre_perm, const std::vector<int> &post_perm,
                        const std::vector<size_t> &in_fixed_pos, const std::vector<size_t> &out_fixed_pos) {
+  if (in_fixed_pos.empty() || out_fixed_pos.empty()) {
+    return false;
+  }
   for (size_t i = 0; i < in_fixed_pos.size() || i < out_fixed_pos.size(); i++) {
     size_t pre_num = 1;
     auto in_begin = i < in_fixed_pos.size() ? in_fixed_pos.at(i) : input_shape.size() - 1;
