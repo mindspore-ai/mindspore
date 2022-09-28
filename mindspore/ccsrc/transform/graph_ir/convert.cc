@@ -1803,7 +1803,10 @@ void DfGraphConvertor::SetOpDynamicInput(const OpAdapterPtr &adpt, const CNodePt
       MS_EXCEPTION_IF_NULL(Convert(input));
       *handles = pred_adpt->getOutputs(Convert(input));
     } else {
-      handles->emplace_back(GetNormalOpInput(node, input));
+      auto handle = GetNormalOpInput(node, input);
+      if (handle.op != nullptr) {
+        handles->emplace_back(handle);
+      }
     }
   }
 
@@ -1826,9 +1829,12 @@ std::vector<OutHandler> DfGraphConvertor::GetAllInputHandle(const CNodePtr &node
     auto input = inputs[i];
     TransformConstOp(node, input);
     auto handler = GetNormalOpInput(node, input);
+    if (handler.op == nullptr) {
+      continue;
+    }
     handles.emplace_back(handler);
-    DrawOpInput(node, input, i);
     AddGraphConstInput(handler.op);
+    DrawOpInput(node, input, i);
   }
   return handles;
 }
@@ -1948,6 +1954,9 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     }
 
     auto handle = GetNormalOpInput(node, pred);
+    if (handle.op == nullptr) {
+      continue;
+    }
     int ret = adpt->setInput(src, SizeToInt(i), handle);
     if (ret != SUCCESS) {
       MS_LOG(WARNING) << "Set node input handle failed, node:" << node->fullname_with_scope()
