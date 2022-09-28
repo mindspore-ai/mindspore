@@ -153,7 +153,7 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
 int FusedBatchnormCPUKernel::Run() {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   MS_ASSERT(param != nullptr);
-  if (IsTrain() && param->is_training_ && in_tensors_.size() >= DIMENSION_5D) {
+  if (IsTrain() && param->is_training_ && in_tensors_.size() >= DIMENSION_5D && out_tensors_.size() >= DIMENSION_5D) {
     float *in = static_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
     float *scale = static_cast<float *>(in_tensors_.at(SECOND_INPUT)->data());
     float *offset = static_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());

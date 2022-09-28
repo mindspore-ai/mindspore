@@ -113,7 +113,7 @@ int AdderCPUKernel::RunImpl(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   MS_ASSERT(input_tensor != nullptr);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
-  MS_ASSERT(ori_input_data != nullptr);
+  CHECK_NULL_RETURN(ori_input_data);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   CHECK_NULL_RETURN(output_addr);
   AdderFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),

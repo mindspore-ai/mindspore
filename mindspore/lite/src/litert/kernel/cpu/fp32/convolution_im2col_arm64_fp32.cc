@@ -31,6 +31,7 @@ void ConvolutionIm2ColARM64CPUKernel::InitGlobalVariable() {
 
 int ConvolutionIm2ColARM64CPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
+  CHECK_NULL_RETURN(ori_input_data);
   if (out_tensors_[0]->format() != NC4HW4) {
     if (use_batch_cut_flag_) {
       ConvFp32CutByBatch(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
