@@ -140,9 +140,9 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     shape_size_ = input_shape.size();
-    if (shape_size_ != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be equal to 2, but got "
-                        << shape_size_;
+    if (shape_size_ > 3) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimension of input must be less than and equal to 3, but got " << shape_size_;
     }
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "LogSoftmaxGrad") {

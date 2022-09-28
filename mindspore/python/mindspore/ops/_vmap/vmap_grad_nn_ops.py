@@ -103,6 +103,7 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.MaxPoolGrad)
 @vmap_rules_getters.register(G.AvgPoolGrad)
 def get_avg_pool_grad_vmap_rule(prim, axis_size):
     """VmapRule for `AvgPoolGrad`."""
@@ -680,4 +681,29 @@ def get_upsample_grad_vmap_rule(prim, axis_size):
         real_out_shape = grad_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
         out = F.reshape(out, real_out_shape)
         return out, 0
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.LogSoftmaxGrad)
+def get_log_softmax_vmap_rule(prim, axis_size):
+    """VmapRule for 'LogSoftmaxGrad' operation."""
+    if isinstance(prim, str):
+        axis = -1
+    else:
+        axis = prim.axis
+
+    def vmap_rule(x_bdim, grad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        grad, _ = grad_bdim
+        x_ndim = F.rank(x) - 1
+
+        batch_axis = axis + x_ndim if axis < 0 else axis
+        batch_axis = batch_axis if batch_axis < x_dim else batch_axis + 1
+
+        dx = G.LogSoftmaxGrad(axis=batch_axis)(x, grad)
+        return dx, x_dim
+
     return vmap_rule

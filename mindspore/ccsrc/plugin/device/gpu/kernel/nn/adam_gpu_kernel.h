@@ -53,6 +53,11 @@ class AdamGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T>
@@ -66,6 +71,9 @@ class AdamGpuKernelMod : public NativeGpuKernelMod {
  private:
   AdamLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, AdamLaunchFunc>> func_list_;
+  size_t input_elements_;
+  int64_t batch_rank_{0};
+  int64_t batch_size_{1};
   size_t variable_size_;
   size_t m_size_;
   size_t v_size_;
