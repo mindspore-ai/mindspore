@@ -129,6 +129,13 @@ class NoRepeatNGram(PrimitiveWithInfer):
     Raises:
         TypeError: If `ngram_size` is not an int.
         TypeError: If neither `state_seq` nor `log_probs` is a Tensor.
+        TypeError: If the dtype of `state_seq` is not int.
+        TypeError: If the dtype of `log_probs` is not float.
+        ValueError: If `ngram_size` is less than zero.
+        ValueError: If `ngram_size` is greater than m.
+        ValueError: If neither `state_seq` nor `log_probs` is not a 3-D Tensor.
+        ValueError: If the batch_size of `state_seq` and `log_probs` are not equal.
+        ValueError: If the beam_width of `state_seq` and `log_probs` are not equal.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
