@@ -54,6 +54,9 @@ class AscendDeprecatedInterface : public DeprecatedInterface {
   bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) override;
   bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) override;
   bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) override;
+  void AclOptimizer(const FuncGraphPtr &graph) override;
+  bool CheckIsAscend910Soc() override;
+  void AclLoadModel(Buffer *om_data) override;
 
  private:
   GeDeviceContext *const ge_device_context_;

@@ -11,6 +11,7 @@ add_library(dvpp_utils SHARED
         VdecHelper.cc
         dvpp_video.cc
         acl_plugin.cc
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.cc
         )
 
 target_link_libraries(dvpp_utils PRIVATE _c_dataengine ${ACL} ${ACL_DVPP} mindspore_core mindspore_shared_lib)

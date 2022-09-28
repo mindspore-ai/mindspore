@@ -26,7 +26,7 @@
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 
 namespace mindspore {
-API_FACTORY_REG(GraphCell::GraphImpl, GPUGraphImpl);
+API_GRAPH_REG(kGPUDevice, GPUGraphImpl);
 
 GPUGraphImpl::GPUGraphImpl()
     : session_impl_(nullptr),

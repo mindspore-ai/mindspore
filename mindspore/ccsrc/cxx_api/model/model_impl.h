@@ -26,7 +26,7 @@
 #include "ir/func_graph.h"
 
 namespace mindspore {
-class ModelImpl {
+class MS_API ModelImpl {
  public:
   ModelImpl() = default;
   virtual ~ModelImpl() = default;

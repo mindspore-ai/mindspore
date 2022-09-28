@@ -38,7 +38,7 @@ Status Model::Build(GraphCell graph_cell, const std::shared_ptr<Context> &model_
   }
 
   auto device_target = device_info[0]->GetDeviceType();
-  impl_ = Factory<ModelImpl>::Instance().Create(device_target);
+  impl_ = ModelImplFactory::Instance().Create(device_target);
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Create session type " << device_target << " failed";
     return kMEFailed;
@@ -168,7 +168,7 @@ Model::Model() : impl_(nullptr) {}
 Model::~Model() {}
 
 bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
-  auto check_model = Factory<ModelImpl>::Instance().Create(device_type);
+  auto check_model = ModelImplFactory::Instance().Create(device_type);
   if (check_model == nullptr) {
     return false;
   }

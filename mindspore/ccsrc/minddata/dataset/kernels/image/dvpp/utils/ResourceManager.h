@@ -43,7 +43,7 @@ class ResourceManager {
     // finalize the acl when the process exit
     auto ret = aclFinalize();
     if (ret != APP_ERR_OK) {
-      MS_LOG(ERROR) << "Failed to finalize acl, ret = " << ret << ".";
+      MS_LOG(DEBUG) << "Failed to finalize acl, ret = " << ret << ".";
       return;
     }
   };

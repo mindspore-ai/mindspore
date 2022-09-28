@@ -19,7 +19,11 @@
 #include <vector>
 #include "backend/common/session/session_factory.h"
 #include "backend/common/optimizer/optimizer.h"
+#ifdef ENABLE_D
+#include "runtime/hardware/device_context_manager.h"
+#else
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
+#endif
 #include "cxx_api/model/acl/model_converter.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 #include "cxx_api/model/acl/acl_vm/ms_tensor_ref.h"
@@ -49,11 +53,22 @@ GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const 
   // construct kernel graph
   auto kernel_graph = SessionBasic::ConstructKernelGraph(lst, outputs, device::DeviceType::kUnknown, false);
   MS_EXCEPTION_IF_NULL(kernel_graph);
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto deprecated_ptr = device_context->GetDeprecatedInterface();
+  MS_EXCEPTION_IF_NULL(deprecated_ptr);
+  deprecated_ptr->AclOptimizer(kernel_graph);
+#else
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");
   pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
+#endif
   kernel_graph->SetExecOrderByDefault();
   // concert to om data
   ModelConverter model_converter_;

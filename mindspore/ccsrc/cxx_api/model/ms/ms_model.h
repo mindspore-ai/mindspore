@@ -27,10 +27,6 @@
 #include "include/api/status.h"
 #include "cxx_api/model/model_impl.h"
 
-#ifdef ENABLE_D
-#include "runtime/context.h"
-#endif
-
 namespace mindspore {
 class MsModel : public ModelImpl {
  public:

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
-#define MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
+#ifndef MINDSPORE_CCSRC_CXX_API_ACL_CALL_H_
+#define MINDSPORE_CCSRC_CXX_API_ACL_CALL_H_
+#include <string>
+#include <functional>
 #include "include/api/visible.h"
 namespace mindspore {
-MS_API void RegAllOp();
+MS_API bool CreateGroupsByCkptFile(const std::string &file);
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
+
+#endif  // MINDSPORE_CCSRC_CXX_API_ACL_CALL_H_

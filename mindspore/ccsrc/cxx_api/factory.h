@@ -23,9 +23,14 @@
 #include <utility>
 #include "include/api/context.h"
 #include "include/common/utils/utils.h"
+#include "cxx_api/graph/graph_impl.h"
+#include "cxx_api/model/model_impl.h"
 
 namespace mindspore {
-inline enum DeviceType g_device_target = kInvalidDeviceType;
+constexpr auto Ascend310 = "Ascend310";
+constexpr auto Ascend910 = "Ascend910";
+constexpr auto kMS = "MS";
+MS_API inline enum DeviceType g_device_target = kInvalidDeviceType;
 
 static inline LogStream &operator<<(LogStream &stream, DeviceType device_type) {
   std::map<DeviceType, std::string> type_str_map = {
@@ -39,50 +44,72 @@ static inline LogStream &operator<<(LogStream &stream, DeviceType device_type) {
   return stream;
 }
 
-template <class T>
-class Factory {
-  using U = std::function<std::shared_ptr<T>()>;
+using GraphImplCreator = std::function<std::shared_ptr<GraphCell::GraphImpl>()>;
 
+class MS_API GraphImplFactory {
  public:
-  Factory(const Factory &) = delete;
-  Factory &operator=(const Factory &) = delete;
+  GraphImplFactory(const GraphImplFactory &) = delete;
+  GraphImplFactory &operator=(const GraphImplFactory &) = delete;
 
-  static Factory &Instance() {
-    static Factory instance;
-    return instance;
-  }
+  static GraphImplFactory &Instance();
 
-  void Register(U &&creator) { creators_.push_back(creator); }
+  void Register(const std::string &device_name, GraphImplCreator &&creator);
 
-  std::shared_ptr<T> Create(enum DeviceType device_type) {
-    for (auto &item : creators_) {
-      MS_EXCEPTION_IF_NULL(item);
-      auto val = item();
-      if (val->CheckDeviceSupport(device_type)) {
-        return val;
-      }
-    }
-    MS_LOG(WARNING) << "Unsupported device target " << device_type;
-    return nullptr;
-  }
+  std::shared_ptr<GraphCell::GraphImpl> Create(enum DeviceType device_type);
+
+  GraphImplFactory() = default;
+  ~GraphImplFactory() = default;
 
  private:
-  Factory() = default;
-  ~Factory() = default;
-  std::vector<U> creators_;
+  inline static std::shared_ptr<GraphImplFactory> instance_;
+  inline static std::once_flag once_flag_;
+  std::vector<GraphImplCreator> creators_;
 };
 
-template <class T>
-class Registrar {
-  using U = std::function<std::shared_ptr<T>()>;
-
+class GraphImplRegistrar {
  public:
-  explicit Registrar(U creator) { Factory<T>::Instance().Register(std::move(creator)); }
-  ~Registrar() = default;
+  explicit GraphImplRegistrar(const std::string &device_name, GraphImplCreator &&creator) {
+    GraphImplFactory::Instance().Register(device_name, std::move(creator));
+  }
+  ~GraphImplRegistrar() = default;
 };
 
-#define API_FACTORY_REG(BASE_CLASS, DERIVE_CLASS)                          \
-  static const Registrar<BASE_CLASS> g_api_##DERIVE_CLASS##_registrar_reg( \
-    []() { return std::make_shared<DERIVE_CLASS>(); });
+using ModelImplCreator = std::function<std::shared_ptr<ModelImpl>()>;
+
+class MS_API ModelImplFactory {
+ public:
+  ModelImplFactory(const ModelImplFactory &) = delete;
+  ModelImplFactory &operator=(const ModelImplFactory &) = delete;
+
+  static ModelImplFactory &Instance();
+
+  void Register(const std::string &device_name, ModelImplCreator &&creator);
+
+  std::shared_ptr<ModelImpl> Create(enum DeviceType device_type);
+
+  ModelImplFactory() = default;
+  ~ModelImplFactory() = default;
+
+ private:
+  inline static std::shared_ptr<ModelImplFactory> instance_;
+  inline static std::once_flag once_flag_;
+  std::vector<ModelImplCreator> creators_;
+};
+
+class ModelImplRegistrar {
+ public:
+  explicit ModelImplRegistrar(const std::string &device_name, ModelImplCreator &&creator) {
+    ModelImplFactory::Instance().Register(device_name, std::move(creator));
+  }
+  ~ModelImplRegistrar() = default;
+};
+
+#define API_GRAPH_REG(DEVICE_NAME, DEVICE_CLASS)                           \
+  static const GraphImplRegistrar graph_api_##DEVICE_NAME##_registrar_reg( \
+    DEVICE_NAME, []() { return std::make_shared<DEVICE_CLASS>(); });
+
+#define API_MODEL_REG(DEVICE_NAME, DEVICE_CLASS)                           \
+  static const ModelImplRegistrar model_api_##DEVICE_NAME##_registrar_reg( \
+    DEVICE_NAME, []() { return std::make_shared<DEVICE_CLASS>(); });
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_FACTORY_H
