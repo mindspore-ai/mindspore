@@ -65,20 +65,20 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   std::vector<int64_t> out_shape;
   if (paddings_size == SizeToLong(kPaddingsSizeTwo)) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 2", kThree, kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 2", SizeToLong(kThree), kEqual,
                                              SizeToLong(x_shape.size()), prim_name);
     (void)out_shape.emplace_back(x_shape[0]);
     (void)out_shape.emplace_back(x_shape[1]);
     (void)out_shape.emplace_back(x_shape[kInputIndex2] - paddings_val[0] - paddings_val[1]);
   } else if (paddings_size == SizeToLong(kPaddingsSizeFour)) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 4", kFour, kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 4", SizeToLong(kFour), kEqual,
                                              SizeToLong(x_shape.size()), prim_name);
     (void)out_shape.emplace_back(x_shape[0]);
     (void)out_shape.emplace_back(x_shape[1]);
     (void)out_shape.emplace_back(x_shape[kInputIndex2] - paddings_val[paddings_pos_2] - paddings_val[paddings_pos_3]);
     (void)out_shape.emplace_back(x_shape[kInputIndex3] - paddings_val[0] - paddings_val[1]);
   } else if (paddings_size == SizeToLong(kPaddingsSizeSix)) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 6", kFive, kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 6", SizeToLong(kFive), kEqual,
                                              SizeToLong(x_shape.size()), prim_name);
     (void)out_shape.emplace_back(x_shape[0]);
     (void)out_shape.emplace_back(x_shape[1]);
