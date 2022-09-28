@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_DEFORMABLE_OFFSETS_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_DEFORMABLE_OFFSETS_GRAD_CPU_KERNEL_H_
+#ifndef AICPU_OPS_AICPU_DEFORMABLE_OFFSETS_GRAD_KERNELS_H_
+#define AICPU_OPS_AICPU_DEFORMABLE_OFFSETS_GRAD_KERNELS_H_
 
 #include <algorithm>
 #include <string>
@@ -65,11 +65,11 @@ class DeformableOffsetsGradKernel : public KernelBase {
   template <typename T>
   void DeformableOffsetGradNHWCKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, const T *input_x,
                                       const T *input_offset, const T *input_grad, T *output_grad_x,
-                                      T *output_grad_offset);
+                                      T *output_grad_offset) const;
   template <typename T>
   void DeformableOffsetGradNCHWKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, const T *input_x,
                                       const T *input_offset, const T *input_grad, T *output_grad_x,
-                                      T *output_grad_offset);
+                                      T *output_grad_offset) const;
 
   template <typename T>
   uint32_t DeformableOffsetsGradTask();
@@ -84,4 +84,4 @@ class DeformableOffsetsGradKernel : public KernelBase {
   std::vector<int64_t> output_shape_;
 };
 }  // namespace aicpu
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_DEFORMABLE_OFFSETS_GRAD_CPU_KERNEL_H_
+#endif  // AICPU_OPS_AICPU_DEFORMABLE_OFFSETS_GRAD_KERNELS_H_
