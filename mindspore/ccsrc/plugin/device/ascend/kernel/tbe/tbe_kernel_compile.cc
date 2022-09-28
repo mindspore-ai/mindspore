@@ -101,8 +101,9 @@ constexpr auto kMS_BUILD_PROCESS_NUM = "MS_BUILD_PROCESS_NUM";
 constexpr auto kMS_PARA_DEBUG_PATH = "PARA_DEBUG_PATH";
 constexpr auto kTBE_IMPL_PATH = "TBE_IMPL_PATH";
 constexpr auto kTUNE_OPS_NAME = "TUNE_OPS_NAME";
-constexpr int KSleepSeconds = 3;
+constexpr int KSleepUSeconds = 3000;
 constexpr int KSleepInterval = 1000;
+const uint64_t kUSecondInSecond = 1000000;
 
 namespace {
 inline bool Order(const nlohmann::json &json1, const nlohmann::json &json2) {
@@ -482,6 +483,8 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
 
 void TbeKernelCompileManager::Query(const std::string &type) {
   size_t query_cnt = 0;
+  size_t last_sleep = 0;
+  size_t sleep_time = 0;
   while (!task_map_.empty()) {
     std::vector<int> success_job;
     auto iter = task_map_.begin();
@@ -495,14 +498,18 @@ void TbeKernelCompileManager::Query(const std::string &type) {
       QueryProcess(type, job_result, &success_job);
       (void)iter++;
     }
+    bool sleep_flag = true;
     for (auto k : success_job) {
       (void)task_map_.erase(k);
+      sleep_flag = false;
     }
     success_job.clear();
-    if (!task_map_.empty()) {
-      if (query_cnt % KSleepInterval == 0) {
+    if (sleep_flag && !task_map_.empty()) {
+      if ((query_cnt - last_sleep) > KSleepInterval * task_map_.size()) {
         MS_LOG(INFO) << "Querying Parallel Compilation Job. Current Query Count: " << query_cnt;
-        (void)sleep(KSleepSeconds);
+        last_sleep = query_cnt;
+        (void)usleep(KSleepUSeconds * (1U << sleep_time));
+        sleep_time++;
       }
     }
   }
@@ -726,7 +733,6 @@ void TbeKernelCompileManager::TbePreBuild(const KernelGraphPtr &kernel_graph) {
   Query(kPreCompile);
   UpdateFusionTypeAndOutputDataDesc(node_list);
   (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "Kernel PreBuild run in " << cost << " us.";
@@ -872,8 +878,6 @@ void TbeKernelCompileManager::ClearOldTask() {
   full_name_to_json_name_.clear();
   single_processed_kernels_.clear();
   fusion_processed_kernels_.clear();
-  pre_build_full_name_to_json_name_.clear();
-  pre_build_single_processed_kernels_.clear();
 }
 
 TbeKernelCompileManager::~TbeKernelCompileManager() { TbeFinalize(); }
