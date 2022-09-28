@@ -266,6 +266,11 @@ def bprop_matmul(self):
                     transpose_b=(ta and tb))
 
     def bprop(x, w, out, dout):
+        conj = P.Conj()
+        origin_dtype = x.dtype
+        if origin_dtype in (mstype.complex64, mstype.complex128):
+            x = conj(x)
+            w = conj(w)
         if ta:
             dx = mul1(w, dout)
         else:

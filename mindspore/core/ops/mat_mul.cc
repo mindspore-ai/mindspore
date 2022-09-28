@@ -83,7 +83,7 @@ class MatMulInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    const std::set valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kComplex64};
+    const std::set valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kComplex64, kComplex128};
     std::map<std::string, TypePtr> types;
     auto a_type = input_args[kInputIndex0]->BuildType();
     (void)types.emplace("a", a_type);
