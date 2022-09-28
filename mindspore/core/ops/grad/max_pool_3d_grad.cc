@@ -55,6 +55,10 @@ abstract::ShapePtr MaxPool3DGradInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  // ToSupport Dynamic rank
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   constexpr int64_t k5DInputDims = 5;
   (void)CheckAndConvertUtils::CheckInteger("input_rank", SizeToLong(x_shape.size()), kEqual, k5DInputDims, op_name);
   return std::make_shared<abstract::Shape>(x_shape);

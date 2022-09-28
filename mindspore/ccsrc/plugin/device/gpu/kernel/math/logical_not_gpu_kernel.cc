@@ -15,9 +15,50 @@
  */
 
 #include "plugin/device/gpu/kernel/math/logical_not_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_not_impl.cuh"
+
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(LogicalNot, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      LogicalNotGpuKernelMod, bool)
+bool LogicalNotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  constexpr size_t input_num = 1;
+  constexpr size_t output_num = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  kernel_name_ = base_operator->GetPrim()->name();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int LogicalNotGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
+  input_num_ = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<>());
+  return KRET_OK;
+}
+
+template <typename T>
+bool LogicalNotGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<AddressPtr> &workspace,
+                                          const std::vector<AddressPtr> &outputs) {
+  auto input_addr = GetDeviceAddress<T>(inputs, 0);
+  auto output_addr = GetDeviceAddress<bool>(outputs, 0);
+  LogicalNotImpl(input_num_, input_addr, output_addr, stream_ptr_);
+  return true;
+}
+
+const std::vector<std::pair<KernelAttr, LogicalNotGpuKernelMod::KernelRunFunc>> &LogicalNotGpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, LogicalNotGpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     &LogicalNotGpuKernelMod::LaunchKernel<bool>},
+  };
+  return func_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LogicalNot, LogicalNotGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

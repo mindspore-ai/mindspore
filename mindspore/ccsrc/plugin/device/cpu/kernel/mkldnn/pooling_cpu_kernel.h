@@ -29,13 +29,19 @@ namespace kernel {
 constexpr auto kUnkown = "Unknown";
 constexpr size_t kPoolingDilation = 1;
 
-class PoolingCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class PoolingCpuKernelMod : public MKLCpuKernelMod {
  public:
   PoolingCpuKernelMod() = default;
   explicit PoolingCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~PoolingCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -52,10 +58,16 @@ class PoolingCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   std::vector<int64_t> dst_shape_;
   std::vector<int64_t> kernel_;
   std::vector<int64_t> padding_invalid_;
+  std::string format_;
+  std::string pad_mode_;
+  std::vector<int64_t> kernel_include_nc_{};
+  std::vector<int64_t> strides_include_nc_{};
+  BaseOperatorPtr base_operator_{nullptr};
+  std::vector<KernelTensorPtr> inputs_{};
+  std::vector<KernelTensorPtr> outputs_{};
+  std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 
  private:
-  void InitPoolingFields(const CNodePtr &kernel_node);
-
   std::string kernel_type_{kUnkown};
 };
 }  // namespace kernel

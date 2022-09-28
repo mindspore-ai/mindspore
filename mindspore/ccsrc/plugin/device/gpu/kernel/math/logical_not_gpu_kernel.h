@@ -14,70 +14,55 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LOGICAL_NOT_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LOGICAL_NOT_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_LOGICAL_NOT_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_LOGICAL_NOT_GPU_KERNEL_H_
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_not_impl.cuh"
+#include <utility>
+#include <map>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class LogicalNotGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class LogicalNotGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<LogicalNotGpuKernelMod> {
  public:
-  LogicalNotGpuKernelMod() { ResetResource(); }
+  LogicalNotGpuKernelMod() = default;
   ~LogicalNotGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    auto input_addr = GetDeviceAddress<T>(inputs, 0);
-    auto output_addr = GetDeviceAddress<bool>(outputs, 0);
-    LogicalNotImpl(input_num_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    stream_ptr_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_num_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void ResetResource() noexcept override {
-    input_num_ = 1;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_num_ * sizeof(T));
-    output_size_list_.push_back(input_num_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
  private:
-  size_t input_num_;
-  bool is_null_input_;
+  std::string kernel_name_{};
+  size_t input_num_{1};
+  cudaStream_t stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LOGICAL_NOT_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_LOGICAL_NOT_GPU_KERNEL_H_
