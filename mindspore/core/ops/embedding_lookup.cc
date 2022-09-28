@@ -22,6 +22,7 @@
 #include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -39,9 +40,21 @@ bool EmbeddingLookup::get_setattr_flag() const {
 
 void EmbeddingLookup::set_offset(const int64_t offset) { (void)this->AddAttr(kAxis, api::MakeValue(offset)); }
 
-int64_t EmbeddingLookup::get_offset() const {
-  auto value_ptr = this->GetAttr("offset");
-  return GetValue<int64_t>(value_ptr);
+int64_t EmbeddingLookup::get_offset() {
+  PrimitivePtr prim = this->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  int64_t offset = 0;
+  if (prim->HasAttr(kAttrOffset)) {
+    auto value_ptr = prim->GetAttr(kAttrOffset);
+    if (value_ptr->isa<tensor::Tensor>()) {
+      auto off_vec = CheckAndConvertUtils::CheckTensorIntValue(kAttrOffset, value_ptr, prim->name());
+      MS_LOG(EXCEPTION) << "For '" << prim->name() << "', offset must be int, bug got " << off_vec;
+      offset = off_vec[0];
+    } else {
+      offset = GetValue<int64_t>(value_ptr);
+    }
+  }
+  return offset;
 }
 
 class EmbeddingLookupInfer : public abstract::OpInferBase {
