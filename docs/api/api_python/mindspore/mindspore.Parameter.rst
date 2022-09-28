@@ -158,3 +158,8 @@
         :property:
 
         表示参数是否唯一。
+
+    .. py:method:: value
+        :property:
+
+        返回参数的值。
