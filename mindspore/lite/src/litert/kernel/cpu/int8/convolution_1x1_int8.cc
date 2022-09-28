@@ -358,6 +358,7 @@ int Convolution1x1Int8CPUKernel::InitParam() {
   pre_trans_input_ = (conv_param_->pad_u_ != 0 || conv_param_->pad_l_ != 0 || conv_param_->stride_h_ != 1 ||
                       conv_param_->stride_w_ != 1);
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_;

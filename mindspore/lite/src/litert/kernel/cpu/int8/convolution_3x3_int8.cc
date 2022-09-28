@@ -30,6 +30,7 @@ int ProcessFilterUint8(const int8_t *origin_weight, int16_t *dst_weight, const C
   CHECK_NULL_RETURN(origin_weight);
   auto input_channel = conv_param->input_channel_;
   auto output_channel = conv_param->output_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->kernel_w_, conv_param->kernel_h_, RET_ERROR);
   auto kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
   int iC8 = UP_DIV(input_channel, C8NUM);
 
@@ -259,6 +260,7 @@ int Convolution3x3Int8CPUKernel::Run() {
   CHECK_NULL_RETURN(out_tensor);
   auto out_data = reinterpret_cast<int8_t *>(out_tensor->MutableData());
   CHECK_NULL_RETURN(out_data);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
   PackNC4HW4ToNHWCInt8(tmp_out_, out_data, conv_param_->output_batch_, conv_param_->output_h_ * conv_param_->output_w_,
                        conv_param_->output_channel_);
   FreeTmpBuffer();
