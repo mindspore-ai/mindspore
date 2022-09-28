@@ -225,6 +225,12 @@ def auto_mixed_precision(network, amp_level="O0"):
 
     Raises:
         ValueError: If amp level is not supported.
+
+    Examples:
+        >>> from mindpsore import amp, nn
+        >>> network = LeNet5()
+        >>> amp_level = "O1"
+        >>> net = amp.auto_mixed_precision(network, amp_level)
     """
     if not isinstance(network, nn.Cell):
         raise TypeError("The network type should be Cell.")
