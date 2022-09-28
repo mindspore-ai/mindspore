@@ -77,7 +77,7 @@ mindspore.set_context
         - **device_target** (str) - 表示待运行的目标设备，支持'Ascend'、'GPU'和'CPU'。如果未设置此参数，则使用MindSpore包对应的后端设备。
         - **max_device_memory** (str) - 设置设备可用的最大内存。格式为"xxGB"。默认值：1024GB。实际使用的内存大小是设备的可用内存和 `max_device_memory` 值中的最小值。
         - **variable_memory_max_size** (str) - 此参数已弃用，将被删除。请使用 `max_device_memory` 。
-        - **mempool_block_size** (str) - 设置设备内存池的块大小。格式为"xxGB"。默认值：1GB。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
+        - **mempool_block_size** (str) - 设置PyNative模式下设备内存池的块大小。格式为"xxGB"。默认值：1GB。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
         - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。默认值：28。
         - **save_graphs** (bool) - 表示是否保存计算图。默认值：False。当 `save_graphs` 属性设为True时， `save_graphs_path` 属性用于设置中间编译图的存储路径。默认情况下，计算图保存在当前目录下。
         - **save_graphs_path** (str) - 表示保存计算图的路径。默认值："."。如果指定的目录不存在，系统将自动创建该目录。在分布式训练中，图形将被保存到 `save_graphs_path/rank_${rank_id}/` 目录下。 `rank_id` 为集群中当前设备的ID。
