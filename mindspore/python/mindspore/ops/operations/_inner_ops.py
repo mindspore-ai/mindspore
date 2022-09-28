@@ -30,7 +30,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm
-from mindspore._c_expression import call_constant_folding
+from mindspore.common.api import _pynative_executor
 
 
 # Bit operation
@@ -2114,14 +2114,14 @@ class TopTypeof(Primitive):
     def __init__(self):
         self.prim = Primitive('TopTypeof')
         self.typeof_cache = {
-            'slice': call_constant_folding(self.prim, slice(None, None, None)),
-            'list': call_constant_folding(self.prim, []),
-            'tuple': call_constant_folding(self.prim, ()),
-            'Tensor': call_constant_folding(self.prim, Tensor(np.ones([1], dtype=np.float32))),
-            'NoneType': call_constant_folding(self.prim, None),
-            'int': call_constant_folding(self.prim, 0),
-            'bool': call_constant_folding(self.prim, False),
-            'ellipsis': call_constant_folding(self.prim, ...)
+            'slice': _pynative_executor.constant_folding(self.prim, slice(None, None, None)),
+            'list': _pynative_executor.constant_folding(self.prim, []),
+            'tuple': _pynative_executor.constant_folding(self.prim, ()),
+            'Tensor': _pynative_executor.constant_folding(self.prim, Tensor(np.ones([1], dtype=np.float32))),
+            'NoneType': _pynative_executor.constant_folding(self.prim, None),
+            'int': _pynative_executor.constant_folding(self.prim, 0),
+            'bool': _pynative_executor.constant_folding(self.prim, False),
+            'ellipsis': _pynative_executor.constant_folding(self.prim, ...)
         }
 
     def __call__(self, x):
@@ -2130,7 +2130,7 @@ class TopTypeof(Primitive):
             index_type = 'Tensor'
         if index_type in ('slice', 'list', 'tuple', 'Tensor', 'NoneType', 'int', 'bool', 'ellipsis'):
             return self.typeof_cache.get(index_type)
-        return call_constant_folding(self.prim, x)
+        return _pynative_executor.constant_folding(self.prim, x)
 
 
 class MixedPrecisionCast(Primitive):

@@ -81,25 +81,19 @@ void PyNativeExecutorTry(const std::function<void(T *ret, const Args &...)> &met
 }
 }  // namespace
 
-py::object RealRunOp(const py::args &args) {
-  const auto &executor = PyNativeExecutor::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor);
-  FrontendOpRunInfoPtr op_run_info = executor->forward_executor()->GenerateOpRunInfo(args);
+py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
+  FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args);
   py::object ret = py::none();
-  PyNativeExecutorTry(executor->forward_executor()->RunOpS, &ret, op_run_info);
+  PyNativeExecutorTry(forward_executor()->RunOpS, &ret, op_run_info);
   return ret;
 }
 
-py::object GetDynShape(const py::args &args) {
-  const auto &executor = PyNativeExecutor::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor);
-  return executor->forward_executor()->dynamic_shape()->GetDynShape(args);
+py::object PyNativeExecutor::GetShape(const py::args &args) const {
+  return forward_executor()->dynamic_shape()->GetDynShape(args);
 }
 
-py::object CallConstantFolding(const py::args &args) {
-  const auto &executor = PyNativeExecutor::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor);
-  return executor->forward_executor()->infer_operation()->CallConstantFolding(args);
+py::object PyNativeExecutor::CallConstantFolding(const py::args &args) const {
+  return forward_executor()->infer_operation()->CallConstantFolding(args);
 }
 
 void PyNativeExecutor::set_py_exe_path(const py::object &py_exe_path) const {
@@ -231,12 +225,12 @@ void PyNativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set
 
 bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
-void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling) {
+void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling) const {
   forward_executor()->set_is_ms_function_compiling(is_compiling);
 }
 
-void RegPynativeExecutor(const py::module *m) {
-  (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PynativeExecutor_")
+void RegPyNativeExecutor(const py::module *m) {
+  (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PyNativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
     .def("is_first_cell", &PyNativeExecutor::IsFirstCell, "check if the first cell.")
     .def("new_graph", &PyNativeExecutor::NewGraph, "pynative new a graph.")
@@ -262,6 +256,9 @@ void RegPynativeExecutor(const py::module *m) {
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
          py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.")
     .def("set_ms_function_compile_status", &PyNativeExecutor::SetMsFunctionCompileStatus,
-         "set ms_funciton compile status.");
+         "set ms_funciton compile status.")
+    .def("real_run_op", &PyNativeExecutor::RealRunOp, "Run op pynatively.")
+    .def("get_shape", &PyNativeExecutor::GetShape, "Get Dynamic Shape of Tensor")
+    .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive");
 }
 }  // namespace mindspore::pynative

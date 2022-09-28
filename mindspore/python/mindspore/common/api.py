@@ -36,7 +36,7 @@ from mindspore.common.tensor import COOTensor as PythonCOOTensor
 from mindspore.common.tensor import RowTensor as PythonRowTensor
 from mindspore.common.initializer import initializer
 from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, \
-    PynativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
+    PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
     _ms_memory_recycle
 from mindspore.parallel._tensor import _load_tensor_by_layout
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
@@ -730,7 +730,7 @@ def _parameter_broadcast(obj, auto_parallel_mode):
     _build_broadcast_graph(broadcast_params_dict, broadcast_phase)
 
 
-class _PynativeExecutor:
+class _PyNativeExecutor:
     """
     A pynative executor used to compile/manage/run single op.
 
@@ -748,11 +748,26 @@ class _PynativeExecutor:
     """
 
     def __init__(self):
-        self._executor = PynativeExecutor_.get_instance()
+        self._executor = PyNativeExecutor_.get_instance()
         self._executor.set_py_exe_path(sys.executable)
         self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
         self._optimizer = None
         self._top_cell = None
+
+    def __call__(self, sens_param, obj, *args, **kwargs):
+        """
+        PyNative executor run grad graph.
+
+        Args:
+            obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            The return object after running grad graph.
+        """
+        args = args + tuple(kwargs.values())
+        return self._executor(sens_param, obj, args)
 
     @staticmethod
     def parameter_broadcast(obj, phase, auto_parallel_mode):
@@ -769,6 +784,18 @@ class _PynativeExecutor:
         """
         if BROADCAST_PHASE not in phase and _get_parameter_broadcast():
             _parameter_broadcast(obj, auto_parallel_mode)
+
+    def real_run_op(self, *args):
+        """
+        Run single op.
+
+        Args:
+            args (tuple): Op prim and input arguments.
+
+        Return:
+            Tensor, result of run op.
+        """
+        return self._executor.real_run_op(*args)
 
     def new_graph(self, obj, *args, **kwargs):
         """
@@ -847,7 +874,7 @@ class _PynativeExecutor:
 
     def clear_res(self):
         """
-        Clean resource for _PynativeExecutor.
+        Clean resource for _PyNativeExecutor.
 
         Return:
             None.
@@ -1011,20 +1038,29 @@ class _PynativeExecutor:
         """
         return self._top_cell
 
-    def __call__(self, sens_param, obj, *args, **kwargs):
+    def get_shape(self, *args):
         """
-        PyNative executor run grad graph.
+        Get shape of input arguments.
 
         Args:
-            obj (Function/Cell): The function or cell instance.
-            args (tuple): Function or cell input arguments.
-            kwargs (dict): keyword arguments.
+            args (Tensor/tuple(Tensor)): Input arguments.
 
         Return:
-            The return object after running grad graph.
+            tuple(int), the shape of input arguments.
         """
-        args = args + tuple(kwargs.values())
-        return self._executor(sens_param, obj, args)
+        return self._executor.get_shape(*args)
+
+    def constant_folding(self, *args):
+        """
+        Get value by infer value.
+
+        Args:
+            args (tuple): Op prim and input arguments.
+
+        Return:
+            Tensor, the value get by op infer.
+        """
+        return self._executor.constant_folding(*args)
 
 
 class _CellGraphExecutor:
@@ -1314,6 +1350,6 @@ def ms_memory_recycle():
 
 
 _cell_graph_executor = _CellGraphExecutor()
-_pynative_executor = _PynativeExecutor()
+_pynative_executor = _PyNativeExecutor()
 
 __all__ = ['ms_function', 'ms_memory_recycle', 'ms_class']

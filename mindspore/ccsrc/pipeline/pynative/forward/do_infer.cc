@@ -323,7 +323,7 @@ void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::
   node_abs_cache_[id] = abs;
 }
 
-py::object InferOperation::CallConstantFolding(const py::args &args) {
+py::object InferOperation::CallConstantFolding(const py::args &args) const {
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[0]);
   const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(args[1]);

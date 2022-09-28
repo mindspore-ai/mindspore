@@ -28,10 +28,6 @@
 namespace mindspore::pynative {
 namespace py = pybind11;
 
-py::object RealRunOp(const py::args &args);
-py::object GetDynShape(const py::args &args);
-py::object CallConstantFolding(const py::args &args);
-
 class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
  public:
   static std::shared_ptr<PyNativeExecutor> GetInstance() {
@@ -55,6 +51,9 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
     return forward_executor_;
   }
 
+  py::object RealRunOp(const py::args &args) const;
+  py::object GetShape(const py::args &args) const;
+  py::object CallConstantFolding(const py::args &args) const;
   bool grad_flag() const;
   void set_grad_flag(bool flag) const;
   void SetDynamicInput(const py::object &cell, const py::args &args) const;
@@ -82,7 +81,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void Sync() const;
   void SetLazyBuild(bool enable) const;
   bool IsFirstCell() const;
-  void SetMsFunctionCompileStatus(bool is_compiling);
+  void SetMsFunctionCompileStatus(bool is_compiling) const;
 
  private:
   PyNativeExecutor() = default;
