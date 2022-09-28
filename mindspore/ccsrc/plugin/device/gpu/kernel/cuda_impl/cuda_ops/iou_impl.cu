@@ -17,13 +17,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/iou_impl.cuh"
 #include "include/cuda_fp16.h"
 
-__device__ float CoordinateMax(const float a, const float b) {
-  return (a > b ? a : b);
-}
+__device__ float CoordinateMax(const float a, const float b) { return (a > b ? a : b); }
 
-__device__ float CoordinateMin(const float a, const float b) {
-  return (a < b ? a : b);
-}
+__device__ float CoordinateMin(const float a, const float b) { return (a < b ? a : b); }
 
 template <typename T>
 __global__ void IOUKernel(const size_t size, const T *box1, const T *box2, T *iou_results, const size_t mode,
@@ -48,10 +44,10 @@ __global__ void IOUKernel(const size_t size, const T *box1, const T *box2, T *io
     float overlaps_h = CoordinateMax(0.0, overlaps_coordinate[3] - overlaps_coordinate[1] + offset);
     float overlaps = overlaps_w * overlaps_h;
 
-    float area1 = (location_coordinate[0][2] - location_coordinate[0][0] + offset) * (location_coordinate[0][3] -
-               location_coordinate[0][1] + offset);
-    float area2 = (location_coordinate[1][2] - location_coordinate[1][0] + offset) * (location_coordinate[1][3] -
-                                                                             location_coordinate[1][1] + offset);
+    float area1 = (location_coordinate[0][2] - location_coordinate[0][0] + offset) *
+                  (location_coordinate[0][3] - location_coordinate[0][1] + offset);
+    float area2 = (location_coordinate[1][2] - location_coordinate[1][0] + offset) *
+                  (location_coordinate[1][3] - location_coordinate[1][1] + offset);
     if (mode == 0) {
       iou_results[i] = static_cast<T>(overlaps / (area1 + area2 - overlaps + epsilon));
     } else {
@@ -68,7 +64,9 @@ void IOU(const size_t &size, const T *box1, const T *box2, T *iou_results, const
   IOUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, box1, box2, iou_results, mode, input_len_0);
 }
 
+template CUDA_LIB_EXPORT void IOU(const size_t &size, const half *box1, const half *box2, half *iou_results,
+                                  const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void IOU(const size_t &size, const float *box1, const float *box2, float *iou_results,
                                   const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IOU(const size_t &size, const half *box1, const half *box2, half *iou_results,
+template CUDA_LIB_EXPORT void IOU(const size_t &size, const double *box1, const double *box2, double *iou_results,
                                   const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);

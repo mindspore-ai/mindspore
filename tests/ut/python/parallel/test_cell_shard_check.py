@@ -16,8 +16,8 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import nn, context, Tensor
 import mindspore.ops as ops
+from mindspore import nn, context, Tensor
 
 
 def setup_function():
@@ -82,19 +82,6 @@ def test_in_strategy_numbers_check():
     cell_shard_execution(in_strategy, out_strategy, error_log)
 
 
-def test_out_strategy_numbers_check():
-    """
-    Feature: shard function for cell
-    Description: inconsistent output number and out_strategy number
-    Expectation: throw an exception indicating inconsistent output number and out_strategy number
-    """
-    set_context()
-    in_strategy = ((8, 1), None)
-    out_strategy = (None, (8, 1))
-    error_log = "Output number: 1 is not equal to out_strategy number: 2"
-    cell_shard_execution(in_strategy, out_strategy, error_log)
-
-
 def test_in_strategy_dimension_check():
     """
     Feature: shard function for cell
@@ -105,19 +92,6 @@ def test_in_strategy_dimension_check():
     in_strategy = ((8, 1, 1), None)
     out_strategy = (None, (8, 1))
     error_log = "Input dimension: 2 is not equal to in_strategy dimension: 3 at index 0"
-    cell_shard_execution(in_strategy, out_strategy, error_log)
-
-
-def test_out_strategy_dimension_check():
-    """
-    Feature: shard function for cell
-    Description: inconsistent output dimension and out_strategy dimension
-    Expectation: throw an exception indicating inconsistent output_dimension and out_strategy dimension
-    """
-    set_context()
-    in_strategy = ((8, 1), None)
-    out_strategy = ((8,),)
-    error_log = "Output dimension: 2 is not equal to out_strategy dimension: 1 at index 0"
     cell_shard_execution(in_strategy, out_strategy, error_log)
 
 

@@ -13,6 +13,9 @@ mindspore.rank_list_for_transform
         - **src_strategy_file** (str) - 源切分策略proto文件名，由context.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为None时，表示切分策略为不切分。默认值：None。
         - **dst_strategy_file** (str) - 目标切分策略proto文件名，由context.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为None时，表示切分策略为不切分。默认值：None。
 
+    返回：
+        转换得到rank_id的分布式Checkpoint所需要的卡号列表。
+
     异常：
         - **ValueError** - src_strategy_file或者dst_strategy_file不是正确的切分策略proto文件。
         - **TypeError** - src_strategy_file或者dst_strategy_file不是字符串。

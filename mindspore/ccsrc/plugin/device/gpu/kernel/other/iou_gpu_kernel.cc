@@ -97,6 +97,8 @@ std::vector<std::pair<KernelAttr, IOUGpuKernelMod::IOULaunchFunc>> IOUGpuKernelM
    &IOUGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &IOUGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &IOUGpuKernelMod::LaunchKernel<double>},
 };
 
 std::vector<KernelAttr> IOUGpuKernelMod::GetOpSupport() {
