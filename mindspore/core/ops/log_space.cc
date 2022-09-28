@@ -28,13 +28,13 @@ namespace {
 abstract::ShapePtr LogSpaceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto start_shape = start_shape_map[kShape];
-  if (start_shape.size() != 0) {
+  if (!IsDynamicRank(start_shape) && start_shape.size() != 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, The dim of start must be 0, "
                              << "but got " << start_shape.size();
   }
   auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto end_shape = end_shape_map[kShape];
-  if (end_shape.size() != 0) {
+  if (!IsDynamicRank(end_shape) && end_shape.size() != 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, The dim of end must be 0, "
                              << "but got " << end_shape.size();
   }

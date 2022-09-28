@@ -52,7 +52,6 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
@@ -66,15 +65,6 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
     is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
-  }
-
-  void InitSizeLists() {
-    size_t sorted_x_size = sorted_x_elements_ * unit_size_;
-    size_t values_size = values_elements_ * unit_size_;
-    size_t output_size = values_elements_ * unit_out_size_;
-    input_size_list_.emplace_back(sorted_x_size);
-    input_size_list_.emplace_back(values_size);
-    output_size_list_.emplace_back(output_size);
   }
 
  private:
@@ -96,7 +86,6 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
   size_t values_col_;
   UpperBoundFunc kernel_func_{};
   BaseOperatorPtr kernel_ptr_{nullptr};
-  std::vector<KernelTensorPtr> outputs_ = {};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   std::optional<bool> is_input_dynamic_shape_ = {};

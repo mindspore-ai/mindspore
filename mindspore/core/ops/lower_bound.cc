@@ -26,8 +26,11 @@ namespace {
 abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  if (IsDynamicRank(values_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   size_t size_exp = 2;
-  if (x_shape.size() != size_exp) {
+  if (!IsDynamicRank(x_shape) && x_shape.size() != size_exp) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the rank of 'sorted_x' must be 2, but got: " << values_shape.size() << ".";
   }
@@ -35,7 +38,7 @@ abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the rank of 'values' must be 2, but got: " << values_shape.size() << ".";
   }
-  if (x_shape[0] != values_shape[0]) {
+  if (!IsDynamic(x_shape) && !IsDynamic(values_shape) && x_shape[0] != values_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the first dimension of the shape of 'sorted_x' must be equal to that of 'values', "
                                 "but got shape of 'values': "

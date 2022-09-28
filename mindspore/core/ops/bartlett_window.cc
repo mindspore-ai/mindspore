@@ -48,6 +48,9 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(input_type_element);
     auto window_length_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
     auto window_length_shape = window_length_shape_map[kShape];
+    if (IsDynamicRank(window_length_shape)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    }
 
     if (window_length_shape.size() != 0) {
       if (window_length_shape[0] == 0) {
@@ -78,6 +81,9 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
     }
   } else {
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    if (IsDynamicRank(x_shape)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    }
     auto x_size = x_shape.size();
     if (x_size != 0) {
       if (x_shape[0] == 0) {

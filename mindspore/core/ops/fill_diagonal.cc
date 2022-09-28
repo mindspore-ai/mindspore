@@ -25,6 +25,9 @@ namespace ops {
 namespace {
 abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   int64_t x_size = SizeToLong(x_shape.size());
   const int64_t kDimSize2 = 2;
   if (x_size < kDimSize2) {
