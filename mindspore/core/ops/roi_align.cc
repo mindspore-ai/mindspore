@@ -84,7 +84,7 @@ abstract::ShapePtr ROIAlignInferShape(const PrimitivePtr &primitive, const std::
   } else {
     auto features_rank = SizeToLong(features_shape.size());
     const int64_t features_rank_required = 4;
-    (void)CheckAndConvertUtils::CheckInteger("rank of 'features'", features_rank, kEqual, features_rank_required,
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'features'", features_rank, kLessEqual, features_rank_required,
                                              prim_name);
     const int64_t channel_index = 1;
     out_c = features_shape[channel_index];

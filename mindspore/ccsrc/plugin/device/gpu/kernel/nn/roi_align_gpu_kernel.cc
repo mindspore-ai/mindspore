@@ -50,8 +50,8 @@ int ROIAlignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
   constexpr size_t X_DIMS = 4;
   constexpr size_t ROIS_DIMS = 2;
-  if (x_shape.size() != X_DIMS) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of features must be equal to 4, but got "
+  if (x_shape.size() > X_DIMS) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of features cannot be greater than  4, but got "
                   << x_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
