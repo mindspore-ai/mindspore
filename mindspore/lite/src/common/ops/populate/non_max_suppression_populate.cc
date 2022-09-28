@@ -37,6 +37,11 @@ OpParameter *PopulateNonMaxSuppressionParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->center_point_box_ = value->center_point_box();
+  if (param->center_point_box_ != C0NUM && param->center_point_box_ != C1NUM) {
+    MS_LOG(ERROR) << "invalid center_point_box value: " << param->center_point_box_;
+    free(param);
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_NonMaxSuppression, PopulateNonMaxSuppressionParameter, SCHEMA_CUR);

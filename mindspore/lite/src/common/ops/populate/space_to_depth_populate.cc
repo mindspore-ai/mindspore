@@ -37,6 +37,11 @@ OpParameter *PopulateSpaceToDepthParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->block_size_ = value->block_size();
+  if (param->block_size_ < C2NUM) {
+    MS_LOG(ERROR) << "invalid block_size value: " << param->block_size_;
+    free(param);
+    return nullptr;
+  }
   if (value->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "Currently only NHWC format is supported.";
     free(param);

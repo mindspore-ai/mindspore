@@ -38,6 +38,11 @@ OpParameter *PopulateIGroupNormParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   param->epsilon_ = value->epsilon();
   param->num_groups_ = value->num_groups();
+  if (param->num_groups_ < C1NUM) {
+    MS_LOG(ERROR) << "GroupNormParameter num_groups cannot less than 1.";
+    free(param);
+    return nullptr;
+  }
   param->affine_ = value->affine();
   return reinterpret_cast<OpParameter *>(param);
 }
