@@ -82,7 +82,7 @@ int Generator::CodeDataCFile() {
   cofs << "#include \"data.h\"\n";
 
   auto inputs_num = ctx_->graph_inputs().size();
-  auto outputs_num = ctx_->graph_eval_outputs().size();
+  auto outputs_num = ctx_->graph_outputs().size();
 
   cofs << "#define NET_INPUTS_NUM " << inputs_num << "\n";
   cofs << "#define NET_OUTPUTS_NUM " << outputs_num << "\n";
@@ -111,7 +111,7 @@ int Generator::CodeDataCFile() {
                             << "  },\n";
   }
   for (size_t i = 0; i < outputs_num; i++) {
-    Tensor *tensor = ctx_->graph_eval_outputs()[i];
+    Tensor *tensor = ctx_->graph_outputs()[i];
     cofs << "#define NET_OUTPUT" << i << "_SIZE " << tensor->ElementsNum() << "\n";
     data_def << "float output" << i << "_data[NET_OUTPUT" << i << "_SIZE];\n";
     calib_data_def << "float calib_output" << i << "_data[NET_OUTPUT" << i << "_SIZE] = {};\n";
