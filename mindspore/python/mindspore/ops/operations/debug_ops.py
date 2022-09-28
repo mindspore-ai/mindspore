@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """debug_ops"""
+from __future__ import absolute_import
 from types import FunctionType, MethodType
 
 from mindspore import context
