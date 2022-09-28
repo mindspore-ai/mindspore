@@ -524,6 +524,27 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
   return CheckTensorSubClass(types.begin()->first, types.begin()->second, check_list, prim_name);
 }
 
+ShapeVector CheckAndConvertUtils::CheckTensorShapeSame(const std::map<std::string, BaseShapePtr> &shapes,
+                                                       const std::vector<int64_t> &check_shape,
+                                                       const std::string &prim_name) {
+  if (shapes.empty()) {
+    MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty shapes map!";
+  }
+  for (const auto &shape : shapes) {
+    auto _shape_ptr_ = shape.second;
+    MS_EXCEPTION_IF_NULL(_shape_ptr_);
+    auto _shape_ = ConvertShapePtrToShapeMap(_shape_ptr_)[kShape];
+    (void)CheckPositiveVectorExcludeZero(shape.first, _shape_, prim_name);
+    if (!ShapeVectorIsSame(_shape_, check_shape)) {
+      std::ostringstream buffer;
+      buffer << "The primitive[" << prim_name << "]'s input arguments " << shape.first << " shape should equal to "
+             << ShapeVectorToStr(check_shape) << ", but get the real shape " << ShapeVectorToStr(_shape_) << ".";
+      MS_EXCEPTION(ValueError) << buffer.str();
+    }
+  }
+  return check_shape;
+}
+
 TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
                                                    const std::set<TypePtr> &check_list, const std::string &prim_name) {
   // note that the return type might be different from input type

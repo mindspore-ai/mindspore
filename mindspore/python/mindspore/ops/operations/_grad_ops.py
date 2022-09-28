@@ -598,6 +598,18 @@ class InstanceNormGrad(PrimitiveWithInfer):
                                 outputs=['dx', 'bn_gamma', 'bn_beta'])
 
 
+class InstanceNormV2Grad(Primitive):
+    """Gradients of InstanceNormV2 operation."""
+
+    @prim_attr_register
+    def __init__(self, is_training=True, epsilon=1e-5):
+        self.init_prim_io_names(inputs=['dy', 'x', 'gamma', 'mean', 'variance', 'save_mean', 'save_variance'],
+                                outputs=['pd_x', 'pd_gamma', 'pd_beta'])
+        validator.check_is_float(epsilon, 'epsilon', self.name)
+        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        validator.check_bool(is_training, "is_training", self.name)
+
+
 class EinsumGrad(PrimitiveWithInfer):
     """Gradients of Einsum."""
 

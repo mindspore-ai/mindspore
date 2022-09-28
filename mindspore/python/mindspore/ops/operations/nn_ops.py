@@ -1057,6 +1057,110 @@ class InstanceNorm(PrimitiveWithInfer):
         self.add_prim_attr('side_effect_mem', True)
 
 
+class InstanceNormV2(Primitive):
+    r"""
+    Instance Normalization over a 4D or 5D input.
+
+    This operator applies Instance Normalization over a 4D or 5D input (a mini-batch of 2D inputs with
+    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
+    of data and the learned parameters which can be described in the following formula.
+
+    .. math::
+
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is scale(gamma), :math:`\beta` is bias(beta), :math:`\epsilon` is epsilon.
+
+    Note:
+        The format of input `x` support ``NCHW`` and ``NC1HWC0`` in platform ``CPU`` and ``Ascend``.
+        When attr `is_training` is `False`, this module does not tracks the running mean and variance.
+        The output `batch_mean` and `batch_variance` would be all zero.
+
+    Args:
+        is_training(bool): An optional boolean value. Default: ``True``.
+            When set to ``True``, this module tracks the running mean and variance.
+            When set to ``False``, this module does not track such statistics and always uses batch
+            statistics in both training and eval modes.
+        momentum (float): The hyper parameter to compute moving average for running_mean and running_var
+            (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
+            Momentum value must be [0, 1]. Default: 0.1.
+        epsilon (float): A small value added to the denominator for numerical stability.
+            Epsilon value must be [0, 1). Default: 1e-5.
+
+    Inputs:
+        - **x** (Tensor) - The input of InstanceNormV2, Tensor of shape :math:`(N, C, H, W)`
+          or :math:`(N, C1, H, W, C0)`, data type: float16 or float32.
+        - **gamma** (Tensor) - Scale, Shape depends on the shape of input `x`, data type: float32.
+          If `x` shape is :math:`(N, C, H, W)`, shape of `gamma` is :math:`(N, C, 1, 1)`.
+          If `x` shape is :math:`(N, C1, H, W, C0)`, shape of `gamma` is :math:`(N, C1, 1, 1, C0)`.
+        - **beta** (Tensor) - Bias, has the same shape and data type as `gamma`.
+        - **mean** (Tensor) - Mean value, has the same shape and data type as `gamma`.
+        - **variance** (Tensor) - Variance value, has the same shape and data type as `gamma`.
+
+    Outputs:
+        Tuple of 3 Tensors, the normalized input, the mean and variance of batch input.
+
+        - **y** (Tensor) - The output of InstanceNormV2, same type and shape as the `x`.
+        - **batch_mean** (Tensor) - The mean value of batch input, same type and shape as the input `mean`.
+        - **batch_variance** (Tensor) - The variance value of batch input, same type and shape as the input `variance`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Raises:
+        TypeError: If either item in the inputs is not Tensor.
+        TypeError: If data type of `x` is neither float16 nor float32.
+        TypeError: If data type of `gamma` is not a Tensor of float32.
+        TypeError: If data type of `beta` is not a Tensor of float32.
+        TypeError: If data type of `mean` is not a Tensor of float32.
+        TypeError: If data type of `variance` is not a Tensor of float32.
+        TypeError: If data type of attr `is_training` is not bool.
+        TypeError: If data type of attr `momentum` is not float.
+        TypeError: If data type of attr `epsilon` is not float.
+        ValueError: If :math:`H * W <= 1` in input `x`.
+        ValueError: If the shape of either item in the inputs is neither 4D nor 5D.
+        ValueError: If `epsilon` is not in the range of [0, 1).
+        ValueError: If `momentum` is not in the range of [0, 1].
+
+    Examples:
+        >>> x = Tensor(input_data=np.random.randn(128, 48, 32, 64, 12), dtype=mindspore.float32)
+        >>> gamma = Tensor(input_data=np.random.randn(128, 48, 1, 1, 12), dtype=mstype.float32)
+        >>> beta = Tensor(input_data=np.random.randn(128, 48, 1, 1, 12), dtype=mstype.float32)
+        >>> mean = Tensor(input_data=np.random.randn(128, 48, 1, 1, 12), dtype=mstype.float32)
+        >>> var = Tensor(input_data=np.random.randn(128, 48, 1, 1, 12), dtype=mstype.float32)
+        >>> ops = P.InstanceNormV2()
+        >>> output = ops(x, gamma, beta, mean, var)
+        >>> y_shape = output[0].shape
+        >>> print(y_shape)
+        (128, 48, 32, 64, 12)
+        >>> batch_mean_shape = output[1].shape
+        >>> print(batch_mean_shape)
+        (128, 48, 1, 1, 12)
+        >>> batch_var_shape = output[2].shape
+        >>> print(batch_var_shape)
+        (128, 48, 1, 1, 12)
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('x', dtype=sig.sig_dtype.T1),
+        sig.make_sig('gamma', dtype=sig.sig_dtype.T),
+        sig.make_sig('beta', dtype=sig.sig_dtype.T),
+        sig.make_sig('mean', dtype=sig.sig_dtype.T),
+        sig.make_sig('variance', dtype=sig.sig_dtype.T),
+    )
+
+    @prim_attr_register
+    def __init__(self, is_training=True, momentum=0.1, epsilon=1e-5):
+        """Initialize InstanceNormV2."""
+        self.init_prim_io_names(inputs=['x', 'gamma', 'beta', 'mean', 'variance'],
+                                outputs=['y', 'batch_mean', 'batch_variance'])
+        validator.check_is_float(epsilon, 'epsilon', self.name)
+        validator.check_is_float(momentum, 'momentum', self.name)
+        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
+        validator.check_bool(is_training, "is_training", self.name)
+
+
 class BNTrainingReduce(Primitive):
     """
     The BNTrainingReduce interface is deprecated, please use the :class:`mindspore.ops.BatchNorm` instead.
