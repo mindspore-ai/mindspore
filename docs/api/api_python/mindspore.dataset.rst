@@ -15,7 +15,8 @@ mindspore.dataset
 .. code-block::
 
     import mindspore.dataset as ds
-    from mindspore.dataset.transforms import c_transforms
+    import mindspore.dataset.transforms as transforms
+    import mindspore.dataset.vision as vision
 
 常用数据集术语说明如下：
 
