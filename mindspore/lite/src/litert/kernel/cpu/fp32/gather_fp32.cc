@@ -70,6 +70,7 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32) {
     }
   } else {
     indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->MutableData());
+    CHECK_NULL_RETURN(indices_data_);
   }
   return RET_OK;
 }

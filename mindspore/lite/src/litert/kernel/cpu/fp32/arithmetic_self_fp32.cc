@@ -113,6 +113,8 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
     }
     float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data());
     bool *output_ptr = reinterpret_cast<bool *>(out_tensors_.at(0)->data());
+    CHECK_NULL_RETURN(input_ptr);
+    CHECK_NULL_RETURN(output_ptr);
     ret = func_float_bool_(input_ptr + offset, output_ptr + offset, count);
     return ret;
   }
@@ -124,6 +126,8 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
     }
     float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data());
     float *output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+    CHECK_NULL_RETURN(input_ptr);
+    CHECK_NULL_RETURN(output_ptr);
     ret = func_(input_ptr + offset, output_ptr + offset, count);
   } else if (in_tensors_[0]->data_type() == kNumberTypeBool) {
     if (func_bool_ == nullptr) {
@@ -132,6 +136,8 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
     }
     bool *input_ptr = reinterpret_cast<bool *>(in_tensors_.at(0)->data());
     bool *output_ptr = reinterpret_cast<bool *>(out_tensors_.at(0)->data());
+    CHECK_NULL_RETURN(input_ptr);
+    CHECK_NULL_RETURN(output_ptr);
     ret = func_bool_(input_ptr + offset, output_ptr + offset, count);
   } else if (in_tensors_[0]->data_type() == kNumberTypeInt32) {
     if (func_int_ == nullptr) {
@@ -140,6 +146,8 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
     }
     int32_t *input_ptr = reinterpret_cast<int32_t *>(in_tensors_.at(0)->data());
     int32_t *output_ptr = reinterpret_cast<int32_t *>(out_tensors_.at(0)->data());
+    CHECK_NULL_RETURN(input_ptr);
+    CHECK_NULL_RETURN(output_ptr);
     ret = func_int_(input_ptr + offset, output_ptr + offset, count);
   } else {
     MS_LOG(ERROR) << "Unsupported type: " << in_tensors_[0]->data_type() << ".";

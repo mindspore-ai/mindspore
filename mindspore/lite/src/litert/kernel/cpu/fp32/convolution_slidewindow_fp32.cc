@@ -133,7 +133,7 @@ int ConvolutionSWCPUKernel::InitTmpBuffer() {
   }
 
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
-  MS_ASSERT(out_data != nullptr);
+  CHECK_NULL_RETURN(out_data);
   if (oc_res_ == 0) {  // not need to malloc dst
     output_data_ = out_data;
   } else {  // need to malloc dst to align block
@@ -172,6 +172,7 @@ int ConvolutionSWCPUKernel::Run() {
   }
   if (oc_res_ != 0) {
     auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+    CHECK_NULL_RETURN(out_data);
     PackNHWCXToNHWCFp32(output_data_, out_data, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_, oc_tile_);
   }
