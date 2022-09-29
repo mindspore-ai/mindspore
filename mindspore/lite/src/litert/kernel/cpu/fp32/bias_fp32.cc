@@ -113,6 +113,9 @@ int BiasCPUKernel::DoExecute(int task_id) {
   auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(bias);
+  CHECK_NULL_RETURN(output);
   int64_t block_start = split_points_[task_id];
   int64_t block_end = total_num_;
   if (static_cast<size_t>(task_id + 1) < split_points_.size()) {

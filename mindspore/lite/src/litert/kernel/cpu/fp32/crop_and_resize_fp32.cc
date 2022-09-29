@@ -33,6 +33,15 @@ constexpr size_t kBoxIndex = 1;
 constexpr size_t kBoxIdIndex = 2;
 }  // namespace
 int CropAndResizeCPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C3NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (std::any_of(in_tensors_.begin(), in_tensors_.end(), [](const auto &in_tensor) { return in_tensor == nullptr; })) {
+    return RET_NULL_PTR;
+  }
+  if (std::any_of(out_tensors_.begin(), out_tensors_.end(),
+                  [](const auto &in_tensor) { return in_tensor == nullptr; })) {
+    return RET_NULL_PTR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -156,7 +165,9 @@ int CropAndResizeCPUKernel::Run() {
   auto input = in_tensors_.at(0);
   auto input_shape = input->shape();
   auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data());
+  CHECK_NULL_RETURN(boxes);
   auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
+  CHECK_NULL_RETURN(box_idx);
   CHECK_LESS_RETURN(input_shape.size(), DIMENSION_4D);
   const auto &output_shape = out_tensors_.at(0)->shape();
   CHECK_LESS_RETURN(output_shape.size(), DIMENSION_4D);

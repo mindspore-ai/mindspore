@@ -124,7 +124,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   CHECK_NULL_RETURN(input_tensor);
   auto input_ptr = reinterpret_cast<float *>(input_tensor->data());
-  MS_ASSERT(input_ptr != nullptr);
+  CHECK_NULL_RETURN(input_ptr);
   if (need_align_) {
     PackNHWCToNHWC4Fp32(input_ptr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
@@ -135,7 +135,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   CHECK_NULL_RETURN(output_tensor);
   auto output_ptr = reinterpret_cast<float *>(output_tensor->data());
-  MS_ASSERT(output_ptr != nullptr);
+  CHECK_NULL_RETURN(output_ptr);
   if (!need_align_) {
     packed_output_ = output_ptr;
   }

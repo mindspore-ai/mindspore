@@ -71,6 +71,8 @@ int BatchToSpaceCPUKernel::Run() {
   CHECK_NULL_RETURN(output);
   const float *input_data = reinterpret_cast<const float *>(input->data());
   float *output_data = reinterpret_cast<float *>(output->data());
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(output_data);
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   size_t data_size = sizeof(float);
