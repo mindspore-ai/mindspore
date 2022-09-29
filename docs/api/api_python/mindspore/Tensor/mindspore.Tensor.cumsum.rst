@@ -6,7 +6,7 @@ mindspore.Tensor.cumsum
     返回指定轴方向上元素的累加值。
 
     .. note::
-        如果 `dtype` 为 `int8` , `int16` 或 `bool` ，则结果 `dtype` 将提升为 `int32` ，不支持 `int64` 。
+        如果 `self.dtype` 为 `int8` , `int16` 或 `bool` ，则结果 `dtype` 将提升为 `int32` ，不支持 `int64` 。
 
     参数：
         - **axis** (int, 可选) - 轴，在该轴方向上的累积和。默认情况下，计算所有元素的累加和。

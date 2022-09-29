@@ -19,7 +19,7 @@ mindspore.nn.probability.distribution.Distribution
         而指数分布的 `dist_spec_args` 为 `rate`。
 
         所有方法都包含一个 `dist_spec_args` 作为可选参数。
-        传入 `dist_spec_args` 可以让该方法基于新的分布的参数值进行运算。但如此做不会改变原始分布的参数。
+        传入 `dist_spec_args` 可以让该方法基于新的分布的参数值进行运算，但如此做不会改变原始分布的参数。
 
     .. py:method:: cdf(value, *args, **kwargs)
 
