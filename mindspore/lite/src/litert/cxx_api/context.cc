@@ -26,6 +26,7 @@
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
+constexpr auto kModelOptionNPUEnableFP16 = "mindspore.option.npu.enable_fp16";
 constexpr auto kModelOptionGPUEnableGLTexture = "mindspore.option.gpu.enable_gl_texture_";
 constexpr auto kModelOptionGPUGLContext = "mindspore.option.gpu.gl_context_";
 constexpr auto kModelOptionGPUGLDisplay = "mindspore.option.gpu.gl_display_";
@@ -156,6 +157,27 @@ std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
     return {};
   }
   return data_->affinity_core_list_;
+}
+void Context::SetBuiltInDelegate(DelegateMode mode) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  if (mode < kCoreML || mode > kNNAPI) {
+    MS_LOG(WARNING) << "Invalid built-in delegate mode: " << mode << ", do not enable any delegate.";
+    data_->delegate_mode_ = kNoDelegate;
+    return;
+  }
+  data_->delegate_mode_ = mode;
+  return;
+}
+
+DelegateMode Context::GetBuiltInDelegate() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return kNoDelegate;
+  }
+  return data_->delegate_mode_;
 }
 
 void Context::set_delegate(const std::shared_ptr<AbstractDelegate> &delegate) {
@@ -347,6 +369,22 @@ void *GPUDeviceInfo::GetGLDisplay() const {
     return nullptr;
   }
   return GetValue<void *>(data_, kModelOptionGPUGLDisplay);
+}
+
+void KirinNPUDeviceInfo::SetEnableFP16(bool is_fp16) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionNPUEnableFP16] = is_fp16;
+}
+
+bool KirinNPUDeviceInfo::GetEnableFP16() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return false;
+  }
+  return GetValue<bool>(data_, kModelOptionNPUEnableFP16);
 }
 
 void KirinNPUDeviceInfo::SetFrequency(int frequency) {

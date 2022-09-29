@@ -40,6 +40,7 @@ typedef struct ContextC {
   bool enable_parallel = false;
   std::vector<int32_t> affinity_core_list;
   int affinity_mode = 0;
+  int delegate_mode = 0;
   std::shared_ptr<Delegate> delegate = nullptr;
 } ContextC;
 }  // namespace mindspore

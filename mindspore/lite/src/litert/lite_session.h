@@ -148,6 +148,7 @@ class LiteSession {
   int ContextInit(const std::shared_ptr<InnerContext> &context);
   int CreateTensorRTDelegate();
   int CreateNPUDelegate();
+  int CreateNNAPIDelegate();
   int CreateCoreMLDelegate();
   int DelegateInit();
   int InitGPURuntime();

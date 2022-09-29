@@ -53,6 +53,7 @@ typedef struct GpuDeviceInfo {
 } GpuDeviceInfo;
 
 typedef struct NpuDeviceInfo {
+  bool enable_float16_ = false; /**< prior enable float16 inference */
   int frequency_ = 3; /**< npu frequency inference, low 1, medium 2, high 3, extreme 4, other values will be set to 3 */
 } NpuDeviceInfo;
 
@@ -84,9 +85,11 @@ struct InnerContext {
   int Init();
   bool IsCpuFloat16Enabled() const;
   bool IsGpuFloat16Enabled() const;
+  bool IsNpuFloat16Enabled() const;
   bool IsGLTextureEnabled() const;
   bool IsDeviceTypeEnabled(DeviceType type) const;
   bool IsProviderEnabled() const;
+  int GetDelegateMode() const;
   std::set<std::string> GetProviders() const;
   DeviceInfo GetDeviceInfo(DeviceType type) const;
   std::set<void *> GetLinkInfo(void *pre) const;
@@ -103,6 +106,7 @@ struct InnerContext {
   std::vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
   AllocatorPtr allocator = nullptr;
   std::vector<DeviceContext> device_list_ = {{DT_CPU, {{false, MID_CPU}}}};
+  int delegate_mode_ = 0;
   DelegatePtr delegate = nullptr;
   bool float_mode = false; /**< convert full quant model to float model */
 

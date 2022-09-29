@@ -49,6 +49,9 @@
 #if GPU_TENSORRT
 #include "src/litert/delegate/tensorrt/tensorrt_delegate.h"
 #endif
+#if SUPPORT_NNAPI
+#include "src/litert/delegate/nnapi/nnapi_delegate.h"
+#endif
 #include "src/litert/runtime_convert.h"
 #include "extendrt/mindir_loader/model_loader.h"
 
@@ -818,27 +821,50 @@ int LiteSession::CreateNPUDelegate() {
   return RET_OK;
 }
 
+int LiteSession::CreateNNAPIDelegate() {
+#if SUPPORT_NNAPI
+  bool enable_fp16 =
+    context_->IsCpuFloat16Enabled() || context_->IsGpuFloat16Enabled() || context_->IsNpuFloat16Enabled();
+  bool only_acc_device = !context_->IsDeviceTypeEnabled(DT_CPU) && !context_->IsDeviceTypeEnabled(DT_GPU) &&
+                         context_->IsDeviceTypeEnabled(DT_NPU);
+  bool disable_cpu = !context_->IsDeviceTypeEnabled(DT_CPU);
+  std::vector<std::string> specified_devices(context_->GetProviders().begin(), context_->GetProviders().end());
+  delegate_ = std::make_shared<NNAPIDelegate>(enable_fp16, only_acc_device, disable_cpu, specified_devices);
+  if (delegate_ == nullptr) {
+    MS_LOG(ERROR) << "New delegate_ failed";
+    return RET_ERROR;
+  }
+  this->context_->delegate = delegate_;
+#endif
+  return RET_OK;
+}
+
 int LiteSession::DelegateInit() {
 #ifndef DELEGATE_CLIP
+  int ret = RET_OK;
   if (context_->delegate != nullptr) {
     delegate_ = context_->delegate;
     delegate_device_type_ = -1;
+  } else if (context_->delegate_mode_ != kNoDelegate) {
+    switch (context_->delegate_mode_) {
+      case kNNAPI:
+        ret = CreateNNAPIDelegate();
+        break;
+      default:
+        MS_LOG(ERROR) << "Unsupported built-in delegate mode: " << context_->delegate_mode_;
+        return RET_ERROR;
+    }
   } else {
     if (context_->IsDeviceTypeEnabled(DT_NPU)) {
-      auto ret = CreateNPUDelegate();
-      if (ret != RET_OK) {
-        return ret;
-      }
-    }
-
-    if (context_->IsDeviceTypeEnabled(DT_GPU)) {
-      auto ret = CreateTensorRTDelegate();
-      if (ret != RET_OK) {
-        return ret;
-      }
+      ret = CreateNPUDelegate();
+    } else if (context_->IsDeviceTypeEnabled(DT_GPU)) {
+      ret = CreateTensorRTDelegate();
     }
   }
 
+  if (ret != RET_OK) {
+    return ret;
+  }
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
     if (delegate_ret == mindspore::kLiteNotSupport) {

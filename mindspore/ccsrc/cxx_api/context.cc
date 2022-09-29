@@ -22,6 +22,7 @@
 
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
+constexpr auto kModelOptionNPUEnableFP16 = "mindspore.option.npu.enable_fp16";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionDeviceID = "mindspore.option.device_id";
 constexpr auto kModelOptionGPUDeviceID = kModelOptionDeviceID;
@@ -148,6 +149,15 @@ void GPUDeviceInfo::SetEnableFP16(bool is_fp16) {
 bool GPUDeviceInfo::GetEnableFP16() const {
   MS_EXCEPTION_IF_NULL(data_);
   return GetValue<bool>(data_, kModelOptionGPUEnableFP16);
+}
+
+void KirinNPUDeviceInfo::SetEnableFP16(bool is_fp16) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionNPUEnableFP16] = is_fp16;
+}
+bool KirinNPUDeviceInfo::GetEnableFP16() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<bool>(data_, kModelOptionNPUEnableFP16);
 }
 
 void KirinNPUDeviceInfo::SetFrequency(int frequency) {

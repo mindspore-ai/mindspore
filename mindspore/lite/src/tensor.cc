@@ -490,16 +490,12 @@ Tensor *Tensor::CreateTensor(const std::string &name, TypeId type, const std::ve
   }
 
   size_t shape_size = 1;
-  if (shape.empty()) {
-    shape_size = 0;
-  } else {
-    for (size_t i = 0; i < shape.size(); ++i) {
-      if (shape[i] < 0) {
-        delete tensor;
-        return nullptr;
-      }
-      shape_size *= static_cast<size_t>(shape[i]);
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] < 0) {
+      delete tensor;
+      return nullptr;
     }
+    shape_size *= static_cast<size_t>(shape[i]);
   }
   auto data_type_size = lite::DataTypeSize(type);
   if (data_type_size == 0) {

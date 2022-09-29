@@ -24,6 +24,12 @@
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
+enum DelegateMode {
+  kNoDelegate = 0,
+  kCoreML = 1,
+  kNNAPI = 2,
+};
+
 enum DeviceType {
   kCPU = 0,
   kGPU,
@@ -99,6 +105,16 @@ class MS_API Context {
   ///
   /// \return Bool value that indicates whether in parallel.
   bool GetEnableParallel() const;
+
+  /// \brief Set built-in delegate mode to access third-party AI framework.
+  ///
+  /// \param[in] mode the built-in delegate mode.
+  void SetBuiltInDelegate(DelegateMode mode);
+
+  /// \brief Get the built-in delegate mode of the third-party AI framework.
+  ///
+  /// \return the built-in delegate mode.
+  DelegateMode GetBuiltInDelegate() const;
 
   /// \brief Set Delegate to access third-party AI framework.
   ///
@@ -233,6 +249,16 @@ class MS_API KirinNPUDeviceInfo : public DeviceInfoContext {
   ///
   /// \return Type of this DeviceInfoContext.
   enum DeviceType GetDeviceType() const override { return DeviceType::kKirinNPU; };
+
+  /// \brief Set enables to perform the float16 inference
+  ///
+  /// \param[in] is_fp16 Enable float16 inference or not.
+  void SetEnableFP16(bool is_fp16);
+
+  /// \brief Get enables to perform the float16 inference
+  ///
+  /// \return Whether enable float16 inference.
+  bool GetEnableFP16() const;
 
   /// \brief Set the NPU frequency.
   ///
