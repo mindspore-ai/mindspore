@@ -1,4 +1,4 @@
-mindspore.ops.functional
+mindspore.ops.function
 =============================
 
 神经网络层函数
@@ -187,7 +187,7 @@ Reduction函数
    :widths: 50 50
    :header-rows: 1
 
-   * - functional
+   * - function
      - Description
    * - mindspore.ops.reduce_sum
      - Refer to :class:`mindspore.ops.ReduceSum`.
@@ -219,7 +219,7 @@ Reduction函数
    :widths: 50 50
    :header-rows: 1
 
-   * - functional
+   * - function
      - Description
    * - mindspore.ops.check_bprop
      - Refer to :class:`mindspore.ops.CheckBprop`.
@@ -360,7 +360,7 @@ Array操作
    :widths: 50 50
    :header-rows: 1
 
-   * - functional
+   * - function
      - Description
    * - mindspore.ops.cast
      - Refer to :class:`mindspore.ops.Cast`.
@@ -483,7 +483,7 @@ Parameter操作函数
    :widths: 50 50
    :header-rows: 1
 
-   * - functional
+   * - function
      - Description
    * - mindspore.ops.bool_and
      - Calculate the result of logical AND operation. (Usage is the same as "and" in Python)
