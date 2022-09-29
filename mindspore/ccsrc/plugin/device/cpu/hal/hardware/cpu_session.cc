@@ -45,7 +45,7 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -91,7 +91,7 @@ void CPUSession::Reorder(std::vector<CNodePtr> *node_list) const {
 void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode && ps::PSContext::instance()->is_ps_mode()) {

@@ -26,7 +26,7 @@
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -229,7 +229,7 @@ void SetPynativeShardFlagIfHasShardNode(const FuncGraphPtr &root, const std::vec
 
 // Only auto_parallel and semi_auto_parallel support PipelineSplit
 bool PipelineSplit(const ResourcePtr &res) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return true;
   }

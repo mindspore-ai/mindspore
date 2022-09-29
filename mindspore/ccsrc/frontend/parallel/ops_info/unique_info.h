@@ -47,7 +47,7 @@ class UniqueInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferAsLossDivisor() override { return SUCCESS; }
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 #endif
 

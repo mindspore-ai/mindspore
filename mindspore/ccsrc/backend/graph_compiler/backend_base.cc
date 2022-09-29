@@ -30,7 +30,7 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"
 #endif
 
@@ -500,7 +500,7 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
   bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
                                 distributed::recovery::RecoveryContext::GetInstance()->need_reset());
   bool is_embedding_cache_server = false;
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   is_embedding_cache_server = ps::PSContext::instance()->cache_enable() && ps::PSContext::instance()->is_server();
 #endif
   if (need_contruct_output) {

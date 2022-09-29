@@ -138,9 +138,6 @@ class BACKEND_EXPORT DataQueueMgr {
   std::map<std::string, DataQueueCreator> data_queue_creator_map_ = {};
 
   HANDLER_DEFINE(bool, DestoryTdtHandle);
-
-  inline static std::shared_ptr<DataQueueMgr> instance_;
-  inline static std::once_flag instance_flag_;
 };
 #ifndef BUILD_LITE
 BACKEND_EXPORT void UpdateGetNextNode(const AnfNodePtr &data_kernel);

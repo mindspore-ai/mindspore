@@ -135,8 +135,6 @@ class BACKEND_EXPORT PSContext {
         server_password_(""),
         http_url_prefix_(""),
         instance_name_("") {}
-  // Use inline static instance pointer in case there are multiple static variables.
-  inline static std::shared_ptr<PSContext> ps_instance_{nullptr};
 
   bool ps_enabled_;
   bool is_worker_;

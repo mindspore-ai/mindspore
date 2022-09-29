@@ -30,11 +30,16 @@
 namespace mindspore {
 namespace ps {
 std::shared_ptr<PSContext> PSContext::instance() {
-  if (ps_instance_ == nullptr) {
-    ps_instance_.reset(new (std::nothrow) PSContext());
-    MS_EXCEPTION_IF_NULL(ps_instance_);
-  }
-  return ps_instance_;
+  static std::once_flag init_flag;
+  static std::shared_ptr<PSContext> ps_instance = nullptr;
+  std::call_once(init_flag, [&]() {
+    if (ps_instance == nullptr) {
+      ps_instance.reset(new (std::nothrow) PSContext());
+      MS_EXCEPTION_IF_NULL(ps_instance);
+    }
+  });
+
+  return ps_instance;
 }
 
 void PSContext::SetPSEnable(bool enabled) {

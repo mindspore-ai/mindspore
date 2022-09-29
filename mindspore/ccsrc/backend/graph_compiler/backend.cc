@@ -46,7 +46,7 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"
 #endif
 
@@ -240,7 +240,7 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   const session::SessionPtr &exe_session = ((target != target_device_ && !target.empty()) ? other_sess_ : target_sess_);
   MS_EXCEPTION_IF_NULL(exe_session);
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   // If in PS mode, must use sync mode to run graph in case that the weights on server are not updated in the last step.
   if (ps::PSContext::instance()->is_ps_mode()) {
     exe_session->RunGraph(g, inputs, &outputs);
