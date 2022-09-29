@@ -15,7 +15,6 @@
 """Auto mixed precision."""
 from __future__ import absolute_import
 
-import mindspore as ms
 from mindspore import nn
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -26,39 +25,17 @@ from mindspore.ops import functional as F
 from mindspore.parallel._utils import _get_pipeline_stages
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager
 from mindspore import boost, context
-from mindspore.ops import operations as P
 
 
-STREE = None
-
-
-AMP_WHITE_LIST_Cell = (
+AMP_WHITE_LIST = (
+    nn.Dense,
     nn.Conv1d,
     nn.Conv2d,
     nn.Conv3d,
     nn.Conv1dTranspose,
     nn.Conv2dTranspose,
-    nn.Conv3dTranspose,
-    nn.Dense,
-    nn.LSTMCell,
-    nn.RNNCell,
-    nn.GRUCell
+    nn.Conv3dTranspose
 )
-
-
-AMP_WHITE_LIST_OPS = (
-    P.Conv2D,
-    P.Conv3D,
-    P.Conv2DTranspose,
-    P.Conv3DTranspose,
-    P.Conv2DBackpropInput,
-    P.MatMul,
-    P.BatchMatMul,
-    P.PReLU,
-    P.ReLU,
-    P.Ger
-)
-
 
 AMP_BLACK_LIST = (
     nn.BatchNorm1d,
@@ -80,114 +57,33 @@ class _OutputTo16(nn.Cell):
 
 
 class _OutputTo32(nn.Cell):
-    "Wrap loss for amp. Cast network output back to float32"
+    "Wrap cell for amp. Cast network output back to float32"
 
-    def __init__(self, backbone):
+    def __init__(self, op):
         super(_OutputTo32, self).__init__(auto_prefix=False)
-        self._backbone = backbone
-        self._jit_config_dict = backbone.jit_config_dict
+        self._op = op
 
-    def construct(self, *inputs):
-        out = self._backbone(*inputs)
-        return F.mixed_precision_cast(mstype.float32, out)
+    def construct(self, x):
+        return F.cast(self._op(x), mstype.float32)
 
 
-def _insert_cast_operator(stree):
-    """insert cast for operators in white_list."""
-    new_cast_node = None
-    for node in stree.nodes():
-        if node.get_targets() is None:
-            continue
-        in_white_list = False
-        if node.get_node_type() != ms.rewrite.NodeType.Tree:
-            # insert cast before the primitive operators in white_list
-            if node.get_instance_type() in AMP_WHITE_LIST_OPS:
-                in_white_list = True
-                for idx in range(len(node.get_inputs())):
-                    position = stree.before(node)
-                    new_node = P.Cast()
-                    arg = ms.rewrite.ScopedValue.create_name_values([node.get_inputs()[idx].get_targets()[0].value,
-                                                                     "mindspore.float16"])
-                    new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                                     targets=['x_cast_{}'.format(node.get_name())],
-                                                                     args=arg,
-                                                                     name='incast_{}{}'.format(node.get_name(), idx))
-                    stree.insert(position, new_cast_node)
-                    node.set_arg_by_node(idx, new_cast_node)
-            # insert cast before the Cell operators in white_list
-            elif node.get_instance_type() in AMP_WHITE_LIST_Cell:
-                in_white_list = True
-                node.get_instance().to_float(mstype.float16)
-
-            # insert cast after the operators in white_list
-            if in_white_list:
-                position = stree.after(node)
-                new_node = P.Cast()
-                arg = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
-                                                                 "mindspore.float32"])
-                new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                                 targets=['x_cast_{}'.format(node.get_name())],
-                                                                 args=arg,
-                                                                 name='outcast_{}'.format(node.get_name()))
-                for i in range(len(node.get_users())):
-                    follow_node = node.get_users()[i]
-                    stree.insert(position, new_cast_node)
-                    idx = follow_node.get_args().index(node.get_targets()[0])
-                    follow_node.set_arg_by_node(idx, new_cast_node)
-        else:
-            substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
-            _insert_cast_operator(substree)
-
-
-def _removed_cast_pair(node):
-    """the cast pairs should be removed."""
-    for i in range(len(node.get_users())):
-        follow_node = node.get_users()[i]
-        if follow_node.get_instance_type() != P.Cast:
-            return False
-    node_dtype = node.get_args()[1]
-    if len(node.get_users()).__trunc__() == 0:
-        return False
-    follow_node_dtype = node.get_users()[0].get_args()[1]
-    for i in range(1, len(node.get_users())):
-        dtype = node.get_users()[i].get_args()[1]
-        if dtype == follow_node_dtype:
-            continue
-    if i == len(node.get_users()) - 1 and follow_node_dtype != node_dtype:
-        return True
-
-    return False
-
-
-def _remove_duplicated_cast(stree):
-    """remove the duplicated cast operators."""
-    for node in stree.nodes():
-        if node.get_targets() is None:
-            continue
-        if node.get_node_type() != ms.rewrite.NodeType.Tree:
-            if node.get_instance_type() == P.Cast and _removed_cast_pair(node):
-                # remove the following cast node first
-                len_users = len(node.get_users())
-                for i in range(len_users):
-                    follow_node = node.get_users()[i]
-                    for n in follow_node.get_users():
-                        idx = n.get_args().index(follow_node.get_targets()[0])
-                        n.set_arg_by_node(idx, node.get_inputs()[0])
-                    stree.erase_node(follow_node)
-                # remove the current cast node
-                stree.erase_node(node)
-        else:
-            substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
-            _remove_duplicated_cast(substree)
-
-
-def _auto_white_list(network):
+def _auto_white_list(network, white_list=None):
     """process the white list of network."""
-    global STREE
-    STREE = ms.rewrite.SymbolTree.create(network)
-    _insert_cast_operator(STREE)
-    _remove_duplicated_cast(STREE)
-    return STREE.get_network()
+    if white_list is None:
+        white_list = AMP_WHITE_LIST
+    cells = network.name_cells()
+    change = False
+    for name in cells:
+        subcell = cells[name]
+        if subcell == network:
+            continue
+        if isinstance(subcell, white_list):
+            network._cells[name] = _OutputTo32(subcell.to_float(mstype.float16))
+            change = True
+        else:
+            _auto_white_list(subcell, white_list)
+    if isinstance(network, nn.SequentialCell) and change:
+        network.cell_list = list(network.cells())
 
 
 def _auto_black_list(network, black_list=None):
@@ -226,21 +122,16 @@ def auto_mixed_precision(network, amp_level="O0"):
     Raises:
         ValueError: If amp level is not supported.
     """
-    if not isinstance(network, nn.Cell):
-        raise TypeError("The network type should be Cell.")
     if amp_level == "O0":
         pass
     elif amp_level == "O1":
-        return _auto_white_list(network)
+        _auto_white_list(network)
     elif amp_level == "O2":
         _auto_black_list(network)
     elif amp_level == "O3":
         network.to_float(mstype.float16)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
-    if amp_level in ("O2", "O3"):
-        network = _OutputTo32(network)
-    return network
 
 
 def _do_keep_batchnorm_fp32(network):
@@ -418,7 +309,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     elif not config["keep_batchnorm_fp32"] and level == "O2":
         network.to_float(mstype.float16)
     else:
-        network = auto_mixed_precision(network, level)
+        auto_mixed_precision(network, level)
 
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])

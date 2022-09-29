@@ -29,7 +29,6 @@ from mindspore.context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_contex
 from mindspore.version import __version__
 from mindspore.profiler import Profiler
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
-from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeHelper
 
 
 __all__ = ["run_check"]
@@ -39,5 +38,4 @@ __all__.extend(train.__all__)
 __all__.extend(log.__all__)
 __all__.extend(context.__all__)
 __all__.extend(parallel.__all__)
-__all__.extend(rewrite.__all__)
 __all__.append("Profiler")
