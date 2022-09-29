@@ -19,4 +19,11 @@ mindspore.ops.NoRepeatNGram
 
     异常：
         - **TypeError** - 如果 `ngram_size` 不是int。
-        - **TypeError** - 如果 `state_seq` 和 `log_probs` 都不是Tensor。
+        - **TypeError** - 如果 `state_seq` 或 `log_probs` 不是Tensor。
+        - **TypeError** - 如果 `state_seq` 的dtype不是int。
+        - **TypeError** - 如果 `log_probs` 的dtype不是float。
+        - **ValueError** - 如果 `ngram_size` 小于0。
+        - **ValueError** - 如果 `ngram_size` 大于m。
+        - **ValueError** - 如果 `state_seq` 或 `log_probs` 不是三维的Tensor。
+        - **ValueError** - 如果 `state_seq` 和 `log_probs` 的batch\_size不相等。
+        - **ValueError** - 如果 `state_seq` 和 `log_probs` 的beam\_width不相等。
