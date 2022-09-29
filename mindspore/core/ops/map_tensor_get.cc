@@ -53,17 +53,10 @@ AbstractBasePtr MapTensorGetInfer(const abstract::AnalysisEnginePtr &, const Pri
                             << " but got " << key_tensor_shape->ToString() << ".";
   }
 
-  // Check 'default_value' dtype and shape.
-  auto default_value_dtype = CheckAndConvertUtils::GetTensorInputType(kNameMapTensorGet, input_args, kInputIndex2);
-  if (!common::IsEqual(value_dtype, default_value_dtype)) {
-    MS_EXCEPTION(ValueError) << kNameMapTensorGet << " - required default_value dtype " << value_dtype->ToString()
-                             << " but got " << default_value_dtype->ToString() << ".";
-  }
-  auto default_value_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorGet, input_args, kInputIndex2);
-  if (!common::IsEqual(value_shape, default_value_shape)) {
-    MS_EXCEPTION(ValueError) << kNameMapTensorGet << " - required default_value shape " << value_shape->ToString()
-                             << " but got " << default_value_shape->ToString() << ".";
-  }
+  // Check 'default_value'.
+  auto default_value_scalar =
+    CheckAndConvertUtils::CheckArgs<abstract::AbstractScalar>(kNameMapTensorGet, input_args, kInputIndex2);
+  MS_EXCEPTION_IF_NULL(default_value_scalar);
 
   // Concate key shape and value shape as the result shape.
   ShapeVector shape_vec = key_tensor_shape->shape();

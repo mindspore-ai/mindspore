@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `getitem` operations."""
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
@@ -307,3 +308,19 @@ def _tensor_getitem_by_tuple(data, tuple_index):
         Tensor, element type is the same as the element type of data.
     """
     return compile_utils.tensor_index_by_tuple(data, tuple_index)
+
+
+@getitem.register("MapTensor", "Tensor")
+def _map_tensor_getitem(map_tensor, key_tensor):
+    """
+    Getting value tensor from map tensor by key tensor.
+
+    Inputs:
+        map_tensor (MapTensor): A map tensor.
+        key_tensor (Tensor): The key tensor.
+
+    Outputs:
+        Tensor, value tensor according the key tensor.
+    """
+    default_value = map_tensor.default_value
+    return _map_tensor_ops.get(map_tensor, key_tensor, default_value)

@@ -15,6 +15,7 @@
  */
 #include <memory>
 #include "common/common_test.h"
+#include "ir/value.h"
 #include "ir/tensor.h"
 #include "ir/map_tensor.h"
 
@@ -32,7 +33,12 @@ class TestMapTensor : public UT::Common {
 /// Description: test MapTensor API.
 /// Expectation: MapTensor API work as expected.
 TEST_F(TestMapTensor, TestApi) {
-  auto m = std::make_shared<MapTensor>(kNumberTypeInt32, kNumberTypeFloat32, ShapeVector{4});
+  auto default_value = std::make_shared<StringImm>("zeros");
+  auto m = std::make_shared<MapTensor>(kNumberTypeInt32, kNumberTypeFloat32, ShapeVector{4}, default_value);
   ASSERT_TRUE(m != nullptr);
+  ASSERT_EQ(m->key_dtype(), kNumberTypeInt32);
+  ASSERT_EQ(m->value_dtype(), kNumberTypeFloat32);
+  ASSERT_EQ(m->value_shape(), ShapeVector{4});
+  ASSERT_EQ(m->default_value(), default_value);
 }
 }  // namespace mindspore

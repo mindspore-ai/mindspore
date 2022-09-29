@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter, context
+from mindspore import context, Tensor, Parameter, ParameterTuple
 from mindspore.experimental import MapParameter
 from mindspore.common.initializer import initializer
 
@@ -35,13 +35,21 @@ def test_basic_operations():
     assert t.shape == (3, 2)
     assert np.allclose(t.asnumpy(), 0)
 
-    t = m.get(Tensor([1, 2, 3], dtype=ms.int32), Tensor([1, 1], dtype=ms.float32))
+    t = m.get(Tensor([1, 2, 3], dtype=ms.int32), 0)
     assert t.dtype == ms.float32
     assert t.shape == (3, 2)
-    assert np.allclose(t.asnumpy(), 1)
+    assert np.allclose(t.asnumpy(), 0)
+
+    t = m[Tensor([1, 2, 3], dtype=ms.int32)]
+    assert t.dtype == ms.float32
+    assert t.shape == (3, 2)
+    assert np.allclose(t.asnumpy(), 0)
 
     m.put(Tensor([1, 2, 3], dtype=ms.int32), Tensor([[1, 1], [2, 2], [3, 3]], dtype=ms.float32))
+    m[Tensor([1, 2, 3], dtype=ms.int32)] = Tensor([[11, 11], [22, 22], [33, 33]], dtype=ms.float32)
     m.erase(Tensor([1, 2, 3], dtype=ms.int32))
+
+    print(m)
 
 
 def test_simple_graph_compile():
@@ -56,13 +64,16 @@ def test_simple_graph_compile():
             self.p = Parameter(initializer('ones', (2, 3), ms.float32))
             self.m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
             self.key = Tensor([1, 2], dtype=ms.int32)
-            self.default_value = Tensor([3.0, 3.0, 3.0], dtype=ms.float32)
 
         def construct(self, x):
             self.m.put(self.key, x)
-            value = self.m.get(self.key, self.default_value)
+            value1 = self.m.get(self.key, 0.1)
+            value2 = self.m.get(self.key, 'zeros')
+            value3 = self.m.get(self.key)
+            value4 = self.m[self.key]
+            self.m[self.key] = value4
             self.m.erase(self.key)
-            return self.p + value
+            return self.p + value1 + value2 + value3 + value4
 
     context.set_context(mode=context.GRAPH_MODE)
     net = MyNet()
@@ -82,3 +93,36 @@ def test_export_update_api():
     m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
     data = m.export(full=True)
     m.update(data)
+
+
+def test_map_parameter_clone():
+    """
+    Feature: MapParameter
+    Description: Test MapParameter clone() method.
+    Expectation: MapParameter cloned as expected.
+    """
+    m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,), name="map")
+    p = Parameter(Tensor(1), name="param")
+    params = ParameterTuple([m, p])
+    cloned_params = params.clone(prefix="cloned", init='zeros')
+
+    cloned_map = cloned_params[0]
+    assert isinstance(cloned_map, MapParameter)
+    assert cloned_map.name == 'cloned.map'
+    assert cloned_map.key_dtype == m.key_dtype
+    assert cloned_map.value_dtype == m.value_dtype
+    assert cloned_map.value_shape == m.value_shape
+    assert cloned_map.default_value == 'zeros'
+
+    old_map_tensor = m._map_tensor  # pylint: disable=W0212
+    new_map_tensor = cloned_map._map_tensor  # pylint: disable=W0212
+    assert new_map_tensor != old_map_tensor
+    assert new_map_tensor.key_dtype == old_map_tensor.key_dtype
+    assert new_map_tensor.value_dtype == old_map_tensor.value_dtype
+    assert new_map_tensor.value_shape == old_map_tensor.value_shape
+
+    clone_same = cloned_map.clone(init='same')
+    assert clone_same.key_dtype == m.key_dtype
+    assert clone_same.value_dtype == m.value_dtype
+    assert clone_same.value_shape == m.value_shape
+    assert clone_same.default_value == 'zeros'

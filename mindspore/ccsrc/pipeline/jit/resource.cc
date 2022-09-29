@@ -405,6 +405,10 @@ BuiltInTypeMap &GetAttrMap() {
        {"ndim", std::string("sparse_ndim_")},         // C.sparse_ndim_
        {"itemsize", std::string("itemsize_")},        // C.itemsize_
      }},
+    {kObjectTypeMapTensorType,
+     {
+       {"default_value", prim::kPrimMapTensorGetDefaultValue},  // F.map_tensor_get_default_value
+     }},
   };
   return attr_map;
 }

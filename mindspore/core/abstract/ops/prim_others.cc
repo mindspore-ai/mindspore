@@ -17,6 +17,7 @@
 #include <string>
 
 #include "ir/dtype.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "abstract/param_validator.h"
 #include "abstract/ops/infer_functions.h"
@@ -524,6 +525,18 @@ AbstractBasePtr InferImplAdamApplyOneWithDecay(const AnalysisEnginePtr &, const 
   auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul5});
   AbstractBasePtrList rets = {add1, add0, sub0};
   return std::make_shared<AbstractTuple>(rets);
+}
+// Infer for MapTensor.default_value.
+AbstractBasePtr InferImplMapTensorGetDefaultValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const AbstractBasePtrList &args_spec_list) {
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  const auto &arg = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(arg);
+  auto abs_map_tensor = arg->cast_ptr<abstract::AbstractMapTensor>();
+  if (abs_map_tensor == nullptr) {
+    MS_EXCEPTION(TypeError) << "Expect MapTensor, but got " << arg->ToString();
+  }
+  return std::make_shared<AbstractScalar>(abs_map_tensor->default_value());
 }
 }  // namespace abstract
 }  // namespace mindspore

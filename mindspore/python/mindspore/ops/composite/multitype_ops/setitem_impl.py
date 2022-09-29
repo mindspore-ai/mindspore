@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import SliceGetItem
+from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite import base
 from mindspore.common import Tensor
 
@@ -45,6 +46,7 @@ class _ListSliceSetItem(base.ListSliceSetItem_):
 
     def __call__(self, *args):
         pass
+
 
 _list_slice_set_item = _ListSliceSetItem('list_slice_set_item')
 """_list_slice_set_item is a MetaFuncGraph object which assign a list will slice."""
@@ -876,3 +878,19 @@ def _tensor_setitem_by_list_with_list(data, index, value):
     if isinstance(index, Tensor):
         return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
     return compile_utils.tensor_setitem_by_tuple_with_sequence(data, index, value)
+
+
+@setitem.register("MapTensor", "Tensor", "Tensor")
+def _map_tensor_setitem(map_tensor, key_tensor, value_tensor):
+    """
+    Update or insert to map tensor by key tensor and value tensor.
+
+    Inputs:
+        map_tensor (MapTensor): A map tensor.
+        key_tensor (Tensor): The key tensor.
+        value_tensor (Tensor): The value tensor.
+
+    Outputs:
+        MapTensor, the map tensor be updated.
+    """
+    return _map_tensor_ops.put(map_tensor, key_tensor, value_tensor)
