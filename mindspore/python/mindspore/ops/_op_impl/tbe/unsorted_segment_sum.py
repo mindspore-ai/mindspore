@@ -16,7 +16,7 @@
 """UnsortedSegmentSum op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-unsorted_segment_sum_op_info = TBERegOp("UnsortedSegmentSum") \
+unsorted_segment_sum_op_info = TBERegOp("UnsortedSegmentSumD") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("unsorted_segment_sum_d.so") \

@@ -415,6 +415,7 @@ constexpr auto kUnsortedSegmentMaxOpName = "UnsortedSegmentMax";
 constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
 constexpr auto kUnsortedSegmentProdOpName = "UnsortedSegmentProd";
 constexpr auto kUnsortedSegmentSumOpName = "UnsortedSegmentSum";
+constexpr auto kUnsortedSegmentSumDOpName = "UnsortedSegmentSumD";
 constexpr auto kUpdateCacheOpName = "UpdateCache";
 constexpr auto kUpdateStateOpName = "UpdateState";
 

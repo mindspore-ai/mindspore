@@ -225,6 +225,7 @@ constexpr auto kSparseSparseMinimum = "SparseSparseMinimum";
 constexpr auto kBroadcastTo = "BroadcastTo";
 constexpr auto kSparseReshape = "SparseReshape";
 constexpr auto kUnsortedSegmentSum = "UnsortedSegmentSum";
+constexpr auto kUnsortedSegmentSumD = "UnsortedSegmentSumD";
 constexpr auto kUnsortedSegmentProd = "UnsortedSegmentProd";
 
 // NN
@@ -536,6 +537,7 @@ GVAR_DEF(PrimitivePtr, kPrimUnstack, std::make_shared<Primitive>(kUnstack));
 GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentMax, std::make_shared<Primitive>("UnsortedSegmentMax"));
 GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentProd, std::make_shared<Primitive>(kUnsortedSegmentProd));
 GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentSum, std::make_shared<Primitive>(kUnsortedSegmentSum));
+GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentSumD, std::make_shared<Primitive>(kUnsortedSegmentSumD));
 GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentMin, std::make_shared<Primitive>("UnsortedSegmentMin"));
 GVAR_DEF(PrimitivePtr, kPrimConcatOffset, std::make_shared<Primitive>("ConcatOffset"));
 GVAR_DEF(PrimitivePtr, kPrimConcatOffsetV1, std::make_shared<Primitive>("ConcatOffsetV1"));

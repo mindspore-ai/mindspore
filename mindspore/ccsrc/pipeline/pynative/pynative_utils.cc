@@ -304,6 +304,12 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
     }
   }
   (void)op_prim->AddAttr(input_name, v);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (op_prim->name() == "UnsortedSegmentSum" && backend == kAscendDevice) {
+    op_prim->set_name("UnsortedSegmentSumD");
+  }
   (void)op_run_info->index_with_value.emplace_back(std::make_pair(input_index, v));
   return true;
 }

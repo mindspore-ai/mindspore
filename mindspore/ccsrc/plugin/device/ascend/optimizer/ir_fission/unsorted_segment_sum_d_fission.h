@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_UNSORTED_SEGMENT_SUM_FISSION_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_UNSORTED_SEGMENT_SUM_FISSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_UNSORTED_SEGMENT_SUM_D_FISSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_UNSORTED_SEGMENT_SUM_D_FISSION_H_
 
 #include <vector>
 #include <memory>
@@ -24,20 +24,21 @@
 
 namespace mindspore {
 namespace opt {
-class UnsortedSegmentSumFission : public PatternProcessPass {
+class UnsortedSegmentSumDFission : public PatternProcessPass {
  public:
-  explicit UnsortedSegmentSumFission(bool multigraph = true)
-      : PatternProcessPass("unsorted_segment_sum_fission", multigraph) {}
-  ~UnsortedSegmentSumFission() override = default;
+  explicit UnsortedSegmentSumDFission(bool multigraph = true)
+      : PatternProcessPass("unsorted_segment_sum_d_fission", multigraph) {}
+  ~UnsortedSegmentSumDFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
-  CNodePtr CreateConcatD(const FuncGraphPtr &graph, const CNodePtr &sum, const size_t &pad_dim_size) const;
-  CNodePtr CreateUnsortedSegmentSum(const FuncGraphPtr &graph, const CNodePtr &orig_sum, const CNodePtr &concat,
+  CNodePtr CreatePadding(const FuncGraphPtr &graph, const CNodePtr &origin_node, const size_t &pad_dim_size) const;
+  CNodePtr CreateUnsortedSegmentSum(const FuncGraphPtr &graph, const CNodePtr &origin_node, const CNodePtr &padding,
                                     const size_t &pad_dim_size) const;
-  CNodePtr CreateSlice(const FuncGraphPtr &graph, const CNodePtr &orig_sum, const CNodePtr &new_sum) const;
+  CNodePtr CreateSlice(const FuncGraphPtr &graph, const CNodePtr &unsort_segment_sum,
+                       const CNodePtr &unsorted_segment_sum8) const;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_UNSORTED_SEGMENT_SUM_FISSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_UNSORTED_SEGMENT_SUM_D_FISSION_H_

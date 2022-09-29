@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_d_fission.h"
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,7 +42,8 @@ TEST_F(TestHWUnsortedSegmentSumFission, test_fission) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::UnsortSegmentSumFission>());
+  pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
+  pm->AddPass(std::make_shared<opt::UnsortedSegmentSumDFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
@@ -61,7 +63,8 @@ TEST_F(TestHWUnsortedSegmentSumFission, test_no_fission) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::UnsortSegmentSumFission>());
+  pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
+  pm->AddPass(std::make_shared<opt::UnsortedSegmentSumDFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 

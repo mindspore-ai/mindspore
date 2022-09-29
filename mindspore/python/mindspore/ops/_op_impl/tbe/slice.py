@@ -19,25 +19,36 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 slice_op_info = TBERegOp("Slice") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("slice_d.so") \
+    .binfile_name("slice.so") \
     .compute_cost(10) \
-    .kernel_name("slice_d") \
+    .kernel_name("slice") \
     .partial_flag(True) \
-    .is_dynamic_format(True) \
-    .attr("begin", "required", "listInt", "all") \
-    .attr("size", "required", "listInt", "all") \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .input(0, "x", False, "required", "all") \
+    .input(1, "begin", False, "required", "all", "optional") \
+    .input(2, "size", False, "required", "all", "optional") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
-    .dtype_format(DataType.U16_Default, DataType.U16_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I64_Default, DataType.I64_Default) \
-    .dtype_format(DataType.U32_Default, DataType.U32_Default) \
-    .dtype_format(DataType.U64_Default, DataType.U64_Default) \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I32_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.I32_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I32_Default, DataType.I32_Default, DataType.I16_Default) \
+    .dtype_format(DataType.U16_Default, DataType.I32_Default, DataType.I32_Default, DataType.U16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I32_Default, DataType.I32_Default, DataType.I64_Default) \
+    .dtype_format(DataType.U32_Default, DataType.I32_Default, DataType.I32_Default, DataType.U32_Default) \
+    .dtype_format(DataType.U64_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I64_Default, DataType.I64_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.I64_Default, DataType.I64_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I64_Default, DataType.I64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.U16_Default, DataType.I64_Default, DataType.I64_Default, DataType.U16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.U32_Default, DataType.I64_Default, DataType.I64_Default, DataType.U32_Default) \
+    .dtype_format(DataType.U64_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.F32_Default) \
     .get_op_info()
 
 

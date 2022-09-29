@@ -287,6 +287,9 @@ CNodePtr AscendVmOpAdapter::CreateTargetOp(const CNodePtr &origin_op,
   target_op->set_primal_attrs(origin_op->primal_attrs());
   target_op->set_attrs(origin_op->attrs());
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(origin_op);
+  if (target_primitive->name() == "UnsortedSegmentSum") {
+    target_primitive->set_name("UnsortedSegmentSumD");
+  }
   MS_LOG(DEBUG) << "Create op " << target_op->fullname_with_scope() << " debug string:" << target_op->DebugString()
                 << " from " << origin_op->fullname_with_scope() << " debug string:" << origin_op->DebugString()
                 << ", is dynamic shape:" << is_dynamic;

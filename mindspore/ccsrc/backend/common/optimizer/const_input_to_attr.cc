@@ -21,6 +21,7 @@
 #include "utils/log_adapter.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "backend/common/optimizer/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -189,6 +190,12 @@ CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t
     auto kernel_graph = graph->cast<KernelGraphPtr>();
     if (kernel_graph != nullptr) {
       kernel_graph->FrontBackendlMapUpdate(cnode, new_cnode);
+    }
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    if (primitive->name() == "UnsortedSegmentSum" && backend == kAscendDevice) {
+      primitive->set_name("UnsortedSegmentSumD");
     }
     return new_cnode;
   }
