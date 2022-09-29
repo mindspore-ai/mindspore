@@ -214,11 +214,14 @@ int Generator::CodeMSModelImplement() {
   ofs << "#include \"context.h\"\n";
   ofs << "#include \"c_api/model_c.h\"\n";
   ofs << "#include \"net.h\"\n";
-  ofs << "#include \"weight.h\"\n\n";
   if (config_->support_parallel()) {
     ofs << "#include \"" << kThreadWrapper << "\"\n";
   }
+  ofs << "#include \"weight.h\"\n\n";
+
   CodeMSModelCreate(ofs, ctx_, *config_);
+  CodeMSModelCalcWorkspaceSize(ofs, ctx_, *config_);
+  CodeMSModelSetWorkspace(ofs, ctx_, *config_);
   CodeMSModelBuild(ofs, config_);
   ofs << model_runtime_other_source;
   if (config_->code_mode() == CodeMode::Train) {
@@ -264,9 +267,8 @@ int Generator::CodeWeightFile() {
       return RET_ERROR;
     }
     cofs << "int __errno; \n";
-    cofs << "unsigned char g_buf[" << ctx_->total_buffer_size() + ctx_->weight_buffer_size() << "]; \n";
-    cofs << "unsigned char * " << ctx_->buffer_name() << " = &g_buf[0]; \n";
-    cofs << "unsigned char * " << ctx_->weight_name() << " = &g_buf[" << ctx_->total_buffer_size() << "]; \n";
+    cofs << "unsigned char * " << ctx_->buffer_name() << " = NULL; \n";
+    cofs << "unsigned char * " << ctx_->weight_name() << " = NULL; \n";
     CodeModelParamsData(cofs, ctx_->saved_weights());
   }
   CodeModelParamsForNet(hofs, cofs, ctx_, *config_);

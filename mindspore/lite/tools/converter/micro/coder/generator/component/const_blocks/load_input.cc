@@ -293,16 +293,17 @@ set -e
 BASEPATH=$(cd "$(dirname $0)"; pwd)
 mkdir -p build
 
-VERSION_STR=1.8.0
+VERSION_STR=1.8.1
 MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-none-cortex-m7"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
 MINDSPORE_LITE_DOWNLOAD_URL=\
-"https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/cortex-m/${MINDSPORE_FILE}"
+"https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/none_cortex-m/${MINDSPORE_FILE}"
 if [ ! -e ${BASEPATH}/${MINDSPORE_FILE} ]; then
-  wget -c -O ${BASEPATH}/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}+
+  wget -c -O ${BASEPATH}/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
-tar xzf ${BASEPATH}/${MINDSPORE_FILE} -C ${BASEPATH}/
-
+if [ ! -e ${BASEPATH}/${MINDSPORE_FILE_NAME} ]; then
+  tar xzf ${BASEPATH}/${MINDSPORE_FILE} -C ${BASEPATH}/
+fi
 cd build
 cmake -DPKG_PATH=../${MINDSPORE_FILE_NAME}  -DCMAKE_TOOLCHAIN_FILE=../cortex-m7.toolchain.cmake  ..
 make

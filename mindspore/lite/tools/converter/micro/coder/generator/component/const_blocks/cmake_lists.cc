@@ -59,9 +59,10 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 else()
     message(STATUS "build benchmark release version")
     set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
-    -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+    -Wno-deprecated-declarations -Wno-incompatible-pointer-types -Wno-missing-braces ${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
-    -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+    -Wno-deprecated-declarations -Wno-incompatible-pointer-types -Wno-missing-braces -Wno-overloaded-virtual \
+    ${CMAKE_CXX_FLAGS}")
     string(REPLACE "-g" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     string(REPLACE "-g" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()

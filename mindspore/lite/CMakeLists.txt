@@ -791,6 +791,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
 endif()
 
 file(GLOB FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/*.fbs)
+
 ms_build_flatbuffers_lite(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/ fbs_src ${CMAKE_BINARY_DIR}/schema "")
 ms_build_flatbuffers_lite(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/ fbs_inner_src ${CMAKE_BINARY_DIR}/schema/inner
         "inner")

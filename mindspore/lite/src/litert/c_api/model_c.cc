@@ -317,6 +317,11 @@ void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_
   return;
 }
 
+size_t MSModelCalcWorkspaceSize(MSModelHandle model) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return 0;
+}
+
 MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_size, MSModelType model_type,
                       const MSContextHandle model_context) {
   if (model == nullptr || model_data == nullptr || model_context == nullptr) {

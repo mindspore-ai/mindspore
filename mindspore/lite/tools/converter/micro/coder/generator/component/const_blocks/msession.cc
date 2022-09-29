@@ -18,30 +18,6 @@
 
 namespace mindspore::lite::micro {
 const char model_runtime_other_source[] = R"RAW(
-void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
-  if (inputs.handle_list == NULL) {
-    return;
-  }
-  for (size_t i = 0; i < inputs.handle_num; i++) {
-    MicroTensor *micro_tensor = inputs.handle_list[i];
-    if (!micro_tensor) {
-      continue;
-    }
-    if (micro_tensor->data) {
-      free(micro_tensor->data);
-      micro_tensor->data = NULL;
-    }
-    if (micro_tensor->shape) {
-      free(micro_tensor->shape);
-      micro_tensor->shape = NULL;
-    }
-    free(micro_tensor);
-    micro_tensor = NULL;
-  }
-  free(inputs.handle_list);
-  inputs.handle_list = NULL;
-}
-
 MSTensorHandleArray MSModelGetInputs(const MSModelHandle model) {
   MicroModel *micro_model = (MicroModel *)model;
   return micro_model->inputs;

@@ -199,12 +199,13 @@ function Run_cortex_m_codegen() {
       out_data=`cat ${models_path}/input_output/output/${model_name}.ms.out.txt`
       sed -i "s/float calib_input0_data\[NET_INPUT0_SIZE\] = {};/float calib_input0_data\[NET_INPUT0_SIZE\] = {${in_data}};/g" benchmark/data.c
       sed -i "s/float calib_output0_data\[NET_OUTPUT0_SIZE\] = {};/float calib_output0_data\[NET_OUTPUT0_SIZE\] = {${out_data}};/g" benchmark/data.c
-      sed -i "s/VERSION_STR=1.8.0/VERSION_STR=${version}/g" build.sh
+      sed -i "s/VERSION_STR=.*/VERSION_STR=${version}/g" build.sh
       bash build.sh || exit 1
       cp -r ${output_file}/mindspore-lite-${version}-none-cortex-m7 ${output_file}/build/
       cd ${stm_demo_file} || exit 1
       [ -n "${stm_demo_file}" ] && rm -rf ${stm_demo_file}/build
       sed -i "s/LITE_PACK =/LITE_PACK = mindspore-lite-${version}-none-cortex-m7/g" Makefile
+      sed -i "s/  if (benchmark() == 0) {/  static char work_space\[300000\];\n  if (benchmark(work_space, 300000) == 0) {/g" Core/Src/main.c
       make >> "$4" || return 1
 
       continue
