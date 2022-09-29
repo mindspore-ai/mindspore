@@ -364,7 +364,8 @@ EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &a
   if (py::isinstance<py::none>(py_fn)) {
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << abs->ToString() << ".";
     MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
-    MS_EXCEPTION(ValueError) << "This may be not defined, or it can't be a operator. Please check code.";
+    MS_EXCEPTION(ValueError) << "Can not call " << class_name << " to create python object in graph mode. "
+                             << "Try using ms_class to decorate the class?";
   }
   auto list_func_fg = parse::ParsePythonCode(py_fn);
   auto fg = cnode->func_graph();
@@ -408,7 +409,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     CheckInterpretedObject(possible_func);
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << possible_func->ToString() << ".";
     MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
-    MS_EXCEPTION(ValueError) << "This may be not defined, or it can't be a operator. Please check code.";
+    MS_EXCEPTION(ValueError) << "The object is not callable. Please check code.";
   }
 
   // Make arguments config list.
