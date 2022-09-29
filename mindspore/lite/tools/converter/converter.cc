@@ -819,6 +819,23 @@ int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
   return RET_OK;
 }
 
+int InitEncryption(const std::shared_ptr<ConverterPara> &param, unsigned char *encKey, size_t *keyLen) {
+  if (param->enable_encryption) {
+    if (!param->encrypt_key.empty()) {
+      *keyLen = lite::Hex2ByteArray(param->encrypt_key, encKey, kEncMaxLen);
+      if (*keyLen != kEncMaxLen) {
+        MS_LOG(ERROR) << "enc_key must expressed in hexadecimal characters "
+                      << " and only support AES-GCM method and the key length is 16.";
+        return RET_INPUT_PARAM_INVALID;
+      }
+    } else {
+      MS_LOG(ERROR) << "If you don't need to use model encryption, please set --encryption=false.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
 int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
   mindspore::mindspore_log_init();
 
@@ -871,20 +888,11 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
   } else {
     unsigned char encKey[kEncMaxLen] = {0};
     size_t keyLen = 0;
-    if (param->enable_encryption) {
-      if (!param->encrypt_key.empty()) {
-        keyLen = lite::Hex2ByteArray(param->encrypt_key, encKey, kEncMaxLen);
-        if (keyLen != kEncMaxLen) {
-          MS_LOG(ERROR) << "enc_key must expressed in hexadecimal characters "
-                        << " and only support AES-GCM method and the key length is 16.";
-          delete meta_graph;
-          return RET_INPUT_PARAM_INVALID;
-        }
-      } else {
-        MS_LOG(ERROR) << "If you don't need to use model encryption, please set --encryption=false.";
-        delete meta_graph;
-        return RET_INPUT_PARAM_INVALID;
-      }
+    status = InitEncryption(param, encKey, &keyLen);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "check encryption failed.";
+      delete meta_graph;
+      return status;
     }
     if (not_save) {
       flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
