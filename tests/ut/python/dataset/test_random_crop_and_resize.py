@@ -484,6 +484,64 @@ def test_random_crop_and_resize_07():
         num_iter += 1
 
 
+def test_random_crop_and_resize_08():
+    """
+    Feature: RandomCropAndResize
+    Description: Test RandomCropAndResize with 4 dim image
+    Expectation: The data is processed successfully
+    """
+    logger.info("test_random_crop_and_resize_08")
+
+    original_seed = config_get_set_seed(5)
+    original_worker = config_get_set_num_parallel_workers(1)
+
+    data = np.random.randint(0, 255, (3, 3, 4, 3), np.uint8)
+    res1 = [[[83, 24, 209], [114, 181, 190]], [[200, 201, 36], [154, 13, 117]]]
+    res2 = [[[158, 140, 182], [104, 154, 109]], [[230, 79, 193], [87, 170, 223]]]
+    res3 = [[[179, 202, 143], [150, 178, 67]], [[20, 94, 159], [253, 151, 82]]]
+    expected_result = np.array([res1, res2, res3], dtype=np.uint8)
+
+    random_crop_and_resize_op = vision.RandomResizedCrop((2, 2))
+    output = random_crop_and_resize_op(data)
+
+    mse = diff_mse(output, expected_result)
+    assert mse < 0.0001
+    assert output.shape[-2] == 2
+    assert output.shape[-3] == 2
+
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_worker)
+
+
+def test_random_crop_and_resize_pipeline():
+    """
+    Feature: RandomCropAndResize
+    Description: Test RandomCropAndResize with 4 dim image
+    Expectation: The data is processed successfully
+    """
+    logger.info("Test RandomCropAndResize pipeline with 4 dimension input")
+
+    original_seed = config_get_set_seed(5)
+    original_worker = config_get_set_num_parallel_workers(1)
+
+    data = np.random.randint(0, 255, (1, 3, 3, 4, 3), np.uint8)
+    res1 = [[[83, 24, 209], [114, 181, 190]], [[200, 201, 36], [154, 13, 117]]]
+    res2 = [[[158, 140, 182], [104, 154, 109]], [[230, 79, 193], [87, 170, 223]]]
+    res3 = [[[179, 202, 143], [150, 178, 67]], [[20, 94, 159], [253, 151, 82]]]
+    expected_result = np.array([[res1, res2, res3]], dtype=np.uint8)
+
+    random_crop_and_resize = vision.RandomResizedCrop((2, 2))
+    dataset = ds.NumpySlicesDataset(data, column_names=["image"], shuffle=False)
+    dataset = dataset.map(input_columns=["image"], operations=random_crop_and_resize)
+
+    for i, item in enumerate(dataset.create_dict_iterator(output_numpy=True)):
+        mse = diff_mse(item["image"], expected_result[i])
+        assert mse < 0.0001
+
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_worker)
+
+
 def test_random_crop_and_resize_eager_error_01():
     """
     Feature: RandomCropAndResize op
@@ -534,5 +592,7 @@ if __name__ == "__main__":
     test_random_crop_and_resize_06()
     test_random_crop_and_resize_comp(True)
     test_random_crop_and_resize_07()
+    test_random_crop_and_resize_08()
+    test_random_crop_and_resize_pipeline()
     test_random_crop_and_resize_eager_error_01()
     test_random_crop_and_resize_eager_error_02()

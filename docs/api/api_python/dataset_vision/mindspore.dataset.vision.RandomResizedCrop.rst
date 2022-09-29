@@ -31,4 +31,4 @@ mindspore.dataset.vision.RandomResizedCrop
         - **ValueError** - 当 `scale` 为负数。
         - **ValueError** - 当 `ratio` 为负数。
         - **ValueError** - 当 `max_attempts` 不为正数。
-        - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。
+        - **RuntimeError** - 当输入图像的shape不为<H, W>或<..., H, W, C>。

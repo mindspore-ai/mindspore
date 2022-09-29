@@ -22,7 +22,6 @@
 #include <string>
 
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
@@ -57,6 +56,8 @@ class RandomCropAndResizeOp : public TensorOp {
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+
+  TensorShape ComputeOutputShape(const TensorShape &input, int32_t target_height, int32_t target_width);
 
   Status GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width);
 

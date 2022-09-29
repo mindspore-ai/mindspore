@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
+
 #include <limits>
 #include <random>
+#include <vector>
 
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
@@ -47,16 +50,20 @@ RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t targ
 
 Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  if (input.size() != 1) {
-    for (size_t i = 0; i < input.size() - 1; i++) {
-      if (input[i]->Rank() != 2 && input[i]->Rank() != 3) {
-        std::string err_msg = "RandomCropAndResizeOp: image shape is not <H,W,C> or <H, W>, but got rank:" +
-                              std::to_string(input[i]->Rank());
-        RETURN_STATUS_UNEXPECTED(err_msg);
-      }
-      if (input[i]->shape()[0] != input[i + 1]->shape()[0] || input[i]->shape()[1] != input[i + 1]->shape()[1]) {
+
+  for (size_t i = 0; i < input.size(); i++) {
+    if (input[i]->Rank() < kMinImageRank) {
+      RETURN_STATUS_UNEXPECTED("RandomResizedCrop: input tensor should have at least 2 dimensions, but got: " +
+                               std::to_string(input[i]->Rank()));
+    }
+    if (i < input.size() - 1) {
+      std::vector<dsize_t> size;
+      std::vector<dsize_t> next_size;
+      RETURN_IF_NOT_OK(ImageSize(input[i], &size));
+      RETURN_IF_NOT_OK(ImageSize(input[i + 1], &next_size));
+      if (size[0] != next_size[0] || size[1] != next_size[1]) {
         RETURN_STATUS_UNEXPECTED(
-          "RandomCropAndResizeOp: Input images in different column of each row must have the same size.");
+          "RandomCropAndResizeOp: Input tensor in different columns of each row must have the same size.");
       }
     }
   }
@@ -66,16 +73,48 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
   int crop_height = 0;
   int crop_width = 0;
   for (size_t i = 0; i < input.size(); i++) {
-    RETURN_IF_NOT_OK(ValidateImageRank("RandomCropAndResize", static_cast<int32_t>(input[i]->shape().Size())));
-    int h_in = static_cast<int>(input[i]->shape()[0]);
-    int w_in = static_cast<int>(input[i]->shape()[1]);
+    auto input_shape = input[i]->shape();
+    std::vector<dsize_t> size;
+    RETURN_IF_NOT_OK(ImageSize(input[i], &size));
+    int h_in = size[0];
+    int w_in = size[1];
     if (i == 0) {
       RETURN_IF_NOT_OK(GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width));
     }
-    RETURN_IF_NOT_OK(CropAndResize(input[i], &(*output)[i], x, y, crop_height, crop_width, target_height_,
-                                   target_width_, interpolation_));
+    if (input[i]->Rank() <= kDefaultImageRank) {
+      RETURN_IF_NOT_OK(CropAndResize(input[i], &(*output)[i], x, y, crop_height, crop_width, target_height_,
+                                     target_width_, interpolation_));
+    } else if (input[i]->Rank() > kDefaultImageRank) {
+      dsize_t num_batch = input[i]->Size() / (input_shape[-3] * input_shape[-2] * input_shape[-1]);
+      TensorShape new_shape({num_batch, input_shape[-3], input_shape[-2], input_shape[-1]});
+      RETURN_IF_NOT_OK(input[i]->Reshape(new_shape));
+      // split [N, H, W, C] to N [H, W, C], and Resize N [H, W, C]
+      std::vector<std::shared_ptr<Tensor>> input_vector_hwc, output_vector_hwc;
+      RETURN_IF_NOT_OK(BatchTensorToTensorVector(input[i], &input_vector_hwc));
+      for (auto input_hwc : input_vector_hwc) {
+        std::shared_ptr<Tensor> output_img;
+        RETURN_IF_NOT_OK(CropAndResize(input_hwc, &output_img, x, y, crop_height, crop_width, target_height_,
+                                       target_width_, interpolation_));
+        output_vector_hwc.push_back(output_img);
+      }
+      RETURN_IF_NOT_OK(TensorVectorToBatchTensor(output_vector_hwc, &(*output)[i]));
+      auto output_shape = ComputeOutputShape(input_shape, target_height_, target_width_);
+      RETURN_IF_NOT_OK((*output)[i]->Reshape(output_shape));
+    }
   }
   return Status::OK();
+}
+
+TensorShape RandomCropAndResizeOp::ComputeOutputShape(const TensorShape &input, int32_t target_height,
+                                                      int32_t target_width) {
+  auto out_shape_vec = input.AsVector();
+  auto size = out_shape_vec.size();
+  int32_t kHeightIdx = -3;
+  int32_t kWidthIdx = -2;
+  out_shape_vec[size + kHeightIdx] = target_height_;
+  out_shape_vec[size + kWidthIdx] = target_width_;
+  TensorShape out = TensorShape(out_shape_vec);
+  return out;
 }
 
 Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
@@ -87,12 +126,16 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
   }
   if (inputs[0].Rank() == 3) {
     (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
+  } else if (inputs[0].Rank() > kDefaultImageRank) {
+    auto out_shape = ComputeOutputShape(inputs[0], target_height_, target_width_);
+    (void)outputs.emplace_back(out_shape);
   }
   if (!outputs.empty()) {
     return Status::OK();
   }
   return Status(StatusCode::kMDUnexpectedError,
-                "RandomCropAndResize: invalid input shape, expected 2D or 3D input, but got input dimension is: " +
+                "RandomCropAndResize: input tensor should have at least 2 dimensions, "
+                "but got: " +
                   std::to_string(inputs[0].Rank()));
 }
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {

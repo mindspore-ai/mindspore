@@ -1830,7 +1830,7 @@ class RandAugment(ImageTensorOperation):
         TypeError: If `num_ops` is not of type int.
         TypeError: If `magnitude` is not of type int.
         TypeError: If `num_magnitude_bins` is not of type int.
-        TypeError: If `interpolation` not of type int.
+        TypeError: If `interpolation` not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `fill_value` is not an int or a tuple of length 3.
         RuntimeError: If given tensor shape is not <H, W, C>.
 
@@ -2951,7 +2951,7 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
         ValueError: If `max_attempts` is not positive.
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU``
