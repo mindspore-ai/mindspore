@@ -683,7 +683,7 @@ void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
                         << "Task overflow infos task_id: " << task_fail_info->taskid
                         << ", stream_id: " << task_fail_info->streamid << ", tid: " << task_fail_info->tid
                         << ", device_id: " << task_fail_info->deviceid << ", retcode: " << task_fail_info->retcode
-                        << " (" << GetErrorMsg(task_fail_info->retcode) << ")" << trace::DumpSourceLines(node);
+                        << " (" << GetErrorMsg(task_fail_info->retcode) << ")" << trace::DumpSourceLines(node, false);
         overflow_tasks_[key] = 1;
       } else {
         overflow_tasks_[key]++;
@@ -759,7 +759,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* 
     }
     auto full_scope_name = node->fullname_with_scope();
     MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << path
-                  << trace::DumpSourceLines(node);
+                  << trace::DumpSourceLines(node, false);
 
     // full_scope_name: Default/GetNext-op1
     std::string lower_full_scope_name(full_scope_name.length(), ' ');

@@ -139,7 +139,7 @@ std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix, So
   return oss.str();
 }
 
-std::string DumpSourceLines(const AnfNodePtr &node) {
+std::string DumpSourceLines(const AnfNodePtr &node, bool has_title) {
   auto vec_source = GetSourceLineList(node);
   if (vec_source.empty()) {
     return "";
@@ -151,16 +151,17 @@ std::string DumpSourceLines(const AnfNodePtr &node) {
   if (oss.str().empty()) {
     return "";
   }
-  return "\nThe function call stack:\n" + oss.str();
+  const std::string prefix = has_title ? "#dmsg#The Function Call Stack:#dmsg#" : "\nThe function call stack:\n";
+  return prefix + oss.str();
 }
 
-std::string DumpSourceLines(AnfNode *node) {
+std::string DumpSourceLines(AnfNode *node, bool has_title) {
   if (node == nullptr) {
     MS_LOG(WARNING) << "Node is null";
     return "";
   }
   AnfNodePtr ptr = std::static_pointer_cast<AnfNode>(node->shared_from_this());
-  return DumpSourceLines(ptr);
+  return DumpSourceLines(ptr, has_title);
 }
 
 void GetSourceLineFromDebugInfo(const DebugInfoPtr &debug_info, std::vector<std::string> *result,

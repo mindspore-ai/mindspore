@@ -34,8 +34,8 @@ MS_CORE_API std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip
 MS_CORE_API std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
                                      SourceLineTip tip = kSourceLineTipNextLine);
 // Generate the call stack of python source code to a string
-MS_CORE_API std::string DumpSourceLines(const AnfNodePtr &node);
-MS_CORE_API std::string DumpSourceLines(AnfNode *node);
+MS_CORE_API std::string DumpSourceLines(const AnfNodePtr &node, bool has_title = true);
+MS_CORE_API std::string DumpSourceLines(AnfNode *node, bool has_title = true);
 // Generate the call stack of python source code to a vector
 MS_CORE_API std::vector<std::string> GetSourceLineList(const AnfNodePtr &node);
 // Get the locations of the call stack of python source code

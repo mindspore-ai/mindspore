@@ -886,7 +886,7 @@ CNodePtr GetPrimalUser(const CNodePtr &j_user, const std::map<FuncGraphPtr, std:
                  << ", J operation: " << j_user->DebugString() << ", Primal call: ";
     size_t count = 0;
     for (const auto &user : primal_users) {
-      MS_LOG(INFO) << "[ " << ++count << " ] : " << user->DebugString(2) << trace::DumpSourceLines(user);
+      MS_LOG(INFO) << "[ " << ++count << " ] : " << user->DebugString(2) << trace::DumpSourceLines(user, false);
     }
     return nullptr;
   }
