@@ -53,6 +53,10 @@ std::shared_ptr<DataQueue> DataQueueMgr::CreateDataQueue(const std::string &devi
   return iter->second(channel_name, dynamic_shape, capacity, shape);
 }
 
+void DataQueueMgr::Manage(const std::string &channel_name, const std::shared_ptr<BlockingQueue> &queue) {
+  (void)name_queue_map_.insert(std::make_pair(channel_name, queue));
+}
+
 DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, const std::vector<size_t> &shape,
                                      const size_t capacity) {
   MS_LOG(INFO) << "Data queue: " << channel_name << " created";
@@ -185,7 +189,7 @@ bool DataQueueMgr::IsInit() const { return init_; }
 
 bool DataQueueMgr::IsClosed() const { return closed_; }
 
-inline bool DataQueueMgr::isCreated(const std::string &channel_name) const {
+bool DataQueueMgr::IsCreated(const std::string &channel_name) const {
   return name_queue_map_.find(channel_name) != name_queue_map_.end();
 }
 

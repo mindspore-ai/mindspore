@@ -83,7 +83,6 @@ class AscendTdtQueue : public DataQueue {
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override { return DataQueueStatus::SUCCESS; }
   DataQueueStatus Pop() override { return DataQueueStatus::SUCCESS; }
-  std::shared_ptr<BlockingQueue> GetWingMan() { return wingman_queue_; }
 
  private:
   void DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true) const;
@@ -91,7 +90,6 @@ class AscendTdtQueue : public DataQueue {
   void ParseType(aclDataType acl_data_type, std::string *data_type) const;
   bool Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset) const;
 
-  std::shared_ptr<BlockingQueue> wingman_queue_;
   acltdtChannelHandle *acl_handle_;
   uint32_t device_id_;
 };
