@@ -495,7 +495,7 @@ bool TensorRTSubGraph::DynamicSizeOutputNeedTranspose(ITensorHelper output_helpe
   if (out_dims.nbDims != DIMENSION_4D) {
     return false;
   }
-  if (!out_shape.empty()) {
+  if (!(out_shape.size() == 1 && out_shape[0] == -1)) {
     return false;
   }
   return !output_helper.same_format_;
