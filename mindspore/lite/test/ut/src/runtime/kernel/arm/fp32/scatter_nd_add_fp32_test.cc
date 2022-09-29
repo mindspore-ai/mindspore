@@ -16,7 +16,7 @@
 
 #include "common/common_test.h"
 #include "src/litert/kernel_registry.h"
-#include "nnacl/fp32/scatter_nd_add.h"
+#include "nnacl/scatter_nd_parameter.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;

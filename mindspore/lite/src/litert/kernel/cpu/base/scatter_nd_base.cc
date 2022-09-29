@@ -100,10 +100,10 @@ int ScatterNDCPUKernel::ScatterND(int task_id) {
   CHECK_NULL_RETURN(update_data);
   CHECK_NULL_RETURN(output_data);
   param_->data_type_len = output_tensor->data_type() == kNumberTypeFloat16 ? FP16_DATA_TYPE_LEN : sizeof(float);
-  return DoScatterND(output_data, update_data, output_unit_offsets_.data(), param_, task_id);
+  return ScatterNDUpdate(output_data, update_data, output_unit_offsets_.data(), param_, task_id);
 }
 
-int ScatterNDRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ScatterNDRun(void *cdata, int task_id, float, float) {
   auto kernel = static_cast<ScatterNDCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
   return kernel->ScatterND(task_id);
