@@ -3,7 +3,10 @@ mindspore.ops.ScatterMin
 
 .. py:class:: mindspore.ops.ScatterMin(use_locking=False)
 
-    根据指定更新值和输入索引通过最小值运算更新输入数据的值。
+    通过最小操作更新输入张量的值。
+
+    根据指定更新值和输入索引通过最小值操作更新输入数据的值。
+    该操作在更新完成后输出 `input_x` ，这样方便使用更新后的值。
 
     对于 `indices.shape` 的每个 `i, ..., j` ：
 
