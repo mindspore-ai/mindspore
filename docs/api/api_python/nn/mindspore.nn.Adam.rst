@@ -1,7 +1,7 @@
 mindspore.nn.Adam
 ==================
 
-.. py:class:: mindspore.nn.Adam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False)
+.. py:class:: mindspore.nn.Adam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False, **kwargs)
 
     Adaptive Moment Estimation (Adam)算法的实现。
 
@@ -75,6 +75,9 @@ mindspore.nn.Adam
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 
         .. include:: mindspore.nn.optim_arg_loss_scale.rst
+        - **kwargs** -
+            - use_lazy (bool)：是否使用Lazy Adam算法。默认值：False。如果为True，使用lazy Adam，反之使用普通Adam算法。
+            - use_offload (bool)：是否在主机CPU上运行Adam优化算法。默认值：False。如果为True，使用offload方法，反之使用普通Adam算法。
 
     输入：
         - **gradients** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同。
@@ -87,7 +90,10 @@ mindspore.nn.Adam
         - **TypeError** - `parameters` 的元素不是Parameter或字典。
         - **TypeError** - `beta1` 、 `beta2` 、 `eps` 或 `loss_scale` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
-        - **TypeError** - `use_locking` 、 `use_nesterov` 或 `use_amsgrad` 不是bool。
+        - **TypeError** - `use_locking` 、 `use_nesterov` 、`use_amsgrad` 、`use_lazy` 或 `use_offload` 不是bool。
         - **ValueError** - `loss_scale` 或 `eps` 小于或等于0。
         - **ValueError** - `beta1` 、`beta2` 不在（0.0,1.0）范围内。
         - **ValueError** - `weight_decay` 小于0。
+        - **ValueError** - `use_lazy` 和 `use_offload` 均为True。
+        - **ValueError** - `use_amsgrad` 为True时， `use_lazy` 或 `use_offload` 亦为True。
+        - **ValueError** - 在分布式训练时，`use_amsgrad` 为True。
