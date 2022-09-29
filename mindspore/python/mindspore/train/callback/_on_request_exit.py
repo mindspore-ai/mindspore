@@ -26,11 +26,10 @@ from mindspore.train.callback._callback import Callback, RunContext
 
 class OnRequestExit(Callback):
     """
-    Exit the training or eval process when an exit signal is detected.
+    Respond to the user's closing request, exit the training or eval process, and save the checkpoint and mindir.
 
-    Register OnRequestExit Callback during training, when the user want to exit
-    the training process and save the training data, could press 'ctrl' + 'c'(when the
-    input 'sig' parameter is signal.SIGINT) or send the signal 'sig' to the training process.
+    Register OnRequestExit Callback before training, when the user want to exit the training process
+    and save the training data, could send the registered exit signal 'sig' to the training process.
     After the training process executes the current step, saves the current training status,
     including checkpoint and mindir, and then exit the training process.
 
@@ -40,7 +39,8 @@ class OnRequestExit(Callback):
         file_name (str): The saved checkpoint and mindir file name,
             the checkpoint file add suffix '.ckpt', the mindir file add suffix '.mindir'. Default: 'Net'.
         directory (str): The directory save checkpoint and mindir. Default: './'.
-        sig (int): The signal represent the request exit the training process. Default: signal.SIGUSR1
+        sig (int): The user registered exit signal, it must be a captureable and negligible signal.
+            When the process receives the signal, exits the training or eval process. Default: signal.SIGTERM.
 
     Raises:
         ValueError: If the 'save_ckpt' is not a bool.
@@ -50,22 +50,41 @@ class OnRequestExit(Callback):
         ValueError: If the 'sig' is not an int or the 'sig' is signal.SIGKILL.
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore as ms
+        >>> from mindspore import dataset as ds
         >>> from mindspore import nn
         >>>
-        >>> forward_net = LeNet5()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-        >>> optim = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
-        >>> model = ms.Model(forward_net, loss_fn=loss, optimizer=optim)
-        >>> data_path = './MNIST_Data'
-        >>> dataset = create_dataset(data_path)
-        >>> on_request_exit = OnRequestExit(save_ckpt=True, file_name='LeNet5')
+        >>> # Define the forward net
+        >>> class ForwardNet(nn.Cell):
+        >>>     def __init__(self, num_class=10, channel=1):
+        >>>         super(ForwardNet, self).__init__()
+        >>>         self.param = ms.Parameter(1.0)
+        >>>         self.relu = ms.ops.ReLU()
+        >>>
+        >>>     def construct(self, x):
+        >>>         return self.relu(x + self.param)
+        >>> forward_net = ForwardNet()
+        >>> loss = nn.MAELoss()
+        >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
+        >>> model = ms.Model(forward_net, loss_fn=loss, optimizer=opt)\
+        >>>
+        >>> # Create dataset
+        >>> def generator_multi_column():
+        >>>    i = 0
+        >>>    while i < 1000:
+        >>>        i += 1
+        >>>        yield np.ones((1, 32, 32)).astype(np.float32) * 0.01, np.array(1).astype(np.int32)
+        >>> dataset = ds.GeneratorDataset(source=generator_multi_column, column_names=["data", "label"])
+        >>> dataset = dataset.batch(32, drop_remainder=True)
+        >>>
+        >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
         >>> model.train(10, dataset, callbacks=on_request_exit)
-        The user send the signal SIGUSR1 to the training process,
-        the process would save the checkpoint and mindir, and then exit the training process.
+        >>> # The user send the signal SIGTERM to the training process,
+        >>> # the process would save the checkpoint and mindir, and then exit the training process.
     """
 
-    def __init__(self, save_ckpt=True, save_mindir=True, file_name='Net', directory='./', sig=signal.SIGUSR1):
+    def __init__(self, save_ckpt=True, save_mindir=True, file_name='Net', directory='./', sig=signal.SIGTERM):
         super(OnRequestExit, self).__init__()
         self.save_ckpt = Validator.check_isinstance('save_ckpt', save_ckpt, bool)
         self.save_mindir = Validator.check_isinstance('save_mindir', save_mindir, bool)
@@ -77,17 +96,17 @@ class OnRequestExit(Callback):
             self.train_file_path = os.path.abspath(os.path.join(directory, f"{file_name}_train"))
             self.eval_file_path = os.path.abspath(os.path.join(directory, f"{file_name}_eval"))
         self.sig = Validator.check_isinstance('sig', sig, int)
-        if self.sig == signal.SIGKILL:
-            raise ValueError("Not support send exit request by signal SIGKILL.")
-        self.stop = False
+        if self.sig == signal.SIGKILL or self.sig == signal.SIGINT:
+            raise ValueError("Not support send exit request by signal SIGKILL or SIGINT.")
+        self.exit = False
 
     def on_train_begin(self, run_context: RunContext):
         """
-        When the train begin, register the handler for signal transferred by user.
+        When the train begin, register the handler for exit signal transferred by user.
 
         Args:
-            run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.train.RunContext`.
+            run_context (RunContext): Context information of the model.
+                For more details, please refer to :class:`mindspore.train.RunContext`.
         """
         if os.path.isfile(f"{self.train_file_path}.ckpt"):
             cb_params = run_context.original_args()
@@ -97,35 +116,39 @@ class OnRequestExit(Callback):
 
     def on_train_step_end(self, run_context: RunContext):
         """
-        When the train step end, if the attr 'stop' is True, set the run_context attr '_stop_requested' to True.
+        When the train step end, if received the exit signal, set the 'run_context' attribute '_stop_requested' to True.
+        Then exit the training process after this step training.
 
         Args:
-            run_context (RunContext): Include some information of the model.  For more details,
-                    please refer to :class:`mindspore.train.RunContext`.
+            run_context (RunContext): Include some information of the model.
+                For more details, please refer to :class:`mindspore.train.RunContext`.
         """
-        if self.stop:
+        if self.exit:
             run_context.request_stop()
 
     def on_train_epoch_end(self, run_context: RunContext):
         """
-        When the train epoch end, if the attr 'stop' is True, set the run_context attr '_stop_requested' to True.
+        When the train epoch end, if received the exit signal,
+        set the 'run_context' attribute '_stop_requested' to True.
+        Then exit the training process after this epoch training.
 
         Args:
-            run_context (RunContext): Include some information of the model. For more details,
-                    please refer to :class:`mindspore.train.RunContext`.
+            run_context (RunContext): Include some information of the model.
+                For more details, please refer to :class:`mindspore.train.RunContext`.
         """
-        if self.stop:
+        if self.exit:
             run_context.request_stop()
 
     def on_train_end(self, run_context: RunContext):
         """
-        When the train end, if the attr 'stop' is True, the checkpoint and mindir would be saved.
+        When the train end, if received the exit signal,
+        the checkpoint and mindir would be saved according to the user config.
 
         Args:
-            run_context (RunContext): Include some information of the model. For more details,
-                    please refer to :class:`mindspore.train.RunContext`.
+            run_context (RunContext): Include some information of the model.
+                For more details, please refer to :class:`mindspore.train.RunContext`.
         """
-        if not self.stop:
+        if not self.exit:
             return
         cb_params = run_context.original_args()
         train_net = cb_params.train_network
@@ -137,11 +160,11 @@ class OnRequestExit(Callback):
 
     def on_eval_begin(self, run_context: RunContext):
         """
-        When the eval begin, register the handler for signal SIGUSR1.
+        When the eval begin, register the handler for exit signal transferred by user.
 
         Args:
-            run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.train.RunContext`.
+            run_context (RunContext): Context information of the model.
+                For more details, please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
         eval_net = cb_params.eval_network
@@ -153,24 +176,26 @@ class OnRequestExit(Callback):
 
     def on_eval_step_end(self, run_context: RunContext):
         """
-        When the eval step end, if the attr 'stop' is True, set the run_context attr '_stop_requested' to True.
+        When the eval step end, if received the exit signal, set the 'run_context' attribute '_stop_requested' to True.
+        Then exit the eval process after this step eval.
 
         Args:
-            run_context (RunContext): Include some information of the model.  For more details,
-                    please refer to :class:`mindspore.train.RunContext`.
+            run_context (RunContext): Include some information of the model.
+                For more details, please refer to :class:`mindspore.train.RunContext`.
         """
-        if self.stop:
+        if self.exit:
             run_context.request_stop()
 
     def on_eval_end(self, run_context):
         """
-        When the eval end, if the attr 'stop' is True, the checkpoint and mindir would be saved.
+        When the eval end, if received the exit signal,
+        the checkpoint and mindir would be saved according to the user config.
 
         Args:
-            run_context (RunContext): Include some information of the model. For more details,
-                    please refer to :class:`mindspore.train.RunContext`.
+            run_context (RunContext): Include some information of the model.
+                For more details, please refer to :class:`mindspore.train.RunContext`.
         """
-        if not self.stop:
+        if not self.exit:
             return
         cb_params = run_context.original_args()
         eval_net = cb_params.eval_network
@@ -183,4 +208,4 @@ class OnRequestExit(Callback):
     def _handle_signal(self, signum, frame):
         """Handle the received signal"""
         log.debug(f"signum: {signum}, frame: {frame}")
-        self.stop = True
+        self.exit = True

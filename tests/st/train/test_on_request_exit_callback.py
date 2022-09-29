@@ -92,7 +92,7 @@ def generator_multi_column():
 
 def send_signal(sleep_time):
     time.sleep(sleep_time)
-    os.kill(os.getppid(), signal.SIGUSR1)
+    os.kill(os.getppid(), signal.SIGTERM)
 
 
 def construct_model():
@@ -126,7 +126,7 @@ class EpochAndStepRecord(Callback):
         self.step = cb_params.cur_step_num
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_on_request_exit_callback():
@@ -166,12 +166,12 @@ def test_on_request_exit_callback():
     on_request_exit = OnRequestExit(save_ckpt=True, file_name='LeNet5', directory=directory)
     send_signal_process = Process(target=send_signal, args=[0.5])
     send_signal_process.start()
-    model.train(2, dataset, callbacks=[loss_monitor, epoch_and_step_record, on_request_exit])
+    model.train(epoch_num, dataset, callbacks=[loss_monitor, epoch_and_step_record, on_request_exit])
     assert epoch_and_step_record.epoch != epoch_num or epoch_and_step_record.step != step_num
     assert os.path.getctime(train_ckpt_file) > ckpt_ctime
     assert os.path.getctime(train_mindir_file) > mindir_ctime
 
-    send_signal_process = Process(target=send_signal, args=[0.18])
+    send_signal_process = Process(target=send_signal, args=[0.14])
     send_signal_process.start()
     on_request_exit = OnRequestExit(save_ckpt=True, file_name='LeNet5', directory=directory)
     model.eval(dataset, callbacks=[loss_monitor, epoch_and_step_record, on_request_exit])
