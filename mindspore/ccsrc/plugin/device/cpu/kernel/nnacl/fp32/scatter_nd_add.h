@@ -22,8 +22,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoScatterND(void *output, const void *update, int *output_unit_offsets, const ScatterNDParameter *param,
-                int task_id);
+int ScatterNDAdd(const void *update, void *output, int *output_unit_offsets, const ScatterNDParameter *param, int type,
+                 int task_id);
 #ifdef __cplusplus
 }
 #endif

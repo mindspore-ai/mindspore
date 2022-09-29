@@ -338,6 +338,7 @@ void RegAllInferFunc4() {
   g_infer_func[PrimType_ScaleFusion] = CommonInferShape;
   g_infer_func[PrimType_ScatterNd] = ScatterNdInferShape;
   g_infer_func[PrimType_ScatterNdUpdate] = ScatterNdUpdateInferShape;
+  g_infer_func[PrimType_TensorScatterAdd] = ScatterNdUpdateInferShape;
   g_infer_func[PrimType_Select] = SelectInferShape;
   g_infer_func[PrimType_SGD] = SgdInferShape;
   g_infer_func[PrimType_Shape] = ShapeInferShape;

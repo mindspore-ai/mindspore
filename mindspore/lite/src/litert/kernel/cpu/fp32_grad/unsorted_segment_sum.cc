@@ -83,14 +83,24 @@ int UnsortedSegmentSumCPUKernel::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto output_tensor = out_tensors_.at(0);
-  float *input = reinterpret_cast<float *>(input_tensor->data());
-  CHECK_NULL_RETURN(input);
   int *indices = reinterpret_cast<int *>(indices_tensor->data());
   CHECK_NULL_RETURN(indices);
-  float *output = reinterpret_cast<float *>(output_tensor->MutableData());
-  CHECK_NULL_RETURN(output);
-  std::fill(output, output + output_tensor->ElementsNum(), 0.f);
-  int ret = UnsortedSegmentSum(float, int, input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);
+  int ret = RET_OK;
+  if (input_tensor->data_type() == kNumberTypeInt32) {
+    int *input = reinterpret_cast<int *>(input_tensor->data());
+    CHECK_NULL_RETURN(input);
+    int *output = reinterpret_cast<int *>(output_tensor->MutableData());
+    CHECK_NULL_RETURN(output);
+    std::fill(output, output + output_tensor->ElementsNum(), 0.f);
+    ret = UnsortedSegmentSum(int, int, input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);
+  } else {
+    float *input = reinterpret_cast<float *>(input_tensor->data());
+    CHECK_NULL_RETURN(input);
+    float *output = reinterpret_cast<float *>(output_tensor->MutableData());
+    CHECK_NULL_RETURN(output);
+    std::fill(output, output + output_tensor->ElementsNum(), 0.f);
+    ret = UnsortedSegmentSum(float, int, input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSliceGrad error error_code[" << ret << "]";
     return RET_ERROR;
@@ -99,4 +109,5 @@ int UnsortedSegmentSumCPUKernel::DoExecute(int task_id) {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_UnsortedSegmentSum, LiteKernelCreator<UnsortedSegmentSumCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_UnsortedSegmentSum, LiteKernelCreator<UnsortedSegmentSumCPUKernel>)
 }  // namespace mindspore::kernel

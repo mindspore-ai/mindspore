@@ -15,6 +15,7 @@
  */
 #include "src/common/ops/populate/arithmetic_populate.h"
 #include "src/common/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_AbsGrad;
 using mindspore::schema::PrimitiveType_BiasAddGrad;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_FloorDiv;
@@ -80,5 +81,6 @@ REG_POPULATE(PrimitiveType_FloorMod, PopulateArithmetic, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_Mod, PopulateArithmetic, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_SquaredDifference, PopulateArithmetic, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_BiasAddGrad, PopulateArithmetic, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_AbsGrad, PopulateArithmetic, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

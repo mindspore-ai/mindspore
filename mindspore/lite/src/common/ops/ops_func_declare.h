@@ -259,6 +259,7 @@
 #include "ops/grad/nllloss_grad.h"
 #include "ops/format_transpose.h"
 #include "ops/gather_d.h"
+#include "ops/tensor_scatter_add.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -486,6 +487,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(FormatTranspose)
 FUNC_MSOP2SCHEMAOP_DECLARE(GatherD)
 FUNC_MSOP2SCHEMAOP_DECLARE(GroupNormFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(Log1p)
+FUNC_MSOP2SCHEMAOP_DECLARE(TensorScatterAdd)
 #endif
 }  // namespace mindspore::lite::ops
 #else

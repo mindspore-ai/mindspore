@@ -271,6 +271,7 @@ REG_MINDSPORE_OPERATOR(FormatTranspose)
 REG_MINDSPORE_OPERATOR(GatherD)
 REG_MINDSPORE_OPERATOR(GroupNormFusion)
 REG_MINDSPORE_OPERATOR(Log1p)
+REG_MINDSPORE_OPERATOR(TensorScatterAdd)
 }  // namespace lite
 }  // namespace mindspore
 
