@@ -1262,8 +1262,8 @@ class UniqueWithPad(PrimitiveWithCheck):
         >>> pad_num = 8
         >>> output = ops.UniqueWithPad()(x, pad_num)
         >>> print(output)
-        (Tensor(shape=[10], dtype=Int32, value= [1, 2, 3, 4, 5, 8, 8, 8]),
-         Tensor(shape=[10], dtype=Int32, value= [0, 0, 1, 1, 2, 2, 3, 4]))
+        (Tensor(shape=[8], dtype=Int32, value= [1, 2, 3, 4, 5, 8, 8, 8]),
+         Tensor(shape=[8], dtype=Int32, value= [0, 0, 1, 1, 2, 2, 3, 4]))
     """
 
     @prim_attr_register
