@@ -250,11 +250,10 @@ class TestAutotuneSaveLoad:
         """
         Feature: Autotuning
         Description: Test Autotune with save final config enabled for pipeline with user-defined Python function.
-        Expectation: Pipeline runs successfully. Autotune save final config not created for pipelines with UDFs.
+        Expectation: Pipeline runs successfully. Autotune save final config created for pipelines with UDFs.
         """
         original_autotune = ds.config.get_enable_autotune()
-        atfinal_filename = str(tmp_path / "test_autotune_pyfunc_pipeline_atfinal")
-        ds.config.set_enable_autotune(True, atfinal_filename)
+        ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_pipeline_pyfunc"))
         original_seed = ds.config.get_seed()
         ds.config.set_seed(55)
 
@@ -271,16 +270,15 @@ class TestAutotuneSaveLoad:
             num += 1
         assert num == 5
 
-        # Confirm that autotune final config file does not exist
-        # Note: Since AutoTune manager task fails when trying to serialize unsupported Python UDF in dataset pipeline,
-        #       the AutoTune manager is terminated (and not restarted)
-        assert not os.path.exists(atfinal_filename)
+        # Confirm that autotune final config file exists.
+        atfinal_filename = tmp_path / ("test_autotune_pipeline_pyfunc_" + os.environ['RANK_ID'] + ".json")
+        assert atfinal_filename.exists()
+        validate_jsonfile(atfinal_filename)
 
         ds.config.set_enable_autotune(False)
 
         # Pipeline#2
-        atfinal_filename2 = str(tmp_path / "test_autotune_pyfunc_pipeline_atfinal2")
-        ds.config.set_enable_autotune(True, atfinal_filename2)
+        ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_pipeline_pyfunc2"))
 
         # Execute similar pipeline without user-defined Python function
         data2 = ds.ImageFolderDataset(DATA_DIR, shuffle=False, decode=False, num_samples=6)
@@ -294,10 +292,10 @@ class TestAutotuneSaveLoad:
             num += 1
         assert num == 6
 
-        # Confirm that autotune final config file does NOT exist
-        # Note: AutoTune manager task has not been restarted and hence not autotune config file is saved for this valid
-        # pipeline.
-        assert not os.path.exists(atfinal_filename2)
+        # Confirm that autotune final config file exists
+        atfinal_filename2 = tmp_path / ("test_autotune_pipeline_pyfunc2_" + os.environ['RANK_ID'] + ".json")
+        assert atfinal_filename2.exists()
+        validate_jsonfile(atfinal_filename2)
 
         ds.config.set_enable_autotune(original_autotune)
         ds.config.set_seed(original_seed)

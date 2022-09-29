@@ -172,12 +172,17 @@ def test_serdes_pyfunc_exception(remove_json_files=True):
         np.array(z).flatten().reshape(10, 1)
     )))
 
-    with pytest.raises(ValueError) as error_info:
-        ds.serialize(data1, "pyfunc_dataset_pipeline.json")
-    assert "Serialization of user-defined Python functions is not supported" in str(error_info.value)
+    # Note: Serialization of a dataset pipeline with Python UDF is not supported, and
+    #       it is not valid to deserialize the JSON output nor re-serialize the deserialize output.
+    ds.serialize(data1, "depr_pyfunc_dataset_pipeline.json")
+    data2 = ds.deserialize(input_dict="depr_pyfunc_dataset_pipeline.json")
+
+    with pytest.raises(RuntimeError) as error_info:
+        ds.serialize(data2, "depr_pyfunc_dataset_pipeline2.json")
+    assert "Failed to find key 'tensor_op_params' in PyFuncOp' JSON file or input dict" in str(error_info.value)
 
     if remove_json_files:
-        delete_json_files("pyfunc_dataset_pipeline")
+        delete_json_files("depr_pyfunc_dataset_pipeline")
 
 
 def test_serdes_pyfunc_exception2(remove_json_files=True):
@@ -209,12 +214,17 @@ def test_serdes_pyfunc_exception2(remove_json_files=True):
         num += 1
     assert num == 5
 
-    with pytest.raises(ValueError) as error_info:
-        ds.serialize(data1, "pyfunc2_dataset_pipeline.json")
-    assert "Serialization of user-defined Python functions is not supported" in str(error_info.value)
+    # Note: Serialization of a dataset pipeline with Python UDF is not supported, and
+    #       it is not valid to deserialize the JSON output nor re-serialize the deserialize output.
+    ds.serialize(data1, "depr_pyfunc2_dataset_pipeline.json")
+    data2 = ds.deserialize(input_dict="depr_pyfunc2_dataset_pipeline.json")
+
+    with pytest.raises(AttributeError) as error_info:
+        ds.serialize(data2, "depr_pyfunc2_dataset_pipeline2.json")
+    assert "no attribute 'chwtohwc'" in str(error_info.value)
 
     if remove_json_files:
-        delete_json_files("pyfunc2_dataset_pipeline")
+        delete_json_files("depr_pyfunc2_dataset_pipeline")
 
 
 def test_serdes_inter_mixed_map(remove_json_files=True):
