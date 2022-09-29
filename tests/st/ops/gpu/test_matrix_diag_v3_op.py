@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor, context
 from mindspore import dtype as mstype
 from mindspore.ops.operations.array_ops import MatrixDiagV3
@@ -39,7 +40,8 @@ class VmapNet(nn.Cell):
         self.vmap_op = vmap(self.op, in_axes=(0, None, None, None, None), out_axes=0)
 
     def construct(self, x, k, num_rows, num_cols, padding_value):
-        output = self.vmap_op(x, k, num_rows, num_cols, padding_value)
+        out = self.vmap_op(x, k, num_rows, num_cols, padding_value)
+        output = ops.expand_dims(out, 0)
         return output
 
 
@@ -208,10 +210,10 @@ def test_matrix_diag_v3_vmap(data_type):
                           [6, 7, 9],
                           [0, 9, 1]]]).astype(data_type)
     k = (-1, 1)
-    expect = np.array([[[1, 8, 0],
-                        [4, 2, 9],
-                        [0, 5, 3]],
-                       [[6, 2, 0],
-                        [9, 7, 3],
-                        [0, 1, 9]]]).astype(data_type)
+    expect = np.array([[[[1, 8, 0],
+                         [4, 2, 9],
+                         [0, 5, 3]],
+                        [[6, 2, 0],
+                         [9, 7, 3],
+                         [0, 1, 9]]]]).astype(data_type)
     benchmark(diagonal, expect, k=k, align="LEFT_RIGHT", is_vmap=True)
