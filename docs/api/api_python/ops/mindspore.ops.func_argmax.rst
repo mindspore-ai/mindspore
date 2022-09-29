@@ -3,7 +3,7 @@ mindspore.ops.argmax
 
 .. py:function:: mindspore.ops.argmax(x, axis=-1, output_type=mstype.int32)
 
-    返回输入Tensor在指定轴上的最小值索引。
+    返回输入Tensor在指定轴上的最大值索引。
 
     如果输入Tensor的shape为 :math:`(x_1, ..., x_N)` ，则输出Tensor的shape为 :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` 。
 
