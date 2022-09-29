@@ -33,14 +33,17 @@ class FSEDecoder {
                         schema::WeightQuantCompressType compress_type);
 
  private:
+  static int FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, size_t table_log,
+                                        uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table);
+
   template <typename C_TYPE, typename OUT_TYPE>
   static int FSEDecode(FSEBitStream *bs, OUT_TYPE *buff, int buff_count, uint32_t *frequency, int frequency_count,
-                       const C_TYPE *centroids, int table_log) {
+                       const C_TYPE *centroids, size_t table_log) {
     MS_ASSERT(bs != nullptr);
     MS_ASSERT(buff != nullptr);
     MS_ASSERT(frequency != nullptr);
     MS_ASSERT(centroids != nullptr);
-    int table_size = 1 << table_log;
+    size_t table_size = 1u << table_log;
     std::vector<uint16_t> states_table(table_size);
     std::vector<uint8_t> bit_count_table(table_size);
     std::vector<uint16_t> symbol_table(table_size);
@@ -51,15 +54,16 @@ class FSEDecoder {
       return RET_ERROR;
     }
 
-    uint16_t state = static_cast<uint16_t>(bs->Pop(table_log));
+    auto state = bs->Pop(table_log);
     while ((bs->GetCurrChunkIndex() >= 0) || (bit_count_table[state] == 0) || (bs->GetCurrBitCount() > 0)) {
       if (buff_count == 0) {
         return RET_OK;
       }
       buff[--buff_count] = static_cast<OUT_TYPE>(centroids[symbol_table[state]]);
-      state = states_table[state] + static_cast<size_t>(bs->Pop(bit_count_table[state]));
+      state = states_table[state] + bs->Pop(bit_count_table[state]);
     }
 
+    // Unexpected Condition!!!
     int remaining_buff_count = buff_count;
     if (remaining_buff_count < 0) {
       MS_LOG(ERROR) << "out buffer too small";
@@ -71,9 +75,6 @@ class FSEDecoder {
     }
     return ret;
   }
-
-  static int FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,
-                                        uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_DECODER_H_

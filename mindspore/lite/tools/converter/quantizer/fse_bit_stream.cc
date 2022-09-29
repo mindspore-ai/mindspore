@@ -56,10 +56,10 @@ void FSEBitStream::Empty() {
   }
 }
 
-int64_t FSEBitStream::Pop(uint8_t bit_count) {
+uint64_t FSEBitStream::Pop(uint8_t bit_count) {
   MS_ASSERT(curr_bit_count_ <= kCurrentBitCount);
-  int64_t right = curr_chunk_ >> static_cast<size_t>(kCurrentBitCount - curr_bit_count_);
-  int64_t res = right & ((1 << bit_count) - 1);
+  uint64_t right = curr_chunk_ >> static_cast<size_t>(kCurrentBitCount - curr_bit_count_);
+  uint64_t res = right & ((1u << bit_count) - 1);
   curr_bit_count_ -= static_cast<int8_t>(bit_count);
   if (curr_bit_count_ > 0) {
     // most likely branch
@@ -77,7 +77,7 @@ int64_t FSEBitStream::Pop(uint8_t bit_count) {
   // sad path :(
   curr_bit_count_ += static_cast<int8_t>(bit_count);
   curr_chunk_ = chunks_[curr_chunk_index_--];
-  right |= (curr_chunk_ & ((1 << (static_cast<int8_t>(bit_count) - curr_bit_count_)) - 1)) << curr_bit_count_;
+  right |= (curr_chunk_ & ((1u << (static_cast<int8_t>(bit_count) - curr_bit_count_)) - 1)) << curr_bit_count_;
   curr_bit_count_ = kCurrentBitCount - (static_cast<int8_t>(bit_count) - curr_bit_count_);
   return right;
 }
@@ -109,9 +109,9 @@ void FSEBitStream::Flush() { curr_chunk_ <<= (kCurrentBitCount - curr_bit_count_
 
 // The function gives the index of most import `1` in the binary representation.
 // e.g. for the number 00100 it gives 2.
-int FSEBitStream::CountBits(int32_t x) {
+size_t FSEBitStream::CountBits(int32_t x) {
 #ifdef _MSC_VER
-  int num = 0;
+  size_t num = 0;
   uint32_t tmp = x;
   tmp |= 1;
   while (!(tmp & INT32_MIN)) {

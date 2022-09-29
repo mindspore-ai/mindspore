@@ -26,8 +26,8 @@
 #include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
-constexpr int MAX_SYMS = 65534;
-constexpr int MAX_TABLE_LOG = 16;
+constexpr size_t MAX_SYMS = 65534;
+constexpr size_t MAX_TABLE_LOG = 16;
 typedef struct FSEQuant {
   uint16_t *symbol_table{nullptr};  // the place to store the quantized tensor
   int32_t symbol_table_count{0};    // the number of symbols that exist
@@ -105,7 +105,7 @@ class FSEEncoder {
     MS_LOG(INFO) << weight->fullname_with_scope() << " shannon_entropy is " << shannon_entropy;
 
     std::vector<uint16_t> uncompressed_freqs_to_compressed_sym(uncompressed_frequency_count);
-    int sym = 0;
+    size_t sym = 0;
     for (int i = 0; i < uncompressed_frequency_count; i++) {
       if (uncompressed_frequency[i] != 0) {
         if (sym >= MAX_SYMS) {

@@ -202,7 +202,7 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   // shrink
   while (updated_table_size > new_table_size) {
     int max_ix = GetMaxIndex(q->frequency, q->size);
-    if (max_ix < 0 || max_ix > MAX_SYMS) {
+    if (max_ix < 0 || static_cast<size_t>(max_ix) > MAX_SYMS) {
       MS_LOG(ERROR) << "max_ix is invalid.";
       return RET_ERROR;
     }
@@ -213,7 +213,7 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   // grow
   if (updated_table_size < new_table_size) {
     int max_ix = GetMaxIndex(q->frequency, q->size);
-    if (max_ix < 0 || max_ix >= MAX_SYMS) {
+    if (max_ix < 0 || static_cast<size_t>(max_ix) >= MAX_SYMS) {
       MS_LOG(ERROR) << "max_ix is invalid.";
       return RET_ERROR;
     }
