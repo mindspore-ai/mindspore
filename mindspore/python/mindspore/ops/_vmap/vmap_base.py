@@ -485,6 +485,7 @@ _ops_vmap_clone_prim_dict = {
     "ApplyAdaMax": P.ApplyAdaMax,
     "ApplyAdadelta": P.ApplyAdadelta,
     "ApplyRMSProp": P.ApplyRMSProp,
+    'Adam': P.Adam,
     "ApplyCenteredRMSProp": P.ApplyCenteredRMSProp,
     "ApplyFtrl": P.ApplyFtrl,
     "ApplyGradientDescent": P.ApplyGradientDescent,

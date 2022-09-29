@@ -37,6 +37,11 @@ class AdamInfer : public abstract::OpInferBase {
     auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
     auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    auto beta1_power_shape =
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    auto beta2_power_shape =
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
     auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->BuildShape())[kShape];
     if (IsDynamicRank(var_shape) || IsDynamicRank(m_shape) || IsDynamicRank(v_shape)) {
       auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
@@ -51,6 +56,44 @@ class AdamInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, m_shape, prim_name);
     CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, v_shape, prim_name);
     CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, grad_shape, prim_name);
+
+    int64_t batch_rank = 0;
+    if (primitive->HasAttr(kBatchRank)) {
+      auto value_ptr = primitive->GetAttr(kBatchRank);
+      batch_rank = GetValue<int64_t>(value_ptr);
+    }
+    if (batch_rank != 0) {
+      (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape size", beta1_power_shape.size(), kEqual, batch_rank,
+                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("beta2_power_shape size", beta2_power_shape.size(), kEqual, batch_rank,
+                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, batch_rank, prim_name);
+    } else {
+      if (beta1_power_shape.size() == 1 || beta1_power_shape.size() == 0) {
+        (void)CheckAndConvertUtils::CheckInteger(
+          "beta1_power_shape element num",
+          std::accumulate(beta1_power_shape.begin(), beta1_power_shape.end(), 1, std::multiplies<int>()), kEqual, 1,
+          prim_name);
+      } else {
+        MS_EXCEPTION(ValueError) << "The rank of beta1_power must be 0 or 1 but got " << lr_shape.size();
+      }
+      if (beta2_power_shape.size() == 1 || beta2_power_shape.size() == 0) {
+        (void)CheckAndConvertUtils::CheckInteger(
+          "beta2_power_shape element num",
+          std::accumulate(beta2_power_shape.begin(), beta2_power_shape.end(), 1, std::multiplies<int>()), kEqual, 1,
+          prim_name);
+      } else {
+        MS_EXCEPTION(ValueError) << "The rank of beta2_power must be 0 or 1 but got " << lr_shape.size();
+      }
+      if (lr_shape.size() == 1 || lr_shape.size() == 0) {
+        (void)CheckAndConvertUtils::CheckInteger(
+          "lr_shape element num", std::accumulate(lr_shape.begin(), lr_shape.end(), 1, std::multiplies<int>()), kEqual,
+          1, prim_name);
+      } else {
+        MS_EXCEPTION(ValueError) << "The rank of lr must be 0 or 1 but got " << lr_shape.size();
+      }
+    }
+
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
   }

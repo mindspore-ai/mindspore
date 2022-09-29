@@ -28,13 +28,15 @@ __device__ __forceinline__ half SqrtFunc(half input) {
 }
 
 template <typename T>
-__global__ void ApplyAdamKernel(const size_t size, const T *gradient, const T *beta1_power, const T *beta2_power,
-                                const T *learning_rate, const T *beta1, const T *beta2, const T *epsilon, T *variable,
-                                T *m, T *v) {
+__global__ void ApplyAdamKernel(const size_t size, const int64_t batch_size, const T *gradient, const T *beta1_power,
+                                const T *beta2_power, const T *learning_rate, const T *beta1, const T *beta2,
+                                const T *epsilon, T *variable, T *m, T *v) {
+  auto all_elements = size * batch_size;
   const T one = static_cast<T>(1.0);
-  const T new_learning_rate = learning_rate[0] * SqrtFunc(one - beta2_power[0]) / (one - beta1_power[0]);
 
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < all_elements; i += gridDim.x * blockDim.x) {
+    auto batch = i / size;
+    auto new_learning_rate = learning_rate[batch] * SqrtFunc(one - beta2_power[batch]) / (one - beta1_power[batch]);
     m[i] += (gradient[i] - m[i]) * (one - beta1[0]);
     v[i] += (gradient[i] * gradient[i] - v[i]) * (one - beta2[0]);
     variable[i] -= new_learning_rate * m[i] / (SqrtFunc(v[i]) + epsilon[0]);
@@ -87,10 +89,11 @@ __global__ void AdamWeightDecayKernel(const size_t size, const half *gradient, c
 }
 
 template <typename T>
-void ApplyAdam(const size_t size, const T *gradient, const T *beta1_power, const T *beta2_power, const T *learning_rate,
-               const T *beta1, const T *beta2, const T *epsilon, T *variable, T *m, T *v, cudaStream_t cuda_stream) {
+void ApplyAdam(const size_t size, const int64_t batch_size, const T *gradient, const T *beta1_power,
+               const T *beta2_power, const T *learning_rate, const T *beta1, const T *beta2, const T *epsilon,
+               T *variable, T *m, T *v, cudaStream_t cuda_stream) {
   ApplyAdamKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    size, gradient, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon, variable, m, v);
+    size, batch_size, gradient, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon, variable, m, v);
 }
 template <typename T, typename S>
 void AdamWeightDecayOp(const size_t size, const S *gradient, const float *learning_rate, const float *beta1,
@@ -100,13 +103,15 @@ void AdamWeightDecayOp(const size_t size, const S *gradient, const float *learni
                                                                            epsilon, decay, variable, m, v);
 }
 
-template CUDA_LIB_EXPORT void ApplyAdam<float>(const size_t size, const float *gradient, const float *beta1_power,
-                                               const float *beta2_power, const float *learning_rate, const float *beta1,
-                                               const float *beta2, const float *epsilon, float *variable, float *m,
-                                               float *v, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ApplyAdam<half>(const size_t size, const half *gradient, const half *beta1_power,
-                                              const half *beta2_power, const half *learning_rate, const half *beta1,
-                                              const half *beta2, const half *epsilon, half *variable, half *m, half *v,
+template CUDA_LIB_EXPORT void ApplyAdam<float>(const size_t size, const int64_t batch_size, const float *gradient,
+                                               const float *beta1_power, const float *beta2_power,
+                                               const float *learning_rate, const float *beta1, const float *beta2,
+                                               const float *epsilon, float *variable, float *m, float *v,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyAdam<half>(const size_t size, const int64_t batch_size, const half *gradient,
+                                              const half *beta1_power, const half *beta2_power,
+                                              const half *learning_rate, const half *beta1, const half *beta2,
+                                              const half *epsilon, half *variable, half *m, half *v,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AdamWeightDecayOp<float, float>(const size_t size, const float *gradient,
                                                               const float *learning_rate, const float *beta1,

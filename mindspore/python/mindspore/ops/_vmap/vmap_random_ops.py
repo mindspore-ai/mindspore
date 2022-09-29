@@ -17,8 +17,9 @@
 """random_ops vmap impl."""
 from __future__ import absolute_import
 
-from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
-from mindspore.ops._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim, vmap_general_preprocess
+from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle, Multinomial
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim, \
+    vmap_general_preprocess, _raise_value_error
 
 
 @vmap_rules_getters.register(UniformCandidateSampler)
@@ -66,5 +67,28 @@ def get_random_shuffle_vmap_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         out = batch_prim(x)
         return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(Multinomial)
+def get_multinomial_vmap_rule(prim, axis_size):
+    """VmapRule for `Multinomial` operation."""
+    prim_name = prim.name
+
+    def vmap_rule(x_bdim, num_samples_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, x_bdim, num_samples_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        num_samples, num_samples_dim = num_samples_bdim
+        if num_samples_dim is not None:
+            _raise_value_error("The source axis of args in {} must be None, "
+                               "but got {}.".format(prim_name, num_samples_dim))
+        x = _bdim_at_front(x, x_dim, axis_size)
+        out = prim(x, num_samples)
+        return (out, 0)
 
     return vmap_rule
