@@ -50,7 +50,7 @@ bool NextAfterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 
 template <typename T>
 bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+                                         const std::vector<AddressPtr> &outputs) const {
   if (inputs.size() != 2 || outputs.size() != 1) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 1 outputs, but got "
                             << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
