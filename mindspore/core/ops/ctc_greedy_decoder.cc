@@ -83,12 +83,12 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
     return std::make_shared<abstract::AbstractTuple>(ret);
   }
 
-  if (inputs_x_shape.size() != kInputsRank) {
+  if (inputs_x_shape.size() != kInputsRank && !IsDynamicRank(inputs_x_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', inputs's dim must be 3, but got: " << inputs_x_shape.size()
                              << ".";
   }
 
-  if (sequence_length_shape.size() != kSeqLenRank) {
+  if (sequence_length_shape.size() != kSeqLenRank && !IsDynamicRank(sequence_length_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', sequence_length's dims must be 1, but got: " << sequence_length_shape.size() << ".";
   }
