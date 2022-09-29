@@ -14,6 +14,8 @@
 # ============================================================================
 
 """FakeQuantPerChannelGrad op"""
+from __future__ import absolute_import
+
 import te.lang.cce
 from te import tvm
 from te.platform.fusion_manager import fusion_manager

@@ -14,6 +14,8 @@
 # ============================================================================
 
 """FakeQuantPerLayer op"""
+from __future__ import absolute_import
+
 from functools import reduce as functools_reduce
 import te.lang.cce
 from te import tvm
