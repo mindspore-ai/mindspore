@@ -33,8 +33,8 @@ bool GeqrfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   std::vector<int64_t> input0_tensor_shape = inputs[0]->GetShapeVector();
-  num_m = input0_tensor_shape[0];
-  num_n = input0_tensor_shape[1];
+  num_m = static_cast<size_t>(input0_tensor_shape[0]);
+  num_n = static_cast<size_t>(input0_tensor_shape[1]);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -56,7 +56,7 @@ void GeqrfCpuKernelMod::Larfg(size_t n, size_t vm, size_t vn, T *x, T *tau) {
   for (size_t i = vm + 1; i < vm + n; i++) {
     xnorm = xnorm + (*(x + i * num_n + vn) * *(x + i * num_n + vn));
   }
-  xnorm = sqrt(xnorm);
+  xnorm = static_cast<T>(sqrt(xnorm));
   if (xnorm == zero) {
     *tau = zero;
     return;
@@ -65,7 +65,7 @@ void GeqrfCpuKernelMod::Larfg(size_t n, size_t vm, size_t vn, T *x, T *tau) {
     if (*(x + vm * num_n + vn) > zero) {
       beta = -beta;
     }
-    if (beta == 0) {
+    if (beta == zero) {
       return;
     }
     *tau = (beta - *(x + vm * num_n + vn)) / beta;
@@ -119,9 +119,9 @@ void GeqrfCpuKernelMod::Geqrf(size_t num_m, size_t num_n, T *x, T *tau) {
 template <typename T>
 bool GeqrfCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  T *x = reinterpret_cast<T *>(inputs[kInputIndex0]->addr);
-  T *y = reinterpret_cast<T *>(outputs[kOutputIndex0]->addr);
-  T *tau = reinterpret_cast<T *>(outputs[kOutputIndex1]->addr);
+  T *x = static_cast<T *>(inputs[kInputIndex0]->addr);
+  T *y = static_cast<T *>(outputs[kOutputIndex0]->addr);
+  T *tau = static_cast<T *>(outputs[kOutputIndex1]->addr);
   for (size_t i = 0; i < num_m; i++) {
     for (size_t j = 0; j < num_n; j++) {
       *(y + i * num_n + j) = *(x + i * num_n + j);
