@@ -23,7 +23,7 @@ class LambdaCallback(Callback):
     Callback for creating simple, custom callbacks.
 
     This callback is constructed with anonymous functions that will be called
-    at the appropriate time (during `mindspore.Model.{train | eval | fit}`). Note that
+    at the appropriate time (during `mindspore.train.Model.{train | eval | fit}`). Note that
     each stage of callbacks expects one positional arguments: `run_context`.
 
     Note:

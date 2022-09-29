@@ -25,7 +25,7 @@ mindspore.ops.AlltoAll
         - **input_x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)`。
 
     输出:
-        Tensor，设输入的shape是 :math:`(x_1, x_2, ..., x_R)`，则输出的shape为 :math:`(y_1, y_2, ..., y_R)，其中：
+        Tensor，设输入的shape是 :math:`(x_1, x_2, ..., x_R)`，则输出的shape为 :math:`(y_1, y_2, ..., y_R)`，其中：
 
         :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
 

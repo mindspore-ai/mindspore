@@ -63,7 +63,7 @@ class LossMonitor(Callback):
 
         Args:
             run_context (RunContext): Include some information of the model.  For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
 
@@ -94,7 +94,7 @@ class LossMonitor(Callback):
 
         Args:
             run_context (RunContext): Include some information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
         metrics = cb_params.get("metrics")

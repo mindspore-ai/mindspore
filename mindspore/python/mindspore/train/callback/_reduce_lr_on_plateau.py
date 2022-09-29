@@ -124,7 +124,7 @@ class ReduceLROnPlateau(Callback):
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         self.cooldown_counter = 0
         self.wait = 0
@@ -140,7 +140,7 @@ class ReduceLROnPlateau(Callback):
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
         cur_lr = cb_params.optimizer.learning_rate
@@ -188,7 +188,7 @@ class ReduceLROnPlateau(Callback):
 
         Args:
             cb_params (dict): A dictionary stores context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         monitor_candidates = {}
         if self.monitor == "loss":

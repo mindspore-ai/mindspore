@@ -432,7 +432,7 @@ def choice_with_mask(input_x, count=256, seed=0, seed2=0):
     sample, while the mask tensor denotes which elements in the index tensor are valid.
 
     Args:
-        input_x (Tensor): The input tensor.
+        input_x (Tensor[bool]): The input tensor.
             The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
         count (int): Number of items expected to get and the number must be greater than 0. Default: 256.
         seed (int): Random seed. Default: 0.

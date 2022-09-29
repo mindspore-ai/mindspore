@@ -1,5 +1,5 @@
 mindspore.train.OnRequestExit
-===========================
+=============================
 
 .. py:class:: mindspore.train.OnRequestExit(save_ckpt=True, save_mindir=True, file_name='Net', directory='./', sig=signal.SIGUSR1)
 
@@ -24,48 +24,46 @@ mindspore.train.OnRequestExit
         在训练开始时，注册用户传入停止信号的处理程序。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_step_end(run_context)
 
         在训练step结束时，根据是否接收到停止信号，将`run_context`的`_stop_requested`属性置为True。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
-        .. py:method:: on_train_step_end(run_context)
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_epoch_end(run_context)
 
         在训练epoch结束时，根据是否接收到停止信号，将`run_context`的`_stop_requested`属性置为True。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
-        .. py:method:: on_train_step_end(run_context)
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_end(run_context)
 
         在训练结束时，根据是否接收到停止信号，保存checkpoint或者mindir。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_begin(run_context)
 
         在推理开始时，注册用户传入停止信号的处理程序。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_step_end(run_context)
 
         在推理step结束时，根据是否接收到停止信号，将`run_context`的`_stop_requested`属性置为True。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_end(run_context)
 
         在推理结束时，根据是否接收到停止信号，保存checkpoint或者mindir。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。

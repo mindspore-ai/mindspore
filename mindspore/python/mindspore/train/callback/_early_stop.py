@@ -126,7 +126,7 @@ class EarlyStopping(Callback):
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
 
         self.wait = 0
@@ -144,7 +144,7 @@ class EarlyStopping(Callback):
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
 
@@ -185,7 +185,7 @@ class EarlyStopping(Callback):
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
 
         if self.stopped_epoch > 0 and self.verbose:
@@ -201,7 +201,7 @@ class EarlyStopping(Callback):
 
         Args:
             cb_params (dict): A dictionary stores context information of the model. For more details,
-                    please refer to :class:`mindspore.RunContext`.
+                    please refer to :class:`mindspore.train.RunContext`.
         """
         monitor_candidates = {}
         if self.monitor == "loss":

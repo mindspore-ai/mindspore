@@ -16,11 +16,11 @@ mindspore.train.TimeMonitor
         在epoch开始时记录时间。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: epoch_end(run_context)
 
         在epoch结束时打印epoch的耗时。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。

@@ -186,9 +186,11 @@ def connect_network_with_dataset(network, dataset_helper):
 
     Note:
         In the case of running the network on Ascend/GPU in graph mode, this function will wrap the input network with
-        'GetNext', in other cases, the input network will be returned with no change.
-        The 'GetNext' is required to get data only in sink mode, so this function is not applicable to no-sink mode.
+        :class:`mindspore.ops.GetNext`. In other cases, the input network will be returned with no change.
+        The :class:`mindspore.ops.GetNext` is required to get data only in sink mode,
+        so this function is not applicable to no-sink mode.
         when dataset_helper's dataset_sink_mode is True, it can only be connected to one network.
+
     Args:
         network (Cell): The training network for dataset.
         dataset_helper (DatasetHelper): A class to process the MindData dataset, it provides the type, shape and queue

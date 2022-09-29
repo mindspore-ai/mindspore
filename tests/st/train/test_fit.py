@@ -46,7 +46,10 @@ def define_model():
 
 
 class MyCallbackOldMethod(Callback):
-    """ Raise warning in `mindspore.Model.train` and  `mindspore.Model.eval`; raise error  in `mindspore.Model.fit`"""
+    """
+    Raise warning in `mindspore.train.Model.train` and  `mindspore.train.Model.eval`;
+    raise error  in `mindspore.train.Model.fit`.
+    """
     def begin(self, run_context):
         print("custom callback: print on begin, just for test.")
 
@@ -62,7 +65,10 @@ class MyCallbackOldMethod(Callback):
 
 
 class MyCallbackNewMethod(Callback):
-    """ Custom callback running in `mindspore.Model.train`, `mindspore.Model.eval`, `mindspore.Model.fit`"""
+    """
+    Custom callback running in `mindspore.train.Model.train`, `mindspore.train.Model.eval`,
+    `mindspore.train.Model.fit`.
+    """
     def on_train_epoch_end(self, run_context):
         cb_params = run_context.original_args()
         print("custom callback: train epoch end, loss is %s" % (cb_params.get("net_outputs")))
@@ -74,7 +80,7 @@ class MyCallbackNewMethod(Callback):
 
 def test_fit_train_dataset_non_sink_mode():
     """
-    Feature: `mindspore.Model.fit` with train dataset in non-sink mode.
+    Feature: `mindspore.train.Model.fit` with train dataset in non-sink mode.
     Description: test fit with train dataset in non-sink mode.
     Expectation: run in non-sink mode.
     """
@@ -87,7 +93,7 @@ def test_fit_train_dataset_non_sink_mode():
 
 def test_fit_train_dataset_sink_mode():
     """
-    Feature: `mindspore.Model.fit` with train dataset in sink mode.
+    Feature: `mindspore.train.Model.fit` with train dataset in sink mode.
     Description: test fit with train dataset in sink mode.
     Expectation: run in sink mode.
     """
@@ -100,7 +106,7 @@ def test_fit_train_dataset_sink_mode():
 
 def test_fit_valid_dataset_non_sink_mode():
     """
-    Feature: `mindspore.Model.fit` with valid dataset in non-sink mode.
+    Feature: `mindspore.train.Model.fit` with valid dataset in non-sink mode.
     Description: test fit with valid dataset in non-sink mode.
     Expectation: run in non-sink mode.
     """
@@ -113,7 +119,7 @@ def test_fit_valid_dataset_non_sink_mode():
 
 def test_fit_valid_dataset_sink_mode():
     """
-    Feature: `mindspore.Model.fit` with valid dataset in sink mode.
+    Feature: `mindspore.train.Model.fit` with valid dataset in sink mode.
     Description: test fit with valid dataset in sink mode.
     Expectation: run in sink mode.
     """
@@ -126,7 +132,7 @@ def test_fit_valid_dataset_sink_mode():
 
 def test_fit_without_valid_dataset():
     """
-    Feature: `mindspore.Model.fit` without `valid_dataset` input .
+    Feature: `mindspore.train.Model.fit` without `valid_dataset` input .
     Description: test fit when `valid_dataset` is None and `valid_dataset_sink_mode` is True or False.
     Expectation: network train without eval process, `valid_dataset_sink_mode` does not take effect.
     """
@@ -139,7 +145,7 @@ def test_fit_without_valid_dataset():
 
 def test_fit_valid_frequency():
     """
-    Feature: check `valid_frequency` input  in `mindspore.Model.fit`.
+    Feature: check `valid_frequency` input  in `mindspore.train.Model.fit`.
     Description: when `valid_frequency` is integer, list or other types.
     Expectation: raise ValueError when the type of valid_frequency is not int or list.
     """
@@ -156,7 +162,7 @@ def test_fit_valid_frequency():
 
 def test_fit_callbacks():
     """
-    Feature: check `callbacks` input in `mindspore.Model.fit`.
+    Feature: check `callbacks` input in `mindspore.train.Model.fit`.
     Description: test internal or custom callbacks in fit.
     Expectation: raise ValueError when methods of custom callbacks are not prefixed with 'on_train' or  'on_eval'.
     """
@@ -178,7 +184,7 @@ def test_fit_callbacks():
 
 def test_train_eval_callbacks():
     """
-    Feature: check `callbacks` input in `mindspore.Model.train` or `mindspore.Model.eval`.
+    Feature: check `callbacks` input in `mindspore.train.Model.train` or `mindspore.train.Model.eval`.
     Description: test internal or custom callbacks in train or eval.
     Expectation: raise warning when methods of custom callbacks are not prefixed with 'on_train' or  'on_eval'.
     """
