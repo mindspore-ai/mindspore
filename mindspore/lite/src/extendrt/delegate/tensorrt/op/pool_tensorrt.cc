@@ -121,7 +121,7 @@ int PoolTensorRT::ParseParams(TensorRTContext *ctx) {
       kernel_size_ = std::vector<int64_t>(kernel_size.begin(), kernel_size.end());
     }
     auto padding = pool_primitive->get_pad();
-    if (padding.size() != DIMENSION_4D) {
+    if (!padding.empty() && padding.size() != DIMENSION_4D) {
       MS_LOG(ERROR) << op_name_ << "has invalid pad dims: " << padding.size();
       return RET_ERROR;
     } else if (padding.empty()) {

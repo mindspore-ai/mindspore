@@ -94,10 +94,10 @@ std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor) {
     for (int64_t i = 0; i < size; i++) {
       vals.push_back(int_data[i]);
     }
-  } else if (ms_dtype == DataType::kNumberTypeInt64) {
-    auto int_data = reinterpret_cast<const int64_t *>(data);
+  } else if (static_cast<TypeId>(ms_dtype) == TypeId::kMetaTypeTypeType) {
+    auto int_data = reinterpret_cast<const int32_t *>(data);
     for (int64_t i = 0; i < size; i++) {
-      vals.push_back(LongToInt(int_data[i]));
+      vals.push_back(int_data[i]);
     }
   } else {
     MS_LOG(ERROR) << "invalid DataType: " << ms_dtype;
