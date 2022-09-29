@@ -35,27 +35,27 @@ void SparseSliceGradCheckInputTensor(const std::vector<AbstractBasePtr> &input_a
   auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto new_indices_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  if (indices_shape.size() != kDim2) {
+  if (indices_shape.size() != static_cast<size_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSliceGrad, indices should be a 2-D tensor"
                              << ", while input_indices dim num is " << indices_shape.size() << ".";
   }
-  if (indices_shape[1] != kDim2) {
+  if (indices_shape[1] != static_cast<int64_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSliceGrad, indices shape should be (2, n)"
                              << ", while input_indices shape dim0 is " << indices_shape[0] << ".";
   }
-  if (bprop_shape.size() != kDim1) {
+  if (bprop_shape.size() != static_cast<size_t>(kDim1)) {
     MS_EXCEPTION(ValueError) << "For SparseSliceGrad, backprop_val_grad should be a 1-D tensor"
                              << ",  while input_backprop_val_grad dim num is " << bprop_shape.size() << ".";
   }
-  if (start_shape[0] != kDim2) {
+  if (start_shape[0] != static_cast<int64_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSliceGrad, start should be a 2-D tensor"
                              << ", while dim num is " << start_shape.size() << ".";
   }
-  if (new_indices_shape.size() != kDim2) {
+  if (new_indices_shape.size() != static_cast<size_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSliceGrad, new_indices should be a 2-D tensor"
                              << ", while input_new_indices dim num is " << new_indices_shape.size() << ".";
   }
-  if (new_indices_shape[1] != kDim2) {
+  if (new_indices_shape[1] != static_cast<int64_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSliceGrad, new_indices shape should be (2, n)"
                              << ", while new_indices_indices shape dim0 is " << new_indices_shape[0] << ".";
   }
