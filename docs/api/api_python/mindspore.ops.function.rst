@@ -1,13 +1,13 @@
-mindspore.ops.functional
+mindspore.ops.function
 =============================
 
-Neural Network Layer Functions
-------------------------------
+神经网络层函数
+----------------
 
-Neural Network
-^^^^^^^^^^^^^^
+神经网络
+^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -22,8 +22,9 @@ Neural Network
     mindspore.ops.avg_pool3d
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
-    mindspore.ops.conv2d
     mindspore.ops.ctc_greedy_decoder
+    mindspore.ops.conv2d
+    mindspore.ops.conv3d
     mindspore.ops.deformable_conv2d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
@@ -39,11 +40,10 @@ Neural Network
     mindspore.ops.relu
     mindspore.ops.relu6
 
+损失函数
+^^^^^^^^^^
 
-Loss Functions
-^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -54,10 +54,10 @@ Loss Functions
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
 
-Activation Functions
-^^^^^^^^^^^^^^^^^^^^
+激活函数
+^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -71,15 +71,15 @@ Activation Functions
     mindspore.ops.log_softmax
     mindspore.ops.mish
     mindspore.ops.selu
-    mindspore.ops.softsign
     mindspore.ops.soft_shrink
     mindspore.ops.softmax
+    mindspore.ops.softsign
     mindspore.ops.tanh
 
-Sampling Functions
-^^^^^^^^^^^^^^^^^^^^
+采样函数
+^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -87,20 +87,20 @@ Sampling Functions
     mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
 
-Distance Functions
-^^^^^^^^^^^^^^^^^^^^
+距离函数
+^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
     mindspore.ops.cdist
 
-Mathematical Functions
-^^^^^^^^^^^^^^^^^^^^^^
+数学运算函数
+^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -109,10 +109,10 @@ Mathematical Functions
     mindspore.ops.cholesky
     mindspore.ops.cholesky_inverse
 
-Element-by-Element Operations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+逐元素运算
+^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -183,9 +183,10 @@ Element-by-Element Operations
     mindspore.ops.xdivy
     mindspore.ops.xlogy
 
-Reduction Functions
-^^^^^^^^^^^^^^^^^^^
-.. msplatformautosummary::
+Reduction函数
+^^^^^^^^^^^^^
+
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -205,10 +206,10 @@ Reduction Functions
     mindspore.ops.prod
     mindspore.ops.std
 
-Comparison Functions
-^^^^^^^^^^^^^^^^^^^^
+比较函数
+^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -228,10 +229,10 @@ Comparison Functions
     mindspore.ops.ne
     mindspore.ops.same_type_shape
 
-Linear Algebraic Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+线性代数函数
+^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -244,13 +245,13 @@ Linear Algebraic Functions
     mindspore.ops.renorm
     mindspore.ops.tensor_dot
 
-Tensor Operation Functions
---------------------------
+Tensor操作函数
+----------------
 
-Tensor Building
-^^^^^^^^^^^^^^^
+Tensor创建
+^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -265,10 +266,10 @@ Tensor Building
     mindspore.ops.ones_like
     mindspore.ops.zeros_like
 
-Randomly Generating Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+随机生成函数
+^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -285,10 +286,10 @@ Randomly Generating Functions
     mindspore.ops.standard_normal
     mindspore.ops.uniform
 
-Array Operation
-^^^^^^^^^^^^^^^
+Array操作
+^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -341,9 +342,9 @@ Array Operation
     mindspore.ops.stack
     mindspore.ops.strided_slice
     mindspore.ops.tensor_scatter_add
-    mindspore.ops.tensor_scatter_min
-    mindspore.ops.tensor_scatter_max
     mindspore.ops.tensor_scatter_div
+    mindspore.ops.tensor_scatter_max
+    mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tensor_scatter_elements
@@ -359,10 +360,10 @@ Array Operation
     mindspore.ops.unsorted_segment_sum
     mindspore.ops.unstack
 
-Type Conversion
-^^^^^^^^^^^^^^^
+类型转换
+^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -372,10 +373,10 @@ Type Conversion
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
-Sparse Functions
+稀疏函数
 ^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -387,10 +388,10 @@ Sparse Functions
     mindspore.ops.csr_to_coo
     mindspore.ops.sparse_add
 
-Gradient Clipping
-^^^^^^^^^^^^^^^^^^
+梯度剪裁
+^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -398,10 +399,10 @@ Gradient Clipping
     mindspore.ops.clip_by_global_norm
     mindspore.ops.clip_by_value
 
-Parameter Operation Functions
------------------------------
+Parameter操作函数
+--------------------
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -411,8 +412,8 @@ Parameter Operation Functions
     mindspore.ops.assign_sub
     mindspore.ops.scatter_add
     mindspore.ops.scatter_div
-    mindspore.ops.scatter_min
     mindspore.ops.scatter_max
+    mindspore.ops.scatter_min
     mindspore.ops.scatter_mul
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_div
@@ -422,10 +423,10 @@ Parameter Operation Functions
     mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
 
-Differential Functions
-----------------------
+微分函数
+----------------
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -439,18 +440,18 @@ Differential Functions
     mindspore.ops.jacfwd
     mindspore.ops.vmap
 
-Debugging Functions
--------------------
+调试函数
+----------------
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
     mindspore.ops.print_
 
-Image Functions
----------------
+图像函数
+----------------
 
 .. msplatformautosummary::
     :toctree: ops
@@ -462,8 +463,8 @@ Image Functions
     mindspore.ops.check_valid
     mindspore.ops.iou
 
-Spectral Functions
-------------------
+光谱函数
+----------------
 
 .. msplatformautosummary::
     :toctree: ops
@@ -472,10 +473,10 @@ Spectral Functions
 
     mindspore.ops.blackman_window
 
-Other Functions
----------------
+其他函数
+----------------
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

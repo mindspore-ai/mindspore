@@ -15,7 +15,7 @@ MindSpore Numpy具有四大功能模块：Array生成、Array操作、逻辑运�
 
 .. note::
 
-    MindSpore numpy通过组装底层算子来提供与numpy一致的编程体验接口，方便开发人员使用和代码移植。相比于MindSpore的functional和ops接口，与原始numpy的接口格式及行为一致性更好，以便于用户理解和使用。注意：由于兼容numpy的考虑，部分接口的性能可能弱于functional和ops接口。使用者可以按需选择不同类型的接口。
+    MindSpore numpy通过组装底层算子来提供与numpy一致的编程体验接口，方便开发人员使用和代码移植。相比于MindSpore的function和ops接口，与原始numpy的接口格式及行为一致性更好，以便于用户理解和使用。注意：由于兼容numpy的考虑，部分接口的性能可能弱于function和ops接口。使用者可以按需选择不同类型的接口。
 
 Array生成
 ----------------
