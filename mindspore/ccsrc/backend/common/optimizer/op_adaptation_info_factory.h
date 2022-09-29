@@ -141,7 +141,7 @@ class BACKEND_EXPORT OpAdaptationInfoRegister {
 
   static std::string GenerateKey(const std::string &op_name, const std::string &device_name, bool flag);
   // key: (op_name + device_name + flag), value: <OpAdaptationInfo *>
-  inline static std::map<std::string, OpAdaptationInfo *> op_info_map_;
+  static std::map<std::string, OpAdaptationInfo *> &GetOpInfoMap();
 };
 
 class BACKEND_EXPORT RegisterHelper {
