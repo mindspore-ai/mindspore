@@ -102,14 +102,15 @@ size_t NonZeroCpuKernelMod::NonZeroCompute(const T *input, int64_t *output, size
       if (common::IsDoubleEqual(input[elem_i], zero)) {
         continue;
       }
-    }
-    if constexpr (std::is_same_v<T, float>) {
-      if (common::IsFloatEqual(input[elem_i], zero)) {
-        continue;
-      }
     } else {
-      if (input[elem_i] == zero) {
-        continue;
+      if constexpr (std::is_same_v<T, float>) {
+        if (common::IsFloatEqual(input[elem_i], zero)) {
+          continue;
+        }
+      } else {
+        if (input[elem_i] == zero) {
+          continue;
+        }
       }
     }
     size_t index = elem_i;
