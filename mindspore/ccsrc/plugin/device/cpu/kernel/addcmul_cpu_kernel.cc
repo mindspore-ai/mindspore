@@ -134,7 +134,7 @@ bool AddcmulCpuKernelMod::AddcmulCompute(const std::vector<AddressPtr> &inputs,
   const auto *input1 = static_cast<T *>(inputs[kInputX1]->addr);
   const auto *input2 = static_cast<T *>(inputs[kInputX2]->addr);
   const auto *input3 = static_cast<T *>(inputs[kInputValue]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kOutputData]->addr);
+  auto *output = static_cast<T *>(outputs[kOutputData]->addr);
 
   AddcmulMul1(input1, input2, output);
   AddcmulMul2(input3, output, output);
