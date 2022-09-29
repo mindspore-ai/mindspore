@@ -73,7 +73,7 @@ bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      output[i] = static_cast<T>(0) == static_cast<T>(input0[iter.GetInputPosA()])
+      output[i] = static_cast<double>(0) == static_cast<double>(input0[iter.GetInputPosA()])
                     ? input1[iter.GetInputPosB()]
                     : static_cast<T>(input0[iter.GetInputPosA()] > static_cast<T>(0));
       iter.GenNextPos();
