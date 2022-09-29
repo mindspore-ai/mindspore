@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """ test_control_flow_specialize """
+import os
+import pytest
+import numpy as np
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype, Parameter
 from mindspore.ops import operations as P
 from mindspore import ms_function
 import mindspore.ops.functional as F
-import numpy as np
-import pytest
 
 
 @pytest.mark.level0
@@ -198,3 +199,82 @@ def test_renormalization_cannot_find_specialized_abstract_2nd_grad():
     grad_foo_2nd = F.grad(grad_foo, grad_position=(0,))
     output = grad_foo_2nd(Tensor(x))
     assert output[0].asnumpy() == np.array([2], np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_renormalization_a_dead_node_in_second_grad():
+    """
+    Feature: control flow
+    Description: after renormalization of second grad, a dead node should not be generated.
+    Expectation: No exception.
+    """
+    def foo(x, y, b, w):
+        while b > w:
+            for i in range(2):
+                b = x + i
+                x = i * w
+                if b > 3:
+                    break
+        return x + y
+
+    x = np.array([5], np.int32)
+    y = np.array([5], np.int32)
+    b = np.array([5], np.int32)
+    w = np.array([5], np.int32)
+    grad_foo = F.grad(foo, grad_position=(0, 1))
+    grad_foo_2nd = F.grad(grad_foo)
+    output = grad_foo_2nd(Tensor(x), Tensor(y), Tensor(b), Tensor(w))
+    assert output[0].asnumpy() == np.array([0], np.int32)
+
+
+def renorm_join_fail(x, y):
+    """
+    Description: control flow test case simplified from test_dde_err_log.
+    """
+    if x != y:
+        x = y - 3
+    elif x == 4:
+        for _ in range(2):
+            if x > 2:
+                y = x * x
+            elif y >= x:
+                x = x * x
+    return x + y
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_renormalization_join_fail_in_second_grad_non_recur_eval():
+    """
+    Feature: control flow
+    Description: after renormalization of second grad, join failure should not be generated.
+    Expectation: No exception.
+    """
+    x = np.array([5], np.int32)
+    y = np.array([5], np.int32)
+    grad_foo = F.grad(renorm_join_fail, grad_position=(0, 1))
+    grad_foo_2nd = F.grad(grad_foo)
+    output = grad_foo_2nd(Tensor(x), Tensor(y))
+    assert output[0].asnumpy() == np.array([0], np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_renormalization_join_fail_in_second_grad_recur_eval():
+    """
+    Feature: control flow
+    Description: In recursive eval, after renormalization of second grad, join failure should not be generated.
+    Expectation: No exception.
+    """
+    x = np.array([5], np.int32)
+    y = np.array([5], np.int32)
+    grad_foo = F.grad(renorm_join_fail, grad_position=(0, 1))
+    grad_foo_2nd = F.grad(grad_foo)
+    os.environ['MS_DEV_RECURSIVE_EVAL'] = '1'
+    output = grad_foo_2nd(Tensor(x), Tensor(y))
+    assert output[0].asnumpy() == np.array([0], np.int32)
+    os.environ['MS_DEV_RECURSIVE_EVAL'] = ''

@@ -76,8 +76,7 @@ bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg)
   MS_EXCEPTION_IF_NULL(arg);
   auto new_sequence = dyn_cast_ptr<AbstractSequence>(arg);
   if (new_sequence != nullptr && new_sequence->sequence_nodes() != nullptr && new_sequence->size() != 0) {
-    static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
-    auto prev_result = cache_mgr.GetValue(conf);
+    const auto &prev_result = ObtainEvalResultFromCache(conf);
     if (prev_result == nullptr) {
       return false;
     }
@@ -210,7 +209,22 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
       MS_LOG(DEBUG) << "Always eval node";
       node_eval_result = engine->ObtainEvalResultWithoutCache(node_conf);
     } else {
-      node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+      node_eval_result = ObtainEvalResultFromCache(node_conf);
+      if (node_eval_result != nullptr) {
+        static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+        if (enable_eliminate_unused_element) {
+          const auto &cnode = node->cast<CNodePtr>();
+          const auto &maybe_func = engine->GetCNodeOperatorAbstract(cnode, context, fg);
+          if (maybe_func->isa<abstract::MetaFuncGraphAbstractClosure>() ||
+              maybe_func->isa<abstract::FuncGraphAbstractClosure>()) {
+            const auto &abs_func_graph = maybe_func->cast<AbstractFunctionPtr>();
+            SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(engine, fg, cnode, abs_func_graph, context);
+          }
+        }
+        MS_LOG(DEBUG) << "No need to jump as found result from cache for node_config";
+      } else {
+        node_eval_result = engine->ObtainEvalResultWithoutCache(node_conf);
+      }
     }
     MS_EXCEPTION_IF_NULL(node_eval_result);
     abstract = node_eval_result->abstract();

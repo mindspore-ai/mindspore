@@ -189,7 +189,46 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
   cache_mgr.SetValue(conf, result);
 }
 
-EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
+void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
+                                                         const CNodePtr &cnode,
+                                                         const AbstractFunctionPtr &base_func_graph_func,
+                                                         const AnalysisContextPtr &fg_context) {
+  // Get the evaluator for func graph.
+  auto evaluator = engine->GetEvaluatorFor(base_func_graph_func);
+  MS_EXCEPTION_IF_NULL(evaluator);
+
+  AbstractBasePtrList args_abs_list;
+  auto &inputs = cnode->inputs();
+  for (std::size_t i = 1; i < inputs.size(); i++) {
+    auto config = engine->MakeConfig(inputs[i], fg_context, fg);
+    auto result = config->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(result);
+    auto abs = result->abstract();
+    args_abs_list.push_back(abs);
+  }
+
+  // Check if already evaluated before.
+  auto &cache = evaluator->evaluator_cache_mgr()->GetCache();
+  auto iter = cache.find(args_abs_list);
+  if (iter != cache.end()) {
+    MS_LOG(DEBUG) << "Eval before, current_node: " << cnode->DebugString() << ", context: " << fg_context->ToString()
+                  << ", args: " << args_abs_list;
+    // Update inputs sequence nodes info, if matched in cache.
+    for (std::size_t i = 0; i < args_abs_list.size(); ++i) {
+      auto new_sequence = dyn_cast<AbstractSequence>(args_abs_list[i]);
+      auto old_sequence = dyn_cast<AbstractSequence>(iter->first[i]);
+      if (old_sequence != nullptr && new_sequence != nullptr) {
+        MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                      << ", new_sequence: " << new_sequence->ToString();
+        SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
+        MS_LOG(DEBUG) << "After synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                      << ", new_sequence: " << new_sequence->ToString();
+      }
+    }
+  }
+}
+
+EvalResultPtr ObtainEvalResultFromCache(const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
   auto result = cache_mgr.GetValue(conf);
@@ -198,14 +237,17 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &
                   << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
     return result;
   }
-  MS_LOG(DEBUG) << "Evaluate cache miss for NodeConfig: " << conf->ToString();
-  result = Eval(conf);
-  if (result == nullptr) {
-    MS_LOG(EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
+  return nullptr;
+}
+
+EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(conf);
+  auto result = ObtainEvalResultFromCache(conf);
+  if (result != nullptr) {
+    return result;
   }
-  MS_LOG(DEBUG) << "Evaluate node on demand for NodeConfig: " << conf->ToString()
-                << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
-  SaveEvalResultInCache(conf, result);
+  MS_LOG(DEBUG) << "Evaluate cache miss for NodeConfig: " << conf->ToString();
+  result = ObtainEvalResultWithoutCache(conf);
   return result;
 }
 
