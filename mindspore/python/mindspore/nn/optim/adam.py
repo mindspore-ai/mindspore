@@ -586,6 +586,17 @@ class Adam(Optimizer):
             `FixedLossScaleManager`. Refer to class :class:`mindspore.amp.FixedLossScaleManager` for more details.
             Default: 1.0.
 
+        kwargs:
+
+            - use_lazy (bool): Whether to use Lazy Adam algorithm. Default: False.
+              If true, apply lazy adam algorithm.
+              If false, apply normal adam algorithm.
+
+            - use_offload (bool): Whether to offload adam optimizer to host CPU and keep parameters being updated on
+              the device in order to minimize the memory cost. Default: False.
+              If true, apply offload adam.
+              If false, apply normal adam.
+
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
@@ -597,10 +608,13 @@ class Adam(Optimizer):
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
-        TypeError: If `use_locking`, `use_nesterov` or `use_amsgrad` is not a bool.
+        TypeError: If `use_locking`, `use_nesterov`, `use_amsgrad`, `use_lazy` or `use_offload` is not a bool.
         ValueError: If `loss_scale` or `eps` is less than or equal to 0.
         ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
         ValueError: If `weight_decay` is less than 0.
+        ValueError: If `use_lazy` and `use_offload` are both true.
+        ValueError: If `use_amsgrad` is true and (`use_lazy` or `use_offload` is true).
+        ValueError: If `use_amsgrad` while using distributed training.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
