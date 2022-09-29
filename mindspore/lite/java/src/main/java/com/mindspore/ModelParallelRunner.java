@@ -22,6 +22,7 @@ import com.mindspore.config.RunnerConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -35,6 +36,7 @@ public class ModelParallelRunner {
     }
 
     private long modelParallelRunnerPtr;
+    private AtomicLong signal = new AtomicLong();
     private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     /**
@@ -90,6 +92,7 @@ public class ModelParallelRunner {
      * @return init status.
      */
     public boolean predict(List<MSTensor> inputs, List<MSTensor> outputs) {
+        signal.incrementAndGet();
         rwLock.readLock().lock();
         try {
             if (this.modelParallelRunnerPtr == 0L) {
@@ -139,6 +142,7 @@ public class ModelParallelRunner {
      * @return The vector that includes all input tensors.
      */
     public List<MSTensor> getInputs() {
+        signal.incrementAndGet();
         rwLock.readLock().lock();
         if (this.modelParallelRunnerPtr == 0L) {
             rwLock.readLock().unlock();
@@ -160,6 +164,7 @@ public class ModelParallelRunner {
      * @return The vector that includes all input tensors.
      */
     public List<MSTensor> getOutputs() {
+        signal.incrementAndGet();
         rwLock.readLock().lock();
         if (this.modelParallelRunnerPtr == 0L) {
             rwLock.readLock().unlock();
@@ -179,6 +184,18 @@ public class ModelParallelRunner {
      * Free model
      */
     public void free() {
+        int maxCount = 100;
+        while (maxCount > 0) {
+            --maxCount;
+            long preSignal = signal.get();
+            rwLock.writeLock().lock();
+            long curSignal = signal.get();
+            rwLock.writeLock().unlock();
+            if (curSignal != preSignal) {
+                continue;
+            }
+            break;
+        }
         rwLock.writeLock().lock();
         if (modelParallelRunnerPtr != 0L) {
             this.free(modelParallelRunnerPtr);
