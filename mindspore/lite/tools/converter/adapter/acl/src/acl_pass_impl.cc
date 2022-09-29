@@ -335,20 +335,22 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   options_ = std::make_shared<AclModelOptions>(model_context);
   CHECK_NULL_RETURN(options_);
   auto inputs = func_graph->get_inputs();
-  std::vector<std::string> input_names;
-  for (auto node : inputs) {
-    CHECK_NULL_RETURN(node);
-    auto para = node->cast<ParameterPtr>();
-    CHECK_NULL_RETURN(para);
-    std::string name = para->name();
-    for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
-      name = name.substr(0, pos) + "_" + name.substr(pos + 1);
-      MS_LOG(INFO) << "Input name: " << name;
+  if (user_options_cfg_.input_shape.empty()) {
+    std::vector<std::string> input_names;
+    for (auto node : inputs) {
+      CHECK_NULL_RETURN(node);
+      auto para = node->cast<ParameterPtr>();
+      CHECK_NULL_RETURN(para);
+      std::string name = para->name();
+      for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
+        name = name.substr(0, pos) + "_" + name.substr(pos + 1);
+        MS_LOG(INFO) << "Input name: " << name;
+      }
+      para->set_name(name);
+      input_names.push_back(name);
     }
-    para->set_name(name);
-    input_names.push_back(name);
+    options_->RenameInput(input_names);
   }
-  options_->RenameInput(input_names);
   options_->SetOmFilePath(user_options_cfg_.om_file_path);
   MS_LOG(INFO) << "Set acl model options success.";
   return lite::RET_OK;

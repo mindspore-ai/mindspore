@@ -80,3 +80,4 @@
 "mindspore/mindspore/core/mindrt/include/async/defer.h"                                            "runtime/explicit"
 "mindspore/mindspore/lite/src/litert/delegate/nnapi/nnapi_implementation.h"                        "build/include_order"
 "mindspore/mindspore/lite/src/litert/delegate/nnapi/nnapi_implementation.cc"                       "build/include_order"
+"mindspore/mindspore/lite/src/extendrt/cxx_api/model/model_impl.cc"                                "whitespace/parens"

@@ -99,11 +99,10 @@ Status ModelImpl::CompileGraphOnline(const void *model_data, size_t data_size,
     MS_LOG(WARNING) << "DLSoOpen RuntimeConvert failed, so path: " << plugin_path;
     return kLiteError;
   }
-  auto convert =
-    reinterpret_cast<mindspore::api::FuncGraphPtr (*)(const char *, const size_t &, const std::shared_ptr<Context> &)>(
-      function);
+  auto convert = reinterpret_cast<mindspore::api::FuncGraphPtr (*)(
+    const char *, const size_t &, const std::shared_ptr<Context> &, const ConfigInfos &)>(function);
   if (convert != nullptr) {
-    auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context);
+    auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context, config_info_);
     auto impl = api_graph->impl();
     auto inner_graph = std::dynamic_pointer_cast<FuncGraph>(impl);
     return session_->CompileGraph(inner_graph);

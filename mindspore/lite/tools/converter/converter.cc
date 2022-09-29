@@ -636,6 +636,17 @@ int ConverterImpl::SaveOutputNames(const FuncGraphPtr &graph) {
       update_output_names.emplace_back(name);
     }
   }
+
+  for (auto &input : graph->get_inputs()) {
+    auto parameter = input->cast<ParameterPtr>();
+    if (!parameter->has_default()) {
+      auto abstract = parameter->abstract();
+      MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "Abstract is nullptr.");
+      if (!abstract->name().empty()) {
+        parameter->set_name(abstract->name());
+      }
+    }
+  }
   ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(update_output_names);
   return RET_OK;
 }
