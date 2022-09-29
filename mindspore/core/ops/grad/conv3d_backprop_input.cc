@@ -92,10 +92,10 @@ void Conv3DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
   (void)AddAttr(kPadMode, api::MakeValue(pad_mode));
 }
 
-PadMode Conv3DBackpropInput::get_pad_mode() const {
+std::string Conv3DBackpropInput::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
   MS_EXCEPTION_IF_NULL(value_ptr);
-  return PadMode(GetValue<int64_t>(value_ptr));
+  return GetValue<std::string>(value_ptr);
 }
 
 void Conv3DBackpropInput::set_pad(const std::vector<int64_t> &pad) {
