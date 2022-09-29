@@ -128,7 +128,7 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->is_from_single_op()) {
     SetOperatorInfo(kernel_graph);
-    OptimizeGraphImpl(kernel_graph);
+    SingleOpGraphOptimize(kernel_graph);
     UpdateKernelRefInfo(kernel_graph);
   } else {
     // Update Graph Dynamic Shape Attr.
@@ -178,6 +178,16 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   pm->AddPass(std::make_shared<opt::InsertTensorMoveForCommunication>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
+}
+
+void CPUKernelExecutor::SingleOpGraphOptimize(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
