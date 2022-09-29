@@ -47,16 +47,17 @@ class OptimizeResults(NamedTuple):
     nit: int
 
 
-def minimize(func, x0, args=(), *, method, tol=None, options=None):
+def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bounds=None, constraints=(),
+             tol=None, callback=None, options=None):
     """Minimization of scalar function of one or more variables.
 
     This API for this function matches SciPy with some minor deviations:
 
     - Gradients of ``func`` are calculated automatically using MindSpore's autodiff
-      support when required.
-    - The ``method`` argument is required. You must specify a solver.
-    - Various optional arguments in the SciPy interface have not yet been
-      implemented.
+      support when the value of jac is None.
+    - The ``method`` argument is required. A exception will be thrown if you don't specify a solver.
+    - Various optional arguments `"hess"` `"hessp"` `"bounds"` `"constraints"` `"tol"` `"callback" `
+      in the SciPy interface have not yet been implemented.
     - Optimization results may differ from SciPy due to differences in the line
       search implementation.
 
@@ -66,15 +67,20 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
 
         - `minimize` is not supported on Windows platform yet.
 
-    Args:
+    Parameters:
       func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
           where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
           of the fixed parameters needed to completely specify the function.
-          `fun` must support differentiation.
+          `fun` must support differentiation if jac is None.
       x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
           the number of independent variables.
       args (Tuple): extra arguments passed to the objective function. Default: ().
-      method (str): solver type. Currently only `"BFGS" or "LBFGS"` is supported.
+      method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`.
+      jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
+          if it is None, the gradient will be estimated with gradient of ``func``.
+          if it is a callable, it should be a function that returns the gradient vector:
+              :math:`jac(x, *args) -> array_like, shape (n,)`
+          where x is an array with shape (n,) and args is a tuple with the fixed parameters.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
           options. Default: None.
       options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
@@ -107,6 +113,9 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
         [3. 2.]
         [3. 2.]
     """
+    if method is None:
+        raise ValueError("You must specify a solver.")
+
     if options is None:
         options = {}
 
@@ -121,7 +130,7 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
         return inner_func
 
     if method.lower() == 'bfgs':
-        results = minimize_bfgs(fun_with_args(args), x0, **options)
+        results = minimize_bfgs(fun_with_args(args), x0, jac, **options)
         success = results.converged and not results.failed
         return OptimizeResults(x=results.x_k,
                                success=success,
@@ -134,7 +143,7 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
                                nit=results.k)
 
     if method.lower() == 'lbfgs':
-        results = minimize_lbfgs(fun_with_args(args), x0, **options)
+        results = minimize_lbfgs(fun_with_args(args), x0, jac, **options)
         success = results.converged and not results.failed
         return OptimizeResults(x=results.x_k,
                                success=success,

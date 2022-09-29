@@ -539,7 +539,7 @@ def test_lbfgs_graph(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options=dict(history_size=150, maxiter=None, gtol=1e-6))
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
