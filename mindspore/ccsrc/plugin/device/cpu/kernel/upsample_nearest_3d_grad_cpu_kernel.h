@@ -34,8 +34,8 @@ class UpsampleNearest3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                      const std::vector<AddressPtr> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

@@ -104,8 +104,8 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   int64_t output_width = y_shape_[kIndex4];
   int64_t input_slice_size = input_depth * input_height * input_width;
 
-  auto x_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto y_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto x_ptr = static_cast<T *>(inputs[kIndex0]->addr);
+  auto y_ptr = static_cast<T *>(outputs[kIndex0]->addr);
   (void)std::fill_n(y_ptr, CPUKernelUtils::CalcElementNum(y_shape_), T(0));
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);
