@@ -51,13 +51,8 @@ class SparseToDenseV2CpuKernelMod : public NativeCpuKernelMod, public MatchKerne
 
  private:
   template <typename I, typename T>
-  void CheckValidateOneDim(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &workspace,
-                           const std::vector<kernel::AddressPtr> &outputs);
-  template <typename I, typename T>
-  void CheckValidateTwoDim(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &workspace,
-                           const std::vector<kernel::AddressPtr> &outputs);
+  void CheckValidate(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                     const std::vector<kernel::AddressPtr> &outputs, const bool dim_flag);
   template <typename I, typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);

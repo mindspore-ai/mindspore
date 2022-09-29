@@ -105,7 +105,7 @@ bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::LaunchKernel(const std::
     }
   }
   for (size_t index = 0, batch_base = 0; index < batch_size; ++index, batch_base += classes_num) {
-    label_type offset = labels[index];
+    size_t offset = static_cast<size_t>(labels[index]);
     loss[index] = -Eigen::numext::log(backprop[batch_base + offset]);
     backprop[batch_base + offset] = backprop[batch_base + offset] - constant_one;
   }
