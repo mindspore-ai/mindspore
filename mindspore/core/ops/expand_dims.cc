@@ -23,6 +23,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "include/common/utils/utils.h"
 
 #include "ops/primitive_c.h"
 #include "ops/op_utils.h"
