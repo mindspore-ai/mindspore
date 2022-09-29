@@ -118,7 +118,7 @@ TypePtr CumSumInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_x_types, prim_name);
   // Second input.
   auto axis_type = input_args[kInputIndex1]->BuildType();
-  const std::set<TypePtr> valid_axis_types = {kInt64};
+  const std::set<TypePtr> valid_axis_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("axis", axis_type, valid_axis_types, prim_name);
   return x_type;
 }
