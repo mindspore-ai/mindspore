@@ -57,47 +57,39 @@ class CropAndResizeInfer : public abstract::OpInferBase {
         std::vector<int64_t>{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM});
     }
 
-    int64_t batch_rank = 0;
-    if (primitive->HasAttr(kBatchRank)) {
-      batch_rank = GetValue<int64_t>(primitive->GetAttr(kBatchRank));
-    }
-    int64_t x_dims = static_cast<int64_t>(x_shape.size()) - batch_rank;
+    auto x_dims = static_cast<int64_t>(x_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("[x shape-length]", x_dims, kEqual, kShapeRank4, prim_name);
     int64_t out_channel = x_shape.back();
 
-    std::vector<int64_t> batch_shape(x_shape.begin(), x_shape.begin() + static_cast<int>(batch_rank));
-    auto num_boxes = ParseNumBoxes(box_shape, box_index_shape, prim_name, batch_shape);
+    auto num_boxes = ParseNumBoxes(box_shape, box_index_shape, prim_name);
     auto crop_size_type = input_args[kInputIndex3]->BuildType();
     MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr,
                                "For primitive[" + prim_name + "], the [crop_size TypeId] is a nullptr.");
     auto value_ptr = input_args[kInputIndex3]->BuildValue();
     std::vector<int64_t> crop_size;
-    if (crop_size_type->isa<TensorType>()) {
-      crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name);
-    } else if (IsIdentidityOrSubclass(crop_size_type, kTuple)) {
-      auto value_tuple = value_ptr->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(value_tuple);
-      auto &elements = value_tuple->value();
-      for (const auto &element : elements) {
-        if (element->isa<Int64Imm>()) {
-          crop_size.push_back(GetValue<int64_t>(element));
-        } else {
-          auto type = element->type();
-          std::string real_type_str = type == nullptr ? "Unknown." : type->ToString() + ".";
-          MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
-                                  << "], the [crop_size] must be a tuple with two Int elements, but got "
-                                  << real_type_str;
-        }
-      }
-    } else {
+    if (!IsIdentidityOrSubclass(crop_size_type, kTuple)) {
       MS_EXCEPTION(TypeError) << "For primitive[" + prim_name
-                              << "], the [crop_size] is must be a Tensor or a Tuple with two Int elements, but got "
+                              << "], the [crop_size] is must be a Tuple with two Int elements, but got "
                               << crop_size_type->ToString();
+    }
+    auto value_tuple = value_ptr->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(value_tuple);
+    const auto &elements = value_tuple->value();
+    for (const auto &element : elements) {
+      if (element->isa<Int64Imm>()) {
+        crop_size.push_back(GetValue<int64_t>(element));
+      } else {
+        auto type = element->type();
+        std::string real_type_str = type == nullptr ? "Unknown." : type->ToString() + ".";
+        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                                << "], the [crop_size] must be a tuple with two Int elements, but got "
+                                << real_type_str;
+      }
     }
     (void)CheckAndConvertUtils::CheckInteger("[crop_size length]", static_cast<int64_t>(crop_size.size()), kEqual,
                                              kShapeRank2, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("[crop height]", crop_size[0], kGreaterThan, 0, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("[crop weight]", crop_size.back(), kGreaterThan, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("[crop width]", crop_size.back(), kGreaterThan, 0, prim_name);
     ShapeVector out_shape = {num_boxes, crop_size[0], crop_size.back(), out_channel};
     return std::make_shared<abstract::Shape>(out_shape);
   }
@@ -121,28 +113,20 @@ class CropAndResizeInfer : public abstract::OpInferBase {
   }
 
  protected:
-  int64_t ParseNumBoxes(const ShapeVector &box_shape, const ShapeVector &box_index_shape, const std::string &prim_name,
-                        const std::vector<int64_t> &batch_shape) const {
-    auto batch_rank = static_cast<int64_t>(batch_shape.size());
-    int64_t box_dims = static_cast<int64_t>(box_shape.size()) - batch_rank;
+  int64_t ParseNumBoxes(const ShapeVector &box_shape, const ShapeVector &box_index_shape,
+                        const std::string &prim_name) const {
+    int64_t box_dims = static_cast<int64_t>(box_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("[boxes shape-length]", box_dims, kEqual, kShapeRank2, prim_name);
-    MS_EXCEPTION_IF_CHECK_FAIL(
-      batch_shape == std::vector<int64_t>(box_shape.begin(), box_shape.begin() + batch_rank),
-      "For primitive[" + prim_name + "], the [batch_shape] of boxes is not equal to that of input.");
     (void)CheckAndConvertUtils::CheckInteger("[boxes second-dim]", box_shape.back(), kEqual, kLimitValue4, prim_name);
 
-    int64_t box_index_dims = static_cast<int64_t>(box_index_shape.size()) - batch_rank;
+    int64_t box_index_dims = static_cast<int64_t>(box_index_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("[box_index shape-length]", box_index_dims, kEqual, 1, prim_name);
-    MS_EXCEPTION_IF_CHECK_FAIL(
-      batch_shape == std::vector<int64_t>(box_index_shape.begin(), box_index_shape.begin() + batch_rank),
-      "For primitive[" + prim_name + "], the [batch_shape] of box_index is not equal to that of input.");
-    if (box_shape[batch_rank] != box_index_shape[batch_rank]) {
+    if (box_shape[0] != box_index_shape[0]) {
       MS_EXCEPTION(ValueError) << "For primitive[" + prim_name +
                                     "], the [boxes first-dim] must be equal to [box_index first-dim], but got " +
-                                    std::to_string(box_shape[batch_rank]) + " vs " +
-                                    std::to_string(box_index_shape[batch_rank]) + ".";
+                                    std::to_string(box_shape[0]) + " vs " + std::to_string(box_index_shape[0]) + ".";
     }
-    return box_shape[batch_rank];
+    return box_shape[0];
   }
 
  private:

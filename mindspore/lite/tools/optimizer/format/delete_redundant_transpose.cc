@@ -97,19 +97,13 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
     auto cnode = node->cast<CNodePtr>();
     if (CheckPrimitiveType(cnode, prim::kPrimIf) || CheckPrimitiveType(cnode, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return lite::RET_NULL_PTR;
-      }
+      MS_CHECK_TRUE_MSG(sub_func_graph != nullptr, lite::RET_NULL_PTR, "find a subgraph is a nullptr.");
       if (TransTransFusion(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "delete transpose failed.";
         return lite::RET_ERROR;
       }
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return lite::RET_NULL_PTR;
-      }
+      MS_CHECK_TRUE_MSG(sub_func_graph != nullptr, lite::RET_NULL_PTR, "find a subgraph is a nullptr.");
       if (TransTransFusion(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "delete transpose failed.";
         return lite::RET_ERROR;

@@ -92,7 +92,7 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
 
   if (inputs.size() == kGatherInputsNum + 1) {
-    axis_ = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr)[0];
+    axis_ = static_cast<int64_t *>(inputs[kIndex2]->addr)[0];
   }
 
   int dims = SizeToInt(input_shape_.size());
