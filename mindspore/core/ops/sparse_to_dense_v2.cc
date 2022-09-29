@@ -15,11 +15,7 @@
  */
 
 #include "ops/sparse_to_dense_v2.h"
-#include <memory>
 #include <set>
-#include <vector>
-#include <map>
-#include <string>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
