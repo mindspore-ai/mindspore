@@ -530,16 +530,17 @@ void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out
           out[i] = zero;
           continue;
         }
-      }
-      if constexpr (std::is_same_v<T, float>) {
-        if (common::IsFloatEqual(divisor, zero)) {
-          out[i] = zero;
-          continue;
-        }
       } else {
-        if (divisor == zero) {
-          out[i] = zero;
-          continue;
+        if constexpr (std::is_same_v<T, float>) {
+          if (common::IsFloatEqual(divisor, zero)) {
+            out[i] = zero;
+            continue;
+          }
+        } else {
+          if (divisor == zero) {
+            out[i] = zero;
+            continue;
+          }
         }
       }
       out[i] = static_cast<T>(dividend / divisor);
