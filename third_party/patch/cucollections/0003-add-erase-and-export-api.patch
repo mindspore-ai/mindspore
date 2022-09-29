@@ -1,0 +1,357 @@
+---
+ include/cuco/detail/bitwise_compare.cuh     |  1 +
+ include/cuco/detail/dynamic_map.inl         | 98 ++++++++++++++++++++-
+ include/cuco/detail/dynamic_map_kernels.cuh | 83 +++++++++++++++++
+ include/cuco/dynamic_map.cuh                | 58 +++++++++++-
+ 4 files changed, 236 insertions(+), 4 deletions(-)
+
+diff --git a/include/cuco/detail/bitwise_compare.cuh b/include/cuco/detail/bitwise_compare.cuh
+index 3038943..4bd58c2 100644
+--- a/include/cuco/detail/bitwise_compare.cuh
++++ b/include/cuco/detail/bitwise_compare.cuh
+@@ -18,6 +18,7 @@
+ 
+ #include <cstdint>
+ #include <type_traits>
++#include <cuco/traits.hpp>
+ 
+ namespace cuco {
+ namespace detail {
+diff --git a/include/cuco/detail/dynamic_map.inl b/include/cuco/detail/dynamic_map.inl
+index 0c1d2e3..2425c7d 100644
+--- a/include/cuco/detail/dynamic_map.inl
++++ b/include/cuco/detail/dynamic_map.inl
+@@ -21,30 +21,68 @@ dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(
+   std::size_t initial_capacity,
+   sentinel::empty_key<Key> empty_key_sentinel,
+   sentinel::empty_value<Value> empty_value_sentinel,
+-  Allocator const& alloc)
++  Allocator const& alloc,
++  cudaStream_t stream)
+   : empty_key_sentinel_(empty_key_sentinel.value),
+     empty_value_sentinel_(empty_value_sentinel.value),
+     size_(0),
+     capacity_(initial_capacity),
+     min_insert_size_(1E4),
+     max_load_factor_(0.60),
++    counter_allocator_{alloc},
+     alloc_{alloc}
+ {
+   submaps_.push_back(std::make_unique<static_map<Key, Value, Scope, Allocator>>(
+     initial_capacity,
+     sentinel::empty_key<Key>{empty_key_sentinel},
+     sentinel::empty_value<Value>{empty_value_sentinel},
+-    alloc));
++    alloc, stream));
+   submap_views_.push_back(submaps_[0]->get_device_view());
+   submap_mutable_views_.push_back(submaps_[0]->get_device_mutable_view());
+ 
+   CUCO_CUDA_TRY(cudaMallocManaged(&num_successes_, sizeof(atomic_ctr_type)));
+-}  // namespace cuco
++  d_submaps_erase_num_successes_ = std::allocator_traits<counter_allocator_type>::allocate(counter_allocator_, max_num_submaps_);
++  CUCO_CUDA_TRY(cudaMallocHost(&h_submaps_erase_num_successes_, sizeof(atomic_ctr_type) * (max_num_submaps_)));
++}
++
++template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
++dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(
++  std::size_t initial_capacity,
++  sentinel::empty_key<Key> empty_key_sentinel,
++  sentinel::empty_value<Value> empty_value_sentinel,
++  sentinel::erased_key<Key> erased_key_sentinel,
++  Allocator const& alloc,
++  cudaStream_t stream)
++  : empty_key_sentinel_(empty_key_sentinel.value),
++    empty_value_sentinel_(empty_value_sentinel.value),
++    erased_key_sentinel_{erased_key_sentinel.value},
++    size_(0),
++    capacity_(initial_capacity),
++    min_insert_size_(1E4),
++    max_load_factor_(0.60),
++    counter_allocator_{alloc},
++    alloc_{alloc}
++{
++  submaps_.push_back(std::make_unique<static_map<Key, Value, Scope, Allocator>>(
++    initial_capacity,
++    sentinel::empty_key<Key>{empty_key_sentinel},
++    sentinel::empty_value<Value>{empty_value_sentinel},
++    sentinel::erased_key<Key>{erased_key_sentinel},
++    alloc, stream));
++  submap_views_.push_back(submaps_[0]->get_device_view());
++  submap_mutable_views_.push_back(submaps_[0]->get_device_mutable_view());
++
++  CUCO_CUDA_TRY(cudaMallocManaged(&num_successes_, sizeof(atomic_ctr_type)));
++  d_submaps_erase_num_successes_ = std::allocator_traits<counter_allocator_type>::allocate(counter_allocator_, max_num_submaps_);
++  CUCO_CUDA_TRY(cudaMallocHost(&h_submaps_erase_num_successes_, sizeof(atomic_ctr_type) * (max_num_submaps_)));
++}
+ 
+ template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+ dynamic_map<Key, Value, Scope, Allocator>::~dynamic_map()
+ {
+   CUCO_ASSERT_CUDA_SUCCESS(cudaFree(num_successes_));
++  std::allocator_traits<counter_allocator_type>::deallocate(counter_allocator_, d_submaps_erase_num_successes_ , max_num_submaps_);
++  CUCO_ASSERT_CUDA_SUCCESS(cudaFreeHost(reinterpret_cast<void *>(h_submaps_erase_num_successes_)));
+ }
+ 
+ template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+@@ -75,6 +113,9 @@ void dynamic_map<Key, Value, Scope, Allocator>::reserve(std::size_t n)
+ 
+     num_elements_remaining -= max_load_factor_ * submap_capacity - min_insert_size_;
+     submap_idx++;
++    if (submap_idx > max_num_submaps_) {
++      throw std::runtime_error("The number of submaps exceeds the maximum[256]");
++    }
+   }
+ }
+ 
+@@ -160,4 +201,55 @@ void dynamic_map<Key, Value, Scope, Allocator>::contains(
+   CUCO_CUDA_TRY(cudaDeviceSynchronize());
+ }
+ 
++template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
++template <typename InputIt, typename Hash, typename KeyEqual>
++void dynamic_map<Key, Value, Scope, Allocator>::erase(InputIt first, InputIt last,
++      cudaStream_t stream, Hash hash, KeyEqual key_equal) {
++  auto num_keys = std::distance(first, last);
++  if (num_keys == 0) { return; }
++
++  auto constexpr block_size = 128;
++  auto constexpr stride     = 1;
++  auto constexpr tile_size  = 4;
++  auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
++
++  static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
++  for(size_t i = 0; i < max_num_submaps_; i++) {
++    h_submaps_erase_num_successes_[i] = 0;
++  }
++
++  CUCO_CUDA_TRY(cudaMemcpyAsync(
++    d_submaps_erase_num_successes_, h_submaps_erase_num_successes_, submaps_.size() * sizeof(atomic_ctr_type),
++    cudaMemcpyHostToDevice, stream));
++
++  detail::erase<block_size, tile_size><<<grid_size, block_size, sizeof(atomic_ctr_type) * submaps_.size(), stream>>>(
++    first, first + num_keys, d_submaps_erase_num_successes_, submap_mutable_views_.data().get(), submaps_.size(), hash, key_equal);
++
++  CUCO_CUDA_TRY(cudaMemcpyAsync(
++    h_submaps_erase_num_successes_, d_submaps_erase_num_successes_, submaps_.size() * sizeof(atomic_ctr_type),
++    cudaMemcpyDeviceToHost, stream));
++
++  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
++  for(size_t submap_idx = 0; submap_idx < submaps_.size(); submap_idx++){
++    submaps_[submap_idx]->size_ -= h_submaps_erase_num_successes_[submap_idx];
++    size_ -= h_submaps_erase_num_successes_[submap_idx];
++  }
++}
++
++template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
++bool dynamic_map<Key, Value, Scope, Allocator>::get_keys_values(Key *keys, Value *values, cudaStream_t stream) {
++  *num_successes_ = 0;
++  int device_id;
++  CUCO_CUDA_TRY(cudaGetDevice(&device_id));
++  CUCO_CUDA_TRY(cudaMemPrefetchAsync(num_successes_, sizeof(atomic_ctr_type), device_id));
++
++  auto const block_size = 128;
++  auto const stride     = 1;
++  auto const grid_size  = (size_ + stride * block_size - 1) / (stride * block_size);
++  detail::get_keys_values<<<grid_size, block_size, sizeof(atomic_ctr_type), stream>>>(submaps_.size(), submap_views_.data().get(), num_successes_, keys, values);
++
++  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
++  size_t h_num_successes = num_successes_->load(cuda::std::memory_order_relaxed);
++  return h_num_successes == size_;
++}
+ }  // namespace cuco
+diff --git a/include/cuco/detail/dynamic_map_kernels.cuh b/include/cuco/detail/dynamic_map_kernels.cuh
+index f261b49..75b2c07 100644
+--- a/include/cuco/detail/dynamic_map_kernels.cuh
++++ b/include/cuco/detail/dynamic_map_kernels.cuh
+@@ -20,6 +20,7 @@
+ #include <cuda/std/atomic>
+ 
+ #include <cooperative_groups.h>
++#include <cuco/detail/bitwise_compare.cuh>
+ 
+ namespace cuco {
+ namespace detail {
+@@ -463,5 +464,87 @@ __global__ void contains(InputIt first,
+     key_idx += (gridDim.x * blockDim.x) / tile_size;
+   }
+ }
++
++template <std::size_t block_size,
++          uint32_t tile_size,
++          typename InputIt,
++          typename atomicT,
++          typename viewT,
++          typename Hash,
++          typename KeyEqual>
++__global__ void erase(
++  InputIt first, InputIt last, atomicT* num_successes, viewT* views, std::size_t num_submaps, Hash hash, KeyEqual key_equal)
++{
++  extern __shared__ atomicT local_num_successes[];
++
++  if (threadIdx.x < num_submaps) {
++    local_num_successes[threadIdx.x] = 0;
++  }
++  __syncthreads();
++
++  auto tile = cg::tiled_partition<tile_size>(cg::this_thread_block());
++  auto tid  = block_size * blockIdx.x + threadIdx.x;
++  auto it   = first + tid / tile_size;
++
++  while (it < last) {
++    for (auto submap_idx = 0; submap_idx < num_submaps; ++submap_idx) {
++      if (views[submap_idx].erase(tile, *it, hash, key_equal)) {
++        if (tile.thread_rank() == 0) {
++          local_num_successes[submap_idx] += 1;
++        }
++        break;
++      }
++    }
++    it += (gridDim.x * block_size) / tile_size;
++  }
++
++  __syncthreads();
++  if (threadIdx.x < num_submaps) {
++    num_successes[threadIdx.x] += local_num_successes[threadIdx.x];
++  }
++}
++
++template<typename Key, typename Value, typename ViewType, typename AtomicType>
++__global__ void get_keys_values(size_t num_submaps, ViewType *submap_views, AtomicType* global_cnt, Key* keys, Value*values) {
++  __shared__ size_t global_offset;
++  extern __shared__ AtomicType local_cnt[];
++  const int default_offset_sentinel = -1;
++
++  for (size_t submap_idx = 0; submap_idx < num_submaps; submap_idx++){
++    auto & submap_view = submap_views[submap_idx];
++
++    for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < submap_view.get_capacity();
++         tid += blockDim.x * gridDim.x) {
++      if (threadIdx.x == 0) {
++        local_cnt[0] = 0;
++      }
++      __syncthreads();
++
++      auto current_slot = submap_view.begin_slot() + tid;
++      const Key & current_key = current_slot->first.load(cuda::std::memory_order_relaxed);
++      auto const slot_not_idle =
++        !detail::bitwise_compare(current_key, submap_view.get_empty_key_sentinel()) &&
++        !detail::bitwise_compare(current_key, submap_view.get_erased_key_sentinel());
++
++      int local_offset = default_offset_sentinel;
++      if(slot_not_idle) {
++        local_offset = local_cnt[0].fetch_add(1, cuda::std::memory_order_relaxed);
++      }
++      __syncthreads();
++
++      if (threadIdx.x == 0) {
++        auto local_cnt_value = local_cnt[0].load(cuda::std::memory_order_relaxed);
++        global_offset = global_cnt->fetch_add(local_cnt_value, cuda::std::memory_order_relaxed);
++      }
++      __syncthreads();
++
++      if (local_offset > default_offset_sentinel) {
++        auto offset = global_offset + local_offset;
++          keys[offset] = current_key;
++          values[offset] = current_slot->second.load(cuda::std::memory_order_relaxed);
++      }
++    }
++  }
++}
+ }  // namespace detail
+ }  // namespace cuco
+diff --git a/include/cuco/dynamic_map.cuh b/include/cuco/dynamic_map.cuh
+index af3ea03..9ed2f25 100644
+--- a/include/cuco/dynamic_map.cuh
++++ b/include/cuco/dynamic_map.cuh
+@@ -105,6 +105,8 @@ class dynamic_map {
+   using atomic_ctr_type = cuda::atomic<std::size_t, Scope>;  ///< Type of atomic counters
+   using view_type = typename static_map<Key, Value, Scope, Allocator>::device_view;  ///< Device view type
+   using mutable_view_type = typename static_map<Key, Value, Scope, Allocator>::device_mutable_view;
++  using counter_allocator_type = typename static_map<Key, Value, Scope, Allocator>::counter_allocator_type;
++
+   ///< Device mutable view type
+ 
+   dynamic_map(dynamic_map const&) = delete;
+@@ -135,7 +137,36 @@ class dynamic_map {
+   dynamic_map(std::size_t initial_capacity,
+               sentinel::empty_key<Key> empty_key_sentinel,
+               sentinel::empty_value<Value> empty_value_sentinel,
+-              Allocator const& alloc = Allocator{});
++              Allocator const& alloc = Allocator{},
++              cudaStream_t stream = 0);
++
++  /**
++   * @brief Construct a dynamically-sized map with the specified initial capacity, growth factor and
++   * sentinel values.
++   *
++   * The capacity of the map will automatically increase as the user adds key/value pairs using
++   * `insert`.
++   *
++   * Capacity increases by a factor of growth_factor each time the size of the map exceeds a
++   * threshold occupancy. The performance of `find` and `contains` decreases somewhat each time the
++   * map's capacity grows.
++   *
++   * The `empty_key_sentinel` and `empty_value_sentinel` values are reserved and
++   * undefined behavior results from attempting to insert any key/value pair
++   * that contains either.
++   *
++   * @param initial_capacity The initial number of slots in the map
++   * @param empty_key_sentinel The reserved key value for empty slots
++   * @param empty_value_sentinel The reserved mapped value for empty slots
++   * @param erased_key_sentinel The reserved value to denote erased slots
++   * @param alloc Allocator used to allocate submap device storage
++   */
++dynamic_map(std::size_t initial_capacity,
++            sentinel::empty_key<Key> empty_key_sentinel,
++            sentinel::empty_value<Value> empty_value_sentinel,
++            sentinel::erased_key<Key> erased_key_sentinel,
++            Allocator const& alloc = Allocator(),
++            cudaStream_t stream = 0);
+ 
+   /**
+    * @brief Destroy the map and frees its contents
+@@ -227,6 +258,25 @@ class dynamic_map {
+                 Hash hash          = Hash{},
+                 KeyEqual key_equal = KeyEqual{});
+ 
++  template <typename InputIt,
++            typename Hash     = cuco::detail::MurmurHash3_32<key_type>,
++            typename KeyEqual = thrust::equal_to<key_type>>
++  void erase(InputIt first,
++             InputIt last,
++             cudaStream_t stream = 0,
++             Hash hash           = Hash{},
++             KeyEqual key_equal  = KeyEqual{});
++
++  /**
++   * @brief Get all keys and values in the hash map.
++   *
++   * @param keys The output parameter, pointing the buffer which will maintain all keys in the hash map.
++   * @param values The output parameter, pointing the buffer which will maintain all values in the hash map.
++   * @param stream The cuda stream.
++   * @return Whether export keys and values successfully.
++   */
++  bool get_keys_values(Key *keys, Value *values, cudaStream_t stream = 0);
++
+   /**
+    * @brief Gets the current number of elements in the map
+    *
+@@ -307,6 +357,7 @@ class dynamic_map {
+  private:
+   key_type empty_key_sentinel_{};       ///< Key value that represents an empty slot
+   mapped_type empty_value_sentinel_{};  ///< Initial value of empty slot
++  key_type erased_key_sentinel_{};  ///< Key value that represents an erased slot
+   std::size_t size_{};                  ///< Number of keys in the map
+   std::size_t capacity_{};              ///< Maximum number of keys that can be inserted
+   float max_load_factor_{};             ///< Max load factor before capacity growth
+@@ -319,6 +370,11 @@ class dynamic_map {
+   std::size_t min_insert_size_{};   ///< min remaining capacity of submap for insert
+   atomic_ctr_type* num_successes_;  ///< number of successfully inserted keys on insert
+   Allocator alloc_{};  ///< Allocator passed to submaps to allocate their device storage
++
++  counter_allocator_type counter_allocator_{};  ///< Allocator used to allocate counters
++  atomic_ctr_type* d_submaps_erase_num_successes_; ///< number of successfully erased keys on erase, atomic on device.
++  atomic_ctr_type* h_submaps_erase_num_successes_; ///< number of successfully erased keys on erase, atomic on host.
++  const size_t max_num_submaps_ = 256;  ///< The max number of submaps.
+ };
+ }  // namespace cuco
