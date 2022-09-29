@@ -102,7 +102,7 @@ endif()
 
 add_library(mindspore_shared_lib_obj OBJECT ${MSLIB_SRC})
 add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:mindspore_shared_lib_obj>)
-if(BUILD_LITE OR ENABLE_ACL)
+if(BUILD_LITE)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
     add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
 elseif(MODE_ASCEND_ACL)
@@ -169,7 +169,8 @@ endif()
 # Before build inference
 if(ENABLE_D)
     find_library(adump_server libadump_server.a ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    target_link_libraries(mindspore_shared_lib PRIVATE ${adump_server})
+    target_link_libraries(mindspore_shared_lib PRIVATE ${adump_server}
+            $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 endif()
 
 if(ENABLE_GPU)
