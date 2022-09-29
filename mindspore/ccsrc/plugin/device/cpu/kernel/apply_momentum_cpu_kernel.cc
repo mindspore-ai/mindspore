@@ -36,10 +36,7 @@ bool ApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 int ApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs,
                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-    return ret;
-  }
-  return static_cast<int>(KRET_OK);
+  return KernelMod::Resize(base_operator, inputs, outputs);
 }
 
 bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

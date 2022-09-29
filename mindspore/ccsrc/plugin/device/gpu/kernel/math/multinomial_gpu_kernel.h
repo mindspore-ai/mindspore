@@ -37,7 +37,7 @@ namespace mindspore {
 namespace kernel {
 class MultinomialGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MultinomialGpuKernelMod() { ResetResource(); }
+  MultinomialGpuKernelMod() = default;
   ~MultinomialGpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -58,8 +58,6 @@ class MultinomialGpuKernelMod : public NativeGpuKernelMod {
   int seed2_{0};
   bool rand_state_init_{false};
   curandState *rand_state_{nullptr};
-
-  void ResetResource() noexcept;
 
   template <typename T>
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,

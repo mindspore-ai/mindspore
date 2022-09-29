@@ -40,6 +40,52 @@ def run_net(var, alpha, delta, expect):
     np.testing.assert_almost_equal(net.var.asnumpy(), expect, decimal=3)
 
 
+class DynamicShapeNet(nn.Cell):
+    def __init__(self, var):
+        super(DynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.var = Parameter(var, name="var")
+        self.apply_gradient_descent = P.ApplyGradientDescent()
+
+    def construct(self, alpha, delta, indices):
+        unique_indices, _ = self.unique(indices)
+        delta = self.gather(delta, unique_indices, 0)
+        return self.apply_gradient_descent(self.var, alpha, delta)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_apply_gradient_descent_dynamic_shape():
+    """
+    Feature: test ApplyGradientDescent dynamic_shape feature.
+    Description: test ApplyGradientDescent dynamic_shape feature.
+    Expectation: success.
+    """
+    # dynamic inputs
+    indices_np = np.random.randint(0, 3, size=6)
+    indices_ms = Tensor(indices_np)
+
+    # data preparation
+    var = Tensor(np.arange(20).reshape(4, 5).astype(np.float32) / 10)
+    unique_indices, _ = P.Unique()(indices_ms)
+    var = P.Gather()(var, unique_indices, 0)
+    alpha = Tensor(np.array([0.0001]).astype(np.float32))
+    delta = Tensor(np.arange(24, 44).reshape(4, 5).astype(np.float32))
+
+    # dynamic shape
+    delta_dyn = Tensor(shape=[None for _ in delta.shape], dtype=delta.dtype)
+    dynamic_shape_net = DynamicShapeNet(var)
+    dynamic_shape_net.set_inputs(alpha, delta_dyn, indices_ms)
+
+    # run in graph mode
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    outputs = dynamic_shape_net(alpha, delta, indices_ms)
+    expect_shape = var.asnumpy().shape
+    assert outputs.asnumpy().shape == expect_shape
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

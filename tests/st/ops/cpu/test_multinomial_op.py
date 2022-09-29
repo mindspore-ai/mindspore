@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -49,3 +50,50 @@ def test_multinomial_net():
     assert out0.asnumpy().shape == (1,)
     assert out1.asnumpy().shape == (2,)
     assert out2.asnumpy().shape == (2, 6)
+
+
+class DynamicShapeNet(nn.Cell):
+    """
+    Inputs:
+        - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
+          dimensions. Must be one of the following types: float16, float32, float64. CPU and GPU
+          supports x 1 or 2 dimensions and Ascend only supports 2 dimensions.
+        - **num_samples** (int) - number of samples to draw, must be a nonnegative number.
+    """
+    def __init__(self):
+        super(DynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.multinomial = P.Multinomial()
+
+    def construct(self, x, indices):
+        unique_indices, _ = self.unique(indices)
+        x = self.gather(x, unique_indices, 0)
+        return self.multinomial(x, 2)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_multinomial_dynamic_shape():
+    """
+    Feature: test Multinomial dynamic_shape feature.
+    Description: test Multinomial dynamic_shape feature. Only support GRAPH_MODE.
+    Expectation: success.
+    """
+    # dynamic inputs
+    indices_np = np.random.randint(0, 3, size=6)
+    indices_ms = Tensor(indices_np)
+
+    # data preparation
+    x = Tensor(np.arange(20).reshape(4, 5).astype(np.float32) / 10)
+
+    # dynamic shape
+    x_dyn = Tensor(shape=[None for _ in x.shape], dtype=x.dtype)
+    dynamic_shape_net = DynamicShapeNet()
+    dynamic_shape_net.set_inputs(x_dyn, indices_ms)
+
+    # run in graph mode
+    outputs = dynamic_shape_net(x, indices_ms)
+    expect_shape = (len(np.unique(indices_np)), 2)
+    assert outputs.asnumpy().shape == expect_shape
