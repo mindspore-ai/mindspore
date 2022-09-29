@@ -26,8 +26,6 @@ squared_difference_op_info = AiCPURegOp("SquaredDifference") \
     .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.F64_Default)     \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default)     \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default)     \
-    .dtype_format(DataType.C64_Default, DataType.C64_Default, DataType.C64_Default)     \
-    .dtype_format(DataType.C128_Default, DataType.C128_Default, DataType.C128_Default)  \
     .get_op_info()
 
 

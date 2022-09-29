@@ -42,8 +42,6 @@ mirror_pad_op_info = AiCPURegOp("MirrorPad") \
     .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
     .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
-    .dtype_format(DataType.C64_Default, DataType.I64_Default, DataType.C64_Default) \
-    .dtype_format(DataType.C128_Default, DataType.I64_Default, DataType.C128_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.I64_Default, DataType.BOOL_Default) \
     .get_op_info()
 
