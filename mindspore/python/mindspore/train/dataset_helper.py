@@ -132,14 +132,14 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     else:
         (min_shapes, max_shapes) = dataset_helper.dynamic_min_max_shapes()
     if network.get_inputs() and None not in network.get_inputs():
-        _check_inputs(network, dataset_shapes)
+        _check_inputs(network, dataset_shapes, dataset_types)
         min_shapes, max_shapes = None, None
     network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types,
                                               queue_name, min_shapes, max_shapes)
     return network
 
 
-def _check_inputs(network, dataset_shapes):
+def _check_inputs(network, dataset_shapes, dataset_types):
     """
     Check if set inputs are correct.
     """
@@ -147,6 +147,12 @@ def _check_inputs(network, dataset_shapes):
     for tensor_index, ele_dataset_shape in enumerate(dataset_shapes):
         set_inputs_shape = list(network_shapes[tensor_index].shape)
         inputs_shape = list(ele_dataset_shape)
+        if dataset_types[tensor_index] != network_shapes[tensor_index].dtype:
+            raise TypeError(
+                f"The {tensor_index+1}th input type of 'set_inputs' must be the same as network's input, "
+                f"but got 'set_inputs': {network_shapes[tensor_index].dtype} and network's "
+                f"input: {dataset_types[tensor_index]}."
+            )
         if len(inputs_shape) != len(set_inputs_shape):
             raise ValueError(
                 f"For 'set_inputs', the Dimension of Tensor shape must be {len(inputs_shape)}, but got "
