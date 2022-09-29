@@ -56,7 +56,7 @@ abstract::ShapePtr Dilation2DBackpropInputInferShape(const PrimitivePtr &primiti
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -69,12 +69,12 @@ abstract::ShapePtr Dilation2DBackpropInputInferShape(const PrimitivePtr &primiti
   const int64_t x_shape_size = 4;
   const int64_t filter_shape_size = 3;
   const int64_t out_backprop_shape_size = 4;
-  CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, x_shape_size,
-                                     primitive->name());
-  CheckAndConvertUtils::CheckInteger("filter shape size", SizeToLong(filter_shape.size()), kEqual, filter_shape_size,
-                                     primitive->name());
-  CheckAndConvertUtils::CheckInteger("out_backprop shape size", SizeToLong(out_backprop_shape.size()), kEqual,
-                                     out_backprop_shape_size, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, x_shape_size,
+                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("filter shape size", SizeToLong(filter_shape.size()), kEqual,
+                                           filter_shape_size, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("out_backprop shape size", SizeToLong(out_backprop_shape.size()), kEqual,
+                                           out_backprop_shape_size, primitive->name());
   std::string data_format = GetValue<std::string>(primitive->GetAttr("format"));
   std::string pad_mode = GetValue<std::string>(primitive->GetAttr("pad_mode"));
   ShapeVector stride = GetValue<std::vector<int64_t>>(primitive->GetAttr("stride"));
@@ -147,7 +147,8 @@ TypePtr Dilation2DBackpropInputInferType(const PrimitivePtr &prim, const std::ve
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                           prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

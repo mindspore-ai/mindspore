@@ -39,19 +39,18 @@ ResizeMethod CropAndResizeGradImage::get_method() const {
 }
 
 namespace {
-constexpr size_t ImagekInputNums = 4;
 constexpr size_t ImagekGrads = 0;
-constexpr size_t ImagekGradsShapeLen = 4;
+constexpr int64_t ImagekGradsShapeLen = 4;
 constexpr size_t ImagekHeight = 1;
 constexpr size_t ImagekWidth = 2;
 constexpr size_t ImagekDepth = 3;
 constexpr size_t ImagekImagesSize = 3;
-constexpr size_t ImagekImageSizeShapeLen = 1;
+constexpr int64_t ImagekImageSizeShapeLen = 1;
 constexpr size_t ImagekBoxes = 1;
-constexpr size_t ImagekBoxesShapeLen = 2;
-constexpr size_t ImagekCoordinateLen = 4;
+constexpr int64_t ImagekBoxesShapeLen = 2;
+constexpr int64_t ImagekCoordinateLen = 4;
 constexpr size_t ImagekBoxIndex = 2;
-constexpr size_t ImagekBoxIndShapeLen = 1;
+constexpr int64_t ImagekBoxIndShapeLen = 1;
 constexpr size_t ImagekOutputSizeD = 1;
 constexpr int64_t ImagekOutputSizeLen = 4;
 constexpr int64_t ImageKMaxshapeDim0 = 16;
@@ -62,25 +61,24 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
   auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, ImagekGradsShapeLen,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grads rank", input_shape0.size(), kEqual, ImagekGradsShapeLen, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
   auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
-                                     prim_name);
-  CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape1[1]), kEqual, ImagekCoordinateLen,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", input_shape1[1], kEqual, ImagekCoordinateLen,
+                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape2.size()), kEqual, ImagekBoxIndShapeLen,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("box_index rank", input_shape2.size(), kEqual, ImagekBoxIndShapeLen,
+                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
   auto input_shape3 =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("image_size rank", SizeToLong(input_shape3.size()), kEqual,
-                                     ImagekImageSizeShapeLen, prim_name);
-  CheckAndConvertUtils::CheckInteger("length of image_size", SizeToLong(input_shape3[0]), kEqual, ImagekGradsShapeLen,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("image_size rank", input_shape3.size(), kEqual, ImagekImageSizeShapeLen,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("length of image_size", input_shape3[0], kEqual, ImagekGradsShapeLen,
+                                           prim_name);
 
   if (input_shape0[ImagekHeight] <= 0 || input_shape0[ImagekWidth] <= 0) {
     MS_EXCEPTION(ValueError) << "the height and width of grads must be over 0.";
@@ -163,6 +161,7 @@ TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vec
   }
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
+  const int64_t ImagekInputNums = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, ImagekInputNums, prim_name);
   const std::set<TypePtr> inputs_types = {kFloat32, kFloat64};
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};

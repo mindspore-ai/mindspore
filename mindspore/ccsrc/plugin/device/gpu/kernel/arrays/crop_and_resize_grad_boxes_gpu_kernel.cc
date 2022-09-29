@@ -172,14 +172,14 @@ bool CropAndResizeGradBoxesGpuKernelMod::Launch(const std::vector<AddressPtr> &i
 bool CropAndResizeGradBoxesGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CropAndResizeGradBoxes>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+  auto kernel_grad_ptr = std::dynamic_pointer_cast<ops::CropAndResizeGradBoxes>(base_operator);
+  kernel_name_ = kernel_grad_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->method_ = kernel_ptr->get_method();
+  attr_ptr_->method_ = kernel_grad_ptr->get_method();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   Resize(base_operator, inputs, outputs);
