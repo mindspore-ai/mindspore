@@ -191,7 +191,8 @@ void DynamicAicpuOpKernelMod::SyncData() {
     MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
   }
 
-  if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE) {
+  if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE ||
+      common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
     MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " update op skip.";
     return;
   }

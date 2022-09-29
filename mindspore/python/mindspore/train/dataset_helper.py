@@ -134,6 +134,9 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     if network.get_inputs() and None not in network.get_inputs():
         _check_inputs(network, dataset_shapes, dataset_types)
         min_shapes, max_shapes = None, None
+    elif context.get_context("mode") == context.PYNATIVE_MODE:
+        dataset_shapes = tuple([(-2,)] * len(dataset_shapes))
+        min_shapes, max_shapes = None, None
     network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types,
                                               queue_name, min_shapes, max_shapes)
     return network
