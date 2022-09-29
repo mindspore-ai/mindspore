@@ -36,7 +36,7 @@ abstract::ShapePtr PReLUInferShape(const PrimitivePtr &primitive, const std::vec
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto weight_shape_ptr = input_args[kInputIndex1]->BuildShape();
   // Dynamic rank.
-  if (x_shape_ptr->IsDimUnknown() || weight_shape_ptr->IsDimUnknown()) {
+  if (x_shape_ptr->IsDynamic() || weight_shape_ptr->IsDynamic()) {
     return x_shape_ptr->cast<abstract::ShapePtr>();
   }
 
