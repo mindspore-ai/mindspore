@@ -45,8 +45,6 @@ bool Log1pCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 
 bool Log1pCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLog1pInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLog1pOutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32) {
