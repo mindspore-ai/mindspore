@@ -391,7 +391,7 @@ class _Linear(Cell):
             same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (str): activate function applied to the output of the fully connected layer,
-            eg. 'ReLU'.Default: None.
+            eg. 'ReLU'. Default: None.
         expert_num (int): The number of experts used in this Linear. Here, for the case expert_num > 1, BatchMatMul is
             used and the first dimension in BatchMatMul indicate expert_num. Default: 1.
         outer_batch (int): The replication number of experts. The replication is effective only when MoE is applied.
@@ -445,7 +445,9 @@ class _Linear(Cell):
         super(_Linear, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        if isinstance(weight_init, Tensor) and (weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
+        if not (isinstance(activation, str) or activation is None or issubclass(activation, nn.Cell)):
+            raise TypeError(f"For Linear cell, the activation should str type or nn.Cell type, but got {activation}.")
+        if isinstance(weight_init, Tensor) and (weight_init.ndim != 2 or weight_init.shape[0] != out_channels or
                                                 weight_init.shape[1] != in_channels):
             raise ValueError("The shape of parameter 'weight_init' is error, please check shape of 'weight_init'.")
         weight_shape = [out_channels, in_channels] if transpose_b else [in_channels, out_channels]
@@ -539,7 +541,7 @@ class _Linear(Cell):
             else:
                 getattr(self.activation, self.act_name).shard(strategy_activation)
         elif self.activation_flag and isinstance(self.activation, Cell):
-            if hasattr(self.activation, 'shard') and strategy_activation:
+            if hasattr(self.activation, 'activation_shard') and strategy_activation:
                 shard_tuple = strategy_activation[0]
                 if len(shard_tuple) == 2:
                     parallel_config = OpParallelConfig(data_parallel=shard_tuple[0],
@@ -552,8 +554,8 @@ class _Linear(Cell):
                     raise ValueError("The user-defined activation function currently only supports the case where the "
                                      "input policy is 2 or 4, so that relevant policies can be extracted from it."
                                      "To avoid this error, you need to add the function of extracting "
-                                     "'ParallelConfig' or 'OpParallelConfig' from the incoming strategy_activation ")
-                self.activation.shard(parallel_config)
+                                     "'ParallelConfig' or 'OpParallelConfig' for the incoming strategy_activation ")
+                self.activation.activation_shard(parallel_config)
             else:
                 logger.warning(f"The user passed the custom defined activation function {self.activation_flag}. "
                                f"If the user want to enable shard for the activation cell, "

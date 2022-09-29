@@ -36,8 +36,18 @@ class MyActivation(mindspore.nn.Cell):
 
         return self.add(x, 0.1)
 
-    def shard(self, parallel_config):
+    def activation_shard(self, parallel_config):
         self.add.shard(((parallel_config.data_parallel, parallel_config.model_parallel), ()))
+
+
+class MyActivationNoShard(mindspore.nn.Cell):
+    def __init__(self):
+        super(MyActivationNoShard, self).__init__()
+        self.add = ops.Add()
+
+    def construct(self, x):
+
+        return self.add(x, 0.1)
 
 
 def test_transformer_encoder_only():
@@ -353,18 +363,34 @@ def test_transformerdecoder_mask(decoder_input_mask, memory_mask):
     model(decoder_input_value, decoder_input_mask, encoder_input_value, memory_mask)
 
 
-def test_transformerdecoder_custom_activation():
+@pytest.mark.parametrize('activation',
+                         [MyActivation, MyActivationNoShard])
+def test_transformerdecoder_custom_activation(activation):
     """
     Feature: Test TransformerDecoderLayer custom activation
     Description: Test TransformerDecoderLayer custom activation
     Expectation: No exception
     """
     model = TransformerDecoderLayer(batch_size=4, hidden_size=64, ffn_hidden_size=64, num_heads=2,
-                                    hidden_act=MyActivation,
+                                    hidden_act=activation,
                                     src_seq_length=20, tgt_seq_length=10)
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
     decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
     model(decoder_input_value, None, encoder_input_value, None)
+
+
+@pytest.mark.parametrize('activation',
+                         [0, None, -1])
+def test_transformerdecoder_wrong_activation(activation):
+    """
+    Feature: Test TransformerDecoderLayer with wrong activation
+    Description: Test TransformerDecoderLayer with wrong activation type
+    Expectation: No exception
+    """
+    with pytest.raises(TypeError):
+        TransformerDecoderLayer(batch_size=4, hidden_size=64, ffn_hidden_size=64, num_heads=2,
+                                hidden_act=activation,
+                                src_seq_length=20, tgt_seq_length=10)
 
 
 @pytest.mark.parametrize('encoder_shape,decoder_shape', [((2, 20, 64), (2, 10, 64)),
@@ -382,7 +408,7 @@ def test_transformerdecoder_2d_or_3d_shape(encoder_shape, decoder_shape):
     model(decoder_input_value, None, encoder_input_value, None)
 
 
-@pytest.mark.parametrize('hidden_act', [MyActivation, None, "relu"])
+@pytest.mark.parametrize('hidden_act', [MyActivation, "relu"])
 def test_transformer_hidden_act(hidden_act):
     """
     Feature: Test Transformer hidden activation with activation or None

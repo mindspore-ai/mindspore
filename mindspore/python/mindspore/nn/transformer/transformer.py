@@ -353,9 +353,11 @@ class FeedForward(Cell):
             hidden_size (int): The dimension of the inputs.
             ffn_hidden_size (int): The intermediate hidden size.
             dropout_rate (float): The dropout rate for the second linear's output.
-            hidden_act (str): The activation of the internal feedforward layer. Supports 'relu',
+            hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+                'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
+                If user want to run the net in the parallel mode, the custom activation must also provide
+                the `activation_shard` function. Please see examples. Default: gelu.
             expert_num (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
                 and the first dimension in BatchMatMul indicate expert_num. Default: 1.
             expert_group_size (int): The number of tokens in each data parallel group. Default: None. This parameter is
@@ -376,7 +378,7 @@ class FeedForward(Cell):
             [batch * seq_length, hidden_size]`.
 
         Raises:
-            ValueError: `hidden_act` is not a string.
+            TypeError: `hidden_act` is not a string or nn.Cell.
             TypeError: `parallel_config` is not a subclass of OpParallelConfig.
             ValueError: `ffn_hidden_size` is not a multiple of the model parallel way.
             ValueError: `hidden_size` is not a multiple of the model parallel way.
@@ -388,12 +390,43 @@ class FeedForward(Cell):
             >>> import numpy as np
             >>> from mindspore.nn.transformer import FeedForward
             >>> from mindspore import dtype as mstype
-            >>> from mindspore import Tensor
+            >>> from mindspore import Tensor, nn
+            >>> import mindspore.ops as ops
             >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1)
             >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
             >>> output = model(tensor)
             >>> print(output.shape)
             (2, 20, 15)
+            >>> # Example 2 using custom hidden activation
+            >>> class MyActivationNoShard(nn.Cell):
+            >>>     def __init__(self):
+            >>>         super(MyActivationNoShard, self).__init__()
+            >>>         self.add = ops.Add()
+            >>>     def construct(self, x):
+            >>>         return self.add(x, 0.1)
+            >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1,
+            >>>                     hidden_act=MyActivationNoShard)
+            >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
+            >>> output = model(tensor)
+            >>> print(output.shape)
+            >>> # Example 3 using custom hidden activation with activation_shard
+            >>> # If user wants to run on the SEMI/AUTO parallel mode, the custom activation must provide
+            >>> # a class function named activation_shard. It accepts the argument parallel_config (OpParallelConfig,
+            >>> # MoEParallelConfig) and set the shard for the primitives used in the construct.
+            >>> class MyActivationWithShard(nn.Cell):
+            >>>     def __init__(self):
+            >>>         super(MyActivationWithShard, self).__init__()
+            >>>         self.add = ops.Add()
+            >>>     def construct(self, x):
+            >>>         return self.add(x, 0.1)
+            >>>     def activation_shard(self, parallel_config):
+            >>>         self.add.shard(((parallel_config.data_parallel, parallel_config.model_parallel), ()))
+            >>>
+            >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1,
+            >>>                     hidden_act=MyActivationWithShard)
+            >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
+            >>> output = model(tensor)
+            >>> print(output.shape)
     """
     @_LogActionOnce(logger=logger, key='FeedForward',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
@@ -413,6 +446,9 @@ class FeedForward(Cell):
                  param_init_type=mstype.float32,
                  parallel_config=default_dpmp_config):
         super(FeedForward, self).__init__()
+        if hidden_act is None or not (isinstance(hidden_act, str) or issubclass(hidden_act, nn.Cell)):
+            raise TypeError(f"For FeedForward cell, the hidden_act should str type or nn.Cell type, "
+                            f"but got {hidden_act}.")
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             _check_config(parallel_config)
             mp = parallel_config.model_parallel
@@ -1345,9 +1381,12 @@ class TransformerEncoderLayer(Cell):
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
-            hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+                'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
+                If user want to run the net in the parallel mode, the custom activation must also provide
+                the `activation_shard` function. Please see the examples of the
+                class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
                 words and want to generate the ten more words. We just need to compute the two words' state only once,
                 and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
@@ -1758,9 +1797,12 @@ class TransformerDecoderLayer(Cell):
                 Should be dtype.float32 or dtype.float16. Default mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
                 Should be dtype.float32 or dtype.float16. Default dtype.float32.
-            hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+                'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
+                If user want to run the net in the parallel mode, the custom activation must also provide
+                the `activation_shard` function. Please see the examples of the
+                class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig
                 with default values. Please see `MoEConfig`.
             parallel_config(OpParallelConfig, MoEParallelConfig): The parallel configure. When MoE is applied,
@@ -2259,9 +2301,12 @@ class TransformerEncoder(Cell):
             num_heads(int): The number of the heads.
             attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
             hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default: 0.1.
-            hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+                'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
+                If user want to run the net in the parallel mode, the custom activation must also provide
+                the `activation_shard` function. Please see the examples of the
+                class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
             layernorm_compute_type(dtype.Number): The computation type of the layernorm.
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
@@ -2519,9 +2564,12 @@ class TransformerDecoder(Cell):
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
-            hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+                'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
+                If user want to run the net in the parallel mode, the custom activation must also provide
+                the `activation_shard` function. Please see the examples of the
+                class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             lambda_func(function): A function can determine the fusion index,
                 pipeline stages and recompute attribute. If the
                 user wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a
@@ -2761,9 +2809,12 @@ class Transformer(Cell):
             num_heads(int): The number of the heads. Default: 2.
             attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
             hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
-            hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+                'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
+                If user want to run the net in the parallel mode, the custom activation must also provide
+                the `activation_shard` function. Please see the examples of the
+                class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
             layernorm_compute_type(dtype.Number): The computation type of the layernorm.
                 Should be dtype.float32 or dtype.float16. Default dtype.float32.
