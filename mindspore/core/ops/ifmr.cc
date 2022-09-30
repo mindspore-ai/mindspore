@@ -25,31 +25,31 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr int64_t kIFMRInputSize = 4;
 abstract::TupleShapePtr IFMRInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  const size_t ifmr_input_num = 4;
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == ifmr_input_num,
-                             "IFMR's input size should be 4 but got " + std::to_string(input_args.size()));
+  (void)CheckAndConvertUtils::CheckInteger("[input number]", static_cast<int64_t>(input_args.size()), kEqual,
+                                           kIFMRInputSize, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const ShapeVector shape_require{1};
+
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(), "data_min's shape wrong.");
   auto data_min_shape_element = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
   auto data_min_shape = data_min_shape_element->shape();
-  CheckAndConvertUtils::Check("data_min", SizeToLong(data_min_shape.size()), kEqual, 1, prim_name);
-  CheckAndConvertUtils::Check("dim_min", data_min_shape.front(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("data_min's rank", SizeToLong(data_min_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("data_min's first-dim", data_min_shape.front(), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(), "data_max's shape wrong.");
   auto data_max_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
   auto data_max_shape = data_max_shape_element->shape();
-  CheckAndConvertUtils::Check("data_max", SizeToLong(data_max_shape.size()), kEqual, 1, prim_name);
-  CheckAndConvertUtils::Check("dim_max", data_max_shape.front(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("data_max's rank", SizeToLong(data_max_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("data_max's first-dim", data_max_shape.front(), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex3]->BuildShape()->isa<abstract::Shape>(), "cumsum's shape wrong.");
   auto cumsum_shape_element = input_args[kInputIndex3]->BuildShape()->cast<abstract::ShapePtr>();
   auto cumsum_shape = cumsum_shape_element->shape();
-  CheckAndConvertUtils::Check("cumsum", SizeToLong(cumsum_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("cumsum's rank", SizeToLong(cumsum_shape.size()), kEqual, 1, prim_name);
 
   ShapeVector out_shape{1};
   auto out_shape_ptr = std::make_shared<abstract::Shape>(out_shape, out_shape, out_shape);
@@ -61,17 +61,20 @@ TuplePtr IFMRInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  const size_t ifmr_input_num = 4;
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == ifmr_input_num,
-                             "IFMR's input size should be 4 but got " + std::to_string(input_args.size()));
+  (void)CheckAndConvertUtils::CheckInteger("[input number]", static_cast<int64_t>(input_args.size()), kEqual,
+                                           kIFMRInputSize, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   std::set<TypePtr> valid_type = {kFloat16, kFloat32};
-  CheckAndConvertUtils::CheckTensorTypeValid("data", input_args[kInputIndex0]->BuildType(), valid_type, prim_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("data_min", input_args[kInputIndex1]->BuildType(), valid_type, prim_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("data_max", input_args[kInputIndex2]->BuildType(), valid_type, prim_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("cumsum", input_args[kInputIndex3]->BuildType(), {kInt32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data", input_args[kInputIndex0]->BuildType(), valid_type,
+                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_min", input_args[kInputIndex1]->BuildType(), valid_type,
+                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_max", input_args[kInputIndex2]->BuildType(), valid_type,
+                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("cumsum", input_args[kInputIndex3]->BuildType(), {kInt32},
+                                                   prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kFloat32, kFloat32});
 }
 }  // namespace
