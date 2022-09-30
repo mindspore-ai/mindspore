@@ -235,36 +235,54 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   return static_cast<int>(ret);
 }
 
+std::vector<int64_t> GetIntValueFromData(void *const data_c, const TypeId &type_id, size_t data_size,
+                                         const size_t input_index, const std::string &kernel_name) {
+  std::vector<int64_t> tensor_value;
+  MS_EXCEPTION_IF_NULL(data_c);
+  if (type_id == kNumberTypeInt32) {
+    auto tensor_data = reinterpret_cast<int32_t *>(data_c);
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value.assign(tensor_data, tensor_data + data_size / sizeof(int32_t));
+  } else if (type_id == kNumberTypeInt64) {
+    auto tensor_data = reinterpret_cast<int64_t *>(data_c);
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value.assign(tensor_data, tensor_data + data_size / sizeof(int64_t));
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name << "', the " << input_index
+                            << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
+                            << TypeIdLabel(type_id);
+  }
+  return tensor_value;
+}
+
 std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
   const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, const std::string &kernel_name) {
-  // The value of dynamic attr can only be obtained after the InferOp() is executed
-  if (depend_tensor_map.empty()) {
-    MS_LOG(DEBUG) << "For '" << kernel_name << "', the depend_tensor_map is currently empty";
+  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, const std::string &kernel_name, bool data_from_host) {
+  if (inputs.size() <= input_index) {
+    MS_LOG(DEBUG) << "For '" << kernel_name << "', inputs size is " << inputs.size() << ", but require " << input_index;
     return std::nullopt;
   }
-  auto depend_iter = depend_tensor_map.find(input_index);
-  if (depend_iter == depend_tensor_map.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', fail to find the " << input_index
-                      << "th input in the depend_tensor_map";
+
+  AddressPtr data{nullptr};
+  if (data_from_host) {
+    data = inputs[input_index]->GetHostData();
+  } else {
+    data = inputs[input_index]->GetData();
   }
-  auto input_tensor = depend_iter->second;
-  auto input_shape = inputs[input_index]->GetShapeVector();
-  // The shape keep in depend_tensor_map was processed if it was empty.
-  if (input_shape.empty()) {
-    input_shape.push_back(1);
+
+  // The value of dynamic attr can only be obtained after the InferOp() is executed.
+  if (data == nullptr || data->addr == nullptr) {
+    MS_LOG(DEBUG) << "For '" << kernel_name << "', fail to find the " << input_index << "th input's data.";
+    return std::nullopt;
   }
-  if (input_shape != input_tensor->shape()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the " << input_index
-                      << "th input is different between the InferShape and the TensorShape: " << input_shape << " vs "
-                      << input_tensor->shape();
-  }
+
   const auto &data_format = inputs[input_index]->GetFormat();
   if (data_format != mindspore::Format::DEFAULT_FORMAT && data_format != mindspore::Format::NCHW) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "',  the format of the " << input_index
                       << "th input currently should be the default format and does not support " << data_format;
   }
-  return GetTensorIntValue(input_tensor, input_index, kernel_name);
+
+  return GetIntValueFromData(data->addr, inputs[input_index]->GetDtype(), data->size, input_index, kernel_name);
 }
 }  // namespace kernel
 }  // namespace mindspore

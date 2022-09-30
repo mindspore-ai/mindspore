@@ -434,16 +434,6 @@ void ResizeNodeInput(const CNodePtr &kernel) {
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto args = kernel::GetArgsFromCNode(kernel);
-  if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
-      kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
-    auto update = kernel::AbstractArgsFromCNode(kernel);
-    if (args == nullptr) {
-      args = std::make_shared<kernel::KernelArgs>();
-    }
-    args->op = update.op;
-    update.depend_tensor_map = args->depend_tensor_map;
-    kernel::SetArgsToCNode(kernel, update);
-  }
   if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
       static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
     MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";

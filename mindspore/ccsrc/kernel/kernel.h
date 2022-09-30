@@ -220,6 +220,7 @@ class BACKEND_EXPORT KernelTensor {
   bool IsDynamicShape() const;
   size_t GetSizeInBytes() const;
   AddressPtr GetData() const { return data_; }
+  AddressPtr GetHostData() const { return host_data_; }
   TypeId GetDtype() const;
   mindspore::Format GetFormat() const { return tensor_info_.format; }
   // If real type is not a list or tuple tensor, it will return kTypeUnknown.
@@ -229,6 +230,7 @@ class BACKEND_EXPORT KernelTensor {
   // If real type is not a list or tuple shape vector, it will return empty.
   std::vector<ShapeVector> GetListOrTupleShapeVector() const;
   void SetData(const AddressPtr &data) { data_ = data; }
+  void SetHostData(const AddressPtr &data) { host_data_ = data; }
   void SetDtype(const TypePtr &dtype);
   void SetFormat(mindspore::Format format) { tensor_info_.format = format; }
   void SetShapeVector(const ShapeVector &shape);
@@ -248,7 +250,8 @@ class BACKEND_EXPORT KernelTensor {
 
  private:
   TensorInfo tensor_info_;
-  AddressPtr data_{nullptr};
+  AddressPtr data_{nullptr};       // Device data address.
+  AddressPtr host_data_{nullptr};  // Host data address.
   string GetAbstractName() const;
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
@@ -373,36 +376,14 @@ inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t inde
   return reinterpret_cast<T *>(addr_list[index]->addr);
 }
 
-inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index,
-                                              const std::string &kernel_name) {
-  std::vector<int64_t> tensor_value;
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  size_t data_size = input_tensor->DataSize();
-  auto tensor_type = input_tensor->Dtype();
-  if (tensor_type->type_id() == kNumberTypeInt32) {
-    auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
-    MS_EXCEPTION_IF_NULL(tensor_data);
-    tensor_value.assign(tensor_data, tensor_data + data_size);
-  } else if (tensor_type->type_id() == kNumberTypeInt64) {
-    auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
-    MS_EXCEPTION_IF_NULL(tensor_data);
-    tensor_value.assign(tensor_data, tensor_data + data_size);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_name << "', the " << input_index
-                            << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
-                            << input_tensor->ToString();
-  }
-  return tensor_value;
-}
-
 BACKEND_EXPORT std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
   const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-  const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name);
+  const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name, bool data_from_host);
 
 inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
                                    const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
-                                   int64_t *attr_value) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name);
+                                   int64_t *attr_value, bool data_from_host = true) {
+  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name, data_from_host);
   if (!res.has_value()) {
     return false;
   }
@@ -415,8 +396,8 @@ inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, c
 
 inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
                                    const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
-                                   std::vector<int64_t> *attr_value) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name);
+                                   std::vector<int64_t> *attr_value, bool data_from_host = true) {
+  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name, data_from_host);
   if (!res.has_value()) {
     return false;
   }

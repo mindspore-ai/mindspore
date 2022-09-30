@@ -293,6 +293,7 @@ void InferOp(const CNodePtr &cnode, void *args) {
     MS_LOG(WARNING) << "The node " << cnode->fullname_with_scope() << " is not dynamic shape.";
     return;
   }
+
   kernel::KernelArgs kernel_args;
   if (AnfAlgo::IsDynamicShapeSkipExecute(cnode)) {
     std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
@@ -301,10 +302,27 @@ void InferOp(const CNodePtr &cnode, void *args) {
     InferShape(cnode, &kernel_args.depend_tensor_map, args);
   }
 
-  if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
-      kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
+  if (auto kernel_mod_type = kernel_mod->GetKernelModType();
+      kernel_mod_type == kernel::KernelModType::NativeGpuKernelMod ||
+      kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod) {
     auto update = kernel::AbstractArgsFromCNode(cnode);
     update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
+    for (const auto &[i, tensor] : update.depend_tensor_map) {
+      if (i >= update.inputs.size()) {
+        MS_LOG(EXCEPTION) << "Type to store the data to KernelTensor, expect less than" << update.inputs.size()
+                          << " but got " << i;
+      }
+      MS_EXCEPTION_IF_NULL(update.inputs[i]);
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto address = std::make_shared<kernel::Address>(tensor->data_c(), tensor->Size());
+      if (kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod) {
+        // Store the data address in device one for cpu.
+        update.inputs[i]->SetData(address);
+        continue;
+      }
+      update.inputs[i]->SetHostData(address);
+    }
+
     kernel::SetArgsToCNode(cnode, update);
   } else {
     kernel::SetArgsToCNode(cnode, kernel_args);

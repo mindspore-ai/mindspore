@@ -63,13 +63,13 @@ bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int SliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto begin = GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
+  auto begin = GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_, false);
   if (kernel_name_ == prim::kPrimStridedSliceGrad->name()) {
-    auto end = GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
-    auto stride = GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
+    auto end = GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_, false);
+    auto stride = GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_, false);
     get_dynamic_attr_value_ = begin && end && stride;
   } else {
-    auto size = GetDynamicAttrIntValue(inputs, kSizeIndex_, inputsOnHost, kernel_name_, &size_);
+    auto size = GetDynamicAttrIntValue(inputs, kSizeIndex_, inputsOnHost, kernel_name_, &size_, false);
     get_dynamic_attr_value_ = begin && size;
   }
   auto ret = KernelMod::Resize(base_operator, inputs, outputs);
