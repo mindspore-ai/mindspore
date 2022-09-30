@@ -127,7 +127,7 @@ def dyn_axis_case(data_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("axis", [0, 1, 2])
-@pytest.mark.parametrize("data_type", [np.float32, np.float64, np.int32, np.int64, np.uint32, np.uint64])
+@pytest.mark.parametrize("data_type", [np.float32, np.float64, np.uint32, np.uint64])
 def test_dynamic_reduce(axis, data_type):
     """
     Feature: Reduce DynamicShape.
@@ -143,7 +143,7 @@ def test_dynamic_reduce(axis, data_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("data_type", [np.float32, np.float64, np.int32, np.int64, np.uint32, np.uint64])
+@pytest.mark.parametrize("data_type", [np.float32, np.float64, np.uint32, np.uint64])
 def test_dynamic_axis_reduce(data_type):
     """
     Feature: Reduce DynamicShape.
