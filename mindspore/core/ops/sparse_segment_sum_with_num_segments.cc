@@ -71,7 +71,7 @@ abstract::ShapePtr SparseSegmentSumWithNumSegmentsInferShape(const PrimitivePtr 
                                << "but got " << dim_zero << ".";
     } else {
       ShapeVector y_shape = x_shape;
-      y_shape[kInputIndex0] = dim_zero;
+      y_shape[kInputIndex0] = static_cast<int64_t>(dim_zero);
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
@@ -92,12 +92,12 @@ TypePtr SparseSegmentSumWithNumSegmentsInferType(const PrimitivePtr &prim,
   auto num_segments_type = input_args[kInputIndex3]->BuildType();
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
   (void)types.emplace("num_segments", num_segments_type);
-  CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
