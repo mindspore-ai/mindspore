@@ -1760,7 +1760,8 @@ OutHandler DfGraphConvertor::GetNormalOpInput(const AnfNodePtr &node, const AnfN
   auto op = Convert(pred);
   if (op == nullptr) {
     MS_LOG(WARNING) << "Convert input node failed, input node: " << pred->fullname_with_scope()
-                    << ", node: " << node->fullname_with_scope() << ", graph: " << anf_graph_->ToString();
+                    << ", node: " << node->fullname_with_scope() << ", graph: " << anf_graph_->ToString()
+                    << ". Please check whether the node is Partial node or successor node of Partial in sub-graph.";
   }
   out_handler.op = op;
   return out_handler;
