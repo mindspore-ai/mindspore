@@ -67,7 +67,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
     }
     // failed to get vector<int64_t> axis from infer
     auto axis_vec = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[axis]", primitive->GetAttr("axis"), prim_name);
-    int axis = axis_vec[0];
+    int64_t axis = axis_vec[0];
     CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-input_rank, input_rank}, prim_name);
 
     auto output_shape = input_shape;

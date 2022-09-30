@@ -99,7 +99,7 @@ std::vector<int64_t> ReduceStd::get_axis() const {
   if (axis_value->isa<api::ValueSequence>()) {
     axis = api::GetValue<std::vector<int64_t>>(axis_value);
   } else if (axis_value->isa<api::Int64Imm>()) {
-    axis.emplace_back(api::GetValue<int64_t>(axis_value));
+    (void)axis.emplace_back(api::GetValue<int64_t>(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For ReduceStd, the type of attribute `axis` is invalid.";
   }

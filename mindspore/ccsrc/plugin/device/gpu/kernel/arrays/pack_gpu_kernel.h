@@ -70,6 +70,7 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
 
     input_num_ = inputs.size();
     inputs_host_ = std::make_unique<T *[]>(input_num_);
+    dims_behind_axis_ = 1;
     for (size_t i = 0; i < input_num_; i++) {
       size_t input_size = 1;
       auto input_shape = inputs.at(i)->GetShapeVector();
@@ -79,7 +80,6 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
           dims_behind_axis_ *= static_cast<size_t>(input_shape[j]);
         }
       }
-      input_size_list_.push_back(input_size * sizeof(T));
     }
     workspace_size_list_.push_back(sizeof(T *) * input_num_);
 
@@ -97,8 +97,6 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
-
-    output_size_list_.push_back(output_size_ * sizeof(T));
     return true;
   }
 
