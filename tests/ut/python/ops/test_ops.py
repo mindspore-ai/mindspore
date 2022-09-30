@@ -176,6 +176,7 @@ from mindspore.ops.operations.array_ops import Expand
 from mindspore.ops.operations.array_ops import HammingWindow
 from mindspore.ops.operations.nn_ops import SparseApplyMomentum
 from mindspore._c_expression import security
+from mindspore.ops.operations.array_ops import Bincount
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -1416,6 +1417,16 @@ class SetSizeNet(nn.Cell):
     def construct(self, set_indices, set_values, set_shape):
         out = self.set_size(set_indices, set_values, set_shape)
         return out
+
+
+class BincountNet(nn.Cell):
+    def __init__(self):
+        super(BincountNet, self).__init__()
+        self.bincount = Bincount()
+        self.size = Tensor(8, mstype.int32)
+
+    def construct(self, array, weights):
+        return self.bincount(array, self.size, weights)
 
 
 test_case_math_ops = [
@@ -3998,6 +4009,11 @@ test_case_array_ops = [
                          Tensor(np.array([1, 4, 3]).astype(np.int32)))],
         'skip': ['backward'],
     }),
+    ('Bincount', {
+        'block': BincountNet(),
+        'desc_inputs': [Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], np.int32)),
+                        Tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], mstype.float32)],
+        'skip': ['backward']}),
 ]
 
 

@@ -226,6 +226,7 @@ constexpr auto kBroadcastTo = "BroadcastTo";
 constexpr auto kSparseReshape = "SparseReshape";
 constexpr auto kUnsortedSegmentSum = "UnsortedSegmentSum";
 constexpr auto kUnsortedSegmentProd = "UnsortedSegmentProd";
+constexpr auto kBincount = "Bincount";
 
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
@@ -673,6 +674,7 @@ GVAR_DEF(PrimitivePtr, kPrimSegmentProd, std::make_shared<Primitive>(kSegmentPro
 GVAR_DEF(PrimitivePtr, kPrimSparseSparseMinimum, std::make_shared<Primitive>(kSparseSparseMinimum));
 GVAR_DEF(PrimitivePtr, kPrimSparseReshape, std::make_shared<Primitive>(kSparseReshape));
 GVAR_DEF(PrimitivePtr, kPrimSparseReorder, std::make_shared<Primitive>(kSparseReorder));
+GVAR_DEF(PrimitivePtr, kPrimBincount, std::make_shared<Primitive>(kBincount));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
