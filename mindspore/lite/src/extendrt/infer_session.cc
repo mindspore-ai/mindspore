@@ -34,8 +34,6 @@ static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,  
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static bool is_infer_single_op = true;
 static bool is_use_lite_session = false;
-// static bool is_use_tensorrt_delegate = true;
-
 class DefaultInferSession : public InferSession {
  public:
   explicit DefaultInferSession(const std::shared_ptr<Context> &context) {}
@@ -134,7 +132,6 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
       if (device_context->GetDeviceType() == kAscend) {
         return kSingleOpSession;
       }
-      // if (device_context->GetDeviceType() == kGPU && is_use_tensorrt_delegate) {
       if (device_context->GetDeviceType() == kGPU || device_context->GetDeviceType() == kCPU) {
         return kDelegateSession;
       }
