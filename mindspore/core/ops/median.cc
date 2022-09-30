@@ -88,7 +88,7 @@ abstract::TupleShapePtr MedianInferShape(const PrimitivePtr &primitive,
           out.push_back(1);
         }
       } else {
-        out.push_back(static_cast<int64_t>(x_shape[i]));
+        out.push_back(static_cast<int64_t>(x_shape[LongToSize(i)]));
       }
     }
   }
