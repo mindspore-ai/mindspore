@@ -16,7 +16,8 @@
 import pytest
 import numpy as np
 import mindspore.nn as nn
-from mindspore.ops import functional as F
+from mindspore import ops
+from mindspore.ops.operations import random_ops
 from mindspore import Tensor, context
 
 context.set_context(device_target="GPU")
@@ -27,9 +28,10 @@ class RandomShuffleNet(nn.Cell):
         super(RandomShuffleNet, self).__init__()
         self.seed = seed
         self.seed2 = seed2
+        self.random_shuffle = random_ops.RandomShuffle(self.seed, self.seed2)
 
     def construct(self, x):
-        return F.random_shuffle(x, self.seed, self.seed2)
+        return self.random_shuffle(x)
 
 
 @pytest.mark.level0
@@ -127,13 +129,13 @@ def test_random_shuffle_op_exception(mode):
     x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
 
     with pytest.raises(TypeError):
-        F.random_shuffle(2, seed=3, seed2=1)
+        ops.shuffle(2, seed=3)
 
     with pytest.raises(ValueError):
-        F.random_shuffle(x, seed=-3, seed2=1)
+        ops.shuffle(x, seed=-3)
 
     with pytest.raises(TypeError):
-        F.random_shuffle(x, seed=2, seed2=1.6)
+        ops.shuffle(x, seed=1.6)
 
     with pytest.raises(TypeError):
-        F.random_shuffle(x, seed=True, seed2=0)
+        ops.shuffle(x, seed=True)
