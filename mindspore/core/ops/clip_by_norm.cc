@@ -55,10 +55,10 @@ abstract::ShapePtr ClipByNormInferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_map.at(kShape);
   auto clip_norm_shape = clip_norm_shape_map.at(kShape);
   // Check whether dynamic shape exists.
-  bool is_x_dyn =
-    std::any_of(x_shape.begin(), x_shape.end(), [](const int64_t &value) { return value == abstract::Shape::SHP_ANY; });
+  bool is_x_dyn = std::any_of(x_shape.begin(), x_shape.end(),
+                              [](const int64_t &value) { return value == abstract::Shape::kShapeDimAny; });
   bool is_clip_norm_dyn = std::any_of(clip_norm_shape.begin(), clip_norm_shape.end(),
-                                      [](const int64_t &value) { return value == abstract::Shape::SHP_ANY; });
+                                      [](const int64_t &value) { return value == abstract::Shape::kShapeDimAny; });
   if (is_x_dyn || is_clip_norm_dyn) {
     MS_EXCEPTION(ValueError) << "For `" << kNameClipByNorm
                              << "` op, dynamic shape is not supported now, but got `-1` in input args shape.";

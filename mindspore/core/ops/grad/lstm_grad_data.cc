@@ -97,7 +97,7 @@ abstract::TupleShapePtr LstmGradDataInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t input_num = 9;
-  auto shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  auto shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   auto unknown_shapes =
     std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>(SizeToLong(kLstmOutputNum), shape_ptr));
   for (size_t i = 0; i < input_num; i++) {

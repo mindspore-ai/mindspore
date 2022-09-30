@@ -85,7 +85,7 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
       x_max_shape[indexid2] = 1;
       return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
     }
-    ShapeVector out_shape = {images_shape[0], abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY,
+    ShapeVector out_shape = {images_shape[0], abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
                              images_shape[indexid3]};
     ShapeVector shape_min = {images_shape[0], 0, 0, images_shape[indexid3]};
     ShapeVector shape_max = {images_shape[0], 1, 1, images_shape[indexid3]};

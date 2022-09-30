@@ -145,8 +145,8 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
     }
     maxshape_dim2 = sqrt(kMaxLen / maxshape_dim0);
     maxshape_dim1 = maxshape_dim2 / input_shape0[ImagekDepth];
-    ShapeVector output_shape = {abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY,
-                                input_shape0[ImagekDepth]};
+    ShapeVector output_shape = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                                abstract::Shape::kShapeDimAny, input_shape0[ImagekDepth]};
     ShapeVector shape_min = {1, 1, 1, input_shape0[ImagekDepth]};
     ShapeVector shape_max = {maxshape_dim0, maxshape_dim1, maxshape_dim2, input_shape0[ImagekDepth]};
     return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);

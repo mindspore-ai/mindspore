@@ -43,7 +43,7 @@ class ReluGradV2Infer : public abstract::OpInferBase {
     auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(mask_shape_ptr);
     auto mask_input_shape = mask_shape_map[kShape];
     if (IsDynamicRank(gradient_input_shape) || IsDynamicRank(mask_input_shape)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
     if (mask_input_shape.size() < kReluGradV2GradientDims) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
@@ -59,7 +59,7 @@ class ReluGradV2Infer : public abstract::OpInferBase {
     if (gradient_shape_ptr->IsDynamic() || mask_shape_ptr->IsDynamic()) {
       ShapeVector shape_out;
       for (size_t i = 0; i < gradient_input_shape.size(); ++i) {
-        shape_out.push_back(abstract::Shape::SHP_ANY);
+        shape_out.push_back(abstract::Shape::kShapeDimAny);
       }
       return std::make_shared<abstract::Shape>(shape_out);
     }

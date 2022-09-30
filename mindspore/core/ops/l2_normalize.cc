@@ -48,7 +48,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
     if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape])) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
     auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
     auto input_shape = input_shape_map[kShape];

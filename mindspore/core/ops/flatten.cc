@@ -38,7 +38,8 @@ abstract::ShapePtr FlattenInferShape(const PrimitivePtr &primitive, const std::v
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_DIM, UNKNOWN_DIM});
+    return std::make_shared<abstract::Shape>(
+      std::vector<int64_t>{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny});
   }
   int64_t prod = 1;
   size_t size = x_shape.size();

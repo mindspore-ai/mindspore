@@ -41,7 +41,7 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   auto label_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto label_shape = label_shape_map[kShape];
   if (IsDynamicRank(logits_shape) || IsDynamicRank(label_shape)) {
-    auto ds_shape = std::vector<int64_t>{UNKNOWN_RANK};
+    auto ds_shape = std::vector<int64_t>{abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(ds_shape);
   }
   if (!ObscureShapeEqual(logits_shape, label_shape) && !(IsDynamicRank(logits_shape) || IsDynamicRank(label_shape))) {

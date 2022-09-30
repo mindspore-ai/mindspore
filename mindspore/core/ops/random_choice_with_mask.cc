@@ -71,7 +71,8 @@ class RandomChoiceWithMaskInfer : public abstract::OpInferBase {
     auto count_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{count_value});
 
     if (IsDynamicRank(shape_vec)) {
-      auto first_output_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector({count_value, UNKNOWN_DIM}));
+      auto first_output_shape_ptr =
+        std::make_shared<abstract::Shape>(ShapeVector({count_value, abstract::Shape::kShapeDimAny}));
       std::make_shared<abstract::TupleShape>(
         std::vector<abstract::BaseShapePtr>{first_output_shape_ptr, count_shape_ptr});
     }

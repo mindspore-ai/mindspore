@@ -41,7 +41,7 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
   auto x_size = x_shape.size();
   auto y_size = y_shape.size();
   if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
   if (x_size != y_size) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()

@@ -51,11 +51,12 @@ class CropAndResizeInfer : public abstract::OpInferBase {
                                "For primitive[" + prim_name + "], the [box_index] has no abstract:Shape.");
     auto box_index_shape = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>()->shape();
     if (IsDynamicRank(x_shape) || IsDynamicRank(box_shape) || IsDynamicRank(box_index_shape)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
     if (IsDynamic(x_shape) || IsDynamic(box_shape) || IsDynamic(box_index_shape)) {
       return std::make_shared<abstract::Shape>(
-        std::vector<int64_t>{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM});
+        std::vector<int64_t>{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                             abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny});
     }
 
     size_t batch_rank = 0;

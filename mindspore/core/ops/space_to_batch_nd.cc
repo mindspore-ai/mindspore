@@ -93,7 +93,7 @@ abstract::ShapePtr SpaceToBatchNDInferShape(const PrimitivePtr &primitive,
   }
   auto input_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   if (IsDynamicRank(input_shape_ptr->shape())) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
   auto paddings_value_ptr = primitive->GetAttr(kPaddings);

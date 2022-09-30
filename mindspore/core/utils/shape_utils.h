@@ -18,14 +18,10 @@
 #define MINDSPORE_SHAPE_UTILS_INFO_H_
 
 #include <algorithm>
-#include "mindapi/base/shape_vector.h"
+#include "abstract/dshape.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-constexpr size_t kDynamicRankLen = 1;
-static const ShapeValueDType UNKNOWN_DIM = -1;
-static const ShapeValueDType UNKNOWN_RANK = -2;
-
 inline size_t SizeOf(const ShapeVector &shape) {
   ShapeValueDType data_size = 1;
   for (auto dim : shape) {
@@ -39,21 +35,26 @@ inline size_t SizeOf(const ShapeVector &shape) {
 }
 
 inline bool IsDynamicRank(const ShapeVector &shape) {
-  if ((shape.size() == kDynamicRankLen) && (shape[0] == UNKNOWN_RANK)) {
+  if ((shape.size() == abstract::Shape::kDynamicRankLen) && (shape[0] == abstract::Shape::kShapeRankAny)) {
     return true;
   }
-  if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s == UNKNOWN_RANK; })) {
+  if (std::any_of(shape.cbegin(), shape.cend(),
+                  [](ShapeValueDType s) { return s == abstract::Shape::kShapeRankAny; })) {
     MS_LOG(EXCEPTION) << "Shape should have only one -2 or no -2 at all but got (" << shape << ").";
   }
   return false;
 }
 
+inline bool IsDynamicShape(const ShapeVector &shape) {
+  return std::any_of(shape.cbegin(), shape.cend(),
+                     [](ShapeValueDType s) { return s == abstract::Shape::kShapeDimAny; });
+}
+
 inline bool IsDynamic(const ShapeVector &shape) {
-  if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < UNKNOWN_RANK; })) {
+  if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < abstract::Shape::kShapeRankAny; })) {
     MS_LOG(EXCEPTION) << "Shape should not have values less than -2 but got (" << shape << ").";
   }
-  return (IsDynamicRank(shape) ||
-          std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s == UNKNOWN_DIM; }));
+  return IsDynamicRank(shape) || IsDynamicShape(shape);
 }
 }  // namespace mindspore
 

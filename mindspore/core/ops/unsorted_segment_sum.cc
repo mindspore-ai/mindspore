@@ -94,9 +94,9 @@ abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckValue<size_t>("x rank", x_shape.size(), kGreaterEqual, "segment_ids_shape rank",
                                                  segment_ids_shape.size(), op_name);
   bool x_any_shape =
-    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim == abstract::Shape::SHP_ANY; });
+    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim == abstract::Shape::kShapeDimAny; });
   bool ids_any_shape = std::any_of(segment_ids_shape.begin(), segment_ids_shape.end(),
-                                   [](int64_t dim) { return dim == abstract::Shape::SHP_ANY; });
+                                   [](int64_t dim) { return dim == abstract::Shape::kShapeDimAny; });
   if (!x_any_shape && !ids_any_shape) {
     for (uint64_t i = 0; i < segment_ids_shape.size(); i++) {
       if (segment_ids_shape[i] != x_shape[i]) {

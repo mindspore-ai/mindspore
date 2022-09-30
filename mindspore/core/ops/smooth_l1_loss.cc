@@ -61,7 +61,7 @@ abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
   auto target_shape = target->shape();
   MS_EXCEPTION_IF_NULL(target_shape);
   if (IsDynamicRank(prediction_shape->shape()) || IsDynamicRank(target_shape->shape())) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   abstract::CheckShapeSame(prim_name, prediction, target);
 

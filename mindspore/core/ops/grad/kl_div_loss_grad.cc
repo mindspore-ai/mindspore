@@ -41,14 +41,14 @@ abstract::ShapePtr KLDivLossGradInferShape(const PrimitivePtr &primitive,
   auto shape_1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
   auto shape_2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(target_shape)[kShape];
   if (IsDynamicRank(shape_0) || IsDynamicRank(shape_1) || IsDynamicRank(shape_2)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
   // Dynamic Shape
   if (grad_shape->IsDynamic() || x_shape->IsDynamic() || target_shape->IsDynamic()) {
     ShapeVector shape_out;
     for (size_t i = 0; i < shape_1.size(); ++i) {
-      shape_out.push_back(abstract::Shape::SHP_ANY);
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
     }
     return std::make_shared<abstract::Shape>(shape_out);
   }

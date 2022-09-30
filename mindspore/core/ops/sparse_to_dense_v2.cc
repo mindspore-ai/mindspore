@@ -105,7 +105,7 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
     ShapeVector shape_min;
     ShapeVector shape_max;
     for (size_t i = 0; i < output_shape_numelement; i++) {
-      y_shape.push_back(abstract::Shape::SHP_ANY);
+      y_shape.push_back(abstract::Shape::kShapeDimAny);
       shape_min.push_back(0);
       shape_max.push_back(input_shapes);
     }

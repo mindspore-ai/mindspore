@@ -314,7 +314,7 @@ AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &
     infer_max_size += *(data_pos + i);
   }
 
-  ShapeVector tensor_out_shape = {Shape::SHP_ANY, tensor_in_shape[1]};
+  ShapeVector tensor_out_shape = {Shape::kShapeDimAny, tensor_in_shape[1]};
   ShapeVector min_shape = {1, tensor_in_shape[1]};
 
   ShapeVector max_shape = {infer_max_size / tensor_in_shape[1], tensor_in_shape[1]};
@@ -426,7 +426,7 @@ AbstractBasePtr InferImplGpuConvertToDynamicShape(const AnalysisEnginePtr &, con
 
   ShapeVector input_shape = input->shape()->shape();
   int32_t input_rank = SizeToInt(input_shape.size());
-  ShapeVector inferred_shape(input_rank, Shape::SHP_ANY);
+  ShapeVector inferred_shape(input_rank, Shape::kShapeDimAny);
   ShapeVector min_shape(input_rank, 1);
   ShapeVector max_shape = input_shape;
 

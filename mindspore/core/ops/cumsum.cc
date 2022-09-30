@@ -62,7 +62,7 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   auto rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", rank, kGreaterThan, 0, prim_name);

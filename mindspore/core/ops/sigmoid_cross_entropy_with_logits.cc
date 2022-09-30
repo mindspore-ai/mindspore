@@ -42,7 +42,7 @@ class SigmoidCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
     auto label_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(label_shape)[kShape];
     if (IsDynamicRank(logits_map) || IsDynamicRank(label_map)) {
-      auto ds_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      auto ds_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
       return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{ds_shape_ptr, ds_shape_ptr});
     }
     // logits and label must have the same shape when is not dynamic

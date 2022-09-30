@@ -61,7 +61,7 @@ class ApplyFtrlInfer : public abstract::OpInferBase {
     int64_t batch_rank = 0;
     if (IsDynamicRank(var_shape_map) || IsDynamicRank(accum_shape_map) || IsDynamicRank(grad_shape_map) ||
         IsDynamicRank(linear_shape_map)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
     if (var_shape->IsDynamic() || accum_shape->IsDynamic() || linear_shape->IsDynamic() || grad_shape->IsDynamic() ||
         lr_shape->IsDynamic() || l1_shape->IsDynamic() || l2_shape->IsDynamic() || lr_power_shape->IsDynamic()) {

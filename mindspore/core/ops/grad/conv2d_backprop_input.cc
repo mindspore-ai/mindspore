@@ -65,20 +65,20 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
     auto kernel_w = kernel_size[1];
     auto dilation_h = dilation[2];
     auto dilation_w = dilation[3];
-    int64_t pad_top = abstract::Shape::SHP_ANY;
-    int64_t pad_bottom = abstract::Shape::SHP_ANY;
-    int64_t pad_left = abstract::Shape::SHP_ANY;
-    int64_t pad_right = abstract::Shape::SHP_ANY;
-    if (dout_shape_norm[kInputIndex2] != abstract::Shape::SHP_ANY &&
-        x_size_v[kInputIndex2] != abstract::Shape::SHP_ANY) {
+    int64_t pad_top = abstract::Shape::kShapeDimAny;
+    int64_t pad_bottom = abstract::Shape::kShapeDimAny;
+    int64_t pad_left = abstract::Shape::kShapeDimAny;
+    int64_t pad_right = abstract::Shape::kShapeDimAny;
+    if (dout_shape_norm[kInputIndex2] != abstract::Shape::kShapeDimAny &&
+        x_size_v[kInputIndex2] != abstract::Shape::kShapeDimAny) {
       auto pad_needed_h =
         (dout_shape_norm[kInputIndex2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex2];
       pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
       pad_top = pad_needed_h / 2;
       pad_bottom = pad_needed_h - pad_top;
     }
-    if (dout_shape_norm[kInputIndex3] != abstract::Shape::SHP_ANY &&
-        x_size_v[kInputIndex3] != abstract::Shape::SHP_ANY) {
+    if (dout_shape_norm[kInputIndex3] != abstract::Shape::kShapeDimAny &&
+        x_size_v[kInputIndex3] != abstract::Shape::kShapeDimAny) {
       auto pad_needed_w =
         (dout_shape_norm[kInputIndex3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex3];
       pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;

@@ -31,7 +31,7 @@ abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vect
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   // Support the dynamic rank.
   if (IsDynamicRank(input_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
   std::vector<int64_t> out_shape;
 

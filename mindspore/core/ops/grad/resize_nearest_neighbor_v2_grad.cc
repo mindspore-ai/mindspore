@@ -66,8 +66,8 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
 
   ShapeVector y_shape(long_kdim4);
   if (IsDynamicRank(grads_shape)) {
-    y_shape[dim_idx_map['N']] = abstract::Shape::SHP_ANY;
-    y_shape[dim_idx_map['C']] = abstract::Shape::SHP_ANY;
+    y_shape[dim_idx_map['N']] = abstract::Shape::kShapeDimAny;
+    y_shape[dim_idx_map['C']] = abstract::Shape::kShapeDimAny;
   } else {
     (void)CheckAndConvertUtils::CheckInteger("dimension of grads", SizeToLong(grads_shape.size()), kEqual, long_kdim4,
                                              prim_name);
@@ -77,8 +77,8 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
 
   bool is_compile = IsNoneOrAnyValue(size_ptr);
   if (is_compile) {
-    y_shape[dim_idx_map['H']] = abstract::Shape::SHP_ANY;
-    y_shape[dim_idx_map['W']] = abstract::Shape::SHP_ANY;
+    y_shape[dim_idx_map['H']] = abstract::Shape::kShapeDimAny;
+    y_shape[dim_idx_map['W']] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(y_shape);
   } else {
     MS_EXCEPTION_IF_NULL(size_ptr);

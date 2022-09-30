@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace trans {
-static const ShapeValueDType SHP_ANY = abstract::Shape::SHP_ANY;
+static const ShapeValueDType kShapeDimAny = abstract::Shape::kShapeDimAny;
 
 const int b1 = 1;
 const int b2 = 2;
@@ -48,12 +48,12 @@ const size_t fz_n0 = 1;
 const size_t fz_ni = 2;
 const size_t fz_c0 = 3;
 bool HasShapeDynamic(const ShapeVector &shape_list) {
-  return std::any_of(shape_list.begin(), shape_list.end(), [](int64_t v) { return v == SHP_ANY; });
+  return std::any_of(shape_list.begin(), shape_list.end(), [](int64_t v) { return v == kShapeDimAny; });
 }
 
 inline int64_t CalMaxShape(int64_t ori_val, int64_t new_val) {
   if (ori_val < 0) {
-    return SHP_ANY;
+    return kShapeDimAny;
   }
 
   return new_val;
@@ -546,13 +546,13 @@ ShapeVector DeviceShapeTransfer::FRAC_ZDeviceShape(const ShapeVector &shape, con
   ShapeVector device_shape;
   auto c0 = GetCubeSizeByType(type);
   if (HasShapeDynamic({shape[kC], shape[kH], shape[kW]})) {
-    device_shape.push_back(abstract::Shape::SHP_ANY);
+    device_shape.push_back(abstract::Shape::kShapeDimAny);
   } else {
     auto c1 = (shape[kC] + c0 - 1) / c0;
     device_shape.push_back(shape[kH] * shape[kW] * c1);
   }
-  if (shape[kN] == abstract::Shape::SHP_ANY) {
-    device_shape.push_back(abstract::Shape::SHP_ANY);
+  if (shape[kN] == abstract::Shape::kShapeDimAny) {
+    device_shape.push_back(abstract::Shape::kShapeDimAny);
   } else {
     auto no = (shape[kN] + kNiSize - 1) / kNiSize;
     device_shape.push_back(no);
@@ -568,7 +568,7 @@ ShapeVector DeviceShapeTransfer::NC1HWC0DeviceShape(const ShapeVector &shape, co
   }
   ShapeVector device_shape;
   auto c0 = GetCubeSizeByType(type);
-  auto c1 = (shape[kC] == abstract::Shape::SHP_ANY) ? abstract::Shape::SHP_ANY : (shape[kC] + c0 - 1) / c0;
+  auto c1 = (shape[kC] == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (shape[kC] + c0 - 1) / c0;
   device_shape.push_back(shape[kN]);
   device_shape.push_back(c1);
   device_shape.push_back(shape[kH]);
@@ -583,7 +583,7 @@ ShapeVector DeviceShapeTransfer::NDC1HWC0DeviceShape(const ShapeVector &shape, c
   }
   ShapeVector device_shape;
   auto c0 = GetCubeSizeByType(type);
-  auto c1 = (shape[1] == abstract::Shape::SHP_ANY) ? abstract::Shape::SHP_ANY : (shape[1] + c0 - 1) / c0;
+  auto c1 = (shape[1] == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (shape[1] + c0 - 1) / c0;
   device_shape.push_back(shape[N_ncdhw]);
   device_shape.push_back(shape[D_ncdhw]);
   device_shape.push_back(c1);
@@ -600,12 +600,13 @@ ShapeVector DeviceShapeTransfer::FRAC_Z3DDeviceShape(const ShapeVector &shape, c
   ShapeVector device_shape;
   auto c0 = GetCubeSizeByType(type);
   if (HasShapeDynamic({shape[C_ncdhw], shape[D_ncdhw], shape[H_ncdhw], shape[W_ncdhw]})) {
-    device_shape.push_back(abstract::Shape::SHP_ANY);
+    device_shape.push_back(abstract::Shape::kShapeDimAny);
   } else {
     auto c1 = (shape[1] + c0 - 1) / c0;
     device_shape.push_back(shape[D_ncdhw] * c1 * shape[H_ncdhw] * shape[W_ncdhw]);
   }
-  auto no = (shape[0] == abstract::Shape::SHP_ANY) ? abstract::Shape::SHP_ANY : (shape[0] + kNiSize - 1) / kNiSize;
+  auto no =
+    (shape[0] == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (shape[0] + kNiSize - 1) / kNiSize;
   device_shape.push_back(no);
   device_shape.push_back(kNiSize);
   device_shape.push_back(c0);
@@ -618,8 +619,8 @@ ShapeVector DeviceShapeTransfer::C1HWNCOC0DeviceShape(const ShapeVector &shape, 
   }
   ShapeVector device_shape;
   auto c0 = GetCubeSizeByType(type);
-  if (shape[kC] == abstract::Shape::SHP_ANY) {
-    device_shape.push_back(abstract::Shape::SHP_ANY);
+  if (shape[kC] == abstract::Shape::kShapeDimAny) {
+    device_shape.push_back(abstract::Shape::kShapeDimAny);
   } else {
     device_shape.push_back((shape[kC] - 1) / c0 + 1);
   }
@@ -639,11 +640,12 @@ ShapeVector DeviceShapeTransfer::FRAC_ZC04DeviceShape(const ShapeVector &shape, 
   const int64_t C04 = 4;
   int64_t first_dim;
   if (HasShapeDynamic({shape[kH], shape[kW]})) {
-    first_dim = abstract::Shape::SHP_ANY;
+    first_dim = abstract::Shape::kShapeDimAny;
   } else {
     first_dim = DivCeil(C04 * shape[kH] * shape[kW], kCubeSize);
   }
-  auto no = (shape[kN] == abstract::Shape::SHP_ANY) ? abstract::Shape::SHP_ANY : DivCeil(shape.at(kN), kCubeSize);
+  auto no =
+    (shape[kN] == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : DivCeil(shape.at(kN), kCubeSize);
   device_shape.push_back(first_dim);
   device_shape.push_back(no);
   device_shape.push_back(kCubeSize);
@@ -657,7 +659,8 @@ ShapeVector DeviceShapeTransfer::NC1HWC04DeviceShape(const ShapeVector &shape, c
   }
   ShapeVector device_shape;
   const int64_t C04 = 4;
-  const int64_t C1 = (shape[kC] == abstract::Shape::SHP_ANY) ? abstract::Shape::SHP_ANY : DivCeil(shape.at(kC), C04);
+  const int64_t C1 =
+    (shape[kC] == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : DivCeil(shape.at(kC), C04);
   device_shape.push_back(shape[kN]);
   device_shape.push_back(C1);
   device_shape.push_back(shape[kH]);
@@ -701,8 +704,9 @@ ShapeVector DeviceShapeTransfer::FRAC_NZDeviceShape(const ShapeVector &shape, co
   }
   int64_t h_shape = shape[shape.size() - kH];
   int64_t w_shape = shape[shape.size() - 1];
-  int64_t w1 = (w_shape == abstract::Shape::SHP_ANY) ? abstract::Shape::SHP_ANY : (w_shape - 1) / c0 + 1;
-  int64_t h1 = (h_shape == abstract::Shape::SHP_ANY) ? abstract::Shape::SHP_ANY : (h_shape - 1) / kCubeSize + 1;
+  int64_t w1 = (w_shape == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (w_shape - 1) / c0 + 1;
+  int64_t h1 =
+    (h_shape == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (h_shape - 1) / kCubeSize + 1;
   device_shape.push_back(w1);
   device_shape.push_back(h1);
   device_shape.push_back(kCubeSize);
@@ -714,8 +718,8 @@ ShapeVector DeviceShapeTransfer::FRAC_ZN_LSTMDeviceShape(const ShapeVector &shap
   ShapeVector device_shape;
   const int64_t lstm_ni = 4;
   const int64_t ni = 16;
-  int64_t first = abstract::Shape::SHP_ANY;
-  int64_t second = abstract::Shape::SHP_ANY;
+  int64_t first = abstract::Shape::kShapeDimAny;
+  int64_t second = abstract::Shape::kShapeDimAny;
   if (!HasShapeDynamic({shape[kN], shape[kC]})) {
     const int64_t h = shape.at(kN) / lstm_ni;
     const int64_t i = shape.at(kC) - h;
@@ -738,9 +742,9 @@ ShapeVector DeviceShapeTransfer::FRAC_ZDeviceShapeWithGroups(const ShapeVector &
     MS_LOG(EXCEPTION) << "The value of groups should be greater than 0, but got " << groups;
   }
   auto cube_size = GetCubeSizeByType(type);
-  auto c1_dim = abstract::Shape::SHP_ANY;
-  auto g_dim = abstract::Shape::SHP_ANY;
-  auto n1 = abstract::Shape::SHP_ANY;
+  auto c1_dim = abstract::Shape::kShapeDimAny;
+  auto g_dim = abstract::Shape::kShapeDimAny;
+  auto n1 = abstract::Shape::kShapeDimAny;
   if (!HasShapeDynamic({shape[kC], shape[kN]})) {
     auto group_size = groups;
     auto cin_ori_tmp = static_cast<int64_t>(shape[kC]);
@@ -756,7 +760,7 @@ ShapeVector DeviceShapeTransfer::FRAC_ZDeviceShapeWithGroups(const ShapeVector &
   if (!HasShapeDynamic({shape[kC], shape[kN], shape[kH], shape[kW]})) {
     device_shape.push_back(g_dim * c1_dim * shape[kH] * shape[kW]);
   } else {
-    device_shape.push_back(abstract::Shape::SHP_ANY);
+    device_shape.push_back(abstract::Shape::kShapeDimAny);
   }
   device_shape.push_back(n1);
   device_shape.push_back(kNiSize);
@@ -777,8 +781,8 @@ ShapeVector DeviceShapeTransfer::FRAC_ZN_RNNDeviceShape(const ShapeVector &shape
   const int64_t NUM16 = 16;
 
   ShapeVector device_shape = shape;
-  if (dim_last2 == abstract::Shape::SHP_ANY) {
-    device_shape[shape.size() - kDim2] = abstract::Shape::SHP_ANY;
+  if (dim_last2 == abstract::Shape::kShapeDimAny) {
+    device_shape[shape.size() - kDim2] = abstract::Shape::kShapeDimAny;
   } else if (dim_last2 == input_size || dim_last2 == hidden_size) {
     device_shape[shape.size() - kDim2] = DivCeil(dim_last2, NUM16);
   } else if (dim_last2 == input_size + hidden_size) {
@@ -786,8 +790,8 @@ ShapeVector DeviceShapeTransfer::FRAC_ZN_RNNDeviceShape(const ShapeVector &shape
   } else {
     MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid.";
   }
-  if (dim_last1 == abstract::Shape::SHP_ANY) {
-    device_shape[shape.size() - kDim1] = abstract::Shape::SHP_ANY;
+  if (dim_last1 == abstract::Shape::kShapeDimAny) {
+    device_shape[shape.size() - kDim1] = abstract::Shape::kShapeDimAny;
   } else {
     if (dim_last1 % hidden_size != 0) {
       MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;
@@ -809,8 +813,8 @@ ShapeVector DeviceShapeTransfer::NDRNNBiasDeviceShape(const ShapeVector &shape, 
   ShapeVector device_shape = shape;
   // cppcheck-suppress *
   auto dim_last1 = shape[shape.size() - 1];
-  if (dim_last1 == abstract::Shape::SHP_ANY) {
-    device_shape[shape.size() - 1] = abstract::Shape::SHP_ANY;
+  if (dim_last1 == abstract::Shape::kShapeDimAny) {
+    device_shape[shape.size() - 1] = abstract::Shape::kShapeDimAny;
   } else {
     if (hidden_size <= 0 || dim_last1 % hidden_size != 0) {
       MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;

@@ -37,7 +37,7 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   auto input_shape = input_shape_map[kShape];
 
   if (IsDynamicRank(input_shape)) {
-    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr, unknow_shape_ptr});
   }

@@ -67,7 +67,7 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
       constexpr int dynamic_rank_value = -2;
       ShapeVector shape = {dynamic_rank_value};
       ShapeVector min_shape = {0};
-      ShapeVector max_shape = {abstract::Shape::SHP_ANY};
+      ShapeVector max_shape = {abstract::Shape::kShapeDimAny};
       return std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
     }
   } else {

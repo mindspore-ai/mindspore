@@ -76,7 +76,7 @@ abstract::ShapePtr TraceGradInferShape(const PrimitivePtr &primitive, const std:
       (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
     }
     auto infer_shape_max = shape_map[kMaxShape];
-    std::vector<int64_t> out_shape = {abstract::Shape::SHP_ANY};
+    std::vector<int64_t> out_shape = {abstract::Shape::kShapeDimAny};
     std::vector<int64_t> infer_shape_min = {0};
     return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
   }

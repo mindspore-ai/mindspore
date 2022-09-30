@@ -73,7 +73,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     MS_EXCEPTION_IF_NULL(max_length_ptr);
     int64_t max_length = GetValue<int64_t>(max_length_ptr);
     for (int64_t i = 1; i <= dense_size[0] - 1; ++i) {
-      dynamic_shape.end()[-i] = abstract::Shape::SHP_ANY;
+      dynamic_shape.end()[-i] = abstract::Shape::kShapeDimAny;
       min_shape.end()[-i] = 0;
       max_shape.end()[-i] = max_length;
     }

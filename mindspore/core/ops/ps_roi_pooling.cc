@@ -55,7 +55,7 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
                         << "', input x shape must be 4d(NCHW), but got: " << x_shape.size();
     }
-    if (x_shape[1] != abstract::Shape::SHP_ANY) {
+    if (x_shape[1] != abstract::Shape::kShapeDimAny) {
       // the first dimension of the input data should be equal group_size * group_size * output_dim
       if (x_shape[1] / (group_size * group_size) != output_dim) {
         MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the second dimension(" << x_shape[1]
@@ -75,7 +75,7 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
                         << "', the dimension of 'rois' should be equal 3, but got: " << rois_shape.size();
     }
-    if (rois_shape[0] == abstract::Shape::SHP_ANY || rois_shape[dim2] == abstract::Shape::SHP_ANY) {
+    if (rois_shape[0] == abstract::Shape::kShapeDimAny || rois_shape[dim2] == abstract::Shape::kShapeDimAny) {
       ret_shape = {-1, output_dim, group_size, group_size};
     } else {
       ret_shape = {rois_shape[0] * rois_shape[dim2], output_dim, group_size, group_size};

@@ -142,7 +142,7 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
 
   bool is_input_dynamic = IsDynamic(shape->shape());
 
-  ShapeVector ids_shape = {Shape::SHP_ANY};
+  ShapeVector ids_shape = {Shape::kShapeDimAny};
   ShapeVector min_shape;
   ShapeVector max_shape;
   if (!is_input_dynamic) {
@@ -243,7 +243,7 @@ AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitiveP
   if (shape->shape().size() != 1) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
   }
-  ShapeVector ids_shape = {Shape::SHP_ANY};
+  ShapeVector ids_shape = {Shape::kShapeDimAny};
   ShapeVector min_shape;
   ShapeVector max_shape;
   ShapeVector input_shape = shape->shape();
@@ -763,13 +763,13 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
   int64_t axis_value_pos = CheckAxis(op_name, "axis", axis, -(rank + 1), rank, "input_x");
   int64_t output_num_value = GetValue<int64_t>(primitive->GetAttr("output_num"));
   size_t pos = LongToSize(axis_value_pos);
-  if ((x_shape[pos] != Shape::SHP_ANY) && (x_shape[pos] % output_num_value != 0)) {
+  if ((x_shape[pos] != Shape::kShapeDimAny) && (x_shape[pos] % output_num_value != 0)) {
     MS_LOG(EXCEPTION) << "x_shape[" << pos << "] = " << x_shape[pos]
                       << " must be divisible by output_num = " << output_num_value;
   }
 
   ShapeVector output_shape = x_shape;
-  if (output_shape[pos] != Shape::SHP_ANY) {
+  if (output_shape[pos] != Shape::kShapeDimAny) {
     output_shape[pos] = static_cast<int>(x_shape[pos] / output_num_value);
   }
 
@@ -1046,7 +1046,7 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   ValuePtr max_output_length_ptr = primitive->GetAttr("maxlen");
   int64_t max_output_length = GetValue<int64_t>(max_output_length_ptr);
-  ShapeVector output_shape = {Shape::SHP_ANY};
+  ShapeVector output_shape = {Shape::kShapeDimAny};
   ShapeVector min_shape = {1};
   ShapeVector max_shape = {max_output_length};
   ShapePtr shape = std::make_shared<Shape>(output_shape, min_shape, max_shape);
@@ -1117,7 +1117,7 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
 
   ShapeVector out_shape;
   if (output_shape_unknow) {
-    out_shape.push_back(abstract::Shape::SHP_ANY);
+    out_shape.push_back(abstract::Shape::kShapeDimAny);
   } else {
     out_shape.push_back(first_dim_size + 1);
   }
@@ -1166,14 +1166,14 @@ AbstractBasePtr InferImplOCRRecognitionPreHandle(const AnalysisEnginePtr &, cons
   ShapeVector universe_min_shp;
   ShapeVector universe_max_shp;
 
-  (void)universe_shp.emplace_back(Shape::SHP_ANY);
+  (void)universe_shp.emplace_back(Shape::kShapeDimAny);
   (void)universe_min_shp.emplace_back(universe_min_batch);
   (void)universe_max_shp.emplace_back(universe_max_batch);
 
   auto universe_abstract =
     std::make_shared<AbstractTensor>(kInt32, std::make_shared<Shape>(universe_shp, universe_min_shp, universe_max_shp));
 
-  ShapeVector r_shp = {Shape::SHP_ANY, image_h, image_w};
+  ShapeVector r_shp = {Shape::kShapeDimAny, image_h, image_w};
   ShapeVector r_max_shp = {images_max_batch, image_h, image_w};
   ShapeVector r_min_shp = {images_min_batch, image_h, image_w};
 

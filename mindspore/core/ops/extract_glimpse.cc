@@ -87,7 +87,7 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
   } else {
     const int64_t image_size = max_length / (batch_cnt * channels);
     const int64_t dim_size = static_cast<int64_t>(std::pow(image_size, 0.5));
-    ShapeVector output_shape{batch_cnt, abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY, channels};
+    ShapeVector output_shape{batch_cnt, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, channels};
     ShapeVector shape_min(output_shape);
     ShapeVector shape_max(output_shape);
     shape_min[1] = 0;

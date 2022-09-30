@@ -35,7 +35,7 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
 
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   if (IsDynamicRank(a_shape) || IsDynamic(a_shape)) {
-    ShapeVector dyn_shape{UNKNOWN_RANK};
+    ShapeVector dyn_shape{abstract::Shape::kShapeRankAny};
     std::vector<abstract::BaseShapePtr> shape_tuple;
     (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(dyn_shape));
     (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(dyn_shape));

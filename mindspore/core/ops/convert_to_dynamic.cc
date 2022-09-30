@@ -73,7 +73,7 @@ class ConvertToDynamicRankInfer : public abstract::OpInferBase {
         return std::make_shared<abstract::Shape>(input_shape);
       }
       int32_t input_rank = SizeToInt(input_shape.size());
-      inferred_shape = ShapeVector(input_rank, abstract::Shape::SHP_ANY);
+      inferred_shape = ShapeVector(input_rank, abstract::Shape::kShapeDimAny);
     }
     return std::make_shared<abstract::Shape>(inferred_shape);
   }

@@ -109,7 +109,7 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   int64_t x_rank = SizeToLong(x_shape.size());
   int64_t dim_v = 0;
   if (!GetGatherDimValue(input_args[kInputIndex1], &dim_v)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   CheckAndConvertUtils::Check("dim value", dim_v, kGreaterEqual, -x_rank, prim_name);
   CheckAndConvertUtils::Check("dim value", dim_v, kLessThan, x_rank, prim_name);

@@ -65,7 +65,7 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("score_threshold rank", score_threshold_shape_rank, kEqual, 0, prim_name);
   auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   // calculate output shape
-  ShapeVector selected_indices_shape = {abstract::Shape::SHP_ANY};
+  ShapeVector selected_indices_shape = {abstract::Shape::kShapeDimAny};
   ShapeVector selected_indices_min_shape = {0};
   ShapeVector selected_indices_max_shape;
   if (scores_shape_map[kShape].size() > 0 && scores_shape_map[kShape][0] == -1) {

@@ -41,7 +41,8 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   if (IsDynamicRank(x_input_shape) || IsDynamicRank(h_input_shape) || IsDynamicRank(c_input_shape) ||
       IsDynamicRank(weight_shape)) {
-    auto output = std::make_shared<abstract::AbstractTensor>(infer_type0, std::vector<int64_t>{UNKNOWN_RANK});
+    auto output =
+      std::make_shared<abstract::AbstractTensor>(infer_type0, std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     AbstractBasePtrList outputs = {output, output, output, output, output};
     return std::make_shared<abstract::AbstractTuple>(outputs);
   }

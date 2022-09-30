@@ -73,8 +73,8 @@ abstract::ShapePtr MaxPoolV1InferShape(const PrimitivePtr &primitive, const std:
     stride_h = strides[kFormatNCHWIndexH];
     stride_w = strides[kFormatNCHWIndexW];
   }
-  int64_t out_h = abstract::Shape::SHP_ANY;
-  int64_t out_w = abstract::Shape::SHP_ANY;
+  int64_t out_h = abstract::Shape::kShapeDimAny;
+  int64_t out_w = abstract::Shape::kShapeDimAny;
   if (pad_mode == VALID) {
     out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
     out_w = static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));

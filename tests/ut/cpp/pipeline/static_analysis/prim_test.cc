@@ -308,16 +308,16 @@ TEST_F(TestPrim, test_broadcast_shape) {
   PrimitivePtr broadcast_shape = std::make_shared<Primitive>("broadcast_shape");
   FuncGraphPtr func_graph = MakeFuncGraph(broadcast_shape, 2);
 
-  auto a = UTPrimUtils::ShapeOf({Shape::SHP_ANY, Shape::SHP_ANY});
-  auto b = UTPrimUtils::ShapeOf({Shape::SHP_ANY});
-  std::vector<Any> expected{Shape::SHP_ANY, Shape::SHP_ANY};
+  auto a = UTPrimUtils::ShapeOf({Shape::kShapeDimAny, Shape::kShapeDimAny});
+  auto b = UTPrimUtils::ShapeOf({Shape::kShapeDimAny});
+  std::vector<Any> expected{Shape::kShapeDimAny, Shape::kShapeDimAny};
 
   AbstractBasePtrList args_spec_list = {a, b};
 
   AbstractTuplePtr res = dyn_cast<AbstractTuple>(engine_->Run(func_graph, args_spec_list).eval_result->abstract());
 
   auto ret = res->BuildValue()->cast<ValueTuplePtr>()->value();
-  std::vector<ValuePtr> element_list = {MakeValue(Shape::SHP_ANY), MakeValue(Shape::SHP_ANY)};
+  std::vector<ValuePtr> element_list = {MakeValue(Shape::kShapeDimAny), MakeValue(Shape::kShapeDimAny)};
   ASSERT_TRUE(ret.size() == element_list.size());
   for (int64_t i = 0; i < element_list.size(); i++) {
     ASSERT_TRUE(*ret[i] == *element_list[i]);

@@ -37,7 +37,7 @@ class ZerosLikeInfer : public abstract::OpInferBase {
     auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
     auto input_shape = input_shape_map[kShape];
     if (IsDynamicRank(input_shape)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
     if (input_shape_ptr->IsDynamic()) {
       return input_shape_ptr->cast<abstract::ShapePtr>();

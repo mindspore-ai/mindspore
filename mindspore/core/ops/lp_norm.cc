@@ -35,7 +35,7 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
   }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(input_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   auto output_shape = input_shape;
   auto input_rank = SizeToLong(input_shape.size());

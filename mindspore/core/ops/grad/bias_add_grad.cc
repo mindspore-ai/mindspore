@@ -44,7 +44,7 @@ abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamic(input_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {

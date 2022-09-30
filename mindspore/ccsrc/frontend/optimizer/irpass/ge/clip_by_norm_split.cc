@@ -73,8 +73,8 @@ std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, co
       broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
     } else if (x_shape[x_length + i] == y_shape[LongToSize(y_length + i)]) {
       broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[x_length + i] == abstract::Shape::SHP_ANY) ||
-               (y_shape[y_length + i] == abstract::Shape::SHP_ANY)) {
+    } else if ((x_shape[x_length + i] == abstract::Shape::kShapeDimAny) ||
+               (y_shape[y_length + i] == abstract::Shape::kShapeDimAny)) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', input dynamic shape args is not supported.";
     } else {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input '" << op_x_name << "' and '" << op_y_name

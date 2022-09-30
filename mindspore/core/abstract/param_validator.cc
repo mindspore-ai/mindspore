@@ -132,7 +132,7 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
   }
 
   for (size_t i = 0; i < shape_vector.size(); i++) {
-    if (shape_vector[i] == Shape::SHP_ANY || shape_base_vector[i] == Shape::SHP_ANY) {
+    if (shape_vector[i] == Shape::kShapeDimAny || shape_base_vector[i] == Shape::kShapeDimAny) {
       continue;
     }
     if (shape_vector[i] != shape_base_vector[i]) {
@@ -202,9 +202,9 @@ void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
 
 void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
-    if ((shape[i] < 0) && (shape[i] != Shape::SHP_ANY)) {
-      MS_EXCEPTION(ValueError) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
-                               << shape[i];
+    if ((shape[i] < 0) && (shape[i] != Shape::kShapeDimAny)) {
+      MS_EXCEPTION(ValueError) << op << " shape element [" << i
+                               << "] must be positive integer or kShapeDimAny, but got " << shape[i];
     }
   }
 }

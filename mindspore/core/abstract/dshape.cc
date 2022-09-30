@@ -17,6 +17,7 @@
  */
 
 #include "abstract/dshape.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -54,6 +55,10 @@ bool BaseShape::operator==(const BaseShape &other) const { return tid() == other
 
 bool BaseShape::operator!=(const BaseShape &other) const { return !(*this == other); }
 
+const ShapeValueDType Shape::kShapeDimAny = -1;
+const ShapeValueDType Shape::kShapeRankAny = -2;
+const size_t Shape::kDynamicRankLen = 1;
+
 std::string Shape::ToString() const {
   std::ostringstream buffer;
   bool has_dyn_shape = IsDynamic();
@@ -76,13 +81,15 @@ std::string Shape::DumpText() const {
   buffer << "[";
   for (size_t i = 0; i < shape_.size(); i++) {
     buffer << (i > 0 ? ", " : "") << shape_[i];
-    if (shape_[i] == SHP_ANY && min_shape_.size() == shape_.size() && max_shape_.size() == shape_.size()) {
+    if (shape_[i] == kShapeDimAny && min_shape_.size() == shape_.size() && max_shape_.size() == shape_.size()) {
       buffer << "_" << min_shape_[i] << "^" << max_shape_[i];
     }
   }
   buffer << "]";
   return buffer.str();
 }
+
+bool Shape::IsDynamic() const { return mindspore::IsDynamic(shape_); }
 
 bool Shape::operator==(const BaseShape &other) const {
   if (tid() != other.tid()) {
@@ -98,10 +105,9 @@ bool Shape::operator==(const BaseShape &other) const {
   return (min_shape_ == other_shape.min_shape_) && (max_shape_ == other_shape.max_shape_);
 }
 
-const int64_t Shape::SHP_ANY;
 void Shape::Broaden() {
   for (size_t i = 0; i < shape_.size(); i++) {
-    shape_[i] = SHP_ANY;
+    shape_[i] = kShapeDimAny;
   }
 }
 

@@ -79,8 +79,8 @@ abstract::ShapePtr SparseSliceGradInferShape(const PrimitivePtr &primitive,
   if (!(SparseSliceGradIsDynamic(backprop_shape)) && !(SparseSliceGradIsDynamic(new_indices_shape))) {
     SparseSliceGradCheckInputTensor(input_args);
   } else {
-    backprop_shape = {abstract::Shape::SHP_ANY};
-    new_indices_shape = {abstract::Shape::SHP_ANY, 2};
+    backprop_shape = {abstract::Shape::kShapeDimAny};
+    new_indices_shape = {abstract::Shape::kShapeDimAny, 2};
   }
   auto indices_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto indices_shape = indices_shape_map[kShape];

@@ -60,7 +60,7 @@ class OneHotInfer : public abstract::OpInferBase {
       auto depth_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
       auto depth_shape = depth_shape_map[kShape];
       if (IsDynamic(depth_shape)) {
-        return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+        return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
       }
       (void)CheckAndConvertUtils::CheckTensorTypeValid("depth", input_args[1]->BuildType(), {kInt64}, op_name);
       auto depth_data = depth->cast<tensor::TensorPtr>()->data_c();

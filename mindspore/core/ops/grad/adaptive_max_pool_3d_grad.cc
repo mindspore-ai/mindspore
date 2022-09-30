@@ -57,7 +57,7 @@ abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &,
     }
   } else {
     for (int64_t i = 1; i < x_dims; ++i) {
-      argmax_shape[LongToSize(i)] = abstract::Shape::SHP_ANY;
+      argmax_shape[LongToSize(i)] = abstract::Shape::kShapeDimAny;
     }
   }
   return std::make_shared<abstract::Shape>(x_shape);

@@ -60,7 +60,7 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
   if (!input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
     // The real output shape relies on the last value of 'segment_ids', we have already added dependency map.
     // The framework ensures the `else` branch will be executed, so min/max shape are not necessary to set.
-    out_shape[LongToSize(batch_rank)] = abstract::Shape::SHP_ANY;
+    out_shape[LongToSize(batch_rank)] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
     auto segment_ids = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();

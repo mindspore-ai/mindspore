@@ -169,7 +169,7 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
     if (arg_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "Arg " << i << " rank should be 1, but got " << arg_shape.size();
     }
-    if ((x_shape[c_axis] != Shape::SHP_ANY) && (arg_shape[0] != x_shape[c_axis])) {
+    if ((x_shape[c_axis] != Shape::kShapeDimAny) && (arg_shape[0] != x_shape[c_axis])) {
       MS_EXCEPTION(ValueError) << "Arg " << i << " shape[0] should equal to x_shape[" << c_axis
                                << "]=" << x_shape[c_axis] << ", but got " << arg_shape[0];
     }
@@ -301,7 +301,7 @@ AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const 
   if (shape->shape().size() != size_expected) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 2.";
   }
-  ShapeVector indices_shape = {Shape::SHP_ANY};
+  ShapeVector indices_shape = {Shape::kShapeDimAny};
   ShapeVector min_shape = {1};
   ShapeVector max_shape = {shape->shape()[0] * shape->shape()[1]};
 

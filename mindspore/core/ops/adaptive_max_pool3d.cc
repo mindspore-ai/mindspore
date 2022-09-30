@@ -26,8 +26,6 @@ namespace {
 constexpr int64_t kInputDims4 = 4;
 constexpr int64_t kInputDims5 = 5;
 constexpr int64_t kOutputSizeNumElem = 3;
-constexpr int64_t kDynamicRankValue = -2;
-constexpr size_t kDynamicRankLen = 1;
 
 abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
@@ -35,8 +33,8 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   const int64_t input_num_dims = SizeToLong(x_shape.size());
   std::shared_ptr<mindspore::abstract::Shape> out_shape_ptr;
-  if (x_shape.size() == kDynamicRankLen && x_shape[0] == kDynamicRankValue) {
-    ShapeVector out_shape = {kDynamicRankValue};
+  if (x_shape.size() == abstract::Shape::kDynamicRankLen && x_shape[0] == abstract::Shape::kShapeRankAny) {
+    ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
     out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
@@ -72,7 +70,7 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
     std::vector<int64_t> infer_shape_min = x_shape;
     std::vector<int64_t> infer_shape_max = x_shape;
     for (int64_t i = out_shape.size() - kDHWDims; i < SizeToLong(out_shape.size()); ++i) {
-      out_shape[i] = abstract::Shape::SHP_ANY;
+      out_shape[i] = abstract::Shape::kShapeDimAny;
     }
     out_shape_ptr = std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
   }

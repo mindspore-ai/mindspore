@@ -39,7 +39,7 @@ abstract::TupleShapePtr ListDiffInferShape(const PrimitivePtr &, const std::vect
                              << ", y dims = " << y_shape.size() << ".";
   }
   int64_t max_size = x_shape[kInputIndex0];
-  ShapeVector out_shape_dynamic = {abstract::Shape::SHP_ANY};
+  ShapeVector out_shape_dynamic = {abstract::Shape::kShapeDimAny};
   ShapeVector out_min_shape = {0};
   ShapeVector out_max_shape = {max_size};
   abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(out_shape_dynamic, out_min_shape, out_max_shape);

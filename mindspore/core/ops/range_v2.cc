@@ -70,7 +70,7 @@ int64_t RangeV2CalculateShape(const tensor::TensorPtr start_ptr, const tensor::T
 
 abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
-  int64_t shape_size = abstract::Shape::SHP_ANY;
+  int64_t shape_size = abstract::Shape::kShapeDimAny;
   MS_EXCEPTION_IF_NULL(primitive->GetAttr(kMaxLen));
   auto start_value = input_args[kInputIndex0]->BuildValue();
   auto limit_value = input_args[kInputIndex1]->BuildValue();
@@ -105,7 +105,7 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
 
   ShapeVector out_shape = {};
   if (is_compile) {
-    (void)out_shape.emplace_back(abstract::Shape::SHP_ANY);
+    (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(out_shape);
   }
 

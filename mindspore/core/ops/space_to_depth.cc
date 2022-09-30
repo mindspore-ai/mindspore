@@ -73,15 +73,15 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
   const int64_t x_rank = 4;
   (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   auto out_shape = x_shape;
-  if (out_shape[c_of_nchw] != abstract::Shape::SHP_ANY) {
+  if (out_shape[c_of_nchw] != abstract::Shape::kShapeDimAny) {
     out_shape[c_of_nchw] *= block_size * block_size;
   }
-  if (out_shape[h_of_nchw] != abstract::Shape::SHP_ANY) {
+  if (out_shape[h_of_nchw] != abstract::Shape::kShapeDimAny) {
     (void)CheckAndConvertUtils::CheckInteger("x_shape[2] % block_size", x_shape[h_of_nchw] % block_size, kEqual, 0,
                                              prim_name);
     out_shape[h_of_nchw] /= block_size;
   }
-  if (out_shape[w_of_nchw] != abstract::Shape::SHP_ANY) {
+  if (out_shape[w_of_nchw] != abstract::Shape::kShapeDimAny) {
     (void)CheckAndConvertUtils::CheckInteger("x_shape[3] % block_size", x_shape[w_of_nchw] % block_size, kEqual, 0,
                                              prim_name);
     out_shape[w_of_nchw] /= block_size;

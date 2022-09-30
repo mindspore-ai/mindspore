@@ -78,7 +78,7 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
     out_shape.push_back(length_value);
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    std::vector<int64_t> out_shape = {abstract::Shape::SHP_ANY};
+    std::vector<int64_t> out_shape = {abstract::Shape::kShapeDimAny};
     std::vector<int64_t> infer_shape_min = {0};
     std::vector<int64_t> infer_shape_max = {MAX_WINDOW_LEN};
     return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);

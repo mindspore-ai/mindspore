@@ -30,9 +30,9 @@ namespace ops {
 namespace {
 void CheckDilation2DShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
-    if ((shape[i] < 0) && (shape[i] != abstract::Shape::SHP_ANY)) {
-      MS_EXCEPTION(ValueError) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
-                               << shape[i];
+    if ((shape[i] < 0) && (shape[i] != abstract::Shape::kShapeDimAny)) {
+      MS_EXCEPTION(ValueError) << op << " shape element [" << i
+                               << "] must be positive integer or kShapeDimAny, but got " << shape[i];
     }
   }
 }

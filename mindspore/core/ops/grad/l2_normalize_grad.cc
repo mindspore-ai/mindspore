@@ -59,7 +59,7 @@ class L2NormalizeGradInfer : public abstract::OpInferBase {
     auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(out_shape_ptr)[kShape];
     auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dout_shape_ptr)[kShape];
     if (IsDynamicRank(input_x_shape) || IsDynamicRank(out_shape) || IsDynamicRank(dout_shape)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
 
     auto input_x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
