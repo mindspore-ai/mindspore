@@ -976,28 +976,30 @@ class Conv2dTranspose(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in}}{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in}}{\text{stride[1]}} + 1} \right \rfloor \\
+                H_{out} = \text H_{in}\times \text {stride[0]} \\
+                W_{out} = \text W_{in}\times \text {stride[1]} \\
             \end{array}
 
         pad_mode is 'valid':
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
-                {\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
-                {\text{stride[1]}} + 1} \right \rfloor \\
+                H_{out} = \text H_{in}\times \text {stride[0]} + \max\{(\text{dilation[0]} - 1) \times
+                (\text{kernel_size[0]} - 1) - \text {stride[0]}, 0 \} \\
+                W_{out} = \text W_{in}\times \text {stride[1]} + \max\{(\text{dilation[1]} - 1) \times
+                (\text{kernel_size[1]} - 1) - \text {stride[1]}, 0 \} \\
             \end{array}
 
         pad_mode is 'pad':
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
-                \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
-                \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
+                H_{out} = \text H_{in}\times \text {stride[0]} - (padding[0] + padding[1]) +
+                \text{kernel_size[0]} + (\text{dilation[0]} - 1) \times
+                (\text{kernel_size[0]} - 1) - \text {stride[0]} \\
+                W_{out} = \text W_{in}\times \text {stride[1]} - (padding[2] + padding[3]) +
+                \text{kernel_size[1]} + (\text{dilation[1]} - 1) \times
+                (\text{kernel_size[1]} - 1) - \text {stride[1]} \\
             \end{array}
 
     Raises:
