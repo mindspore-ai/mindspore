@@ -63,6 +63,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     {prim::kPrimArgMaxWithValue->name(), {ArgWithValueDeco::Creator}},
     {prim::kPrimArgMinWithValue->name(), {ArgWithValueDeco::Creator}},
     {prim::kPrimSolveTriangular->name(), {ProcessCustomOpDeco::Creator}},
+    {prim::kPrimLU->name(), {ProcessCustomOpDeco::Creator}},
   };
   const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
@@ -100,6 +101,7 @@ bool CanExpandFallback(const AnfNodePtr &node) {
     {kAllTarget, OpLevel_0, prim::kPrimAdam},
     // some ops including custom op are only used expand fallbak on Ascend.
     {kAscendDevice, OpLevel_0, prim::kPrimSolveTriangular},
+    {kAscendDevice, OpLevel_0, prim::kPrimLU},
     // disabled
     {kAllTarget, OpLevel_1, prim::kPrimAddN},
     {kAllTarget, OpLevel_1, prim::kPrimErfc},

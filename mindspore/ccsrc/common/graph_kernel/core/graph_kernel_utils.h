@@ -32,6 +32,7 @@ GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));
 GVAR_DEF(PrimitivePtr, kPrimLayoutTransform, std::make_shared<Primitive>("LayoutTransform"));
 GVAR_DEF(PrimitivePtr, kPrimStridedSliceOnnx, std::make_shared<Primitive>("StridedSliceOnnx"));
 GVAR_DEF(PrimitivePtr, kPrimSolveTriangular, std::make_shared<Primitive>("SolveTriangular"));
+GVAR_DEF(PrimitivePtr, kPrimLU, std::make_shared<Primitive>("LU"));
 }  // namespace mindspore::prim
 
 namespace mindspore::graphkernel {
