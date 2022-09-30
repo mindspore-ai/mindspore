@@ -5777,7 +5777,7 @@ class Tensor(Tensor_):
             TypeError: If input tensor dtype is not float16 or float32.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([0, -0.5]), mindspore.float32)

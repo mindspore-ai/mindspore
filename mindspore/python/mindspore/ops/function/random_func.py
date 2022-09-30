@@ -318,12 +318,12 @@ def uniform_candidate_sampler(true_classes, num_true, num_sampled, unique, range
     Examples:
         >>> data = Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int32))
         >>> output1, output2, output3 = ops.uniform_candidate_sampler(data, 1, 3, False, 4, 1)
-        >>> print(output1)
-        [0 0 3]
-        >>> print(output2)
-        [[0.75] [0.75] [0.75] [0.75] [0.75]]
-        >>> print(output3)
-        [0.75 0.75 0.75]
+        >>> print(output1.shape)
+        (3,)
+        >>> print(output2.shape)
+        (5, 1)
+        >>> print(output3.shape)
+        (3,)
     """
     sampler_op = _get_cache_prim(P.UniformCandidateSampler)(num_true, num_sampled, unique, range_max, seed=seed,
                                                             remove_accidental_hits=remove_accidental_hits)
