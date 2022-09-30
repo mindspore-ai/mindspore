@@ -98,7 +98,7 @@ class ReshapeInfer : public abstract::OpInferBase {
                                     << "', the shape size must be 1, but got: " << shape_value.size() << ".";
           }
           if (y_shape->IsDynamic()) {
-            output_shape.push_back(UNKNOWN_RANK);
+            output_shape.push_back(abstract::Shape::kShapeRankAny);
             return std::make_shared<abstract::Shape>(output_shape);
           } else if (x_shape.size() == 0) {
             MS_LOG(DEBUG) << "x is a scalar.";
@@ -111,7 +111,7 @@ class ReshapeInfer : public abstract::OpInferBase {
             auto y_tensor = input_y->cast<abstract::AbstractTensorPtr>();
             auto tensor_shape_value = y_tensor->get_shape_value();
             if (tensor_shape_value == nullptr) {
-              output_shape = ShapeVector(shape_value[0], UNKNOWN_DIM);
+              output_shape = ShapeVector(shape_value[0], abstract::Shape::kShapeDimAny);
               return std::make_shared<abstract::Shape>(output_shape);
             } else {
               auto shape_vector = GetValue<ShapeVector>(tensor_shape_value);
