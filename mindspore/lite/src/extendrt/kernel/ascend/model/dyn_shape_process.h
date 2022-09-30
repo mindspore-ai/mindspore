@@ -46,6 +46,7 @@ class DynShapeProcess {
   size_t input_data_idx_;
   AddressPtr batch_size_ptr_;
   AddressPtr image_size_ptr_;
+  bool is_first_invoked_ = true;
 };
 
 using DynShapeProcPtr = std::shared_ptr<DynShapeProcess>;
