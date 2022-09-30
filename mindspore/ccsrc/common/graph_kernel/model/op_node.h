@@ -352,5 +352,14 @@ class MatMulOp : public OpaqueOp {
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
+
+class TupleGetItemOp : public VirtualOp {
+ public:
+  using VirtualOp::VirtualOp;
+  ~TupleGetItemOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
+};
 }  // namespace mindspore::graphkernel::inner
 #endif

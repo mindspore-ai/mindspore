@@ -27,7 +27,7 @@ class MIND_API TupleGetItem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TupleGetItem);
   /// \brief Constructor.
-  TupleGetItem() : BaseOperator(kNameTupleGetItem) {}
+  TupleGetItem() : BaseOperator(kNameTupleGetItem) { InitIOName({"input", "index"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

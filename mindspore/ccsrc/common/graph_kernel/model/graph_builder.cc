@@ -58,4 +58,8 @@ NodePtr GraphBuilder::ReduceMin(const NodePtr &input, const std::vector<int64_t>
   auto keep_dims_value = MakeValue(keep_dims);
   return Emit("ReduceMin", {input}, {{"axis", reduce_axis}, {"keep_dims", keep_dims_value}});
 }
+
+NodePtr GraphBuilder::TupleGetItem(const NodePtr &input, int64_t index) const {
+  return Emit("TupleGetItem", {input}, {{"index", MakeValue(index)}});
+}
 }  // namespace mindspore::graphkernel::inner

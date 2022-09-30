@@ -165,7 +165,9 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
   if (!CanExpandFallback(node)) {
     return nullptr;
   }
-  auto res = GetExpander(node)->Run(node);
+  auto expander = GetExpander(node);
+  expander = AttrToInputDeco::GetCreator(true)(expander);
+  auto res = expander->Run(node);
   auto expand_fg = GetCNodeFuncGraph(res);
   if (expand_fg != nullptr) {
     auto todos = TopoSort(expand_fg->get_return());
@@ -226,20 +228,22 @@ AnfNodePtr SetDynamicShapeAttrDeco::Run(const AnfNodePtr &node) {
   return new_cnode;
 }
 
-void ConvertAttrToInput(const FuncGraphPtr &graph) {
+void AttrToInputDeco::ConvertAttrToInput(const FuncGraphPtr &graph) {
   auto todos = TopoSort(graph->get_return());
   for (const auto &node : todos) {
-    if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
-      continue;
-    }
     auto primitive = GetCNodePrimitive(node);
-    if (!primitive) {
+    if (primitive == nullptr) {
       continue;
     }
-    primitive = primitive->Clone();
-    std::map<std::string, std::set<size_t>> attr2input_map = {
-      {prim::kPrimCast->name(), {1}},      {prim::kPrimReshape->name(), {1}},   {prim::kPrimReduceMax->name(), {1}},
-      {prim::kPrimReduceMin->name(), {1}}, {prim::kPrimReduceSum->name(), {1}}, {prim::kPrimTranspose->name(), {1}}};
+    std::map<std::string, std::set<size_t>> attr2input_map;
+    if (is_backend_) {
+      attr2input_map = std::map<std::string, std::set<size_t>>{{prim::kPrimTupleGetItem->name(), {1}}};
+    } else {
+      attr2input_map = std::map<std::string, std::set<size_t>>{
+        {prim::kPrimCast->name(), {1}},        {prim::kPrimReshape->name(), {1}},   {prim::kPrimReduceMax->name(), {1}},
+        {prim::kPrimReduceMin->name(), {1}},   {prim::kPrimReduceSum->name(), {1}}, {prim::kPrimTranspose->name(), {1}},
+        {prim::kPrimTupleGetItem->name(), {1}}};
+    }
     if (attr2input_map.count(primitive->name()) != 0) {
       auto input_names = primitive->GetAttr(kAttrInputNames);
       auto cnode = dyn_cast<CNode>(node);
@@ -262,7 +266,6 @@ void ConvertAttrToInput(const FuncGraphPtr &graph) {
           j++;
         }
       }
-      new_inputs[0] = NewValueNode(primitive);
       cnode->set_inputs(new_inputs);
     }
   }
