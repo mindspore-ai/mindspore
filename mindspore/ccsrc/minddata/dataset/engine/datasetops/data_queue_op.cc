@@ -77,8 +77,8 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
 #ifdef WITH_BACKEND
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    (void)device::DataQueueMgr::GetInstance().Create(channel_name, {}, 0);
-    ascend_data_queue_ = device::DataQueueMgr::GetInstance().GetDataQueue(channel_name)->Queue();
+    ascend_data_queue_ =
+      device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, channel_name, dynamic_shape_, 0, {});
   }
 #endif
 #ifdef ENABLE_DUMP_IR

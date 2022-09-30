@@ -200,12 +200,15 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
     }
     tdt_handle::AddHandle(&acl_handle_, nullptr);
   }
-  wingman_queue_ = std::make_shared<BlockingQueue>();
+
+  // a wingman of tdt to help with transferring data shapes on host
+  auto wingman_queue = std::make_shared<BlockingQueue>();
   std::shared_ptr<DataQueue> data_queue = std::make_shared<WingmanQueue>(channel_name);
-  auto rt = wingman_queue_->Create(data_queue);
+  auto rt = wingman_queue->Create(data_queue);
   if (rt != DataQueueStatus::SUCCESS) {
     MS_LOG(EXCEPTION) << "Wingman queue: " << channel_name << "create failed: " << rt;
   }
+  DataQueueMgr::GetInstance().Manage(channel_name, wingman_queue);
 }
 
 AscendTdtQueue::~AscendTdtQueue() {
@@ -216,6 +219,9 @@ AscendTdtQueue::~AscendTdtQueue() {
       tdt_handle::DelHandle(&acl_handle_);
       acl_handle_ = nullptr;
     }
+  }
+  if (DataQueueMgr::GetInstance().IsCreated(channel_name_)) {
+    DataQueueMgr::GetInstance().Free(channel_name_);
   }
 }
 
@@ -255,8 +261,9 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
     }
     MS_LOG(EXCEPTION) << "Tdt Send data failed." << ascend::GetErrorMessage(true);
   }
-  if (wingman_queue_->IsOpen() && !data.empty()) {
-    wingman_queue_->Push(data);
+  auto wingman = DataQueueMgr::GetInstance().GetDataQueue(channel_name_);
+  if (wingman != nullptr && wingman->IsOpen() && !data.empty()) {
+    wingman->Push(data);
   }
   return DataQueueStatus::SUCCESS;
 }
@@ -647,14 +654,7 @@ void WingmanQueue::Close() {
 std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
   if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) return nullptr;
   auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(node, "shared_name");
-  auto data_queue = DataQueueMgr::GetInstance().GetDataQueue(queue_name);
-  if (data_queue) {
-    auto tdt_queue = dynamic_cast<device::AscendTdtQueue *>(data_queue->Queue().get());
-    if (tdt_queue) {
-      return tdt_queue->GetWingMan();
-    }
-  }
-  return nullptr;
+  return DataQueueMgr::GetInstance().GetDataQueue(queue_name);
 }
 
 void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
@@ -668,10 +668,6 @@ void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
 namespace {
 std::shared_ptr<DataQueue> CreateAscendDataQueue(const std::string &channel_name, bool dynamic_shape, size_t capacity,
                                                  const std::vector<size_t> &) {
-  if (dynamic_shape) {
-    return std::make_shared<AscendDataQueueDynamic>(channel_name, capacity);
-  }
-
   int32_t is_heterogeneous = 0;
   (void)rtGetIsHeterogenous(&is_heterogeneous);
   if (is_heterogeneous != 0) {

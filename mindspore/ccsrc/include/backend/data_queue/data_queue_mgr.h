@@ -105,6 +105,8 @@ class BACKEND_EXPORT DataQueueMgr {
 
   bool IsClosed() const;
 
+  bool IsCreated(const std::string &channel_name) const;
+
   bool Destroy();
 
   // call for Release GPU Resources
@@ -117,9 +119,9 @@ class BACKEND_EXPORT DataQueueMgr {
 
   size_t Capacity(const std::string &channel_name);
 
- private:
-  inline bool isCreated(const std::string &channel_name) const;
+  void Manage(const std::string &channel_name, const std::shared_ptr<BlockingQueue> &queue);
 
+ private:
   DataQueueMgr(const DataQueueMgr &) = delete;
   DataQueueMgr &operator=(const DataQueueMgr &) = delete;
 
