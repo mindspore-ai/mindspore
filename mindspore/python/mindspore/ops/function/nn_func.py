@@ -2295,7 +2295,7 @@ def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dila
 
             - same: Adopts the way of completion. The depth, height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
-              left and right directions possiblily.
+              left and right directions possibility.
               Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
               If this mode is set, `pad` must be 0.
 
@@ -2376,7 +2376,7 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
     of kernel and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,where :math:`\text{
-    kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of theconvolution kernel.
+    kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the convolution kernel.
     The full kernel has shape :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where group is the group number to split the input in the channel dimension.
 
@@ -2405,7 +2405,7 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
 
             - same: Adopts the way of completion. The height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
-              left and right possiblily.
+              left and right possibility.
               Otherwise, the last extra padding will be calculated from the bottom and the right side.
               If this mode is set, `padding` must be 0.
 
