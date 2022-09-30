@@ -29,10 +29,10 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const size_t Indiceselement = 2;
-  const size_t OutShapeSize = 1;
-  const size_t ValuesSize = 1;
-  const size_t DefaultSize = 0;
+  const int64_t Indiceselement = 2;
+  const int64_t OutShapeSize = 1;
+  const int64_t ValuesSize = 1;
+  const int64_t DefaultSize = 0;
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
@@ -44,13 +44,14 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   auto output_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(output_shape_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto default_value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(default_value_shape_ptr)[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kLessEqual, Indiceselement,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("outshape dimension", output_shape_shape.size(), kEqual, OutShapeSize,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("values dimension", values_shape.size(), kLessEqual, ValuesSize, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("default_value dimension", default_value_shape.size(), kEqual, DefaultSize,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", static_cast<int64_t>(indices_shape.size()), kLessEqual,
+                                           Indiceselement, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("outshape dimension", static_cast<int64_t>(output_shape_shape.size()),
+                                           kEqual, OutShapeSize, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("values dimension", static_cast<int64_t>(values_shape.size()), kLessEqual,
+                                           ValuesSize, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("default_value dimension", static_cast<int64_t>(default_value_shape.size()),
+                                           kEqual, DefaultSize, prim_name);
   size_t output_shape_numelement = LongToSize(output_shape_shape[0]);
   auto output_shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(output_shape);
