@@ -35,10 +35,10 @@ from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
+from mindspore.common.api import _pynative_executor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
-from mindspore._c_expression import get_dyn_shape
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -842,7 +842,7 @@ class Shape(Primitive):
         """Initialize Shape"""
 
     def __call__(self, x):
-        return get_dyn_shape(x)
+        return _pynative_executor.get_shape(x)
 
 
 class TensorShape(Primitive):

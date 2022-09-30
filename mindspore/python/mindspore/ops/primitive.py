@@ -22,7 +22,8 @@ from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.common.parameter import Parameter
-from mindspore._c_expression import Primitive_, real_run_op, prim_type
+from mindspore.common.api import _pynative_executor
+from mindspore._c_expression import Primitive_, prim_type
 from mindspore._checkparam import Validator
 from mindspore.ops import signature as sig
 
@@ -749,5 +750,5 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
 @_wrap_func
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
-    output = real_run_op(obj, op_name, args)
+    output = _pynative_executor.real_run_op(obj, op_name, args)
     return output

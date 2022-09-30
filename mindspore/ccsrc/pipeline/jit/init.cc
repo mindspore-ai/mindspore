@@ -109,7 +109,7 @@ void RegModule(py::module *m) {
   mindspore::initializer::RegRandomNormal(m);
   RegMsContext(m);
   RegSecurity(m);
-  mindspore::pynative::RegPynativeExecutor(m);
+  mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::opt::python_pass::RegPattern(m);
   mindspore::opt::python_pass::RegPyPassManager(m);
   mindspore::prim::RegCompositeOpsGroup(m);
@@ -187,7 +187,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.")
     .def("generate_arguments_key", &GraphExecutorPy::GenerateArgumentsKey, "Generate unique key of argument.");
 
-  (void)m.def("real_run_op", &mindspore::pynative::RealRunOp, "Run op pynatively.");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("reset_op_id_with_offset", &mindspore::pipeline::ResetOpIdWithOffset, "Reset Operator Id With Offset");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");
@@ -208,8 +207,6 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("init_cluster", &mindspore::distributed::Initialize, "Init Cluster");
   (void)m.def("set_cluster_exit_with_exception", &mindspore::distributed::set_cluster_exit_with_exception,
               "Set this process exits with exception.");
-  (void)m.def("get_dyn_shape", &mindspore::pynative::GetDynShape, "Get Dynamic Shape of Tensor");
-  (void)m.def("call_constant_folding", &mindspore::pynative::CallConstantFolding, "Call Constant Folding Primitive");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")

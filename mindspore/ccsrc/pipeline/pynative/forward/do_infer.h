@@ -41,7 +41,7 @@ class InferOperation {
   void ClearPrimAbsList() { prim_abs_list_.clear(); }
   // Manage constant flag primitive cache.
   void ClearConstFlagPrimCache() { no_const_flag_prims_.clear(); }
-  py::object CallConstantFolding(const py::args &args);
+  py::object CallConstantFolding(const py::args &args) const;
 
  private:
   // Set abstract for each input value.
