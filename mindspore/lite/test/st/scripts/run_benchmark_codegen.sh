@@ -208,7 +208,6 @@ function Run_cortex_m_codegen() {
       sed -i "s/  if (benchmark() == 0) {/  static char work_space\[300000\];\n  if (benchmark(work_space, 300000) == 0) {/g" Core/Src/main.c
       make >> "$4" || return 1
 
-      continue
       # 2. run benchmark
       bash ${STM32_CUBE_PROG_PATH}/bin/STM32_Programmer.sh -c port=SWD -w build/test_767_01.bin 0x08000000 -s 0x08000000 || exit 1
       sleep 3
