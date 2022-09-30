@@ -249,24 +249,23 @@ class TensorStringifier {
   }
 
   static void OutputOtherDataString(std::ostringstream &ss, bool isScalar, const T &value, int *max_width) {
-    if (isScalar) {
-      ss << value;
+    std::ostringstream value_ss;
+    if constexpr (std::is_same<T, uint8_t>::value) {
+      value_ss << static_cast<uint16_t>(value);
+    } else if constexpr (std::is_same<T, int8_t>::value) {
+      value_ss << static_cast<int16_t>(value);
     } else {
-      std::ostringstream value_ss;
-      if constexpr (std::is_same<T, uint8_t>::value) {
-        value_ss << static_cast<uint16_t>(value);
-      } else if constexpr (std::is_same<T, int8_t>::value) {
-        value_ss << static_cast<int16_t>(value);
-      } else {
-        value_ss << value;
-      }
-      auto value_str = value_ss.str();
+      value_ss << value;
+    }
+    auto value_str = value_ss.str();
+    if (!isScalar) {
       const int width = static_cast<int>(value_str.size());
       *max_width = std::max(*max_width, width);
       // Add a padding string before the number, such as "###123", for subsequent replacement.
       std::string pad(width, '#');
-      ss << pad << value_str;
+      ss << pad;
     }
+    ss << value_str;
   }
 
   static std::string ProcessPlaceholder(const std::ostringstream &ss, int max_width) {
