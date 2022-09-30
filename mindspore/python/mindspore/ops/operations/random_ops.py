@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Operators for random."""
+from __future__ import absolute_import
 
 from mindspore.common._decorator import deprecated
 from mindspore._checkparam import Validator, Rel
