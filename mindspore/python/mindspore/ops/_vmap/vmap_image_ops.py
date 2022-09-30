@@ -16,6 +16,7 @@
 """image_ops vmap impl."""
 from __future__ import absolute_import
 
+import mindspore.numpy as mnp
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import image_ops as IMG
@@ -81,5 +82,49 @@ def get_resize_grad_dynamic_rule(prim, axis_size):
         # (b*n, c, o_w) -> (b, n, c, o_w) for 3-D input
         out = F.reshape(out, img_shape)
         return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(IMG.CropAndResize)
+def get_crop_and_resize_vmap_rule(prim, axis_size):
+    """VmapRule for `CropAndResize` operation."""
+
+    def vmap_rule(x_bdim, boxes_bdim, box_indices_bdim, crop_size_bdim):
+        is_all_none, result = vmap_general_preprocess(x_bdim, boxes_bdim, box_indices_bdim, crop_size_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        boxes, boxes_dim = boxes_bdim
+        box_indices, box_indices_dim = box_indices_bdim
+        crop_size, crop_size_dim = crop_size_bdim
+        if crop_size_dim is not None:
+            _raise_value_error(
+                "The axis of `crop_size` in `{}` must be None, but got {}.".format(prim.name, crop_size_dim))
+
+        boxes = _bdim_at_front(boxes, boxes_dim, axis_size)
+        box_indices = _bdim_at_front(box_indices, box_indices_dim, axis_size)
+        boxes = F.reshape(boxes, (-1, 4))
+        num_boxes = F.shape(box_indices)[-1]
+
+        if x_dim is None:
+            box_indices = F.reshape(box_indices, (-1,))
+            out = prim(x, boxes, box_indices, crop_size)
+        else:
+            x = _bdim_at_front(x, x_dim, axis_size)
+            x_shape = F.shape(x)
+            x = F.reshape(x, (-1,) + x_shape[2:])
+            counts = mnp.arange(0, axis_size * x_shape[1], x_shape[1])
+            counts = F.reshape(counts, (axis_size, 1))
+            counts = F.broadcast_to(counts, (axis_size, num_boxes))
+            box_indices = F.add(box_indices, counts)
+            box_indices = F.reshape(box_indices, (-1,))
+            out = prim(x, boxes, box_indices, crop_size)
+
+        out_shape = F.shape(out)
+        out = F.reshape(out, (-1, num_boxes) + out_shape[1:])
+        return out, 0
+
 
     return vmap_rule

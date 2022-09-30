@@ -390,7 +390,8 @@ from .debug_func import (
 from .image_func import (
     bounding_box_decode,
     bounding_box_encode,
-    check_valid
+    check_valid,
+    crop_and_resize
 )
 from .spectral_func import (
     blackman_window

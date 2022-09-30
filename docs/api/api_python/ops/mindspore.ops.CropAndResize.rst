@@ -1,5 +1,5 @@
 mindspore.ops.CropAndResize
-============================
+===========================
 
 .. py:class:: mindspore.ops.CropAndResize(method="bilinear", extrapolation_value=0.0)
 
@@ -22,6 +22,16 @@ mindspore.ops.CropAndResize
         四维Tensor，其shape为 :math:`(num\_boxes, crop\_height, crop\_width, depth)` ，数据类型类型为float32。
 
     异常：
-        - **TypeError** - 如果 `method` 不是str。
-        - **TypeError** - 如果 `extrapolation_value` 不是float，且取值不是"bilinear"、"nearest"或"bilinear_v2"。
-        - **ValueError** - 如果 `method` 不是'bilinear'、 'nearest'或者'bilinear_v2'。
+        - **TypeError** - `x`、 `boxes` 或 `box_index` 不是Tensor。
+        - **TypeError** - `crop_size` 不是int32的2元组。
+        - **TypeError** - `boxes` 的数据类型不是float， 或者，`box_index` 的数据类型不是int32。
+        - **TypeError** - `method` 不是字符串。
+        - **TypeError** - `extrapolation_value` 不是浮点值。
+        - **ValueError** - `x` 的维度不是4维。
+        - **ValueError** - `boxes` 的纬度不是2维。
+        - **ValueError** - `boxes` 的第2维不是4。
+        - **ValueError** - `box_index` 的维度不是1维。
+        - **ValueError** - `box_index` 的第1维与 `boxes` 的第1维不相等。
+        - **ValueError** - `box_index` 存在元素不在 `[0, batch)` 的范围内.
+        - **ValueError** - `crop_size` 的数据不是正整数.
+        - **ValueError** - `method` 不是 "bilinear"、"nearest"、"bilinear_v2"之一。
