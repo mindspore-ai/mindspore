@@ -158,14 +158,6 @@ std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
   return data_->affinity_core_list_;
 }
 
-void Context::set_delegate(const std::shared_ptr<AbstractDelegate> &delegate) {
-  // if (data_ == nullptr) {
-  //   MS_LOG(ERROR) << "Invalid context.";
-  //   return;
-  // }
-  // data_->delegate = std::dynamic_pointer_cast<Delegate>(delegate);
-}
-
 std::shared_ptr<AbstractDelegate> Context::get_delegate() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
