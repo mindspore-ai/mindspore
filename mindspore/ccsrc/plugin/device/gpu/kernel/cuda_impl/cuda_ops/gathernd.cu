@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 template <typename T, typename S>
 __global__ void GatherNdKernel(T *input, S *indices, T *output, const size_t output_dim0, const size_t output_dim1,
                                const size_t indices_dim1, S *batch_indices, S *batch_strides) {
@@ -117,6 +118,25 @@ void GatherNd(T *input, S *indices, T *output, const size_t &output_dim0, const 
   return;
 }
 
+template <typename S>
+void GatherNd(cuComplex *input, S *indices, cuComplex *output, const size_t &output_dim0, const size_t &output_dim1,
+              const size_t &indices_dim1, S *batch_indices, S *batch_strides, cudaStream_t stream) {
+  int size = output_dim0 * output_dim1;
+  GatherNdKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
+                                                               indices_dim1, batch_indices, batch_strides);
+  return;
+}
+
+template <typename S>
+void GatherNd(cuDoubleComplex *input, S *indices, cuDoubleComplex *output, const size_t &output_dim0,
+              const size_t &output_dim1, const size_t &indices_dim1, S *batch_indices, S *batch_strides,
+              cudaStream_t stream) {
+  int size = output_dim0 * output_dim1;
+  GatherNdKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
+                                                               indices_dim1, batch_indices, batch_strides);
+  return;
+}
+
 template CUDA_LIB_EXPORT void GatherNd<double, int>(double *input, int *indices, double *output,
                                                     const size_t &output_dim0, const size_t &output_dim1,
                                                     const size_t &indices_dim1, int *batch_indices, int *batch_strides,
@@ -135,9 +155,9 @@ template CUDA_LIB_EXPORT void GatherNd<int, int>(int *input, int *indices, int *
                                                  const size_t &output_dim1, const size_t &indices_dim1,
                                                  int *batch_indices, int *batch_strides, cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherNd<short, int>(short *input, int *indices, short *output,  // NOLINT
-                                                   const size_t &output_dim0,
-                                                   const size_t &output_dim1, const size_t &indices_dim1,
-                                                   int *batch_indices, int *batch_strides, cudaStream_t stream);
+                                                   const size_t &output_dim0, const size_t &output_dim1,
+                                                   const size_t &indices_dim1, int *batch_indices, int *batch_strides,
+                                                   cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherNd<unsigned int, int>(unsigned int *input, int *indices, unsigned int *output,
                                                           const size_t &output_dim0, const size_t &output_dim1,
                                                           const size_t &indices_dim1, int *batch_indices,
@@ -211,3 +231,19 @@ template CUDA_LIB_EXPORT void GatherNd<bool, int64_t>(bool *input, int64_t *indi
                                                       const size_t &output_dim0, const size_t &output_dim1,
                                                       const size_t &indices_dim1, int64_t *batch_indices,
                                                       int64_t *batch_strides, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherNd<int64_t>(cuComplex *input, int64_t *indices, cuComplex *output,
+                                                const size_t &output_dim0, const size_t &output_dim1,
+                                                const size_t &indices_dim1, int64_t *batch_indices,
+                                                int64_t *batch_strides, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherNd<int64_t>(cuDoubleComplex *input, int64_t *indices, cuDoubleComplex *output,
+                                                const size_t &output_dim0, const size_t &output_dim1,
+                                                const size_t &indices_dim1, int64_t *batch_indices,
+                                                int64_t *batch_strides, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherNd<int>(cuComplex *input, int *indices, cuComplex *output,
+                                            const size_t &output_dim0, const size_t &output_dim1,
+                                            const size_t &indices_dim1, int *batch_indices, int *batch_strides,
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherNd<int>(cuDoubleComplex *input, int *indices, cuDoubleComplex *output,
+                                            const size_t &output_dim0, const size_t &output_dim1,
+                                            const size_t &indices_dim1, int *batch_indices, int *batch_strides,
+                                            cudaStream_t stream);

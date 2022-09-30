@@ -15,9 +15,13 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/gathernd_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 MS_REG_GPU_KERNEL_TWO(
   GatherNd,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
@@ -80,5 +84,21 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   GatherNd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   GatherNdFwdGpuKernelMod, bool, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd,
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+  GatherNdFwdGpuKernelMod, cuComplex, int)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd,
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
+  GatherNdFwdGpuKernelMod, cuDoubleComplex, int)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd,
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+  GatherNdFwdGpuKernelMod, cuComplex, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd,
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+  GatherNdFwdGpuKernelMod, cuDoubleComplex, int64_t)
 }  // namespace kernel
 }  // namespace mindspore
