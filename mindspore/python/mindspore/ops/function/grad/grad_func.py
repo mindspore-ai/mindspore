@@ -857,7 +857,7 @@ def _jac_generate_target_dimension(x):
     return target_dimension
 
 
-def _jac_trans_item(item, inputs_shape, grad_position):
+def _jacfwd_trans_item(item, inputs_shape, grad_position):
     """transfer origin item to derivative of each output with respect to each input."""
     output_wrt_input_all = ()
     length = len(inputs_shape) - 1
@@ -876,10 +876,10 @@ def _jacfwd_postprocess(x, inputs_shape, grad_position):
     if isinstance(x, tuple):
         jacobian = ()
         for item in x:
-            jacobian += _jac_trans_item(item, inputs_shape, grad_position)
+            jacobian += _jacfwd_trans_item(item, inputs_shape, grad_position)
         res = jacobian
     else:
-        res = _jac_trans_item(x, inputs_shape, grad_position)
+        res = _jacfwd_trans_item(x, inputs_shape, grad_position)
     if len(res) == 1:
         return res[0]
     input_num = len(grad_position)
@@ -899,7 +899,7 @@ def _jacfwd_postprocess(x, inputs_shape, grad_position):
 
 def _jacfwd_construct_v(inputs, grad_position):
     """
-    For input (x, y), x.shape = (a, b), y.shape = (c, d), this method generates corresponding v (v1, v2),
+    For input (x1, x2), x1.shape = (a, b), x2.shape = (c, d), this method generates corresponding v (v1, v2),
     v1.shape = (N, a, b), v2.shape = (N, c, d), while N = a*b + c*d.
     """
     v = ()
@@ -940,8 +940,8 @@ def jacfwd(fn, grad_position=0, has_aux=False):
     reverse mode to get better performance.
 
     Args:
-        fn (Union(Cell, function)): Function to do GradOperation.
-        grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
+        fn (Union[Cell, function]): Function to do GradOperation.
+        grad_position (Union[int, tuple[int]]): If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
@@ -1045,6 +1045,169 @@ def jacfwd(fn, grad_position=0, has_aux=False):
     return wrapped
 
 
+def _jacrev_trans_item(item, outputs_shape):
+    """transfer origin item to derivative of each output with respect to each input."""
+    output_wrt_input_all = ()
+    length = len(outputs_shape) - 1
+    for i in range(length):
+        origin_output_wrt_input = item[outputs_shape[i][1]:outputs_shape[i + 1][1]]
+        target_dimension = _jac_generate_target_dimension(origin_output_wrt_input.shape)
+        temp = transpose(origin_output_wrt_input, target_dimension)
+        output_wrt_input = reshape(origin_output_wrt_input, outputs_shape[i + 1][0] + temp.shape[:-1])
+        output_wrt_input_all += (output_wrt_input,)
+    return output_wrt_input_all
+
+
+def _jacrev_postprocess(x, outputs_shape, grad_position):
+    """reformat jacobian."""
+    if isinstance(x, tuple):
+        jacobian = ()
+        for item in x:
+            jacobian += _jacrev_trans_item(item, outputs_shape)
+        res = jacobian
+    else:
+        res = _jacrev_trans_item(x, outputs_shape)
+    if len(res) == 1:
+        return res[0]
+    input_num = len(grad_position)
+    if len(res) % input_num != 0:
+        raise ValueError("The numbers of inputs and outputs do not match.")
+    output_num = len(res) // input_num
+    if input_num == 1 or output_num == 1:
+        return res
+    jac = ()
+    for i in range(output_num):
+        input_grad = ()
+        for j in range(input_num):
+            input_grad += (res[j * output_num + i],)
+        jac += (input_grad,)
+    return jac
+
+
+def _jacrev_construct_v(inputs, outputs, has_aux=False):
+    """
+    For outputs (y1, y2), y1.shape = (a, b), y2.shape = (c, d), this method generates corresponding v (v1, v2),
+    v1.shape = (N, a, b), v2.shape = (N, c, d), while N = a*b + c*d.
+    """
+    if isinstance(outputs, Tensor):
+        outputs = (outputs,)
+    if has_aux:
+        outputs = (outputs[0],)
+    v = ()
+    primals = ()
+    outputs_shape = (((), 0),)
+    num = 0
+    items_num = ()
+    cum_num = (0,)
+    for item in outputs:
+        item_num = size(item)
+        num += item_num
+        outputs_shape += ((item.shape, num),)
+        items_num += (item_num,)
+        cum_num += (num,)
+    for i, element in enumerate(inputs):
+        primal = broadcast_to(element, (num,) + element.shape)
+        primals += (primal,)
+    for i, element in enumerate(outputs):
+        item_size = items_num[i]
+        temp2 = Tensor(np.eye(num, item_size, -cum_num[i], np.float32))
+        output_v = reshape(temp2, (num,) + element.shape)
+        v += (output_v,)
+    if len(outputs) == 1 or has_aux:
+        return primals, v[0], outputs_shape
+    return primals, v, outputs_shape
+
+
+_grad = _Grad(get_by_position=True, has_aux=False, sens_param=True)
+
+
+def jacrev(fn, grad_position=0, has_aux=False):
+    """
+    Compute Jacobian via reverse mode, corresponding to
+    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#reverse-mode-ad>`_.
+    When number of inputs is much greater than that of outputs, it's better to calculate Jacobian via reverse mode than
+    forward mode to get better performance.
+
+    Args:
+        fn (Union[Cell, function]): Function to do GradOperation.
+        grad_position (Union[int, tuple[int]]): If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False.
+
+    Returns:
+        Function, returns the Jacobian function for the input function or cell.
+        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
+        like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore.ops import jacrev
+        >>> from mindspore import Tensor
+        >>> class MultipleInputsMultipleOutputsNet(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x ** 2 + y ** 2 + z ** 2, x * y * z
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> z = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+        >>> net = MultipleInputsMultipleOutputsNet()
+        >>> jac, aux = jacrev(net, grad_position=0, has_aux=True)(x, y, z)
+        >>> print(jac)
+        Tensor(shape=[2, 2, 2, 2], dtype=Float32, value=
+        [[[[ 2.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  0.00000000e+00]],
+          [[ 0.00000000e+00,  4.00000000e+00],
+           [ 0.00000000e+00,  0.00000000e+00]]],
+         [[[ 0.00000000e+00,  0.00000000e+00],
+           [ 6.00000000e+00,  0.00000000e+00]],
+          [[ 0.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  8.00000000e+00]]]])
+        >>> print(aux)
+        [[ 1.  4.]
+         [ 9. 16.]]
+    """
+
+    def aux_fn(*args):
+        outputs = fn(*args)
+        if not isinstance(outputs, tuple) or len(outputs) < 2:
+            raise ValueError("When 'has_aux' is True, origin 'fn' requires more than one outputs.")
+        res = outputs[0]
+        return res
+
+    @ms_function
+    def wrapped(*args):
+        checked_grad_position = _check_grad_position(grad_position, len(args))
+        outputs = fn(*args)
+        primals, v, outputs_shape = _jacrev_construct_v(args, outputs, has_aux)
+
+        def inner_fn(vjp_inputs, vectors):
+            gradient_outputs = _grad(fn, None, checked_grad_position)(*vjp_inputs, vectors)
+            return gradient_outputs
+
+        def inner_aux_fn(vjp_inputs, vectors):
+            gradient_outputs = _grad(aux_fn, None, checked_grad_position)(*vjp_inputs, vectors)
+            return gradient_outputs
+
+        if has_aux:
+            res = _vmap(inner_aux_fn)(primals, v)
+            jac_res = _jacrev_postprocess(res, outputs_shape, checked_grad_position)
+            forward_outputs = fn(*args)
+            if len(forward_outputs) == 2:
+                return jac_res, forward_outputs[1]
+            return jac_res, forward_outputs[1:]
+
+        res = _vmap(inner_fn)(primals, v)
+        jac_res = _jacrev_postprocess(res, outputs_shape, checked_grad_position)
+        return jac_res
+
+    return wrapped
+
+
 def custom_vjp(fn=None):
     """
     Support vjp to custom bprop for function.
@@ -1116,12 +1279,13 @@ def custom_vjp(fn=None):
 __all__ = [
     'grad',
     'value_and_grad',
+    'jacfwd',
+    'jacrev',
     'jet',
     'derivative',
     'jvp',
     'vjp',
     'custom_vjp',
-    'jacfwd',
     'linearize'
 ]
 __all__.sort()
