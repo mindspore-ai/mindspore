@@ -824,7 +824,8 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
   }
   if (!is_correct) {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
-                            << " must be a Int or a tuple with all Int elements, but got " << attr->ToString();
+                            << " must be one of ['int', 'tuple', 'list'] with all Int elements, but got "
+                            << attr->ToString();
   }
   return result;
 }
