@@ -75,8 +75,8 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                   << rois_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (xdiff_shape_.size() != dx_dy_shape_size) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of xdiff_shape must be equal to 4, but got "
+  if (xdiff_shape_.size() > dx_dy_shape_size) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of xdiff_shape cannot be greater than 4, but got "
                   << xdiff_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
   }

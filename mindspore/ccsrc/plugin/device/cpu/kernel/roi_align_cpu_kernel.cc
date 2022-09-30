@@ -161,8 +161,8 @@ int ROIAlignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
   constexpr size_t X_DIMS = 4;
   constexpr size_t ROIS_DIMS = 2;
-  if (x_shape.size() != X_DIMS) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'features' must be equal to 4, but got "
+  if (x_shape.size() > X_DIMS) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'features' cannot be greater than 4, but got "
                   << x_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
@@ -176,7 +176,7 @@ int ROIAlignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
   x_size_ = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies{}) * x_type_size;
   rois_size_ = std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{}) * rois_type_size;
-  output_size_ = rois_shape[kIndex0] * x_shape[kIndex0] * pooled_height_ * pooled_width_ * x_type_size;
+  output_size_ = rois_shape[kIndex0] * x_shape[kIndex1] * pooled_height_ * pooled_width_ * x_type_size;
 
   channels_ = LongToInt(x_shape[kIndex1]);
   MS_EXCEPTION_IF_ZERO("channels", channels_);
