@@ -906,9 +906,10 @@ class RandomShuffle(Primitive):
     Randomly shuffles a Tensor along its first dimension.
 
     Args:
-        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
-        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-            final generated random number, must be non-negative. Default: 0.
+        seed (int): Random seed. If `seed` or `seed2` is set to non-zero, the random number generator will be seeded
+            by the given seed. Otherwise, it will be seeded randomly. The seed must be non-negative. Default: 0.
+        seed2 (int): Random seed2, a second seed to avoid seed collision. If `seed` is 0, the `seed2` will be used as
+            the seed of the random generator. It must be non-negative. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The Tensor need be shuffled.
@@ -920,7 +921,7 @@ class RandomShuffle(Primitive):
         TypeError: If data type of `seed` or `seed2` is not int.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)

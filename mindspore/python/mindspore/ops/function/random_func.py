@@ -397,16 +397,17 @@ def shuffle(x, seed=None):
 
     Args:
         x (Tensor): The Tensor need be shuffled.
-        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed (int): Random seed used for random number generation, must be non-negative. If `seed` is 0, which will be
+            replaced with a randomly generated value. Default: None, which will be treated as 0.
 
     Returns:
         Tensor. The shape and type are the same as the input `x`.
 
     Raises:
-        TypeError: If data type of `seed` or `seed2` is not int.
+        TypeError: If data type of `seed` is not None or non-negative int.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
