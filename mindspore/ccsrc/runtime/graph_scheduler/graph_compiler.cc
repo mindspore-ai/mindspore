@@ -237,7 +237,7 @@ void OptimizeNopNode(KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(origin_pair.first);
     // The device address of parameter as input may be not the running used in the heterogeneous or control flow
     // scenarios, and not set the ref node.
-    if (origin_pair.first->isa<Parameter>()) {
+    if (origin_pair.first->isa<Parameter>() || origin_pair.first->isa<ValueNode>()) {
       continue;
     }
     MS_LOG(INFO) << "The reference relation of nopnode " << ref_node->fullname_with_scope() << ", index: " << 0
