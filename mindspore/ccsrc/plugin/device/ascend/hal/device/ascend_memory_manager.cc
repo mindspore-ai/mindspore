@@ -48,10 +48,6 @@ uint64_t AscendMemoryManager::GetMsUsedHbmSize() const { return AscendMemAdapter
 void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
   auto align_size = GetCommonAlignSize(size);
   const auto device_addr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem);
-  if (device_addr == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
-                      << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
-  }
   return device_addr;
 }
 

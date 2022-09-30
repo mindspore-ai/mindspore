@@ -65,6 +65,12 @@ enum FittingType {
   kNumFittingTypes
 };
 
+struct BestInfo {
+  size_t best_sol, worst, best, best_timing;
+  AlgorithmType best_algo;
+  BestInfo() : best_sol(0), worst(0), best(SIZE_MAX), best_timing(SIZE_MAX), best_algo(kManyObjects) {}
+};
+
 class DynamicBitSet {
   const size_t bit_width_ = 64;
 
