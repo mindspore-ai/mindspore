@@ -37,6 +37,16 @@ bool CastGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 int CastGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
+  is_null_input_ =
+    CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
+  if (is_null_input_) {
+    input_size_list_.push_back(0);
+    output_size_list_.push_back(0);
+    return KRET_OK;
+  }
+
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
