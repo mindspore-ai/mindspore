@@ -7,7 +7,7 @@ mindspore.rewrite
     SymbolTree通常对应于网络的forward方法。
 
     参数：
-        - **network** ( Cell ) - 要重写的网络。现在只支持Cell类型的网络。
+        - **network** (Cell) - 要重写的网络。现在只支持Cell类型的网络。
 
     .. py:method:: mindspore.rewrite.SymbolTree.after(node: Node)
 
