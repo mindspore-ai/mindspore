@@ -73,6 +73,12 @@ def _zeros_like_csr_tensor(x):
     return F.make_csr_tensor(x.indptr, x.indices, values, x.shape)
 
 
+@zeros_like_leaf.register("MapTensor")
+def _zeros_like_map_tensor(x):
+    """Returns a map tensor with the same shape and dtype as x and all elements are 0."""
+    return x
+
+
 @zeros_like_leaf.register("TypeType")
 def _zeros_like_type_type(x):
     """Returns x because x is a type. This is usually used in backprop progress."""

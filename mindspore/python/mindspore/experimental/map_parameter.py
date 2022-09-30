@@ -146,6 +146,24 @@ class MapParameter(Parameter):
         result_tensor = self._map_tensor.get(key_tensor, default_value)
         return Tensor(result_tensor, internal=True)
 
+    def get_keys(self):
+        """
+        Get all keys as a tensor.
+
+        Returns:
+            Tensor, the tensor contains all keys.
+        """
+        return None
+
+    def get_values(self):
+        """
+        Get all values as a tensor.
+
+        Returns:
+            Tensor, the tensor contains all keys.
+        """
+        return None
+
     def put(self, key_tensor, value_tensor):
         """
         Insert or update records according the given key tensor and value tensor.

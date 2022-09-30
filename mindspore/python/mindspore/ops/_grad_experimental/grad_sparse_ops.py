@@ -28,6 +28,7 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseDiv
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
+from mindspore.ops.operations import _map_tensor_ops
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
@@ -292,4 +293,15 @@ def get_bprop_sparse_reorder(self):
         axis = 0
         return None, gather_op(dout[1], inverted_permutation, axis), None
 
+    return bprop
+
+
+@bprop_getters.register(_map_tensor_ops.MapTensorGet)
+def get_bprop_map_tensor_get(self):
+    """Grad definition for `MapTensorGet` operation."""
+    grad_op = G.MapTensorGetGrad()
+
+    def bprop(map_tensor, key_tensor, default_value, out, dout):
+        grad_map_tensor = grad_op(map_tensor, key_tensor, default_value, dout)
+        return grad_map_tensor, zeros_like(key_tensor), zeros_like(default_value)
     return bprop

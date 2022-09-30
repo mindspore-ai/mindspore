@@ -1822,5 +1822,17 @@ bool AbstractIOMonad::operator==(const AbstractBase &other) const {
   }
   return other.isa<AbstractIOMonad>();
 }
+
+ValuePtr GetRefKeyValue(const AbstractBasePtr &abs) {
+  auto abs_ref = abs->cast_ptr<AbstractRefTensor>();
+  if (abs_ref != nullptr) {
+    return abs_ref->ref_key_value();
+  }
+  auto abs_map_tensor = abs->cast_ptr<AbstractMapTensor>();
+  if (abs_map_tensor != nullptr) {
+    return abs_map_tensor->ref_key_value();
+  }
+  return nullptr;
+}
 }  // namespace abstract
 }  // namespace mindspore

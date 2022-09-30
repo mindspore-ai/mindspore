@@ -1592,6 +1592,8 @@ MS_CORE_API std::string ExtractLoggingInfo(const std::string &info);
 
 MS_CORE_API void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &lhs_sequence,
                                                                 const AbstractSequencePtr &rhs_sequence);
+
+MS_CORE_API ValuePtr GetRefKeyValue(const AbstractBasePtr &abs);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_

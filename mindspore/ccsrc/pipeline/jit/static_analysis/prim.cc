@@ -1848,8 +1848,8 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     MS_EXCEPTION_IF_NULL(eval_result);
     AbstractBasePtr abs = eval_result->abstract();
     MS_EXCEPTION_IF_NULL(abs);
-    auto ref_abs = abs->cast_ptr<AbstractRefTensor>();
-    if (ref_abs == nullptr) {
+    auto ref_key_value = abstract::GetRefKeyValue(abs);
+    if (ref_key_value == nullptr) {
       MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref, but " << abs->ToString();
       return nullptr;
     }
@@ -1865,11 +1865,9 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_EXCEPTION_IF_NULL(param);
       ifEmbedIsWeight = param->has_default();
     }
-    auto refkey = ref_abs->ref_key_value()->cast_ptr<StringImm>();
+    auto refkey = ref_key_value->cast_ptr<StringImm>();
     if (refkey == nullptr || !ifEmbedIsWeight) {
       auto ret = std::make_shared<AbstractScalar>(type);
-      auto ref_value = ref_abs->ref();
-      MS_EXCEPTION_IF_NULL(ref_value);
       return std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
     }
 
@@ -1884,8 +1882,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_LOG(ERROR) << "RefToEmbed input can't find parameter \"" << name << "\" in graph.";
       return nullptr;
     }
-    AbstractBasePtr x = ref_abs->ref();
-    x = SensitivityTransform(x);
+    AbstractBasePtr x = SensitivityTransform(abs);
     std::shared_ptr<SymbolicKeyInstance> key = std::make_shared<SymbolicKeyInstance>(node, x);
     std::shared_ptr<AbstractScalar> abs_scalar = std::make_shared<AbstractScalar>(key, type);
     return std::make_shared<EvalResult>(abs_scalar, std::make_shared<AttrValueMap>());

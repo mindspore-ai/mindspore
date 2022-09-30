@@ -3271,6 +3271,20 @@ def map_tensor_erase(map_tensor, key_tensor):
     return _map_tensor_ops.erase(map_tensor, key_tensor)
 
 
+def map_tensor_get_keys(map_tensor):
+    r"""
+    Get all keys as a tensor.
+    """
+    return _map_tensor_ops.get_keys(map_tensor)
+
+
+def map_tensor_get_values(map_tensor):
+    r"""
+    Get all values as a tensor.
+    """
+    return _map_tensor_ops.get_values(map_tensor)
+
+
 def conj(input):
     r"""
     Computes complex conjugate of the input element-wise.

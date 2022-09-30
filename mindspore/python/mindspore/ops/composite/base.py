@@ -32,8 +32,6 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
 from mindspore.common import dtype as mstype
 from mindspore.common.api import ms_function, _pynative_executor, _wrap_func
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.operations import _grad_ops
-from mindspore.ops import operations as P
 from mindspore.ops import signature as sig
 
 __all__ = [TupleAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_, ListSliceSetItem_]
@@ -1108,15 +1106,3 @@ class _ZipOperation(ZipOperation_):
 
 zip_operation = _ZipOperation('zip_operation')
 """`zip_operation` will generate a tuple of zip iterations of inputs."""
-
-env_get = MultitypeFuncGraph("env_get")
-
-environ_get = Primitive('EnvironGet')
-ref_to_embed = _grad_ops.RefToEmbed()
-zeros_like = P.ZerosLike()
-
-
-@env_get.register("EnvType", "Tensor")
-def _tensor_env_get(env, parameter):
-    """Used to get env."""
-    return environ_get(env, ref_to_embed(parameter), zeros_like(parameter))
