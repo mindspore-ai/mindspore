@@ -47,6 +47,7 @@ class MS_CORE_API Named : public Value {
   const std::string &name() const { return name_; }
   /// \brief Setting name of object.
   ///
+  /// \param[in] name The name set for the object.
   /// \no return.
   void set_name(const std::string &name) { name_ = name; }
   /// \brief Check whether two Named objects are the same.

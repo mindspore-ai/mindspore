@@ -291,7 +291,6 @@ from .minimum_grad_ds import _minimum_grad_ds_tbe
 from .concat import _concat_tbe
 from .concat_ds import _concat_ds_tbe
 from .slice import _slice_tbe
-from .slice_ds import _slice_ds_tbe
 from .sign import _sign_tbe
 from .sign_ds import _sign_ds_tbe
 from .greater import _greater_tbe

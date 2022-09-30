@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/fused_batch_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/layer_norm_grad_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_d_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/gather_v2_ds_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bce_with_logits_loss_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/broadcastto_fission.h"
@@ -89,6 +90,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/transposed_update_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_dilation_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/unsorted_segment_sum_replace.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
 #include "plugin/device/ascend/optimizer/format_type/dynamic_rnn_grad_reformat.h"
@@ -215,6 +217,7 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
 
 void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
+  ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumReplace>());
   ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
@@ -260,7 +263,8 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
   ir_fusion_pm->AddPass(std::make_shared<ReduceMinFission>());
-  ir_fusion_pm->AddPass(std::make_shared<UnsortSegmentSumFission>());
+  ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumFission>());
+  ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumDFission>());
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
@@ -418,6 +422,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumReplace>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());

@@ -22,7 +22,7 @@ unsorted_segment_sum = P.UnsortedSegmentSum()
 num_segments = 4
 padding = Primitive('Padding')
 op_slice = Primitive('Slice')
-op_unsorted_segment_sum = Primitive('UnsortedSegmentSum')
+op_unsorted_segment_sum = Primitive('UnsortedSegmentSumD')
 
 
 class FnDict:

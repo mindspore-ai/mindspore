@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,124 +25,108 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool CheckInputs(const CNodePtr &origin_node) {
-  MS_EXCEPTION_IF_NULL(origin_node);
-  if (common::AnfAlgo::GetInputTensorNum(origin_node) != kUnsortedSegmentSumInputTensorNum) {
-    MS_LOG(DEBUG) << "UnsortedSegmentSum has wrong inputs num, not equal " << kUnsortedSegmentSumInputTensorNum
-                  << ". CNode= " << origin_node->DebugString();
-    return false;
-  }
-  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
-  auto y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
-  if (x_shape.empty() || y_shape.empty()) {
-    return false;
-  }
-  if (x_shape[x_shape.size() - 1] != 1) {
-    MS_LOG(DEBUG) << "UnsortedSegmentSum is not need fission. The last value of input0's shape is "
-                  << x_shape[x_shape.size() - 1];
-    return false;
-  }
-  return x_shape.size() > y_shape.size();
-}
+constexpr size_t kUnsortedSegmentSumInputNum = 3;
 }  // namespace
 
-CNodePtr UnsortSegmentSumFission::CreatePadding(const FuncGraphPtr &graph, const CNodePtr &origin_node,
-                                                const size_t &pad_dim_size) const {
+CNodePtr UnsortedSegmentSumFission::CreateConcatD(const FuncGraphPtr &graph, const CNodePtr &sum,
+                                                  const size_t &pad_dim_size) const {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(origin_node);
-  std::vector<AnfNodePtr> padding_inputs = {NewValueNode(std::make_shared<Primitive>(kPaddingOpName)),
-                                            origin_node->input(kIndex1)};
-  auto padding = NewCNode(padding_inputs, graph);
-  MS_EXCEPTION_IF_NULL(padding);
-  padding->set_scope(origin_node->scope());
-  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
+  MS_EXCEPTION_IF_NULL(sum);
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
+  auto x_input = sum->input(kIndex1);
+  for (size_t i = 0; i < pad_dim_size; ++i) {
+    concat_inputs.push_back(x_input);
+  }
+  auto concat = NewCNode(concat_inputs, graph);
+  MS_EXCEPTION_IF_NULL(concat);
+  concat->set_scope(sum->scope());
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sum, 0);
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
   if (IsDynamic(shape)) {
-    auto min_shape = common::AnfAlgo::GetInputMinShape(origin_node, 0);
-    auto max_shape = common::AnfAlgo::GetInputMaxShape(origin_node, 0);
+    auto min_shape = common::AnfAlgo::GetInputMinShape(sum, 0);
+    auto max_shape = common::AnfAlgo::GetInputMaxShape(sum, 0);
     if (!min_shape.empty() && !max_shape.empty()) {
       min_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
       max_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
     }
     BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)},
-                                                 {base_shape}, padding.get());
+    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(sum, 0)},
+                                                 {base_shape}, concat.get());
   } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)},
-                                                {shape}, padding.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(sum, 0)}, {shape},
+                                                concat.get());
   }
-  common::AnfAlgo::SetNodeAttr(kAttrPadDimSize, MakeValue(SizeToLong(pad_dim_size)), padding);
-  return padding;
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(shape.size() - 1)), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(pad_dim_size)}), concat);
+  return concat;
 }
 
-CNodePtr UnsortSegmentSumFission::CreateUnsortedSegmentSum(const FuncGraphPtr &graph, const CNodePtr &origin_node,
-                                                           const CNodePtr &padding, const size_t &pad_dim_size) const {
+CNodePtr UnsortedSegmentSumFission::CreateUnsortedSegmentSum(const FuncGraphPtr &graph, const CNodePtr &orig_sum,
+                                                             const CNodePtr &concat, const size_t &pad_dim_size) const {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(origin_node);
-  MS_EXCEPTION_IF_NULL(padding);
-  std::vector<AnfNodePtr> unsorted_segment_sum8_inputs = {
-    NewValueNode(std::make_shared<Primitive>(prim::kPrimUnsortedSegmentSum->name())), padding,
-    origin_node->input(kIndex2)};
-  auto unsorted_segment_sum = NewCNode(unsorted_segment_sum8_inputs, graph);
-  MS_EXCEPTION_IF_NULL(unsorted_segment_sum);
-  unsorted_segment_sum->set_scope(origin_node->scope());
-  auto shape = common::AnfAlgo::GetOutputInferShape(origin_node, 0);
+  MS_EXCEPTION_IF_NULL(orig_sum);
+  MS_EXCEPTION_IF_NULL(concat);
+  std::vector<AnfNodePtr> new_sum_inputs = {
+    NewValueNode(std::make_shared<Primitive>(prim::kPrimUnsortedSegmentSum->name())), concat, orig_sum->input(kIndex2),
+    orig_sum->input(kIndex3)};
+  auto new_sum = NewCNode(new_sum_inputs, graph);
+  MS_EXCEPTION_IF_NULL(new_sum);
+  new_sum->set_scope(orig_sum->scope());
+  auto shape = common::AnfAlgo::GetOutputInferShape(orig_sum, 0);
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
   if (IsDynamic(shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(origin_node, 0);
-    auto max_shape = common::AnfAlgo::GetInputMaxShape(origin_node, 0);
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(orig_sum, 0);
+    auto max_shape = common::AnfAlgo::GetInputMaxShape(orig_sum, 0);
     if (!min_shape.empty() && !max_shape.empty()) {
       min_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
       max_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
     }
 
     BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)},
-                                                 {base_shape}, unsorted_segment_sum.get());
+    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(orig_sum, 0)}, {base_shape},
+                                                 new_sum.get());
   } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
-                                                unsorted_segment_sum.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(orig_sum, 0)}, {shape},
+                                                new_sum.get());
   }
-
-  common::AnfAlgo::SetNodeAttr(kAttrNumSegments, MakeValue(shape[0]), unsorted_segment_sum);
-  return unsorted_segment_sum;
+  return new_sum;
 }
 
-CNodePtr UnsortSegmentSumFission::CreateSlice(const FuncGraphPtr &graph, const CNodePtr &unsort_segment_sum,
-                                              const CNodePtr &unsorted_segment_sum8) const {
+CNodePtr UnsortedSegmentSumFission::CreateSlice(const FuncGraphPtr &graph, const CNodePtr &orig_sum,
+                                                const CNodePtr &new_sum) const {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(unsort_segment_sum);
-  MS_EXCEPTION_IF_NULL(unsorted_segment_sum8);
-  std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)),
-                                          unsorted_segment_sum8};
+  MS_EXCEPTION_IF_NULL(orig_sum);
+  MS_EXCEPTION_IF_NULL(new_sum);
+  auto orig_sum_shape = common::AnfAlgo::GetOutputInferShape(orig_sum, 0);
+  std::vector<int64_t> offsets(orig_sum_shape.size(), 0);
+  auto offsets_input = CreateShapeValueNode(graph, offsets, true);
+  auto size_input = CreateShapeValueNode(graph, orig_sum_shape, true);
+  std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)), new_sum,
+                                          offsets_input, size_input};
   auto slice = NewCNode(slice_inputs, graph);
   MS_EXCEPTION_IF_NULL(slice);
-  slice->set_scope(unsort_segment_sum->scope());
-  slice->set_abstract(unsort_segment_sum->abstract());
-  auto unsort_segment_sum_shape = common::AnfAlgo::GetOutputInferShape(unsort_segment_sum, 0);
-  std::vector<size_t> offsets(unsort_segment_sum_shape.size(), 0);
-  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
-  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(unsort_segment_sum_shape), slice);
+  slice->set_scope(orig_sum->scope());
+  slice->set_abstract(orig_sum->abstract());
   return slice;
 }
 
-const BaseRef UnsortSegmentSumFission::DefinePattern() const {
+const BaseRef UnsortedSegmentSumFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   VectorRef pattern({prim::kPrimUnsortedSegmentSum, Xs});
   return pattern;
 }
 
-const AnfNodePtr UnsortSegmentSumFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                  const EquivPtr &) const {
+const AnfNodePtr UnsortedSegmentSumFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                                    const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto origin_node = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(origin_node);
-  if (!CheckInputs(origin_node)) {
+  auto sum = CheckAnfNodeIfCNodeAndInputSize(node, kUnsortedSegmentSumInputNum);
+  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sum, 0);
+  if (x_shape.size() <= 1 || x_shape.back() != 1) {
     return nullptr;
   }
   size_t pad_dim_size;
-  auto input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
+  auto input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(sum, 0);
   constexpr auto PADSIZE32 = 8;
   constexpr auto PADSIZE16 = 16;
   if (input_dtype == kNumberTypeFloat32) {
@@ -150,13 +134,13 @@ const AnfNodePtr UnsortSegmentSumFission::Process(const FuncGraphPtr &graph, con
   } else if (input_dtype == kNumberTypeFloat16) {
     pad_dim_size = PADSIZE16;
   } else {
-    MS_LOG(DEBUG) << "UnsortedSegmentSum data type not in (float32, float16), no need change";
+    MS_LOG(DEBUG) << "UnsortedSegmentSum data type not in (float32, float16), no need change.";
     return nullptr;
   }
 
-  auto padding = CreatePadding(graph, origin_node, pad_dim_size);
-  auto unsorted_segment_sum8 = CreateUnsortedSegmentSum(graph, origin_node, padding, pad_dim_size);
-  return CreateSlice(graph, origin_node, unsorted_segment_sum8);
+  auto concat = CreateConcatD(graph, sum, pad_dim_size);
+  auto new_sum = CreateUnsortedSegmentSum(graph, sum, concat, pad_dim_size);
+  return CreateSlice(graph, sum, new_sum);
 }
 }  // namespace opt
 }  // namespace mindspore
