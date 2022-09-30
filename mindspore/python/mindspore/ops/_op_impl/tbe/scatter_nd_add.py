@@ -22,6 +22,8 @@ scatter_nd_add_op_info = TBERegOp("ScatterNdAdd") \
     .binfile_name("scatter_nd_add.so") \
     .compute_cost(10) \
     .kernel_name("scatter_nd_add") \
+    .dynamic_shape(True) \
+    .dynamic_compile_static(True) \
     .partial_flag(True) \
     .attr("use_locking", "optional", "bool", "all", "false") \
     .input(0, "var", False, "required", "all") \
