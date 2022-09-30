@@ -15,9 +15,11 @@
 
 import numpy as np
 import pytest
-
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
+import mindspore.ops as op
+from mindspore.nn import Cell
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
@@ -187,11 +189,11 @@ def test_4d_transpose_ab():
                         [[1054., 1180., 1306., 1432.],
                          [1129., 1264., 1399., 1534.]]],
                        [[[2224., 2404., 2584., 2764.],
-                         [2335., 2524., 2713., 2902.]],
-                        [[3826., 4060., 4294., 4528.],
-                         [3973., 4216., 4459., 4702.]],
-                        [[5860., 6148., 6436., 6724.],
-                         [6043., 6340., 6637., 6934.]]]], np.float16)
+                         [2336., 2524., 2712., 2902.]],
+                        [[3826., 4060., 4296., 4528.],
+                         [3974., 4216., 4460., 4704.]],
+                        [[5860., 6148., 6436., 6728.],
+                         [6040., 6340., 6636., 6932.]]]], np.float16)
     judge_result_correct(output.asnumpy(), expect)
 
 
@@ -254,3 +256,308 @@ def test_bmm_forward_float32_functional_api():
 if __name__ == '__main__':
     test_bmm_forward_float32_tensor_api()
     test_bmm_forward_float32_functional_api()
+
+
+class BatchMatMul(Cell):
+    def __init__(self):
+        super().__init__()
+        self.batchmatmul = op.matmul
+
+    def construct(self, x1, x2):
+        return self.batchmatmul(x1, x2)
+
+
+class BatchMatMulTestNet(Cell):
+    def __init__(self, inputs=None):
+        self.ms_type = inputs[0].dtype
+
+        self.input_x1 = inputs[0]
+        self.input_x1_np = inputs[0].asnumpy()
+        self.input_x1_shape = inputs[0].shape
+
+        self.input_x2 = inputs[1]
+        self.input_x2_np = inputs[1].asnumpy()
+        self.input_x2_shape = inputs[1].shape
+        self.loss = 1e-3
+
+    def forward_mindspore_impl(self):
+        input_x1 = Tensor(self.input_x1)
+        input_x2 = Tensor(self.input_x2)
+        net = BatchMatMul()
+        out = net(input_x1, input_x2)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_float16():
+    """
+    Feature: test bmm with dtype float16.
+    Description: test bmm with dtype float16.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.float16)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.float16)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    float16_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]]], np.float16)
+    assert (float16_out.asnumpy() == expect).all()
+    assert str(float16_out.dtype) == "Float16"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_float32():
+    """
+    Feature: test bmm with dtype float32.
+    Description: test bmm with dtype float32.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.float32)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.float32)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    float32_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]]], np.float32)
+    assert (float32_out.asnumpy() == expect).all()
+    assert str(float32_out.dtype) == "Float32"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_float64():
+    """
+    Feature: test bmm with dtype float64.
+    Description: test bmm with dtype float64.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.float64)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.float64)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    float64_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]],
+                       [[3., 3., 3., 3.]]], np.float64)
+    assert (float64_out.asnumpy() == expect).all()
+    assert str(float64_out.dtype) == "Float64"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_int8():
+    """
+    Feature: test bmm with dtype int8.
+    Description: test bmm with dtype int8.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.int8)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.int8)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    int8_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.int8)
+    assert (int8_out.asnumpy() == expect).all()
+    assert str(int8_out.dtype) == "Int8"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_int16():
+    """
+    Feature: test bmm with dtype int16.
+    Description: test bmm with dtype int16.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.int16)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.int16)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    int16_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.int16)
+    assert (int16_out.asnumpy() == expect).all()
+    assert str(int16_out.dtype) == "Int16"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_int32():
+    """
+    Feature: test bmm with dtype int32.
+    Description: test bmm with dtype int32.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.int32)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.int32)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    int32_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.int32)
+    assert (int32_out.asnumpy() == expect).all()
+    assert str(int32_out.dtype) == "Int32"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_int64():
+    """
+    Feature: test bmm with dtype int64.
+    Description: test bmm with dtype int64.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.int64)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.int64)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    int64_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.int64)
+    assert (int64_out.asnumpy() == expect).all()
+    assert str(int64_out.dtype) == "Int64"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_uint8():
+    """
+    Feature: test bmm with dtype uint8.
+    Description: test bmm with dtype uint8.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.uint8)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.uint8)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    uint8_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.int8)
+    assert (uint8_out.asnumpy() == expect).all()
+    assert str(uint8_out.dtype) == "UInt8"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_uint16():
+    """
+    Feature: test bmm with dtype uint16.
+    Description: test bmm with dtype uint16.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.uint16)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.uint16)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    uint16_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.int16)
+    assert (uint16_out.asnumpy() == expect).all()
+    assert str(uint16_out.dtype) == "UInt16"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_uint32():
+    """
+    Feature: test bmm with dtype uint32.
+    Description: test bmm with dtype uint32.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.uint32)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.uint32)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    uint32_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.uint32)
+    assert (uint32_out.asnumpy() == expect).all()
+    assert str(uint32_out.dtype) == "UInt32"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_uint64():
+    """
+    Feature: test bmm with dtype uint64.
+    Description: test bmm with dtype uint64.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.ones(shape=[4, 1, 3]), ms.uint64)
+    input_x2 = Tensor(np.ones(shape=[4, 3, 4]), ms.uint64)
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    uint64_out = fact.forward_mindspore_impl()
+    expect = np.array([[[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]],
+                       [[3, 3, 3, 3]]], np.uint64)
+    assert (uint64_out.asnumpy() == expect).all()
+    assert str(uint64_out.dtype) == "UInt64"
