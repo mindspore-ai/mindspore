@@ -144,6 +144,74 @@ int Generator::CodeDataCFile() {
   return RET_OK;
 }
 
+int Generator::CodeBenchmarkHFile(const std::string &file) {
+  std::ofstream of(file);
+  if (of.bad()) {
+    MS_LOG(ERROR) << "open file error " << file;
+    return RET_ERROR;
+  }
+  MS_LOG(INFO) << "write " << file;
+  of << R"RAW(/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_LITE_MICRO_BENCHMARK_H_
+#define MINDSPORE_LITE_MICRO_BENCHMARK_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+)RAW";
+  size_t shape_size = 0;
+  std::vector<Tensor *> inputs = ctx_->graph_inputs();
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    shape_size += inputs[i]->shape().size();
+  }
+  std::vector<Tensor *> outputs = ctx_->graph_outputs();
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    shape_size += outputs[i]->shape().size();
+  }
+  typedef struct {
+    int type;
+    int format;
+    void *name;
+    int ndim;
+    int64_t *shape;
+    void *data;
+    int quant_nums;
+  } MicroTensor;
+
+  size_t workspace_size =
+    ctx_->total_buffer_size() + ctx_->weight_buffer_size() + shape_size * sizeof(int64_t) +
+    (sizeof(MicroTensor) + sizeof(MicroTensor *)) * (ctx_->graph_inputs().size() + ctx_->graph_outputs().size());
+
+  of << "#define WORK_SPACE_SIZE " << workspace_size << "\n";
+  of << R"RAW(
+
+int benchmark();
+
+#ifdef __cplusplus
+}
+#endif
+#endif //MINDSPORE_LITE_MICRO_BENCHMARK_H_
+
+)RAW";
+  of.close();
+  return RET_OK;
+}
+
 int Generator::CodeStaticContent() {
   std::string bench_cmake_lists_txt = bench_cmake_lists;
   std::string calib_header_txt = calib_header;
@@ -189,7 +257,7 @@ int Generator::CodeStaticContent() {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));
   }
   if (config_->target() == kCortex_M) {
-    const_blocks.emplace_back(std::make_pair(net_main_file_path_ + "benchmark.h", benchmark_h_cortex));
+    CodeBenchmarkHFile(net_main_file_path_ + "benchmark.h");
     const_blocks.emplace_back(std::make_pair(net_main_file_path_ + "data.h", data_h_cortex));
     const_blocks.emplace_back(
       std::make_pair(config_->code_path() + "/" + "cortex-m7.toolchain.cmake", cortex_m7_toolchain));

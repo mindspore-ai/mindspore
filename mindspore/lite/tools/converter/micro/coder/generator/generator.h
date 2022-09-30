@@ -65,6 +65,7 @@ class Generator {
  private:
   int CodeSourceCMakeFile();
   int CodeStaticContent();
+  int CodeBenchmarkHFile(const std::string &file);
   int CodeMSModelImplement();
   int CodeDataCFile();
 

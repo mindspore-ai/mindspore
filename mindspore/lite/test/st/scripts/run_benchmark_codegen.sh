@@ -205,7 +205,6 @@ function Run_cortex_m_codegen() {
       cd ${stm_demo_file} || exit 1
       [ -n "${stm_demo_file}" ] && rm -rf ${stm_demo_file}/build
       sed -i "s/LITE_PACK =/LITE_PACK = mindspore-lite-${version}-none-cortex-m7/g" Makefile
-      sed -i "s/  if (benchmark() == 0) {/  static char work_space\[300000\];\n  if (benchmark(work_space, 300000) == 0) {/g" Core/Src/main.c
       make >> "$4" || return 1
 
       # 2. run benchmark
