@@ -2778,7 +2778,7 @@ class Dilation2DBackpropInput(Primitive):
         ValueError: If `data_format` is not the str of 'NCHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         (pad_mode="SAME", data_format="NCHW")
@@ -2895,7 +2895,7 @@ class Dilation2DBackpropFilter(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         (pad_mode="SAME", data_format="NCHW")
