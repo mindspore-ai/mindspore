@@ -49,7 +49,7 @@ TypePtr Atan2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kFloat64}, prim->name());
 }
 }  // namespace
 
