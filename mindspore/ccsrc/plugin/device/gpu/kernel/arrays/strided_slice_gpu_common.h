@@ -49,6 +49,7 @@ class StridedSliceGpuCommon {
 
  protected:
   void FillOutputDim() {
+    output_shape_.clear();
     for (size_t i = 0; i < MAX_DIMS; i++) {
       if (begin_[i] <= end_[i] && strides_[i] > 0) {
         output_shape_.push_back((end_[i] - 1 - begin_[i]) / strides_[i] + 1);
