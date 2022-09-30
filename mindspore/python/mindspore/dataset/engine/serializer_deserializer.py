@@ -27,15 +27,15 @@ def serialize(dataset, json_filepath=""):
     Serialize dataset pipeline into a JSON file.
 
     Note:
-        Currently some Python objects are not supported to be serialized.
-        Some examples of unsupported objects are callable user-defined Python functions (Python UDFs) and
-        GeneratorDataset.
-        For such unsupported objects, partially serialized JSON output is produced
-        for which later deserialization, pipeline execution of the deserialized JSON file
-        and/or re-serialization of the deserialized pipeline may result in an error.
-        For example, serialization of callable user-defined Python functions (Python UDFs) is not supported,
-        and a warning results on serialization. Any produced serialized JSON file output for this dataset pipeline
-        is not valid to be deserialized.
+        Complete serialization of Python objects is not currently supported.
+        Scenarios that are not supported include data pipelines that use `GeneratorDataset`
+        or `map` or `batch` operations that contain custom Python functions.
+        For Python objects, serialization operations do not yield the full object content,
+        which means that deserialization of the JSON file obtained by serialization may result in errors.
+        For example, when serializing the data pipeline of Python user-defined functions,
+        a related warning message is reported and the obtained JSON file cannot be deserialized
+        into a usable data pipeline.
+
 
     Args:
         dataset (Dataset): The starting node.

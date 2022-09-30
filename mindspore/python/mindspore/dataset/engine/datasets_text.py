@@ -176,7 +176,7 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
     The dataset is mainly used for text classification, given the content and title, predict the correct star rating.
 
     The Amazon reviews polarity dataset is constructed by taking review score 1 and 2 as negative, 4 and 5 as positive.
-    Samples of score 3 is ignored. In the dataset, class 1 is the negative and class 2 is the positive.
+    Samples of score 3 is ignored.
 
     The Amazon Reviews Polarity and Amazon Reviews Full datasets have the same directory structures.
     You can unzip the dataset files into the following structure and read by MindSpore's API:

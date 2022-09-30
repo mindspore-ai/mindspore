@@ -59,7 +59,7 @@ mindspore.dataset.KMnistDataset
     **关于KMNIST数据集：**
     
     KMNIST是一个数据集，改编自Kuzushiji数据集，作为MNIST数据集的替代数据集（MNIST数据集是机器学习社区中著名的数据集）。
-    以下是原始KMNIST数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
+    以下是原始KMNIST数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
     .. code-block::
 

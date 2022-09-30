@@ -31,14 +31,14 @@ mindspore.train.OnRequestExit
 
     .. py:method:: on_train_step_end(run_context)
 
-        在训练step结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True，在本轮训练结束后，退出训练。
+        在训练step结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True。在本轮训练结束后，退出训练。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_epoch_end(run_context)
 
-        在训练epoch结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True，在本轮训练结束后，退出训练。
+        在训练epoch结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True。在本轮训练结束后，退出训练。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
@@ -59,7 +59,7 @@ mindspore.train.OnRequestExit
 
     .. py:method:: on_eval_step_end(run_context)
 
-        在推理step结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True，在本轮推理结束后，退出推理。
+        在推理step结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True。在本轮推理结束后，退出推理。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。

@@ -587,7 +587,8 @@ class Parameter(Tensor_):
 
     def value(self):
         """
-        Return: the value of parameter object.
+        Return the value of parameter object.
+
         Examples:
         >>> from mindspore import Tensor, Parameter
         >>> import numpy as np
