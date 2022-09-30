@@ -249,7 +249,7 @@ void ScaleAndTranslateCpuKernelMod::ComputeSpansCore(const Kernel &kernel, const
   spans->weights = std::make_shared<Eigen::Tensor<float, dim1>>(spans->span_size * output_size);
   Eigen::TensorMap<Eigen::Tensor<int64_t, dim1>> starts_vec(spans->starts->data(), spans->starts->dimensions());
   Eigen::TensorMap<Eigen::Tensor<float, dim1>> weights_vec(spans->weights->data(), spans->weights->dimensions());
-  weights_vec.setZero();
+  (void)weights_vec.setZero();
   const float one_over_kernel_scale = 1.0f / kernel_scale;
   int64_t max_span_size = 0;
   std::vector<float> temp_weights;
@@ -308,7 +308,7 @@ void ScaleAndTranslateGradCpuKernelMod::ComputeGradSpansCore(const Spans *spans,
       int64_t input_index = starts_vec(output_index);
       for (int64_t j = 0; j < spans->span_size; ++j, ++input_index) {
         const float weight = weights_vec(output_index * spans->span_size + j);
-        if (weight != 0.0f && input_index < forward_input_size) {
+        if (weight != static_cast<float>(0.0f) && input_index < forward_input_size) {
           grad_components[input_index].push_back(GradComponent{output_index, weight});
         }
       }
@@ -331,7 +331,7 @@ void ScaleAndTranslateGradCpuKernelMod::ComputeGradSpansCore(const Spans *spans,
                                                                  grad_spans->starts->dimensions());
   Eigen::TensorMap<Eigen::Tensor<float, dim1>> grad_weights_vec(grad_spans->weights->data(),
                                                                 grad_spans->weights->dimensions());
-  grad_weights_vec.setZero();
+  (void)grad_weights_vec.setZero();
   auto shard_grad_input = [&grad_components, &grad_starts_vec, &grad_weights_vec, &grad_spans](int64_t start,
                                                                                                int64_t end) {
     for (int64_t input_index = start; input_index < end; ++input_index) {
@@ -449,12 +449,12 @@ bool ScaleAndTranslateCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
 
   typename TTypes<float, dim4>::Tensor output_data(outputTensor.tensor<float, dim4>());
   Spans col_spans;
-  ComputeSpans(sampling_kernel_type, output_width, input_width, col_scale, col_translation, antialias_, &col_spans,
-               kernel_name_);
+  (void)ComputeSpans(sampling_kernel_type, output_width, input_width, col_scale, col_translation, antialias_,
+                     &col_spans, kernel_name_);
 
   Spans row_spans;
-  ComputeSpans(sampling_kernel_type, output_height, input_height, row_scale, row_translation, antialias_, &row_spans,
-               kernel_name_);
+  (void)ComputeSpans(sampling_kernel_type, output_height, input_height, row_scale, row_translation, antialias_,
+                     &row_spans, kernel_name_);
 
   Eigen::Tensor<float, dim4> intermediate_tensor_middle(batch_size, output_height, input_width, channels);
   Eigen::TensorMap<Eigen::Tensor<float, dim4>> intermediate_data(intermediate_tensor_middle.data(),
@@ -501,11 +501,11 @@ bool ScaleAndTranslateGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   const int64_t forward_output_width = input_grad.dimension(2);
 
   Spans col_spans;
-  ComputeGradSpans(sampling_kernel_type, forward_output_width, forward_input_width, col_scale, col_translation,
-                   antialias_, &col_spans, kernel_name_);
+  (void)ComputeGradSpans(sampling_kernel_type, forward_output_width, forward_input_width, col_scale, col_translation,
+                         antialias_, &col_spans, kernel_name_);
   Spans row_spans;
-  ComputeGradSpans(sampling_kernel_type, forward_output_height, forward_input_height, row_scale, row_translation,
-                   antialias_, &row_spans, kernel_name_);
+  (void)ComputeGradSpans(sampling_kernel_type, forward_output_height, forward_input_height, row_scale, row_translation,
+                         antialias_, &row_spans, kernel_name_);
 
   Eigen::Tensor<float, dim4> intermediate_tensor_middle(batch_size, forward_input_height, forward_output_width,
                                                         channels);

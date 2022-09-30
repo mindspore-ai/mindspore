@@ -67,12 +67,13 @@ class EmbeddingLookupInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(params_shape_ptr);
     auto params_shape = params_shape_ptr->shape();
     constexpr int64_t kEmbeddingLookupInputParamsMaxDim = 2;
-    CheckAndConvertUtils::CheckInRange<int64_t>("dimension of params", SizeToLong(params_shape.size()), kIncludeBoth,
-                                                {1, kEmbeddingLookupInputParamsMaxDim}, op_name);
+    (void)CheckAndConvertUtils::CheckInRange<int64_t>("dimension of params", SizeToLong(params_shape.size()),
+                                                      kIncludeBoth, {1, kEmbeddingLookupInputParamsMaxDim}, op_name);
     auto indices_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, kInputIndex1);
     MS_EXCEPTION_IF_NULL(indices_shape_ptr);
     auto indices_shape = indices_shape_ptr->shape();
-    CheckAndConvertUtils::CheckValue<int64_t>("dimension of indices ", indices_shape.size(), kGreaterThan, 0, op_name);
+    (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of indices ", SizeToLong(indices_shape.size()),
+                                                    kGreaterThan, 0, op_name);
 
     ShapeVector out_shape;
     if (!params_shape_ptr->IsDimUnknown() && !indices_shape_ptr->IsDimUnknown()) {
