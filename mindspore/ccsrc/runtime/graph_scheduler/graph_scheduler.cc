@@ -1529,7 +1529,7 @@ void FetchRealInputByNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *input
       FetchRealInputByNode(input, inputs);
     }
   } else {
-    inputs->emplace_back(node);
+    (void)inputs->emplace_back(node);
   }
 }
 
