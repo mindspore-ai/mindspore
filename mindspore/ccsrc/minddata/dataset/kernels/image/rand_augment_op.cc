@@ -26,7 +26,7 @@ RandAugmentOp::RandAugmentOp(int32_t num_ops, int32_t magnitude, int32_t num_mag
       magnitude_(magnitude),
       num_magnitude_bins_(num_magnitude_bins),
       interpolation_(interpolation),
-      fill_value_(std::move(fill_value)) {
+      fill_value_(fill_value) {
   rnd_.seed(GetSeed());
 }
 

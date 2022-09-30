@@ -126,8 +126,12 @@ Status DvppDecodeResizeJpegOp::OutputShape(const std::vector<TensorShape> &input
   if (inputs.size() < 1) {
     RETURN_STATUS_UNEXPECTED("DvppDecodeResizeJpegOp::OutputShape inputs is null");
   }
-  if (inputs[0].Rank() == 1) outputs.emplace_back(out);
-  if (!outputs.empty()) return Status::OK();
+  if (inputs[0].Rank() == 1) {
+    outputs.emplace_back(out);
+  }
+  if (!outputs.empty()) {
+    return Status::OK();
+  }
   return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
 }
 

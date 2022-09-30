@@ -73,7 +73,9 @@ Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *con
     int32_t cur_node_num_worker = std::max(std::min(num_workers, cur_node_max), min_num_workers_);
 
     // if the num_worker to set is same as original, skip setting and printing the logs
-    if (cur_node_num_worker == p.first->NumWorkers()) continue;
+    if (cur_node_num_worker == p.first->NumWorkers()) {
+      continue;
+    }
     // log the change via warning msg so user can see what the num_worker is being set for which op
     MS_LOG(WARNING) << "AutoNumWorker enabled, num_workers in " << p.first->Name() << " is auto-adjusted from "
                     << std::to_string(p.first->NumWorkers()) + " to " + std::to_string(cur_node_num_worker);

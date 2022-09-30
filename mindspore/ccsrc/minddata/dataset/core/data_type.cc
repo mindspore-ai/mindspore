@@ -124,10 +124,11 @@ DataType::DataType(const std::string &type_str) {
 }
 
 std::string DataType::ToString() const {
-  if (type_ < DataType::NUM_OF_TYPES)
+  if (type_ < DataType::NUM_OF_TYPES) {
     return kTypeInfo[type_].name_;
-  else
+  } else {
     return "unknown";
+  }
 }
 
 #ifdef ENABLE_PYTHON

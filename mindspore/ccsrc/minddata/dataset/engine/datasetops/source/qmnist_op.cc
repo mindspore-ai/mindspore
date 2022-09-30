@@ -35,8 +35,8 @@ const int32_t kQMnistLabelFileMagicNumber = 3074;
 const size_t kQMnistImageRows = 28;
 const size_t kQMnistImageCols = 28;
 const size_t kQMnistLabelLength = 8;
-uint32_t kNum4 = 4;
-uint32_t kNum12 = 12;
+const uint32_t kNum4 = 4;
+const uint32_t kNum12 = 12;
 
 QMnistOp::QMnistOp(const std::string &folder_path, const std::string &usage, bool compat,
                    std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, int32_t num_workers,

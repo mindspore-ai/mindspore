@@ -776,10 +776,11 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
 
 Status CopyTensorValue(const std::shared_ptr<Tensor> &source_tensor, std::shared_ptr<Tensor> *dest_tensor,
                        const std::vector<int64_t> &source_indx, const std::vector<int64_t> &dest_indx) {
-  if (source_tensor->type() != (*dest_tensor)->type())
+  if (source_tensor->type() != (*dest_tensor)->type()) {
     RETURN_STATUS_UNEXPECTED(
       "CutMixBatch: CopyTensorValue failed: "
       "source and destination tensor must have the same type.");
+  }
   if (source_tensor->type() == DataType::DE_UINT8) {
     uint8_t pixel_value = 0;
     RETURN_IF_NOT_OK(source_tensor->GetItemAt(&pixel_value, source_indx));
