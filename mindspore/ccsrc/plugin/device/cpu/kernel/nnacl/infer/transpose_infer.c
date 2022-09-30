@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,21 +66,17 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   const TensorC *perm_tensor = inputs[1];
   const int32_t *perm_data = (int32_t *)perm_tensor->data_;
   const int perms_num = perm_tensor->shape_[0];
-  if (perm_tensor->shape_size_ == 0) {
-    return NNACL_INFER_INVALID;
-  }
+  MS_CHECK_TRUE_RET(perm_tensor->shape_size_ != 0, NNACL_INFER_INVALID);
   if (perms_num != 0 && perm_data == NULL) {
     return NNACL_INFER_INVALID;
   }
   int perm[MAX_TRANSPOSE_DIM_SIZE] = {0};
   size_t perm_size = 0;
   for (int i = 0; i < perms_num; i++) {
-    if (perm_data[i] >= perms_num) {
-      return NNACL_ERR;
-    }
+    MS_CHECK_TRUE_RET(perm_data[i] < perms_num, NNACL_ERR);
     ShapePush(perm, &perm_size, perm_data[i]);
   }
-  if (perms_num == 4) {
+  if (perms_num == PERM_NUM_FOUR) {
     const int nchw2nhwc[4] = {0, 2, 3, 1};
     const int nhwc2nchw[4] = {0, 3, 1, 2};
     const int trans3d[3] = {0, 2, 1};
@@ -94,6 +90,9 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
     if (input->shape_size_ == 3) {
       ShapeSet(perm, &perm_size, trans3d, 3);
     }
+  }
+  if (perms_num == PERM_NUM_THREE && perm[0] == 0 && perm[1] == 2) {
+    output->format_ = input->format_ == Format_NCHW ? Format_NHWC : Format_NCHW;
   }
   if (parameter->quant_type_ == QuantType_QUANT_WEIGHT) {
     output->data_type_ = kNumberTypeFloat32;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ PrimitiveCPtr OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const 
     }
   }
   if (!FloatCompare(alpha, 1.0f) || (!FloatCompare(beta, 1.0f) && !(onnx_node.input().size() == 2 &&
-                                                                    !FloatCompare(beta)))) {  // 2: input num is A and B
+                                                                    FloatCompare(beta)))) {  // 2: input num is A and B
     MS_LOG(ERROR) << "not support alpha * A * B + beta * C";
     return nullptr;
   }
