@@ -157,7 +157,8 @@ class _BatchNorm(Cell):
 
     def extend_repr(self):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
-            self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
+            self.num_features, self.eps, 1.0 - self.momentum, self.gamma, self.beta, \
+            self.moving_mean, self.moving_variance)
 
 
 class BatchNorm1d(_BatchNorm):

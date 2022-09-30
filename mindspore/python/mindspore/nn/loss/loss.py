@@ -737,6 +737,10 @@ class DiceLoss(LossBase):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
         _check_shape(logits.shape, label.shape, self.cls_name)
+        if logits.dtype == mstype.uint8:
+            raise TypeError(f"For '{self.cls_name}', the dtype of 'logits' can not be uint8.")
+        if label.dtype == mstype.uint8:
+            raise TypeError(f"For '{self.cls_name}', the dtype of 'labels' can not be uint8.")
         intersection = self.reduce_sum(self.mul(logits.view(-1), label.view(-1)))
         unionset = self.reduce_sum(self.mul(logits.view(-1), logits.view(-1))) + \
                    self.reduce_sum(self.mul(label.view(-1), label.view(-1)))
