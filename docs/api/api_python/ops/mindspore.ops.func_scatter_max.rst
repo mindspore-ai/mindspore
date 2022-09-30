@@ -3,7 +3,8 @@ mindspore.ops.scatter_max
 
 .. py:function:: mindspore.ops.scatter_max(input_x, indices, updates)
 
-    根据指定更新值和输入索引通过最大值运算更新输入数据的值。
+    根据指定更新值和输入索引通过最大值操作更新输入数据的值。
+    该操作在更新完成后输出 `input_x` ，这样方便使用更新后的值。
 
     对于 `indices.shape` 的每个 :math:`i, ..., j` ：
 
