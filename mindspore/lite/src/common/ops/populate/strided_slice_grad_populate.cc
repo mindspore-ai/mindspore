@@ -41,6 +41,12 @@ OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
   param->ellipsisMask_ = value->ellipsis_mask();
   param->newAxisMask_ = value->new_axis_mask();
   param->shrinkAxisMask_ = value->shrink_axis_mask();
+  if (param->begins_mask_ < C0NUM || param->ends_mask_ < C0NUM || param->ellipsisMask_ < C0NUM ||
+      param->newAxisMask_ < C0NUM || param->shrinkAxisMask_ < C0NUM) {
+    MS_LOG(ERROR) << "invalid StridedSliceGradParameter value";
+    free(param);
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_StridedSliceGrad, PopulateStridedSliceGradParameter, SCHEMA_CUR);

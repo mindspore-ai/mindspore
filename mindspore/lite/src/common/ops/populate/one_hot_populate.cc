@@ -37,6 +37,11 @@ OpParameter *PopulateOneHotParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->axis_ = value->axis();
+  if (param->axis_ < -C1NUM) {
+    MS_LOG(ERROR) << "OneHotParameter axis cannot less than -1.";
+    free(param);
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_OneHot, PopulateOneHotParameter, SCHEMA_CUR)
