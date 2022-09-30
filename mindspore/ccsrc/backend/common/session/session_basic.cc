@@ -2306,10 +2306,9 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
     if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
-      if (graph->is_dynamic_shape()) {
-        MS_LOG(EXCEPTION) << "Dump is not supported for dynamic shape!";
-      }
       std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
+      MS_LOG(INFO) << "Dump graph and exeorder for graph: " << graph->graph_id()
+                   << "root_graph_id: " << graph->root_graph_id();
       std::string target_dir = root_dir + "/graphs";
       std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id, true);
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";

@@ -324,7 +324,7 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
     // set root graph id for GPU mindrt runtime.
-    MS_LOG(DEBUG) << "Set root graph for graph: " << graph->graph_id() << " to: " << cur_root_graph_id_ << ".";
+    MS_LOG(INFO) << "Set root graph for graph: " << graph->graph_id() << " to: " << cur_root_graph_id_ << ".";
     graph->set_root_graph_id(cur_root_graph_id_);
     if (debugger_) {
       debugger_->PreExecute(graph);
@@ -1357,10 +1357,10 @@ bool Debugger::DumpTensorToFile(const std::string &filepath, const std::string &
 }
 
 bool Debugger::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
-  if (debug_services_ != nullptr) {
-    return debug_services_.get()->LoadNewTensor(tensor, keep_prev);
+  if (debug_services_ == nullptr) {
+    debug_services_ = std::make_unique<DebugServices>();
   }
-  return false;
+  return debug_services_.get()->LoadNewTensor(tensor, keep_prev);
 }
 
 bool Debugger::debugger_enabled() const { return debugger_enabled_; }

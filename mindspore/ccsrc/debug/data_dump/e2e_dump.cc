@@ -538,10 +538,6 @@ void E2eDump::UpdateIterMindRTDump() {
  * each epoch and dumps all the iterations in the epoch to the graph history file.
  */
 void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
-  if (graph->is_dynamic_shape()) {
-    MS_LOG(INFO) << "Dump is not supported for dynamic shape!";
-    return;
-  }
   auto &json_parser = DumpJsonParser::GetInstance();
   if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
     return;
@@ -599,9 +595,6 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
  */
 void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_dynamic_shape()) {
-    MS_LOG(EXCEPTION) << "Dump is not supported for dynamic shape!";
-  }
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t graph_id = graph->graph_id();

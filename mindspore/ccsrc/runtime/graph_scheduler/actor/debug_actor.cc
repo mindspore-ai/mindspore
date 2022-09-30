@@ -143,12 +143,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
     }
   }
-  for (auto graph : graphs) {
-    std::string error_info = CheckDynamicShape(graph);
-    if (!error_info.empty()) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
-    }
-  }
   auto debugger = Debugger::GetInstance();
   if (debugger != nullptr && debugger->DebuggerBackendEnabled()) {
     debugger->PreExecuteGraphDebugger(graphs, origin_parameters_order);
@@ -167,10 +161,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
       MS_EXCEPTION_IF_NULL(graphs[i]);
       MS_EXCEPTION_IF_NULL(device_contexts[i]);
       if (device_contexts[i]->GetDeviceType() == device::DeviceType::kCPU) {
-        if (graphs[i]->is_dynamic_shape()) {
-          std::string error_info = "Dump is not supported for dynamic shape!";
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
-        }
         DumpJsonParser::GetInstance().SaveGraph(graphs[i].get());
       }
     }
