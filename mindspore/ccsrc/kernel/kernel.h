@@ -127,9 +127,15 @@ struct KernelJsonInfo {
   std::string magic;
   std::vector<size_t> parameters;
   std::string sha256;
+  std::vector<size_t> workspaces_type;
   std::vector<size_t> workspaces;
   bool has_kernel_list = false;
   uint32_t op_para_size;
+  int32_t KBHit;
+  uint32_t mode_in_args_first_field;
+  uint32_t batch_bind_only;
+  uint32_t task_ration;
+  std::string core_type;
   KernelJsonInfo() : block_dim(0), op_para_size(0) {}
 };
 
@@ -157,6 +163,23 @@ class BACKEND_EXPORT KernelPack {
  private:
   bool ReadFromJsonFileHelper(std::ifstream &kernel_bin);
   void ParseKernelJson(const nlohmann::json &js);
+  static void ParseKernelName(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseBinFileName(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseBinFileSuffix(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseMagic(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseBlockDim(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseTaskRatio(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseCoreType(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseParameters(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseWorkSpace(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseOpParaSize(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseSHA256(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseKBHit(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseBatchBindOnly(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseKernelList(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
+  static void ParseModeInArgsFirstField(const std::string &key, const nlohmann::json &js,
+                                        KernelJsonInfo *kernel_json_info);
+
   KernelJsonInfo kernel_json_info_;
   FlexArray *json_;
   FlexArray *kernel_;

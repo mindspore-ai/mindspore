@@ -430,11 +430,11 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   *compile_info = build_res_json.dump();
   file.close();
   file.clear();
-  MS_LOG(INFO) << "Get compile info from json file success :" << *compile_info;
+  MS_LOG(INFO) << "Get compile info from json file success.";
 }
 
 void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag) {
-  MS_LOG(INFO) << "Save compile info to json file start. [" << json_name << "], value: " << build_res;
+  MS_LOG(INFO) << "Save compile info to json file start, op: [" << json_name << "].";
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string path = config_path + kCceKernelMeta + json_name + kJsonSuffix;
   if (path.size() > PATH_MAX) {

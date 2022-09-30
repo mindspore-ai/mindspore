@@ -166,7 +166,6 @@ std::string DynamicTbeKernelMod::ParseCompileJson(const CNodePtr &cnode) const {
     MS_LOG(EXCEPTION) << "Get compile_info failed. The compile result of [" << cnode->fullname_with_scope()
                       << "] maybe not in the json file(kernel_meta/) or the file had been deleted.";
   }
-  MS_LOG(INFO) << "Node: " << cnode->fullname_with_scope() << " get compile_info: " << op_compile_info;
   return op_compile_info;
 }
 

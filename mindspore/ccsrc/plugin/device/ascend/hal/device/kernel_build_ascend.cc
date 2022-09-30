@@ -131,6 +131,41 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
 bool KernelBuild(const std::vector<CNodePtr> &kernels) { return device::ascend::KernelBuildParallelCompile(kernels); }
 
 namespace {
+void GetWorkspaceOrOutputIndex(const std::vector<size_t> &parameters_indexes, size_t input_num, size_t output_num,
+                               size_t target_obj_num, bool is_workspace, std::vector<size_t> *target_obj) {
+  size_t param_size = parameters_indexes.size();
+  size_t start_idx = is_workspace ? (input_num + output_num) : input_num;
+  std::vector<size_t> tmp_idx;
+  for (size_t i = 0; i < target_obj_num; ++i) {
+    if (start_idx + i >= param_size) {
+      continue;
+    }
+    (void)tmp_idx.emplace_back(parameters_indexes[start_idx + i]);
+  }
+  for (size_t i = 0; i < tmp_idx.size(); ++i) {
+    if (tmp_idx[i] == 1) {
+      (void)target_obj->emplace_back(i);
+    }
+  }
+}
+
+void GetAtomicWorkspaceAndOutputIndex(const std::vector<size_t> &parameters_indexes, size_t workspace_num,
+                                      size_t input_num, size_t output_num, std::vector<size_t> *output_indexes,
+                                      std::vector<size_t> *workspace_indexes, bool *output_index_flag,
+                                      bool *workspace_atomic_flag) {
+  MS_EXCEPTION_IF_NULL(output_indexes);
+  MS_EXCEPTION_IF_NULL(workspace_indexes);
+  MS_EXCEPTION_IF_NULL(output_index_flag);
+  MS_EXCEPTION_IF_NULL(workspace_atomic_flag);
+  // process workspace_indexes and workspace_atomic_flag
+  GetWorkspaceOrOutputIndex(parameters_indexes, input_num, output_num, workspace_num, true, workspace_indexes);
+  // process output_indexes and output_index_flag
+  GetWorkspaceOrOutputIndex(parameters_indexes, input_num, output_num, output_num, false, output_indexes);
+  // atomic flag
+  *workspace_atomic_flag = !workspace_indexes->empty();
+  *output_index_flag = !output_indexes->empty();
+}
+
 bool IsAtomicNode(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
@@ -139,66 +174,37 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   if (parameters_indexes.empty()) {
     return false;
   }
-  if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    if (parameters_indexes.at(0) == 1) {
-      (void)parameters_indexes.erase(parameters_indexes.cbegin());
-    } else {
-      parameters_indexes.pop_back();
-    }
-  }
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
-  size_t param_num = parameters_indexes.size();
   size_t total_num = input_num + output_num + workspace_num;
-  size_t pad_index = param_num;
 
-  for (; pad_index < total_num; ++pad_index) {
-    (void)parameters_indexes.emplace_back(0);
+  if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
+    total_num = input_num + output_num + workspace_num + 1;
   }
 
-  for (size_t j = 0; j < input_num; ++j) {
-    if (parameters_indexes.at(j) == 1) {
-      MS_LOG(EXCEPTION) << "Atomic clean doesn't support clean input address, input index: " << j;
+  if (total_num >= parameters_indexes.size()) {
+    size_t loss_num = total_num - parameters_indexes.size();
+    for (size_t i = 0; i < loss_num; i++) {
+      (void)parameters_indexes.emplace_back(0);
     }
   }
 
-  if (parameters_indexes.size() < total_num) {
-    MS_LOG(EXCEPTION) << "Parameters indexes size: " << parameters_indexes.size()
-                      << " less than total num: " << total_num;
-  }
-  // process output
+  common::AnfAlgo::SetNodeAttr("ub_atomic_params", MakeValue(parameters_indexes), kernel_node);
+  bool output_index_flag = false;
+  bool workspace_atomic_flag = false;
   std::vector<size_t> output_indexes = {};
-  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, kernel_node)) {
-    output_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(kernel_node, kAttrAtomicOutputIndexs);
-  }
-
-  for (size_t i = 0; i < output_num; ++i) {
-    auto param_output = parameters_indexes.at(input_num + i);
-    if (param_output == 1) {
-      (void)output_indexes.emplace_back(i);
-      MS_LOG(DEBUG) << "Atomic clear output index: " << i;
-    }
-  }
+  std::vector<size_t> workspace_indexes = {};
+  GetAtomicWorkspaceAndOutputIndex(parameters_indexes, workspace_num, input_num, output_num, &output_indexes,
+                                   &workspace_indexes, &output_index_flag, &workspace_atomic_flag);
 
   if (!output_indexes.empty()) {
-    std::set<size_t> s(output_indexes.begin(), output_indexes.end());
-    output_indexes.assign(s.begin(), s.end());
     common::AnfAlgo::SetNodeAttr(kAttrAtomicOutputIndexs, MakeValue(output_indexes), kernel_node);
-  }
-  // process workspace
-  std::vector<size_t> workspace_indexes = {};
-  for (size_t k = 0; k < workspace_num; ++k) {
-    auto param_workspace = parameters_indexes.at(input_num + output_num + k);
-    if (param_workspace == 1) {
-      (void)workspace_indexes.emplace_back(k);
-      MS_LOG(DEBUG) << "Atomic clear workspace index: " << k;
-    }
   }
   if (!workspace_indexes.empty()) {
     common::AnfAlgo::SetNodeAttr(kAttrAtomicWorkspaceIndexs, MakeValue(workspace_indexes), kernel_node);
   }
-  return !(workspace_indexes.empty() && output_indexes.empty());
+  return output_index_flag || workspace_atomic_flag;
 }
 
 bool IfAtomicOpNeedFusion(const size_t clean_total_num, const CNodePtr &first_node, const CNodePtr &current_node) {
