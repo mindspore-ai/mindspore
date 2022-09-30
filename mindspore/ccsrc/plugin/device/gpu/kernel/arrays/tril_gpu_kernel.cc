@@ -36,31 +36,8 @@ bool TrilGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies<int64_t>());
-  int64_t input_dims = input_shape.size();
-  if (input_dims <= 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 1-D, but got " << input_dims
-                  << "-D.";
-    return KRET_RESIZE_FAILED;
-  }
   diagonal_ = kernel_ptr_->get_diagonal();
-  matrix_row_ = input_shape[input_dims - kRowindex];
-  matrix_col_ = input_shape[input_dims - kColindex];
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  InitSizeLists();
-  if (!is_input_dynamic_shape_.has_value()) {
-    bool is_input_dynamic_shape = false;
-    for (const auto &input : inputs) {
-      auto input_shape_d = input->GetShapeVector();
-      if (std::any_of(input_shape_d.begin(), input_shape_d.end(), [](int64_t dim) { return dim < 0; })) {
-        is_input_dynamic_shape = true;
-        break;
-      }
-    }
-    is_input_dynamic_shape_ = is_input_dynamic_shape;
-  }
   return true;
 }
 
@@ -74,13 +51,33 @@ int TrilGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
-    DestroyResource();
-    ResetResource();
-    if (!Init(base_operator, inputs, outputs)) {
-      return KRET_RESIZE_FAILED;
+  for (const auto &output : outputs) {
+    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
+    auto output_shape = output->GetShapeVector();
+    if (!IsValidShape(output_shape)) {
+      return KRET_UNKNOWN_SHAPE;
     }
   }
+  ResetResource();
+  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
+  size_t output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  if (output_elements_ == 0) {
+    is_null_input_ = true;
+  }
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies<int64_t>());
+  int64_t input_dims = input_shape.size();
+  if (input_dims <= 1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 1-D, but got " << input_dims
+                  << "-D.";
+    return KRET_RESIZE_FAILED;
+  }
+  matrix_row_ = input_shape[input_dims - kRowindex];
+  matrix_col_ = input_shape[input_dims - kColindex];
+  size_t input_size = input_elements_ * unit_size_;
+  input_size_list_.push_back(input_size);
+  output_size_list_.push_back(input_size);
   return KRET_OK;
 }
 

@@ -28,6 +28,9 @@ abstract::ShapePtr PdistInferShape(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto x_size = x_shape.size();
   const int64_t input_dim = 2;
   (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kEqual, input_dim, prim_name);

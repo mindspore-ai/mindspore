@@ -34,6 +34,9 @@ abstract::ShapePtr TrilInferShape(const PrimitivePtr &primitive, const std::vect
   const int64_t kShapeSize = 2;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = shape_map[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto x_shape_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("x's rank", x_shape_rank, kGreaterEqual, kShapeSize, prim_name);
   return std::make_shared<abstract::Shape>(x_shape);

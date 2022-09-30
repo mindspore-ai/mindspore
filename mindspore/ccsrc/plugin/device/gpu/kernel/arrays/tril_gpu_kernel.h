@@ -62,12 +62,6 @@ class TrilGpuKernelMod : public NativeGpuKernelMod {
     output_size_list_.clear();
   }
 
-  void InitSizeLists() {
-    size_t input_size = input_elements_ * unit_size_;
-    input_size_list_.push_back(input_size);
-    output_size_list_.push_back(input_size);
-  }
-
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -87,7 +81,6 @@ class TrilGpuKernelMod : public NativeGpuKernelMod {
   TrilFunc kernel_func_{};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
-  std::optional<bool> is_input_dynamic_shape_ = {};
   static std::vector<std::pair<KernelAttr, TrilFunc>> func_list_;
 };
 }  // namespace kernel

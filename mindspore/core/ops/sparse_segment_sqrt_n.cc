@@ -49,10 +49,14 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
                              << "x's rank must be greater than 1, but got [" << x_shape.size() << "].";
   }
-  if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
+  if (!(IsDynamic(indices_shape) || IsDynamic(segment_ids_shape)) &&
+      indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of indices and segment_ids must be the same, "
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
+  }
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
   if (!input_args[kInputIndex2]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex2]->BuildValue()->isa<None>()) {
@@ -70,10 +74,9 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
-    std::vector<int64_t> output_shape = {-2};
-    std::vector<int64_t> min_shape = {1};
-    std::vector<int64_t> max_shape = {1};
-    return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+    ShapeVector output_shape = x_shape;
+    output_shape[kInputIndex0] = -1;
+    return std::make_shared<abstract::Shape>(output_shape);
   }
 }
 
