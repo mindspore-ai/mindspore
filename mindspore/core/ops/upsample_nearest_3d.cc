@@ -31,9 +31,9 @@ namespace {
 abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  size_t long_kdim2 = SizeToLong(kDim2);
-  size_t long_kdim3 = SizeToLong(kDim3);
-  size_t long_kdim5 = SizeToLong(kDim5);
+  int64_t long_kdim2 = SizeToLong(kDim2);
+  int64_t long_kdim3 = SizeToLong(kDim3);
+  int64_t long_kdim5 = SizeToLong(kDim5);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, long_kdim5, prim_name);
@@ -59,7 +59,7 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual, long_kdim3,
                                              prim_name);
-    for (size_t idx = 0; idx < long_kdim3; ++idx) {
+    for (int64_t idx = 0; idx < long_kdim3; ++idx) {
       (void)y_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + long_kdim2] * scales[idx])));
     }
   } else if (output_size.empty() && scales.empty()) {
