@@ -18,11 +18,13 @@
 #include <cstdint>
 #include "mindspore/core/ops/one_hot.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/one_hot_impl.cuh"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
 bool OneHotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
+  device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   constexpr size_t min_input_num = 3;
   constexpr size_t max_input_num = 4;
   if (inputs.size() != min_input_num && inputs.size() != max_input_num) {
@@ -100,7 +102,7 @@ bool OneHotGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   const T *on_value = GetDeviceAddress<T>(inputs, on_value_idx);
   const T *off_value = GetDeviceAddress<T>(inputs, off_value_idx);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  OneHot(indices, depth_, on_value, off_value, left_dim_size_, right_dim_size_, output,
+  OneHot(indices, depth_, on_value, off_value, left_dim_size_, right_dim_size_, output, device_id_,
          reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
