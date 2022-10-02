@@ -15,11 +15,13 @@
 
 """Operators for function."""
 from __future__ import absolute_import
+import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.operations import array_ops as A
+from mindspore._checkparam import Validator as validator
 
 from ..operations.array_ops import (
     UniqueConsecutive,
@@ -4646,6 +4648,85 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     return unfold_op(input)
 
 
+def diagonal(input, offset=0, dim1=0, dim2=1):
+    """
+    Returns a partial view of input with the its diagonal elements with respect to `dim1` and `dim2`
+        appended as a dimension at the end of the shape.
+
+    Args:
+        input (Tensor): The input tensor. Must be at least 2-dimensional.
+        offset (int, optional): Offset of the diagonal from the main diagonal.
+            Can be positive or negative. Default: 0.
+        dim1 (int, optional): Dimension to be used as the first dim of the 2-D
+            sub-arrays from which the diagonals should be taken. Default: 0.
+        dim2 (int, optional): Dimension to be used as the second dim of the 2-D
+            sub-arrays from which the diagonals should be taken. Default: 1.
+
+    Returns:
+        Tensor, a partial view of input with the its diagonal elements with respect to `dim1` and `dim2`
+            appended as a dimension at the end of the shape.
+
+    Raises:
+        ValueError: if the input tensor has less than two dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor([[0, 1], [2, 3]], mstype.float32)
+        >>> output = ops.diagonal(x)
+        >>> print(output)
+        [0 3]
+    """
+    x_ndim = input.ndim
+    if x_ndim < 2:
+        raise ValueError(f"ops.diagonal requires an array of at least two dimensions")
+    dtype = input.dtype
+
+    axes = validator.check_axis_valid((dim1, dim2), x_ndim)
+    perm = ()
+    for i in np.arange(x_ndim):
+        if i not in axes:
+            perm += (i,)
+    perm += axes
+    input = input.transpose(perm)
+
+    x_shape = input.shape
+    n, m = x_shape[-2:]
+
+    fill_op = _get_cache_prim(P.Fill)()
+    e = _get_cache_prim(P.Eye)()(n, m, dtype)
+    if offset >= m or offset <= -n:
+        e = fill_op(dtype, (n, m), 0)
+    elif offset != 0:
+        e = e.astype(mstype.float32)
+        if offset > 0:
+            e_left = fill_op(dtype, (n, offset), 0)
+            e_right = e[..., 0:m - offset:1]
+            e = _get_cache_prim(P.Concat)(1)((e_left, e_right)).astype(dtype)
+        elif offset < 0:
+            e_upper = fill_op(dtype, (-offset, m), 0)
+            e_lower = e[0:n + offset:1, ...]
+            e = _get_cache_prim(P.Concat)(0)((e_upper, e_lower)).astype(dtype)
+    e = _get_cache_prim(P.BroadcastTo)(x_shape)(e)
+
+    prod_val = _get_cache_prim(P.Mul)()(input, e)
+    res = _get_cache_prim(P.ReduceSum)()(prod_val.astype(mstype.float32), -1)
+
+    begin = ()
+    for _ in np.arange((x_ndim - 2)):
+        begin += (0,)
+    last_dim_begin = np.max((0, -offset))
+    begin += (last_dim_begin,)
+    res_size = res.shape[:-1]
+    last_dim_end = np.min((x_shape[-2], np.max((0, (x_shape[-1] - offset))))) - last_dim_begin
+    if last_dim_end <= 0:
+        return Tensor([])
+    res_size += (last_dim_end,)
+    res = _get_cache_prim(P.Slice)()(res, begin, res_size)
+    return res.astype(dtype)
+
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -4738,5 +4819,6 @@ __all__ = [
     'expand',
     'fold',
     'unfold',
+    'diagonal',
 ]
 __all__.sort()

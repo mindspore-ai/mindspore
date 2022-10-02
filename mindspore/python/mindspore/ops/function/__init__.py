@@ -117,6 +117,7 @@ from .array_func import (
     expand,
     fold,
     unfold,
+    diagonal,
 )
 from .parameter_func import (
     assign,
@@ -333,6 +334,8 @@ from .nn_func import (
     glu,
     multi_margin_loss,
     multi_label_margin_loss,
+    elu,
+    gelu,
 )
 from .linalg_func import (
     svd,

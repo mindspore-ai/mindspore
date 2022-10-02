@@ -16,11 +16,12 @@
 import numpy as np
 import pytest
 
-import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.common import dtype as mstype
 
 
 class NetElu(nn.Cell):
@@ -43,9 +44,9 @@ def test_elu_dshape():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     net = NetElu()
-    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    input_x_dyn = Tensor(shape=[3, None], dtype=mstype.float32)
     net.set_inputs(input_x_dyn)
-    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=mstype.float32)
     output = net(input_x)
     expect_shape = (3, 10)
     assert output.asnumpy().shape == expect_shape
@@ -79,3 +80,30 @@ def test_elu_fp32():
     output = elu(x)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
+
+def test_elu_functional_api():
+    """
+    Feature: test elu functional API.
+    Description: test elu functional API and compare with expected output.
+    Expectation: output should be equal to expected value.
+    """
+    input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mstype.float32)
+    output = F.elu(input_x)
+    expected = np.array([[-0.63212055, 4.0, -0.99966455], [2.0, -0.99326205, 9.0]], np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_elu_functional_api_modes():
+    """
+    Feature: test elu functional API for different modes.
+    Description: test elu functional API and compare with expected output.
+    Expectation: output should be equal to expected value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_elu_functional_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_elu_functional_api()
