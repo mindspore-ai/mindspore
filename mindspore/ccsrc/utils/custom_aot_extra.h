@@ -26,7 +26,7 @@ namespace mindspore {
 class AotKernelData {
  public:
   AotKernelData() = default;
-  virtual ~AotKernelData() = 0;
+  virtual ~AotKernelData() = default;
 };
 
 class AotExtra {
@@ -46,10 +46,8 @@ class AotExtra {
   AotKernelData *KernelData() const { return kernel_data_; }
 
   void DestructKernelData() {
-    if (kernel_data_ != nullptr) {
-      delete kernel_data_;
-      kernel_data_ = nullptr;
-    }
+    delete kernel_data_;
+    kernel_data_ = nullptr;
   }
 
  private:
@@ -69,29 +67,45 @@ class AotExtra {
 
 class AotExtraImpl : public AotExtra {
  public:
-  AotExtraImpl() : cnode_(nullptr) {}
-  void SetKernelNode(const CNodePtr &cnode) { cnode_ = cnode; }
-  bool HasAttr(std::string name) final { return common::AnfAlgo::HasNodeAttr(name, cnode_); }
+  AotExtraImpl() : prim_(nullptr) {}
+  void SetKernelPrim(const PrimitivePtr &prim) { prim_ = prim; }
+  bool HasAttr(std::string name) final { return prim_ != nullptr && prim_->HasAttr(name); }
 
  private:
-  bool GetAttrBool(std::string name) { return common::AnfAlgo::GetNodeAttr<bool>(this->cnode_, name); }
-  int64_t GetAttrInt(std::string name) { return common::AnfAlgo::GetNodeAttr<int64_t>(this->cnode_, name); }
-  float GetAttrFloat(std::string name) { return common::AnfAlgo::GetNodeAttr<float>(this->cnode_, name); }
-  std::string GetAttrStr(std::string name) { return common::AnfAlgo::GetNodeAttr<std::string>(this->cnode_, name); }
+  bool GetAttrBool(std::string name) {
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<bool>(prim_->GetAttr(name));
+  }
+  int64_t GetAttrInt(std::string name) {
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<int64_t>(prim_->GetAttr(name));
+  }
+  float GetAttrFloat(std::string name) {
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<float>(prim_->GetAttr(name));
+  }
+  std::string GetAttrStr(std::string name) {
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<std::string>(prim_->GetAttr(name));
+  }
 
   std::vector<int64_t> GetAttrIntVec(std::string name) {
-    return common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(this->cnode_, name);
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<std::vector<int64_t>>(prim_->GetAttr(name));
   }
   std::vector<float> GetAttrFloatVec(std::string name) {
-    return common::AnfAlgo::GetNodeAttr<std::vector<float>>(this->cnode_, name);
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<std::vector<float>>(prim_->GetAttr(name));
   }
   std::vector<std::vector<int64_t>> GetAttrInt2DVec(std::string name) {
-    return common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(this->cnode_, name);
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<std::vector<std::vector<int64_t>>>(prim_->GetAttr(name));
   }
   std::vector<std::vector<float>> GetAttrFloat2DVec(std::string name) {
-    return common::AnfAlgo::GetNodeAttr<std::vector<std::vector<float>>>(this->cnode_, name);
+    MS_EXCEPTION_IF_NULL(prim_);
+    return GetValue<std::vector<std::vector<float>>>(prim_->GetAttr(name));
   }
-  CNodePtr cnode_;
+  PrimitivePtr prim_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_CUSTOM_AOT_EXTRA_H
