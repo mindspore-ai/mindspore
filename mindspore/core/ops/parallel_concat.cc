@@ -42,8 +42,8 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
   auto element0_rank = element0_shape.size();
   if (element0_rank < kOneNum) {
-    MS_EXCEPTION(ValueError) << "For [" << prim_name << "], the rank of input must greater than 1. But got："
-                             << element0_rank << ".";
+    MS_EXCEPTION(ValueError) << "For [" << prim_name
+                             << "], the rank of input must greater than 1. But got:" << element0_rank << ".";
   }
 
   auto axis = 0;
@@ -86,8 +86,9 @@ TypePtr ParallelConcatInferType(const PrimitivePtr &primitive, const std::vector
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be a list or tuple of tensors. But got："
-                            << input_args[0]->ToString() << ".";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', the input must be a list or tuple of tensors. But got:" << input_args[0]->ToString()
+                            << ".";
   }
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
