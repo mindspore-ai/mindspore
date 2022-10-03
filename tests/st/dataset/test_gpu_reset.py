@@ -27,11 +27,15 @@ set_seed(1)
 # pylint: disable=no-value-for-parameter
 
 
-def create_np_dataset(size):
+def create_np_dataset(size, num_parallel_workers, python_multiprocessing):
     """
     Create dataset for train or test
     """
+    def my_func(x):
+        return x + 1 if x % 2 else x - 1
     data = ds.NumpySlicesDataset(list(range(1, size + 1)), shuffle=False)
+    data = data.map(operations=my_func, num_parallel_workers=num_parallel_workers,
+                    python_multiprocessing=python_multiprocessing)
     return data
 
 
@@ -72,7 +76,9 @@ class MyCallback(Callback):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("fast_recovery", (False, True))
-def test_dataset_reset_sink(fast_recovery):
+@pytest.mark.parametrize("num_parallel_workers", (1, 4))
+@pytest.mark.parametrize("python_multiprocessing", (False, True))
+def test_dataset_reset_sink(fast_recovery, num_parallel_workers, python_multiprocessing):
     """
     Feature: Dataset recovery
     Description: Test Dataset recovery when GPU (and sink mode) is used.
@@ -80,7 +86,7 @@ def test_dataset_reset_sink(fast_recovery):
     """
     original_fast_recovery = ds.config.get_fast_recovery()
     ds.config.set_fast_recovery(fast_recovery)
-    data = create_np_dataset(10)
+    data = create_np_dataset(20, num_parallel_workers, python_multiprocessing)
     model = create_model()
     num_epochs = 3
     reset_point = 2  # 2nd epoch

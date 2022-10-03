@@ -69,15 +69,22 @@ def create_imagenet_dataset(size):
     return data
 
 
-def create_random_imagenet_dataset(repeat_size, sampler=None, num_parallel_workers=1, to_pil=False):
+def create_random_imagenet_dataset(repeat_size, sampler=None, num_parallel_workers=1, to_pil=False, batch_func=None):
     shuffle = True if sampler is None else None
     data_dir = "../data/dataset/testImageNetData2/train"
     data = ds.ImageFolderDataset(
         data_dir, shuffle=shuffle, sampler=sampler)
     data = data.repeat(repeat_size)
     crop_op1 = vision.RandomCrop(4)
-    data = data.map(operations=[vision.Decode(to_pil=to_pil), crop_op1], input_columns=[
+    operations = [vision.Decode(to_pil=to_pil), crop_op1]
+    if to_pil: # include a pyfunc in test if to_pil is True
+        operations.append(lambda x: x.rotate(45))
+    data = data.map(operations=operations, input_columns=[
         "image"], num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
+    if batch_func:
+        data = data.batch(
+            batch_size=2, per_batch_map=batch_func,
+            num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
     data = data.project(["image"])
     return data
 
@@ -236,9 +243,14 @@ def test_reset_np_error():
         run_reset_error(data, num_epochs=num_epochs, failure_point=failure_point)
 
 
-@pytest.mark.parametrize("num_parallel_workers", (1, 4))
+def random_col(col1, col2, batch_info):
+    return ([np.random.rand(1) for a in col1], [np.random.rand(1) for b in col2])
+
+
+@pytest.mark.parametrize("num_parallel_workers", (4, 5))
 @pytest.mark.parametrize("sampler", (ds.RandomSampler(), None))
-def test_repeatable_reset_imagenet(sampler, num_parallel_workers, to_pil=False):
+@pytest.mark.parametrize("to_pil, batch_func", [(False, None), (True, random_col)]) # test C ops and Python ops (MP)
+def test_repeatable_reset_imagenet(sampler, num_parallel_workers, to_pil, batch_func):
     """
     Feature: Dataset recovery
     Description: Simple test of data pipeline with fast_recovery set to False
@@ -247,12 +259,14 @@ def test_repeatable_reset_imagenet(sampler, num_parallel_workers, to_pil=False):
     num_epochs = 4
     original_seed = ds.config.get_seed()
     original_fast_recovery = ds.config.get_fast_recovery()
+    original_shared_mem = ds.config.get_enable_shared_mem()
     ds.config.set_seed(100)
     ds.config.set_fast_recovery(False)
+    ds.config.set_enable_shared_mem(False)
 
     expected = []
     data = create_random_imagenet_dataset(
-        repeat_size=1, sampler=sampler, to_pil=to_pil, num_parallel_workers=num_parallel_workers)
+        repeat_size=1, sampler=sampler, to_pil=to_pil, num_parallel_workers=num_parallel_workers, batch_func=batch_func)
     expected_itr = data.create_tuple_iterator(
         num_epochs=num_epochs, output_numpy=True)
 
@@ -261,11 +275,9 @@ def test_repeatable_reset_imagenet(sampler, num_parallel_workers, to_pil=False):
         for d in expected_itr:
             expected.append(d)
     del expected_itr
-    import mindspore.log as logger
     dataset_size = data.get_dataset_size()
-    logger.error(dataset_size)
     # try different failure points
-    for failure_point in range(1, dataset_size * num_epochs, 2):
+    for failure_point in (5, 6, 19, 22):
         expected2 = []
         expected2_itr = data.create_tuple_iterator(
             num_epochs=num_epochs, output_numpy=True)
@@ -292,10 +304,13 @@ def test_repeatable_reset_imagenet(sampler, num_parallel_workers, to_pil=False):
 
     ds.config.set_seed(original_seed)
     ds.config.set_fast_recovery(original_fast_recovery)
+    ds.config.set_enable_shared_mem(original_shared_mem)
 
 
-@pytest.mark.parametrize("num_parallel_workers", (1, 4))
-def test_repeatable_reset_distributed(num_parallel_workers):
+@pytest.mark.parametrize("to_pil", (False, True)) # test C ops and Python ops with MP=true
+@pytest.mark.parametrize("num_parallel_workers", (4, 5))
+@pytest.mark.parametrize("shard_id", (0, 1, 2, 3))
+def test_repeatable_reset_distributed(shard_id, num_parallel_workers, to_pil):
     """
     Feature: Dataset recovery
     Description: Simple test of data pipeline with fast_recovery set to False for a distributed sampler
@@ -305,53 +320,55 @@ def test_repeatable_reset_distributed(num_parallel_workers):
     num_epochs = 3
     original_seed = ds.config.get_seed()
     original_fast_recovery = ds.config.get_fast_recovery()
+    original_shared_mem = ds.config.get_enable_shared_mem()
     ds.config.set_seed(100)
     ds.config.set_fast_recovery(False)
+    ds.config.set_enable_shared_mem(False)
 
-    for i in range(num_shards):
-        expected = []
-        distributed_sampler = ds.DistributedSampler(
-            num_shards=num_shards, shard_id=i)
-        data = create_random_imagenet_dataset(
-            repeat_size=4, sampler=distributed_sampler, num_parallel_workers=num_parallel_workers)
-        iter_counter = 0
+    expected = []
+    distributed_sampler = ds.DistributedSampler(
+        num_shards=num_shards, shard_id=shard_id)
+    data = create_random_imagenet_dataset(
+        repeat_size=2, sampler=distributed_sampler, num_parallel_workers=num_parallel_workers, to_pil=to_pil)
+    iter_counter = 0
 
-        # successful run (to collect correct output)
-        expected_itr = data.create_tuple_iterator(
+    # successful run (to collect correct output)
+    expected_itr = data.create_tuple_iterator(
+        num_epochs=num_epochs, output_numpy=True)
+    for _ in range(num_epochs):
+        for d in expected_itr:
+            expected.append(d)
+            iter_counter += 1
+    assert iter_counter == data.get_dataset_size() * num_epochs
+    del expected_itr
+
+    # try different failure points
+    for failure_point in (3, 7, 9):
+        expected2 = []
+        expected2_itr = data.create_tuple_iterator(
             num_epochs=num_epochs, output_numpy=True)
-        for _ in range(num_epochs):
-            for d in expected_itr:
-                expected.append(d)
-                iter_counter += 1
-        assert iter_counter == data.get_dataset_size() * num_epochs
-        del expected_itr
-
-        # try different failure points
-        for failure_point in range(1, data.get_dataset_size() * num_epochs, 3):
-            expected2 = []
-            expected2_itr = data.create_tuple_iterator(
-                num_epochs=num_epochs, output_numpy=True)
-            ds.engine.datasets._set_training_dataset(expected2_itr)  # pylint: disable=W0212
-            failure = False
-            for epoch in range(num_epochs):
-                for step, d in enumerate(expected2_itr):
+        ds.engine.datasets._set_training_dataset(expected2_itr)  # pylint: disable=W0212
+        failure = False
+        for epoch in range(num_epochs):
+            for step, d in enumerate(expected2_itr):
+                expected2.append(d)
+                if epoch * data.get_dataset_size() + step + 1 == failure_point:
+                    failure = True
+                    break
+            if failure:
+                ds.engine.datasets._reset_training_dataset(failure_point)  # pylint: disable=W0212
+                failure = False
+                for d in expected2_itr:
                     expected2.append(d)
-                    if epoch * data.get_dataset_size() + step + 1 == failure_point:
-                        failure = True
-                        break
-                if failure:
-                    ds.engine.datasets._reset_training_dataset(failure_point)  # pylint: disable=W0212
-                    failure = False
-                    for d in expected2_itr:
-                        expected2.append(d)
 
-            # verify count and values of failover with original run
-            assert len(expected) == len(expected2)
-            for a, b in zip(expected, expected2):
-                assert np.array_equal(a, b)
+        # verify count and values of failover with original run
+        assert len(expected) == len(expected2)
+        for a, b in zip(expected, expected2):
+            assert np.array_equal(a, b)
 
     ds.config.set_seed(original_seed)
     ds.config.set_fast_recovery(original_fast_recovery)
+    ds.config.set_enable_shared_mem(original_shared_mem)
 
 
 if __name__ == "__main__":
