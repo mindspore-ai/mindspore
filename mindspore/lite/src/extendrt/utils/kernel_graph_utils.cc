@@ -970,9 +970,7 @@ void KernelGraphUtils::GetOutputNames(const std::vector<AnfNodePtr> &outputs,
     auto idx = real_output_with_index.second;
     MS_EXCEPTION_IF_NULL(real_output);
     MS_LOG(DEBUG) << " Real output info: " << real_output->DebugString();
-    auto cnode = real_output->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    AbstractBasePtr abstract = cnode->abstract();
+    AbstractBasePtr abstract = real_output->abstract();
     if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
       auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
       MS_EXCEPTION_IF_NULL(abstract_tuple);

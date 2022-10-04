@@ -89,7 +89,7 @@ std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor) {
   std::vector<int32_t> vals;
   auto ms_dtype = ms_tensor.DataType();
   auto size = ms_tensor.ElementNum();
-  if (ms_dtype == DataType::kNumberTypeInt32) {
+  if (ms_dtype == DataType::kNumberTypeInt32 || static_cast<TypeId>(ms_dtype) == TypeId::kMetaTypeTypeType) {
     auto int_data = reinterpret_cast<const int32_t *>(data);
     for (int64_t i = 0; i < size; i++) {
       vals.push_back(int_data[i]);

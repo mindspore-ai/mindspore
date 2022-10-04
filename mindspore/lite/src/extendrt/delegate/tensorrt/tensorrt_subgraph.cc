@@ -450,6 +450,25 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
 int TensorRTSubGraph::MarkOutputs() {
   // Mark NetWork Output Tensor.
   for (const auto &out_tensor : outputs_) {
+    if (out_tensor.IsConst()) {
+      MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
+      auto output_helper = ctx_->MsName2Tensor(out_tensor.Name());
+      if (output_helper.trt_tensor_ == nullptr) {
+        MS_LOG(ERROR) << "output_helper.trt_tensor_ == nullptr";
+        return RET_ERROR;
+      }
+      nvinfer1::ITensor *out_trt_tensor = output_helper.trt_tensor_;
+      out_trt_tensor->setName(("__" + out_tensor.Name()).c_str());
+      out_trt_tensor = ctx_->network()->addIdentity(*out_trt_tensor)->getOutput(0);
+      out_trt_tensor->setName(out_tensor.Name().c_str());
+      ctx_->network()->markOutput(*out_trt_tensor);
+      for (int n = 0; n < out_trt_tensor->getDimensions().nbDims; n++) {
+        if (out_trt_tensor->getDimensions().d[n] == -1) {
+          output_batchsize_index_ = n;
+          break;
+        }
+      }
+    }
     for (auto out_op : this->out_ops_) {
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {

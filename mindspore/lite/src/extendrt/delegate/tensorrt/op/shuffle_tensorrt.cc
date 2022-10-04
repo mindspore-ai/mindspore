@@ -253,6 +253,10 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   if (shape_tensor.IsConst()) {
     // static shuffle layer
     auto reshape_dims = lite::ConvertCudaDims(shape_tensor);
+    if (reshape_dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return RET_ERROR;
+    }
     shuffle_layer->setReshapeDimensions(reshape_dims);
   } else {
     if (in_tensors_.size() != INPUT_SIZE2) {
