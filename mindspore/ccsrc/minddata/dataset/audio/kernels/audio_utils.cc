@@ -2009,112 +2009,78 @@ Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
 template <typename T>
 Status GetSincResampleKernel(int32_t orig_freq, int32_t des_freq, ResampleMethod resample_method,
                              int32_t lowpass_filter_width, float rolloff, float beta, DataType datatype,
-                             std::shared_ptr<Tensor> *kernel, int32_t *width) {
+                             Eigen::MatrixX<T> *kernel_ptr, int32_t *width) {
   CHECK_FAIL_RETURN_UNEXPECTED(orig_freq != 0, "Resample: invalid parameter, 'orig_freq' can not be zero.");
   CHECK_FAIL_RETURN_UNEXPECTED(des_freq != 0, "Resample: invalid parameter, 'des_freq' can not be zero.");
   float base_freq = static_cast<float>(std::min(orig_freq, des_freq));
-  // Removing the highest frequencies to perform antialiasing filtering. This is needed in both upsampling and
-  // downsampling
+  // Removing the highest frequencies to perform antialiasing filtering. This is
+  // needed in both upsampling and downsampling
   base_freq *= rolloff;
-  // The key idea of the algorithm is that x(t) can be exactly reconstructed from x[i] (tensor) using the sinc
-  // interpolation formula:
-  //  x(t) = sum_i x[i] sinc(pi * orig_freq * (i / orig_freq - t))
-  // We can then sample the function x(t) with a different sample rate:
-  //  y[j] = sum_i x[i] sinc(pi * orig_freq * (i / orig_freq - j / des_freq))
   *width = static_cast<int32_t>(ceil(static_cast<float>(lowpass_filter_width * orig_freq) / base_freq));
   int32_t kernel_length = 2 * (*width) + orig_freq;
-  std::shared_ptr<Tensor> idx;
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1, kernel_length}), datatype, &idx));
-  auto idx_it = idx->begin<T>();
+  Eigen::MatrixX<T> idx(1, kernel_length);
+  auto idx_it = idx.data();
   for (int32_t i = -(*width); i < (*width + orig_freq); i++) {
-    *idx_it = static_cast<T>(i);
-    idx_it++;
+    *idx_it = static_cast<T>(i) / orig_freq;
+    ++idx_it;
   }
-  std::vector<std::shared_ptr<Tensor>> kernels_vec;
-  std::shared_ptr<Tensor> filter;
-  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(idx, &filter));
-  auto filter_begin = filter->begin<T>();
-  auto filter_end = filter->end<T>();
-  std::shared_ptr<Tensor> window;
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(filter->shape(), filter->type(), &window));
-  auto window_it = window->begin<T>();
-  idx_it = idx->begin<T>();
-  // Compute the filter for resample, sinc interpolation
-  for (int32_t i = 0; i < des_freq; i++) {
-    while (filter_begin != filter_end) {
-      *filter_begin = (static_cast<T>(-i) / des_freq + *idx_it / orig_freq) * base_freq;
-      *filter_begin =
-        std::clamp(*filter_begin, static_cast<T>(-lowpass_filter_width), static_cast<T>(lowpass_filter_width));
-      // Build window
-      if (resample_method == ResampleMethod::kSincInterpolation) {
-        *window_it = *filter_begin * PI / lowpass_filter_width / 2.0;
-        *window_it = pow(cos(*window_it), 2);
-      } else {
+  Eigen::VectorX<T> filter(des_freq);
+  auto filter_it = filter.data();
+  for (int32_t i = 0; i > -des_freq; i--) {
+    *filter_it = static_cast<T>(i) / des_freq;
+    ++filter_it;
+  }
+  Eigen::MatrixX<T> kernel_matrix(kernel_length, des_freq);
+  kernel_matrix.noalias() = filter.replicate(1, kernel_length) + idx.replicate(des_freq, 1);
+  kernel_matrix *= base_freq;
+  // clamp
+  kernel_matrix.noalias() = kernel_matrix.cwiseMin(lowpass_filter_width).cwiseMax(-lowpass_filter_width);
+  Eigen::MatrixX<T> window;
+  if (resample_method == ResampleMethod::kSincInterpolation) {
+    window = kernel_matrix * PI / lowpass_filter_width / TWO;
+    window.noalias() = window.unaryExpr([=](T x) -> T {
+      T temp = cos(x);
+      return temp * temp;
+    });
+  } else {
+    // kaiser_window
 #ifdef __APPLE__
-        RETURN_STATUS_ERROR(StatusCode::kMDNotImplementedYet,
-                            "Resample: ResampleMethod of Kaiser Window is not supported on MacOS yet.");
+    RETURN_STATUS_ERROR(StatusCode::kMDNotImplementedYet,
+                        "Resample: ResampleMethod of Kaiser Window is not "
+                        "supported on MacOS yet.");
 #else
-        *window_it =
-          static_cast<T>(std::cyl_bessel_i(3.0, beta * sqrt(1 - pow((*filter_begin / lowpass_filter_width), 2)))) /
-          (static_cast<T>(std::cyl_bessel_if(3.0, beta)));
+    T beta_bessel = std::cyl_bessel_if(0, beta);
+    window.noalias() = kernel_matrix.unaryExpr([=](T x) -> T {
+      return std::cyl_bessel_i(0, beta * sqrt(1 - pow((x / lowpass_filter_width), TWO))) / beta_bessel;
+    });
 #endif
-      }
-      *filter_begin *= PI;
-      // sinc function
-      if (*filter_begin == 0) {
-        *filter_begin = 1.0;
-      } else {
-        *filter_begin = sin(*filter_begin) / *filter_begin;
-      }
-      *filter_begin *= (*window_it);
-      ++window_it;
-      ++filter_begin;
-      ++idx_it;
-    }
-    std::shared_ptr<Tensor> temp_filter;
-    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(filter, &temp_filter));
-    kernels_vec.emplace_back(temp_filter);
-    window_it = window->begin<T>();
-    filter_begin = filter->begin<T>();
-    idx_it = idx->begin<T>();
   }
-  T scale = static_cast<T>(base_freq) / orig_freq;
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({des_freq, kernel_length}), datatype, kernel));
-  T temp;
-  for (int32_t i = 0; i < des_freq; i++) {
-    for (int32_t j = 0; j < kernel_length; j++) {
-      RETURN_IF_NOT_OK(kernels_vec.at(i)->GetItemAt<T>(&temp, {0, j}));
-      temp *= scale;
-      RETURN_IF_NOT_OK((*kernel)->SetItemAt<T>({i, j}, temp));
-    }
-  }
+  kernel_matrix *= PI;
+  T scale = base_freq / orig_freq;
+  kernel_matrix = kernel_matrix.unaryExpr([=](T x) -> T { return x == 0 ? scale : scale * (sin(x) / x); });
+  kernel_matrix = kernel_matrix.cwiseProduct(window);
+  *kernel_ptr = kernel_matrix;
   return Status::OK();
 }
 
-namespace {
 template <typename T>
-using MatrixXTRowMajor = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-}
-
-template <typename T>
-void ResampleSingle(const MatrixXTRowMajor<T> &waveform_pad_matrix, MatrixXTRowMajor<T> *output_matrix,
-                    const MatrixXTRowMajor<T> &kernel_matrix, int32_t orig_freq, int32_t target_length,
-                    int32_t pad_length, int32_t index) {
-  const int32_t kernel_x = kernel_matrix.cols();
-  const int32_t kernel_y = kernel_matrix.rows();
+std::shared_ptr<Eigen::MatrixX<T>> Cov1dStride(const Eigen::MatrixX<T> &waveform_pad_matrix,
+                                               const Eigen::MatrixX<T> &kernel, int32_t num_waveform, int32_t orig_freq,
+                                               int32_t target_length, int32_t pad_length) {
+  Eigen::MatrixX<T> output_matrix(target_length, num_waveform);
+  Eigen::MatrixX<T> mul_matrix;
+  int32_t kernel_x = kernel.rows();
+  int32_t kernel_y = kernel.cols();
   int32_t resample_num = static_cast<int32_t>(ceil(static_cast<float>(target_length) / kernel_x));
-  Eigen::MatrixX<T> multi_input(resample_num, kernel_y);
-
-  // Slice the waveform with stride orig_freq and length kernel_y
-  for (int i = 0, x_dim = 0; i + kernel_y < pad_length && x_dim < resample_num; i += orig_freq, ++x_dim) {
-    multi_input.row(x_dim) = waveform_pad_matrix(Eigen::seqN(index, 1), Eigen::seqN(i, kernel_y));
+  Eigen::MatrixX<T> multi_input(kernel_y, resample_num);
+  for (int32_t i = 0; i < num_waveform; i++) {
+    for (int32_t j = 0, x_dim = 0; j + kernel_y < pad_length && x_dim < resample_num; j += orig_freq, ++x_dim) {
+      multi_input.col(x_dim) = waveform_pad_matrix(Eigen::seqN(j, kernel_y), Eigen::seqN(i, 1));
+    }
+    mul_matrix.noalias() = kernel * multi_input;
+    output_matrix.col(i) = Eigen::Map<Eigen::MatrixX<T>>(mul_matrix.data(), target_length, 1);
   }
-  MatrixXTRowMajor<T> mul_matrix = (multi_input * kernel_matrix).transpose();
-
-  // reshape to RowVector
-  Eigen::Map<Eigen::RowVector<T, Eigen::Dynamic>> mul_matrix_vec(mul_matrix.data(), mul_matrix.size());
-  auto output_slice = mul_matrix_vec(Eigen::seqN(0, target_length));
-  *output_matrix = Eigen::Map<MatrixXTRowMajor<T>>(output_slice.data(), 1, target_length);
+  return std::make_shared<Eigen::MatrixX<T>>(output_matrix);
 }
 
 template <typename T>
@@ -2130,38 +2096,33 @@ Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   CHECK_FAIL_RETURN_UNEXPECTED(gcd != 0, "Resample: gcd cannot be equal to 0.");
   int32_t orig_freq_prime = static_cast<int32_t>(floor(orig_freq / gcd));
   int32_t des_freq_prime = static_cast<int32_t>(floor(des_freq / gcd));
-  CHECK_FAIL_RETURN_UNEXPECTED(orig_freq_prime != 0, "Resample: invalid parameter, 'orig_freq_prime' can not be zero.");
-  std::shared_ptr<Tensor> kernel;
+  CHECK_FAIL_RETURN_UNEXPECTED(orig_freq_prime != 0, "Resample: invalid parameter, 'orig_freq_prime' cannot be zero.");
+  Eigen::MatrixX<T> kernel;
   int32_t width = 0;
   RETURN_IF_NOT_OK(GetSincResampleKernel<T>(orig_freq_prime, des_freq_prime, resample_method, lowpass_filter_width,
                                             rolloff, beta, input->type(), &kernel, &width));
-  const dsize_t zero = 0;
-  ValidateGreaterThan("Resample", "kernel.shape[0]", kernel->shape()[0], "the least shape", zero);
-  ValidateGreaterThan("Resample", "kernel.shape[1]", kernel->shape()[1], "the least shape", zero);
-  const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> kernel_matrix =
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>(&*kernel->begin<T>(), kernel->shape()[1],
-                                                                 kernel->shape()[0]);
+  const int32_t ZERO = 0;
+  const int32_t kernel_rows = kernel.rows();
+  const int32_t kernel_cols = kernel.cols();
+  ValidateGreaterThan("Resample", "kernel.cols()", kernel_cols, "boundary", ZERO);
+  ValidateGreaterThan("Resample", "kernel.rows()", kernel_rows, "boundary", ZERO);
+
   // padding
   int32_t pad_length = waveform_length + 2 * width + orig_freq_prime;
   std::shared_ptr<Tensor> waveform_pad;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1, pad_length}), input->type(), &waveform_pad));
   RETURN_IF_NOT_OK(Pad<T>(input, &waveform_pad, width, width + orig_freq_prime, BorderType::kConstant));
-
-  const MatrixXTRowMajor<T> waveform_pad_matrix =
-    Eigen::Map<MatrixXTRowMajor<T>>(&*waveform_pad->begin<T>(), waveform_pad->shape()[0], waveform_pad->shape()[1]);
+  Eigen::MatrixX<T> waveform_pad_matrix =
+    Eigen::Map<Eigen::MatrixX<T>>(&*waveform_pad->begin<T>(), waveform_pad->shape()[1], waveform_pad->shape()[0]);
   int32_t target_length =
     static_cast<int32_t>(std::ceil(static_cast<double>(des_freq_prime * waveform_length) / orig_freq_prime));
-  MatrixXTRowMajor<T> output_matrix(num_waveform, target_length);
-  MatrixXTRowMajor<T> resampled_single_matrix;
 
-  for (int32_t i = 0; i < num_waveform; i++) {
-    ResampleSingle<T>(waveform_pad_matrix, &resampled_single_matrix, kernel_matrix, orig_freq_prime, target_length,
-                      pad_length, i);
-    output_matrix.row(i) = resampled_single_matrix;
-  }
+  // cov1d with stide = orig_freq_prime
+  std::shared_ptr<Eigen::MatrixX<T>> output_ptr =
+    Cov1dStride<T>(waveform_pad_matrix, kernel, num_waveform, orig_freq_prime, target_length, pad_length);
   std::vector<dsize_t> shape_vec = input_shape.AsVector();
   shape_vec.at(shape_vec.size() - 1) = static_cast<dsize_t>(target_length);
-  const auto output_data = reinterpret_cast<const uchar *>(output_matrix.data());
+  const auto output_data = reinterpret_cast<const uchar *>(output_ptr->data());
   RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape_vec), DataType::FromCType<T>(), output_data, output));
   return Status::OK();
 }
