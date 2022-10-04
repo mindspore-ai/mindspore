@@ -37,6 +37,12 @@
 #endif
 
 namespace mindspore {
+#ifdef USE_GLOG
+extern "C" {
+extern void mindspore_log_init();
+}
+#endif
+
 std::mutex g_impl_init_lock;
 #ifdef ENABLE_OPENSSL
 Status DecryptModel(const std::string &cropto_lib_path, const void *model_buf, size_t model_size, const Key &dec_key,
@@ -60,12 +66,17 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
                     const std::shared_ptr<Context> &model_context, const Key &dec_key,
                     const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
-  if (impl_ == nullptr) {
+  {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
+#ifdef USE_GLOG
+      mindspore::mindspore_log_init();
+#endif
+      impl_ = std::make_shared<ModelImpl>();
+      if (impl_ == nullptr) {
+        MS_LOG(ERROR) << "Model implement is null.";
+        return kLiteFileError;
+      }
     }
   }
   if (dec_key.len > 0) {
@@ -97,12 +108,17 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
-  if (impl_ == nullptr) {
+  {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
+#ifdef USE_GLOG
+      mindspore::mindspore_log_init();
+#endif
+      impl_ = std::make_shared<ModelImpl>();
+      if (impl_ == nullptr) {
+        MS_LOG(ERROR) << "Model implement is null.";
+        return kLiteFileError;
+      }
     }
   }
 
@@ -117,12 +133,17 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context, const Key &dec_key,
                     const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
-  if (impl_ == nullptr) {
+  {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
+#ifdef USE_GLOG
+      mindspore::mindspore_log_init();
+#endif
+      impl_ = std::make_shared<ModelImpl>();
+      if (impl_ == nullptr) {
+        MS_LOG(ERROR) << "Model implement is null.";
+        return kLiteFileError;
+      }
     }
   }
   if (dec_key.len > 0) {
@@ -164,12 +185,17 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
-  if (impl_ == nullptr) {
+  {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
+#ifdef USE_GLOG
+      mindspore::mindspore_log_init();
+#endif
+      impl_ = std::make_shared<ModelImpl>();
+      if (impl_ == nullptr) {
+        MS_LOG(ERROR) << "Model implement is null.";
+        return kLiteFileError;
+      }
     }
   }
 
@@ -183,12 +209,17 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context,
                     const std::shared_ptr<TrainCfg> &train_cfg) {
   std::stringstream err_msg;
-  if (impl_ == nullptr) {
+  {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
+#ifdef USE_GLOG
+      mindspore::mindspore_log_init();
+#endif
+      impl_ = std::make_shared<ModelImpl>();
+      if (impl_ == nullptr) {
+        MS_LOG(ERROR) << "Model implement is null.";
+        return kLiteFileError;
+      }
     }
   }
 
