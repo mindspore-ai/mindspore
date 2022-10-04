@@ -783,4 +783,5 @@ def test_raise_joinedstr_tensor():
         net = RaiseNet()
         res = net()
         print("res:", res)
-    assert "The input should not be [1]" in str(raise_info_joinedstr_tensor.value)
+    assert "The input should not be Tensor(shape=[1], dtype=Int64, value= [1])" \
+        in str(raise_info_joinedstr_tensor.value)

@@ -378,7 +378,8 @@ def test_tensor_input_empty():
 def test_tensor_input_ndarray_str():
     inp = np.array(["88", 0, 9])
     tensor = ms.Tensor(inp)
-    assert str(tensor) == "['88' '0' '9']"
+    assert str(tensor) == "Tensor(shape=[3], dtype=String, " \
+                          "value= ['88', '0', '9'])"
 
 
 def test_tensor_input_ndarray_bool():
