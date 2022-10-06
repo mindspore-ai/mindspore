@@ -31,6 +31,11 @@
 namespace mindspore {
 namespace abstract {
 namespace {
+const int kInputIndex0 = 0;
+const int kInputIndex1 = 1;
+const int kInputIndex2 = 2;
+#define IsSameType(source_type, cmp_type) (cmp_type->equal(source_type))
+#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<AnyValue>()))
 // Get 3rd argument for UnsortedSegmentOps' inferImpl function
 int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list, const std::string &op_name) {
   int64_t num_segments_value = 0;
@@ -63,6 +68,98 @@ int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list,
     MS_LOG(EXCEPTION) << "num_segments incorrect type in " << op_name;
   }
   return num_segments_value;
+}
+
+template <typename T>
+int64_t RangeCalculateShape(const tensor::TensorPtr start_ptr, const tensor::TensorPtr limit_ptr,
+                            const tensor::TensorPtr delta_ptr) {
+  T start = *(reinterpret_cast<T *>(start_ptr->data_c()));
+  T limit = *(reinterpret_cast<T *>(limit_ptr->data_c()));
+  T delta = *(reinterpret_cast<T *>(delta_ptr->data_c()));
+  bool valid_value = (delta == T(0) || (delta > 0 && start > limit) || (delta < 0 && start < limit));
+  if (valid_value) {
+    if (delta == T(0)) {
+      MS_EXCEPTION(ValueError) << "For Range, delta cannot be equal to zero.";
+    }
+    if (delta > 0 && start > limit) {
+      MS_EXCEPTION(ValueError) << "For Range, delta cannot be positive when limit < start.";
+    }
+    if (delta < 0 && start < limit) {
+      MS_EXCEPTION(ValueError) << "For Range, delta cannot be negative when limit > start.";
+    }
+  }
+  int64_t shape_size = 0;
+  if (std::is_integral<T>::value) {
+    shape_size = static_cast<int64_t>((std::abs(limit - start) + std::abs(delta) - 1) / std::abs(delta));
+  } else {
+    shape_size = static_cast<int64_t>(std::ceil(std::abs((limit - start) / delta)));
+  }
+  return shape_size;
+}
+
+abstract::ShapePtr RangeCheckAndInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
+  int64_t shape_size = abstract::Shape::kShapeDimAny;
+  auto start_value = input_args[kInputIndex0]->BuildValue();
+  auto limit_value = input_args[kInputIndex1]->BuildValue();
+  auto delta_value = input_args[kInputIndex2]->BuildValue();
+  MS_EXCEPTION_IF_NULL(start_value);
+  MS_EXCEPTION_IF_NULL(limit_value);
+  MS_EXCEPTION_IF_NULL(delta_value);
+
+  bool is_compile = (IsNoneOrAnyValue(start_value) || IsNoneOrAnyValue(limit_value) || IsNoneOrAnyValue(delta_value));
+  // not in compile, need inferShape
+  if (!is_compile) {
+    auto op_name = "Range";
+    auto dtype = CheckAndConvertUtils::GetTensorInputType(op_name, input_args, kInputIndex0);
+    auto start_tensor = start_value->cast<tensor::TensorPtr>();
+    auto limit_tensor = limit_value->cast<tensor::TensorPtr>();
+    auto delta_tensor = delta_value->cast<tensor::TensorPtr>();
+    if (IsSameType(dtype, kInt) || IsSameType(dtype, kInt32)) {
+      shape_size = RangeCalculateShape<int32_t>(start_tensor, limit_tensor, delta_tensor);
+    } else if (IsSameType(dtype, kInt64)) {
+      shape_size = RangeCalculateShape<int64_t>(start_tensor, limit_tensor, delta_tensor);
+    } else if (IsSameType(dtype, kFloat) || IsSameType(dtype, kFloat32)) {
+      shape_size = RangeCalculateShape<float>(start_tensor, limit_tensor, delta_tensor);
+    } else if (IsSameType(dtype, kFloat64)) {
+      shape_size = RangeCalculateShape<double>(start_tensor, limit_tensor, delta_tensor);
+    } else {
+      MS_EXCEPTION(TypeError) << "For Range, the dtype of input must be int32, int64, float32, float64, but got "
+                              << dtype->meta_type() << ".";
+    }
+    if (shape_size < 0) {
+      MS_EXCEPTION(ValueError) << "For Range, infer shape error, shape_size [" << shape_size << "] is negative.";
+    }
+  }
+
+  ShapeVector out_shape = {};
+  if (is_compile) {
+    (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
+  (void)out_shape.emplace_back(shape_size);
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
+TypePtr RangeCheckAndInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  std::set<TypePtr> support_types = {kInt32, kInt64, kFloat32, kFloat64};
+  auto start_type = CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex0]->BuildType(),
+                                                               support_types, prim->name());
+  auto limit_type = CheckAndConvertUtils::CheckTensorTypeValid("limit", input_args[kInputIndex1]->BuildType(),
+                                                               support_types, prim->name());
+  auto delta_type = CheckAndConvertUtils::CheckTensorTypeValid("delta", input_args[kInputIndex2]->BuildType(),
+                                                               support_types, prim->name());
+  MS_EXCEPTION_IF_NULL(start_type);
+  MS_EXCEPTION_IF_NULL(limit_type);
+  MS_EXCEPTION_IF_NULL(delta_type);
+  bool same_type = IsSameType(start_type, limit_type) && IsSameType(limit_type, delta_type);
+  if (!same_type) {
+    MS_EXCEPTION(TypeError) << "For Range, start, limit delta should have same type, but get start["
+                            << start_type->meta_type() << "], limit[" << limit_type->meta_type() << "], delta["
+                            << delta_type->meta_type() << "].";
+  }
+  return start_type;
 }
 }  // namespace
 AbstractBasePtr InferImplScalarToArray(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -1019,39 +1116,20 @@ AbstractBasePtr InferImplFlattenConcat(const AnalysisEnginePtr &, const Primitiv
 
 AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
-  const std::string &op_name = primitive->name();
-  if (args_spec_list.size() == 1) {
-    return args_spec_list[0]->Broaden();
-  }
-  constexpr size_t args_size = 3;
-  constexpr size_t range_start_index = 0;
-  constexpr size_t range_end_index = 1;
-  constexpr size_t range_delta_index = 2;
-  CheckArgsSize(op_name, args_spec_list, args_size);
-  AbstractTensorPtr range_start = CheckArg<AbstractTensor>(op_name, args_spec_list, range_start_index);
-  AbstractTensorPtr range_end = CheckArg<AbstractTensor>(op_name, args_spec_list, range_end_index);
-  AbstractTensorPtr range_delta = CheckArg<AbstractTensor>(op_name, args_spec_list, range_delta_index);
-
-  TypePtrList supported_types = {kInt64, kInt32, kFloat32, kFloat64};
-  TypePtr range_start_type = CheckTensorDType(range_start, supported_types, "range_start input of Range should be %s");
-  TypePtr range_end_type = CheckTensorDType(range_end, supported_types, "range_start input of Range should be %s");
-  TypePtr range_delta_type = CheckTensorDType(range_delta, supported_types, "range_start input of Range should be %s");
-  // check all 3 inputs are same type
-  if (!IsIdentidityOrSubclass(range_start_type, range_end_type) ||
-      !IsIdentidityOrSubclass(range_end_type, range_delta_type)) {
-    MS_LOG(EXCEPTION) << "All inputs must have same type, but got: " << args_spec_list[range_start_index]->type_name()
-                      << ", " << args_spec_list[range_end_index]->type_name() << ", and "
-                      << args_spec_list[range_delta_index]->type_name();
-  }
-
-  ValuePtr max_output_length_ptr = primitive->GetAttr("maxlen");
-  int64_t max_output_length = GetValue<int64_t>(max_output_length_ptr);
-  ShapeVector output_shape = {Shape::kShapeDimAny};
-  ShapeVector min_shape = {1};
-  ShapeVector max_shape = {max_output_length};
-  ShapePtr shape = std::make_shared<Shape>(output_shape, min_shape, max_shape);
-
-  return std::make_shared<AbstractTensor>(range_start_type, shape);
+  const int kInputIndex0 = 0;
+  const int kInputIndex1 = 1;
+  const int kInputIndex2 = 2;
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 3;
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(args_spec_list, kEqual, input_num, op_name);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, args_spec_list, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, args_spec_list, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, args_spec_list, kInputIndex2);
+  // infer type must in before
+  auto infer_type = RangeCheckAndInferType(primitive, args_spec_list);
+  auto infer_shape = RangeCheckAndInferShape(primitive, args_spec_list);
+  return std::make_shared<AbstractTensor>(infer_type, infer_shape);
 }
 
 AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
