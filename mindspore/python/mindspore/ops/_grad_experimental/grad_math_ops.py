@@ -56,10 +56,12 @@ from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.math_ops import Logit
+from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr
-from mindspore.ops._utils.utils import is_shape_unknown
+from mindspore.ops._utils.utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element, dyn_rank
+from mindspore.ops._grad.grad_base import dyn_ones, dyn_fill, sum_grad_reduce_axis
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
 
 transpose = P.Transpose()
@@ -465,27 +467,43 @@ def get_bprop_matrix_exp(self):
     concat_col = P.Concat(-2)
     cast = P.Cast()
     slice_op = P.Slice()
+    range_op = P.Range()
+    expand_dims = P.ExpandDims()
+    dyn_shape = P.TensorShape()
 
     def bprop(x, out, dout):
-        shape_x = P.Shape()(x)
-        n = shape_x[-1]
-        zero_matrix = zeros(shape_x, mstype.float32)
-        zero_matrix = cast(zero_matrix, dout.dtype)
-        x_len = len(shape_x)
-        input_perm = [ele for ele in range(x_len)]
-        input_perm[-1] = input_perm[-2]
-        input_perm[-2] = x_len - 1
-        input_perm = tuple(input_perm)
-        x_transpose = P.Transpose()(x, input_perm)
+        if is_shape_unknown(x.shape):
+            shape_x = dyn_shape(x)
+            x_len = dyn_rank(x)
+            input_perm = range_op(cast(0, mstype.int64), x_len, cast(1, mstype.int64))
+            input_perm[-1] = input_perm[-2]
+            input_perm[-2] = x_len - 1
+            x_transpose = transpose(x, input_perm)
+            zero_matrix = dyn_fill(mstype.float32, shape_x, 0)
+        else:
+            shape_x = x.shape
+            x_len = len(shape_x)
+            input_perm = [ele for ele in range(x_len)]
+            input_perm[-1] = input_perm[-2]
+            input_perm[-2] = x_len - 1
+            input_perm = tuple(input_perm)
+            x_transpose = P.Transpose()(x, input_perm)
+            zero_matrix = zeros(shape_x, mstype.float32)
 
+        zero_matrix = cast(zero_matrix, dout.dtype)
         meta_grad_up = concat_row((x_transpose, dout))
         meta_grad_down = concat_row((zero_matrix, x_transpose))
         meta_grad = concat_col((meta_grad_up, meta_grad_down))
         meta_grad = matrix_exp(meta_grad)
 
-        begins = [0] * x_len
+        if is_shape_unknown(x.shape):
+            begins = dyn_fill(mstype.int32, expand_dims(x_len, 0), 0)
+            sizes = cast(shape_x, mstype.int32)
+        else:
+            begins = [0] * x_len
+            sizes = [i for i in shape_x]
+        n = shape_x[-1]
         begins[-1] = n
-        sizes = [i for i in shape_x]
         sizes[-2] = n
         sizes[-1] = n
         return (slice_op(meta_grad, begins, sizes),)
@@ -563,6 +581,13 @@ def get_bprop_matrix_solve(self):
         grad_b_type = F.dtype(grad_b)
         if grad_b_type == mstype.float64:
             grad_b = cast(grad_b, mstype.float32)
+
+        a_shape = F.shape(input_a)
+        if is_shape_unknown(a_shape):
+            matrix_rank = dyn_rank(input_a)
+        else:
+            matrix_rank = rank(input_a)
+
         matrix_rank = rank(input_a)
         if adjoint:
             if matrix_rank > 2:
@@ -616,7 +641,13 @@ def get_bprop_log_matrix_determinant(self):
 
     def bprop(x, out, dout):
         x_adj_inv = inverse_op(x)
-        multipliers = reshape(dout[1], shape_op(out[1]) + (1, 1))
+        if is_shape_unknown(shape_op(out[1])):
+            const_value = F.cast(1, mstype.int64)
+            const_value = P.ExpandDims()(const_value, 0)
+            new_shape = P.Concat()((dyn_shape_op(out[1]), const_value, const_value))
+            multipliers = reshape(dout[1], new_shape)
+        else:
+            multipliers = reshape(dout[1], shape_op(out[1]) + (1, 1))
         dx = multipliers * x_adj_inv
         return (dx,)
 
@@ -1064,6 +1095,15 @@ def get_bprop_igamma(self):
     def bprop(a, x, out, dout):
         sa = shape_(a)
         sx = shape_(x)
+        if is_shape_unknown(sa) or is_shape_unknown(sx):
+            sa = dyn_shape_op(a)
+            sx = dyn_shape_op(x)
+            ra, rx = DynamicBroadcastGradientArgs()(sa, sx)
+            partial_a = igammagrada(a, x)
+            partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
+            r1 = reshape_(sum_grad_reduce_axis(partial_a * dout, ra), sa)
+            r2 = reshape_(sum_grad_reduce_axis(partial_x * dout, rx), sx)
+            return r1, r2
         ra, rx = broadcast_gradient_args(sa, sx)
         partial_a = igammagrada(a, x)
         partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
@@ -1095,6 +1135,15 @@ def get_bprop_igammac(self):
     def bprop(a, x, out, dout):
         sa = shape_(a)
         sx = shape_(x)
+        if is_shape_unknown(sa) or is_shape_unknown(sx):
+            sa = dyn_shape_op(a)
+            sx = dyn_shape_op(x)
+            ra, rx = DynamicBroadcastGradientArgs()(sa, sx)
+            partial_a = igammagrada(a, x)
+            partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
+            r1 = neg_(reshape_(sum_grad_reduce_axis(partial_a * dout, ra), sa))
+            r2 = neg_(reshape_(sum_grad_reduce_axis(partial_x * dout, rx), sx))
+            return r1, r2
         ra, rx = broadcast_gradient_args(sa, sx)
         partial_a = igammagrada(a, x)
         partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
@@ -1159,7 +1208,7 @@ def get_bprop_tridiagonal_matmul(self):
         maindiag_grad = reduce_sum(rhs_conj * grad, -1)
         subdiag_grad = reduce_sum(_rightshift(rhs_conj) * grad, -1)
         rhs_grad = _rightshift(superdiag_conj * grad) + maindiag_conj * grad + \
-            _leftshift(subdiag_conj * grad)
+                   _leftshift(subdiag_conj * grad)
         superdiag_grad = expand_dims(superdiag_grad, -2)
         maindiag_grad = expand_dims(maindiag_grad, -2)
         subdiag_grad = expand_dims(subdiag_grad, -2)
@@ -1190,13 +1239,18 @@ def get_bprop_cholesky_solve(self):
 
     def bprop(x1, x2, out, dout):
         flag = 0
+        shape_x1 = shape_op(x1)
+        if is_dim_unknown(shape_x1):
+            len_x1 = dyn_rank(x1)
+        else:
+            len_x1 = len(shape_x1)
         if dout.dtype == mstype.float64:
             flag = 1
             x2 = F.cast(x2, mstype.float32)
             out = F.cast(out, mstype.float32)
             dout = F.cast(dout, mstype.float32)
         dx1 = cholesky_solve(dout, x2)
-        if len(shape_op(x2)) == 2:
+        if len_x1 == 2:
             common_term = matmul_op(dx1, transpose(out, (1, 0)))
             common_term = common_term + transpose(common_term, (1, 0))
             if upper is True:
@@ -1222,6 +1276,7 @@ def get_bprop_cholesky_solve(self):
 def get_bprop_nextafter(self):
     """Grad definition for 'NextAfter' operation"""
     shape = P.Shape()
+    dyn_shape = P.TensorShape()
     ones = P.Ones()
     zeros = P.Zeros()
     dtype = P.DType()
@@ -1240,9 +1295,21 @@ def get_bprop_nextafter(self):
             dout = cast(dout, mstype.float32)
 
         s_x1 = shape(x1)
+        partial_x1 = ()
+        if is_shape_unknown(s_x1):
+            s_x1 = dyn_shape(x1)
+            partial_x1 = dyn_ones(s_x1, dtype(x1))
+        else:
+            partial_x1 = ones(s_x1, dtype(x1))
+
         s_x2 = shape(x2)
-        partial_x1 = ones(s_x1, dtype(x1))
-        partial_x2 = zeros(s_x2, dtype(x2))
+        partial_x2 = ()
+        if is_shape_unknown(s_x2):
+            s_x2 = dyn_shape(x2)
+            partial_x2 = dyn_fill(dtype(x2), s_x2, 0)
+        else:
+            partial_x2 = zeros(s_x2, dtype(x2))
+
         dx1 = reshape(partial_x1 * dout, s_x1)
         dx2 = reshape(partial_x2 * dout, s_x2)
         return cast(dx1, dtype(dout)), cast(dx2, dtype(dout))

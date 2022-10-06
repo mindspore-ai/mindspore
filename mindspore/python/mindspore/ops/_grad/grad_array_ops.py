@@ -17,6 +17,7 @@
 
 import numpy as np
 import mindspore as ms
+from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
@@ -24,12 +25,14 @@ from mindspore.ops.operations.array_ops import Fills, NonZero
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.functional import broadcast_gradient_args
 from mindspore.ops import functional as F
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import RowTensor
 from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
 from .._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, dyn_fill
+from .._grad.grad_base import sum_grad_reduce_axis
+from ..operations._inner_ops import DynamicBroadcastGradientArgs
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -126,6 +129,7 @@ def dout_cast_row_tensor(dout, x):
 @bprop_getters.register(P.Cast)
 def get_bprop_cast(self):
     """Generate bprop for Cast"""
+
     def bprop(x, t, out, dout):
         dx = dout_cast(dout, x)
         return dx, zeros_like(t)
@@ -151,6 +155,7 @@ def get_bprop_dynamicshape(self):
         return (zeros_like(x),)
 
     return bprop
+
 
 @bprop_getters.register(P.TensorShape)
 def get_bprop_tensorshape(self):
@@ -230,7 +235,10 @@ def get_bprop_flatten(self):
     flatten_grad = P.Reshape()
 
     def bprop(x, out, dout):
-        dx = flatten_grad(dout, shape_op(x))
+        shape_x = shape_op(x)
+        if is_shape_unknown(shape_x):
+            shape_x = dyn_shape_op(x)
+        dx = flatten_grad(dout, shape_x)
         return (dx,)
 
     return bprop
@@ -268,40 +276,46 @@ def _tile_shape(multiples, shapex):
 @bprop_getters.register(P.Tile)
 def get_bprop_tile(self):
     """Generate bprop for Tile"""
-    tuple_to_array = P.TupleToArray()
     cast = P.Cast()
     stack_op = P.Stack(1)
-    ones = P.Ones()
     concat = P.Concat()
+    stridedslice = P.StridedSlice()
+
+    def get_reduce_axis(r_shape):
+        """
+        reshape grad to r_shape, and reduce along all even dimensions to get the result with input_shape
+        For example:
+        input_shape = [20, 30, 40]
+        multiples = [2, 3, 4]
+        r_shape = [2, 20, 3, 30, 4, 40]
+        axis = [0, 2, 4]
+        """
+        rankr = dyn_shape_op(r_shape)[0]
+        tmp = range_op(0, 20, 2, mstype.int64)
+        return stridedslice(tmp, (0,), F.expand_dims(rankr//2, 0), (1,))
 
     def bprop(x, multiples, out, dout):
         shapex = shape_op(x)
         if is_shape_unknown(shapex):
             shapex = dyn_shape_op(x)
-        # if shapex or multiples not tuple, it should be dynamic shape.
         if isinstance(multiples, tuple) and isinstance(shapex, tuple):
             r_shape = _tile_shape(multiples, shapex)
+            # 0 represents the start index, and 2 represents the step
+            axis = F.make_range(0, len(r_shape), 2)
         else:
-            if isinstance(multiples, tuple):
-                multiples = tuple_to_array(multiples)
-            multiples = cast(multiples, mstype.int64)
-            len_multi = size_op(multiples)
-            rank = len(shapex)
-            if isinstance(shapex, tuple):
-                shape_tensor = cast(tuple_to_array(shapex), mstype.int64)
-            else:
-                shape_tensor = shapex
-            if len_multi > rank:
-                one_tensor = ones((len_multi - rank,), mstype.int64)
-                shape_tensor = concat((one_tensor, shape_tensor))
-            elif len_multi < rank:
-                one_tensor = ones((rank - len_multi,), mstype.int64)
-                multiples = concat((one_tensor, multiples))
-            tile_shape = stack_op((multiples, shape_tensor))
+            shapex = dyn_shape_op(x)
+            shapey = create_tensor_by_element(multiples)
+            rankx = dyn_rank(x)
+            ranky = dyn_shape_op(shapey)[0]
+            offset = F.expand_dims(ranky - rankx + 1, 0)
+            shape_x = concat((dyn_ones(offset, mstype.int64), shapex))
+            shape_x = shape_x[1:]
+            shapey = concat((dyn_ones((1,), mstype.int64), shapey))
+            shapey = shapey[1:]
+            tile_shape = transpose(stack_op((shapey, shape_x)), (1, 0))
             r_shape = P.Reshape()(tile_shape, (-1,))
+            axis = get_reduce_axis(r_shape)
 
-        # 0 represents the start index, and 2 represents the step
-        axis = F.make_range(0, len(r_shape), 2)
         dout_reshaped = P.Reshape()(dout, r_shape)
         dout_origin_dtype = dout_reshaped.dtype
         # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
@@ -325,6 +339,8 @@ def get_bprop_embedding_lookup(self):
 
     def bprop_sparse(x, indices, offset, out, dout):
         x_shp = shape_op(x)
+        if is_shape_unknown(x_shp):
+            raise RuntimeError("Now, EmbeddingLookup op's grad don't support Dynamic Sense!")
         new_indices = sub_op(indices, offset)
         indices_size = size_op(new_indices)
         if indices_size > 0:
@@ -349,13 +365,24 @@ def make_begin(shp):
     return begin
 
 
+def make_dynamic_begin(shp):
+    """Creates a tuple with zero according to the shape."""
+    begin = zeros_like(shp)
+    return begin
+
+
 @bprop_getters.register(P.Padding)
 def get_bprop_padding(self):
     """Grad definition for `Padding` operation."""
 
     def bprop(x, out, dout):
         shp = shape_op(x)
-        begin = make_begin(shp)
+        begin = ()
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x)
+            begin = make_dynamic_begin(shp)
+        else:
+            begin = make_begin(shp)
         dx = P.Slice()(dout, begin, shp)
         return (dx,)
 
@@ -480,12 +507,70 @@ def _regenerate_output_shape(x_shp, ind_shp, axis):
     return out_shape
 
 
+def _dyn_regenerate_output_shape(x_shp, ind_shp, axis):
+    """Get reshape new_shape"""
+    rank = dyn_shape_op(x_shp)[0]
+    if axis < 0:
+        axis += rank
+    out_shape = P.Concat(0)((x_shp[:axis], ind_shp, x_shp[axis + 1:]))
+    return out_shape
+
+
+def _dyn_generate_shape_index(out_shape, indices_shape, axis):
+    """Get tranpose order"""
+    out_rank = F.reshape(dyn_shape_op(out_shape), ())
+    ind_rank = F.reshape(dyn_shape_op(indices_shape), ())
+    if axis < 0:
+        axis += out_rank - ind_rank + 1
+    perm_part1 = P.Range()(F.cast(0, mstype.int32), F.cast(20, mstype.int32), F.cast(1, mstype.int32))
+    perm_part1 = perm_part1[axis : axis + ind_rank]
+    index = P.Range()(F.cast(0, mstype.int32), F.cast(out_rank, mstype.int32), F.cast(1, mstype.int32))
+    perm = P.Concat(0)((perm_part1, index[:axis], index[axis + ind_rank:]))
+    return perm
+
+
+def _dyn_generate_inverse_index(x_shp, axis):
+    """Get tranpose order"""
+    x_rank = F.reshape(dyn_shape_op(x_shp), ())
+    index = P.Range()(F.cast(0, mstype.int32), F.cast(x_rank, mstype.int32), F.cast(1, mstype.int32))
+    if axis < 0:
+        axis += x_rank
+    perm = P.Concat(0)((index[1: 1 + axis], Tensor([0], dtype=mstype.int32), index[1 + axis:]))
+    return perm
+
+
 @bprop_getters.register(P.Gather)
 @bprop_getters.register(P.GatherV2)
 def get_bprop_gather_v2(self):
     """Generate bprop for GatherV2"""
 
+    def _dyn_bprop_gather_v2(x, indices, axis, dout):
+        """dyn shape bprop for GatherV2"""
+        orig_indices = indices
+        x_shp = dyn_shape_op(x)
+        ind_shp = dyn_shape_op(indices)
+        out_shp = dyn_shape_op(dout)
+
+        if F.rank(dout) == 0:
+            dout = P.ExpandDims()(dout, -1)
+        if F.rank(indices) == 0:
+            indices = P.ExpandDims()(indices, -1)
+            out_shp = _dyn_regenerate_output_shape(x_shp, ind_shp, axis)
+            dout = reshape(dout, out_shp)
+
+        # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
+        perm_1 = _dyn_generate_shape_index(out_shp, ind_shp, axis)
+        values_transpose = transpose(dout, perm_1)
+        params_grad = unsorted_segment_sum(values_transpose, indices, x_shp[axis])
+        perm_2 = _dyn_generate_inverse_index(x_shp, axis)
+        params_grad = transpose(params_grad, perm_2)
+        return params_grad, zeros_like(orig_indices), zeros_like(axis)
+
     def bprop(x, indices, axis, out, dout):
+        is_mutable, axis = convert_to_tensor(axis)
+        if (is_shape_unknown(shape_op(x)) or is_shape_unknown(shape_op(indices)) or \
+                is_shape_unknown(shape_op(dout))) and is_mutable:
+            return _dyn_bprop_gather_v2(x, indices, axis, dout)
         orig_indices = indices
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
@@ -524,12 +609,14 @@ def get_bprop_gather_d(self):
 
     return bprop
 
+
 @bprop_getters.register(G.GatherDGrad)
 def get_bprop_gather_d_grad(self):
     """Generate bprop for GatherDGrad"""
     op = P.Gather()
     dim = self.dim
     x_shp = self.out_shape
+
     def bprop(index, x, out, dout):
         index_shp = shape_op(index)
         dim_before_axis = 1
@@ -538,7 +625,7 @@ def get_bprop_gather_d_grad(self):
         dim_at_axis_index = index_shp[dim]
         dim_at_axis_output = x_shp[dim]
         dim_after_axis = 1
-        for i in range(dim+1, len(x_shp)):
+        for i in range(dim + 1, len(x_shp)):
             dim_after_axis *= x_shp[i]
         element = dim_before_axis * dim_at_axis_index * dim_after_axis
         id_ = range_op(0, element, 1, index.dtype)
@@ -547,7 +634,7 @@ def get_bprop_gather_d_grad(self):
         j = P.Cast()(index < 0, index.dtype)
         j_read = dim_at_axis_index * j + index
         j_read = P.Reshape()(j_read, (-1,))
-        read_id = i*dim_at_axis_output*dim_after_axis + j_read * dim_after_axis + k
+        read_id = i * dim_at_axis_output * dim_after_axis + j_read * dim_after_axis + k
         dout = P.Reshape()(dout, (-1,))
         dx = op(dout, read_id, 0)
         dx = P.Reshape()(dx, shape_op(x))
@@ -561,6 +648,7 @@ def get_bprop_gather_d_grad_v2(self):
     """Generate bprop for GatherDGradV2"""
     op = P.Gather()
     dim = self.dim
+
     def bprop(index, x, out, dout):
         index_shp = shape_op(index)
         dim_before_axis = 1
@@ -570,7 +658,7 @@ def get_bprop_gather_d_grad_v2(self):
         dim_at_axis_index = index_shp[dim]
         dim_at_axis_output = x_shp[dim]
         dim_after_axis = 1
-        for i in range(dim+1, len(x_shp)):
+        for i in range(dim + 1, len(x_shp)):
             dim_after_axis *= x_shp[i]
         element = dim_before_axis * dim_at_axis_index * dim_after_axis
         id_ = range_op(0, element, 1, index.dtype)
@@ -579,13 +667,14 @@ def get_bprop_gather_d_grad_v2(self):
         j = P.Cast()(index < 0, index.dtype)
         j_read = dim_at_axis_index * j + index
         j_read = P.Reshape()(j_read, (-1,))
-        read_id = i*dim_at_axis_output*dim_after_axis + j_read * dim_after_axis + k
+        read_id = i * dim_at_axis_output * dim_after_axis + j_read * dim_after_axis + k
         dout = P.Reshape()(dout, (-1,))
         dx = op(dout, read_id, 0)
         dx = P.Reshape()(dx, shape_op(x))
         return zeros_like(index), dx
 
     return bprop
+
 
 @bprop_getters.register(P.SparseGatherV2)
 def get_bprop_sparse_gather_v2(self):
@@ -1030,11 +1119,7 @@ def _gather_drop_negatives(params,
     select = P.Select()
 
     if zero_clipped_indices is None:
-        if is_shape_unknown(shape_op(ids)):
-            zero_ids = dyn_fill(ids.dtype, dyn_shape_op(ids), 0)
-        else:
-            zero_ids = zeros_like(ids)
-        zero_clipped_indices = maximum(ids, zero_ids)
+        zero_clipped_indices = maximum(ids, zeros_like(ids))
     gathered = gather(params, zero_clipped_indices, 0)
     zero_slice = zeros_like(gathered)
     if is_positive is None:
@@ -1053,7 +1138,6 @@ def _gather_drop_negatives(params,
                 is_positive_shape = P.Concat(-1)((is_positive_shape, padded_shape))
             is_positive = reshape(is_positive, is_positive_shape)
             is_positive = logical_and(is_positive, F.cast(fill_gathered, mstype.bool_))
-            zero_slice = dyn_fill(gathered.dtype, gathered_shape, 0)
         else:
             broadcastable_shape = is_positive_shape
             for _ in range(rank(gathered) - rank(is_positive)):
@@ -1088,13 +1172,7 @@ def get_bprop_unsorted_segment_sum(self):
     """Generate bprop for UnsortedSegmentSum"""
 
     def bprop(x, segment_ids, num_segments, out, dout):
-        segment_shape = shape_op(segment_ids)
-        if is_shape_unknown(segment_shape):
-            segment_shape = dyn_shape_op(segment_ids)
-            zeros_segment = dyn_fill(segment_ids.dtype, segment_shape, 0)
-        else:
-            zeros_segment = zeros_like(segment_ids)
-        return _gather_drop_negatives(dout, segment_ids, None, None)[0], zeros_segment, \
+        return _gather_drop_negatives(dout, segment_ids, None, None)[0], zeros_like(segment_ids), \
                zeros_like(num_segments)
 
     return bprop
@@ -1222,12 +1300,20 @@ def get_bprop_broadcast_to(self):
         x_shape = shape_op(x)
         dout_shape = shape_op(dout)
         broadcast_shape = shape_op(out)
-
-        if x_shape == dout_shape:
+        dynamic = is_shape_unknown(x_shape) or is_shape_unknown(dout_shape)
+        if not dynamic and x_shape == dout_shape:
             return (dout,)
-        _, reduction_axes = broadcast_gradient_args(broadcast_shape, x_shape)
-        reduced_grad = reduce_keep_dim(dout, reduction_axes)
-        dx = reshape(reduced_grad, x_shape)
+        dynamic = dynamic or is_shape_unknown(broadcast_shape)
+        if not dynamic:
+            _, reduction_axes = broadcast_gradient_args(broadcast_shape, x_shape)
+            reduced_grad = reduce_keep_dim(dout, reduction_axes)
+            dx = reshape(reduced_grad, x_shape)
+        else:
+            x_shape = dyn_shape_op(x)
+            broadcast_shape = dyn_shape_op(out)
+            _, reduction_axes = DynamicBroadcastGradientArgs()(broadcast_shape, x_shape)
+            reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
+            dx = reshape(reduced_grad, x_shape)
         return (dx,)
 
     return bprop

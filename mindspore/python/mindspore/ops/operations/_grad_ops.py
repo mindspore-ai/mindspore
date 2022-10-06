@@ -26,7 +26,7 @@ import mindspore.context as context
 from mindspore._checkparam import Validator as validator, Rel
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
-from mindspore.ops._utils import is_shape_unknown
+from mindspore.ops._utils import is_shape_unknown, is_dim_unknown
 
 
 class AbsGrad(PrimitiveWithInfer):
@@ -232,10 +232,27 @@ class ConcatOffset(PrimitiveWithInfer):
         x_type = input_x['dtype']
         self.add_prim_attr('T', x_type[0].element_type())
 
+        # input_x is dynamic rank
+        rank = -1
+        is_dyn_rank = False
+        for _, sh in enumerate(x_shp):
+            if is_dim_unknown(sh):
+                is_dyn_rank = True
+            else:
+                rank = len(sh)
+        if is_dyn_rank:
+            return {
+                'shape': [len(x_shp), rank],
+                'dtype': mstype.int64,
+                'value': None
+            }
+
         # if the dimension of input_x on the axis is dynamic
-        rank_base = len(x_shp[0])
+        if axis < -rank or axis >= rank:
+            raise ValueError("For 'ConcatOffset', 'axis' must be in range [{}, {}), but got {}"
+                             .format(-rank, rank, axis))
         if axis < 0:
-            axis = axis + rank_base
+            axis = axis + rank
         for each in x_shp:
             if each[axis] == -1:
                 return {

@@ -16,7 +16,7 @@ $bprop_tuple_getitem.155:[CNode]158:5$bprop_tuple_getitem.155:[CNode]159:7$bpr
 bprop_tuple_getitem.155:out*
 bprop_tuple_getitem.155:dout2&
 $bprop_tuple_getitem.155:[CNode]159:7:@5762fbec96d9311f48905028e4687b3c255d34c9501710bc8a449a228b23a28ePbH
-#S-Prim-hyper_map[zeros_like_leaf]:6!S-Prim-hyper_map[zeros_like_leaf]bH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]b&
+#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]bH
+#S-Prim-hyper_map[zeros_like_leaf]:6!S-Prim-hyper_map[zeros_like_leaf]b&
 S-Prim-MakeTuple:8S-Prim-MakeTupleb.
 S-Prim-tuple_setitem:4S-Prim-tuple_setitemh

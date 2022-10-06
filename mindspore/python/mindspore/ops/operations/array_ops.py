@@ -434,8 +434,7 @@ class Cast(PrimitiveWithInfer):
                'dtype': mstype.tensor_type(t['value']),
                'value': value}
         if 'shape_value' in x:
-            np_dst_type = mstype.dtype_to_nptype(dst_type)
-            out['shape_value'] = tuple(np.array(x['shape_value']).astype(np_dst_type))
+            out['shape_value'] = tuple(np.array(x['shape_value']).astype(np.int64))
         return out
 
 
@@ -2288,6 +2287,8 @@ class Tile(PrimitiveWithInfer):
     def _get_shape_and_range(self, x, multiples):
         """calculate tile shape and value"""
         x_shp = x['shape']
+        if is_dim_unknown(x_shp):
+            return {'shape': x_shp}, None
         multiples_v = multiples['value']
         value = None
         len_sub = len(multiples_v) - len(x_shp)

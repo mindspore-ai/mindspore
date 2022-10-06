@@ -18,7 +18,8 @@ import numpy as np
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.common import dtype as mstype
-from .grad_base import bprop_getters, dyn_size, create_tensor_by_element
+from mindspore.common.tensor import Tensor
+from .grad_base import bprop_getters, dyn_size, create_tensor_by_element, dyn_rank
 from .. import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -26,7 +27,7 @@ from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ..operations import _rl_inner_ops as rl_ops
 from ... import context
-from .._utils.utils import range_op, get_1d_shape, is_shape_unknown
+from .._utils.utils import range_op, get_1d_shape, is_shape_unknown, is_dim_unknown
 
 
 @bprop_getters.register(P.BiasAdd)
@@ -121,6 +122,7 @@ def get_bprop_conv2d(self):
         w_shape = get_shape(w)
         if is_shape_unknown(x_shape):
             x_shape = get_dyn_shape(x)
+        if is_shape_unknown(w_shape):
             w_shape = get_dyn_shape(w)
             w_shape = cast_type(w_shape, mstype.int32)
         dx = input_grad(dout, w, x_shape)
@@ -204,11 +206,51 @@ def get_bprop_extract_image_patches(self):
     transpose = P.Transpose()
     cast = P.Cast()
     matmul = P.MatMul()
+    range_ = P.Range()
+    dyn_shape_op = P.TensorShape()
+    ones_like = P.OnesLike()
 
     _, _, ksizes_row, ksizes_col = self.ksizes
 
+    def _dyn_extract_image_patched(x, out, dout):
+        x_shape = dyn_shape_op(x)
+        out_shape = dyn_shape_op(out)
+        x_batch, x_depth, x_row, x_col = x_shape[0], x_shape[1], x_shape[2], x_shape[3]
+        x_indices_num = x_row * x_col + 1
+        x_idx = range_(cast(1, mstype.float32), cast(x_indices_num, mstype.float32), cast(1, mstype.float32))
+        x_idx = reshape(x_idx, create_tensor_by_element((1, 1, x_row, x_col)))
+        x_idx_patch = cast(extract_image_patches(x_idx), mstype.int32)
+        x_idx_patch = transpose(x_idx_patch, (0, 2, 3, 1))
+
+        out_row, out_col = out_shape[2], out_shape[3]
+        out_indices_num = out_row * out_col * ksizes_row * ksizes_col
+        out_idx_ori = range_(cast(0, mstype.int32), cast(out_indices_num, mstype.int32), cast(1, mstype.int32))
+        out_idx = reshape(out_idx_ori, create_tensor_by_element((1, out_row, out_col, ksizes_row * ksizes_col)))
+
+        idx_tensor = concat((expand_dims(x_idx_patch, -1), expand_dims(out_idx, -1)))
+        idx_tensor = reshape(idx_tensor, (-1, 2))
+        sp_shape = create_tensor_by_element((x_indices_num, out_indices_num))
+        update = cast(ones_like(out_idx_ori), dtype(dout))
+        sp_tensor = scatter_nd(idx_tensor, update, sp_shape)
+        begin = create_tensor_by_element((1, 0))
+        size = create_tensor_by_element((x_indices_num - 1, out_indices_num))
+        sp_tensor = slice_op(sp_tensor, begin, size)
+
+        grad = transpose(dout, (0, 2, 3, 1))
+        grad = reshape(grad, create_tensor_by_element((x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth)))
+        grad = transpose(grad, (1, 2, 3, 4, 0, 5))
+        grad = reshape(grad, create_tensor_by_element((out_row * out_col * ksizes_row * ksizes_col, x_batch * x_depth)))
+
+        jac = matmul(sp_tensor, grad)
+        dx = reshape(jac, create_tensor_by_element((x_row, x_col, x_batch, x_depth)))
+        dx = transpose(dx, (2, 3, 0, 1))
+        return (dx,)
+
     def bprop(x, out, dout):
         x_shape = get_shape(x)
+        out_shape = get_shape(out)
+        if is_shape_unknown(x_shape) or is_shape_unknown(out_shape):
+            return _dyn_extract_image_patched(x, out, dout)
         x_batch, x_depth, x_row, x_col = x_shape
         x_indices_num = x_row * x_col + 1
         x_idx = cast(F.tuple_to_array(range(1, x_indices_num)), mstype.float32)
@@ -216,7 +258,6 @@ def get_bprop_extract_image_patches(self):
         x_idx_patch = cast(extract_image_patches(x_idx), mstype.int32)
         x_idx_patch = transpose(x_idx_patch, (0, 2, 3, 1))
 
-        out_shape = get_shape(out)
         _, _, out_row, out_col = out_shape
         out_indices_num = out_row * out_col * ksizes_row * ksizes_col
         out_idx = F.tuple_to_array(range(out_indices_num))
@@ -302,6 +343,10 @@ def get_bprop_max_pool_grad_grad(self):
         reshape = P.Reshape()
     else:
         raise RuntimeError("MaxPoolGradGrad does not support on CPU!")
+    shape_op = P.Shape()
+    dyn_shape_op = P.TensorShape()
+    op_range = P.Range()
+    dyn_broadcast_op = inner.DynamicBroadcastTo()
 
     def bprop(x1, x2, grad, out, dout):
         dx1 = zeros_like(x1)
@@ -309,12 +354,24 @@ def get_bprop_max_pool_grad_grad(self):
         if is_ascend:
             dgrad = maxpool_grad_grad(x1, x2, dout)
         else:
-            b, c, h, w = P.Shape()(x2)
-            _, ind = maxpool_with_argmax(x1)
-            batch = F.cast(F.tuple_to_array(range(b)), mstype.int32)
-            batch = P.Tile()(reshape(batch, (-1, 1)), (1, c * h * w))
-            gather_ind = P.Stack(-1)((batch, reshape(ind, (b, -1))))
-            dgrad = reshape(gather(reshape(dout, (b, -1)), gather_ind), (b, c, h, w))
+            shape_x2 = shape_op(x2)
+            if is_shape_unknown(shape_x2):
+                shape_x2 = dyn_shape_op(x2)
+                b, c, h, w = shape_x2
+                _, ind = maxpool_with_argmax(x1)
+                batch = op_range(F.cast(0, mstype.int32), F.cast(b, mstype.int32), F.cast(1, mstype.int32))
+                batch = dyn_broadcast_op(reshape(batch, (-1, 1)),
+                                         create_tensor_by_element((dyn_size(batch), c * h * w)))
+                gather_ind = P.Stack(-1)((batch, reshape(ind, create_tensor_by_element((b, -1)))))
+                dgrad = reshape(gather(reshape(dout, create_tensor_by_element((b, -1))), gather_ind),
+                                create_tensor_by_element((b, c, h, w)))
+            else:
+                b, c, h, w = shape_x2
+                _, ind = maxpool_with_argmax(x1)
+                batch = F.cast(F.tuple_to_array(range(b)), mstype.int32)
+                batch = P.Tile()(reshape(batch, (-1, 1)), (1, c * h * w))
+                gather_ind = P.Stack(-1)((batch, reshape(ind, (b, -1))))
+                dgrad = reshape(gather(reshape(dout, (b, -1)), gather_ind), (b, c, h, w))
         return (dx1, dx2, dgrad)
 
     return bprop
@@ -461,6 +518,8 @@ def get_bprop_avg_pool_3d_grad(self):
 
     def bprop(x, out, dout):
         x_shape = F.shape(x)
+        if is_shape_unknown(x_shape):
+            x_shape = P.TensorShape()(x)
         dx = avgpool3d_grad(x_shape, dout)
         return (dx,)
 
@@ -661,6 +720,34 @@ def _get_transpose_axis(x_shp, axis):
     return tuple(reverse_axis)
 
 
+def _get_dyn_transpose_axis(x, axis, is_ascend):
+    """Get transpose axis"""
+    if is_dim_unknown(P.Shape()(x)):
+        rank = dyn_rank(x)
+        start = Tensor(0, dtype=mstype.int64)
+        delta = Tensor(1, dtype=mstype.int64)
+    else:
+        rank = P.Cast()(len(P.Shape()(x)), mstype.int64)
+        start = P.Cast()(0, mstype.int64)
+        delta = P.Cast()(1, mstype.int64)
+
+    if axis < 0:
+        axis += rank
+    range_ops = P.Range()
+
+    reverse_axis = range_ops(start, rank, delta)
+    if is_ascend:
+        reverse_axis = P.Cast()(reverse_axis, mstype.int8)
+        axis = P.Cast()(axis, mstype.int32)
+        reverse_axis[axis] = rank - 1
+        rank = P.Cast()(rank, mstype.int32)
+    else:
+        reverse_axis[axis] = rank - 1
+
+    reverse_axis[rank - 1] = axis
+    return reverse_axis
+
+
 @bprop_getters.register(P.Softmax)
 def get_bprop_softmax(self):
     """Grad definition for `Softmax` operation."""
@@ -673,13 +760,22 @@ def get_bprop_softmax(self):
     if not isinstance(axis, int):
         axis = axis[0]
 
+    device_target = context.get_context("device_target")
+    is_ascend = (device_target == "Ascend")
+
     def bprop(x, out, dout):
         # dx = (dout - sum(dout * out)) * out
         # This formula is correct only when the `axis` is the last dimension.
         # In order to support the scenario where the `axis` is other values,
         # we transpose the data of the `axis` dimension to the last dimension for calculation,
         # and then transpose it back after the calculation.
-        reverse_axis = _get_transpose_axis(get_shape(x), axis)
+        shp = get_shape(x)
+        if is_shape_unknown(shp):
+            reverse_axis = _get_dyn_transpose_axis(x, axis, is_ascend)
+            if is_ascend:
+                reverse_axis = P.Cast()(reverse_axis, mstype.int32)
+        else:
+            reverse_axis = _get_transpose_axis(get_shape(x), axis)
         out = transpose(out, reverse_axis)
         dout = transpose(dout, reverse_axis)
         dx = mul(out, sub(dout, sum_func(mul(out, dout), -1)))
@@ -1216,6 +1312,7 @@ def get_bprop_sigmoid_crossentropy_with_logits(self):
 def get_bprop_pad(self):
     """Grad definition for `Pad` operation."""
     shape_op = P.Shape()
+    dyn_shape_op = P.TensorShape()
     paddings = self.paddings
 
     def bprop(x, out, dout):
@@ -1223,6 +1320,8 @@ def get_bprop_pad(self):
         for item in paddings:
             begin += (item[0],)
         shp = shape_op(x)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x)
         dx = P.Slice()(dout, begin, shp)
         return (dx,)
 
@@ -1346,12 +1445,14 @@ def get_bprop_kl_div_loss(self):
     else:
         grad = G.KLDivLossGrad(self.reduction)
     size = P.Size()
+    shape = P.Shape()
     reduce_type = self.reduction
 
     def bprop(x, y, out, dout):
         dx = grad(dout, x, y)
         if reduce_type == "mean":
-            return dx / size(x), zeros_like(y)
+            x_size = dyn_size(x) if is_shape_unknown(shape(x)) else size(x)
+            return dx / x_size, zeros_like(y)
         return dx, zeros_like(y)
 
     return bprop
@@ -1451,6 +1552,7 @@ def get_bprop_deformable_offsets(self):
     def bprop(x, offsets, out, dout):
         out_grad = grad(dout, x, offsets)
         return out_grad
+
     return bprop
 
 
@@ -1502,6 +1604,7 @@ def get_bprop_upsample_nearest_3d_grad(self):
         input_grad = G.UpsampleNearest3DGrad(get_shape(input_x), output_size, scales)
         dx = input_grad(dout)
         return (dx,)
+
     return bprop
 
 
@@ -1517,4 +1620,5 @@ def get_bprop_upsample_trilinear_3d_grad(self):
         input_grad = G.UpsampleTrilinear3DGrad(get_shape(input_x), output_size, scales, align_corners)
         dx = input_grad(dout)
         return (dx,)
+
     return bprop
