@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad.grad_base import bprop_getters, sum_grad_reduce_axis
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
@@ -167,14 +167,13 @@ def get_bprop_ps_roi_pooling(self):
 @bprop_getters.register(inner.DynamicBroadcastTo)
 def get_bprop_dynamic_broadcast_to(self):
     """Generate bprop for DynamicBroadcastTo"""
-    reduce_keep_dim = P.ReduceSum(keep_dims=True)
 
     def bprop(x, shp, out, dout):
         x_shape = dyn_shape_op(x)
         broadcast_shape = dyn_shape_op(out)
 
         _, reduction_axes = inner.DynamicBroadcastGradientArgs()(broadcast_shape, x_shape)
-        reduced_grad = reduce_keep_dim(dout, reduction_axes)
+        reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
         dx = reshape(reduced_grad, x_shape)
         return dx, zeros_like(shp)
 

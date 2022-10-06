@@ -23,6 +23,7 @@ bce_with_logits_loss_op_info = TBERegOp("BCEWithLogitsLoss") \
     .compute_cost(10) \
     .kernel_name("sigmoid_cross_entropy_with_logits_v2") \
     .partial_flag(True) \
+    .dynamic_shape(True) \
     .is_dynamic_format(True) \
     .attr("reduction", "optional", "str", "all", "mean") \
     .input(0, "predict", False, "required", "all") \

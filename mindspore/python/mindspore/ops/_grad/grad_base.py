@@ -94,7 +94,14 @@ def convert_to_tensor(data):
 
 def dyn_rank(tensor):
     """get the rank of tensor"""
-    return dyn_shape(dyn_shape(tensor))[0]
+    out_rank = dyn_shape(dyn_shape(tensor))
+    return P.Reshape()(out_rank, ())
+
+
+def dyn_rank_1d(tensor):
+    """get the rank of tensor and return a 1D tensor"""
+    tensor_shape = dyn_shape(tensor)
+    return dyn_shape(tensor_shape)
 
 
 def dyn_size(tensor, dtype=mstype.int64):
@@ -117,13 +124,15 @@ def create_tensor_by_element(ori_tuple, data_type=mstype.int64):
     return ori_tuple
 
 
-def dyn_invert_permutation(prem):
+def dyn_invert_permutation(perm):
     """get the invert premutation of tensor"""
-    indices = P.ExpandDims()(prem, -1)
-    end = dyn_size(prem)
+    indices = P.ExpandDims()(perm, -1)
+    end = dyn_size(perm)
     updates = P.Range()(P.Cast()(0, end.dtype), end, P.Cast()(1, end.dtype))
     output = P.ZerosLike()(updates)
-    return P.TensorScatterUpdate()(output, indices, updates)
+    new_perm = P.TensorScatterUpdate()(P.Cast()(output, mstype.float32),
+                                       indices, P.Cast()(updates, mstype.float32))
+    return P.Cast()(new_perm, mstype.int32)
 
 
 def dyn_fill(value_type, shape, value):
@@ -135,3 +144,8 @@ def dyn_fill(value_type, shape, value):
 def dyn_ones(shape, value_type):
     """creates a tensor filled with value ones."""
     return dyn_fill(value_type, shape, 1)
+
+
+def sum_grad_reduce_axis(x, rx, keep_dims=False):
+    """sum the grad_reduce_axis"""
+    return P.ReduceSum(keep_dims=keep_dims)(x, rx)

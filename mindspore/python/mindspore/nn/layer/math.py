@@ -25,6 +25,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
+from mindspore.ops._utils.utils import is_shape_unknown
 
 __all__ = ['ReduceLogSumExp',
            'Range',
@@ -239,6 +240,7 @@ class LGamma(Cell):
         self.log1p = P.Log1p()
         self.abs = P.Abs()
         self.shape = P.Shape()
+        self.dyn_shape = P.TensorShape()
         self.dtype = P.DType()
         self.fill = P.Fill()
         self.floor = P.Floor()
@@ -249,11 +251,15 @@ class LGamma(Cell):
         self.select = P.Select()
         self.sin = P.Sin()
         self.isfinite = P.IsFinite()
+        self.ones_like = P.OnesLike()
 
     def construct(self, x):
         input_dtype = self.dtype(x)
         _check_input_dtype("x", input_dtype, [mstype.float16, mstype.float32], self.cls_name)
-        infinity = self.fill(input_dtype, self.shape(x), self.inf)
+        if is_shape_unknown(self.shape(x)):
+            infinity = self.ones_like(x) * F.cast(self.inf, input_dtype)
+        else:
+            infinity = self.fill(input_dtype, self.shape(x), self.inf)
 
         need_to_reflect = self.less(x, 0.5)
         neg_input = -x
@@ -266,6 +272,7 @@ class LGamma(Cell):
                 product_ = k_lanczos_coefficients[i] / (z + i + 1)
                 reflex_x = product_ + reflex_x
             return reflex_x
+
         reflex_x = _calculate_reflected_x(z, self.k_base_lanczos_coeff, self.k_lanczos_coefficients)
 
         t = z + self.lanczos_gamma_plus_one_half
@@ -281,8 +288,8 @@ class LGamma(Cell):
         reflection_denom = self.log(self.sin(self.pi * reduced_frac_input))
 
         reflection = self.select(self.isfinite(reflection_denom),
-                                 -reflection_denom - log_y + self.log_pi, # pylint: disable=invalid-unary-operand-type
-                                 -reflection_denom) # pylint: disable=invalid-unary-operand-type
+                                 -reflection_denom - log_y + self.log_pi,  # pylint: disable=invalid-unary-operand-type
+                                 -reflection_denom)  # pylint: disable=invalid-unary-operand-type
 
         result = self.select(need_to_reflect, reflection, log_y)
 
@@ -369,6 +376,7 @@ class DiGamma(Cell):
                 num = num - k_lanczos_coefficients[i] / ((z + i + 1) * (z + i + 1))
                 denom = denom + k_lanczos_coefficients[i] / (z + i + 1)
             return num, denom
+
         num, denom = _calculate_num_denom(z, self.k_base_lanczos_coeff, self.k_lanczos_coefficients)
 
         t = z + self.lanczos_gamma_plus_one_half
@@ -1005,6 +1013,7 @@ class MatInverse(Cell):
          [-13.555558  3.7777784  -0.5555557]
          [2.1111116  -0.5555557  0.11111113]]
     """
+
     def __init__(self):
         """Initialize MatInverse."""
         super(MatInverse, self).__init__()
@@ -1044,6 +1053,7 @@ class MatDet(Cell):
         >>> print(output)
         35.999996
     """
+
     def __init__(self):
         """Initialize MatDet."""
         super(MatDet, self).__init__()

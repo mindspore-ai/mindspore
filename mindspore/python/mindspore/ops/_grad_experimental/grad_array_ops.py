@@ -19,7 +19,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.numpy.array_ops import where
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad.grad_base import bprop_getters, dyn_rank, dyn_fill, dyn_ones, create_tensor_by_element
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.array_ops import MatrixDiagV3
@@ -166,10 +166,16 @@ def get_bprop_index_fill(self):
     def bprop(x, dim, indices, value, out, dout):
         zero_value = zeros_like(value)
         x_grad = index_fill(dout, dim, indices, zero_value)
-        if shape(x) == ():
-            value_grad = dout
+        if is_shape_unknown(shape(x)):
+            if dyn_rank(x) == 0:
+                value_grad = dout
+            else:
+                value_grad = gather(dout, indices, dim).sum()
         else:
-            value_grad = gather(dout, indices, dim).sum()
+            if shape(x) == ():
+                value_grad = dout
+            else:
+                value_grad = gather(dout, indices, dim).sum()
         result = (x_grad, zeros_like(dim), zeros_like(indices), value_grad)
         return result
 
@@ -248,36 +254,17 @@ def get_bprop_matrix_set_diag_v3(self):
     align = self.align
     matrix_diag_part_v3 = MatrixDiagPartV3(align=align)
     matrix_set_diag_v3 = MatrixSetDiagV3(align=align)
-    resha = P.Reshape()
     zeros = P.Zeros()
-    minimum = P.Minimum()
-    concat = P.Concat()
 
     def bprop(x, diagonal, k, out, dout):
         diagonal_cal = matrix_diag_part_v3(dout, k, zeros((), dout.dtype))
 
         diagonal_shape = P.Shape()(diagonal)
         if is_shape_unknown(diagonal_shape):
-            shape_dout = P.Shape()(dout)
-            pre_shape = shape_dout[:-2]
-            back_shape = shape_dout[-2:]
-
-            site_dia = resha(k, (-1))
-            index_min = -1 * site_dia[0]
-            index_max = site_dia[-1]
-            col = 0
-            if index_max < 0:
-                col = index_max
-            row = 0
-            if index_min < 0:
-                row = index_min
-            max_diag_len = minimum(back_shape[0] + col, back_shape[1] + row)
-
-            back = [max_diag_len]
-            if index_max != index_min:
-                back = [index_max - index_min + 1, max_diag_len]
-            diagonal_shape = concat([pre_shape, back])
-        x_cal = matrix_set_diag_v3(dout, zeros(diagonal_shape, dout.dtype), k)
+            diagonal = F.cast(diagonal, dout.dtype)
+            x_cal = matrix_set_diag_v3(dout, zeros_like(diagonal), k)
+        else:
+            x_cal = matrix_set_diag_v3(dout, zeros(diagonal_shape, dout.dtype), k)
 
         return x_cal, diagonal_cal, zeros_like(k)
 
@@ -290,11 +277,16 @@ def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
     scatter_nd = P.ScatterNd()
     equal = P.Equal()
     shape = P.Shape()
+    dyn_shape_op = P.TensorShape()
 
     x_indicators = F.cast(equal(x, out), mstype.int32)
     possibly_updated = gather_nd(out, indices)
     out_indicators = F.cast(equal(updates, possibly_updated), mstype.int32)
-    scattered_out_indicators = scatter_nd(indices, out_indicators, shape(x))
+    input_shape = shape(x)
+    if is_shape_unknown(input_shape):
+        input_shape = dyn_shape_op(x)
+
+    scattered_out_indicators = scatter_nd(indices, out_indicators, input_shape)
     indicators = x_indicators + scattered_out_indicators
     dx = dout * F.cast(x_indicators, F.dtype(dout)) / F.cast(indicators, F.dtype(dout))
     dupdates = gather_nd(dout / F.cast(indicators, F.dtype(dout)), indices) * F.cast(out_indicators, F.dtype(dout))
@@ -401,9 +393,16 @@ def get_bprop_resize_nearest_neighbor_v2(self):
 
     def bprop(x, size, output, dout):
         x_shape = P.Shape()(x)
+        if is_shape_unknown(x_shape):
+            x_shape = P.TensorShape()(x)
         grad_in_size = x_shape[1:3]
         if data_format == 'NCHW':
             grad_in_size = x_shape[2:4]
+
+        if is_shape_unknown(P.Shape()(x)):
+            dx = grad_op(dout, grad_in_size)
+            return dx, zeros_like(grad_in_size)
+
         dx = grad_op(dout, _create_tensor(grad_in_size, mstype.int32))
         return dx, zeros_like(grad_in_size)
 
@@ -440,9 +439,54 @@ def get_bprop_extract_volume_patches(self):
     cast = P.Cast()
     matmul = P.MatMul()
     _, _, ksize_d, ksize_h, ksize_w = self.kernel_size
+    range_ = P.Range()
+    dyn_shape_op = P.TensorShape()
+    ones_like = P.OnesLike()
+
+    def _dyn_extract_volume_patches(x, out, dout):
+        x_shape = dyn_shape_op(x)
+        out_shape = dyn_shape_op(out)
+        x_n, x_c, x_d, x_h, x_w = x_shape[0], x_shape[1], x_shape[2], x_shape[3], x_shape[4]
+        x_indices_num = 1 + x_d * x_h * x_w
+        x_idx = range_(cast(1, mstype.float32), cast(x_indices_num, mstype.float32), cast(1, mstype.float32))
+        x_idx = cast(x_idx, mstype.float16)
+        x_idx = P.Reshape()(x_idx, create_tensor_by_element((1, 1, x_d, x_h, x_w)))
+        x_idx_patched = extract_volume_patches(x_idx)
+        x_idx_patched = P.Transpose()(x_idx_patched, (0, 2, 3, 4, 1))
+        x_idx_patched = cast(x_idx_patched, mstype.int32)
+
+        out_d, out_h, out_w = out_shape[2], out_shape[3], out_shape[4]
+        out_indices_num = out_d * out_h * out_w * ksize_d * ksize_h * ksize_w
+        out_idx_ori = range_(cast(0, mstype.int32), cast(out_indices_num, mstype.int32), cast(1, mstype.int32))
+        out_idx = P.Reshape()(out_idx_ori,
+                              create_tensor_by_element((1, out_d, out_h, out_w, ksize_d * ksize_h * ksize_w)))
+
+        idx_tensor = concat((expend_dims(x_idx_patched, -1), expend_dims(out_idx, -1)))
+        idx_map = P.Reshape()(idx_tensor, (-1, 2))
+        sp_shape = create_tensor_by_element((x_indices_num, out_indices_num))
+        update = cast(ones_like(out_idx_ori), dtype(dout))
+        sp_mat_full = scatter_nd(idx_map, update, sp_shape)
+        begin = create_tensor_by_element((1, 0))
+        size = create_tensor_by_element((x_indices_num - 1, out_indices_num))
+        sp_tensor = slice_op(sp_mat_full, begin, size)
+
+        grad = P.Transpose()(dout, (0, 2, 3, 4, 1))
+        grad = P.Reshape()(grad, create_tensor_by_element((x_n, out_d, out_h, out_w, ksize_d,
+                                                           ksize_h, ksize_w, x_c)))
+        grad_expended = P.Transpose()(grad, (1, 2, 3, 4, 5, 6, 0, 7))
+        grad_flat = P.Reshape()(grad_expended,
+                                create_tensor_by_element((out_d * out_h * out_w * ksize_d * ksize_h * ksize_w,
+                                                          x_n * x_c)))
+        jac = matmul(sp_tensor, grad_flat)
+        dx = P.Reshape()(jac, create_tensor_by_element((x_d, x_h, x_w, x_n, x_c)))
+        dx = P.Transpose()(dx, (3, 4, 0, 1, 2))
+        return (dx,)
 
     def bprop(x, out, dout):
         x_shape = P.Shape()(x)
+        out_shape = P.Shape()(out)
+        if is_shape_unknown(x_shape) or is_shape_unknown(out_shape):
+            return _dyn_extract_volume_patches(x, out, dout)
         x_n, x_c, x_d, x_h, x_w = x_shape
         x_indices_num = 1 + x_d * x_h * x_w
         x_idx = cast(F.tuple_to_array(range(1, x_indices_num)), mstype.float16)
@@ -451,7 +495,6 @@ def get_bprop_extract_volume_patches(self):
         x_idx_patched = P.Transpose()(x_idx_patched, (0, 2, 3, 4, 1))
         x_idx_patched = cast(x_idx_patched, mstype.int32)
 
-        out_shape = P.Shape()(out)
         _, _, out_d, out_h, out_w = out_shape
         out_indices_num = out_d * out_h * out_w * ksize_d * ksize_h * ksize_w
         out_idx = F.tuple_to_array(range(0, out_indices_num))
@@ -554,10 +597,10 @@ def get_bprop_affinegrid(self):
                 vecy = vecy * (h_value - 1) / h_value
                 vecz = vecz * (d_value - 1) / d_value
             out = vecx
-            if h_value*d_value != 1:
-                multiples = (h_value*d_value, 1)
+            if h_value * d_value != 1:
+                multiples = (h_value * d_value, 1)
                 out = tile(vecx, multiples)
-            one = reshape(out, (h_value*w_value*d_value, 1))
+            one = reshape(out, (h_value * w_value * d_value, 1))
             if w_value == 1:
                 out = expend_dims(vecy, 0)
             elif w_value != 1:
@@ -567,21 +610,21 @@ def get_bprop_affinegrid(self):
             if d_value != 1:
                 multiples = (d_value, 1)
                 out = tile(out, multiples)
-            two = reshape(out, (h_value*w_value*d_value, 1))
+            two = reshape(out, (h_value * w_value * d_value, 1))
             out = expend_dims(vecz, 0)
-            if w_value*h_value != 1:
-                multiples = (w_value*h_value, 1)
+            if w_value * h_value != 1:
+                multiples = (w_value * h_value, 1)
                 out = tile(vecz, multiples)
             out = transpose(out, perm1)
-            tre = reshape(out, (h_value*w_value*d_value, 1))
-            fou = ones((h_value*w_value*d_value, 1), mstype.float32)
+            tre = reshape(out, (h_value * w_value * d_value, 1))
+            fou = ones((h_value * w_value * d_value, 1), mstype.float32)
             output = concat((one, two, tre, fou))
             output = transpose(output, perm1)
             if n_value != 1:
                 multiples = (n_value, 1)
                 output = tile(output, multiples)
-            output = output.view(n_value, 4, h_value*w_value*d_value)
-            dout_ = dout.view(n_value, d_value*h_value*w_value, 3).astype("float32")
+            output = output.view(n_value, 4, h_value * w_value * d_value)
+            dout_ = dout.view(n_value, d_value * h_value * w_value, 3).astype("float32")
             dtheta = batmatmul(output, dout_)
             dtheta = transpose(dtheta, perm2)
         elif len_output_size == 4:
@@ -600,21 +643,21 @@ def get_bprop_affinegrid(self):
             if h_value != 1:
                 multiples = (h_value, 1)
                 out = tile(vecx, multiples)
-            one = reshape(out, (h_value*w_value, 1))
+            one = reshape(out, (h_value * w_value, 1))
             if w_value == 1:
                 out = expend_dims(vecy, 0)
             elif w_value != 1:
                 multiples = (w_value, 1)
                 out = tile(vecy, multiples)
             out = transpose(out, perm1)
-            two = reshape(out, (h_value*w_value, 1))
-            tre = ones((h_value*w_value, 1), mstype.float32)
+            two = reshape(out, (h_value * w_value, 1))
+            tre = ones((h_value * w_value, 1), mstype.float32)
             output = concat((one, two, tre))
             multiples = (n_value, 1)
             output = transpose(output, perm1)
             output = tile(output, multiples)
-            output = output.view(n_value, 3, h_value*w_value)
-            dout_ = dout.view(n_value, h_value*w_value, 2).astype("float32")
+            output = output.view(n_value, 3, h_value * w_value)
+            dout_ = dout.view(n_value, h_value * w_value, 2).astype("float32")
             dtheta = batmatmul(output, dout_)
             dtheta = transpose(dtheta, perm2)
         return dtheta, tre
@@ -720,21 +763,37 @@ def get_bprop_segment_mean(self):
     """Generate bprop for SegmentMean"""
     rank = P.Rank()
     shape = P.Shape()
+    dyn_shape = P.TensorShape()
     fill = P.Fill()
     divide = P.Div()
     segment_sum = SegmentSum()
     gather = P.Gather()
     cast = P.Cast()
+    concat = P.Concat()
+    expand_dims = P.ExpandDims()
 
     def bprop(input_x, segment_ids, output, dout):
         input_x_type = F.dtype(input_x)
         input_x = cast(input_x, mstype.float32)
         dout = cast(dout, mstype.float32)
         dout_type = F.dtype(dout)
-        input_rank = rank(input_x)
+
         ones_shape = shape(segment_ids)
-        ones_shape = ones_shape + (1,) * (input_rank - 1)
-        ones = fill(dout_type, ones_shape, 1)
+        if is_shape_unknown(ones_shape):
+            ones_shape = dyn_shape(segment_ids)
+
+        ones = ()
+        inputx_shape = shape(input_x)
+        if is_shape_unknown(inputx_shape):
+            input_rank = dyn_rank(input_x)
+            if input_rank > cast(1, mstype.float32):
+                ones_shape = concat([ones_shape, dyn_ones(expand_dims(input_rank - 1, 0), mstype.int64)])
+            ones = dyn_fill(dout_type, ones_shape, 1)
+        else:
+            input_rank = rank(input_x)
+            ones_shape = ones_shape + (1,) * (input_rank - 1)
+            ones = fill(dout_type, ones_shape, 1)
+
         scaled_grad = divide(dout, segment_sum(ones, segment_ids))
         return cast(gather(scaled_grad, segment_ids, 0), input_x_type), zeros_like(segment_ids)
 

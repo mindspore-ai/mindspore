@@ -12,10 +12,10 @@ z
 bprop.152:y*
 bprop.152:out*
 bprop.152:dout2
-bprop.152:[CNode]154:5:@320a603a26f1cc5c0174957a4eea3494bfd5f1c2f20ad64ef6e0ee49a91b62baPbr
+bprop.152:[CNode]154:5:@2a182f8d10100a26d4f469a8af90f934a1ee340c39ba096a9e5e678ba1a5a353Pb&
+S-Prim-MakeTuple:6S-Prim-MakeTuplebH
+#S-Prim-hyper_map[zeros_like_leaf]:4!S-Prim-hyper_map[zeros_like_leaf]br
 S-Prim-ReluGrad:2S-Prim-ReluGrad
 output_names€ŠZoutput€+
 input_names€ŠZ
-y_backprop€ŠZx€b&
-S-Prim-MakeTuple:6S-Prim-MakeTuplebH
-#S-Prim-hyper_map[zeros_like_leaf]:4!S-Prim-hyper_map[zeros_like_leaf]h
+y_backprop€ŠZx€h
