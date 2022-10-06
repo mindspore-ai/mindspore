@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/concat_offset_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <vector>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -29,19 +30,7 @@ void ConcatOffsetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   cnode_ptr_ = kernel_node;
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  auto input_1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (axis < 0) {
-    axis_ = LongToSize(axis + input_1_shape.size());
-  } else {
-    axis_ = LongToSize(axis);
-  }
-  if (axis_ >= input_1_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'axis' must be less than the dimension of 'input_x', but got 'axis': " << axis_
-                      << ", and the dimension of 'input_x': " << input_1_shape.size();
-  }
+  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -61,19 +50,38 @@ bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node_);
+  if (input_num == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", input tensors can not be empty";
+  }
+  // check input shapes
+  std::vector<ShapeVector> input_shapes;
+  for (size_t i = 0; i < input_num; i++) {
+    ShapeVector input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
+    input_shapes.push_back(input_shape_i);
+    if (input_shape_i.size() != input_shapes[0].size()) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', input tensors shape's rank must be equal, but got input[0] shape's rank = "
+                        << input_shapes[0].size() << ", input[" << i << "] shape's rank = " << input_shape_i.size();
+    }
+  }
+  // check axis
+  auto x_rank = SizeToLong(input_shapes[0].size());
+  if (axis_ < -x_rank || axis_ >= x_rank) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", 'axis' must be in range [-" << x_rank << ", " << x_rank
+                      << "), but got " << axis_;
+  }
+  if (axis_ < 0) {
+    axis_ += x_rank;
+  }
+  auto axis = LongToSize(axis_);
+
   ShapeVector offset{0};
-  auto all_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0)[axis_];
+  auto all_shape = input_shapes[0][axis];
 
   // cal offset
   for (size_t i = 1; i < input_num; i++) {
-    auto input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
-    if (axis_ >= input_shape_i.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'axis' must be less than the dimension of input, but got 'axis': " << axis_
-                        << ", and the dimension of the " << i << "'th input: " << input_shape_i.size();
-    }
     offset.emplace_back(all_shape);
-    all_shape += input_shape_i[axis_];
+    all_shape += input_shapes[i][axis];
   }
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node_, 0);
   if (output_shape.size() != kConcatOffsetOutputShapeSize) {
@@ -90,7 +98,7 @@ bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   size_t idx = 0;
   for (size_t i = 0; i < input_num; ++i) {
     for (size_t j = 0; j < rank; ++j) {
-      if (j == axis_) {
+      if (j == axis) {
         output_addr[idx] = offset[i];
       } else {
         output_addr[idx] = 0;

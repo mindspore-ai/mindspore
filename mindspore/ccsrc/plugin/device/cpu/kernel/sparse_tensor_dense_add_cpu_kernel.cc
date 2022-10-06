@@ -36,24 +36,29 @@ void SparseTensorDenseAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
+  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
+  auto shape_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex2);
+  auto x2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex3);
+  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape, shape_shape, x2_shape})) {
+    return;
+  }
+
   if (indices_shape.size() != kIndicesShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'x1_indices' must be a " << kIndicesShapeSize
                       << "-D Tensor, but got " << indices_shape.size() << "-D";
   }
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'x1_values' must be a 1-D Tensor and the first dimension length "
                       << "must be equal to the first dimension length of 'indices', but got 'x1_values' shape: "
                       << Vector2Str(values_shape) << " and 'x1_indices' shape: " << Vector2Str(indices_shape);
   }
-  auto shape_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex2);
-  x2_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex3);
-  size_t x1_rank = static_cast<size_t>(shape_shape_[0]);
+  x2_shape_ = x2_shape;
+  size_t x1_rank = static_cast<size_t>(shape_shape[0]);
   size_t x2_rank = x2_shape_.size();
   if (x1_rank != x2_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', x1 and x2 must have same ranks, but got 'x1' shape: " << Vector2Str(shape_shape_)
+                      << "', x1 and x2 must have same ranks, but got 'x1' shape: " << Vector2Str(shape_shape)
                       << "and 'x2' shape: " << Vector2Str(x2_shape_);
   }
   values_size_ = static_cast<size_t>(values_shape[0]);

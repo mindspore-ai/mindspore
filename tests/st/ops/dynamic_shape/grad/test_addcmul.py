@@ -19,8 +19,6 @@ import mindspore as ms
 from mindspore import ops, nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
-context.set_context(mode=context.PYNATIVE_MODE)
-
 
 class NetAddcmul(nn.Cell):
     def __init__(self):
@@ -49,6 +47,7 @@ def test_addcmul_dyn_shape():
     Description: Test case of dynamic shape for Addcmul grad operator.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     addcmul_test(False)
 
 
@@ -61,4 +60,5 @@ def test_addcmul_dyn_rank():
     Description: Test case of dynamic rank for Addcmul grad operator.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     addcmul_test(True)

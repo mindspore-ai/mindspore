@@ -18,8 +18,6 @@ import pytest
 from mindspore import ops, nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
-context.set_context(mode=context.PYNATIVE_MODE)
-
 
 class NetDivNoNan(nn.Cell):
     def __init__(self):
@@ -47,6 +45,7 @@ def test_divnonan_dyn_shape():
     Description: Test case of dynamic shape for DivNoNan grad operator.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     divnonan_test(False)
 
 
@@ -60,4 +59,5 @@ def test_divnonan_dyn_rank():
     Description: Test case of dynamic rank for DivNoNan grad operator.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     divnonan_test(True)

@@ -49,8 +49,6 @@ bool ExtractVolumePatchesKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_size_ = kernel_ptr->get_kernel_size();
   strides_ = kernel_ptr->get_strides();
   padding_ = kernel_ptr->get_padding();
-  input_shape_ = inputs[0]->GetShapeVector();
-  output_shape_ = outputs[0]->GetShapeVector();
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
@@ -65,6 +63,8 @@ int ExtractVolumePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != 0) {
     return ret;
   }
+  input_shape_ = inputs[0]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
   return static_cast<int>(KRET_OK);
 }
 

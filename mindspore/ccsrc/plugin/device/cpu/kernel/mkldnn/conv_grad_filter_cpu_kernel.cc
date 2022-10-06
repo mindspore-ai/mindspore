@@ -135,9 +135,11 @@ std::vector<KernelAttr> ConvGradFilterCpuKernelMod::GetOpSupport() {
         .AddInputAttr(kNumberTypeInt32)
         .AddOutputAttr(kNumberTypeFloat32)}},
     {kConv3DBackpropFilter,
-     {KernelAttr()
+     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
         .AddInputAttr(kNumberTypeFloat32)
         .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
         .AddOutputAttr(kNumberTypeFloat32)}}};
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {

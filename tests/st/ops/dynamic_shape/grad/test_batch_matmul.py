@@ -19,8 +19,6 @@ import mindspore.ops.operations.math_ops as M
 from mindspore import nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
-context.set_context(mode=context.PYNATIVE_MODE)
-
 
 class NetBatchMatMul(nn.Cell):
     def __init__(self):
@@ -40,6 +38,7 @@ def test_batch_matmul_dynamic_shape():
     Description: Test case of dynamic shape for BatchMatMul grad operator on GPU.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     test_dynamic = TestDynamicGrad(NetBatchMatMul(), skip_convert_out_ids=[0])
     x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
     y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
@@ -56,6 +55,7 @@ def test_batch_matmul_dynamic_rank():
     Description: Test case of dynamic rank for BatchMatMul grad operator on GPU.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     test_dynamic = TestDynamicGrad(NetBatchMatMul(), skip_convert_out_ids=[0])
     x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
     y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)

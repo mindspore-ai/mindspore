@@ -137,9 +137,11 @@ int Conv3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   }
   pad_mode_ = kernel_ptr->get_pad_mode();
   SetPad(pad_list);
-  std::vector<int64_t> stride_me = kernel_ptr->get_stride();
-  std::vector<int64_t> dilation_me = kernel_ptr->get_dilation();
-  SetStrideAndDilation(stride_me, dilation_me);
+  if (!IsDynamicRank(in_shape) && !IsDynamicRank(filter_shape)) {
+    std::vector<int64_t> stride_me = kernel_ptr->get_stride();
+    std::vector<int64_t> dilation_me = kernel_ptr->get_dilation();
+    SetStrideAndDilation(stride_me, dilation_me);
+  }
   auto input_descriptor_real = GetInputDescReal(pad_list);
   if (cudnn_data_type_ == CUDNN_DATA_HALF) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),

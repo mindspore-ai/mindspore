@@ -38,15 +38,17 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   adj_st_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
   adj_dt_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
+  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, static_cast<size_t>(DENSE));
+  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape, output_shape, b_shape})) {
+    return;
+  }
   if (indices_shape.size() != kIndicesSizeNum && indices_shape[1] != kIndices2rdDimNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'indices' must be a 2-D Tensor and the second dimension length "
                          "must be 2, but got 'indices' shape: "
                       << Vector2Str(indices_shape);
-  }
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
-  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape})) {
-    return;
   }
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -54,9 +56,9 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
                          " must be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
-  output_shape_ = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+  output_shape_ = Convert2SizeT(output_shape);
   values_size_ = LongToSize(values_shape[0]);
-  b_shape_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, static_cast<size_t>(DENSE)));
+  b_shape_ = Convert2SizeT(b_shape);
   if (b_shape_.size() != kSparseTensorDenseMatmulDenseShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' must be "
                       << kSparseTensorDenseMatmulDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";

@@ -18,8 +18,6 @@ import pytest
 from mindspore import ops, nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
-context.set_context(mode=context.PYNATIVE_MODE)
-
 
 class NetTopK(nn.Cell):
     def __init__(self, k):
@@ -47,6 +45,7 @@ def test_topk_dyn_shape():
     Description: Test case of dynamic shape for TopK grad operator.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     topk_test(False)
 
 
@@ -59,4 +58,5 @@ def test_topk_dyn_rank():
     Description: Test case of dynamic rank for TopK grad operator.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     topk_test(True)
