@@ -34,7 +34,7 @@ class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
+    if (is_null_input_ || prev_node_output_shape_.empty()) {
       return true;
     }
     S *output_device_address = GetDeviceAddress<S>(outputs, 0);

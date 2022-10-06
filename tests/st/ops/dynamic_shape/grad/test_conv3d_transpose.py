@@ -98,7 +98,7 @@ def test_gpu_grad_dynamic_rank_2():
 
 
 @pytest.mark.skip(reason="CPU无Conv3DBackpropFilter, Conv3DBackpropInput, kernel实现")
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_grad_dynamic_shape():
@@ -112,7 +112,7 @@ def test_cpu_grad_dynamic_shape():
 
 
 @pytest.mark.skip(reason="CPU无Conv3DBackpropFilter, Conv3DBackpropInput, kernel实现")
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_grad_dynamic_rank():

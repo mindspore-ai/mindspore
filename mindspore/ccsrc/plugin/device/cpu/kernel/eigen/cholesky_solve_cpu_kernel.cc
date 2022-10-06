@@ -33,9 +33,13 @@ constexpr size_t kCholeskySolveOutputNum = 1;
 
 void CholeskySolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
+  if (IsDynamic(shape)) {
+    return;
+  }
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  std::vector<size_t> x1_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0));
+  std::vector<size_t> x1_shape = Convert2SizeT(shape);
   size_t rank = x1_shape.size();
   if (rank == kDefalutRank) {
     dim = x1_shape[rank - kRowIndex];

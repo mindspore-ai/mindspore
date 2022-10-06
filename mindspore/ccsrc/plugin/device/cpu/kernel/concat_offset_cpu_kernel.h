@@ -46,7 +46,7 @@ class ConcatOffsetCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                               const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, ConcatOffsetFunc>> func_list_;
   ConcatOffsetFunc kernel_func_;
-  size_t axis_{0};
+  int64_t axis_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

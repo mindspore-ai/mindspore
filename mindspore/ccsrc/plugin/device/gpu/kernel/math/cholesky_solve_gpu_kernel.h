@@ -121,6 +121,15 @@ class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    is_null_input_ = false;
+    input_size_list_.clear();
+    workspace_size_list_.clear();
+    output_size_list_.clear();
+    h_b_array_.clear();
+    h_a_array_.clear();
+  }
+
  protected:
   void InitSizeLists() override {
     size_t input_size = outer_batch_ * m_ * lda_ * unit_size_;

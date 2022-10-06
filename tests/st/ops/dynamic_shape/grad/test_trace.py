@@ -19,8 +19,6 @@ import mindspore.ops.operations.math_ops as M
 from mindspore import nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
-context.set_context(mode=context.PYNATIVE_MODE)
-
 
 class NetTrace(nn.Cell):
     def __init__(self):
@@ -41,6 +39,7 @@ def test_trace_dynamic_shape():
     Description: Test case of dynamic shape for Trace grad operator on CPU and GPU.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     test_dynamic = TestDynamicGrad(NetTrace())
     x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
     test_dynamic.test_dynamic_grad_net(x, False)
@@ -56,6 +55,7 @@ def test_trace_dynamic_shape_rank():
     Description: Test case of dynamic rank for Trace grad operator on CPU and GPU.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     test_dynamic = TestDynamicGrad(NetTrace())
     x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
     test_dynamic.test_dynamic_grad_net(x, True)
