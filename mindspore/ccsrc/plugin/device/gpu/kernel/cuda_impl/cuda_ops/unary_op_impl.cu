@@ -1699,6 +1699,9 @@ template CUDA_LIB_EXPORT void Inv<Complex<float>>(const Complex<float> *input, C
                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sigmoid<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                       const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Square<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                     const size_t count, cudaStream_t cuda_stream);
+
 template CUDA_LIB_EXPORT void Tanh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Logarithm<Complex<float>>(const Complex<float> *input, Complex<float> *output,
@@ -1726,6 +1729,8 @@ template CUDA_LIB_EXPORT void Inv<Complex<double>>(const Complex<double> *input,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sigmoid<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                        const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Square<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                      const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tanh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Logarithm<Complex<double>>(const Complex<double> *input, Complex<double> *output,
