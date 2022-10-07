@@ -67,6 +67,12 @@ class CropAndResizeInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr,
                                "For primitive[" + prim_name + "], the [crop_size TypeId] is a nullptr.");
     auto value_ptr = input_args[kInputIndex3]->BuildValue();
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    if (value_ptr->isa<AnyValue>()) {
+      return std::make_shared<abstract::Shape>(
+        ShapeVector{num_boxes, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, out_channel});
+    }
+
     std::vector<int64_t> crop_size;
     if (crop_size_type->isa<TensorType>()) {
       crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name);
@@ -115,6 +121,8 @@ class CropAndResizeInfer : public abstract::OpInferBase {
                                                      prim_name);
     return kFloat32;
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {3}; }
 
  protected:
   int64_t ParseNumBoxes(const ShapeVector &box_shape, const ShapeVector &box_index_shape,

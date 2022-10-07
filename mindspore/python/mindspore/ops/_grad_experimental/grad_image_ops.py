@@ -29,6 +29,7 @@ from mindspore.ops.operations.image_ops import CropAndResizeGradImage
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
 from mindspore.ops.operations.image_ops import RGBToHSV
 from mindspore.ops.operations.image_ops import ScaleAndTranslate
+from mindspore.ops._utils.utils import is_shape_unknown
 
 
 @bprop_getters.register(ResizeBicubic)
@@ -54,6 +55,7 @@ def get_bprop_crop_and_resize(self):
     allowed_types = [mstype.float16, mstype.float32, mstype.float64]
     gradboxes = CropAndResizeGradBoxes(method="bilinear")
     method_ = self.method
+    dyn_shape = P.TensorShape()
 
     def bprop(x, boxes, box_index, crop_size, out, dout):
         if method_ != "bilinear":
@@ -64,7 +66,11 @@ def get_bprop_crop_and_resize(self):
         dimage_type = image_type
         gradimage = CropAndResizeGradImage(dimage_type, method=method_)
         image_shape = x.shape
-        image_size = Tensor(image_shape, dtype=mstype.int32)
+        if is_shape_unknown(image_shape):
+            image_size = dyn_shape(x)
+            image_size = F.cast(image_size, mstype.int32)
+        else:
+            image_size = Tensor(image_shape, dtype=mstype.int32)
         dimage = gradimage(dout, boxes, box_index, image_size)
         dbox = gradboxes(dout, x, boxes, box_index)
         return (dimage, dbox, zeros_like(box_index), zeros_like(crop_size))

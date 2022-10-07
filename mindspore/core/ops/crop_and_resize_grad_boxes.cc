@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,20 +59,27 @@ abstract::ShapePtr CropAndResizeGradBoxesInferShape(const PrimitivePtr &primitiv
   // Infer shape
   MS_EXCEPTION_IF_NULL(input_args[kGrads]);
   auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGrads]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, kGradsShapeLen,
-                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kImages]);
   auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kImages]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("images rank", SizeToLong(input_shape1.size()), kEqual, kImageShapeLen,
-                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kBoxes]);
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxes]->BuildShape())[kShape];
+  MS_EXCEPTION_IF_NULL(input_args[kBoxIndex]);
+  auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxIndex]->BuildShape())[kShape];
+  if (IsDynamicRank(input_shape0) || IsDynamicRank(input_shape1) || IsDynamicRank(input_shape2) ||
+      IsDynamicRank(input_shape3)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  } else if (IsDynamic(input_shape0) || IsDynamic(input_shape1) || IsDynamic(input_shape2) || IsDynamic(input_shape3)) {
+    return std::make_shared<abstract::Shape>(input_shape2);
+  }
+
+  (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, kGradsShapeLen,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("images rank", SizeToLong(input_shape1.size()), kEqual, kImageShapeLen,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape2.size()), kEqual, kBoxesShapeLen,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", input_shape2[1], kEqual, SizeToLong(kCoordinateLen),
                                            prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[kBoxIndex]);
-  auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxIndex]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape3.size()), kEqual, kBoxIndShapeLen,
                                            prim_name);
   if (!(input_shape1[kHeight] > 0 && input_shape1[kWidth] > 0)) {
