@@ -91,6 +91,7 @@ file(GLOB_RECURSE CUDA_KERNEL_SRC
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchtospace_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/spacetobatch_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/where_impl.cu
 )
 
 set_source_files_properties(${CUDA_KERNEL_SRC} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
