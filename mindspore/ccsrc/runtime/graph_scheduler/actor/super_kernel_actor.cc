@@ -51,9 +51,19 @@ void SuperKernelActor::Init() {
     MS_EXCEPTION_IF_NULL(data);
     auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, IntToSize(data_arrow->from_output_index_), false);
     data->data_ = device_address.get();
-    if (output_node->isa<CNode>() && (!device_address->is_ptr_persisted())) {
+  }
+
+  const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(graph_->output());
+  for (const auto &output_with_index : output_with_indexs) {
+    const auto &output_node = output_with_index.first;
+    if (output_node->isa<CNode>() && (!HasAbstractMonad(output_node))) {
+      auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, output_with_index.second, false);
+      if (device_address->is_ptr_persisted()) {
+        continue;
+      }
       // Free the ptr in device address of output node.
       if (device_address->GetPtr() != nullptr) {
+        MS_LOG(WARNING) << "Output node:" << output_node->DebugString() << " has a default ptr, maybe a mem leak.";
         device_address->set_ptr(nullptr);
       }
       memory_alloc_list_.emplace_back(device_address.get());
