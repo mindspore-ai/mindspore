@@ -30,7 +30,7 @@ from mindspore.ops import composite as C
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor, RowTensor
 from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer, HeUniform, Uniform, _calculate_correct_fan, One
+from mindspore.common.initializer import initializer, _calculate_correct_fan, One
 
 import mindspore.nn as nn
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule
@@ -537,15 +537,14 @@ class Conv2d(nn.Cell):
                  negative_slope=math.sqrt(5), mode="fan_in", nonlinerity="leaky_relu"):
         super(Conv2d, self).__init__()
         kaiming_uniform_0 = initializer(
-            HeUniform(negative_slope=negative_slope,
-                      mode=mode, nonlinearity=nonlinerity),
+            0.5,
             (out_channel, in_channel, kernel_size, kernel_size),
         )
         fan_in = _calculate_correct_fan(
             (out_channel, in_channel, kernel_size, kernel_size), mode=mode)
         scale = 1 / math.sqrt(fan_in)
         bias_init_0 = initializer(
-            Uniform(scale), [out_channel], mindspore.float32)
+            scale, [out_channel], mindspore.float32)
         self.conv2d = nn.Conv2d(
             in_channel,
             out_channel,
@@ -634,8 +633,7 @@ class Dense(nn.Cell):
                  mode="fan_in", nonlinearity="leaky_relu"):
         super(Dense, self).__init__()
         kaiming_uniform_0 = initializer(
-            HeUniform(negative_slope=negative_slope, mode=mode,
-                      nonlinearity=nonlinearity), (out_channel, in_channel)
+            0.5, (out_channel, in_channel)
         )
         bias_init_0 = "zeros"
         if has_bias:
@@ -643,7 +641,7 @@ class Dense(nn.Cell):
                 (out_channel, in_channel), mode=mode)
             scale = 1 / math.sqrt(fan_in)
             bias_init_0 = initializer(
-                Uniform(scale), [out_channel], mindspore.float32)
+                scale, [out_channel], mindspore.float32)
         self.dense = CustomDense(
             in_channel,
             out_channel,
@@ -1722,7 +1720,6 @@ def init_asr_model(input_dim, vocab_size):
 
 
 def create_dataset(batch_size=32, label_len=30, mel_bins=80):
-    np.random.seed(0)
     seq_len_list = [701, 474, 314, 502, 288, 629]
     data_list = []
     upper_limit = 50
@@ -1800,7 +1797,10 @@ def get_train_loss(train_dataset, run_mode):
     return callback.loss
 
 
-@pytest.mark.skip(reason="fail on run package upgrade")
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_train():
     """
     Feature: Test the simplified dynamic shape WeNet-ASR network with small data.
@@ -1815,8 +1815,4 @@ def test_train():
     set_seed(0)
     train_dataset = create_dataset(bs, ll, mb)
     expect_graph_loss = get_train_loss(train_dataset, context.GRAPH_MODE)
-    assert np.allclose(expect_graph_loss, 114.664, 0.001, 0.001)
-    set_seed(0)
-    train_dataset = create_dataset(bs, ll, mb)
-    expect_pynative_loss = get_train_loss(train_dataset, context.PYNATIVE_MODE)
-    assert np.allclose(expect_pynative_loss, 114.917, 0.001, 0.001)
+    assert np.allclose(expect_graph_loss, 111.1163, 0.0001, 0.0001)
