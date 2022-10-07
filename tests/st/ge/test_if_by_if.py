@@ -20,13 +20,13 @@ import pytest
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-def test_cell_list_in_while():
+def test_if_by_if():
     """
-    Feature: control flow(while and case)
-    Description: test cell in list with ge backend
+    Feature: control flow(if) impl
+    Description: test if_by_if with ge backend
     Expectation: success
     """
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"sh {sh_path}/run_cell_list_in_while.sh")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/cell_list_in_while/test_cell*log -C 3")
+    ret = os.system(f"sh {sh_path}/run_if_by_if.sh")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/if/test_if_by_if*log -C 3")
     assert ret == 0

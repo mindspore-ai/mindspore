@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
-import pytest
+set -e
+BASE_PATH=$(cd "$(dirname $0)"; pwd)
+rm -rf ${BASE_PATH}/if_by_if
+mkdir ${BASE_PATH}/if_by_if
+export MS_ENABLE_GE=1
+export MS_GE_TRAIN=1
+unset SLOG_PRINT_TO_STDOUT
+cd ${BASE_PATH}/if_by_if
+echo "start test if_by_if with ge backend"
+env > env.log
+python ../run_if_by_if.py > test_if_by_if.log 2>&1 &
+process_pid=`echo $!`
+wait ${process_pid}
+unset MS_GE_TRAIN
+unset MS_ENABLE_GE
+status=`echo $?`
+if [ "${status}" != "0" ]; then
+    echo "[ERROR] test if_by_if with ge backend failed. status: ${status}"
+    exit 1
+else
+    echo "[INFO] test if_by_if with ge backend success."
+fi
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
-def test_cell_list_in_while():
-    """
-    Feature: control flow(while and case)
-    Description: test cell in list with ge backend
-    Expectation: success
-    """
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"sh {sh_path}/run_cell_list_in_while.sh")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/cell_list_in_while/test_cell*log -C 3")
-    assert ret == 0
+exit 0

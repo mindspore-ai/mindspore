@@ -44,4 +44,12 @@ ATTR_MAP(PartitionedCall) = {
 DYN_OUTPUT_MAP(PartitionedCall) = {{0, DYN_OUTPUT_DESC(output)}};
 SUBGRAPH_MAP(PartitionedCall) = {{0, SUBGRAPH_DESC(f)}};
 REG_ADPT_DESC(PartitionedCall, kNamePartitionedCall, ADPT_DESC(PartitionedCall))
+
+// If
+INPUT_MAP(If) = {{1, INPUT_DESC(cond)}};
+DYN_INPUT_MAP(If) = {{2, DYN_INPUT_DESC(input)}};
+DYN_OUTPUT_MAP(If) = {{0, DYN_OUTPUT_DESC(output)}};
+ATTR_MAP(If) = EMPTY_ATTR_MAP;
+SUBGRAPH_MAP(If) = {{0, SUBGRAPH_DESC(then_branch)}, {1, SUBGRAPH_DESC(else_branch)}};
+REG_ADPT_DESC(If, kNameIf, ADPT_DESC(If));
 }  // namespace mindspore::transform

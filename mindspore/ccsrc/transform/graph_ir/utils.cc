@@ -26,8 +26,10 @@ namespace mindspore {
 namespace transform {
 namespace {
 constexpr size_t kSwitchInputSize = 4;
-constexpr size_t kSwitchBodyIndex = 2;
-constexpr size_t kSwitchAfterIndex = 3;
+constexpr size_t kSwitchCondIndex = 1;
+constexpr size_t kSwitchTrueBranchIndex = 2;
+constexpr size_t kSwitchFalseBranchIndex = 3;
+constexpr size_t kPartialCNodeValue = 1;
 }  // namespace
 
 OpAdapterPtr FindAdapter(const AnfNodePtr node, bool train) {
@@ -135,15 +137,58 @@ bool IsWhileNode(const AnfNodePtr &node) {
       continue;
     }
     auto c_beg = (*beg)->cast<CNodePtr>();
-    if (IsPartialSuccNode(c_beg) && c_beg->inputs().size() == kSwitchInputSize &&
-        IsPartialCNode(c_beg->input(kSwitchBodyIndex)) && IsPartialCNode(c_beg->input(kSwitchAfterIndex)) &&
-        GetCNodeFuncName(c_beg) == prim::kPrimSwitch->name()) {
+    if (IsPrimitiveCNode(c_beg, prim::kPrimSwitch)) {
       auto func_graph = node->func_graph();
-      MS_LOG(DEBUG) << "there is while node: " << node->ToString() << " in graph: " << func_graph->ToString();
+      MS_LOG(DEBUG) << "There is while node: " << node->ToString() << " in graph: " << func_graph->ToString();
       return true;
     }
   }
   return false;
+}
+
+bool CheckSwitchBranch(const AnfNodePtr &node) {
+  AnfNodePtr value_node = nullptr;
+  if (IsPartialCNode(node)) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    value_node = cnode->input(kPartialCNodeValue);
+  } else if (IsValueNode<FuncGraph>(node)) {
+    value_node = node;
+  } else {
+    return false;
+  }
+  auto graph = GetValueNode<FuncGraphPtr>(value_node);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (graph->recursive()) {
+    return false;
+  }
+  return true;
+}
+
+bool IsIfNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inp0 = cnode->input(0);
+  MS_EXCEPTION_IF_NULL(inp0);
+  if (!IsPrimitiveCNode(inp0, prim::kPrimSwitch)) {
+    return false;
+  }
+  CNodePtr switch_node = inp0->cast<CNodePtr>();
+
+  auto true_branch = switch_node->input(kSwitchTrueBranchIndex);
+  MS_EXCEPTION_IF_NULL(true_branch);
+  auto false_branch = switch_node->input(kSwitchFalseBranchIndex);
+  MS_EXCEPTION_IF_NULL(false_branch);
+
+  if (!CheckSwitchBranch(switch_node->input(kSwitchTrueBranchIndex))) {
+    return false;
+  }
+  auto func_graph = node->func_graph();
+  MS_LOG(DEBUG) << "There is if node: " << node->ToString() << " in graph: " << func_graph->ToString();
+  return true;
 }
 
 std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
@@ -153,6 +198,9 @@ std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
   if (IsWhileNode(cnode)) {
     return string(kNameWhile);
   }
+  if (IsIfNode(cnode)) {
+    return string(kNameIf);
+  }
   auto name = GetCNodeFuncName(cnode);
   if (name == "switch_layer") {
     name = "";
@@ -160,10 +208,15 @@ std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
   return name;
 }
 
-bool IsCaseNode(const CNodePtr node) {
+bool IsCaseNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->inputs().empty() && node->input(0)->isa<CNode>() &&
-      GetCNodeFuncName(node->input(0)->cast<CNodePtr>()) == "switch_layer") {
+
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (!cnode->inputs().empty() && cnode->input(0)->isa<CNode>() &&
+      GetCNodeFuncName(cnode->input(0)->cast<CNodePtr>()) == "switch_layer") {
     return true;
   }
   return false;

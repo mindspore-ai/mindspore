@@ -53,6 +53,7 @@ using Constant = ::ge::op::Constant;
 using Assign = ::ge::op::Assign;
 using Data = ::ge::op::Data;
 using std::endl;
+using std::static_pointer_cast;
 
 constexpr size_t kInputOffset = 2;
 constexpr size_t kSwitchInputSize = 4;
@@ -99,6 +100,8 @@ std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr
   return (node == nullptr) ? TopoSort(fg->get_return(), succ_include_fv, BelongSameGraph)
                            : TopoSort(node, succ_include_fv, BelongSameGraph);
 }
+
+bool IsBranchNode(const AnfNodePtr &node) { return IsIfNode(node) || IsCaseNode(node); }
 }  // namespace
 
 // ---------------implement of DfGraphConvertor-------------
@@ -813,8 +816,6 @@ std::shared_ptr<std::vector<Operator>> DfGraphConvertor::GetWhileSubGraphInput()
 
 void DfGraphConvertor::BuildWhileSubGraph() {
   // set up dependencies
-  MS_LOG(DEBUG) << "begin to build graph: " << anf_graph_->ToString();
-  MS_LOG(DEBUG) << "set up dependencies";
 
   std::vector<Operator> graph_in = *GetWhileSubGraphInput();
   auto nodes = GetOrderedCNodes(anf_graph_, while_cond_node_);
@@ -833,13 +834,13 @@ void DfGraphConvertor::BuildWhileSubGraph() {
     real_ret = real_ret->cast<CNodePtr>()->input(1);
   }
   for (auto &it : nodes) {
-    if (it->isa<CNode>() && IsCaseNode(it->cast<CNodePtr>())) {
+    if (IsBranchNode(it)) {
       auto node = it->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(node);
       auto input = node->input(0);
       MS_EXCEPTION_IF_NULL(input);
       auto cinput = input->cast<CNodePtr>();
-      GetCaseNodeInput(node, cinput);
+      GetBranchNodeInput(node, cinput);
     }
   }
 
@@ -851,7 +852,6 @@ void DfGraphConvertor::BuildWhileSubGraph() {
     SetSubgraph(it);
     UpdateOpDesc(it);
   }
-  MS_LOG(DEBUG) << "trace output";
   std::vector<Operator> graph_out;
   auto graph_name = TransformUtil::NormOpName(cur_while_node_->fullname_with_scope());
   if (graph_type_ == GraphType::kCond) {
@@ -872,13 +872,12 @@ void DfGraphConvertor::BuildWhileSubGraph() {
   } else {
     return;
   }
-  MS_LOG(DEBUG) << "set while sub graph input num: " << graph_in.size();
-  MS_LOG(DEBUG) << "set while sub graph output num: " << graph_out.size();
+  MS_LOG(DEBUG) << "Set while sub graph input num: " << graph_in.size();
+  MS_LOG(DEBUG) << "Set while sub graph output num: " << graph_out.size();
 
   compute_sout_ << "}" << endl;
   (void)df_graph_->SetInputs(graph_in).SetOutputs(graph_out);
   IdentityOptimization();
-  MS_LOG(DEBUG) << "build graph: " << anf_graph_->ToString() << " end";
 }
 
 void DfGraphConvertor::BuildWhileAfterSubGraph() {
@@ -891,15 +890,12 @@ void DfGraphConvertor::BuildWhileAfterSubGraph() {
     }
   }
   GetCallNodeInputs(cur_while_node_);
-  // set up dependencies
-  MS_LOG(INFO) << "set up dependencies";
   auto nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
     SetNodeInput(it);
     SetSubgraph(it);
     UpdateOpDesc(it);
   }
-  MS_LOG(INFO) << "trace output";
   if (graph_outputs_.empty()) {
     SetGraphOutputs();
   }
@@ -911,7 +907,6 @@ void DfGraphConvertor::ConvertWhileBody(const AnfNodePtr &node) {
   if (!node->isa<CNode>() || GetCNodeFuncName(node->cast<CNodePtr>()) != prim::kPrimPartial->name()) {
     return;
   }
-  MS_LOG(DEBUG) << "begin to convert while node body graph";
   auto graph_node = node->cast<CNodePtr>()->input(1)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(graph_node);
   FuncGraphPtr anf_graph = graph_node->value()->cast<FuncGraphPtr>();
@@ -933,7 +928,6 @@ void DfGraphConvertor::ConvertWhileBody(const AnfNodePtr &node) {
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     converter.DrawComputeGraph(name);
   }
-  MS_LOG(DEBUG) << "convert while node body graph end";
   return;
 }
 
@@ -1130,16 +1124,12 @@ void DfGraphConvertor::ConvertWhileNode(const CNodePtr &node) {
   cur_while_node_out_size_ = while_inputs.size();
   while_dfgraph_cache_[node] = std::make_shared<std::vector<DfGraph>>();
   // convert cond graph
-  MS_LOG(DEBUG) << "convert while cond begin...";
   auto cond_graph_node = while_graph[0];
   ConvertWhileCond(cond_graph_node);
-  MS_LOG(DEBUG) << "convert while cond end...";
 
   // convert body graph
-  MS_LOG(DEBUG) << "convert while body begin...";
   auto body_graph_node = while_graph[1];
   ConvertWhileBody(body_graph_node);
-  MS_LOG(DEBUG) << "convert while body end...";
 
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
@@ -1152,10 +1142,8 @@ void DfGraphConvertor::ConvertWhileNode(const CNodePtr &node) {
   adpt->setSubgraph(op, graphs);
 
   // convert after graph
-  MS_LOG(DEBUG) << "convert while after begin...";
   auto after_graph_node = while_graph[kAfterIndexInCache];
   ConvertWhileAfter(after_graph_node);
-  MS_LOG(DEBUG) << "convert while after end...";
   return;
 }
 
@@ -1163,74 +1151,60 @@ void DfGraphConvertor::SetSubgraph(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return;
   }
-  MS_LOG(DEBUG) << "set sub graph begin";
   auto cnode = node->cast<CNodePtr>();
   if (IsWhileNode(cnode)) {
+    MS_LOG(DEBUG) << "Start to set while's sub graph.";
     CacheWhileGraph(cnode);
     ConvertWhileNode(cnode);
-    MS_LOG(DEBUG) << "set sub graph end....";
+    MS_LOG(DEBUG) << "Set while's sub graph end.";
     return;
   }
 
-  if (!IsCaseNode(cnode)) {
-    MS_LOG(DEBUG) << "set sub graph end....";
+  if (!IsBranchNode(cnode)) {
     return;
   }
-  std::vector<AnfNodePtr> case_inputs;
+  MS_LOG(DEBUG) << "Start to set if/case's sub graph.";
+  bool is_case = IsCaseNode(node);
   std::shared_ptr<std::vector<DfGraph>> df_branches = std::make_shared<std::vector<DfGraph>>();
-  case_call_input_size_ = 0;
-  if (IsNormalGraph()) {
+  if (IsNormalGraph() || IsBodyGraph() || IsBranchGraph()) {
+    size_t branch_call_input_size = 0;
+    size_t node_input_index = 0;
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
-      (void)case_inputs.emplace_back(cnode->input(i));
-      case_call_input_size_++;
-    }
-    auto bnode = cnode->input(0)->cast<CNodePtr>()->input(2)->cast<CNodePtr>();
-
-    for (size_t i = 1; i < bnode->inputs().size(); i++) {
-      if (!bnode->input(i)->isa<CNode>()) {
+      auto pred = cnode->input(i);
+      if (!IsDataInput(cnode, pred, 0)) {
         continue;
       }
-      auto branch_node = bnode->input(i)->cast<CNodePtr>();
-      for (size_t j = kInputOffset; j < branch_node->inputs().size(); j++) {
-        if (std::find(case_inputs.begin(), case_inputs.end(), branch_node->input(j)) == case_inputs.end()) {
-          (void)case_inputs.emplace_back(branch_node->input(j));
+      node_input_index++;
+      branch_call_input_size++;
+    }
+    auto input_node = cnode->input(0)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto bnode = is_case ? input_node->input(kInputOffset)->cast<CNodePtr>() : input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(bnode);
+    const size_t init_i = is_case ? 1 : 2;
+
+    for (size_t i = init_i; i < bnode->inputs().size(); i++) {
+      ParamIndexMap branch_to_parent_node_map;
+      size_t branch_index = 0;  //  branch graph input's index
+      if (bnode->input(i)->isa<CNode>()) {
+        auto branch_node = bnode->input(i)->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(branch_node);
+        for (size_t j = kInputOffset; j < branch_node->inputs().size(); j++) {
+          auto pred = branch_node->input(j);
+          if (!IsDataInput(cnode, pred, 0)) {
+            continue;
+          }
+          branch_to_parent_node_map[branch_index] = node_input_index;
+          node_input_index++;
+          branch_index++;
         }
       }
-    }
-    for (size_t i = 1; i < bnode->inputs().size(); i++) {
-      ProcessSubgraph(bnode->input(i), case_inputs);
-    }
-    for (size_t i = 1; i < bnode->inputs().size(); i++) {
-      (void)df_branches->emplace_back(branches_map_[bnode->input(i).get()]);
-    }
-  } else {
-    std::vector<AnfNodePtr> inputs;
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
-      auto ele_node = cnode->input(i);
-      if (HasAbstractMonad(ele_node)) {
-        continue;
+      for (size_t k = 0; k < branch_call_input_size; k++) {
+        branch_to_parent_node_map[branch_index] = k;
+        branch_index++;
       }
-      inputs.push_back(ele_node);
-      case_call_input_size_++;
-    }
-    auto bnode = cnode->input(0)->cast<CNodePtr>()->input(kInputOffset);
-    auto cbnode = bnode->cast<CNodePtr>();
-
-    for (size_t i = 1; i < cbnode->inputs().size(); i++) {
-      auto br = cbnode->input(i);
-      if (!cbnode->input(i)->isa<CNode>()) {
-        ProcessSubgraph(br, inputs);
-        (void)df_branches->emplace_back(branches_map_[br.get()]);
-        continue;
-      }
-
-      auto branch_node = cbnode->input(i)->cast<CNodePtr>();
-      auto branch_input = inputs;
-      for (size_t j = kInputOffset; j < branch_node->inputs().size(); j++) {
-        branch_input.push_back(branch_node->input(j));
-      }
-      ProcessSubgraph(cbnode->input(i), branch_input);
-      (void)df_branches->emplace_back(branches_map_[br.get()]);
+      ProcessSubgraph(node, bnode->input(i), branch_to_parent_node_map);
+      df_branches->emplace_back(branches_map_[bnode->input(i).get()]);
     }
   }
   if (op_cache_.find(node.get()) == op_cache_.end()) {
@@ -1245,75 +1219,76 @@ void DfGraphConvertor::SetSubgraph(const AnfNodePtr &node) {
 
   OperatorPtr op = Convert(node);
 
-  adpt->setSubgraph(op, 0, df_branches);
-  MS_LOG(DEBUG) << "set sub graph end....";
+  if (is_case) {
+    adpt->setSubgraph(op, 0, df_branches);
+  } else {
+    adpt->setSubgraph(op, df_branches);
+  }
+  MS_LOG(DEBUG) << "Set if/case's sub graph end.";
   return;
 }
 
-void DfGraphConvertor::GetCaseNodeInput(const CNodePtr node, const CNodePtr input_node) {
-  if (case_input_handle_cache_.find(node.get()) != case_input_handle_cache_.end()) {
+void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node, const CNodePtr input_node) {
+  if (branch_input_handle_cache_.find(node.get()) != branch_input_handle_cache_.end()) {
     return;
   }
+  bool is_case = IsCaseNode(node);
+  std::vector<AnfNodePtr> branch_inputs;
+  const size_t branch_index = 1;
 
-  std::vector<AnfNodePtr> case_inputs;
-  const size_t case_index = 1;
-  const size_t make_tuple_index = 2;
-
-  AnfNodePtr case_index_iter = input_node->input(case_index);
-  AnfNodePtr make_tuple_iter = input_node->input(make_tuple_index);
-  AnfNodePtr make_tuple_node = make_tuple_iter;
+  AnfNodePtr branch_index_iter = input_node->input(branch_index);
+  AnfNodePtr branch_dyn_input_node = nullptr;
+  if (is_case) {
+    const size_t make_tuple_index = 2;
+    AnfNodePtr make_tuple_iter = input_node->input(make_tuple_index);
+    branch_dyn_input_node = make_tuple_iter;
+  } else {
+    branch_dyn_input_node = input_node;
+  }
 
   std::shared_ptr<std::vector<OutHandler>> tuple_items = std::make_shared<std::vector<OutHandler>>();
 
-  if (IsNormalGraph()) {
-    make_tuple_node = make_tuple_iter->cast<CNodePtr>();
-    for (size_t i = 1; i < node->inputs().size(); i++) {
-      (void)case_inputs.emplace_back(node->input(i));
-    }
-
-    auto bnode = input_node->input(2)->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(bnode);
-    for (size_t i = 1; i < bnode->inputs().size(); i++) {
-      if (!bnode->input(i)->isa<CNode>()) {
-        continue;
-      }
-      auto branch_node = bnode->input(i)->cast<CNodePtr>();
-      for (size_t j = 2; j < branch_node->inputs().size(); j++) {
-        if (std::find(case_inputs.begin(), case_inputs.end(), branch_node->input(j)) == case_inputs.end()) {
-          (void)case_inputs.emplace_back(branch_node->input(j));
-        }
-      }
-    }
-    for (size_t i = 0; i < case_inputs.size(); i++) {
-      auto item = case_inputs[i];
-      tuple_items->push_back(GetHandler(item));
-    }
-  } else if (IsSubGraph()) {
-    auto &inputs = node->inputs();
-    for (size_t i = 1; i < inputs.size(); i++) {
-      auto input = inputs[i];
-      if (HasAbstractUMonad(input) || HasAbstractIOMonad(input)) {
-        continue;
-      }
-      if (input->isa<Parameter>()) {
-        auto idx = std::find(inputs_.begin(), inputs_.end(), input) - inputs_.begin();
-        tuple_items->push_back(OutHandler(subgraph_input_cache_[idx], "", input));
-      } else {
-        tuple_items->push_back(GetHandler(input));
-      }
-    }
-    MS_LOG(DEBUG) << "tuple input size of case in sub graph is " << tuple_items->size();
-  } else {
-    MS_LOG(ERROR) << "case in after graph is not supported.";
-    return;
+  for (size_t i = 1; i < node->inputs().size(); i++) {
+    auto pred = node->input(i);
+    branch_inputs.emplace_back(pred);
   }
+  auto bnode = is_case ? input_node->input(2)->cast<CNodePtr>() : input_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(bnode);
+  const size_t init_i = is_case ? 1 : 2;
+  for (size_t i = init_i; i < bnode->inputs().size(); i++) {
+    if (!bnode->input(i)->isa<CNode>()) {
+      continue;
+    }
+    auto branch_node = bnode->input(i)->cast<CNodePtr>();
+    for (size_t j = 2; j < branch_node->inputs().size(); j++) {
+      auto pred = branch_node->input(j);
+      branch_inputs.emplace_back(pred);
+    }
+  }
+  std::vector<AnfNodePtr> branch_control_input;
+  for (size_t i = 0; i < branch_inputs.size(); i++) {
+    auto item = branch_inputs[i];
+    if (!IsDataInput(node, item, 0)) {
+      branch_control_input.push_back(item);
+      continue;
+    }
+    if (IsBodyGraph() && item->isa<Parameter>()) {
+      auto idx = std::find(inputs_.begin(), inputs_.end(), item) - inputs_.begin();
+      tuple_items->push_back(OutHandler(subgraph_input_cache_[idx], "", item));
+    } else {
+      auto hd = GetHandler(item);
+      tuple_items->push_back(hd);
+    }
+  }
+  tuple_out_handle_cache_[branch_dyn_input_node.get()] = tuple_items;
 
-  tuple_out_handle_cache_[make_tuple_node.get()] = tuple_items;
+  std::shared_ptr<std::vector<AnfNodePtr>> branch_input_items = std::make_shared<std::vector<AnfNodePtr>>();
+  (void)branch_input_items->emplace_back(branch_index_iter);
+  (void)branch_input_items->emplace_back(branch_dyn_input_node);
 
-  std::shared_ptr<std::vector<AnfNodePtr>> case_input_items = std::make_shared<std::vector<AnfNodePtr>>();
-  (void)case_input_items->emplace_back(case_index_iter);
-  (void)case_input_items->emplace_back(make_tuple_iter);
-  case_input_handle_cache_[node.get()] = case_input_items;
+  (void)std::copy(branch_control_input.begin(), branch_control_input.end(), std::back_inserter(*branch_input_items));
+  branch_input_handle_cache_[node.get()] = branch_input_items;
+  return;
 }
 
 void DfGraphConvertor::GetCallNodeInputs(const CNodePtr &node) {
@@ -1398,7 +1373,7 @@ void DfGraphConvertor::GetCallNodeInputs(const CNodePtr &node) {
 }
 
 void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
-  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+  if (IsNormalGraph() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
@@ -1408,19 +1383,6 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
     }
   } else {
     auto params = anf_graph_->parameters();
-    if (use_inputs_) {
-      params = inputs_;
-      auto anf_params = anf_graph_->parameters();
-      for (size_t i = 0; i < params.size(); i++) {
-        for (size_t j = 0; j < anf_params.size(); j++) {
-          if (TransformUtil::NormOpName(params[i]->ToString()) ==
-              TransformUtil::NormOpName(anf_params[j]->ToString())) {
-            params[i] = anf_params[j];
-          }
-        }
-      }
-    }
-
     int index = 0;
     for (auto &it : params) {
       auto name = std::static_pointer_cast<Parameter>(it)->name();
@@ -1439,8 +1401,10 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
         }
         UpdateDataOpDesc(it, op);
 
-        MS_LOG(INFO) << "add input " << it->ToString() << ", index " << index;
-        (void)std::static_pointer_cast<Data>(op)->set_attr_index(index++);
+        if (IsNormalGraph()) {
+          MS_LOG(INFO) << "add input " << it->ToString() << ", index " << index;
+          (void)std::static_pointer_cast<Data>(op)->set_attr_index(index++);
+        }
         inputs->push_back(*op);
       } else if (vars_[name] != nullptr) {
         MS_LOG(INFO) << "add var input " << it->ToString();
@@ -1465,10 +1429,10 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
   // Case node set input.
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
-    if (it != nullptr && it->isa<CNode>() && IsCaseNode(it->cast<CNodePtr>())) {
+    if (IsBranchNode(it)) {
       auto node = it->cast<CNodePtr>();
       auto input_node = node->input(0)->cast<CNodePtr>();
-      GetCaseNodeInput(node, input_node);
+      GetBranchNodeInput(node, input_node);
     }
   }
 
@@ -1925,19 +1889,18 @@ void DfGraphConvertor::SetNodeControlInput(const AnfNodePtr &node, const AnfNode
 
 void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
   OperatorPtr src = Convert(node);
-  int case_flag = 0;
+  bool branch_flag = false;
   auto &inputs = node->inputs();
   size_t input_size = inputs.size();
-  if (case_input_handle_cache_.find(node.get()) != case_input_handle_cache_.end()) {
-    case_flag = 1;
-    input_size = case_input_handle_cache_[node.get()]->size() + 1;
+  if (branch_input_handle_cache_.find(node.get()) != branch_input_handle_cache_.end()) {
+    branch_flag = true;
+    input_size = branch_input_handle_cache_[node.get()]->size() + 1;
   } else if (!IsSubGraph() && call_input_handle_cache_.find(node) != call_input_handle_cache_.end()) {
     auto &handles = call_input_handle_cache_[node];
     MS_LOG(DEBUG) << "call node input size: " << handles->size();
     adpt->setInput(src, 1, handles);
     return;
   }
-  MS_LOG(DEBUG) << "op:  " << src->GetName() << "'s input size is " << input_size - 1;
 
   if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     SetMakeTupleInput(adpt, node);
@@ -1950,7 +1913,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   }
 
   for (size_t i = 1; i < input_size; i++) {
-    AnfNodePtr pred = (case_flag != 0) ? case_input_handle_cache_[node.get()]->at(i - 1) : inputs[i];
+    AnfNodePtr pred = branch_flag ? branch_input_handle_cache_[node.get()]->at(i - 1) : inputs[i];
     MS_EXCEPTION_IF_NULL(pred);
     if (!IsDataInput(node, pred, i)) {
       SetNodeControlInput(node, pred);
@@ -2136,12 +2099,14 @@ void DfGraphConvertor::IdentityOptimization() {
   MS_LOG(INFO) << "End IdentityOptimization, graph: " << anf_graph_->ToString();
 }
 
-void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs) {
+void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr &branch_node,
+                                       ParamIndexMap &branch_to_parent_node_map) {
+  MS_LOG(INFO) << "ProcessSubgraph begin.";
   ValueNodePtr graph_node = nullptr;
-  if (node->isa<CNode>()) {
-    graph_node = node->cast<CNodePtr>()->input(1)->cast<ValueNodePtr>();
-  } else if (node->isa<ValueNode>()) {
-    graph_node = node->cast<ValueNodePtr>();
+  if (branch_node->isa<CNode>()) {
+    graph_node = branch_node->cast<CNodePtr>()->input(1)->cast<ValueNodePtr>();
+  } else if (branch_node->isa<ValueNode>()) {
+    graph_node = branch_node->cast<ValueNodePtr>();
   } else {
     return;
   }
@@ -2149,43 +2114,30 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const std::vector
   MS_EXCEPTION_IF_NULL(graph_node);
   FuncGraphPtr anf_graph = graph_node->value()->cast<FuncGraphPtr>();
   DfGraphConvertor converter(anf_graph);
-  converter.use_inputs_ = true;
-  converter.inputs_ = inputs;
-  if (IsSubGraph()) {
-    converter.case_call_input_size_ = case_call_input_size_;
-    auto &params = anf_graph->parameters();
-    for (size_t i = case_call_input_size_; i < inputs.size(); i++) {
-      auto p = inputs[i];
-      if (HasAbstractMonad(p)) {
-        continue;
+  converter.graph_type_ = GraphType::kBranch;
+
+  auto &params = anf_graph->parameters();
+  auto &dyn_input = branch_input_handle_cache_[node.get()];
+  auto &inputs = tuple_out_handle_cache_[dyn_input->at(1).get()];
+  for (size_t i = 0; i < params.size(); i++) {
+    auto &param = params[i];
+    if (branch_to_parent_node_map.find(i) != branch_to_parent_node_map.end()) {
+      size_t parent_index = branch_to_parent_node_map[i];
+      auto &parent_handle = inputs->at(parent_index);
+      OperatorPtr op = nullptr;
+      if (parent_handle.node != nullptr && (parent_handle.node->abstract()->isa<abstract::AbstractRefTensor>())) {
+        auto name = parent_handle.op->GetName();
+        op = std::make_shared<Variable>(name);
+        (void)((static_pointer_cast<Variable>(op))->set_attr_index(parent_index));
+      } else {
+        op = std::make_shared<Data>();
+        (void)((static_pointer_cast<Data>(op))->set_attr_index(parent_index));
       }
-      if (p->isa<Parameter>()) {
-        auto idx = std::find(inputs_.begin(), inputs_.end(), p) - inputs_.begin();
-        auto idx_cond = body_cond_map_[idx];
-        if (while_const_input_index_.find(idx_cond) != while_const_input_index_.end()) {
-          auto temp = while_const_input_index_[idx_cond].op;
-          auto name = temp->GetName();
-          auto value = const_op_to_value_[temp];
-          MS_EXCEPTION_IF_NULL(value);
-          auto adpt_const = FindAdapter(kNameConst, training_);
-          if (adpt_const == nullptr) {
-            continue;
-          }
-          name += "_case";
-          auto const_op = adpt_const->generate(name);
-          (void)adpt_const->setAttr(const_op, "value", value);
-          auto const_op_desc = TransformUtil::GetGeTensorDesc(value->shape_c(), value->data_type(), kOpFormat_NCHW);
-          if (const_op_desc == nullptr) {
-            MS_LOG(WARNING) << "Create variable " << name << " output descriptor failed!";
-            continue;
-          }
-          (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*const_op_desc);
-          auto n = params.at(i - case_call_input_size_);
-          converter.op_cache_[n.get()] = const_op;
-          MS_LOG(DEBUG) << "node :" << n->ToString() << " and op: " << const_op->GetName()
-                        << " has cached in graph: " << anf_graph->ToString();
-        }
-      }
+      converter.op_cache_[param.get()] = op;
+    } else if (!HasAbstractMonad(param)) {
+      MS_LOG(EXCEPTION) << "Branch graph input index to parent node dyn input index error, "
+                        << "branch graph: " << anf_graph->ToString() << "'s " << i << "(st/nd/rd/st)"
+                        << " input can not find the corresponding parent node input index.";
     }
   }
 
@@ -2196,7 +2148,8 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const std::vector
     converter.DrawComputeGraph(name);
   }
 #endif
-  branches_map_[node.get()] = *(converter.df_graph_);
+  branches_map_[branch_node.get()] = *(converter.df_graph_);
+  MS_LOG(INFO) << "ProcessSubgraph end.";
   return;
 }
 
@@ -2563,6 +2516,9 @@ OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node) {
     MS_LOG(ERROR) << "Get nullptr while getting handler from node";
     return OutHandler(nullptr, "");
   }
+  if (out_handle_cache_.find(node.get()) != out_handle_cache_.end()) {
+    return out_handle_cache_[node.get()];
+  }
   auto op = Convert(node);
   if (op != nullptr) {
     auto name = op->GetName();
@@ -2571,8 +2527,6 @@ OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node) {
       MS_LOG(DEBUG) << "update tuple_out_handle_cache_ " << name;
     }
     return OutHandler(op, "", node);
-  } else if (out_handle_cache_.find(node.get()) != out_handle_cache_.end()) {
-    return out_handle_cache_[node.get()];
   } else {
     MS_LOG(DEBUG) << "Add an empty out handler: " << node->ToString();
     return OutHandler();
