@@ -2961,7 +2961,6 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.ppid = os.getpid()
         self.hook = None
         self.warning_ctl = None
-        self.threads_to_workers = {}
 
     def __del__(self):
         try:
@@ -3102,6 +3101,11 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
     def launch(self, op_id=-1):
         self.op_id = op_id
         logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
+        if self.is_mp_enabled():
+            logger.warning('Launching a new Python multiprocessing pool while a pool already exists! \
+                The existing pool will be terminated first.')
+            self.terminate()
+            self.reset()
         self.create_pool()
 
     def create_pool(self):
@@ -3193,8 +3197,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         """
         Execute
         """
-        t_id = threading.get_ident()
-        worker_id = self.threads_to_workers.setdefault(t_id, len(self.threads_to_workers))
+        worker_id = self.get_thread_to_worker()
+        if worker_id >= len(self.workers):
+            raise RuntimeError("[Internal] worker_id value is greater than number of available workers!")
 
         # todo check_iterator_cleanup
         if self.is_running() and check_iterator_cleanup() is False:

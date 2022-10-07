@@ -215,7 +215,14 @@ PYBIND_REGISTER(PythonMultiprocessingRuntime, 1, ([](const py::module *m) {
                     .def("is_mp_enabled", &PythonMultiprocessingRuntime::is_mp_enabled)
                     .def("add_new_workers", &PythonMultiprocessingRuntime::add_new_workers)
                     .def("remove_workers", &PythonMultiprocessingRuntime::remove_workers)
-                    .def("get_pids", &PythonMultiprocessingRuntime::get_pids);
+                    .def("get_pids", &PythonMultiprocessingRuntime::get_pids)
+                    .def("get_thread_to_worker",
+                         [](PythonMultiprocessingRuntime &rt) {
+                           int32_t res;
+                           THROW_IF_ERROR(rt.get_thread_to_worker(&res));
+                           return res;
+                         })
+                    .def("reset", &PythonMultiprocessingRuntime::reset);
                 }));
 
 PYBIND_REGISTER(ProjectNode, 2, ([](const py::module *m) {

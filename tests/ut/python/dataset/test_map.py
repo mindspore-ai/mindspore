@@ -257,39 +257,32 @@ def test_c_map_randomness_repeatability_with_shards(set_seed_to=312, set_num_par
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_python_map_mp_repeatability(set_seed_to=1605, set_num_parallel_workers_to=2, num_repeat=3):
+@pytest.mark.parametrize("num_parallel_workers", (2, 4, 6))
+@pytest.mark.parametrize("num_samples", (1, 2, 5, 6))
+def test_python_map_mp_repeatability(num_parallel_workers, num_samples, set_seed_to=1605):
     """
     Feature: Map op
     Description: Test repeatability of Map op with Python multiprocessing with Python implemented
     random ops and num_parallel_workers > 1
     Expectation: The dataset would be the same each iteration
     """
-    data_dir = "../data/dataset/testImageNetData/train/"
+    data_dir = "../data/dataset/testImageNetData2/train/"
     original_seed = config_get_set_seed(set_seed_to)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(num_parallel_workers)
     # Reduce memory required by disabling the shared memory optimization
     original_enable_shared_mem = config_get_set_enable_shared_mem(False)
 
-    # First dataset
-    data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=1)
+    # dataset
+    data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=num_samples)
     transforms_list1 = [vision.Decode(to_pil=True),
                         vision.RandomPerspective(0.4, 1.0),
                         vision.RandomLighting(0.01)]
-    data1 = data1.map(transforms_list1, num_parallel_workers=set_num_parallel_workers_to, python_multiprocessing=True)
+    data1 = data1.map(transforms_list1, num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 
-    for _ in range(num_repeat):
-        # Next datasets
-        data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=1)
-        transforms_list2 = [vision.Decode(to_pil=True),
-                            vision.RandomPerspective(0.4, 1.0),
-                            vision.RandomLighting(0.01)]
-        data2 = data2.map(transforms_list2, num_parallel_workers=set_num_parallel_workers_to,
-                          python_multiprocessing=True)
-
-        # Expect to have the same image every time
-        for img1, img2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
-                              data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
-            np.testing.assert_equal(img1, img2)
+    # Expect to have the same augmentations
+    for img1, img2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                          data1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+        np.testing.assert_equal(img1, img2)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -356,5 +349,5 @@ if __name__ == '__main__':
     test_map_operations1()
     test_c_map_randomness_repeatability()
     test_c_map_randomness_repeatability_with_shards()
-    test_python_map_mp_repeatability()
+    test_python_map_mp_repeatability(num_parallel_workers=4, num_samples=4)
     test_python_map_mp_seed_repeatability()

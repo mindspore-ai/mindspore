@@ -250,6 +250,10 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
 
 Status BatchOp::WorkerEntry(int32_t workerId) {
   TaskManager::FindMe()->Post();
+  // let Python layer know the worker id of this thread
+  if (python_mp_ != nullptr) {
+    python_mp_->set_thread_to_worker(workerId);
+  }
   std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair;
   RETURN_IF_NOT_OK(worker_in_queues_[workerId]->PopFront(&table_pair));
   while (table_pair.second.ctrl_ != batchCtrl::kQuit) {

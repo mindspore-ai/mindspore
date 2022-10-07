@@ -191,6 +191,10 @@ Status MapOp::operator()() {
 Status MapOp::WorkerEntry(int32_t worker_id) {
   // Handshake with TaskManager that thread creation is successful.
   TaskManager::FindMe()->Post();
+  // let Python layer know the worker id of this thread
+  if (python_mp_ != nullptr) {
+    python_mp_->set_thread_to_worker(worker_id);
+  }
 
   TensorRow in_row;
   std::vector<std::shared_ptr<MapJob>> job_list;
