@@ -193,12 +193,76 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setFloatData(J
     return static_cast<jboolean>(false);
   }
   auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
+  const int float_flag = 41;
+  if (ms_tensor_ptr->DataType() != mindspore::DataType::kNumberTypeFloat32 &&
+      static_cast<int>(ms_tensor_ptr->DataType()) != float_flag) {
+    MS_LOG(ERROR) << "data_type must be Float32(43), but got (" << static_cast<int>(ms_tensor_ptr->DataType()) << ").";
+    return static_cast<jboolean>(false);
+  }
   if (data_len != ms_tensor_ptr->ElementNum()) {
     MS_LOG(ERROR) << "data_len(" << data_len << ") not equal to Size of ms_tensor(" << ms_tensor_ptr->DataSize() << ")";
     return static_cast<jboolean>(false);
   }
   auto *local_data = reinterpret_cast<jfloat *>(ms_tensor_ptr->MutableData());
+  if (local_data == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed.";
+    return static_cast<jboolean>(false);
+  }
   env->GetFloatArrayRegion(data, 0, static_cast<jsize>(data_len), local_data);
+  return static_cast<jboolean>(true);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setIntData(JNIEnv *env, jobject thiz,
+                                                                             jlong tensor_ptr, jintArray data,
+                                                                             jlong data_len) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+    return static_cast<jboolean>(false);
+  }
+  auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
+  const int int_flag = 31;
+  if (ms_tensor_ptr->DataType() != mindspore::DataType::kNumberTypeInt32 &&
+      static_cast<int>(ms_tensor_ptr->DataType()) != int_flag) {
+    MS_LOG(ERROR) << "data_type must be Int32(34), but got (" << static_cast<int>(ms_tensor_ptr->DataType()) << ").";
+    return static_cast<jboolean>(false);
+  }
+  if (data_len != ms_tensor_ptr->ElementNum()) {
+    MS_LOG(ERROR) << "data_len(" << data_len << ") not equal to Size of ms_tensor(" << ms_tensor_ptr->DataSize() << ")";
+    return static_cast<jboolean>(false);
+  }
+  auto *local_data = reinterpret_cast<jint *>(ms_tensor_ptr->MutableData());
+  if (local_data == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed.";
+    return static_cast<jboolean>(false);
+  }
+  env->GetIntArrayRegion(data, 0, static_cast<jsize>(data_len), local_data);
+  return static_cast<jboolean>(true);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setLongData(JNIEnv *env, jobject thiz,
+                                                                              jlong tensor_ptr, jlongArray data,
+                                                                              jlong data_len) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+    return static_cast<jboolean>(false);
+  }
+  auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
+  if (ms_tensor_ptr->DataType() != mindspore::DataType::kNumberTypeInt64) {
+    MS_LOG(ERROR) << "data_type must be Int64(35), but got (" << static_cast<int>(ms_tensor_ptr->DataType()) << ").";
+    return static_cast<jboolean>(false);
+  }
+  if (data_len != ms_tensor_ptr->ElementNum()) {
+    MS_LOG(ERROR) << "data_len(" << data_len << ") not equal to Size of ms_tensor(" << ms_tensor_ptr->DataSize() << ")";
+    return static_cast<jboolean>(false);
+  }
+  auto *local_data = reinterpret_cast<jlong *>(ms_tensor_ptr->MutableData());
+  if (local_data == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed.";
+    return static_cast<jboolean>(false);
+  }
+  env->GetLongArrayRegion(data, 0, static_cast<jsize>(data_len), local_data);
   return static_cast<jboolean>(true);
 }
 
@@ -314,3 +378,113 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_MSTensor_createTensorByNat
   env->ReleaseStringUTFChars(tensor_name, c_tensor_name);
   return jlong(tensor);
 }
+
+bool WriteScalar(JNIEnv *env, jobject src, jint data_type, void *dst) {
+#define CASE(type, jtype, dtype, name, sig)            \
+  case mindspore::DataType::dtype: {                   \
+    jclass clazz = env->FindClass("java/lang/Number"); \
+    jmethodID id = env->GetMethodID(clazz, name, sig); \
+    jtype src_data = env->Call##type##Method(src, id); \
+    *static_cast<jtype *>(dst) = src_data;             \
+    break;                                             \
+  }
+  switch (static_cast<mindspore::DataType>(data_type)) {
+    CASE(Float, jfloat, kNumberTypeFloat32, "floatValue", "()F");
+    CASE(Int, jint, kNumberTypeInt32, "intValue", "()I");
+    CASE(Long, jlong, kNumberTypeInt64, "longValue", "()J");
+    CASE(Boolean, jboolean, kNumberTypeBool, "booleanValue", "()Z");
+#undef CASE
+    default:
+      MS_LOG(ERROR) << "The dataType only support float32, int32, int64 and bool, but got " << data_type;
+      return false;
+  }
+  return true;
+}
+
+bool Write1DArray(JNIEnv *env, jarray src, jint data_type, void *dst, size_t *offset, int require_len) {
+#define CASE(type, jtype, dtype)                                                                                      \
+  case mindspore::DataType::dtype:                                                                                    \
+    env->Get##type##ArrayRegion(static_cast<jtype##Array>(src), 0, element_num, static_cast<jtype *>(dst) + *offset); \
+    break;
+
+  int element_num = env->GetArrayLength(src);
+  if (element_num != require_len) {
+    MS_LOG(ERROR) << "The length of 1DArray " << element_num << "is not equal to " << require_len;
+    return false;
+  }
+  switch (static_cast<mindspore::DataType>(data_type)) {
+    CASE(Float, jfloat, kNumberTypeFloat32);
+    CASE(Int, jint, kNumberTypeInt32);
+    CASE(Long, jlong, kNumberTypeInt64);
+    CASE(Boolean, jboolean, kNumberTypeBool);
+#undef CASE
+    default:
+      MS_LOG(ERROR) << "The dataType only support float32, int32, int64 and bool, but got " << data_type;
+      return false;
+  }
+  *offset += element_num;
+  return true;
+}
+
+bool WriteNDArray(JNIEnv *env, jarray src, jint data_type, void *dst, size_t *offset, const std::vector<int> &shape,
+                  size_t dim_index) {
+  if (dim_index + 1 == shape.size()) {
+    return Write1DArray(env, src, data_type, dst, offset, shape.back());
+  } else {
+    auto nd_src = static_cast<jobjectArray>(src);
+    int len = env->GetArrayLength(nd_src);
+    if (len != shape[dim_index]) {
+      MS_LOG(ERROR) << "The dim-value " << len << "is not equal to " << shape[dim_index];
+      return false;
+    }
+    for (int i = 0; i < len; ++i) {
+      auto row = static_cast<jarray>(env->GetObjectArrayElement(nd_src, i));
+      auto ret = WriteNDArray(env, row, data_type, dst, offset, shape, dim_index + 1);
+      if (!ret) {
+        MS_LOG(ERROR) << "Write data failed.";
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_MSTensor_createTensorByObject(JNIEnv *env, jobject thiz,
+                                                                                    jstring tensor_name, jint data_type,
+                                                                                    jintArray tensor_shape,
+                                                                                    jobject value) {
+  auto size = static_cast<jsize>(env->GetArrayLength(tensor_shape));
+  std::vector<int> shape(size);
+  env->GetIntArrayRegion(tensor_shape, 0, size, shape.data());
+  std::vector<int64_t> c_shape(shape.begin(), shape.end());
+
+  const char *c_tensor_name = env->GetStringUTFChars(tensor_name, nullptr);
+  std::string str_tensor_name(c_tensor_name, env->GetStringLength(tensor_name));
+  env->ReleaseStringUTFChars(tensor_name, c_tensor_name);
+  auto tensor = mindspore::MSTensor::CreateTensor(str_tensor_name, static_cast<mindspore::DataType>(data_type), c_shape,
+                                                  nullptr, 0);
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Create a tensor failed.";
+    return 0;
+  }
+  auto *local_data = tensor->MutableData();
+  if (local_data == nullptr) {
+    delete tensor;
+    MS_LOG(ERROR) << "Create a tensor failed, due to fail to alloc.";
+    return 0;
+  }
+  bool ret = true;
+  if (size == 0) {
+    ret = WriteScalar(env, value, data_type, local_data);
+  } else {
+    size_t offset = 0;
+    ret = WriteNDArray(env, static_cast<jarray>(value), data_type, local_data, &offset, shape, 0);
+  }
+  if (!ret) {
+    delete tensor;
+    tensor = nullptr;
+    MS_LOG(ERROR) << "Create a tensor failed, due to fail to write.";
+  }
+  return jlong(tensor);
+}
+

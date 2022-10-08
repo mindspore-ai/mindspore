@@ -17,8 +17,10 @@
 package com.mindspore;
 
 import com.mindspore.config.MindsporeLite;
-
+import com.mindspore.config.DataType;
 import java.nio.ByteBuffer;
+import java.lang.reflect.Array;
+import java.util.HashMap;
 
 public class MSTensor {
     static {
@@ -54,6 +56,28 @@ public class MSTensor {
             return null;
         }
         long tensorPtr = createTensorByNative(tensorName, dataType, tensorShape, buffer);
+        return new MSTensor(tensorPtr);
+    }
+
+    /**
+     * MSTensor construct function.
+     *
+     * @param tensorName tensor name
+     * @param obj        java Array or a Scalar. Support dtype: float, double, int, long, boolean.
+     */
+    public static MSTensor createTensor(String tensorName, Object obj) {
+        if (tensorName == null || obj == null) {
+            return null;
+        }
+        int dType = ParseDataType(obj);
+        if (dType == 0) {
+            return null;
+        }
+        int[] shape = ParseShape(obj);
+        if (shape == null) {
+            return null;
+        }
+        long tensorPtr = createTensorByObject(tensorName, dType, shape, obj);
         return new MSTensor(tensorPtr);
     }
 
@@ -153,6 +177,32 @@ public class MSTensor {
     /**
      * Set the input data of MSTensor.
      *
+     * @param data Input data of int[] type.
+     * @return whether set data success.
+     */
+    public boolean setData(int[] data) {
+        if (data == null) {
+            return false;
+        }
+        return this.setIntData(this.tensorPtr, data, data.length);
+    }
+
+    /**
+     * Set the input data of MSTensor.
+     *
+     * @param data Input data of long[] type.
+     * @return whether set data success.
+     */
+    public boolean setData(long[] data) {
+        if (data == null) {
+            return false;
+        }
+        return this.setLongData(this.tensorPtr, data, data.length);
+    }
+
+    /**
+     * Set the input data of MSTensor.
+     *
      * @param data data Input data of ByteBuffer type
      * @return whether set data success.
      */
@@ -203,8 +253,54 @@ public class MSTensor {
         return tensorPtr;
     }
 
+    private static int ParseDataType(Object obj) {
+        HashMap<Class<?>, Integer> classToDType = new HashMap<Class<?>, Integer>() {{
+            put(float.class, DataType.kNumberTypeFloat32);
+            put(Float.class, DataType.kNumberTypeFloat32);
+            put(double.class, DataType.kNumberTypeFloat64);
+            put(Double.class, DataType.kNumberTypeFloat64);
+            put(int.class, DataType.kNumberTypeInt32);
+            put(Integer.class, DataType.kNumberTypeInt32);
+            put(long.class, DataType.kNumberTypeInt64);
+            put(Long.class, DataType.kNumberTypeInt64);
+            put(boolean.class, DataType.kNumberTypeBool);
+            put(Boolean.class, DataType.kNumberTypeBool);
+        }};
+        Class<?> c = obj.getClass();
+        while (c.isArray()) {
+            c = c.getComponentType();
+        }
+        Integer dType = classToDType.get(c);
+        return dType == null ? 0 : dType;
+    }
+
+    private static int[] ParseShape(Object obj) {
+        int i = 0;
+        Class<?> c = obj.getClass();
+        while (c.isArray()) {
+            c = c.getComponentType();
+            ++i;
+        }
+        int[] shape = new int[i];
+        i = 0;
+        c = obj.getClass();
+        while (c.isArray()) {
+            shape[i] = Array.getLength(obj);
+            if (shape[i] <= 0) {
+                return null;
+            }
+            obj = Array.get(obj, 0);
+            c = c.getComponentType();
+            ++i;
+        }
+        return shape;
+    }
+
     private static native long createTensorByNative(String tensorName, int dataType, int[] tesorShape,
                                                     ByteBuffer buffer);
+
+    private static native long createTensorByObject(String tensorName, int dataType, int[] tesorShape,
+                                                    Object obj);
 
     private native int[] getShape(long tensorPtr);
 
@@ -221,6 +317,10 @@ public class MSTensor {
     private native boolean setByteData(long tensorPtr, byte[] data, long dataLen);
 
     private native boolean setFloatData(long tensorPtr, float[] data, long dataLen);
+
+    private native boolean setIntData(long tensorPtr, int[] data, long dataLen);
+
+    private native boolean setLongData(long tensorPtr, long[] data, long dataLen);
 
     private native boolean setShape(long tensorPtr, int[] tensorShape);
 
