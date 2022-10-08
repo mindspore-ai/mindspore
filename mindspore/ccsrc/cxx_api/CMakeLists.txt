@@ -179,9 +179,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
             ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_RPATH
-    ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp_arch64-linux/built-in/op_impl/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH
-            ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp_arch64-linux/built-in/op_impl/ai_core/tbe/op_tiling)
+            ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
+        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
     endif()
     set_target_properties(mindspore_shared_lib PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 endif()
