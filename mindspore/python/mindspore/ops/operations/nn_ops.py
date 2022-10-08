@@ -5571,7 +5571,7 @@ class KLDivLoss(Primitive):
         elif device_target == "GPU":
             support_mode = ['none', 'mean', 'sum']
         elif device_target == "Ascend":
-            support_mode = ['none', 'mean', 'batchmean', 'sum']
+            support_mode = ['none', 'batchmean', 'sum']
         else:
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
 
