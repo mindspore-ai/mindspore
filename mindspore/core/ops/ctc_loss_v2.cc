@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,12 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   auto targets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto log_probs_shape = log_probs_shape_map[kShape];
   auto targets_shape = targets_shape_map[kShape];
+  if (IsDynamicRank(log_probs_shape) || IsDynamicRank(targets_shape)) {
+    std::vector<int64_t> dyn_shape = {abstract::Shape::kShapeRankAny};
+    abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(dyn_shape);
+    abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(dyn_shape);
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{neg_log_shape, log_alpha_shape});
+  }
   if (log_probs_shape.size() != kLenLogProbs) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input log_probs's dim must be 3, but got: " << log_probs_shape.size() << ".";
