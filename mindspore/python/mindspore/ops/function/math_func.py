@@ -176,9 +176,7 @@ def addn(x):
     All input tensors must have the same shape.
 
     Args:
-        x (Union(tuple[Tensor], list[Tensor])): A tuple or list composed of Tensor, the data type is
-            `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        x (Union(tuple[Tensor], list[Tensor])): A tuple or list composed of Tensor.
 
     Returns:
         Tensor, has the same shape and dtype as each Tensor of `x`.

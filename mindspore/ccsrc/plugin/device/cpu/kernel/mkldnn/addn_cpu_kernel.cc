@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/mkldnn/addn_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
@@ -26,6 +27,9 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 constexpr size_t kAddNInputsMinNum = 2;
 constexpr size_t kAddNOutputsNum = 1;
 
@@ -164,7 +168,11 @@ std::vector<std::pair<KernelAttr, AddNCpuKernelMod::AddNFunc>> AddNCpuKernelMod:
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &AddNCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &AddNCpuKernelMod::LaunchKernel<double>}};
+   &AddNCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &AddNCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &AddNCpuKernelMod::LaunchKernel<complex128>}};
 
 std::vector<KernelAttr> AddNCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

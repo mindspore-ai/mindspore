@@ -48,7 +48,7 @@ bool AddNDynShapeJoin(ShapeVector *shape1, const ShapeVector *shape2) {
     if ((*shape1)[i] == (*shape2)[i]) {
       continue;
     }
-    // If shape1 is dynamic, use shape of shape2.If shape2 is dynamic, keep shape1.
+    // If shape1 is dynamic, use shape of shape2. If shape2 is dynamic, keep shape1.
     if ((*shape1)[i] == abstract::Shape::kShapeDimAny) {
       (*shape1)[i] = (*shape2)[i];
       continue;
@@ -115,8 +115,7 @@ TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
     std::string element_i = "element_" + std::to_string(i);
     (void)types.emplace(element_i, elements[i]->BuildType());
   }
-  std::set<TypePtr> valid_types = common_valid_types;
-  valid_types.insert(kBool);
+  std::set<TypePtr> valid_types = common_valid_types_with_complex_and_bool;
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return elements[0]->BuildType();
 }
