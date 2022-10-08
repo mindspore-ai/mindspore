@@ -57,6 +57,13 @@ std::vector<std::pair<KernelAttr, SliceGradPtrCreatorFunc>> kernel_attr = {
    CreateSliceKernelPtr<uchar>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    CreateSliceKernelPtr<bool>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateSliceKernelPtr<float>},
 };
 
 std::vector<KernelAttr> SliceGradGpuKernelMod::GetOpSupport() {
