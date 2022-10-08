@@ -51,7 +51,7 @@ class MIND_API Conv3DBackpropInput : public BaseOperator {
   int64_t get_out_channel() const;
   std::vector<int64_t> get_kernel_size() const;
   int64_t get_mode() const;
-  PadMode get_pad_mode() const;
+  std::string get_pad_mode() const;
   std::vector<int64_t> get_pad() const;
   std::vector<int64_t> get_stride() const;
   std::vector<int64_t> get_dilation() const;
