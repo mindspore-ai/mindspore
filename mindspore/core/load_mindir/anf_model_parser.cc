@@ -188,18 +188,27 @@ std::string ParseCNodeName(const string &name) {
 
 #define PARSE_MINDIR_ATTR_IN_INT_FORM(type, valuetype)                                                    \
   ValuePtr ParseAttrInScalar_##type##_##valuetype(const mind_ir::AttributeProto &attr_proto, int index) { \
-    auto value = static_cast<valuetype>(attr_proto.ints(index));                                          \
-    return MakeValue<valuetype>(value);                                                                   \
+    if (attr_proto.ints_size() > index) {                                                                 \
+      auto value = static_cast<valuetype>(attr_proto.ints(index));                                        \
+      return MakeValue<valuetype>(value);                                                                 \
+    }                                                                                                     \
+    MS_LOG(EXCEPTION) << "Parse MindIR attr failed.";                                                     \
   }                                                                                                       \
   ValuePtr ParseAttrInSingleScalar_##type##_##valuetype(const mind_ir::AttributeProto &attr_proto) {      \
-    auto value = static_cast<valuetype>(attr_proto.i());                                                  \
-    return MakeValue<valuetype>(value);                                                                   \
+    if (attr_proto.has_i()) {                                                                             \
+      auto value = static_cast<valuetype>(attr_proto.i());                                                \
+      return MakeValue<valuetype>(value);                                                                 \
+    }                                                                                                     \
+    MS_LOG(EXCEPTION) << "Parse MindIR attr failed.";                                                     \
   }
 
 #define PARSE_MINDIR_ATTR_IN_SCALAR_FORM(type, valuetype)                                                 \
   ValuePtr ParseAttrInScalar_##type##_##valuetype(const mind_ir::AttributeProto &attr_proto, int index) { \
-    auto value = static_cast<valuetype>(attr_proto.type##s(index));                                       \
-    return MakeValue<valuetype>(value);                                                                   \
+    if (attr_proto.type##s_size() > index) {                                                              \
+      auto value = static_cast<valuetype>(attr_proto.type##s(index));                                     \
+      return MakeValue<valuetype>(value);                                                                 \
+    }                                                                                                     \
+    MS_LOG(EXCEPTION) << "Parse MindIR attr failed.";                                                     \
   }
 
 PARSE_MINDIR_ATTR_IN_INT_FORM(int8_t, int8_t)
@@ -1318,6 +1327,10 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     MS_LOG(ERROR) << "Get CNode op_type failed!";
     return nullptr;
   }
+  if (node_proto.output_size() <= 0) {
+    MS_LOG(ERROR) << "Get CNode out failed!";
+    return nullptr;
+  }
   const std::string &node_name = node_proto.output(0);
   MS_LOG(DEBUG) << "Process CNode: " << node_name;
   // Build inputs.
@@ -1385,7 +1398,8 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     return_node->set_load_flag(true);
     outputFuncGraph->set_return(return_node);
     MS_LOG(DEBUG) << "Construct funcgraph finined, all success.";
-  } else {
+    return true;
+  } else if (importProto.output_size() == 1) {
     inputs.push_back(NewValueNode(prim::kPrimReturn));
     auto nodeName = importProto.output(0).name();
     auto anfNode = GetAnfNode(nodeName);
@@ -1400,9 +1414,10 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     return_node->set_load_flag(true);
     outputFuncGraph->set_return(return_node);
     MS_LOG(DEBUG) << "Construct funcgraph finined, all success!";
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,

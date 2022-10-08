@@ -1431,7 +1431,9 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(func_args),
                        [](const AnfNodePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
-                         return arg->abstract()->Broaden();
+                         auto abs = arg->abstract();
+                         MS_EXCEPTION_IF_NULL(abs);
+                         return abs->Broaden();
                        });
 
   bool is_equal_input_args = true;
