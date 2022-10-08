@@ -36,20 +36,23 @@ abstract::TupleShapePtr SparseSplitInferShape(const PrimitivePtr &prim,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto shape_shape_vec =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("split_dim's rank'", split_dim_shape_vec.size(), kLessEqual, 1,
+  (void)CheckAndConvertUtils::CheckInteger("split_dim's rank'", (SizeToLong)(split_dim_shape_vec.size()), kLessEqual, 1,
                                            prim->name());
   if (split_dim_shape_vec.size() == 1) {
     (void)CheckAndConvertUtils::CheckInteger("split_dim's size", split_dim_shape_vec[0], kEqual, 1, prim->name());
   }
   const int64_t rank = 2;
-  (void)CheckAndConvertUtils::CheckInteger("indices' rank'", indices_shape_vec.size(), kEqual, rank, prim->name());
-  (void)CheckAndConvertUtils::CheckInteger("values' rank'", values_shape_vec.size(), kEqual, 1, prim->name());
-  (void)CheckAndConvertUtils::CheckInteger("shape' rank'", shape_shape_vec.size(), kEqual, 1, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("indices' rank'", (SizeToLong)(indices_shape_vec.size()), kEqual, rank,
+                                           prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("values' rank'", (SizeToLong)(values_shape_vec.size()), kEqual, 1,
+                                           prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("shape' rank'", (SizeToLong)(shape_shape_vec.size()), kEqual, 1,
+                                           prim->name());
 
-  ShapeVector output_indices_vec = {-1, SizeToLong(shape_shape_vec[0])};
+  ShapeVector output_indices_vec = {-1, shape_shape_vec[0]};
   ShapeVector output_values_vec = {-1};
 
-  ShapeVector min_output_indices_vec = {0, SizeToLong(shape_shape_vec[0])};
+  ShapeVector min_output_indices_vec = {0, shape_shape_vec[0]};
   ShapeVector min_output_values_vec = {0};
 
   auto num_splits = GetValue<int64_t>(prim->GetAttr("num_split"));
