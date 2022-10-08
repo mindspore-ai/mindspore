@@ -18,7 +18,6 @@
 #include "extendrt/session/single_op_session.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
-// #include "backend/common/session/session_basic.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "extendrt/utils/kernel_graph_utils.h"
@@ -41,6 +40,8 @@ class DefaultInferSession : public InferSession {
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
+  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                  const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;
@@ -62,6 +63,11 @@ Status DefaultInferSession::Init(const std::shared_ptr<Context> &context) {
 }
 Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "DefaultInferSession::CompileGraph";
+  return kSuccess;
+}
+
+Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
   return kSuccess;
 }
 

@@ -53,6 +53,8 @@ class ModelImpl {
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
   bool HasPreprocess();
   Status Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs);
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
+                 const MSKernelCallBack &after);
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
   Status Predict();
   Status PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs);

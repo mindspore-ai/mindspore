@@ -56,7 +56,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/convert/runtime_convert.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc

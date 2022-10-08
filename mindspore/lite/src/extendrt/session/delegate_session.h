@@ -38,6 +38,8 @@ class GraphSinkSession : public InferSession {
 
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
+  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                  const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
   Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 

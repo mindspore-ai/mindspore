@@ -32,12 +32,44 @@
 #include "extendrt/utils/tensor_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "src/common/helper/external_tensor/memory_helper.h"
+#include "src/litert/kernel_exec.h"
 
 namespace mindspore {
 namespace {
 // leave 200MB for the model struct to make sure the model will not large than 2GB
 const size_t kOnlineExtractDataSize = 1800 * 1024 * 1024;
 const int64_t kBufferSize = 1024;
+
+Status LiteTensorToMSTensor(lite::Tensor *srcTensor, MSTensor *dstTensor, bool fromSession) {
+  auto impl = std::make_shared<LiteTensorImpl>(srcTensor);
+  if (impl == nullptr || impl->lite_tensor() == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed.";
+    return kLiteError;
+  }
+  impl->set_from_session(fromSession);
+  auto tensor = MSTensor(impl);
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed.";
+    return kLiteError;
+  }
+  *dstTensor = tensor;
+  return kSuccess;
+}
+
+std::vector<MSTensor> LiteTensorsToMSTensors(const std::vector<mindspore::lite::Tensor *> &srcTensors,
+                                             bool fromSession) {
+  std::vector<MSTensor> dstTensors;
+  dstTensors.reserve(srcTensors.size());
+  for (auto inTensor : srcTensors) {
+    MSTensor tensor;
+    auto status = LiteTensorToMSTensor(inTensor, &tensor, fromSession);
+    if (status != kSuccess) {
+      return {};
+    }
+    dstTensors.emplace_back(tensor);
+  }
+  return dstTensors;
+}
 }  // namespace
 const char litert_provider[] = "litert";
 
@@ -139,7 +171,28 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
       }
     }
   }
-  auto ret = lite_session_->RunGraph();
+  lite::KernelCallBack before_call_back = nullptr;
+  lite::KernelCallBack after_call_back = nullptr;
+  if (before_ != nullptr) {
+    before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                           const std::vector<mindspore::lite::Tensor *> &before_outputs,
+                           const MSCallBackParam &call_param) {
+      std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs, true);
+      std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs, true);
+      return before_(inputs, outputs, call_param);
+    };
+  }
+
+  if (after_ != nullptr) {
+    after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
+                          const MSCallBackParam &call_param) {
+      std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs, true);
+      std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs, true);
+      return after_(inputs, outputs, call_param);
+    };
+  }
+  auto ret = lite_session_->RunGraph(before_call_back, after_call_back);
   ResetTensorData(old_data, input_tensors);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";

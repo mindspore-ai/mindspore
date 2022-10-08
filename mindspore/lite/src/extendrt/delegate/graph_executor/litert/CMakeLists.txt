@@ -102,9 +102,9 @@ endif()
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
-        ${LITE_DIR}/src/litert/dynamic_mem_allocator.cc
-        ${LITE_DIR}/src/litert/dynamic_mem_manager.cc
-        ${LITE_DIR}/src/litert/numa_adapter.cc
+        ${LITE_DIR}/src/extendrt/dynamic_mem_allocator.cc
+        ${LITE_DIR}/src/extendrt/dynamic_mem_manager.cc
+        ${LITE_DIR}/src/extendrt/numa_adapter.cc
         )
 endif()
 
