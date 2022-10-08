@@ -56,7 +56,6 @@ struct BaseOpRunInfo {
 struct FrontendOpRunInfo {
   BaseOpRunInfo base_op_run_info;
   bool run_in_vm = false;
-  bool is_nop_prim = false;
   bool output_get_by_infer_value = false;
   int mix_type{0};
   PrimitivePyPtr op_prim;

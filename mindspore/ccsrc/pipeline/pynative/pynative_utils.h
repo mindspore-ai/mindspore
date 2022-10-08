@@ -31,7 +31,10 @@ namespace PyNativeAlgo {
 struct Common {
   static std::string GetIdByValue(const ValuePtr &v);
   static TypePtr GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
-  static bool IsDynamicShape(const FrontendOpRunInfoPtr &op_run_info);
+  static inline bool IsDynamicShape(const FrontendOpRunInfoPtr &op_run_info) {
+    MS_EXCEPTION_IF_NULL(op_run_info);
+    return op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.has_dynamic_input;
+  }
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
 };

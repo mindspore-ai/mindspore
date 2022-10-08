@@ -33,29 +33,20 @@ class DynamicShape {
   ~DynamicShape() = default;
   void SetDynamicInput(const py::object &cell, const py::args &args);
   void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args);
-  py::object GetDynamicInput(const py::object &actual_input) const;
   ValuePtr GetSensValueForDynamicShapeOutput(const TopCellInfoPtr &top_cell, const ValuePtr &v,
                                              const AnfNodePtr &node) const;
-  void UpdateValueToDynamicShape(const ValuePtr &value) const;
-  void UpdateInputTensorToDynamicShape(const FrontendOpRunInfoPtr &op_run_info);
-  void SaveDynShapeAbsForMsFunction(const py::args &args, const py::object &out, const FuncGraphPtr &ms_func_graph);
-  void SaveOutputDynamicShape(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v);
+  void UpdateValueBaseShape(const ValuePtr &v, const AbstractBasePtr &abs) const;
+  void SetValueBaseShape(const ValuePtr &v, const AbstractBasePtr &abs) const;
+  void SaveDynShapeAbsForMsFunction(const py::args &args, const py::object &out,
+                                    const FuncGraphPtr &ms_func_graph) const;
   void UpdateSensValueForDynamicShapeOutput(const TopCellInfoPtr &top_cell, const ValuePtr &v) const;
   TopCellInfoPtr GetTopCellWithDynamicShape(const py::object &cell, const py::args &args, bool is_auto);
   void CheckPreviousTopCellCanBeDynamicShape(const py::object &cell, const py::args &args);
-  const OrderedMap<std::string, abstract::AbstractBasePtr> &id_with_dynamic_abs() const { return id_with_dynamic_abs_; }
-  void SetIdWithDynamicAbs(const std::string &id, const abstract::AbstractBasePtr &abs) {
-    id_with_dynamic_abs_[id] = abs;
-  }
-  void reset() { id_with_dynamic_abs_.clear(); }
   py::object GetDynShape(const py::args &args) const;
 
  private:
-  ShapeVector GetTensorShape(const ValuePtr &v) const;
   abstract::ShapePtr GetShapeFromAbstract(const abstract::AbstractBasePtr &abs) const;
-  void SaveIdWithDynamicAbstract(const ValuePtr &v, const AbstractBasePtr &abs);
   ValuePtr SetSensValue(const ValuePtr &value, const TopCellInfoPtr &top_cell) const;
-
   TopCellInfoPtr ChangeTopCellToDynamicShapeBySetInputs(const TopCellInfoPtr &top_cell,
                                                         const std::vector<ShapeVector> &new_args_shape,
                                                         const py::object &cell);
@@ -65,10 +56,10 @@ class DynamicShape {
   void UpdateTopCellId(const py::args &args) const;
   void FindMatchTopCell(const TopCellInfoPtr &top_cell, const py::args &args,
                         std::vector<ShapeVector> *new_args_shape) const;
-  bool HasFeedDynamicInput() const { return !feed_dynamic_input_.empty(); }
+  inline bool HasFeedDynamicInput() const { return !feed_dynamic_input_.empty(); }
+  bool SetFeedTupleDynamicInputAbs(const abstract::AbstractBasePtr &abs, const py::object &arg, size_t i);
 
  private:
-  OrderedMap<std::string, abstract::AbstractBasePtr> id_with_dynamic_abs_;
   mindspore::HashMap<std::string, std::vector<abstract::AbstractBasePtr>> feed_dynamic_input_;
 };
 using DynamicShapePtr = std::shared_ptr<DynamicShape>;

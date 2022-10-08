@@ -166,10 +166,6 @@ void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &a
   forward_executor()->dynamic_shape()->CheckPreviousTopCellCanBeDynamicShape(cell, args);
 }
 
-py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) const {
-  return forward_executor()->dynamic_shape()->GetDynamicInput(actual_input);
-}
-
 py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
                                              const py::object &grad_hash_id, const py::args &args) const {
   return grad_executor()->CheckAlreadyRun(grad, cell, grad_hash_id, args);
@@ -250,7 +246,6 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
          "Executor set grad flag.")
     .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")
-    .def("get_dynamic_input", &PyNativeExecutor::GetDynamicInput, "get dynamic input")
     .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path, py::arg("py_exe_path") = py::str(""),
          "set python executable path.")
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,

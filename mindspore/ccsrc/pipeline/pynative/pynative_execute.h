@@ -57,7 +57,6 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   bool grad_flag() const;
   void set_grad_flag(bool flag) const;
   void SetDynamicInput(const py::object &cell, const py::args &args) const;
-  py::object GetDynamicInput(const py::object &actual_input) const;
   void set_graph_phase(const std::string &graph_phase) const;
   void set_py_exe_path(const py::object &py_exe_path) const;
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir) const;

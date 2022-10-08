@@ -222,8 +222,9 @@ void ForwardExecutor::EraseFromNodeAbsMap(const std::string &id) const {
   infer_operation()->EraseElemFromNodeAbsCache(id);
 }
 
-void ForwardExecutor::SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) const {
-  infer_operation()->SetNodeAbsCacheByValue(value, abs);
+void ForwardExecutor::SetNodeAbsMapByValue(const std::string &op_name, const ValuePtr &value,
+                                           const abstract::AbstractBasePtr &abs) const {
+  infer_operation()->SetNodeAbsCacheByValue(op_name, value, abs);
 }
 
 void ForwardExecutor::SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const {
@@ -246,6 +247,10 @@ ValuePtr ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
       out_real_value = result_v_list->value().front();
     }
   }
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
+    dynamic_shape()->UpdateValueBaseShape(out_real_value, op_run_info->base_op_run_info.abstract);
+  }
+  SetNodeAbsMapByValue(op_run_info->base_op_run_info.op_name, out_real_value, op_run_info->base_op_run_info.abstract);
   return out_real_value;
 }
 
@@ -320,7 +325,6 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
       }
     }
     auto result_v = std::make_shared<ValueTuple>(result);
-    dynamic_shape()->SaveOutputDynamicShape(op_run_info, result_v);
     MS_LOG(DEBUG) << "RunOpInVM end";
     return result_v;
   }
@@ -335,7 +339,6 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     MS_LOG(EXCEPTION) << "VM op " << op_run_info->base_op_run_info.op_name << " run failed!";
   }
   ValuePtr result_v = PyNativeAlgo::DataConvert::PyObjToValue(result);
-  dynamic_shape()->SaveOutputDynamicShape(op_run_info, result_v);
   MS_LOG(DEBUG) << "RunOpInVM end";
   if (result_v->isa<ValueSequence>()) {
     return result_v;
@@ -390,7 +393,6 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
     ExecuteLazyTask();
     if (!grad()->grad_flag()) {
       // Clean up some resources for dynamic shape
-      dynamic_shape()->reset();
       ClearNodeAbsMap();
     }
   }
@@ -398,7 +400,6 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
 
 void ForwardExecutor::ProcessAfterEndGraph() const {
   if (IsFirstCell()) {
-    dynamic_shape()->reset();
     ClearNodeAbsMap();
   }
 }
@@ -444,7 +445,6 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
   op_run_info->base_op_run_info.device_target = cur_target;
   CheckIfNeedSyncForHeterogeneous(cur_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, cur_target);
-  dynamic_shape()->UpdateInputTensorToDynamicShape(op_run_info);
   // get graph info for checking it whether existing in the cache
   GetSingleOpGraphInfo(op_run_info, cur_target);
   auto backend_op_run_info =
@@ -464,7 +464,6 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
     cur_session->RunOp(backend_op_run_info, &outputs);
   }
   const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs);
-  dynamic_shape()->SaveOutputDynamicShape(op_run_info, result_v);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";
   return result_v;

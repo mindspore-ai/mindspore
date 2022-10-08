@@ -58,7 +58,8 @@ class ForwardExecutor {
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   void ClearNodeAbsMap() const;
   void EraseFromNodeAbsMap(const std::string &id) const;
-  void SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) const;
+  void SetNodeAbsMapByValue(const std::string &op_name, const ValuePtr &value,
+                            const abstract::AbstractBasePtr &abs) const;
   void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const;
   const NodeAbsCache &NodeAbsMap() const;
   void ClearRes();

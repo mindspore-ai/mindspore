@@ -70,6 +70,7 @@ struct CellSelfInfo {
   std::vector<std::string> args_id;
   std::vector<abstract::ShapePtr> args_shape;
   std::vector<TypePtr> args_type;
+  bool is_unknown_rank = false;
 };
 using CellSelfInfoPtr = std::shared_ptr<CellSelfInfo>;
 
