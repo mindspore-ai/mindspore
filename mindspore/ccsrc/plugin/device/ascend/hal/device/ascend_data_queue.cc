@@ -193,9 +193,9 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
   if (!channel_name_.empty()) {
     acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
     if (acl_handle_ == nullptr) {
-      MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
-                           "Please check DEVICE ID setting, DEVICE ID that passed into dataset"
-                           "(from context) and training process should be the same."
+      MS_LOG(EXCEPTION) << "Create channel for sending data failed. The details refer to 'Ascend Error Message'."
+                           "#umsg#User Help Message:#umsg#Please check DEVICE ID setting, DEVICE ID that passed"
+                           "into dataset(from context) and training process should be the same."
                         << ascend::GetErrorMessage(true);
     }
     tdt_handle::AddHandle(&acl_handle_, nullptr);
@@ -211,7 +211,8 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 AscendTdtQueue::~AscendTdtQueue() {
   if (acl_handle_ != nullptr) {
     if (acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Failed to destroy channel for tdt queue." << ascend::GetErrorMessage(true);
+      MS_LOG(EXCEPTION) << "Failed to destroy channel for tdt queue. The details refer to 'Ascend Error Message'."
+                        << ascend::GetErrorMessage(true);
     } else {
       tdt_handle::DelHandle(&acl_handle_);
       acl_handle_ = nullptr;
@@ -253,7 +254,8 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
                       << "transmission channel on the device side. So we force the data transmission channel to stop.";
       return DataQueueStatus::SUCCESS;
     }
-    MS_LOG(EXCEPTION) << "Tdt Send data failed." << ascend::GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Tdt Send data failed. The details refer to 'Ascend Error Message'."
+                      << ascend::GetErrorMessage(true);
   }
   if (wingman_queue_->IsOpen() && !data.empty()) {
     wingman_queue_->Push(data);

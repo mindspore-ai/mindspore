@@ -236,7 +236,8 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
   auto ret = ExecuteGraph(kernel_graph);
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Run task for graph:" << kernel_graph->ToString() << " error!" << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Run task for graph:" << kernel_graph->ToString()
+                      << " error! The details refer to 'Ascend Error Message'." << GetErrorMessage(true);
   }
   if (auto warning_message = GetWarningMessage(); !warning_message.empty()) {
     MS_LOG(WARNING) << "Ascend warning message:\n" << warning_message;

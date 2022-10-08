@@ -105,10 +105,14 @@ constexpr auto kSOC_VERSION = "SOC_VERSION";
 
 std::string GetErrorMessage(bool add_title) {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-  if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-    return add_title ? "#umsg#Ascend Error Message:#umsg#" + error_message : error_message;
+  if (error_message.empty() || error_message.find(kUnknowErrorString) != string::npos) {
+    return "";
   }
-  return "";
+  if (add_title) {
+    return "#umsg#Ascend Error Message:#umsg#" + error_message +
+           "\n(Please search \"Ascend Error Message\" at https://www.mindspore.cn for error code description)";
+  }
+  return error_message;
 }
 
 void SetErrorManagerContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }
