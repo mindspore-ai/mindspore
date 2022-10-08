@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,26 +55,16 @@ constexpr size_t ImagekOutputSizeD = 1;
 constexpr int64_t ImagekOutputSizeLen = 4;
 constexpr int64_t ImageKMaxshapeDim0 = 16;
 constexpr int64_t ImageKMaxshapeNum = 2;
-abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitive,
-                                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
-  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
+
+void CheckShapes(const std::string &prim_name, const ShapeVector &input_shape0, const ShapeVector &input_shape1,
+                 const ShapeVector &input_shape2, const ShapeVector &input_shape3) {
   (void)CheckAndConvertUtils::CheckInteger("grads rank", input_shape0.size(), kEqual, ImagekGradsShapeLen, prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
-  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", input_shape1[1], kEqual, ImagekCoordinateLen,
                                            prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
-  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("box_index rank", input_shape2.size(), kEqual, ImagekBoxIndShapeLen,
                                            prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
-  auto input_shape3 =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("image_size rank", input_shape3.size(), kEqual, ImagekImageSizeShapeLen,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("length of image_size", input_shape3[0], kEqual, ImagekGradsShapeLen,
@@ -83,29 +73,19 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   if (input_shape0[ImagekHeight] <= 0 || input_shape0[ImagekWidth] <= 0) {
     MS_EXCEPTION(ValueError) << "the height and width of grads must be over 0.";
   }
+
   if (input_shape0[ImagekDepth] <= 0) {
     MS_EXCEPTION(ValueError) << "the depth of grads must be over 0.";
   }
+
   if (input_shape0[0] != input_shape1[0] || input_shape2[0] != input_shape1[0]) {
     MS_EXCEPTION(ValueError) << "the first dimension of the tensor in {grads, boxes, box_index} must be equal.";
   }
+}
+
+abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBasePtr &output_size,
+                                  const TypePtr &output_type, int64_t max_len, int64_t image_k_dep) {
   // Infer max shape of output
-  bool gen_value_succ = false;
-  std::vector<int64_t> output_size_value_vec(ImagekOutputSizeLen);
-  auto output_size = input_args[ImagekImagesSize];
-  MS_EXCEPTION_IF_NULL(output_size);
-  auto dtype_value = primitive->GetAttr("T");
-  auto output_type = dtype_value->cast<TypePtr>();
-  auto type_size = GetTypeByte(output_type);
-  auto max_Byte_ptr = primitive->GetAttr("max_Byte");
-  MS_EXCEPTION_IF_NULL(max_Byte_ptr);
-  const int64_t kMaxSize = GetValue<int64_t>(max_Byte_ptr);
-  int64_t kMaxLen = 0;
-  if (type_size > 0) {
-    kMaxLen = kMaxSize / static_cast<int64_t>(type_size);
-  } else {
-    MS_EXCEPTION(ValueError) << "the value of T is incorrect.";
-  }
   if (output_size->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> output_size_valid_types = {kInt32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->BuildType(),
@@ -115,15 +95,16 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
     if (!output_size_value->isa<None>() && !output_size_value->isa<AnyValue>()) {
       auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
       const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
+      std::vector<int64_t> output_size_value_vec(ImagekOutputSizeLen);
       if (const_output_size_shape.size() == ImagekOutputSizeD) {
         auto value = static_cast<int32_t *>(output_size_tensor->data_c());
         MS_EXCEPTION_IF_NULL(value);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
           if (value[i] > 0) {
-            if (value[i] > kMaxLen) {
-              MS_EXCEPTION(ValueError) << "The value in output_size must be no more than max length: " << kMaxLen
+            if (value[i] > max_len) {
+              MS_EXCEPTION(ValueError) << "The value in output_size must be no more than max length: " << max_len
                                        << ", but got " << value[i]
-                                       << "! The value in output_size should be reduced or kMaxLen should be increased";
+                                       << "! The value in output_size should be reduced or max_len should be increased";
             }
             output_size_value_vec[i] = static_cast<int64_t>(value[i]);
           } else {
@@ -132,27 +113,64 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
                                      << value[i];
           }
         }
-        gen_value_succ = true;
+        return std::make_shared<abstract::Shape>(output_size_value_vec);
       }
     }
   }
-  if (!gen_value_succ) {
-    int64_t maxshape_dim0 = ImageKMaxshapeDim0;
-    int64_t maxshape_dim1 = 0;
-    int64_t maxshape_dim2 = 0;
-    if (output_type == kFloat32) {
-      maxshape_dim0 *= ImageKMaxshapeNum;
-    }
-    maxshape_dim2 = sqrt(kMaxLen / maxshape_dim0);
-    maxshape_dim1 = maxshape_dim2 / input_shape0[ImagekDepth];
-    ShapeVector output_shape = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
-                                abstract::Shape::kShapeDimAny, input_shape0[ImagekDepth]};
-    ShapeVector shape_min = {1, 1, 1, input_shape0[ImagekDepth]};
-    ShapeVector shape_max = {maxshape_dim0, maxshape_dim1, maxshape_dim2, input_shape0[ImagekDepth]};
-    return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);
-  } else {
-    return std::make_shared<abstract::Shape>(output_size_value_vec);
+
+  int64_t maxshape_dim0 = ImageKMaxshapeDim0;
+  int64_t maxshape_dim1 = 0;
+  int64_t maxshape_dim2 = 0;
+  if (output_type == kFloat32) {
+    maxshape_dim0 *= ImageKMaxshapeNum;
   }
+  maxshape_dim2 = sqrt(max_len / maxshape_dim0);
+  maxshape_dim1 = maxshape_dim2 / image_k_dep;
+  ShapeVector output_shape = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                              abstract::Shape::kShapeDimAny, image_k_dep};
+  ShapeVector shape_min = {1, 1, 1, image_k_dep};
+  ShapeVector shape_max = {maxshape_dim0, maxshape_dim1, maxshape_dim2, image_k_dep};
+  return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);
+}
+
+abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
+  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
+  MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
+  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
+  MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
+  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
+  MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
+  auto input_shape3 =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
+  if (IsDynamicRank(input_shape0) || IsDynamicRank(input_shape1) || IsDynamicRank(input_shape2) ||
+      IsDynamicRank(input_shape3)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  } else if (IsDynamic(input_shape0) || IsDynamic(input_shape1) || IsDynamic(input_shape2) || IsDynamic(input_shape3)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                                                         abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny});
+  }
+
+  CheckShapes(prim_name, input_shape0, input_shape1, input_shape2, input_shape3);
+
+  auto dtype_value = primitive->GetAttr("T");
+  auto output_type = dtype_value->cast<TypePtr>();
+  auto type_size = GetTypeByte(output_type);
+  if (type_size <= 0) {
+    MS_EXCEPTION(ValueError) << "the value of T is incorrect.";
+  }
+
+  auto max_Byte_ptr = primitive->GetAttr("max_Byte");
+  MS_EXCEPTION_IF_NULL(max_Byte_ptr);
+  const auto max_size = GetValue<int64_t>(max_Byte_ptr);
+  auto max_len = max_size / static_cast<int64_t>(type_size);
+  auto output_size = input_args[ImagekImagesSize];
+  MS_EXCEPTION_IF_NULL(output_size);
+
+  return GetReturnShape(prim_name, output_size, output_type, max_len, input_shape0[ImagekDepth]);
 }
 
 TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
