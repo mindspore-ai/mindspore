@@ -651,6 +651,10 @@ class Conv3d(_Conv):
                  bias_init='zeros',
                  data_format='NCDHW'):
         """Initialize Conv3d."""
+        if not in_channels % group == 0 and out_channels % group == 0:
+            raise ValueError("The argument 'group' should be divisible by 'in_channels' " \
+                             "and 'out_channels'")
+
         kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.cls_name)
         stride = _check_3d_int_or_tuple("stride", stride, self.cls_name)
         dilation = _check_3d_int_or_tuple("dilation", dilation, self.cls_name)
@@ -670,25 +674,42 @@ class Conv3d(_Conv):
             weight_init,
             bias_init,
             data_format)
-        self.conv3d = P.Conv3D(out_channel=self.out_channels,
+        out_channels = self.out_channels // group
+        self.conv3d = P.Conv3D(out_channel=out_channels,
                                kernel_size=self.kernel_size,
                                mode=1,
                                pad_mode=self.pad_mode,
                                pad=self.padding,
                                stride=self.stride,
                                dilation=self.dilation,
-                               group=self.group,
+                               group=1,
                                data_format=self.data_format)
         self.bias_add = P.BiasAdd(data_format=self.data_format)
         self.shape = P.Shape()
+        self.concat = P.Concat(1)
+        self.split_0 = P.Split(0, self.group)
+        self.split_1 = P.Split(1, self.group)
 
     def construct(self, x):
         x_shape = self.shape(x)
         _check_input_5dims(x_shape, self.cls_name)
-        output = self.conv3d(x, self.weight)
-        if self.has_bias:
-            output = self.bias_add(output, self.bias)
-        return output
+        if self.group == 1:
+            out = self.conv3d(x, self.weight)
+            if self.has_bias:
+                out = self.bias_add(out, self.bias)
+        else:
+            features = self.split_1(x)
+            weights = self.split_0(self.weight)
+            outputs = ()
+            for i in range(self.group):
+                output = self.conv3d(features[i], weights[i])
+                outputs = outputs + (output,)
+            out = self.concat(outputs)
+            if self.bias is not None:
+                new_shape = [1 for _ in range(out.ndim)]
+                new_shape[1] = self.out_channels
+                out = out + self.bias.reshape(new_shape)
+        return out
 
 
 class Conv3dTranspose(_Conv):
