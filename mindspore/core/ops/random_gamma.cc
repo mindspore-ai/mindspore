@@ -88,8 +88,8 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
   auto alpha_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   alpha_beta_shape = alpha_shape_map[kShape];
 
-  auto alpha_rank = SizeToLong(alpha_beta_shape.size());
-  for (int64_t i = 0; i < alpha_rank; i++) {
+  size_t alpha_rank = static_cast<size_t>(SizeToLong(alpha_beta_shape.size()));
+  for (size_t i = 0; i < alpha_rank; i++) {
     shape_vec.push_back(alpha_beta_shape[i]);
   }
 
