@@ -237,3 +237,43 @@ def test_logsoftmaxgrad1():
     diff = dx[0].asnumpy() - expect
     err = np.ones(shape=expect.shape) * 1.0e-5
     assert np.all(diff < err)
+
+
+class LogSoftmaxForForward(nn.Cell):
+    def __init__(self, axis=0):
+        super().__init__()
+        self.axis = axis
+        self.logsoftmax = P.LogSoftmax(axis=axis)
+        self.stack = P.Stack(axis=axis)
+
+    def construct(self, x):
+        out = []
+        for i in range(x.shape[self.axis]):
+            out.append(self.logsoftmax(x[i]))
+        out = self.stack(out)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_logsoftmaxgrad_vmap():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LogSoftmax Grad vmap
+    Expectation: the result match result
+    """
+    seed = np.random.RandomState()
+    x = Tensor(seed.random((3, 5, 1)).astype(np.float32))
+    sens = Tensor(seed.random((3, 5, 1)).astype(np.float32))
+
+    forward = LogSoftmax(axis=0)
+    for_forward = LogSoftmaxForForward(axis=0)
+    backward = Grad(forward)
+    for_backward = Grad(for_forward)
+
+    forward_result = forward(x)
+    backward_vmap = ops.vmap(backward, in_axes=0, out_axes=0)(forward_result, sens)
+    backward_for = for_backward(forward_result, sens)
+
+    np.testing.assert_allclose(backward_for[0].asnumpy(), backward_vmap[0].asnumpy(), rtol=1e-5)
