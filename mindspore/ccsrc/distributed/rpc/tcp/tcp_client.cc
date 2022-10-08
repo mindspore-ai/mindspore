@@ -113,13 +113,13 @@ MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t
   bool retval = tcp_comm_->Send(msg.release(), nullptr, true);
   if (retval) {
     std::unique_lock<std::mutex> lock(mutex_);
+    received_message_ = nullptr;
     bool res =
       wait_msg_cond_.wait_for(lock, std::chrono::seconds(timeout), [this] { return received_message_ != nullptr; });
     if (res) {
       // Clear the address of received message before returning this address to the caller, because the next
       // `ReceiveSync` call will block on the received message's condition variable.
       MessageBase *message = received_message_;
-      received_message_ = nullptr;
       return message;
     }
   }

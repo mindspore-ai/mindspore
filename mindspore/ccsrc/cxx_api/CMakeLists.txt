@@ -109,6 +109,9 @@ elseif(MODE_ASCEND_ACL)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
             $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>
             $<TARGET_OBJECTS:_mindspore_debug_obj> mindspore_backend_static)
+    add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
+    add_dependencies(mindspore_shared_lib _mindspore_backend_graph_compiler_obj)
+    add_dependencies(mindspore_shared_lib _mindspore_debug_obj)
     if(MS_BUILD_GRPC)
         target_link_libraries(mindspore_shared_lib PRIVATE mindspore::grpc++)
     endif()

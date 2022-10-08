@@ -69,7 +69,7 @@ def check_deps_version(mindspore_version, supported_version):
 
     except ImportError as e:
         logger.info("CheckFailed: ", e.args)
-        logger.info("MindSpore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"fwkacllib\" "
+        logger.info("MindSpore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"latest\" "
                     "folder of the Ascend AI software package (Ascend Data Center Solution), please check whether they "
                     "are installed correctly or not, reference to the match info on: https://www.mindspore.cn/install")
 
