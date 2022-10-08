@@ -126,10 +126,13 @@ Status GraphSinkSession::InitGraphInputsOutputs() {
   return kSuccess;
 }
 
-Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                                  const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_LOG(INFO) << "GraphSinkSession::RunGraph";
   MS_EXCEPTION_IF_NULL(graph_executor_);
   MS_EXCEPTION_IF_NULL(outputs);
+  graph_executor_->SetBefore(before);
+  graph_executor_->SetAfter(after);
   bool ret = true;
   if (is_use_kernel_graph_) {
     ret = graph_executor_->RunGraph(kernel_graph_, inputs, outputs, options_);
@@ -141,6 +144,10 @@ Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
     return kCoreFailed;
   }
   return kSuccess;
+}
+
+Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+  return RunGraph(inputs, outputs, nullptr, nullptr);
 }
 
 Status GraphSinkSession::Resize(const std::vector<tensor::Tensor> &inputs,

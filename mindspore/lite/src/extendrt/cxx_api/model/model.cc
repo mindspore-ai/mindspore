@@ -129,7 +129,7 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
     return kMCFailed;
   }
   try {
-    return impl_->Predict(inputs, outputs);
+    return impl_->Predict(inputs, outputs, before, after);
   } catch (const std::exception &exe) {
     MS_LOG_ERROR << "Catch exception: " << exe.what();
     return kCoreFailed;

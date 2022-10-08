@@ -167,6 +167,11 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   return kSuccess;
 }
 
+Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                                      const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  return RunGraph(inputs, outputs);
+}
+
 Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   MS_LOG(INFO) << "SingleOpInferSession::RunGraph with input and outputs";
   MS_EXCEPTION_IF_NULL(kernel_graph_);

@@ -200,7 +200,8 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
   return MSTensor(tensor_impl);
 }
 
-Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                          const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(outputs);
   std::vector<mindspore::tensor::Tensor> graph_inputs = TensorUtils::MSTensorToTensor(inputs);
@@ -210,7 +211,7 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     graph_outputs = TensorUtils::MSTensorToTensor(*outputs);
     org_graph_outputs = graph_outputs;
   }
-  auto ret = session_->RunGraph(graph_inputs, &graph_outputs);
+  auto ret = session_->RunGraph(graph_inputs, &graph_outputs, before, after);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ModelImpl::Predict RunGraph failed with " << ret;
     return ret;
@@ -247,6 +248,10 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
   }
   return kSuccess;
+}
+
+Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  return Predict(inputs, outputs, nullptr, nullptr);
 }
 
 Status ModelImpl::Predict() {
