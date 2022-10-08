@@ -707,7 +707,6 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   bool is_need_sync = IsNeedSync(tensor);
   if (host_tensor_address != device_tensor) {
     if (host_tensor_address == nullptr) {
-      // The step mode can't reuse the device tensor, because other actors may use the device tensor in step mode.
       if (device_tensor->GetDeviceType() != device_context->GetDeviceType()) {
         host_tensor_address = device_context->device_res_manager_->CreateDeviceAddress(
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
@@ -735,13 +734,17 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
         tensor->set_device_address(device_tensor);
       } else {
         AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
-        host_tensor_address->SetNodeIndex(backend_node, 0);
       }
     } else {
-      MS_LOG(INFO) << "The device type or format is not equal, host tensor type:"
-                   << host_tensor_address->GetDeviceType() << " format:" << host_tensor_address->format()
-                   << ", device tensor type:" << device_tensor->GetDeviceType()
-                   << " format:" << device_tensor->format();
+      MS_LOG(INFO) << "The device type is not equal, host tensor type:" << host_tensor_address->GetDeviceType()
+                   << ", device tensor type:" << device_tensor->GetDeviceType();
+      // The fake heterogeneous scenario.
+      if (DeviceTensorStore::GetInstance().Fetch(front_node.get()).size() == 1) {
+        tensor->data_sync();
+        host_tensor_address = device_tensor;
+        tensor->set_device_address(device_tensor);
+        is_need_sync = true;
+      }
     }
   }
   // Maybe the same host_tensor_address corresponds to the different front_node in shared weight scene,
@@ -861,9 +864,9 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     MS_LOG(DEBUG) << "Set tensor position:" << tensor_position << " for input data.";
     (*host_tensors)[tensor_position] = input_tensor;
     UpdateDynamicShape(input_node, input_tensor);
-    // Avoid the device `ptr_` being hold by the input tensor and the output tensor, the input tensor address cannot be
-    // directly set to the input control node, which may be a passthrough node. The device 'ptr_' is re-malloced and
-    // device to device copy by input tensor address in data source process.
+    // Avoid the device `ptr_` being hold by the input tensor and the output tensor, the input tensor address cannot
+    // be directly set to the input control node, which may be a passthrough node. The device 'ptr_' is re-malloced
+    // and device to device copy by input tensor address in data source process.
   }
 }
 
