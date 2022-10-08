@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "nnacl/fp32/scatter_nd_add.h"
+#include "nnacl/base/scatter_nd_binary.h"
 #include <string.h>
 #include <stdio.h>
 #include "nnacl/errorcode.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/scatter_nd_binary_simd.h"
 
 int ScatterNDAdd(const void *update, void *output, int *output_unit_offsets, const ScatterNDParameter *param, int type,
                  int task_id) {
@@ -39,16 +39,7 @@ int ScatterNDAdd(const void *update, void *output, int *output_unit_offsets, con
       float *output_data = output_fp32 + output_unit_offsets[i];
       int j = 0;
 
-#ifdef ENABLE_ARM
-      for (; j + C4NUM < param->unit_size; j += C4NUM) {
-        MS_ST128_F32(output_data + j, MS_ADD128_F32(MS_LD128_F32(output_data + j), MS_LD128_F32(update_data + j)));
-      }
-#endif
-#ifdef ENABLE_AVX
-      for (; j + C8NUM < param->unit_size; j += C8NUM) {
-        MS_ST256_F32(output_data + j, MS_ADD256_F32(MS_LD256_F32(output_data + j), MS_LD256_F32(update_data + j)));
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(ScatterNDAddFp32, j, update_data, param->unit_size, output_data);
       for (; j < param->unit_size; j++) {
         output_data[j] += update_data[j];
       }
@@ -61,22 +52,28 @@ int ScatterNDAdd(const void *update, void *output, int *output_unit_offsets, con
       int *output_data = output_int32 + output_unit_offsets[i];
       int j = 0;
 
-#ifdef ENABLE_ARM
-      for (; j + C4NUM < param->unit_size; j += C4NUM) {
-        MS_ST128_EPI32(output_data + j,
-                       MS_ADD128_EPI32(MS_LD128_EPI32(output_data + j), MS_LD128_EPI32(update_data + j)));
-      }
-#endif
-#ifdef ENABLE_AVX
-      for (; j + C8NUM < param->unit_size; j += C8NUM) {
-        MS_ST256_EPI32(output_data + j,
-                       MS_ADD256_EPI32(MS_LD256_EPI32(output_data + j), MS_LD256_EPI32(update_data + j)));
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(ScatterNDAddInt32, j, update_data, param->unit_size, output_data);
       for (; j < param->unit_size; j++) {
         output_data[j] += update_data[j];
       }
     }
+  }
+  return NNACL_OK;
+}
+
+int ScatterNDUpdate(void *output, const void *update, int *output_unit_offsets, const ScatterNDParameter *param,
+                    int task_id) {
+  if (param->op_parameter.thread_num_ == 0) {
+    return NNACL_ERR;
+  }
+  int unit_per_thread = UP_DIV(param->num_unit, param->op_parameter.thread_num_);
+  int begin = unit_per_thread * task_id;
+  int end = MSMIN(begin + unit_per_thread, param->num_unit);
+
+  int data_type_len = param->data_type_len;
+  for (int i = begin; i < end; i++) {
+    (void)memcpy((int8_t *)output + output_unit_offsets[i] * data_type_len,
+                 (int8_t *)update + i * param->unit_size * data_type_len, param->unit_size * data_type_len);
   }
   return NNACL_OK;
 }

@@ -21,7 +21,7 @@ import signal
 from mindspore import log
 from mindspore._checkparam import Validator
 from mindspore.train.serialization import load_checkpoint, save_checkpoint, export
-from mindspore.train.callback._callback import Callback, RunContext
+from mindspore.train.callback._callback import Callback
 
 
 class OnRequestExit(Callback):
@@ -91,8 +91,7 @@ class OnRequestExit(Callback):
         if self.save_ckpt or self.save_mindir:
             file_name = Validator.check_isinstance('file_name', file_name, str)
             directory = Validator.check_isinstance('directory', directory, str)
-            if not os.path.isdir(directory):
-                os.makedirs(os.path.abspath(directory), exist_ok=True)
+            os.makedirs(os.path.abspath(directory), exist_ok=True)
             self.train_file_path = os.path.abspath(os.path.join(directory, f"{file_name}_train"))
             self.eval_file_path = os.path.abspath(os.path.join(directory, f"{file_name}_eval"))
         self.sig = Validator.check_isinstance('sig', sig, int)
@@ -100,7 +99,7 @@ class OnRequestExit(Callback):
             raise ValueError("Not support send exit request by signal SIGKILL or SIGINT.")
         self.exit = False
 
-    def on_train_begin(self, run_context: RunContext):
+    def on_train_begin(self, run_context):
         """
         When the train begin, register the handler for exit signal transferred by user.
 
@@ -108,13 +107,13 @@ class OnRequestExit(Callback):
             run_context (RunContext): Context information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
         """
-        if os.path.isfile(f"{self.train_file_path}.ckpt"):
+        signal.signal(self.sig, self._handle_signal)
+        if self.save_ckpt and os.path.isfile(f"{self.train_file_path}.ckpt"):
             cb_params = run_context.original_args()
             train_net = cb_params.train_network
             load_checkpoint(f"{self.train_file_path}.ckpt", net=train_net)
-        signal.signal(self.sig, self._handle_signal)
 
-    def on_train_step_end(self, run_context: RunContext):
+    def on_train_step_end(self, run_context):
         """
         When the train step end, if received the exit signal, set the 'run_context' attribute '_stop_requested' to True.
         Then exit the training process after this step training.
@@ -126,7 +125,7 @@ class OnRequestExit(Callback):
         if self.exit:
             run_context.request_stop()
 
-    def on_train_epoch_end(self, run_context: RunContext):
+    def on_train_epoch_end(self, run_context):
         """
         When the train epoch end, if received the exit signal,
         set the 'run_context' attribute '_stop_requested' to True.
@@ -139,7 +138,7 @@ class OnRequestExit(Callback):
         if self.exit:
             run_context.request_stop()
 
-    def on_train_end(self, run_context: RunContext):
+    def on_train_end(self, run_context):
         """
         When the train end, if received the exit signal,
         the checkpoint and mindir would be saved according to the user config.
@@ -158,7 +157,7 @@ class OnRequestExit(Callback):
             inputs = cb_params.train_dataset_element
             export(train_net, *inputs, file_name=self.train_file_path, file_format='MINDIR')
 
-    def on_eval_begin(self, run_context: RunContext):
+    def on_eval_begin(self, run_context):
         """
         When the eval begin, register the handler for exit signal transferred by user.
 
@@ -166,15 +165,17 @@ class OnRequestExit(Callback):
             run_context (RunContext): Context information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
         """
+        signal.signal(self.sig, self._handle_signal)
+        if not self.save_ckpt:
+            return
         cb_params = run_context.original_args()
         eval_net = cb_params.eval_network
         if os.path.isfile(f"{self.eval_file_path}.ckpt"):
             load_checkpoint(f"{self.eval_file_path}.ckpt", net=eval_net)
         elif os.path.isfile(f"{self.train_file_path}.ckpt"):
             load_checkpoint(f"{self.train_file_path}.ckpt", net=eval_net)
-        signal.signal(self.sig, self._handle_signal)
 
-    def on_eval_step_end(self, run_context: RunContext):
+    def on_eval_step_end(self, run_context):
         """
         When the eval step end, if received the exit signal, set the 'run_context' attribute '_stop_requested' to True.
         Then exit the eval process after this step eval.

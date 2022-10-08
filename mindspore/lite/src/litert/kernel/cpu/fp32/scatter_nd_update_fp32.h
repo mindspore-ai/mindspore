@@ -14,33 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SCATTER_ND_UPDATE_FP32_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SCATTER_ND_UPDATE_FP32_H_
+#ifndef MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_FP32_SCATTER_ND_UPDATE_FP32_H_
+#define MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_FP32_SCATTER_ND_UPDATE_FP32_H_
 
 #include <vector>
-#include "src/litert/lite_kernel.h"
-#include "nnacl/base/scatter_nd_base.h"
+#include "src/litert/kernel/cpu/base/scatter_nd_binary.h"
 
 namespace mindspore::kernel {
 
-class ScatterNdUpdateCPUKernel : public LiteKernel {
+class ScatterNdUpdateCPUKernel : public ScatterNDBinaryCPUKernel {
  public:
   explicit ScatterNdUpdateCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
-    param_ = reinterpret_cast<ScatterNDParameter *>(parameter);
-  }
+      : ScatterNDBinaryCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ScatterNdUpdateCPUKernel() override = default;
 
-  int Prepare() override;
-  int ReSize() override;
   int Run() override;
   int ScatterNdUpdate(int task_id);
-
- private:
-  ScatterNDParameter *param_ = nullptr;
-  std::vector<int> output_unit_offsets_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SCATTER_ND_UPDATE_FP32_H_
+#endif  // MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_FP32_SCATTER_ND_UPDATE_FP32_H_

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/common/ops/populate/populate_register.h"
 #include "nnacl/scatter_nd_parameter.h"
 

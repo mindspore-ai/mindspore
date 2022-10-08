@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_TENSOR_SCATTER_ADD_FP32_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_TENSOR_SCATTER_ADD_FP32_H_
+#ifndef MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_BASE_TENSOR_SCATTER_ADD_H_
+#define MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_BASE_TENSOR_SCATTER_ADD_H_
 
 #include <vector>
-#include "src/litert/lite_kernel.h"
-#include "nnacl/fp32/scatter_nd_add.h"
+#include "src/litert/kernel/cpu/base/scatter_nd_binary.h"
 
 namespace mindspore::kernel {
-class TensorScatterAddCPUKernel : public LiteKernel {
+class TensorScatterAddCPUKernel : public ScatterNDBinaryCPUKernel {
  public:
   explicit TensorScatterAddCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
-    param_ = reinterpret_cast<ScatterNDParameter *>(parameter);
-  }
+      : ScatterNDBinaryCPUKernel(parameter, inputs, outputs, ctx) {}
   ~TensorScatterAddCPUKernel() override = default;
 
-  int Prepare() override;
-  int ReSize() override;
   int Run() override;
   int TensorScatterAdd(int task_id);
-
- private:
-  ScatterNDParameter *param_ = nullptr;
-  std::vector<int> output_unit_offsets_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_TENSOR_SCATTER_ADD_FP32_H_
+#endif  // MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_BASE_TENSOR_SCATTER_ADD_H_

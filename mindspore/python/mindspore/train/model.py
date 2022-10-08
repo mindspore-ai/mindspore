@@ -1286,6 +1286,8 @@ class Model:
         list_callback.on_eval_epoch_begin(run_context)
         for inputs in dataset_helper:
             cb_params.cur_step_num += 1
+            inputs = _transfer_tensor_to_tuple(inputs)
+            cb_params.eval_dataset_element = inputs
             list_callback.on_eval_step_begin(run_context)
             eval_network = self._check_network_mode(eval_network, False)
             outputs = eval_network(*inputs)
