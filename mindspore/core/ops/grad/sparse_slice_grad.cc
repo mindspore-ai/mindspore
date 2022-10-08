@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 #include "ops/grad/sparse_slice_grad.h"
-#include <string>
-#include <algorithm>
-#include <memory>
-#include <set>
+
 #include <map>
-#include <vector>
-#include "abstract/param_validator.h"
+#include <set>
+#include <string>
+
 #include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -28,92 +26,88 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-void SparseSliceGradCheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
-  auto bprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto new_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  if (indices_shape.size() != static_cast<size_t>(kDim2)) {
-    MS_EXCEPTION(ValueError) << "For SparseSliceGrad, indices should be a 2-D tensor"
-                             << ", while input_indices dim num is " << indices_shape.size() << ".";
-  }
-  if (indices_shape[1] != static_cast<int64_t>(kDim2)) {
-    MS_EXCEPTION(ValueError) << "For SparseSliceGrad, indices shape should be (2, n)"
-                             << ", while input_indices shape dim0 is " << indices_shape[0] << ".";
-  }
-  if (bprop_shape.size() != static_cast<size_t>(kDim1)) {
-    MS_EXCEPTION(ValueError) << "For SparseSliceGrad, backprop_val_grad should be a 1-D tensor"
-                             << ",  while input_backprop_val_grad dim num is " << bprop_shape.size() << ".";
-  }
-  if (start_shape[0] != static_cast<int64_t>(kDim2)) {
-    MS_EXCEPTION(ValueError) << "For SparseSliceGrad, start should be a 2-D tensor"
-                             << ", while dim num is " << start_shape.size() << ".";
-  }
-  if (new_indices_shape.size() != static_cast<size_t>(kDim2)) {
-    MS_EXCEPTION(ValueError) << "For SparseSliceGrad, new_indices should be a 2-D tensor"
-                             << ", while input_new_indices dim num is " << new_indices_shape.size() << ".";
-  }
-  if (new_indices_shape[1] != static_cast<int64_t>(kDim2)) {
-    MS_EXCEPTION(ValueError) << "For SparseSliceGrad, new_indices shape should be (2, n)"
-                             << ", while new_indices_indices shape dim0 is " << new_indices_shape[0] << ".";
-  }
-}
+MIND_API_OPERATOR_IMPL(SparseSliceGrad, BaseOperator);
+class SparseSliceGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    if (!SparseSliceGradCheckShape(primitive, input_args)) {
+      auto y_grad_shape = ShapeVector({abstract::Shape::kShapeDimAny});
+      return std::make_shared<abstract::Shape>(y_grad_shape);
+    }
 
-bool SparseSliceGradIsDynamic(const ShapeVector &shape) {
-  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
+    auto indices_shape =
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto y_grad_shape = ShapeVector({indices_shape[0]});
+    return std::make_shared<abstract::Shape>(y_grad_shape);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    const int64_t input_num = 4;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+
+    (void)CheckAndConvertUtils::CheckTensorTypeValid(
+      "backprop_val_grad", input_args[kInputIndex0]->BuildType(),
+      {kUInt8, kInt8, kUInt16, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128}, op_name);
+    std::map<std::string, TypePtr> in_args = {{"indices", input_args[kInputIndex1]->BuildType()},
+                                              {"start", input_args[kInputIndex2]->BuildType()},
+                                              {"new_indices", input_args[kInputIndex3]->BuildType()}};
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(in_args, {kInt64, kInt32}, op_name);
+    auto output_type = input_args[kInputIndex0]->BuildType();
+    return output_type;
+  }
+
+ private:
+  static bool SparseSliceGradCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+    auto op_name = primitive->name();
+    auto grad_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto start_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    auto new_indices_shape_ptr = input_args[kInputIndex3]->BuildShape();
+
+    auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape_ptr)[kShape];
+    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
+    auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(start_shape_ptr)[kShape];
+    auto new_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(new_indices_shape_ptr)[kShape];
+    if (IsDynamic(grad_shape) || IsDynamic(indices_shape) || IsDynamic(start_shape) || IsDynamic(new_indices_shape)) {
+      return false;
+    }
+
+    const int64_t indices_rank = 2;
+    (void)CheckAndConvertUtils::CheckInteger("rank of backprop_val_grad", SizeToLong(grad_shape.size()), kEqual, 1,
+                                             op_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of indices", SizeToLong(indices_shape.size()), kEqual, indices_rank,
+                                             op_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of start", SizeToLong(start_shape.size()), kEqual, 1, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of new_indices", SizeToLong(new_indices_shape.size()), kEqual,
+                                             indices_rank, op_name);
+
+    if (grad_shape[0] != new_indices_shape[0]) {
+      MS_EXCEPTION(ValueError)
+        << "For SparseSliceGrad, backprop_val_grad.shape[0] must equal to new_indices_shape.shape[0], but "
+           "got backprop_val_grad.shape = "
+        << grad_shape_ptr->ToString() << " and new_indices.shape = " << new_indices_shape_ptr->ToString() << ".";
+    }
+
+    if (indices_shape[1] != start_shape[0]) {
+      MS_EXCEPTION(ValueError)
+        << "For SparseSliceGrad, indices.shape[1] must equal to start.shape[0], but got indices.shape = "
+        << indices_shape_ptr->ToString() << " and start.shape = " << start_shape_ptr->ToString() << ".";
+    }
+
+    if (indices_shape[1] != new_indices_shape[1]) {
+      MS_EXCEPTION(ValueError)
+        << "For SparseSliceGrad, indices.shape[1] must equal to new_indices.shape[1], but got indices.shape = "
+        << indices_shape_ptr->ToString() << " and new_indices.shape = " << new_indices_shape_ptr->ToString() << ".";
+    }
+
     return true;
   }
-  return false;
-}
+};
 
-abstract::ShapePtr SparseSliceGradInferShape(const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto new_indices_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("SparseSliceGrad", input_args, 3);
-  MS_EXCEPTION_IF_NULL(new_indices_shape_ptr);
-  auto new_indices_shape = new_indices_shape_ptr->shape();
-  auto backprop_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("SparseSliceGrad", input_args, 0);
-  auto backprop_shape = backprop_shape_ptr->shape();
-  if (!(SparseSliceGradIsDynamic(backprop_shape)) && !(SparseSliceGradIsDynamic(new_indices_shape))) {
-    SparseSliceGradCheckInputTensor(input_args);
-  } else {
-    backprop_shape = {abstract::Shape::kShapeDimAny};
-    new_indices_shape = {abstract::Shape::kShapeDimAny, 2};
-  }
-  auto indices_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-  auto indices_shape = indices_shape_map[kShape];
-  int64_t output_shape = indices_shape[0];
-  std::vector<int64_t> output_values_shape = {output_shape};
-  return std::make_shared<abstract::Shape>(output_values_shape);
-}
-
-TypePtr SparseSliceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid(
-    "backprop_val_grad", input_args[kInputIndex0]->BuildType(),
-    {kUInt8, kInt8, kUInt16, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64}, prim_name);
-  std::map<std::string, TypePtr> in_args = {{"indices", input_args[kInputIndex1]->BuildType()},
-                                            {"start", input_args[kInputIndex2]->BuildType()},
-                                            {"new_indices", input_args[kInputIndex3]->BuildType()}};
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(in_args, {kInt64, kInt32}, prim_name);
-  auto output_type = input_args[kInputIndex0]->BuildType();
-  return output_type;
-}
-}  // namespace
-
-MIND_API_OPERATOR_IMPL(SparseSliceGrad, BaseOperator);
-AbstractBasePtr SparseSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 4;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-  auto infer_type = SparseSliceGradInferType(primitive, input_args);
-  auto infer_shape = SparseSliceGradInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSliceGrad, prim::kPrimSparseSliceGrad, SparseSliceGradInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSliceGrad, prim::kPrimSparseSliceGrad, SparseSliceGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

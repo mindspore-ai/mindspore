@@ -17,13 +17,10 @@
 #define MINDSPORE_CORE_OPS_SPARSE_SLICE_GRAD_H_
 
 #include <vector>
-#include <set>
 #include <memory>
+
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,10 +32,8 @@ class MIND_API SparseSliceGrad : public BaseOperator {
   SparseSliceGrad() : BaseOperator(kNameSparseSliceGrad) {
     InitIOName({"backprop_val_grad", "indices", "start", "new_indices"}, {"y_grad"});
   }
-  void Init() {}
+  void Init() const {}
 };
-AbstractBasePtr SparseSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
