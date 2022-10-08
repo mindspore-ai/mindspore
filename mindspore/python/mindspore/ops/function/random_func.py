@@ -20,12 +20,12 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
-from ...common import dtype as mstype
-from ...common.seed import _get_graph_seed
-from ...common.tensor import Tensor
-from ..operations.random_ops import RandomShuffle, RandomChoiceWithMask
-from .._primitive_cache import _get_cache_prim
-from .._utils import get_broadcast_shape
+from mindspore.common import dtype as mstype
+from mindspore.common.seed import _get_graph_seed
+from mindspore.common.tensor import Tensor
+from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
+from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops._utils import get_broadcast_shape
 
 
 def random_gamma(shape, alpha, seed=0, seed2=0):
