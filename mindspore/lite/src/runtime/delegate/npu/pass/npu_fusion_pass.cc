@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,9 +248,10 @@ int NPUFusionPass::CommonFusion(NPUOp *cur_op) {
     MS_LOG(ERROR) << "UpdateOp failed.";
     return RET_ERROR;
   }
-  ret = cur_op->HandleAxis();
+  auto all_tensors = subgraph_->GetInsertTensors();
+  ret = cur_op->HandleAxisAndConstantInputs(all_tensors);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "HandleAxis failed.";
+    MS_LOG(ERROR) << "HandleAxisAndConstantInputs failed.";
     return ret;
   }
   return RET_OK;

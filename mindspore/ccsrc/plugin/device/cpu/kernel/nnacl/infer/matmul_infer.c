@@ -143,7 +143,8 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   for (int i = 0; i < diff; ++i) {
     ShapeInsert(in->shape_, &in->shape_size_, 0, 1);
   }
-  SetDataTypeFormat(output, input0);
+  TensorC *input = input1->data_ == NULL ? input1 : input0;  // transfer the input which comes from the other node.
+  SetDataTypeFormat(output, input);
   if (parameter->quant_type_ == QuantType_QUANT_DYNAMIC || parameter->quant_type_ == QuantType_QUANT_WEIGHT) {
     output->data_type_ = kNumberTypeFloat32;
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,6 +189,15 @@ bool MulAddFusion::ScaleInputShapeValid(size_t *axis_offset) const {
   return true;
 }
 
+bool MulAddFusion::MulInputAnodeIsInferred(const AnfNodePtr &mul_input_anode) const {
+  auto mul_input_cnode = mul_input_anode->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(mul_input_cnode);
+  auto prim = GetValueNode<PrimitivePtr>(mul_input_cnode->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, false);
+  auto is_inferred = prim->GetAttr(kInferDone) != nullptr && GetValue<bool>(prim->GetAttr(kInferDone));
+  return is_inferred;
+}
+
 AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
                                  const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
   if (func_graph == nullptr || node == nullptr) {
@@ -232,6 +241,12 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
   }
 
   MS_CHECK_TRUE_RET(mul_input_anode != nullptr, nullptr);
+  if (mul_input_anode->isa<CNode>()) {
+    if (!MulInputAnodeIsInferred(mul_input_anode)) {
+      MS_LOG(DEBUG) << "mul_input_anode is not inferred, don't perform the ScaleInputShapeValid method.";
+      return nullptr;
+    }
+  }
   if (FetchShapeFromAbstract(mul_input_anode->abstract(), &mul_input_shape_) != lite::RET_OK) {
     return nullptr;
   }

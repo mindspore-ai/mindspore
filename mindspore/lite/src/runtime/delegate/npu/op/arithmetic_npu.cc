@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 #include "src/runtime/delegate/npu/op/arithmetic_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
+#include "src/runtime/delegate/delegate_utils.h"
+#include "src/runtime/delegate/npu/transpose_kernel.h"
+
 namespace mindspore {
 constexpr int ARITHMETIC_INPUT_NUM = 2;
 constexpr int MAX_HW_SIZE = 1664;
@@ -24,20 +27,24 @@ int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
   auto in_shape_0 = in_tensors[0].Shape();
   auto in_shape_1 = in_tensors[1].Shape();
   auto out_shape = out_tensors[0].Shape();
-  if (in_shape_0.size() != 0 && in_shape_1.size() != 0 && in_shape_0.size() != in_shape_1.size()) {
-    MS_LOG(WARNING) << name_ << " for the two inputs, the dimension size must be same. size 1 is: " << in_shape_0.size()
-                    << " size 2 is: " << in_shape_1.size();
-    return RET_NOT_SUPPORT;
-  }
   // a hidden limitation in npu bottom implementation
-  if (type_ == schema::PrimitiveType_MulFusion && out_shape.size() == NPU_SHAPE_SIZE) {
-    bool is_nhwc = out_tensors[0].format() == Format::NHWC;
-    auto out_h = is_nhwc ? out_shape.at(NHWC_H) : out_shape.at(NCHW_H);
-    auto out_w = is_nhwc ? out_shape.at(NHWC_W) : out_shape.at(NCHW_W);
-    // two inputs have different shape with the output, which means both of them need broadcast
-    if (in_shape_0 != out_shape && in_shape_1 != out_shape && out_h * out_w > MAX_HW_SIZE) {
-      MS_LOG(WARNING) << "The size of out_height * out_width is larger than the max value (1664) that npu supports "
-                         "during broadcasting.";
+  if (type_ == schema::PrimitiveType_MulFusion) {
+    if (out_shape.size() == NPU_SHAPE_SIZE) {
+      bool is_nhwc = out_tensors[0].format() == Format::NHWC;
+      auto out_h = is_nhwc ? out_shape.at(NHWC_H) : out_shape.at(NCHW_H);
+      auto out_w = is_nhwc ? out_shape.at(NHWC_W) : out_shape.at(NCHW_W);
+      // two inputs have different shape with the output, which means both of them need broadcast
+      if (in_shape_0 != out_shape && in_shape_1 != out_shape && out_h * out_w > MAX_HW_SIZE) {
+        MS_LOG(WARNING) << "The size of out_height * out_width is larger than the max value (1664) that npu supports "
+                           "during broadcasting.";
+        return RET_NOT_SUPPORT;
+      }
+    }
+  } else {
+    if (in_shape_0.size() != 0 && in_shape_1.size() != 0 && in_shape_0.size() != in_shape_1.size()) {
+      MS_LOG(WARNING) << name_
+                      << " for the two inputs, the dimension size must be same. size 1 is: " << in_shape_0.size()
+                      << " size 2 is: " << in_shape_1.size();
       return RET_NOT_SUPPORT;
     }
   }
@@ -238,6 +245,32 @@ ge::Operator *ArithmeticNPUOp::GetNPUOp() {
     return op_;
   }
   return act_;
+}
+
+int ArithmeticNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) {
+  for (size_t i = 0; i < inputs_.size(); i++) {
+    auto in_tensor = inputs_.at(i);
+    if (!in_tensor.IsConst() || in_tensor.Shape().size() != DIMENSION_4D) {
+      continue;
+    }
+    auto shape = in_tensor.Shape();
+    auto new_shape = {in_tensor.Shape().at(NHWC_N), in_tensor.Shape().at(NHWC_C), in_tensor.Shape().at(NHWC_H),
+                      in_tensor.Shape().at(NHWC_W)};
+    auto nh2nc_tensor =
+      mindspore::MSTensor::CreateTensor(in_tensor.Name() + "_nh2nc", in_tensor.DataType(), new_shape, nullptr, 0);
+    if (nh2nc_tensor == nullptr) {
+      MS_LOG(ERROR) << "New nchw tensor failed when inserting nchw2nhwc op.";
+      return RET_ERROR;
+    }
+    auto dst_data = nh2nc_tensor->MutableData();
+    MS_CHECK_TRUE_RET(dst_data != nullptr, RET_ERROR);
+    // transpose dst_data to nchw.
+    PackNHWCToNCHWFp32(in_tensor.MutableData(), dst_data, shape[NHWC_N], shape[NHWC_H] * shape[NHWC_W], shape[NHWC_C]);
+    nh2nc_tensor->SetFormat(NCHW);
+    inputs_.at(i) = *nh2nc_tensor;
+    all_tensors->push_back(nh2nc_tensor);
+  }
+  return RET_OK;
 }
 
 ArithmeticNPUOp::~ArithmeticNPUOp() {

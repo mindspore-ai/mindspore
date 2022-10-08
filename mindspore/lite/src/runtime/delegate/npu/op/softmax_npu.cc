@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ int SoftmaxNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensor
 
 ge::Operator *SoftmaxNPUOp::GetNPUOp() { return this->softmax_; }
 
-int SoftmaxNPUOp::HandleAxis() {
+int SoftmaxNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) {
   axis_ = TransFormAxis(axis_);
   if (axis_ == NCHW_INVALID) {
     MS_LOG(ERROR) << "Transform axis for Softmax op failed.";

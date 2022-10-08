@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
 
 ge::Operator *PadNPUOp::GetNPUOp() { return this->pad_; }
 
-int PadNPUOp::HandleAxis() {
+int PadNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) {
   if (paddings_vec_.size() != PAD_SIZE) {
     return RET_ERROR;
   }

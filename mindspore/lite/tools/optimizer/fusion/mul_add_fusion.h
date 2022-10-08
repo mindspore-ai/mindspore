@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ class MulAddFusion : public MultiplePatternProcessPass {
   bool CheckAddNode(const mindspore::CNodePtr &cnode) const;
   bool CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const mindspore::CNodePtr &cnode) const;
   bool ScaleInputShapeValid(size_t *axis_offset) const;
+  bool MulInputAnodeIsInferred(const AnfNodePtr &mul_input_anode) const;
   bool AdjustScaleBiasTensorShape(size_t *axis_offset) const;
 
  private:

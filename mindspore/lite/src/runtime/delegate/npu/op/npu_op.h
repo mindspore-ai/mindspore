@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ class NPUOp {
 
   virtual ge::Operator *GetNPUOp() { return nullptr; }
 
-  virtual int HandleAxis() { return RET_OK; }
+  virtual int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) { return RET_OK; }
 
   void set_inputs(const std::vector<mindspore::MSTensor> &in_tensors) { this->inputs_ = in_tensors; }
 

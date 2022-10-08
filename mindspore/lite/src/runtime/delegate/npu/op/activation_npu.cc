@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ int ActivationNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
   if (act_type_ != schema::ActivationType_RELU && act_type_ != schema::ActivationType_RELU6 &&
       act_type_ != schema::ActivationType_SIGMOID && act_type_ != schema::ActivationType_TANH &&
       act_type_ != schema::ActivationType_HSIGMOID && act_type_ != schema::ActivationType_LEAKY_RELU &&
-      act_type_ != schema::ActivationType_SWISH && act_type_ != schema::ActivationType_ELU) {
+      act_type_ != schema::ActivationType_SWISH && act_type_ != schema::ActivationType_ELU &&
+      act_type_ != schema::ActivationType_GELU) {
     MS_LOG(WARNING) << "Unsupported activation type for activation op " << name_ << "when running npu";
     return RET_NOT_SUPPORT;
   }
