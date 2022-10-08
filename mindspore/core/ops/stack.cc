@@ -22,6 +22,10 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+constexpr int64_t kUnknownDim = -1;
+constexpr int64_t kUnknownRank = -2;
+}  // namespace
 void Stack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t Stack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
@@ -48,45 +52,44 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   const int64_t kOneNum = 1;
   (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
                                            primitive->name());
-  auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
-  auto element0_rank = element0_shape.size();
-  auto shape_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0]->BuildShape())[kShape]);
-  auto shape_v = shape_ptr->shape();
-  bool isDynamic = true;
-  if (find(shape_v.begin(), shape_v.end(), -1) == shape_v.end()) {
-    isDynamic = false;
-  }
-  if (!isDynamic) {
-    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
-    for (size_t i = 1; i < elements.size(); ++i) {
-      auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
-      if (input_shape_tmp.size() != input_shape.size()) {
-        MS_EXCEPTION(ValueError) << "All input shape size must be the same!";
+  ShapeVector input_shape;
+  size_t element_rank = 0;
+  for (size_t i = 0; i < elements.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(elements[i]);
+    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    if (IsDynamicRank(input_shape_tmp)) {
+      continue;
+    }
+    if (input_shape.empty()) {
+      input_shape = input_shape_tmp;
+      element_rank = input_shape_tmp.size();
+      continue;
+    }
+    if (input_shape_tmp.size() != input_shape.size()) {
+      MS_EXCEPTION(ValueError) << "All input shape size must be the same!";
+    }
+    for (size_t j = 0; j < input_shape.size(); ++j) {
+      if (input_shape.at(j) == kUnknownDim && input_shape_tmp.at(j) != kUnknownDim) {
+        input_shape[j] = input_shape_tmp.at(j);
+        continue;
       }
-      for (size_t j = 0; j < input_shape.size(); ++j) {
-        if (input_shape_tmp.at(j) != input_shape.at(j)) {
-          MS_EXCEPTION(ValueError) << "All input shape must be the same! " << input_shape_tmp << " And " << input_shape;
-        }
+      if (input_shape_tmp.at(j) != input_shape.at(j)) {
+        MS_EXCEPTION(ValueError) << "All input shape must be the same! " << input_shape_tmp << " And " << input_shape;
       }
     }
-    std::vector<int64_t> infer_shape = input_shape;
-    auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
-    CheckAndConvertUtils::CheckInRange<int64_t>("Stack axis", axis_temp, kIncludeBoth,
-                                                {-SizeToLong(element0_rank) - kOneNum, SizeToLong(element0_rank)},
-                                                primitive->name());
-    auto axis = axis_temp < 0 ? static_cast<size_t>(axis_temp) + element0_rank + 1 : LongToSize(axis_temp);
-    (void)infer_shape.insert(infer_shape.begin() + axis, elements.size());
-    return std::make_shared<abstract::Shape>(infer_shape);
-  }
-  std::vector<int64_t> output_shape;
-  for (int i = 0; i < SizeToLong(shape_v.size()); i++) {
-    output_shape.push_back(-1);
   }
 
-  return std::make_shared<abstract::Shape>(output_shape);
+  if (input_shape.empty()) {
+    return std::make_shared<abstract::Shape>(ShapeVector{kUnknownRank});
+  }
+  std::vector<int64_t> infer_shape = input_shape;
+  auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  CheckAndConvertUtils::CheckInRange<int64_t>("Stack axis", axis_temp, kIncludeBoth,
+                                              {-SizeToLong(element_rank) - kOneNum, SizeToLong(element_rank)},
+                                              primitive->name());
+  auto axis = axis_temp < 0 ? static_cast<size_t>(axis_temp) + element_rank + 1 : LongToSize(axis_temp);
+  (void)infer_shape.insert(infer_shape.begin() + axis, elements.size());
+  return std::make_shared<abstract::Shape>(infer_shape);
 }
 
 TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -102,6 +105,7 @@ TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   const int64_t kOneNum = 1;
   (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
                                            primitive->name());
+  primitive->AddAttr("num", MakeValue(SizeToLong(elements.size())));
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
   auto infer_type0 = element0->BuildType();

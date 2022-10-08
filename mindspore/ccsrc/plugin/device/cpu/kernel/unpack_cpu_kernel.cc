@@ -18,6 +18,7 @@
 #include <map>
 #include <tuple>
 #include "ops/unstack.h"
+#include "ops/unstack_with_num.h"
 #include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -32,13 +33,22 @@ constexpr size_t kMaxDataSize = 2147483648;  // 2GB
 
 bool UnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Unstack>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast unstack ops failed!";
-    return false;
+  kernel_name_ = base_operator->name();
+  if (kernel_name_ == prim::kPrimUnstack->name()) {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::Unstack>(base_operator);
+    if (kernel_ptr == nullptr) {
+      MS_LOG(ERROR) << "cast unstack ops failed!";
+      return false;
+    }
+    unstack_param_.axis_ = kernel_ptr->get_axis();
+  } else if (kernel_name_ == prim::kPrimUnstackWithNum->name()) {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::UnstackWithNum>(base_operator);
+    if (kernel_ptr == nullptr) {
+      MS_LOG(ERROR) << "cast unstack with num ops failed!";
+      return false;
+    }
+    unstack_param_.axis_ = kernel_ptr->get_axis();
   }
-  kernel_name_ = kernel_ptr->name();
-  unstack_param_.axis_ = kernel_ptr->get_axis();
   unstack_param_.pre_dims_ = 1;
   unstack_param_.axis_dim_ = 1;
   unstack_param_.after_dims_ = 1;
@@ -158,5 +168,6 @@ std::vector<std::tuple<KernelAttr, UnpackCpuKernelMod::UnstackFunc, UnpackCpuKer
      &UnpackCpuKernelMod::LaunchKernel<double>, &UnpackCpuKernelMod::InitIOSize<double>}};
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Unstack, UnpackCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnstackWithNum, UnpackCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

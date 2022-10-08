@@ -79,6 +79,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"IndexAdd", "InplaceIndexAdd"},
     {"KLDivLoss", "KLDiv"},
     {"Unstack", "Unpack"},
+    {"UnstackWithNum", "Unpack"},
     {"ArgminV2", "ArgMin"},
     {"CumSum", "Cumsum"},
     {"InplaceUpdateV2", "InplaceUpdate"},

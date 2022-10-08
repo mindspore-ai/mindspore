@@ -2718,27 +2718,45 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
     validator.check_int(len(x_shape), 1, Rel.GE, "len of input_x", prim_name)
     validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
-    rank_base = len(x_shape[0])
-    n = len(x_shape)
-    out_shape = x_shape[0]
+
+    out_n = len(x_shape)
+    for i in range(1, out_n):
+        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
+
+    new_x_shape = []
+    for i, shp in enumerate(x_shape):
+        if is_dim_unknown(shp):
+            continue
+        new_x_shape.append({"shape": shp, "id": i})
+
+    if not new_x_shape:
+        out = {"shape": x_shape[0]}
+        return out
+
+    out_shape = new_x_shape[0]["shape"]
+    n = len(new_x_shape)
+
+    rank_base = len(new_x_shape[0]["shape"])
+    for i in range(1, n):
+        validator.check('len of x_shape[%d]' % new_x_shape[i]["id"], len(new_x_shape[i]["shape"]),
+                        'len of x_shape[0]', rank_base, Rel.EQ, prim_name, ValueError)
+        for j in range(0, rank_base):
+            if new_x_shape[i]["shape"][j] != new_x_shape[0]["shape"][j] and \
+                    new_x_shape[i]["shape"][j] != -1 and new_x_shape[0]["shape"][j] != -1:
+                raise ValueError("For \'{}\' element {} shape in input can not pack with first element".format(
+                    prim_name, new_x_shape[i]['id']))
+
     validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base + 1
-    for i in range(1, n):
-        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
-        validator.check('len of x_shape[%d]' % i, len(x_shape[i]), 'len of x_shape[0]', rank_base, Rel.EQ,
-                        prim_name, ValueError)
-        for j in range(0, rank_base):
-            if x_shape[i][j] != x_shape[0][j] and x_shape[i][j] != -1 and x_shape[0][j] != -1:
-                raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
 
-    out = {}
     if is_shape_unknown(out_shape):
-        out_shape.insert(axis, n)
+        out = {}
+        out_shape.insert(axis, out_n)
         out['shape'] = out_shape
         return out
 
-    out_shape.insert(axis, n)
+    out_shape.insert(axis, out_n)
     return out_shape
 
 
