@@ -302,6 +302,7 @@ constexpr auto kPullWeightOpName = "PullWeight";
 constexpr auto kPushOpName = "Push";
 constexpr auto kPushWeightOpName = "PushWeight";
 constexpr auto kRandomShuffle = "RandomShuffle";
+constexpr auto kRange = "Range";
 constexpr auto kRealDivOpName = "RealDiv";
 constexpr auto kReceiveOpName = "Receive";
 constexpr auto kReciprocalOpName = "Reciprocal";

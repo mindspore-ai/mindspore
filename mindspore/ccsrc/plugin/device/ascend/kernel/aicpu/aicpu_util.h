@@ -175,6 +175,7 @@ constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
+constexpr auto kRange = "Range";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -254,7 +255,8 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kReservoirReplayBufferSample,
                                               kReservoirReplayBufferDestroy,
                                               kGatherDGradV2,
-                                              kRandomShuffle};
+                                              kRandomShuffle,
+                                              kRange};
 const std::set<std::string> kDynamicInputOps{kPrint,
                                              kPack,
                                              kMeshgrid,

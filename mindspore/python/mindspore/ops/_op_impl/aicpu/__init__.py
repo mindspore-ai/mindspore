@@ -163,3 +163,4 @@ from .reservoir_replay_buffer import _rrb_push_op_cpu
 from .reservoir_replay_buffer import _rrb_sample_op_cpu
 from .reservoir_replay_buffer import _rrb_destroy_op_cpu
 from .parallel_concat import _parallel_concat_aicpu
+from .range import _range_aicpu
