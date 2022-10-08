@@ -36,6 +36,7 @@ struct CurKernelInfo {
   std::string op_type;
   std::string op_name;
   std::vector<CurKernelInputInfo> cur_kernel_all_inputs_info;
+  uint32_t graph_id;
 };
 struct OpDetailInfo {
   std::string op_type_;

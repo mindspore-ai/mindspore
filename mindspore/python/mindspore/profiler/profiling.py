@@ -882,8 +882,10 @@ class Profiler:
             logger.warning(err.message)
         finally:
             pass
+        parser = GpuFrameWorkParser(self._output_path, self._dev_id)
+        graph_ids = parser.get_graph_ids()
+        ProfilerInfo.set_graph_ids(graph_ids)
         if self._dynamic_status:
-            parser = GpuFrameWorkParser(self._output_path, self._dev_id)
             parser.analyse_dynamic_shape_data(self._timeline_meta)
         logger.warning(
             '\nThe GPU supports only the training mode or inference mode, '

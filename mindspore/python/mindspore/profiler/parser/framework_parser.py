@@ -22,8 +22,9 @@ from pathlib import Path
 from typing import List
 from collections import defaultdict
 from collections import namedtuple
-
+import glob
 import numpy as np
+
 from mindspore import log as logger
 from mindspore.profiler.parser.framework_struct import TASK_DESC_STRUCT, TENSOR_DATA_STRUCT, STEP_INFO_STRUCT
 from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType, MSPROF_DIFFERENCE
@@ -647,6 +648,21 @@ class GpuFrameWorkParser:
         output_dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
         with os.fdopen(os.open(output_dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT, 0o660), 'w') as fp:
             json.dump(result, fp)
+
+    def get_graph_ids(self):
+        """Get gpu graph ids."""
+        gpu_framework_file = list(glob.glob(os.path.join(self._output_path,
+                                                         'gpu_framework_{}.txt'.format(self._dev_id))))
+        if not gpu_framework_file:
+            return []
+        graph_ids = set()
+        with open(gpu_framework_file[0], 'r') as f_obj:
+            framework_info = f_obj.readlines()
+        for line_info in framework_info:
+            line_info = line_info.strip(' ').strip('\n').split(';')
+            if len(line_info) > 2 and line_info[2].isdigit():
+                graph_ids.add(int(line_info[2]))
+        return list(graph_ids)
 
     def _organize_result(self, step, op_info, args):
         """Organize the results."""
