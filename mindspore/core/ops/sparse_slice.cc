@@ -34,15 +34,15 @@ void SparseSliceCheckInputTensor(const std::vector<AbstractBasePtr> &input_args)
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  if (indices_shape.size() != kDim2) {
+  if (indices_shape.size() != static_cast<size_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSlice, indices should be a 2-D tensor"
                              << ", while input_indices dim num is " << indices_shape.size() << ".";
   }
-  if (indices_shape[1] != kDim2) {
+  if (indices_shape[1] != static_cast<int64_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSlice, indices shape should be (2, n)"
                              << ", while input_indices shape dim0 is " << indices_shape[0] << ".";
   }
-  if (values_shape.size() != kDim1) {
+  if (values_shape.size() != static_cast<size_t>(kDim1)) {
     MS_EXCEPTION(ValueError) << "For SparseSlice, values should be a 1-D tensor"
                              << ",  while input_values dim num is " << values_shape.size() << ".";
   }
@@ -52,32 +52,32 @@ void SparseSliceCheckInputTensor(const std::vector<AbstractBasePtr> &input_args)
                              << " while indices_shape dim1 size is " << indices_shape[1]
                              << ", values_shape dim0 size is " << values_shape[0] << ".";
   }
-  if (shape_shape.size() != kDim1) {
+  if (shape_shape.size() != static_cast<size_t>(kDim1)) {
     MS_EXCEPTION(ValueError) << "For SparseSlice"
                              << ", shape should be a 1-D tensor, while input_shape dim num is " << shape_shape.size()
                              << ".";
   }
-  if (shape_shape[0] != kDim2) {
+  if (shape_shape[0] != static_cast<int64_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSlice"
                              << ", the shape of input shape should be [2] but got shape [" << shape_shape[0] << "].";
   }
-  if (start_shape[0] != kDim2) {
+  if (start_shape[0] != static_cast<int64_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSlice, start should be a 2-D tensor"
                              << ", while dim num is " << start_shape.size() << ".";
   }
-  if (size_shape[0] != kDim2) {
+  if (size_shape[0] != static_cast<int64_t>(kDim2)) {
     MS_EXCEPTION(ValueError) << "For SparseSlice, size should be a 2-D tensor"
                              << ", while dim num is " << size_shape.size() << ".";
   }
 }
 
 template <typename T>
-void SparseSliceIndicesBoundCheck(T *indices_val, size_t indices_num, T *shape_val, std::string name) {
+void SparseSliceIndicesBoundCheck(const T *indices_val, size_t indices_num, const T *shape_val, std::string name) {
   if (shape_val[0] <= 0 || shape_val[1] <= 0) {
     MS_EXCEPTION(ValueError) << "For SparseSlice, " << name << "_shape should be positive, "
                              << "while got shape [" << shape_val[0] << ", " << shape_val[1] << "].";
   }
-  size_t half_num = indices_num / kDim2;
+  size_t half_num = indices_num / static_cast<size_t>(kDim2);
   for (size_t i = 0; i < half_num; i++) {
     if ((indices_val[i] < 0) || (indices_val[i] >= shape_val[0])) {
       MS_EXCEPTION(ValueError) << "For SparseSlice, " << name << "_indices row index should between [0, "
@@ -110,13 +110,13 @@ void SparseSliceCheckIndices(const std::vector<AbstractBasePtr> &input_args) {
   auto x1_shape_tensor = x1_shape_value_ptr->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(x1_shape_tensor);
   if (x1_indices_type_element->type_id() == kNumberTypeInt32) {
-    SparseSliceIndicesBoundCheck<int32_t>(reinterpret_cast<int32_t *>(x1_indices_tensor->data_c()),
+    SparseSliceIndicesBoundCheck<int32_t>(static_cast<int32_t *>(x1_indices_tensor->data_c()),
                                           x1_indices_tensor->DataSize(),
-                                          reinterpret_cast<int32_t *>(x1_shape_tensor->data_c()), "x1");
+                                          static_cast<int32_t *>(x1_shape_tensor->data_c()), "x1");
   } else {
-    SparseSliceIndicesBoundCheck<int64_t>(reinterpret_cast<int64_t *>(x1_indices_tensor->data_c()),
+    SparseSliceIndicesBoundCheck<int64_t>(static_cast<int64_t *>(x1_indices_tensor->data_c()),
                                           x1_indices_tensor->DataSize(),
-                                          reinterpret_cast<int64_t *>(x1_shape_tensor->data_c()), "x1");
+                                          static_cast<int64_t *>(x1_shape_tensor->data_c()), "x1");
   }
 }
 
@@ -133,17 +133,17 @@ abstract::TupleShapePtr SparseSliceInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(input_indices_value_ptr);
     auto input_indices_tensor = input_indices_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(input_indices_tensor);
-    auto input_indices_val = reinterpret_cast<int64_t *>(input_indices_tensor->data_c());
+    auto input_indices_val = static_cast<int64_t *>(input_indices_tensor->data_c());
     auto input_start_ptr = input_args[kInputIndex3]->BuildValue();
     MS_EXCEPTION_IF_NULL(input_start_ptr);
     auto input_start_tensor = input_start_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(input_start_tensor);
-    auto input_start_val = reinterpret_cast<int64_t *>(input_start_tensor->data_c());
+    auto input_start_val = static_cast<int64_t *>(input_start_tensor->data_c());
     auto input_size_ptr = input_args[kInputIndex4]->BuildValue();
     MS_EXCEPTION_IF_NULL(input_size_ptr);
     auto input_size_tensor = input_size_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(input_size_tensor);
-    auto input_size_val = reinterpret_cast<int64_t *>(input_size_tensor->data_c());
+    auto input_size_val = static_cast<int64_t *>(input_size_tensor->data_c());
     int64_t count = 0;
     int64_t size_left = input_size_val[0];
     int64_t size_right = input_size_val[1];

@@ -84,6 +84,31 @@ void Necessity(uint64_t un, bool u_n, float *y_d, uint64_t p_y, string no) {
   }
 }
 
+std::pair<float, float> ExtractGlimpseCpuKernelMod::GetLocation(const float *ptr, const uint64_t seq,
+                                                                const std::pair<uint64_t, uint64_t> image_size,
+                                                                const std::pair<uint64_t, uint64_t> g_size,
+                                                                const bool normalized, const bool centered) {
+  float x = ptr[seq << 1];
+  float y = ptr[1 + (seq << 1)];
+  uint64_t image_height = image_size.first;
+  uint64_t image_width = image_size.second;
+  uint64_t g_height = g_size.first;
+  uint64_t g_width = g_size.second;
+  if (normalized) {
+    x *= static_cast<float>(image_height);
+    y *= static_cast<float>(image_width);
+  }
+  if (centered) {
+    x /= 2.0f;
+    y /= 2.0f;
+    x += image_height / 2.0f;
+    y += image_width / 2.0f;
+  }
+  x -= g_height / 2.0f;
+  y -= g_width / 2.0f;
+  return std::pair<float, float>(x, y);
+}
+
 template <typename T>
 bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &outputs) {
@@ -105,22 +130,13 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   uint64_t size3 = g_height * g_width * channels;
   uint64_t size4 = size3 / g_height;
   uint64_t g_size = g_width * g_height;
+  std::pair<uint64_t, uint64_t> image_size(image_height, image_width);
+  std::pair<uint64_t, uint64_t> win_size(g_height, g_width);
   if (batch_cnt < kNumber8 * kNumber1024) {
     for (uint64_t i = 0; i < batch_cnt; i++) {
-      float x = offsets_data[i << 1];
-      float y = offsets_data[1 + (i << 1)];
-      if (normalized_) {
-        x *= static_cast<float>(image_height);
-        y *= static_cast<float>(image_width);
-      }
-      if (centered_) {
-        x /= 2.0f;
-        y /= 2.0f;
-        x += image_height / 2.0f;
-        y += image_width / 2.0f;
-      }
-      x -= g_height / 2.0f;
-      y -= g_width / 2.0f;
+      std::pair<float, float> loc = GetLocation(offsets_data, i, image_size, win_size, normalized_, centered_);
+      float x = loc.first;
+      float y = loc.second;
       auto task = [&](int64_t st, int64_t ed) {
         for (int64_t v = st; v < ed; v++) {
           int64_t j = v / static_cast<int64_t>(g_width), k = v % static_cast<int64_t>(g_width);
@@ -147,20 +163,9 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   } else {
     auto task = [&](size_t st, size_t ed) {
       for (uint64_t i = st; i < ed; i++) {
-        float x = offsets_data[i << 1];
-        float y = offsets_data[1 + (i << 1)];
-        if (normalized_) {
-          x *= static_cast<float>(image_height);
-          y *= static_cast<float>(image_width);
-        }
-        if (centered_) {
-          x /= 2.0f;
-          y /= 2.0f;
-          x += image_height / 2.0f;
-          y += image_width / 2.0f;
-        }
-        x -= g_height / 2.0f;
-        y -= g_width / 2.0f;
+        std::pair<float, float> loc = GetLocation(offsets_data, i, image_size, win_size, normalized_, centered_);
+        float x = loc.first;
+        float y = loc.second;
         for (uint64_t v = 0; v < g_size; v++) {
           int64_t j = static_cast<int64_t>(v / g_width), k = static_cast<int64_t>(v % g_width);
           uint64_t a = static_cast<uint64_t>(FloatToLong(x) + j), b = static_cast<uint64_t>(FloatToLong(y) + k);

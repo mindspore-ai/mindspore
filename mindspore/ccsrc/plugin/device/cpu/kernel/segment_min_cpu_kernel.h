@@ -52,9 +52,6 @@ class SegmentMinCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, SegmentMinFunc>> func_list_;
   SegmentMinFunc kernel_func_;
 
-  template <typename T>
-  std::vector<int64_t> CalcSegmentIds(const T *segment_ids_data_addr) const;
-
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);

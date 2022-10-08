@@ -257,6 +257,27 @@ class CPUKernelUtils {
     T total = std::accumulate(shape.begin(), shape.end(), T(1), std::multiplies<T>());
     return total;
   }
+  template <typename T>
+  inline static std::vector<int64_t> CalcSegmentIds(const T *segment_ids_data_addr, const size_t segment_ids_num) {
+    std::vector<int64_t> segments;
+    int64_t seg_tmp = 1;
+    for (size_t i = 0; i < segment_ids_num - 1; ++i) {
+      if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
+        seg_tmp++;
+      } else {
+        segments.push_back(seg_tmp);
+        seg_tmp = 1;
+      }
+      const size_t last_loc = 2;
+      if (i == segment_ids_num - last_loc) {
+        segments.push_back(seg_tmp);
+      }
+    }
+    if (segment_ids_num == 1) {
+      segments.push_back(seg_tmp);
+    }
+    return segments;
+  }
 };
 
 class BroadcastIterator {

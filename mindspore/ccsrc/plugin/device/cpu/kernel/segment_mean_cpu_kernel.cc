@@ -25,12 +25,6 @@ const size_t kDataSizeThreshold = 2 * 1024;
     ret = LaunchKernel<TYPE1, TYPE2>(inputs, outputs); \
     break;                                             \
   }
-
-#define SEGMENTMEAN_COMPUTE_CASE_CP(DTYPE, TYPE1, TYPE2)      \
-  case (DTYPE): {                                             \
-    ret = LaunchKernelComplex<TYPE1, TYPE2>(inputs, outputs); \
-    break;                                                    \
-  }
 }  // namespace
 
 namespace mindspore {
@@ -105,8 +99,8 @@ bool SegmentMeanCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   switch (segment_ids_dtype_) {
     case kNumberTypeInt32: {
       switch (input_x_dtype_) {
-        SEGMENTMEAN_COMPUTE_CASE_CP(kNumberTypeComplex64, std::complex<float>, int32_t)
-        SEGMENTMEAN_COMPUTE_CASE_CP(kNumberTypeComplex128, std::complex<double>, int32_t)
+        SEGMENTMEAN_COMPUTE_CASE(kNumberTypeComplex64, std::complex<float>, int32_t)
+        SEGMENTMEAN_COMPUTE_CASE(kNumberTypeComplex128, std::complex<double>, int32_t)
         SEGMENTMEAN_COMPUTE_CASE(kNumberTypeInt8, int8_t, int32_t)
         SEGMENTMEAN_COMPUTE_CASE(kNumberTypeInt16, int16_t, int32_t)
         SEGMENTMEAN_COMPUTE_CASE(kNumberTypeInt32, int32_t, int32_t)
@@ -125,8 +119,8 @@ bool SegmentMeanCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
     }
     case kNumberTypeInt64: {
       switch (input_x_dtype_) {
-        SEGMENTMEAN_COMPUTE_CASE_CP(kNumberTypeComplex64, std::complex<float>, int64_t)
-        SEGMENTMEAN_COMPUTE_CASE_CP(kNumberTypeComplex128, std::complex<double>, int64_t)
+        SEGMENTMEAN_COMPUTE_CASE(kNumberTypeComplex64, std::complex<float>, int64_t)
+        SEGMENTMEAN_COMPUTE_CASE(kNumberTypeComplex128, std::complex<double>, int64_t)
         SEGMENTMEAN_COMPUTE_CASE(kNumberTypeInt8, int8_t, int64_t)
         SEGMENTMEAN_COMPUTE_CASE(kNumberTypeInt16, int16_t, int64_t)
         SEGMENTMEAN_COMPUTE_CASE(kNumberTypeInt32, int32_t, int64_t)
@@ -155,23 +149,7 @@ bool SegmentMeanCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
   auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
   auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
-  std::vector<int64_t> segments;
-  int64_t seg_tmp = 1;
-  for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
-    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
-      seg_tmp++;
-    } else {
-      segments.push_back(seg_tmp);
-      seg_tmp = 1;
-    }
-    const size_t last_loc = 2;
-    if (i == segment_ids_num_ - last_loc) {
-      segments.push_back(seg_tmp);
-    }
-  }
-  if (segment_ids_num_ == 1) {
-    segments.push_back(seg_tmp);
-  }
+  std::vector<int64_t> segments = CPUKernelUtils::CalcSegmentIds(segment_ids_data_addr, segment_ids_num_);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);
   }
@@ -194,7 +172,13 @@ bool SegmentMeanCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
             sum_value += input_x_data_addr[tmp_addr];
           }
           size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
-          output_data_addr[output_index] = sum_value / static_cast<T1>(count);
+          if constexpr (std::is_same_v<T1, std::complex<float>>) {
+            output_data_addr[output_index] = ComplexDiv(sum_value, count);
+          } else if constexpr (std::is_same_v<T1, std::complex<double>>) {
+            output_data_addr[output_index] = ComplexDiv(sum_value, count);
+          } else {
+            output_data_addr[output_index] = sum_value / static_cast<T1>(count);
+          }
         }
       };
       if (num_compare_per < kDataSizeThreshold) {
@@ -220,87 +204,13 @@ bool SegmentMeanCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
             sum_value += input_x_data_addr[tmp_addr];
           }
           size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
-          output_data_addr[output_index] = sum_value / static_cast<T1>(count);
-        }
-      }
-    };
-    CPUKernelUtils::ParallelFor(task, num_segments);
-  }
-  return true;
-}
-
-template <typename T1, typename T2>
-bool SegmentMeanCPUKernelMod::LaunchKernelComplex(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
-  std::vector<int64_t> segments;
-  int64_t seg_tmp = 1;
-  for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
-    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
-      seg_tmp++;
-    } else {
-      segments.push_back(seg_tmp);
-      seg_tmp = 1;
-    }
-    const size_t last_loc = 2;
-    if (i == segment_ids_num_ - last_loc) {
-      segments.push_back(seg_tmp);
-    }
-  }
-  if (segment_ids_num_ == 1) {
-    segments.push_back(seg_tmp);
-  }
-  for (size_t i = 0; i < output_num_; ++i) {
-    output_data_addr[i] = static_cast<T1>(0);
-  }
-  const size_t num_compare_per = input_x_num_ / LongToSize(input_x_shape_[0]);
-  const size_t num_segments = segments.size();
-  if (num_segments < kSegmentsThreshold) {
-    for (size_t i = 0; i < num_segments; ++i) {
-      const size_t count = static_cast<size_t>(segments[i]);
-      size_t count_no = 0;
-      for (size_t j = 0; j < i; ++j) {
-        count_no += static_cast<size_t>(segments[j]);
-      }
-      size_t input_addr_base = count_no * num_compare_per;
-      auto task = [&](size_t start, size_t end) {
-        for (size_t j = start; j < end; ++j) {
-          size_t mean_init_addr = input_addr_base + j;
-          T1 sum_value = input_x_data_addr[mean_init_addr];
-          for (size_t k = 1; k < count; ++k) {
-            int tmp_addr = mean_init_addr + k * num_compare_per;
-            sum_value += input_x_data_addr[tmp_addr];
+          if constexpr (std::is_same_v<T1, std::complex<float>>) {
+            output_data_addr[output_index] = ComplexDiv(sum_value, count);
+          } else if constexpr (std::is_same_v<T1, std::complex<double>>) {
+            output_data_addr[output_index] = ComplexDiv(sum_value, count);
+          } else {
+            output_data_addr[output_index] = sum_value / static_cast<T1>(count);
           }
-          size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
-          output_data_addr[output_index] = ComplexDiv(sum_value, count);
-        }
-      };
-      if (num_compare_per < kDataSizeThreshold) {
-        task(0, num_compare_per);
-      } else {
-        CPUKernelUtils::ParallelFor(task, num_compare_per);
-      }
-    }
-  } else {
-    auto task = [&](size_t start, size_t end) {
-      for (size_t i = start; i < end; ++i) {
-        const size_t count = static_cast<size_t>(segments[i]);
-        size_t count_no = 0;
-        for (size_t j = 0; j < i; ++j) {
-          count_no += static_cast<size_t>(segments[j]);
-        }
-        size_t input_addr_base = count_no * num_compare_per;
-        for (size_t j = 0; j < num_compare_per; ++j) {
-          size_t mean_init_addr = input_addr_base + j;
-          T1 sum_value = input_x_data_addr[mean_init_addr];
-          for (size_t k = 1; k < count; ++k) {
-            int tmp_addr = mean_init_addr + k * num_compare_per;
-            sum_value += input_x_data_addr[tmp_addr];
-          }
-          size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
-          output_data_addr[output_index] = ComplexDiv(sum_value, count);
         }
       }
     };
