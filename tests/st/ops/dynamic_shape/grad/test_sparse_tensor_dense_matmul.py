@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import mindspore as ms
 from mindspore import nn, context, Tensor
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
@@ -37,6 +38,9 @@ def grad_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net((x1_indices, x1_values, x1_shape, x2), is_dynamic_rank)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cpu_grad_dynamic_shape():
     """
     Feature: test SparseTensorDenseMatmul dynamic shape on CPU.
@@ -47,6 +51,9 @@ def test_cpu_grad_dynamic_shape():
     grad_dyn_case(False)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cpu_grad_dynamic_rank():
     """
     Feature: test SparseTensorDenseMatmul dynamic rank on CPU.
