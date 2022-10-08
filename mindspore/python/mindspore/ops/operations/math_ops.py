@@ -466,7 +466,7 @@ class AssignSub(Primitive):
         >>> net = Net()
         >>> value = Tensor(np.ones([1]).astype(np.int32)*100)
         >>> output = net(value)
-        >>> print(output)
+        >>> print(net.variable.asnumpy())
         [-99]
     """
 
