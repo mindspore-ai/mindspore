@@ -1471,6 +1471,12 @@ bool GradExecutor::ConvertTupleAndScalarIntoTensor(const FrontendOpRunInfoPtr &o
           value_tuple = value_seq->cast<ValueTuplePtr>();
         }
         auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
+        if (tensor_ptr != nullptr) {
+          tensor_ptr->ToAbstract()->Broaden();
+        } else {
+          return false;
+        }
+
         (*input_args)[idx] = tensor_ptr;
         return true;
       } else if (default_value->isa<Scalar>()) {
@@ -1502,8 +1508,7 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
     input_args = op_run_info->input_value;
   } else {
     for (size_t i = 0; i < op_run_info->input_value.size(); ++i) {
-      if (enable_tuple_to_tensor_ &&
-          ConvertTupleAndScalarIntoTensor(op_run_info, &input_args, i, op_run_info->input_value[i])) {
+      if (ConvertTupleAndScalarIntoTensor(op_run_info, &input_args, i, op_run_info->input_value[i])) {
         continue;
       }
       input_args[i] = op_run_info->input_value[i];
