@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <limits>
 #include <string>
-#include <utility>
+#include <cmath>
 #include "abstract/utils.h"
 #include "mindspore/core/ops/ctc_loss_v2_grad.h"
 namespace mindspore {
@@ -37,7 +37,7 @@ struct SoftParam {
 };
 
 template <typename target_t>
-static inline int64_t get_target_prime(target_t *target, int64_t offset, int64_t idx, int64_t BLANK) {
+static inline int64_t get_target_prime(const target_t *target, int64_t offset, int64_t idx, int64_t BLANK) {
   constexpr int64_t even = 2;
   if (idx % even == 0) {
     return BLANK;
@@ -88,8 +88,8 @@ int CTCLossV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename scalar_t, typename target_t>
-void ComputeGrad(scalar_t *log_probs, const NdTensorIterator<kDim3> &log_probs_it, SoftParam params,
-                 scalar_t *log_alpha, const NdTensorIterator<kDim3> &log_alpha_it, scalar_t *log_beta,
+void ComputeGrad(const scalar_t *log_probs, const NdTensorIterator<kDim3> &log_probs_it, SoftParam params,
+                 const scalar_t *log_alpha, const NdTensorIterator<kDim3> &log_alpha_it, scalar_t *log_beta,
                  const NdTensorIterator<kDim3> &log_beta_it, scalar_t *grad, const NdTensorIterator<kDim3> &grad_it) {
   int64_t blank_ = params.blank_;
   int64_t input_length = params.input_length;
@@ -121,14 +121,14 @@ void ComputeGrad(scalar_t *log_probs, const NdTensorIterator<kDim3> &log_probs_i
       } else {
         lb3 = neginf;
       }
-      if (lbmax == neginf) {
+      if (std::isinf(lbmax) && std::signbit(lbmax)) {
         lbmax = 0;
       }
       log_beta[log_beta_it(b, t, s)] = std::log(std::exp(lb1 - lbmax) + std::exp(lb2 - lbmax) + std::exp(lb3 - lbmax)) +
                                        lbmax + log_probs[log_probs_it(t, b, current_target_prime)];
       scalar_t log_alpha_beta = log_alpha[log_alpha_it(b, t, s)] + log_beta[log_beta_it(b, t, s)];
       scalar_t &lcab = grad[grad_it(t, b, current_target_prime)];
-      if (lcab == neginf) {
+      if (std::isinf(lcab) && std::signbit(lcab)) {
         lcab = log_alpha_beta;
       } else {
         scalar_t max = std::max(lcab, log_alpha_beta);
@@ -140,16 +140,16 @@ void ComputeGrad(scalar_t *log_probs, const NdTensorIterator<kDim3> &log_probs_i
 template <typename scalar_t, typename target_t>
 bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &workspace,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto grad_out = reinterpret_cast<scalar_t *>(inputs[kIndex0]->addr);
-  auto log_probs = reinterpret_cast<scalar_t *>(inputs[kIndex1]->addr);
-  auto targets = reinterpret_cast<target_t *>(inputs[kIndex2]->addr);
-  auto input_lengths = reinterpret_cast<target_t *>(inputs[kIndex3]->addr);
-  auto target_lengths = reinterpret_cast<target_t *>(inputs[kIndex4]->addr);
-  auto neg_log_likelihood = reinterpret_cast<scalar_t *>(inputs[kIndex5]->addr);
-  auto log_alpha = reinterpret_cast<scalar_t *>(inputs[kIndex6]->addr);
-  auto log_beta = reinterpret_cast<scalar_t *>(workspace[kIndex0]->addr);
-  auto grad = reinterpret_cast<scalar_t *>(outputs[kIndex0]->addr);
+                                             const std::vector<kernel::AddressPtr> &outputs) const {
+  auto grad_out = static_cast<scalar_t *>(inputs[kIndex0]->addr);
+  auto log_probs = static_cast<scalar_t *>(inputs[kIndex1]->addr);
+  auto targets = static_cast<target_t *>(inputs[kIndex2]->addr);
+  auto input_lengths = static_cast<target_t *>(inputs[kIndex3]->addr);
+  auto target_lengths = static_cast<target_t *>(inputs[kIndex4]->addr);
+  auto neg_log_likelihood = static_cast<scalar_t *>(inputs[kIndex5]->addr);
+  auto log_alpha = static_cast<scalar_t *>(inputs[kIndex6]->addr);
+  auto log_beta = static_cast<scalar_t *>(workspace[kIndex0]->addr);
+  auto grad = static_cast<scalar_t *>(outputs[kIndex0]->addr);
 
   constexpr scalar_t neginf = -std::numeric_limits<scalar_t>::infinity();
   std::fill(grad, grad + (T_ * batch_size_ * num_labels_), neginf);
@@ -160,7 +160,7 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   NdTensorIterator<kDim3> log_beta_it(batch_size_, T_, target_mul * max_target_length_ + 1);
   for (int64_t b = 0; b < batch_size_; b++) {
     scalar_t nll = neg_log_likelihood[b];
-    if (zero_infinity_ && nll == std::numeric_limits<scalar_t>::infinity()) {
+    if (zero_infinity_ && std::isinf(nll) && !std::signbit(nll)) {
       for (int t = 0; t < T_; t++) {
         for (int c = 0; c < num_labels_; c++) {
           grad[grad_it(t, b, c)] = 0;
@@ -189,7 +189,7 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
           log_beta[log_beta_it(b, input_length - 1, target_mul * target_length - 1)];
       }
     }
-    SoftParam param = {blank_, input_length, target_length, tg_batch_offset, b, reinterpret_cast<void *>(targets)};
+    SoftParam param = {blank_, input_length, target_length, tg_batch_offset, b, static_cast<void *>(targets)};
     ComputeGrad<scalar_t, target_t>(log_probs, log_probs_it, param, log_alpha, log_alpha_it, log_beta, log_beta_it,
                                     grad, grad_it);
     scalar_t gr = grad_out[b];
