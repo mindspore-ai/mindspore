@@ -172,10 +172,10 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1-"
                       << kEmbeddingLookUpInputParamsMaxDim << "D, but got " << input_params_shape.size() << "D.";
   }
-  first_dim_size_ = input_params_shape[0];
+  first_dim_size_ = LongToSize(input_params_shape[0]);
   outer_dim_size_ = 1;
   for (size_t i = 1; i < input_params_shape.size(); ++i) {
-    outer_dim_size_ *= input_params_shape[i];
+    outer_dim_size_ *= LongToSize(input_params_shape[i]);
   }
   input_params_dtype_ = inputs[kIndex0]->GetDtype();
 
@@ -191,11 +191,11 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 template <typename T, typename S, typename G>
 bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
-  T *input_params_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  S *input_indices_addr = reinterpret_cast<S *>(inputs[1]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_params_addr = static_cast<T *>(inputs[0]->addr);
+  S *input_indices_addr = static_cast<S *>(inputs[1]->addr);
+  T *output_addr = static_cast<T *>(outputs[0]->addr);
   if (inputs.size() == kEmbeddingLookupDynamicShapeInputsNum) {
-    G *input_offset_addr = reinterpret_cast<G *>(inputs[2]->addr);
+    G *input_offset_addr = static_cast<G *>(inputs[2]->addr);
     memcpy(&offset_, input_offset_addr, sizeof(G));
   }
   auto task = [&](size_t start, size_t end) {
