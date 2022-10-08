@@ -31,20 +31,20 @@ class Geqrf(Primitive):
 
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(m, n)`, input must be a two-dimensional matrix,
-          with dtype of float32, float64.
+        - **x** (Tensor) - Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
+          with dtype of float32, float64, complex64, complex128.
 
     Outputs:
-        - **y** (Tensor) - Tensor of shape :math:`(m, n)`, has the same dtype as the `x`.
-        - **tau** (Tensor) - Tensor of shape :math:`(p,)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
+        - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `x`.
+        - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If the dtype of `x` is neither float32, float64.
-        ValueError: If `x` dimension is not equal to 2
+        TypeError: If the dtype of `x` is neither float32, float64, complex64, complex128.
+        ValueError: If `x` dimension is less than 2
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations import linalg_ops as linalg

@@ -33,18 +33,29 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t kTwo = 2;
+  const size_t kTwo = 2;
+  const std::vector<int64_t> UNKNOWN_RANK = {-2};
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto ndim = SizeToLong(a_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("ndim", ndim, kEqual, kTwo, primitive->name());
+  if (IsDynamicRank(a_shape) || IsDynamic(a_shape)) {
+    ShapeVector dyn_shape{UNKNOWN_RANK};
+    std::vector<abstract::BaseShapePtr> shape_tuple;
+    (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(dyn_shape));
+    (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(dyn_shape));
+    return std::make_shared<abstract::TupleShape>(shape_tuple);
+  }
+  auto ndim = a_shape.size();
+  (void)CheckAndConvertUtils::CheckInteger("ndim", ndim, kGreaterEqual, kTwo, primitive->name());
   auto m = a_shape[ndim - 2];
   auto n = a_shape[ndim - 1];
   auto p = std::min(m, n);
-  std::vector<int64_t> y_shape{m, n};
-  std::vector<int64_t> tau_shape{p};
+  std::vector<int64_t> tau_shape;
+  for (size_t i = 0; i < ndim - kDim2; i++) {
+    tau_shape.emplace_back(a_shape[i]);
+  }
+  tau_shape.emplace_back(p);
 
   std::vector<abstract::BaseShapePtr> shape_tuple;
-  (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(y_shape));
+  (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(a_shape));
   (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(tau_shape));
   return std::make_shared<abstract::TupleShape>(shape_tuple);
 }
@@ -52,7 +63,7 @@ abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std
 TypePtr GeqrfInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(infer_type);
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
 
   std::vector<TypePtr> type_tuple = {type, type};
