@@ -58,7 +58,6 @@ mindspore.ops.strided_slice
         - **shrink_axis_mask** (int，可选) - 表示切片的收缩维度掩码。如果第i位设置为1，则意味着第i维度缩小为1。为int型掩码。默认值：0。
 
     返回：
-
         返回根据起始索引、结束索引和步长进行提取出的切片Tensor。
 
     异常：
