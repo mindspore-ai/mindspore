@@ -78,7 +78,7 @@ class TopoManager(Observable):
         if consumers is None:
             self._target_consumer[product] = [(consumer, index)]
         else:
-            self._target_consumer[product].append((consumer, index))
+            self._target_consumer.get(product).append((consumer, index))
 
     def _erase_provider(self, product: ScopedValue):
         """
