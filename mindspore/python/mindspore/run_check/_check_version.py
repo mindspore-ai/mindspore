@@ -20,6 +20,7 @@ import sys
 import time
 import subprocess
 import glob
+from copy import deepcopy
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
 from packaging import version
@@ -222,33 +223,33 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self):
         self.version = ["1.83"]
-        atlas_nnae_version = "/usr/local/Ascend/nnae/latest/fwkacllib/version.info"
-        atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/version.info"
-        hisi_fwk_version = "/usr/local/Ascend/latest/fwkacllib/version.info"
+        atlas_nnae_version = "/usr/local/Ascend/nnae/latest/compiler/version.info"
+        atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/compiler/version.info"
+        hisi_fwk_version = "/usr/local/Ascend/latest/compiler/version.info"
         if os.path.exists(atlas_nnae_version):
             # atlas default path
-            self.fwk_path = "/usr/local/Ascend/nnae/latest/fwkacllib"
+            self.fwk_path = "/usr/local/Ascend/nnae/latest"
             self.op_impl_path = "/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe"
             self.tbe_path = self.fwk_path + "/lib64"
-            self.cce_path = self.fwk_path + "/ccec_compiler/bin"
+            self.cce_path = self.fwk_path + "/compiler/ccec_compiler/bin"
             self.fwk_version = atlas_nnae_version
             self.op_path = "/usr/local/Ascend/nnae/latest/opp"
             self.aicpu_path = "/usr/local/Ascend/nnae/latest"
         elif os.path.exists(atlas_toolkit_version):
             # atlas default path
-            self.fwk_path = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib"
+            self.fwk_path = "/usr/local/Ascend/ascend-toolkit/latest"
             self.op_impl_path = "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe"
             self.tbe_path = self.fwk_path + "/lib64"
-            self.cce_path = self.fwk_path + "/ccec_compiler/bin"
+            self.cce_path = self.fwk_path + "/compiler/ccec_compiler/bin"
             self.fwk_version = atlas_toolkit_version
             self.op_path = "/usr/local/Ascend/ascend-toolkit/latest/opp"
             self.aicpu_path = "/usr/local/Ascend/ascend-toolkit/latest"
         elif os.path.exists(hisi_fwk_version):
             # hisi default path
-            self.fwk_path = "/usr/local/Ascend/latest/fwkacllib"
+            self.fwk_path = "/usr/local/Ascend/latest"
             self.op_impl_path = "/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe"
             self.tbe_path = self.fwk_path + "/lib64"
-            self.cce_path = self.fwk_path + "/ccec_compiler/bin"
+            self.cce_path = self.fwk_path + "/compiler/ccec_compiler/bin"
             self.fwk_version = hisi_fwk_version
             self.op_path = "/usr/local/Ascend/latest/opp"
             self.aicpu_path = "/usr/local/Ascend/latest"
@@ -270,9 +271,9 @@ class AscendEnvChecker(EnvChecker):
         self.ascend_aicpu_path = os.getenv("ASCEND_AICPU_PATH")
 
         # check content
-        self.path_check = "/fwkacllib/ccec_compiler/bin"
+        self.path_check = "/compiler/ccec_compiler/bin"
         self.python_path_check = "opp/op_impl/built-in/ai_core/tbe"
-        self.ld_lib_path_check_fwk = "/fwkacllib/lib64"
+        self.ld_lib_path_check_fwk = "/lib64"
         self.ld_lib_path_check_addons = "/add-ons"
         self.ascend_opp_path_check = "/op"
         self.v = ""
@@ -324,9 +325,11 @@ class AscendEnvChecker(EnvChecker):
             return
 
         try:
+            origin_path = deepcopy(sys.path)
             import te  # pylint: disable=unused-import
         # pylint: disable=broad-except
         except Exception:
+            sys.path = deepcopy(origin_path)
             if Path(self.tbe_path).is_dir():
                 if os.getenv('LD_LIBRARY_PATH'):
                     os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']

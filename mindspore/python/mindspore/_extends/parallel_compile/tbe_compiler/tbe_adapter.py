@@ -132,7 +132,7 @@ def __init_tune_env(job, need_ga):
               "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
               "please configure `auto_tune` or `schedule_search` related environment variables." \
               "Try to set the following environment variables:" \
-              "export fwk_path=/usr/local/Ascend/fwkacllib" \
+              "export fwk_path=/usr/local/Ascend/latest" \
               "export PYTHONPATH=${fwk_path}/python/site-packages:$PYTHONPATH" \
               "export PYTHONPATH=${fwk_path}/python/site-packages/auto_tune.egg/auto_tune:$PYTHONPATH" \
               "export PYTHONPATH=${fwk_path}/python/site-packages/schedule_search.egg:$PYTHONPATH"
@@ -239,6 +239,10 @@ def tbe_initialize(job: TbeJob):
     :param job:
     :return:
     """
+    if os.getenv("LD_PRELOAD"):
+        os.environ["LD_PRELOAD"] = "libgomp.so.1:" + os.environ["LD_PRELOAD"]
+    else:
+        os.environ["LD_PRELOAD"] = "libgomp.so.1"
     os.environ["CONTEXT_MODELCOMPILING"] = "TRUE"
     soc_info = get_soc_info(job.content)
     res = te_set_version(*soc_info)
