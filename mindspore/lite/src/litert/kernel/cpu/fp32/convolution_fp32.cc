@@ -40,13 +40,21 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]->MutableData());
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_h_, conv_param_->kernel_w_, RET_ERROR);
+  int kernel_hw = conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_hw, conv_param_->input_channel_, RET_ERROR);
+  int kernel_chw = kernel_hw * conv_param_->input_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_chw, thread_count_, RET_ERROR);
+  int total_kernel_chw = kernel_chw * thread_count_;
 #ifdef ENABLE_AVX
-  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C6NUM * thread_count_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_kernel_chw, C6NUM, RET_ERROR);
+  int unit_size = total_kernel_chw * C6NUM;
 #elif defined(ENABLE_SSE)
-  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C4NUM * thread_count_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_kernel_chw, C4NUM, RET_ERROR);
+  int unit_size = total_kernel_chw * C4NUM;
 #else
-  int unit_size =
-    conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C12NUM * thread_count_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_kernel_chw, C12NUM, RET_ERROR);
+  int unit_size = total_kernel_chw * C12NUM;
 #endif
   packed_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(unit_size * sizeof(float)));
   if (packed_input_ == nullptr) {
@@ -64,8 +72,12 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   if (conv_param_->output_channel_ % OC_BLOCK != 0 && out_tensors_[0]->format() == NC4HW4) {
     output_need_align_ = true;
     int oc_algin = UP_DIV(conv_param_->output_channel_, OC_BLOCK);
-    int pack_output_size =
-      conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * OC_BLOCK * oc_algin;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
+    int output_hw = conv_param_->output_h_ * conv_param_->output_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_batch_, output_hw, RET_ERROR);
+    int output_bhw = conv_param_->output_batch_ * output_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, OC_BLOCK * oc_algin, RET_ERROR);
+    int pack_output_size = output_bhw * OC_BLOCK * oc_algin;
     tmp_output_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_output_size * sizeof(float)));
     if (tmp_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc tmp_output_ buffer is failed.";
@@ -106,6 +118,7 @@ int ConvolutionCPUKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t pe
     use_batch_cut_flag_ = false;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
   auto output_hw = conv_param_->output_h_ * conv_param_->output_w_;
 #ifdef ENABLE_AVX
   const int cal_num = C6NUM;

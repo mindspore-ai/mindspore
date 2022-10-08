@@ -23,8 +23,11 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int GroupConvolutionFp32CPUKernel::Separate(int task_id) {
   auto plane_step = UP_DIV(in_plane_, in_thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, RET_ERROR);
   auto begin_plane = plane_step * task_id;
   auto end_plane = MSMIN(in_plane_, plane_step * (task_id + 1));
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, ori_in_channel_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, sub_in_channel_, RET_ERROR);
   auto src_ptr = sub_in_src_ + begin_plane * ori_in_channel_;
   auto dst_ptr = sub_in_dst_ + begin_plane * sub_in_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {
@@ -46,6 +49,7 @@ int SeparateInputRun(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 }
 
 int GroupConvolutionFp32CPUKernel::SeparateInput(int group_id) {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(group_id, sub_in_channel_, RET_ERROR);
   sub_in_src_ = reinterpret_cast<float *>(ori_in_data_) + group_id * sub_in_channel_;
   sub_in_dst_ = reinterpret_cast<float *>(group_convs_.at(group_id)->in_tensors().front()->data());
   CHECK_NULL_RETURN(sub_in_src_);
@@ -61,8 +65,11 @@ int GroupConvolutionFp32CPUKernel::SeparateInput(int group_id) {
 
 int GroupConvolutionFp32CPUKernel::Concat(int task_id) {
   auto plane_step = UP_DIV(out_plane_, out_thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, RET_ERROR);
   auto begin_plane = plane_step * task_id;
   auto end_plane = MSMIN(out_plane_, plane_step * (task_id + 1));
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, sub_out_channel_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, ori_out_channel_, RET_ERROR);
   auto src_ptr = sub_out_src_ + begin_plane * sub_out_channel_;
   auto dst_ptr = sub_out_dst_ + begin_plane * ori_out_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {
@@ -85,6 +92,7 @@ int ConcatOutputRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 
 int GroupConvolutionFp32CPUKernel::PostConcat(int group_id) {
   sub_out_src_ = reinterpret_cast<float *>(group_convs_.at(group_id)->out_tensors().front()->data());
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(group_id, sub_out_channel_, RET_ERROR);
   sub_out_dst_ = reinterpret_cast<float *>(ori_out_data_) + group_id * sub_out_channel_;
   CHECK_NULL_RETURN(sub_out_src_);
   CHECK_NULL_RETURN(sub_out_dst_);

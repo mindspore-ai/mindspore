@@ -93,9 +93,15 @@ int CumSumCPUKernel::DoCumsum(int task_id) {
   float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
 
-  float *input = input_data + task_id * unit_ * axis_dim_ * in_dim_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, unit_, RET_ERROR);
+  int total_unit = task_id * unit_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_unit, axis_dim_, RET_ERROR);
+  int total_axis_dim = total_unit * axis_dim_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_axis_dim, in_dim_, RET_ERROR);
+  int total_axis_in_dim = total_axis_dim * in_dim_;
+  float *input = input_data + total_axis_in_dim;
   int out_dim = MSMIN(out_dim_ - unit_ * task_id, unit_);
-  float *output = output_data + task_id * unit_ * axis_dim_ * in_dim_;
+  float *output = output_data + total_axis_in_dim;
   if (!param_->reverse_) {
     Cumsum(input, output, out_dim, axis_dim_, in_dim_, param_->exclusive_);
   } else {
@@ -110,9 +116,15 @@ int CumSumCPUKernel::DoCumsumInt(int task_id) {
   int *output_data = reinterpret_cast<int *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
 
-  int *input = input_data + task_id * unit_ * axis_dim_ * in_dim_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, unit_, RET_ERROR);
+  int total_unit = task_id * unit_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_unit, axis_dim_, RET_ERROR);
+  int total_axis_dim = total_unit * axis_dim_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_axis_dim, in_dim_, RET_ERROR);
+  int total_axis_in_dim = total_axis_dim * in_dim_;
+  int *input = input_data + total_axis_in_dim;
   int out_dim = MSMIN(out_dim_ - unit_ * task_id, unit_);
-  int *output = output_data + task_id * unit_ * axis_dim_ * in_dim_;
+  int *output = output_data + total_axis_in_dim;
   if (!param_->reverse_) {
     CumsumInt(input, output, out_dim, axis_dim_, in_dim_, param_->exclusive_);
   } else {

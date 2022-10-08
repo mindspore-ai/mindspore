@@ -49,6 +49,7 @@ int AddNCPUKernel::ReSize() { return RET_OK; }
 
 int AddNCPUKernel::AddNParallelRun(int thread_id, float lhs_scale, float rhs_scale) {
   int count_per_thread = UP_DIV(elements_num_, op_parameter_->thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(thread_id, count_per_thread, RET_ERROR);
   int count = MSMIN(count_per_thread, elements_num_ - thread_id * count_per_thread);
   auto stride = count_per_thread * thread_id;
   auto ret = ElementAdd(in1_addr_ + stride, in2_addr_ + stride, out_addr_ + stride, count);

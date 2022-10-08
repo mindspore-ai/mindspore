@@ -33,6 +33,7 @@ int ConvolutionDepthwise3x3CPUKernel::Prepare() {
     CHECK_NULL_RETURN(weight_tensor);
     int channel = weight_tensor->Batch();
     int c4 = UP_ROUND(channel, C4NUM);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(c4, C12NUM, RET_ERROR);
     int pack_weight_size = c4 * C12NUM;
     set_workspace_size(pack_weight_size * sizeof(float));
   }
@@ -60,12 +61,15 @@ int ConvolutionDepthwise3x3CPUKernel::ReSize() {
 int ConvolutionDepthwise3x3CPUKernel::DoExecute(int task_id) {
   int units = UP_DIV(conv_param_->output_w_, C2NUM);  // F(2, 3) contains 2 conv units
   int c4 = UP_ROUND(conv_param_->input_channel_, C4NUM);
-  auto buffer = buffer_ + C12NUM * c4 * units * task_id;
+  int c12c4_units = C12NUM * c4 * units;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(c12c4_units, task_id, RET_ERROR);
+  auto buffer = buffer_ + c12c4_units * task_id;
   if (conv_param_->thread_num_ == 0) {
     MS_LOG(ERROR) << "conv_param_->thread_num_ must be not equal to 0";
     return RET_ERROR;
   }
   int step_oh = UP_DIV(conv_param_->output_h_, conv_param_->thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(step_oh, task_id, RET_ERROR);
   int start_oh = step_oh * task_id;
   int end_oh = MSMIN(start_oh + step_oh, conv_param_->output_h_);
   ConvDw3x3(output_ptr_, buffer, input_ptr_, reinterpret_cast<float *>(packed_weight_),
@@ -86,7 +90,12 @@ int ConvDw3x3Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int ConvolutionDepthwise3x3CPUKernel::Run() {
   int units = UP_DIV(conv_param_->output_w_, C2NUM);  // F(2, 3) contains 2 conv units
   int c4 = UP_ROUND(conv_param_->input_channel_, C4NUM);
-  int buffer_size = units * c4 * C12NUM * conv_param_->thread_num_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(C12NUM, c4, RET_ERROR);
+  int c12c4 = C12NUM * c4;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(c12c4, units, RET_ERROR);
+  int c12c4_units = c12c4 * units;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(c12c4_units, conv_param_->thread_num_, RET_ERROR);
+  int buffer_size = c12c4_units * conv_param_->thread_num_;
   buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(buffer_size * sizeof(float)));
   if (buffer_ == nullptr) {
     MS_LOG(ERROR) << "ConvDw3x3Run failed to allocate buffer";

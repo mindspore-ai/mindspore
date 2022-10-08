@@ -69,12 +69,10 @@ int ClipCPUKernel::DoClip(int task_id) {
 
   auto length = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(length, thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, RET_ERROR);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
-  }
-  if (INT_MUL_OVERFLOW(stride, task_id)) {
-    return RET_ERROR;
   }
 
   auto ret = RET_OK;

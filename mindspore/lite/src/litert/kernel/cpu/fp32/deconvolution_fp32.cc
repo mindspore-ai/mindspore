@@ -108,14 +108,19 @@ void DeConvolutionCPUKernel::PackWeight() {
 }
 
 int DeConvolutionCPUKernel::InitParam() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_w_, conv_param_->kernel_h_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
   input_plane_ = conv_param_->input_h_ * conv_param_->input_w_;
   kernel_plane_ = conv_param_->kernel_w_ * conv_param_->kernel_h_;
   output_plane_ = conv_param_->output_h_ * conv_param_->output_w_;
 
   matmul_param_->row_ = input_plane_;
   matmul_param_->deep_ = conv_param_->input_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_channel_, kernel_plane_, RET_ERROR);
   matmul_param_->col_ = conv_param_->output_channel_ * kernel_plane_;
   matmul_param_->row_align_ = UP_ROUND(matmul_param_->row_, row_tile_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(UP_ROUND(conv_param_->output_channel_, C8NUM), kernel_plane_, RET_ERROR);
   matmul_param_->col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * kernel_plane_;
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
@@ -140,36 +145,42 @@ int DeConvFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int DeConvolutionCPUKernel::DoDeconv(int task_id) {
-  int res_stride = UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_stride_, RET_ERROR);
+  int total_thead_stride_ = task_id * thread_stride_;
+  int res_stride = UP_DIV(conv_param_->output_channel_, C8NUM) - total_thead_stride_;
   int oc = MSMIN(thread_stride_, res_stride);
   int cur_stride = thread_stride_ * C8NUM;
-  res_stride = conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_, C8NUM, RET_ERROR);
+  int total_thead_stride_c8 = total_thead_stride_ * C8NUM;
+  res_stride = conv_param_->output_channel_ - total_thead_stride_c8;
   int oc_res = MSMIN(cur_stride, res_stride);
   if (oc <= 0 || oc_res <= 0) {
     return RET_OK;
   }
-  auto tmp_buffer = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_align_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_c8, kernel_plane_, RET_ERROR);
+  int plane_thead_stride_c8 = total_thead_stride_c8 * kernel_plane_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_thead_stride_c8, matmul_param_->row_align_, RET_ERROR);
+  int row_c8 = plane_thead_stride_c8 * matmul_param_->row_align_;
+  auto tmp_buffer = tmp_buffer_ + row_c8;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_thead_stride_c8, matmul_param_->deep_, RET_ERROR);
+  int deep_c8 = plane_thead_stride_c8 * matmul_param_->deep_;
+
 #ifdef ENABLE_AVX
-  DeconvMatmulAvx(
-    pack_input_,
-    reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-    tmp_buffer, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_, kernel_plane_);
+  DeconvMatmulAvx(pack_input_, reinterpret_cast<float *>(packed_weight_) + deep_c8, tmp_buffer, matmul_param_->deep_,
+                  matmul_param_->row_align_, oc * C8NUM * kernel_plane_, kernel_plane_);
 #elif ENABLE_SSE
-  DeconvMatmulFloatSse(
-    pack_input_,
-    reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-    tmp_buffer, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_);
+  DeconvMatmulFloatSse(pack_input_, reinterpret_cast<float *>(packed_weight_) + deep_c8, tmp_buffer,
+                       matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_);
 #else
-  MatMulOpt(
-    pack_input_,
-    reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-    tmp_buffer, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_,
-    matmul_param_->col_, OutType_C8);
+  MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + deep_c8, tmp_buffer, nullptr, ActType_No,
+            matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_, matmul_param_->col_,
+            OutType_C8);
 #endif
 
-  DeConvPostFp32C8(tmp_buffer, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
-                   reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id * C8NUM,
-                   output_ptr_ + task_id * thread_stride_ * C8NUM, oc_res, conv_param_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_c8, output_plane_, RET_ERROR);
+  DeConvPostFp32C8(tmp_buffer, pack_output_ + total_thead_stride_c8 * output_plane_,
+                   reinterpret_cast<float *>(bias_data_) + total_thead_stride_c8, output_ptr_ + total_thead_stride_c8,
+                   oc_res, conv_param_);
   return RET_OK;
 }
 
@@ -194,7 +205,12 @@ int DeConvolutionCPUKernel::Prepare() {
     auto kernel_h_ = weight_tensor->Height();
     auto kernel_w_ = weight_tensor->Width();
     int output_aligned_size = UP_ROUND(output_channel, C8NUM);
-    size_t pack_weight_size = input_channel * kernel_w_ * kernel_h_ * output_aligned_size * sizeof(float);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_w_, kernel_h_, RET_ERROR);
+    int kernel_hw = kernel_w_ * kernel_h_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, kernel_hw, RET_ERROR);
+    int kernel_chw = input_channel * kernel_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_chw, output_aligned_size, RET_ERROR);
+    size_t pack_weight_size = kernel_chw * output_aligned_size * sizeof(float);
     set_workspace_size(pack_weight_size);
   }
   if (matmul_param_ == nullptr) {
@@ -236,6 +252,7 @@ void DeConvolutionCPUKernel::FreeRunBuf() {
 }
 
 int DeConvolutionCPUKernel::InitRunBuf() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(UP_ROUND(conv_param_->output_channel_, C8NUM), output_plane_, RET_ERROR);
   pack_output_ = reinterpret_cast<float *>(
     ctx_->allocator->Malloc(UP_ROUND(conv_param_->output_channel_, C8NUM) * output_plane_ * sizeof(float)));
   if (pack_output_ == nullptr) {
@@ -243,6 +260,7 @@ int DeConvolutionCPUKernel::InitRunBuf() {
     return RET_NULL_PTR;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul_param_->row_align_, matmul_param_->col_8_, RET_ERROR);
   tmp_buffer_ = reinterpret_cast<float *>(
     ctx_->allocator->Malloc(matmul_param_->row_align_ * matmul_param_->col_8_ * sizeof(float)));
   if (tmp_buffer_ == nullptr) {
@@ -250,6 +268,7 @@ int DeConvolutionCPUKernel::InitRunBuf() {
     return RET_NULL_PTR;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul_param_->row_align_, matmul_param_->deep_, RET_ERROR);
   pack_input_ = reinterpret_cast<float *>(
     ctx_->allocator->Malloc(matmul_param_->row_align_ * matmul_param_->deep_ * sizeof(float)));
   if (pack_input_ == nullptr) {
@@ -279,6 +298,10 @@ int DeConvolutionCPUKernel::Run() {
     return error_code;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((conv_param_->input_batch_ - 1), conv_param_->input_channel_, RET_ERROR);
+  int input_bc = (conv_param_->input_batch_ - 1) * conv_param_->input_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(input_plane_, input_bc, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(output_plane_, input_bc, RET_ERROR);
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     input_ptr_ = src_in + batch_index * input_plane_ * conv_param_->input_channel_;
     output_ptr_ = src_out + batch_index * output_plane_ * conv_param_->output_channel_;

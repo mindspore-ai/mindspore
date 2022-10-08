@@ -71,9 +71,17 @@ int GruCPUKernel::InitParam() {
   std::vector<int> w_shape = weight_g->shape();
   gru_param_->hidden_size_ = w_shape.at(1) / gate_num;
 
-  gru_param_->output_step_ = gru_param_->bidirectional_ ? 2 * gru_param_->batch_ * gru_param_->hidden_size_
-                                                        : gru_param_->batch_ * gru_param_->hidden_size_;
-  weight_batch_ = gru_param_->bidirectional_ ? 2 * gate_num : gate_num;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(gru_param_->batch_, gru_param_->hidden_size_, RET_ERROR);
+  int gru_bh = gru_param_->batch_ * gru_param_->hidden_size_;
+  if (gru_param_->bidirectional_) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(C2NUM, gru_bh, RET_ERROR);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(C2NUM, gate_num, RET_ERROR);
+    gru_param_->output_step_ = C2NUM * gru_bh;
+    weight_batch_ = C2NUM * gate_num;
+  } else {
+    gru_param_->output_step_ = gru_bh;
+    weight_batch_ = gate_num;
+  }
 
 #ifdef ENABLE_AVX
   row_tile_ = C6NUM;
@@ -88,6 +96,7 @@ int GruCPUKernel::InitParam() {
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
 #endif
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(gru_param_->seq_len_, gru_param_->batch_, RET_ERROR);
   gru_param_->input_row_align_ = UP_ROUND(gru_param_->seq_len_ * gru_param_->batch_, row_tile_);
   gru_param_->input_col_align_ = UP_ROUND(gru_param_->hidden_size_, col_tile_);
 
@@ -104,8 +113,10 @@ int GruCPUKernel::InitInputWeightBias() {
   // result -- row: seq_len * batch; col: hidden_size
   auto weight_g = in_tensors_.at(weight_g_index);
   MS_ASSERT(weight_g != nullptr);
-  weight_g_ptr_ = reinterpret_cast<float *>(
-    malloc(weight_batch_ * gru_param_->input_col_align_ * gru_param_->input_size_ * sizeof(float)));
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_batch_, gru_param_->input_col_align_, RET_ERROR);
+  int weight_size = weight_batch_ * gru_param_->input_col_align_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_size, gru_param_->input_size_, RET_ERROR);
+  weight_g_ptr_ = reinterpret_cast<float *>(malloc(weight_size * gru_param_->input_size_ * sizeof(float)));
   if (weight_g_ptr_ == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc weight_g_ptr_ error.";
     return RET_ERROR;
@@ -116,12 +127,12 @@ int GruCPUKernel::InitInputWeightBias() {
                  gru_param_->input_col_align_, nullptr);
 
   // input bias
-  input_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * gru_param_->input_col_align_ * sizeof(float)));
+  input_bias_ = reinterpret_cast<float *>(malloc(weight_size * sizeof(float)));
   if (input_bias_ == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc input_bias_ error.";
     return RET_ERROR;
   }
-  memset(input_bias_, 0, weight_batch_ * gru_param_->input_col_align_ * sizeof(float));
+  memset(input_bias_, 0, weight_size * sizeof(float));
   auto bias_g_data = reinterpret_cast<float *>(in_tensors_.at(bias_index)->data());
   CHECK_NULL_RETURN(bias_g_data);
   PackLstmBias(input_bias_, bias_g_data, weight_batch_, gru_param_->hidden_size_, gru_param_->input_col_align_,
@@ -138,9 +149,11 @@ int GruCPUKernel::InitStateWeightBias() {
   MS_ASSERT(weight_r != nullptr);
   auto weight_r_data = reinterpret_cast<float *>(weight_r->data());
   CHECK_NULL_RETURN(weight_r_data);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_batch_, gru_param_->state_col_align_, RET_ERROR);
+  int weight_plane_size = weight_batch_ * gru_param_->state_col_align_;
   if (!is_vec_) {
-    weight_r_ptr_ = reinterpret_cast<float *>(
-      malloc(weight_batch_ * gru_param_->state_col_align_ * gru_param_->hidden_size_ * sizeof(float)));
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_plane_size, gru_param_->hidden_size_, RET_ERROR);
+    weight_r_ptr_ = reinterpret_cast<float *>(malloc(weight_plane_size * gru_param_->hidden_size_ * sizeof(float)));
     if (weight_r_ptr_ == nullptr) {
       MS_LOG(ERROR) << "GruCPUKernel malloc weight_r_ptr_ error.";
       return RET_ERROR;
@@ -152,14 +165,15 @@ int GruCPUKernel::InitStateWeightBias() {
   }
 
   // state bias
-  state_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * gru_param_->state_col_align_ * sizeof(float)));
+  state_bias_ = reinterpret_cast<float *>(malloc(weight_plane_size * sizeof(float)));
   if (state_bias_ == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc state_bias_ error.";
     return RET_ERROR;
   }
-  memset(state_bias_, 0, weight_batch_ * gru_param_->state_col_align_ * sizeof(float));
+  memset(state_bias_, 0, weight_plane_size * sizeof(float));
   auto bias_r_data = reinterpret_cast<float *>(in_tensors_.at(bias_index)->data());
   CHECK_NULL_RETURN(bias_r_data);
+
   auto state_bias = bias_r_data + gate_num * gru_param_->hidden_size_;
   PackLstmBias(state_bias_, state_bias, weight_batch_, gru_param_->hidden_size_, gru_param_->state_col_align_,
                gru_param_->bidirectional_, nullptr);
@@ -203,6 +217,7 @@ int GruCPUKernel::MallocRunBuffer() {
   for (int i = 0; i < 4; i++) {
     buffer_[i] = nullptr;
   }
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(gru_param_->input_row_align_, gru_param_->input_size_, RET_ERROR);
   buffer_[packed_input_index] = reinterpret_cast<float *>(
     ms_context_->allocator->Malloc(gru_param_->input_row_align_ * gru_param_->input_size_ * sizeof(float)));
   if (buffer_[packed_input_index] == nullptr) {
@@ -210,14 +225,18 @@ int GruCPUKernel::MallocRunBuffer() {
     return RET_ERROR;
   }
 
-  buffer_[input_gate_index] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
-    gate_num * gru_param_->seq_len_ * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float)));
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(gate_num * gru_param_->hidden_size_, gru_param_->batch_, RET_ERROR);
+  int tmp_size = gate_num * gru_param_->hidden_size_ * gru_param_->batch_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(tmp_size, gru_param_->seq_len_, RET_ERROR);
+  buffer_[input_gate_index] =
+    reinterpret_cast<float *>(ms_context_->allocator->Malloc(gru_param_->seq_len_ * tmp_size * sizeof(float)));
   if (buffer_[input_gate_index] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc input * weight result matirx error.";
     return RET_ERROR;
   }
 
   if (!is_vec_) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(gru_param_->state_row_align_, gru_param_->hidden_size_, RET_ERROR);
     buffer_[packed_state_index] = reinterpret_cast<float *>(
       ms_context_->allocator->Malloc(gru_param_->state_row_align_ * gru_param_->hidden_size_ * sizeof(float)));
     if (buffer_[packed_state_index] == nullptr) {
@@ -226,8 +245,7 @@ int GruCPUKernel::MallocRunBuffer() {
     }
   }
 
-  buffer_[state_gate_index] = reinterpret_cast<float *>(
-    ms_context_->allocator->Malloc(gate_num * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float)));
+  buffer_[state_gate_index] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(tmp_size * sizeof(float)));
   if (buffer_[state_gate_index] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc state gate buffer error.";
     return RET_ERROR;
