@@ -31,7 +31,6 @@ from mindspore.common.api import context
 class ReduceOp:
     """
     Operation options for reducing tensors. This is an enumerated type, not an operator.
-    Mainly used in data parallel mode.
 
     The main calling methods are as follows:
 
@@ -395,7 +394,6 @@ class ReduceScatter(PrimitiveWithInfer):
     Reduces and scatters tensors from the specified communication group.
 
     Note:
-        The back propagation of the op is not supported yet. Stay tuned for more.
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
@@ -403,12 +401,13 @@ class ReduceScatter(PrimitiveWithInfer):
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
-                  like SUM, MAX, AVG. Default: ReduceOp.SUM.
+                  like SUM and MAX. Default: ReduceOp.SUM.
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Raises:
         TypeError: If any of operation and group is not a string.
-        ValueError: If the first dimension of the input cannot be divided by the rank size.
+        ValueError: If the first dimension of the input cannot be divided by the rank size. Rank size refers to the
+            number of cards in the communication group.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
