@@ -37,8 +37,11 @@ int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   }
   int shape_size = 0;
   if (inputs_size == C3NUM) {
-    if ((inputs[FIRST_INPUT]->data_ == NULL) || (inputs[SECOND_INPUT]->data_ == NULL) ||
-        (inputs[THIRD_INPUT]->data_ == NULL)) {
+    MS_CHECK_FALSE(inputs[FIRST_INPUT]->data_ == NULL, NNACL_INFER_INVALID);
+    MS_CHECK_FALSE(inputs[SECOND_INPUT]->data_ == NULL, NNACL_INFER_INVALID);
+    MS_CHECK_FALSE(inputs[THIRD_INPUT]->data_ == NULL, NNACL_INFER_INVALID);
+    if ((inputs[FIRST_INPUT]->data_type_ != inputs[SECOND_INPUT]->data_type_) ||
+        (inputs[FIRST_INPUT]->data_type_ != inputs[THIRD_INPUT]->data_type_)) {
       return NNACL_INFER_INVALID;
     }
     if (GetElementNum(inputs[SECOND_INPUT]) < 1 || GetElementNum(inputs[THIRD_INPUT]) < 1) {
