@@ -16,6 +16,10 @@
 """Defines image operators with functional form."""
 
 from mindspore.ops import operations as P
+from mindspore.ops.operations import image_ops as IMG
+import mindspore.common.dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 from .._primitive_cache import _get_cache_prim
 
 
@@ -134,7 +138,7 @@ def check_valid(bboxes, img_metas):
     return check_valid_op(bboxes, img_metas)
 
 
-def crop_and_resize(x, boxes, box_indices, crop_size, method="bilinear", extrapolation_value=0.0):
+def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", extrapolation_value=0.0):
     """
     Extracts crops from the input image tensor and resizes them.
 
@@ -143,7 +147,7 @@ def crop_and_resize(x, boxes, box_indices, crop_size, method="bilinear", extrapo
         For now, the backward of the operator only support bilinear method, for other methods, will return 0.
 
     Args:
-        x (Tensor): The input image must be a 4-D tensor of shape [batch, image_height, image_width, depth].
+        image (Tensor): The input image must be a 4-D tensor of shape [batch, image_height, image_width, depth].
            Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         boxes (Tensor): A 2-D tensor of shape [num_boxes, 4].
            The i-th row of the tensor specifies the coordinates of a box in the box_ind[i] image
@@ -167,12 +171,12 @@ def crop_and_resize(x, boxes, box_indices, crop_size, method="bilinear", extrapo
         A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth] with type: float32.
 
     Raises:
-        TypeError: If `x` or `boxes` or `box_indices` is not a Tensor.
+        TypeError: If `image` or `boxes` or `box_indices` is not a Tensor.
         TypeError: If `crop_size` is not a Tuple with two int32 elements.
         TypeError: If dtype of `boxes` is not float or that of `box_indices` is not int.
         TypeError: If `method` is not a str.
         TypeError: If `extrapolation_value` is not a float.
-        ValueError: If the shape rank of `x` is not 4.
+        ValueError: If the shape rank of `image` is not 4.
         ValueError: If the shape rank of `boxes` is not 2.
         ValueError: If the second dim of `boxes` is not 4.
         ValueError: If the shape rank of `box_indices` is not 1.
@@ -198,8 +202,8 @@ def crop_and_resize(x, boxes, box_indices, crop_size, method="bilinear", extrapo
         >>> print(output.shape)
          (5, 24, 24, 3)
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("For crop_and_resize, the input x must be a tensor")
+    if not isinstance(image, (Tensor, Tensor_)):
+        raise TypeError("For crop_and_resize, the input image must be a tensor")
     if not isinstance(boxes, (Tensor, Tensor_)):
         raise TypeError("For crop_and_resize, the input boxes must be a tensor")
     if not isinstance(box_indices, (Tensor, Tensor_)):
@@ -213,9 +217,10 @@ def crop_and_resize(x, boxes, box_indices, crop_size, method="bilinear", extrapo
     if crop_size[0] <= 0 or crop_size[1] <= 0:
         raise ValueError("For crop_and_resize, the crop_size's value must be positive.")
 
-    x_shape = x.shape
-    if len(x_shape) != 4:
-        raise ValueError("For crop_and_resize, the input x must be 4D Tensor, but got is {}D".format(len(x_shape)))
+    image_shape = image.shape
+    if len(image_shape) != 4:
+        raise ValueError(
+            "For crop_and_resize, the input image must be 4D Tensor, but got is {}D".format(len(image_shape)))
     boxes_dtype = _get_cache_prim(P.DType)()(boxes)
     if boxes_dtype not in [mstype.float32]:
         raise TypeError(
@@ -236,7 +241,7 @@ def crop_and_resize(x, boxes, box_indices, crop_size, method="bilinear", extrapo
                          ", but got {} vs {}".format(box_indices_shape[0], boxes_shape[0]))
 
     _crop_and_resize = _get_cache_prim(IMG.CropAndResize)(method, extrapolation_value)
-    return _crop_and_resize(x, boxes, box_indices, crop_size)
+    return _crop_and_resize(image, boxes, box_indices, crop_size)
 
 
 __all__ = [
