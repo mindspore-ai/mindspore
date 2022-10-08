@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_ACL_CALL_H_
-#define MINDSPORE_CCSRC_CXX_API_ACL_CALL_H_
+#ifndef MINDSPORE_CCSRC_CXX_API_UTILS_H_
+#define MINDSPORE_CCSRC_CXX_API_UTILS_H_
 #include <string>
 #include <functional>
 #include "include/api/visible.h"
@@ -22,4 +22,4 @@ namespace mindspore {
 MS_API bool CreateGroupsByCkptFile(const std::string &file);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_CXX_API_ACL_CALL_H_
+#endif  // MINDSPORE_CCSRC_CXX_API_UTILS_H_

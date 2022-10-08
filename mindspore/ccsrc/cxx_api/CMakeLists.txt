@@ -53,14 +53,14 @@ if(ENABLE_D OR ENABLE_GPU)
     list(APPEND MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc)
 endif()
 
-if(ENABLE_ACL)
-    list(APPEND MSLIB_SRC
+if(ENABLE_ACL AND NOT BUILD_LITE)
+    list(APPEND MSLIB_SRC_DEPEND
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc)
-    list(APPEND MSLIB_SRC ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc)
-    list(APPEND MSLIB_SRC ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/map.cc)
-    list(APPEND MSLIB_SRC ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/arrangement.cc)
-    list(APPEND MSLIB_SRC ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc)
-    list(APPEND MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/utils.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/map.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/arrangement.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_CURRENT_SOURCE_DIR}/utils.cc)
 endif()
 
 if((MODE_ASCEND_ACL) AND NOT BUILD_LITE)
@@ -93,17 +93,11 @@ if(BUILD_LITE)
             "${CMAKE_CURRENT_SOURCE_DIR}/types.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
-            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc"
-            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc"
-            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/map.cc"
-            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/arrangement.cc"
-            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc"
             ${ACL_REMOVE_SRC})
 endif()
 
 add_library(mindspore_shared_lib_obj OBJECT ${MSLIB_SRC})
-add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:mindspore_shared_lib_obj>)
+add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:mindspore_shared_lib_obj> ${MSLIB_SRC_DEPEND})
 if(BUILD_LITE)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
     add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
