@@ -175,7 +175,6 @@ class GradExecutor {
   bool grad_is_running_{false};
   bool need_renormalize_{false};
   bool eliminate_forward_{true};
-  bool enable_tuple_to_tensor_{false};
   int custom_bprop_cell_count_{0};
   size_t cell_order_{0};
   size_t grad_order_{0};
