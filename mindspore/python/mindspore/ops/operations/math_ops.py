@@ -2349,8 +2349,8 @@ class ReduceStd(Primitive):
 
 class Einsum(Primitive):
     """
-    This operator uses equation to represent a tuple of tensors operations,
-    you can use this operator to perform diagonal/reducesum/transpose/matmul/mul/inner product operations, etc.
+    This operator uses equation to represent a tuple of tensors operations.
+    You can use this operator to perform diagonal/reducesum/transpose/matmul/mul/inner product operations, etc.
 
     The inputs must be a tuple of tensors.
     When the inputs are only one tensor, you can input (tensor, )

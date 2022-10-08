@@ -194,7 +194,7 @@ mindspore.rewrite
     下面提到的NodeImpl是Node的实现，它不是Rewrite的接口。Rewrite建议调用Node的特定 `create` 方法来实例化Node的实例，例如 `create_call_cell`，而不是直接调用Node的构造函数，所以不要关心NodeImpl是什么，只需要看做一个句柄即可。
 
     参数：
-        - **node** ( Node ) - SymbolTree中节点的具体实现类的实例。
+        - **node** (Node) - SymbolTree中节点的具体实现类的实例。
 
     .. py:method:: mindspore.rewrite.Node.create_call_cell(cell: Cell, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = "", is_sub_net: bool = False)
         :staticmethod:

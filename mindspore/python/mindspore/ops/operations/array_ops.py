@@ -4218,7 +4218,8 @@ class ScatterMin(_ScatterOpDynamic):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    the relatively highest priority data type. A RuntimeError will be reported
+    when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
         use_locking (bool): Whether to protect the assignment by a lock. Default: False.

@@ -3,9 +3,7 @@ mindspore.dataset.audio.MaskAlongAxisIID
 
 .. py:class:: mindspore.dataset.audio.MaskAlongAxisIID(mask_param, mask_value, axis)
 
-    对音频波形应用掩码。掩码的起始和长度由 `[mask_start, mask_start + mask_width)` 决定。
-
-    其中 `mask_width` 从 `uniform[0, mask_param]` 中采样， `mask_start` 从 `uniform[0, max_length - mask_width]` 中采样，
+    对音频波形应用掩码。掩码的起始和长度由 `[mask_start, mask_start + mask_width)` 决定，其中 `mask_width` 从 `uniform[0, mask_param]` 中采样， `mask_start` 从 `uniform[0, max_length - mask_width]` 中采样，
     `max_length` 是光谱图中特定轴的列数。
 
     参数：

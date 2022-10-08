@@ -6,7 +6,7 @@ mindspore.dataset.LJSpeechDataset
     读取和解析LJSpeech数据集的源文件构建数据集。
 
     生成的数据集有两列: `[waveform, sample_rate, transcription, normalized_transcript]`。
-    `waveform` 列的数据类型为float32， `sample_rate` 列的数据类型为int32， `transcription` 列的数据类型为string， `normalized_transcript` 列的数据类型为string。
+    `waveform` 列的数据类型为float32。 `sample_rate` 列的数据类型为int32。 `transcription` 列的数据类型为string。 `normalized_transcript` 列的数据类型为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
@@ -58,9 +58,9 @@ mindspore.dataset.LJSpeechDataset
     **关于LJSPEECH数据集：**
     
     LJSPEECH是一个公共领域的语音数据集，由13,100个来自7部非小说类书籍的段落短音频片段组成。
-    为每个剪辑片段都进行转录，剪辑的长度从1秒到10秒不等，总长度约为24小时。
+    为每个剪辑片段都进行转录。剪辑的长度从1秒到10秒不等，总长度约为24小时。
 
-    这些被阅读的文本于1884年至1964年间出版，属于公共领域，这些音频由LibriVox项目于2016-17年录制。
+    这些被阅读的文本于1884年至1964年间出版，属于公共领域。这些音频由LibriVox项目于2016-17年录制。
 
     以下是原始的LJSPEECH数据集结构。
     可以将数据集文件解压缩到以下目录结构中，并由MindSpore的API读取。

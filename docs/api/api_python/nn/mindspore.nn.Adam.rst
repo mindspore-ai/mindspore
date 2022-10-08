@@ -75,7 +75,8 @@ mindspore.nn.Adam
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 
         .. include:: mindspore.nn.optim_arg_loss_scale.rst
-        - **kwargs** -
+
+        - **kwargs** - 
             - use_lazy (bool)：是否使用Lazy Adam算法。默认值：False。如果为True，使用lazy Adam，反之使用普通Adam算法。
             - use_offload (bool)：是否在主机CPU上运行Adam优化算法。默认值：False。如果为True，使用offload方法，反之使用普通Adam算法。
 

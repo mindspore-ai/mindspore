@@ -22,37 +22,16 @@ mindspore.train.OnRequestExit
         - **ValueError** - `directory` 不是字符串。
         - **ValueError** - `sig` 不是int值，或者是signal.SIGKILL。
 
-    .. py:method:: on_train_begin(run_context)
-
-        在训练开始时，注册用户传入退出信号的处理程序。
-
-        参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
-
-    .. py:method:: on_train_step_end(run_context)
-
-        在训练step结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True。在本轮训练结束后，退出训练。
-
-        参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
-
-    .. py:method:: on_train_epoch_end(run_context)
-
-        在训练epoch结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True。在本轮训练结束后，退出训练。
-
-        参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
-
-    .. py:method:: on_train_end(run_context)
-
-        在训练结束时，如果接收到退出信号，根据用户配置，保存checkpoint和mindir。
-
-        参数：
-            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
-
     .. py:method:: on_eval_begin(run_context)
 
         在推理开始时，注册用户传入退出信号的处理程序。
+
+        参数：
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
+
+    .. py:method:: on_eval_end(run_context)
+
+        在推理结束时，如果接收到退出信号，根据用户配置，保存checkpoint和mindir。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
@@ -64,9 +43,31 @@ mindspore.train.OnRequestExit
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
 
-    .. py:method:: on_eval_end(run_context)
+    .. py:method:: on_train_begin(run_context)
 
-        在推理结束时，如果接收到退出信号，根据用户配置，保存checkpoint和mindir。
+        在训练开始时，注册用户传入退出信号的处理程序。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
+
+    .. py:method:: on_train_end(run_context)
+
+        在训练结束时，如果接收到退出信号，根据用户配置，保存checkpoint和mindir。
+
+        参数：
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
+
+    .. py:method:: on_train_epoch_end(run_context)
+
+        在训练epoch结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True。在本轮训练结束后，退出训练。
+
+        参数：
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
+
+    .. py:method:: on_train_step_end(run_context)
+
+        在训练step结束时，如果接收到退出信号，将 `run_context` 的 `_stop_requested` 属性置为True。在本轮训练结束后，退出训练。
+
+        参数：
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
+

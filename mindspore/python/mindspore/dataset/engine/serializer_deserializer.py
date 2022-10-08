@@ -42,10 +42,10 @@ def serialize(dataset, json_filepath=""):
         json_filepath (str): The filepath where a serialized JSON file will be generated (default="").
 
     Returns:
-       Dict, The dictionary contains the serialized dataset graph.
+       Dict, the dictionary contains the serialized dataset graph.
 
     Raises:
-        OSError: Cannot open a file
+        OSError: Cannot open a file.
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)

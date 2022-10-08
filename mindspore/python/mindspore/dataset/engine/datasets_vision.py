@@ -4396,9 +4396,7 @@ class SVHNDataset(GeneratorDataset):
 
     About SVHN dataset:
 
-    SVHN dataset consists of 10 digit classes.
-    SVHN is obtained from house numbers in Google Street View images.
-    73257 digits for training, 26032 digits for testing, and 531131 additional extra training data.
+    SVHN dataset consists of 10 digit classes and is obtained from house numbers in Google Street View images.
 
     Here is the original SVHN dataset structure.
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
@@ -4645,7 +4643,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         >>> # In VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
         >>> # In VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
 
-    About VOC dataset.
+    About VOC dataset:
 
     The PASCAL Visual Object Classes (VOC) challenge is a benchmark in visual
     object category recognition and detection, providing the vision and machine

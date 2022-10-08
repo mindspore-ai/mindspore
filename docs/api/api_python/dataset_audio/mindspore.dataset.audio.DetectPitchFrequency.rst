@@ -3,7 +3,8 @@ mindspore.dataset.audio.DetectPitchFrequency
 
 .. py:class:: mindspore.dataset.audio.DetectPitchFrequency(sample_rate, frame_time=0.01, win_length=30, freq_low=85, freq_high=3400)
 
-    检测音调频率，基于归一化互相关函数和中位平滑来实现。
+    检测音调频率。
+    基于归一化互相关函数和中位平滑来实现。
 
     参数：
         - **sample_rate** (int) - 采样频率（单位：Hz），值必须为44100或48000。

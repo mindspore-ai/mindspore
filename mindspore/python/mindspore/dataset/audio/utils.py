@@ -166,7 +166,7 @@ class NormType(str, Enum):
 
 class ResampleMethod(str, Enum):
     """
-    Resample method
+    Resample method.
 
     Possible enumeration values are: ResampleMethod.SINC_INTERPOLATION, ResampleMethod.KAISER_WINDOW.
 

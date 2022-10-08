@@ -20,8 +20,8 @@ mindspore.ops.NeighborExchange
         - **recv_type** (type) - 指定 `recv_rank_ids` 接收的数据类型。
         - **group** (str) - 要处理的通信范围。默认值："GlobalComm.WORLD_COMM_GROUP"。
 
-    输入:
+    输入：
         - **input_x** (tuple[Tensor]) - shape与参数send_shapes相同。
 
-    输出:
+    输出：
         Tuple tensor，shape与参数recv_shapes相同。

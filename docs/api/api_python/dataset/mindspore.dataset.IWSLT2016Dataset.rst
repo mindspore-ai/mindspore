@@ -5,7 +5,7 @@ mindspore.dataset.IWSLT2016Dataset
 
     读取和解析IWSLT2016数据集的源数据集。
 
-    生成的数据集有两列 `[text, translation]` ， `text` 列的数据类型是string。 `translation` 列的数据类型是string。
+    生成的数据集有两列 `[text, translation]` 。 `text` 列的数据类型是string。 `translation` 列的数据类型是string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
