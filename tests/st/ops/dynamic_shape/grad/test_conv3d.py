@@ -47,31 +47,33 @@ def grad_dyn_case(is_dynamic_rank):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape_1():
+def test_grad_dynamic_shape_1():
     """
-    Feature: test Conv3D grad dynamic shape on GPU.
+    Feature: test Conv3D grad dynamic shape.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(False)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank_1():
+def test_grad_dynamic_rank_1():
     """
-    Feature: test Conv3D grad dynamic rank on GPU.
+    Feature: test Conv3D grad dynamic rank.
     Description: input is dynamic rank.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_grad_dynamic_shape_2():
@@ -84,7 +86,7 @@ def test_gpu_grad_dynamic_shape_2():
     grad_dyn_case(False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_grad_dynamic_rank_2():
@@ -94,32 +96,4 @@ def test_gpu_grad_dynamic_rank_2():
     Expectation: the result match with static shape
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    grad_dyn_case(True)
-
-
-@pytest.mark.skip(reason="CPU无Conv3DBackpropFilter, Conv3DBackpropInput, kernel实现")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_shape():
-    """
-    Feature: test Conv3D grad dynamic shape on CPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    grad_dyn_case(False)
-
-
-@pytest.mark.skip(reason="CPU无Conv3DBackpropFilter, Conv3DBackpropInput, kernel实现")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_rank():
-    """
-    Feature: test Conv3D grad dynamic rank on CPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     grad_dyn_case(True)

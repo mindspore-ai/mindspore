@@ -61,3 +61,29 @@ def test_cpu_grad_dynamic_rank():
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     grad_dyn_case(True)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gpu_grad_dynamic_shape():
+    """
+    Feature: test SparseSegmentSqrtN dynamic shape on GPU.
+    Description: input is dynamic shape.
+    Expectation: the result match with static shape
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    grad_dyn_case(False)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gpu_grad_dynamic_rank():
+    """
+    Feature: test SparseSegmentSqrtN dynamic rank on GPU.
+    Description: input is dynamic rank.
+    Expectation: the result match with static shape
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    grad_dyn_case(True)

@@ -62,6 +62,9 @@ def test_gpu_grad_dynamic_rank():
     grad_dyn_case(True)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cpu_grad_dynamic_shape():
     """
     Feature: test SquaredDifference dynamic shape on CPU.
@@ -72,6 +75,9 @@ def test_cpu_grad_dynamic_shape():
     grad_dyn_case(False)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cpu_grad_dynamic_rank():
     """
     Feature: test SquaredDifference dynamic rank on CPU.

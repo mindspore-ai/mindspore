@@ -172,6 +172,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kResizeNearestNeighborV2Grad, ShapeSet{1}},
                                          {kScatterNd, ShapeSet{2}},
                                          {kSparseToDenseV2, ShapeSet{1}},
+                                         {prim::kPrimSparseTensorDenseMatmul->name(), ShapeSet{2}},
                                          {kSliceGrad, ShapeSet{2, 3}},
                                          {kFillV2, ShapeSet{0}},
                                          {kRandomCategorical, ShapeSet{1}},

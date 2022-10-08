@@ -182,14 +182,11 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto x_shape = x_shape_map[kShape];
   auto w_shape = w_shape_map[kShape];
 
-  auto x_shape_rank = SizeToLong(x_shape.size());
-  constexpr int dynamic_rank_len = 1;
-  constexpr int dynamic_rank_value = -2;
   ShapeVector output_shape;
-  if (x_shape_rank == dynamic_rank_len && x_shape[0] == dynamic_rank_value) {
+  if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
     std::vector<ValuePtr> pad_list_val = {MakeValue(0), MakeValue(0), MakeValue(0), MakeValue(0)};
     primitive->set_attr("pad_list", MakeValue(pad_list_val));
-    output_shape = {dynamic_rank_value};
+    output_shape = {abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(output_shape);
   }
 

@@ -39,6 +39,9 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
   auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
+  if (IsDynamicRank(element0_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
   auto element0_rank = element0_shape.size();
   auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
   CheckAndConvertUtils::CheckInRange<int64_t>("Concat axis", axis_temp, kIncludeBoth,
@@ -55,7 +58,7 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
     (void)CheckAndConvertUtils::CheckInteger(elementi + " shape rank", SizeToLong(elementi_shape.size()), kEqual,
                                              SizeToLong(element0_shape.size()), prim_name);
     for (size_t j = 0; j < element0_rank; ++j) {
-      if (j != axis && elementi_shape[j] != element0_shape[j]) {
+      if (j != axis && elementi_shape[j] != element0_shape[j] && elementi_shape[j] != -1 && element0_shape[j] != -1) {
         MS_EXCEPTION(ValueError)
           << "For '" << prim_name << "', element" << i
           << " shape in input can not concat with element0. To perform concat in the axis 0 "

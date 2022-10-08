@@ -77,6 +77,7 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   std::function<void(const T *, T *, size_t, size_t, TransposeIterator *)> reduce_func_;
   bool simple_execute_{false};
   std::string kernel_name_;
+  bool need_skip_execute_{false};
 };
 
 template <typename T>
@@ -212,6 +213,12 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
     axis_ = kernel_ptr->get_axis();
   }
   (void)GetDynamicAttrIntValue(inputs, kAxisIndex_, inputsOnHost, kernel_name_, &axis_);
+  if (inputs.size() > kAxisIndex_ &&
+      AnfAlgo::IsDynamicShapeSkipExecute(kernel_name_, inputs[kAxisIndex_]->GetShapeVector())) {
+    need_skip_execute_ = true;
+  } else {
+    need_skip_execute_ = false;
+  }
   HandleInputAxis();
   return KRET_OK;
 }
@@ -276,6 +283,13 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
   size_t input_size = inputs[0]->size / sizeof(T);
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  if (need_skip_execute_) {
+    auto ret = memcpy_s(output_addr, outputs[0]->size, input_addr, inputs[0]->size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+    }
+    return true;
+  }
 
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
     if (input_size < kReduceSmallVectorSize) {

@@ -1350,6 +1350,17 @@ void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   graph->set_ref_out_in_map(new_ref_map);
 }
 
+bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const std::string &op_name, const ShapeVector &axes_shape) {
+  // Skip run ReduceSum when axis is a Empty Tensor
+  if (op_name != kReduceSumOpName) {
+    return false;
+  }
+  if (std::any_of(axes_shape.begin(), axes_shape.end(), [](int64_t shape) { return shape == 0; })) {
+    return true;
+  }
+  return false;
+}
+
 bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
   // Skip run ReduceSum when axis is a Empty Tensor
   MS_EXCEPTION_IF_NULL(cnode);

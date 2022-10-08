@@ -49,6 +49,9 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
   auto keep_dims_value = primitive->GetAttr("keep_dims");
   MS_EXCEPTION_IF_NULL(keep_dims_value);
   auto keep_dims = GetValue<bool>(keep_dims_value);
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
+  }
   auto x_rank = SizeToLong(x_shape.size());
   if (x_rank == 0) {
     if (axis != -1 && axis != 0) {

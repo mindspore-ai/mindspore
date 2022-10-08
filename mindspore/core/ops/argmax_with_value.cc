@@ -45,6 +45,9 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_map[kShape];
   auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
+  }
   auto x_rank = static_cast<int64_t>(x_shape.size());
   if (x_rank == 0) {
     if (axis != -1 && axis != 0) {

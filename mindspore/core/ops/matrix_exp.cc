@@ -38,12 +38,19 @@ abstract::ShapePtr MatrixExpInferShape(const PrimitivePtr &primitive, const std:
   auto x_rank = SizeToLong(x_shape.size());
   constexpr int64_t number1 = 1;
   constexpr int64_t number2 = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
-  if (SizeToLong(x_shape[x_rank - number1]) != SizeToLong(x_shape[x_rank - number2])) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input expects a tensor of squared matrices"
-                             << ", but got shape " << x_shape << ".";
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
-  (void)CheckAndConvertUtils::CheckInteger("row size", x_shape[x_rank - number1], kGreaterEqual, number1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
+  if (x_shape[x_rank - number1] != x_shape[x_rank - number2]) {
+    if (x_shape[x_rank - number1] == -1 || x_shape[x_rank - number2] == -1) {
+      MS_LOG(WARNING) << "There is one dimension of the " << prim_name << "'s input is dynamic. Please make sure "
+                      << "the input is a squared matrix whose last two dimensions are equal during runtime.";
+    } else {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input expects a tensor of squared matrices"
+                               << ", but got shape " << x_shape << ".";
+    }
+  }
   return shape_element;
 }
 
