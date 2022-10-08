@@ -94,7 +94,7 @@ def assign_sub(variable, value):
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
         >>> output = ops.assign_sub(variable, value)
-        >>> print(output)
+        >>> print(variable.asnumpy())
         [-99]
     """
     return assign_sub_(variable, value)
