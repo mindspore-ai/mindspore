@@ -24,17 +24,17 @@ template <typename IndiceType>
 __global__ void SparseTensorToCSRSparseMatrixKernel(const IndiceType* x_indices_ptr,
                                                     IndiceType *out_row_indices_ptr,
                                                     IndiceType *out_col_indices_ptr,
-                                                    IndiceType *batch_ptr,
+                                                    IndiceType *out_batch_pointers_ptr,
                                                     int total_num,
                                                     int rank) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < total_num; i += blockDim.x * gridDim.x) {
-        IndiceType row_idx = x_indices_ptr[i * rank + rank - 2];
-        IndiceType col_idx = x_indices_ptr[i * rank + rank - 1];
-        out_row_indices_ptr[i] = row_idx;
-        out_col_indices_ptr[i] = col_idx;
+        out_row_indices_ptr[i] = static_cast<IndiceType>(__ldg(x_indices_ptr + i * rank + rank - 2));
+        out_col_indices_ptr[i] = static_cast<IndiceType>(__ldg(x_indices_ptr + i * rank + rank - 1));
         if (rank == 3) {
             IndiceType batch = x_indices_ptr[i * rank];
-            MsAtomicAdd(batch_ptr + batch + 1, (IndiceType)1);
+            MsAtomicMax(out_batch_pointers_ptr + batch + 1, i + 1);
+        } else {
+            MsAtomicMax(out_batch_pointers_ptr + 1, i + 1);
         }
     }
 }
@@ -43,27 +43,20 @@ template <typename IndiceType>
 CUDA_LIB_EXPORT void SparseTensorToCSRSparseMatrix(const IndiceType* x_indices_ptr,
                                                    IndiceType *out_row_indices_ptr,
                                                    IndiceType *out_col_indices_ptr,
-                                                   IndiceType *batch_ptr,
+                                                   IndiceType *out_batch_pointers_ptr,
                                                    int total_num,
                                                    int rank,
                                                    cudaStream_t cuda_stream,
                                                    const uint32_t device_id) {;
     SparseTensorToCSRSparseMatrixKernel<<<CUDA_BLOCKS(device_id, total_num), CUDA_THREADS(device_id), 0,
-        cuda_stream>>>(x_indices_ptr, out_row_indices_ptr, out_col_indices_ptr, batch_ptr, total_num, rank);
+        cuda_stream>>>(x_indices_ptr, out_row_indices_ptr, out_col_indices_ptr, out_batch_pointers_ptr,
+        total_num, rank);
 }
 
 template CUDA_LIB_EXPORT void SparseTensorToCSRSparseMatrix<int32_t>(const int32_t* x_indices_ptr,
                                                                      int32_t *out_row_indices_ptr,
                                                                      int32_t *out_col_indices_ptr,
-                                                                     int32_t *batch_ptr,
-                                                                     int total_num,
-                                                                     int rank,
-                                                                     cudaStream_t cuda_stream,
-                                                                     const uint32_t device_id);
-template CUDA_LIB_EXPORT void SparseTensorToCSRSparseMatrix<int64_t>(const int64_t* x_indices_ptr,
-                                                                     int64_t *out_row_indices_ptr,
-                                                                     int64_t *out_col_indices_ptr,
-                                                                     int64_t *batch_ptr,
+                                                                     int32_t *out_batch_pointers_ptr,
                                                                      int total_num,
                                                                      int rank,
                                                                      cudaStream_t cuda_stream,
