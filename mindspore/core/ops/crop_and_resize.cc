@@ -34,7 +34,7 @@ class CropAndResizeInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    (void)CheckAndConvertUtils::CheckInteger("[input number]", static_cast<int64_t>(input_args.size()), kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("[input] number", static_cast<int64_t>(input_args.size()), kEqual,
                                              kCropAndResizeInputSize, prim_name);
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
@@ -58,13 +58,13 @@ class CropAndResizeInfer : public abstract::OpInferBase {
     }
 
     auto x_dims = static_cast<int64_t>(x_shape.size());
-    (void)CheckAndConvertUtils::CheckInteger("[x shape-length]", x_dims, kEqual, kShapeRank4, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("[x] rank", x_dims, kEqual, kShapeRank4, prim_name);
     int64_t out_channel = x_shape.back();
 
     auto num_boxes = ParseNumBoxes(box_shape, box_index_shape, prim_name);
     auto crop_size_type = input_args[kInputIndex3]->BuildType();
     MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr,
-                               "For primitive[" + prim_name + "], the [crop_size TypeId] is a nullptr.");
+                               "For primitive[" + prim_name + "], the [crop_size] typeid is a nullptr.");
     auto value_ptr = input_args[kInputIndex3]->BuildValue();
     std::vector<int64_t> crop_size;
     if (!IsIdentidityOrSubclass(crop_size_type, kTuple)) {
@@ -86,10 +86,10 @@ class CropAndResizeInfer : public abstract::OpInferBase {
                                 << real_type_str;
       }
     }
-    (void)CheckAndConvertUtils::CheckInteger("[crop_size length]", static_cast<int64_t>(crop_size.size()), kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("[crop_size] length", static_cast<int64_t>(crop_size.size()), kEqual,
                                              kShapeRank2, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("[crop height]", crop_size[0], kGreaterThan, 0, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("[crop width]", crop_size.back(), kGreaterThan, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("[crop] height", crop_size[0], kGreaterThan, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("[crop] width", crop_size.back(), kGreaterThan, 0, prim_name);
     ShapeVector out_shape = {num_boxes, crop_size[0], crop_size.back(), out_channel};
     return std::make_shared<abstract::Shape>(out_shape);
   }
@@ -97,7 +97,7 @@ class CropAndResizeInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    (void)CheckAndConvertUtils::CheckInteger("[input number]", static_cast<int64_t>(input_args.size()), kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("[input] number", static_cast<int64_t>(input_args.size()), kEqual,
                                              kCropAndResizeInputSize, prim_name);
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
@@ -116,14 +116,14 @@ class CropAndResizeInfer : public abstract::OpInferBase {
   int64_t ParseNumBoxes(const ShapeVector &box_shape, const ShapeVector &box_index_shape,
                         const std::string &prim_name) const {
     int64_t box_dims = static_cast<int64_t>(box_shape.size());
-    (void)CheckAndConvertUtils::CheckInteger("[boxes shape-length]", box_dims, kEqual, kShapeRank2, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("[boxes second-dim]", box_shape.back(), kEqual, kLimitValue4, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("[boxes] rank", box_dims, kEqual, kShapeRank2, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("[boxes] dim_1", box_shape.back(), kEqual, kLimitValue4, prim_name);
 
     int64_t box_index_dims = static_cast<int64_t>(box_index_shape.size());
-    (void)CheckAndConvertUtils::CheckInteger("[box_index shape-length]", box_index_dims, kEqual, 1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("[box_index] rank", box_index_dims, kEqual, 1, prim_name);
     if (box_shape[0] != box_index_shape[0]) {
       MS_EXCEPTION(ValueError) << "For primitive[" + prim_name +
-                                    "], the [boxes first-dim] must be equal to [box_index first-dim], but got " +
+                                    "], the [boxes] dim_0 must be equal to [box_index] dim_0, but got " +
                                     std::to_string(box_shape[0]) + " vs " + std::to_string(box_index_shape[0]) + ".";
     }
     return box_shape[0];
