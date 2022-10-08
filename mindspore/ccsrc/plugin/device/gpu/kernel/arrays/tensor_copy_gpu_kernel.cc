@@ -26,7 +26,15 @@ bool TensorCopyGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
   kernel_name_ = base_operator->name();
-
+  return true;
+}
+int TensorCopyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret;
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+    return ret;
+  }
   auto input_shapes = inputs.at(kIndex0)->GetShapeVector();
   auto output_shapes = outputs.at(kIndex0)->GetShapeVector();
   auto input_type = inputs.at(kIndex0)->GetDtype();
@@ -41,24 +49,9 @@ bool TensorCopyGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
                   << "', the shape of 'input' and the shape of 'output' should be same, but 'input' shape is "
                   << input_shapes << "while 'output' shape is " << output_shapes;
   }
-
   copy_size_ = GetTypeByte(TypeIdToType(input_type));
   copy_size_ = std::accumulate(input_shapes.begin(), input_shapes.end(), copy_size_, std::multiplies<size_t>());
-  InitSizeLists();
-  return true;
-}
-int TensorCopyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
-    return ret;
-  }
   return KRET_OK;
-}
-void TensorCopyGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(copy_size_);
-  output_size_list_.push_back(copy_size_);
 }
 
 bool TensorCopyGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
