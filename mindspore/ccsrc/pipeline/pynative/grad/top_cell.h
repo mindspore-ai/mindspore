@@ -29,6 +29,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "pybind11/numpy.h"
+#include "pybind11/pytypes.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "ir/anf.h"
 #include "frontend/optimizer/ad/kpynative.h"

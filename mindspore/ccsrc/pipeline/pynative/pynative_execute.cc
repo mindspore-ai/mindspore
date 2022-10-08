@@ -204,7 +204,7 @@ void PyNativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
   }
   const py::object ret;
   PyNativeExecutorTry(grad_executor()->LinkGraph, &ret, cell, out, args);
-  forward_executor()->ProcessAfterEndGraph();
+  forward_executor()->ProcessAfterEndGraph(cell);
 }
 
 void PyNativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,

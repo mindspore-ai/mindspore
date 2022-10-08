@@ -23,6 +23,7 @@
 #include <set>
 #include "pipeline/pynative/grad/top_cell.h"
 #include "utils/check_convert_utils.h"
+#include "pybind11/pytypes.h"
 
 namespace mindspore {
 namespace pynative {

@@ -30,6 +30,8 @@ namespace pynative {
 namespace {
 // primitive unable to infer value for constant input in PyNative mode
 const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "HookBackward", "CellBackwardHook"};
+constexpr char kBegin[] = "Begin";
+constexpr char kEnd[] = "End";
 enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 // Shallow Copy Value and change shape
@@ -373,16 +375,30 @@ void ForwardExecutor::ExecuteLazyTask() {
   }
 }
 
+void ForwardExecutor::PrintPyObjInfo(const py::object &cell, const std::string &str) const {
+  if (py::isinstance<Cell>(cell)) {
+    MS_LOG(DEBUG) << str << " run " << cell.cast<CellPtr>()->ToString();
+    return;
+  }
+  if (py::isinstance<py::function>(cell)) {
+    MS_LOG(DEBUG) << str << " run python function " << py::getattr(cell, "__name__").cast<std::string>();
+  }
+}
+
 void ForwardExecutor::ProcessBeforeNewGraph(const py::object &cell, const py::args &args) {
   if (py::isinstance<Cell>(cell)) {
     PushForwardCell(cell);
   }
+  PrintPyObjInfo(cell, kBegin);
   dynamic_shape()->SetFeedDynamicInputAbs(cell, args);
 }
 
 void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
   if (py::isinstance<Cell>(cell)) {
     PopForwardCell();
+  }
+  if (!grad()->grad_flag()) {
+    PrintPyObjInfo(cell, kEnd);
   }
 
   // Do some finishing work before end graph
@@ -398,10 +414,11 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
   }
 }
 
-void ForwardExecutor::ProcessAfterEndGraph() const {
+void ForwardExecutor::ProcessAfterEndGraph(const py::object &cell) const {
   if (IsFirstCell()) {
     ClearNodeAbsMap();
   }
+  PrintPyObjInfo(cell, kEnd);
 }
 
 std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim) {
