@@ -2591,6 +2591,9 @@ def check_is_tensor_bool_cond(shp):
     """check if tensor is a bool condition"""
     if shp in ((), (1,)):
         return True
+    if -1 in shp:
+        raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is "
+                         f"None")
     raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is {shp}")
 
 
