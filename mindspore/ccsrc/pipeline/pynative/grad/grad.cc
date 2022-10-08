@@ -385,6 +385,15 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::object &cell
 void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const {
   MS_EXCEPTION_IF_NULL(v);
   auto output_node = GetObjNode(v, obj_id);
+  if (v->isa<tensor::CSRTensor>()) {
+    auto csr_tensorptr = v->cast<tensor::CSRTensorPtr>();
+    auto value_ptr = csr_tensorptr->GetValues();
+    output_node = GetObjNode(value_ptr, PyNativeAlgo::Common::GetIdByValue(value_ptr));
+  } else if (v->isa<tensor::COOTensor>()) {
+    auto coo_tensorptr = v->cast<tensor::COOTensorPtr>();
+    auto value_ptr = coo_tensorptr->GetValues();
+    output_node = GetObjNode(value_ptr, PyNativeAlgo::Common::GetIdByValue(value_ptr));
+  }
   MS_EXCEPTION_IF_NULL(output_node);
   if (top_cell()->dynamic_shape()) {
     abstract::AbstractBasePtr last_node_abs = nullptr;

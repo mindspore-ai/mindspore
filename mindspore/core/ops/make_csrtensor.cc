@@ -70,9 +70,9 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
     return elem;
   });
   if (values_shp.size() + 1 != shape_vec.size()) {
-    MS_EXCEPTION(ValueError) << "Values' dimension should equal to csr_tensor's dimension - 1, but got"
+    MS_EXCEPTION(ValueError) << "Values' dimension should equal to CSRTensor's dimension - 1, but got"
                              << "Values' dimension: " << values_shp.size()
-                             << ", csr_tensor's dimension: " << shape_vec.size() << ".";
+                             << ", CSRTensor's dimension: " << shape_vec.size() << ".";
   }
   if (shape_vec[kIndexZero] + 1 != indptr_shp[kIndexZero]) {
     MS_EXCEPTION(ValueError) << "Indptr must have length (1 + shape[0]), but got: " << indptr_shp[kIndexZero];
@@ -84,7 +84,10 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
       MS_EXCEPTION(ValueError) << "The element of shape must be positive, but got " << shape_value->ToString();
     }
     if ((i > 1) && (shape_vec[i] != values_shp[i - 1])) {
-      MS_EXCEPTION(ValueError) << "csr_tensor's shape should match with values' shape.";
+      MS_EXCEPTION(ValueError)
+        << "CSRTensor's shape[2: ] must be equal to value's shape[1: ], but CSRTensor's shape got: "
+        << shape_value->ToString() << ", "
+        << "values's shape got: " << values->shape()->ToString() << ".";
     }
     if (!shape_types[i]->isa<Int>()) {
       MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << shape_types[i]->ToString();
