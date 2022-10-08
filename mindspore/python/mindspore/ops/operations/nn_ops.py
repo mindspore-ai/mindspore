@@ -5755,7 +5755,7 @@ class ApplyAdaMax(Primitive):
         sig.make_sig('beta1', dtype=sig.sig_dtype.T3),
         sig.make_sig('beta2', dtype=sig.sig_dtype.T4),
         sig.make_sig('epsilon', dtype=sig.sig_dtype.T5),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T6)
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
