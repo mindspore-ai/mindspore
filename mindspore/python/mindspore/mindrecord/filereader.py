@@ -53,7 +53,7 @@ class FileReader:
         >>>
         >>> # create iterator for mindrecord and get saved data
         >>> for _, item in enumerate(reader.get_next()):
-        ...     print("item: ", item)
+        ...     ori_data = item
         >>> reader.close()
     """
 
