@@ -29,7 +29,7 @@ else()
             set(_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
             set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
             if(DEBUG_MODE)
-                set(opencv_Debug ON)
+                set(protobuf_Debug ON)
             endif()
         else()
             set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
