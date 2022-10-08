@@ -121,7 +121,7 @@ void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const st
                       << "but got " << group_indices.size() << " and " << input_strides.size() << ".";
   }
   result->clear();
-  auto data_ptr = reinterpret_cast<T *>(input->addr);
+  auto data_ptr = static_cast<T *>(input->addr);
   const auto start = std::inner_product(group_indices.begin(), group_indices.end(), input_strides.begin(), 0UL);
   const auto end = start + last_dim;
   for (size_t i = start; i < end; ++i) {
@@ -199,9 +199,9 @@ bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kern
                                                           const std::vector<kernel::AddressPtr> &outputs,
                                                           const ShapeVector &output_shape, const size_t num_values,
                                                           const std::map<std::vector<size_t>, std::set<T>> *sets) {
-  auto out_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput1]->addr);
-  auto out_values_ptr = reinterpret_cast<T *>(outputs[kOutput2]->addr);
-  auto out_shape_ptr = reinterpret_cast<int64_t *>(outputs[kOutput3]->addr);
+  auto out_indices_ptr = static_cast<int64_t *>(outputs[kOutput1]->addr);
+  auto out_values_ptr = static_cast<T *>(outputs[kOutput2]->addr);
+  auto out_shape_ptr = static_cast<int64_t *>(outputs[kOutput3]->addr);
   size_t output_shape_size = output_shape.size();
   auto num_values_signed = SizeToLong(num_values);
   auto output_shape_size_signed = SizeToLong(output_shape_size);
@@ -230,14 +230,14 @@ bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kern
     int64_t group_idx = 0;
     for (auto val = set.begin(); val != set.end(); ++val, ++val_idx, ++group_idx) {
       for (size_t i = 0; i < group_indices.size(); ++i) {
-        out_indices_mat(val_idx, i) = group_indices[i];
+        out_indices_mat(val_idx, i) = SizeToLong(group_indices[i]);
       }
-      out_indices_mat(val_idx, group_indices.size()) = group_idx;
+      out_indices_mat(val_idx, group_indices.size()) = SizeToLong(group_idx);
       out_values_flat(val_idx) = *val;
     }
   }
   for (size_t i = 0; i < output_shape_size; ++i) {
-    out_shape_flat(i) = output_shape[i];
+    out_shape_flat(i) = SizeToLong(output_shape[i]);
   }
   return true;
 }
