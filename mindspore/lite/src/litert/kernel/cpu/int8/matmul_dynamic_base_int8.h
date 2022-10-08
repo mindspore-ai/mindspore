@@ -18,12 +18,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_MATMUL_DYNAMIC_BASE_INT8_H_
 
 #include <vector>
+#include <algorithm>
 #include "include/errorcode.h"
 #include "src/litert/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"
 #include "nnacl/int8/common_func_int8.h"
+#include "src/common/common.h"
 
 namespace mindspore::kernel {
 class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
@@ -36,6 +38,8 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   ~MatmulDynamicBaseInt8CPUKernel() override;
   int Prepare() override;
   int ReSize() override;
+  static int InitBroadcastParams(const std::vector<int> &a_shape_const, const std::vector<int> &b_shape_const,
+                                 MatMulParameter *params, std::vector<int> *a_offsets, std::vector<int> *b_offsets);
 
  private:
   void ResizeMatrixBParameter();
@@ -45,6 +49,10 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   int MallocQuantParam();
 
  protected:
+  int a_batch_ = 1;
+  int b_batch_ = 1;
+  std::vector<int> a_offset_;
+  std::vector<int> b_offset_;
   typedef void (*PackFunc)(const int8_t *src, int8_t *dst, int row, int col);
   virtual void InitParameter() = 0;
   int TransferA();
@@ -63,6 +71,7 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   bool filter_per_channel_ = true;
   int8_t *batch_input_ptr_ = nullptr;
   int8_t *batch_weight_ptr_ = nullptr;
+  int8_t *batch_a_ptr_ = nullptr;
   int8_t *batch_b_ptr_ = nullptr;
   float *batch_c_ptr_ = nullptr;
   int *input_sums_ = nullptr;

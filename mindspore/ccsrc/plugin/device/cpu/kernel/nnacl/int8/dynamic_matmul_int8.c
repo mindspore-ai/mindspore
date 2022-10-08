@@ -25,7 +25,7 @@ void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_
    * support activation per-layer symmetric && weight per-layer/per-channel symmetric
    * */
   for (int r = 0; r < row; r++) {
-    int64_t s2 = a_sums[r] * b_zp_sum;
+    int64_t s2 = a_sums[r];
     for (int c = 0; c < col; c++) {
       int r4div = r / C4NUM, r4mod = r % C4NUM;
       int c16div = c / C16NUM, c16mod = c % C16NUM;
