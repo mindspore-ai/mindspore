@@ -158,24 +158,6 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(BatchMatMul, MatMul);
-void BatchMatMul::Init(bool transpose_a, bool transpose_b) {
-  set_transpose_a(transpose_a);
-  set_transpose_b(transpose_b);
-}
-
-void BatchMatMul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
-
-void BatchMatMul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
-
-bool BatchMatMul::get_transpose_a() const {
-  auto value_ptr = GetAttr(kTransposeA);
-  return GetValue<bool>(value_ptr);
-}
-
-bool BatchMatMul::get_transpose_b() const {
-  auto value_ptr = GetAttr(kTransposeB);
-  return GetValue<bool>(value_ptr);
-}
 
 AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
