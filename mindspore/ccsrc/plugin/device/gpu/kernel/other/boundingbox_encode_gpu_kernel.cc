@@ -111,7 +111,9 @@ bool BoundingBoxEncodeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 std::vector<std::pair<KernelAttr, BoundingBoxEncodeGpuKernelMod::BoundingBoxEncodeLaunchFunc>>
   BoundingBoxEncodeGpuKernelMod::func_list_ = {
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &BoundingBoxEncodeGpuKernelMod::LaunchKernel<float>}};
+     &BoundingBoxEncodeGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &BoundingBoxEncodeGpuKernelMod::LaunchKernel<half>}};
 
 std::vector<KernelAttr> BoundingBoxEncodeGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
