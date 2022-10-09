@@ -2635,7 +2635,7 @@ class Hypot(Primitive):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([3., 5., 7.]))
