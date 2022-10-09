@@ -29,7 +29,7 @@ class TuningSplitSchemer : public CommonSplitSchemer {
   bool Split(const FuncGraphPtr &func_graph) override;
 
  protected:
-  bool ReadCache(const std::string &filename, nlohmann::json *result);
+  bool ReadCache(const std::string &filename, nlohmann::json *result) const;
   bool ParseResult(const AnfNodePtrList &nodes, const nlohmann::json &result);
 
   std::string tuning_path_;

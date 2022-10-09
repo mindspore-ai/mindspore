@@ -38,7 +38,7 @@ bool HasDuplicateIndex(const int32_t *indices, size_t len) {
     if (unique_idx.find(indices[i]) != unique_idx.end()) {
       return true;
     }
-    unique_idx.insert(indices[i]);
+    (void)unique_idx.insert(indices[i]);
   }
   return false;
 }

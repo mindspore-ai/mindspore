@@ -248,7 +248,7 @@ bool RemoveNonScalarConstTensorFromParameter(const FuncGraphPtr &fg, AnfNodePtrL
 
   auto mng = GkUtils::GetFuncGraphManager(fg);
   for (const auto &iter : param_const_map) {
-    mng->Replace(iter.first, iter.second);
+    (void)mng->Replace(iter.first, iter.second);
   }
 
   std::vector<AnfNodePtr> new_params;

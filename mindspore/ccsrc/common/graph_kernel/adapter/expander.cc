@@ -147,10 +147,14 @@ bool CanExpandFallback(const AnfNodePtr &node) {
 }
 
 AnfNodePtr ProcessCustomOpDeco::Run(const AnfNodePtr &node) {
-  if (node == nullptr) return nullptr;
+  if (node == nullptr) {
+    return nullptr;
+  }
   auto new_node = decorated_->Run(node);
   auto graph = GetCNodeFuncGraph(new_node);
-  if (graph == nullptr) return nullptr;
+  if (graph == nullptr) {
+    return nullptr;
+  }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InplaceAssignForCustomOp>());
