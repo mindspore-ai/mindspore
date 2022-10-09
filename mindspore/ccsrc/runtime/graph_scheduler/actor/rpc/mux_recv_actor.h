@@ -46,7 +46,7 @@ class MuxRecvActor : public RecvActor {
   // it in the ready state to continue with the next request.
   void UpdateStatus() override;
 
-  // Mux recv actor need not set 'is_context_valid_' to be false, jusg leave it blank;
+  // Mux recv actor need not set 'is_context_valid_' to be false, just leave it blank;
   void ResetOpcontext() override {}
 
   // Finalize mux recv actor gracefully.

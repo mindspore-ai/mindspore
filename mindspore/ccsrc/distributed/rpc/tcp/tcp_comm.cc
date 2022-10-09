@@ -454,7 +454,7 @@ bool TCPComm::Connect(const std::string &dst_url, const MemFreeCallback &free_cb
     conn->destination = dst_url;
 
     // Check the state of this new created connection.
-    uint32_t interval = 3;
+    uint32_t interval = 1;
     size_t retry = 3;
     while (conn->state < ConnectionState::kConnected && retry-- > 0) {
       MS_LOG(WARNING) << "Waiting for the state of the connection to " << dst_url << " to be connected...";
