@@ -48,7 +48,7 @@ T GetInitValue(std::string kernel_name) {
 }
 
 template <typename T, typename S>
-bool UnsortedSegmentArithmeticCpuKernelMod::ComputeFunc(T *input_addr, S *ids_addr, T *output_addr) {
+bool UnsortedSegmentArithmeticCpuKernelMod::ComputeFunc(T *input_addr, S *ids_addr, T *output_addr) const {
   for (size_t loop = 0; loop < loop_size_; loop++) {
     auto output_index = ids_addr[loop];
     if (output_index < 0) {
