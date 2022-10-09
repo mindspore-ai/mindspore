@@ -40,7 +40,7 @@ class SparseToDense(Cell):
         TypeError: If `sparse_tensor.shape` is not a tuple.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms

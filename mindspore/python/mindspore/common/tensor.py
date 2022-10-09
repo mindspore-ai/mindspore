@@ -5244,7 +5244,7 @@ class Tensor(Tensor_):
             ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
@@ -5410,7 +5410,7 @@ class Tensor(Tensor_):
             ValueError: If `axis` is not in range of [-len(`self.shape`), len(`self.shape`) - 1).
 
         Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> # case 1 : common median compute
