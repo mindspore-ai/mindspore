@@ -41,6 +41,7 @@ namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
 using IntPtr = std::shared_ptr<Int>;
 using UIntPtr = std::shared_ptr<UInt>;
+using ComplexPtr = std::shared_ptr<Complex>;
 using ModelProtoPtr = std::shared_ptr<mind_ir::ModelProto>;
 
 // anf type to mindir type map
@@ -81,6 +82,11 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_float_
   {16, mind_ir::TensorProto_DataType_FLOAT16},
   {32, mind_ir::TensorProto_DataType_FLOAT},
   {64, mind_ir::TensorProto_DataType_FLOAT64},
+};
+
+static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_complex_map = {
+  {64, mind_ir::TensorProto_DataType_COMPLEX64},
+  {128, mind_ir::TensorProto_DataType_COMPLEX128},
 };
 
 static std::set<std::string> g_export_attr_blacklist = {kAttrDump};
@@ -145,6 +151,7 @@ class IrExportBuilder {
   mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsFloatType(int bits) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsUIntType(int bits) const;
+  mind_ir::TensorProto_DataType GetMindirDataBitsComplexType(int bits) const;
   std::string GetNodeName(const AnfNodePtr &node) const;
   std::string GetUniqueNodeName(const AnfNodePtr &node);
   std::string GetOpTypeName(const AnfNodePtr &node);
@@ -487,6 +494,15 @@ mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsFloatType(int bi
   auto iter = g_data_bits_float_map.find(bits);
   if (iter == g_data_bits_float_map.end()) {
     MS_LOG(ERROR) << "Convert bits float error, unsupported bits! " << bits;
+    return mind_ir::TensorProto_DataType_UNDEFINED;
+  }
+  return iter->second;
+}
+
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsComplexType(int bits) const {
+  auto iter = g_data_bits_complex_map.find(bits);
+  if (iter == g_data_bits_complex_map.end()) {
+    MS_LOG(ERROR) << "Convert bits complex error, unsupported bits:" << bits << "!";
     return mind_ir::TensorProto_DataType_UNDEFINED;
   }
   return iter->second;
@@ -926,6 +942,14 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     tensor_proto->set_name("value0");
     auto float_value = value->cast<FloatPtr>();
     auto data_type = GetMindirDataBitsFloatType(float_value->nbits());
+    if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
+      return false;
+    }
+    tensor_proto->set_data_type(data_type);
+  } else if (value->isa<Complex>()) {
+    tensor_proto->set_name("value0");
+    auto complex_value = value->cast<ComplexPtr>();
+    auto data_type = GetMindirDataBitsComplexType(complex_value->nbits());
     if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
       return false;
     }
