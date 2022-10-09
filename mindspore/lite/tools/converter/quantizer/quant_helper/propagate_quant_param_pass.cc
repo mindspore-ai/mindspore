@@ -197,9 +197,10 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
       continue;
     }
     auto curr_output_quant_params = curr_quant_holder->get_output_quant_params();
-    if (curr_output_quant_params.empty()) {  // multi output
+    if (curr_output_quant_params.empty()) {  // single output
       std::vector<schema::QuantParamT> place_quant(1);
       curr_output_quant_params.emplace_back(place_quant);
+      curr_quant_holder->set_output_quant_param(0, place_quant);
     }
     for (size_t i = 0; i < curr_output_quant_params.size(); ++i) {
       if (CheckValidQuantParams(curr_output_quant_params.at(i))) {
@@ -208,26 +209,24 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
       // output<-input
       auto depend_iter = node_depends_.find(cnode);
       if (depend_iter == node_depends_.end()) {
-        MS_LOG(INFO) << cnode->fullname_with_scope() << " find depend failed.";
+        MS_LOG(WARNING) << cnode->fullname_with_scope() << " find depend failed.";
         continue;
       }
       if (depend_iter->second.backwards.size() == 1) {
         auto post_cnode = depend_iter->second.backwards.at(0);
-        if (BackwardPerNode(post_cnode, cnode, i) != RET_OK) {
-          MS_LOG(INFO) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
+        ret = BackwardPerNode(post_cnode, cnode, i);
+        if (ret != RET_OK && ret != RET_NOT_SUPPORT) {
+          MS_LOG(WARNING) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
           continue;
         }
       } else if (depend_iter->second.backwards.size() > 1) {
-        if (cnode->isa<abstract::AbstractTuple>() && cnode->cast<abstract::AbstractTuplePtr>()->size() > 1) {
-          // Single output, multiple references
-          for (auto &post_cnode : depend_iter->second.backwards) {
-            if (BackwardPerNode(post_cnode, cnode, i) != RET_OK) {
-              MS_LOG(INFO) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
-              continue;
-            }
+        // Single output, multiple references
+        for (auto &post_cnode : depend_iter->second.backwards) {
+          ret = BackwardPerNode(post_cnode, cnode, i);
+          if (ret != RET_OK && ret != RET_NOT_SUPPORT) {
+            MS_LOG(WARNING) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
+            continue;
           }
-        } else {
-          MS_LOG(DEBUG) << "Dont support multi output.";
         }
       }
     }
@@ -314,10 +313,7 @@ int PropagateQuantParamPass::BackwardPerNode(const CNodePtr &post_cnode, const C
   auto curr_quant_holder = GetCNodeQuantHolder(cnode);
   MS_CHECK_TRUE_RET(curr_quant_holder != nullptr, RET_ERROR);
   auto curr_output_quant_param = curr_quant_holder->get_output_quant_params();
-  if (curr_output_quant_param.empty()) {
-    std::vector<schema::QuantParamT> place_quant(1);
-    curr_output_quant_param.emplace_back(place_quant);
-  }
+  MS_CHECK_TRUE_RET(!curr_output_quant_param.empty(), RET_ERROR);
   if (CheckValidQuantParams(curr_output_quant_param.at(curr_index))) {
     return RET_OK;
   }
@@ -326,23 +322,19 @@ int PropagateQuantParamPass::BackwardPerNode(const CNodePtr &post_cnode, const C
   auto iter = std::find(post_cnode->inputs().cbegin(), post_cnode->inputs().cend(), cnode);
   if (iter == post_cnode->inputs().cend()) {
     MS_LOG(INFO) << cnode->fullname_with_scope() << "find backward node failed!";
-    return RET_ERROR;
+    return RET_NOT_SUPPORT;
   } else {
     input_index = std::distance(post_cnode->inputs().cbegin(), iter) - kPrimOffset;
   }
 
-  auto input_quant_holder = GetCNodeQuantHolder(post_cnode);
-  MS_CHECK_TRUE_RET(input_quant_holder != nullptr, RET_ERROR);
-  auto input_quant_params = input_quant_holder->get_input_quant_params();
-  if (input_quant_params.size() <= input_index) {
-    MS_LOG(INFO) << "Post cnode input quant param not exist, post node name: " << post_cnode->fullname_with_scope()
-                 << " index: " << input_index;
-    return RET_ERROR;
+  auto post_quant_holder = GetCNodeQuantHolder(post_cnode);
+  MS_CHECK_TRUE_RET(post_quant_holder != nullptr, RET_ERROR);
+  auto input_quant_params = post_quant_holder->get_input_quant_params();
+  if (input_quant_params.size() <= input_index || !CheckValidQuantParams(input_quant_params.at(input_index))) {
+    return RET_NOT_SUPPORT;
   }
-  if (CheckValidQuantParams(input_quant_params.at(input_index))) {
-    MS_LOG(INFO) << post_cnode->fullname_with_scope() << " backward propagate to " << cnode->fullname_with_scope();
-    curr_quant_holder->set_output_quant_param(curr_index, input_quant_params.at(input_index));
-  }
+  MS_LOG(INFO) << post_cnode->fullname_with_scope() << " backward propagate to " << cnode->fullname_with_scope();
+  curr_quant_holder->set_output_quant_param(curr_index, input_quant_params.at(input_index));
   return RET_OK;
 }
 

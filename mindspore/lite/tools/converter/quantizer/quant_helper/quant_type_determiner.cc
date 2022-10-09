@@ -27,7 +27,7 @@
 
 namespace mindspore::lite::quant {
 bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(cnode != nullptr, false);
   if (opt::IsSpecialType(cnode)) {
     return false;
   }

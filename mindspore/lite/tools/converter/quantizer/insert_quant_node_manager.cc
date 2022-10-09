@@ -95,8 +95,7 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
 
   TypeId data_type = kNumberTypeFloat32;
   if (opt::GetDataTypeFromAnfNode(input_node, &data_type) != RET_OK) {
-    MS_LOG(INFO) << cnode->fullname_with_scope() << " input op name: " << input_node->fullname_with_scope()
-                 << " input data type: " << data_type << " index " << input_index;
+    MS_LOG(ERROR) << "Fetch data type failed, cnode name: " << input_node->fullname_with_scope();
     return RET_ERROR;
   }
 
@@ -144,6 +143,7 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
   return RET_OK;
 }
 
+// If dtype can be fetched, check data type, otherwise return RET_OK
 int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const {
   bool is_graph_input = IsGraphInput(input_node);
   if (!input_node->isa<mindspore::CNode>() && !is_graph_input) {
@@ -356,10 +356,8 @@ int InsertQuantNodeManager::InsertForwardQuantCastNode(const FuncGraphPtr &graph
     MS_LOG(ERROR) << "Invalid input node, input node name: " << input_node->fullname_with_scope();
     return RET_ERROR;
   }
-  auto ret = CheckDataType(input_node, cast_dtype);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check data type failed, input node name: " << input_node->fullname_with_scope();
-    return ret;
+  if (CheckDataType(input_node, cast_dtype) != RET_OK) {
+    return RET_NO_CHANGE;
   }
   // insert forward cast_node
   TypeId src_dtype = cast_dtype;

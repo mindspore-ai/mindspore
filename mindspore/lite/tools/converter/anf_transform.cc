@@ -28,6 +28,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/pass_manager_extends.h"
 #include "ir/primitive.h"
+#include "tools/optimizer/fusion/add_activation_fusion.h"
 #include "tools/optimizer/fusion/affine_activation_fusion.h"
 #include "tools/optimizer/fusion/affine_fusion.h"
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
@@ -305,7 +306,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::FullconnectedAddFusion>(),
                                     std::make_shared<opt::TensorDotFusion>(),
                                     std::make_shared<opt::MatMulActivationFusion>(param),
-                                    std::make_shared<opt::MulActivationFusion>()};
+                                    std::make_shared<opt::MulActivationFusion>(),
+                                    std::make_shared<opt::AddActivationFusion>()};
 #ifdef ENABLE_CLOUD_FUSION_INFERENCE
   fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
 #endif

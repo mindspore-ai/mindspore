@@ -107,35 +107,29 @@ bool QuantNodePass::IsPerchannelWeight(const std::vector<schema::QuantParamT> &q
   return (static_cast<int>(quant_params.size()) == dims[preferred_dim]);
 }
 
-int QuantNodePass::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (primitive == nullptr) {
-    return RET_ERROR;
-  }
-  auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
+int QuantNodePass::CheckNodeDType(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
   TypeId type_id = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
     MS_LOG(ERROR) << "Get data type failed.";
     return RET_ERROR;
   }
-  // support for share weight.
+
   if (type_id == kNumberTypeInt8) {
     auto iter = weight_quant_params_bak_.find(input_node->fullname_with_scope());
-    if (iter == weight_quant_params_bak_.end()) {
-      return RET_ERROR;
-    } else {
+    if (iter != weight_quant_params_bak_.end()) {
+      //  support share weight
+      auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+      MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
+      auto quant_param_holder = GetCNodeQuantHolder(primitive);
+      MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
       quant_param_holder->set_input_quant_param(input_index - 1, iter->second);
-      return RET_NO_CHANGE;
     }
+    return RET_NO_CHANGE;
   }
-  // Only data the data type is fp32 can be quant.
+
   if (type_id != kNumberTypeFloat32) {
-    MS_LOG(WARNING) << "Input_node data type not fp32, " << input_node->fullname_with_scope();
-    schema::QuantParamT quant_param;
-    quant_param.inited = false;
-    std::vector<schema::QuantParamT> quant_params = {quant_param};
-    quant_param_holder->set_input_quant_param(input_index - 1, quant_params);
+    MS_LOG(INFO) << "Input node data type not fp32, input node name: " << input_node->fullname_with_scope();
+    return RET_NO_CHANGE;
   }
   return RET_OK;
 }
@@ -143,7 +137,7 @@ int QuantNodePass::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr 
 int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index) {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(input_node);
-  auto ret = IsSupportWeightQuant(cnode, input_node, input_index);
+  auto ret = CheckNodeDType(cnode, input_node, input_index);
   if (ret != RET_OK) {
     return ret;
   }
@@ -188,7 +182,7 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
 int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index) {
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
   CHECK_NULL_RETURN(quant_param_holder);
-  auto ret = IsSupportWeightQuant(cnode, input_node, input_index);
+  auto ret = CheckNodeDType(cnode, input_node, input_index);
   if (ret != RET_OK) {
     return ret;
   }
