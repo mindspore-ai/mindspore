@@ -294,8 +294,8 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
   auto ret = rtSetDevice(static_cast<int32_t>(device_id));
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]."
-                      << GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret)
+                      << "]. The details refer to 'Ascend Error Message'." << GetErrorMessage(true);
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
   auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
@@ -322,8 +322,8 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = rtDeviceReset(static_cast<int32_t>(device_id));
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]."
-                        << GetErrorMessage(true);
+      MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret)
+                        << "]. The details refer to 'Ascend Error Message'." << GetErrorMessage(true);
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
     MS_LOG(INFO) << "Call rtDeviceReset, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";

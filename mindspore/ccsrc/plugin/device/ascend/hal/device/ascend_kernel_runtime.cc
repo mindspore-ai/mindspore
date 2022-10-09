@@ -413,8 +413,8 @@ bool AscendKernelRuntime::Init() {
     if (init_device) {
       (void)ResetDevice(device_id_);
     }
-    MS_LOG(EXCEPTION) << "Ascend kernel runtime initialization failed." << GetErrorMessage(true)
-                      << "#dmsg#Framework Error Message:#dmsg#" << e.what();
+    MS_LOG(EXCEPTION) << "Ascend kernel runtime initialization failed. The details refer to 'Ascend Error Message'."
+                      << GetErrorMessage(true) << "#dmsg#Framework Error Message:#dmsg#" << e.what();
     throw;
   }
 

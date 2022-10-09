@@ -203,7 +203,8 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
       CreateKernel(kernels);
     }
   } catch (const std::exception &e) {
-    MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id() << "." << GetErrorMessage(true)
+    MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id()
+                      << ". The details refer to 'Ascend Error Message'." << GetErrorMessage(true)
                       << "#dmsg#Framework Error Message:#dmsg#" << e.what();
   }
 
