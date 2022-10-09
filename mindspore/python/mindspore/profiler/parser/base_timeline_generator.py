@@ -54,8 +54,6 @@ class BaseTimelineGenerator:
 
     _STEPS_SORT_INDEX = -4
 
-    __col_names__ = ['op_name', 'stream_id', 'start_time', 'duration']
-
     _output_timeline_data_file_path = 'output_timeline_data_{}.txt'
     _timeline_meta = []
     _format_meta_data_list = []
@@ -89,6 +87,8 @@ class BaseTimelineGenerator:
     _op_name_list = []
     _device_target = DeviceTarget.ASCEND.value
     _model = context.GRAPH_MODE
+
+    __col_names__ = ['op_name', 'stream_id', 'start_time', 'duration']
 
     def __init__(self, device_target, model):
         self._tid_dict = {

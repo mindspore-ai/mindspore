@@ -20,6 +20,8 @@ from .._primitive_cache import _get_cache_prim
 
 
 assign_ = P.Assign()
+
+
 def assign(variable, value):
     """
     Assigns `Parameter` with a value.
@@ -56,6 +58,8 @@ def assign(variable, value):
 
 
 assign_sub_ = P.AssignSub()
+
+
 def assign_sub(variable, value):
     """
     Updates a `Parameter` by subtracting a value from it.

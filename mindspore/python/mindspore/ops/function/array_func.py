@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for function."""
+from __future__ import absolute_import
 
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P

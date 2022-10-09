@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for quantization."""
+from __future__ import absolute_import
 from functools import partial
 
 import mindspore.context as context
