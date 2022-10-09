@@ -24,6 +24,7 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSum
 from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
+from mindspore.ops.operations.sparse_ops import SparseFillEmptyRows
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSlice
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
@@ -248,6 +249,18 @@ def get_bprop_sparse_segment_sum(self):
     if context.get_context('device_target') == "GPU":
         return bprop_gpu
 
+    return bprop
+
+
+@bprop_getters.register(SparseFillEmptyRows)
+def get_bprop_sparsefillemptyrows(self):
+    """Grad definition for `SparseFillEmptyRows` operation."""
+    op = G.SparseFillEmptyRowsGrad()
+
+    def bprop(indices, values, dense_shape, default_value, out, dout):
+        dx = op(out[3], dout[1])
+        dx_all = (zeros_like(indices), dx[0], zeros_like(dense_shape), dx[1])
+        return dx_all
     return bprop
 
 
