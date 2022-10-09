@@ -446,7 +446,7 @@ void IterateFindTensor(std::vector<ValuePtr> *msTensors, const VectorRef &ref_li
     if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
       auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(ref_list[i]);
       MS_EXCEPTION_IF_NULL(tensor_ptr);
-      msTensors->emplace_back(tensor_ptr);
+      (void)msTensors->emplace_back(tensor_ptr);
     } else if (utils::isa<VectorRef>(ref_list[i])) {
       auto ref_iter = utils::cast<VectorRef>(ref_list[i]);
       IterateFindTensor(msTensors, ref_iter);
