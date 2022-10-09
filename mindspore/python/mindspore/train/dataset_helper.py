@@ -54,7 +54,6 @@ def _dynamic_sink_data(dataset, dataset_iter):
        dataset.get_dataset_size() != 1 and \
        hasattr(dataset_iter, "sink_count") and \
        dataset_iter.sink_count == 1 and \
-       context.get_context("device_target") == "Ascend" and \
        not _has_dynamic_shape(dataset_shapes) and \
        not ds.config.get_dynamic_shape():
         return True
