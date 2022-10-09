@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,10 @@ abstract::ShapePtr CTCLossV2GradInferShape(const PrimitivePtr &primitive,
   }
   auto log_probs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto log_probs_shape = log_probs_shape_map[kShape];
+  if (IsDynamicRank(log_probs_shape)) {
+    std::vector<int64_t> dyn_shape = {abstract::Shape::kShapeRankAny};
+    return std::make_shared<abstract::Shape>(dyn_shape);
+  }
   if (log_probs_shape.size() != kLenLogProbs) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input log_probs's dims must be 3, but got: " << log_probs_shape.size() << ".";
