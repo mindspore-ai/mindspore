@@ -20,7 +20,7 @@ from mindspore import common, dataset, mindrecord, train, log
 from mindspore import profiler, communication, numpy, parallel
 from mindspore.common import *
 from mindspore.mindrecord import *
-from mindspore.ops import _op_impl
+from mindspore.ops import _op_impl, grad, value_and_grad, vjp, jvp, jacfwd, jacrev
 from mindspore.train import *
 from mindspore.log import *
 from mindspore.context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_context, set_auto_parallel_context, \
