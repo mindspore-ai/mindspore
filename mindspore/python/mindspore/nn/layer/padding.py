@@ -17,10 +17,12 @@ from __future__ import absolute_import
 
 from mindspore.common import Tensor
 from mindspore import ops
+from mindspore.ops.operations import nn_ops
 from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 
-__all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ReflectionPad1d', 'ReflectionPad2d', 'ZeroPad2d']
+__all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ReflectionPad1d', 'ReflectionPad2d', 'ZeroPad2d',
+           'ReplicationPad1d', 'ReplicationPad2d', 'ReplicationPad3d']
 
 
 @constexpr
@@ -185,7 +187,7 @@ class _ConstantPadNd(Cell):
                 raise ValueError(msg)
 
         else:
-            msg = "For '{}', the type of parameter 'padding' must be in [int, float], " \
+            msg = "For '{}', the type of parameter 'padding' must be in [int, tuple], " \
                   "but got {}".format(name, type(padding))
             raise TypeError(msg)
 
@@ -585,3 +587,244 @@ class ZeroPad2d(_ConstantPadNd):
     def __init__(self, padding):
         value = 0
         super(ZeroPad2d, self).__init__(padding, value, name='ZeroPad2d')
+
+
+class _ReplicationPadNd(Cell):
+    r"""
+    Using a given padding to do replication pad on the given tensor.
+    Work as a parent class, and only accepts tuple as padding input.
+    """
+    def __init__(self, padding, name="ReplicationPadNd"):
+        super(_ReplicationPadNd, self).__init__()
+        self.name = name
+        if not isinstance(padding, tuple):
+            raise TypeError(f"For '{self.name}' the input 'padding' must be an integer or tuple, "
+                            f"but got {type(padding).__name__}")
+        if len(padding) % 2 != 0:
+            raise ValueError(f"For '{self.name}' the length of input 'padding' must be divisible by 2, "
+                             f"but got padding of length {len(padding)}. ")
+        if not all(isinstance(i, int) for i in padding):
+            raise TypeError(f"For '{self.name}' every element in 'padding' must be integer, "
+                            f"but got {padding}. ")
+        self.padding = padding
+        self.padv3 = nn_ops.PadV3(mode="edge")
+
+    @staticmethod
+    @constexpr
+    def _check_input_dim(shape, cls_name):
+        raise NotImplementedError
+
+    @staticmethod
+    @constexpr
+    def _need_expend_dim(x):
+        raise NotImplementedError
+
+    def construct(self, x):
+        self._check_input_dim(x.shape, self.name)
+        need_expend_dims = self._need_expend_dim(x)
+        if need_expend_dims:
+            x = x.expand_dims(0)
+            x = self.padv3(x, self.padding)
+            x = x.squeeze(0)
+        else:
+            x = self.padv3(x, self.padding)
+        return x
+
+
+class ReplicationPad1d(_ReplicationPadNd):
+    r"""
+    Pad on W dimension of input `x` according to `padding`.
+
+    Args:
+        padding (int, tuple): the size of the padding. If is `int`, uses the same
+            padding in all boundaries. If is tuple, uses :math:`(pad_{left}, pad_{right})` to pad.
+
+    Inputs:
+        - **x** (Tensor) - 2D or 3D, shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
+
+    Outputs:
+        Tensor, after padding. Shape: :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
+            where :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
+
+    Raises:
+        TypeError: If 'padding' is neither a tuple nor an int.
+        TypeError: If there is an element in 'padding' that is not int.
+        ValueError: If `padding` is tuple and the length of 'padding' is not divisible by 2.
+        ValueError: If `padding` is tuple and there is a dimension mismatch between the padding and the tensor.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples::
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn import ReplicationPad1d
+        >>> x = Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
+        >>> pad1d = ReplicationPad1d(2)
+        >>> input = Tensor(np.arange(0, 8).reshape(1, 2, 4), mindspore.float32)
+        >>> input
+        Tensor(shape=[1, 2, 4], dtype=Float32, value=
+              [[[0., 1., 2., 3.],
+                 [4., 5., 6., 7.]]])
+        >>> out = pad1d(input)
+        >>> print(out)
+        Tensor(shape=[1, 2, 8], dtype=Float32, value=
+              [[[0., 0., 0., 1., 2., 3., 3., 3.],
+                 [4., 4., 4., 5., 6., 7., 7., 7.]]])
+        >>> pad1d = ReplicationPad1d((3, 1))
+        >>> out = pad1d(input)
+        >>> print(out)
+        Tensor(shape=[1, 2, 8], dtype=Float32, value=
+              [[[0., 0., 0., 0., 1., 2., 3., 3.],
+                 [4., 4., 4., 4., 5., 6., 7., 7.]]])
+    """
+    def __init__(self, padding):
+        if isinstance(padding, int):
+            padding = (padding, padding)
+        super(ReplicationPad1d, self).__init__(padding, name="ReplicationPad1d")
+
+    @staticmethod
+    @constexpr
+    def _check_input_dim(shape, cls_name):
+        dim = len(shape)
+        if dim not in (2, 3):
+            raise ValueError(f"For '{cls_name}', the in_shape must have 2 or 3 dims, but got {dim}.")
+
+    def _need_expend_dim(self, x):
+        input_shape = x.shape
+        return 1 if len(input_shape) == 2 else 0
+
+
+class ReplicationPad2d(_ReplicationPadNd):
+    r"""
+    Pad on HW dimension of input `x` according to `padding`.
+
+    Args:
+        padding (int, tuple): the size of the padding. If is `int`, uses the same padding in all boundaries.
+            If a 4-`tuple`, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})` to pad.
+
+    Inputs:
+        - **x** (Tensor) - 3D or 4D, shape: :math:`(C, H_{in}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`.
+
+    Outputs:
+        Tensor, after padding. Shape: :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`,
+        where :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`, :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
+
+    Raises:
+        TypeError: If 'padding' is neither a tuple nor an int.
+        TypeError: If there is an element in 'padding' that is not int.
+        ValueError: If `padding` is tuple and the length of 'padding' is not divisible by 2.
+        ValueError: If `padding` is tuple and there is a dimension mismatch between the padding and the tensor.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples::
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn import ReplicationPad2d
+        >>> pad2d = ReplicationPad2d(2)
+        >>> input = Tensor(np.arange(0, 9).reshape(1, 1, 3, 3), mindspore.float32)
+        >>> input
+        Tensor(shape=[1, 1, 3, 3], dtype=Float32, value=
+             [[[[0., 1., 2.],
+                  [3., 4., 5.],
+                  [6., 7., 8.]]]])
+        >>> out = pad2d(input)
+        >>> print(out)
+        Tensor(shape=[1, 1, 7, 7], dtype=Float32, value=
+             [[[[0., 0., 0., 1., 2., 2., 2.],
+                  [0., 0., 0., 1., 2., 2., 2.],
+                  [0., 0., 0., 1., 2., 2., 2.],
+                  [3., 3., 3., 4., 5., 5., 5.],
+                  [6., 6., 6., 7., 8., 8., 8.],
+                  [6., 6., 6., 7., 8., 8., 8.],
+                  [6., 6., 6., 7., 8., 8., 8.]]]])
+        >>> pad2d = nn.ReplicationPad2d((1, 1, 2, 0))
+        >>> out = m(input)
+        >>> print(out)
+        Tensor(shape=[1, 1, 5, 5], dtype=Float32, value=
+             [[[[0., 0., 1., 2., 2.],
+                  [0., 0., 1., 2., 2.],
+                  [0., 0., 1., 2., 2.],
+                  [3., 3., 4., 5., 5.],
+                  [6., 6., 7., 8., 8.]]]])
+    """
+
+    def __init__(self, padding):
+        if isinstance(padding, int):
+            padding = (padding, padding, padding, padding)
+        super(ReplicationPad2d, self).__init__(padding, name="ReplicationPad2d")
+
+    @staticmethod
+    @constexpr
+    def _check_input_dim(shape, cls_name):
+        dim = len(shape)
+        if dim not in (3, 4):
+            raise ValueError(f"For '{cls_name}', the in_shape must have 3 or 4 dims, but got {dim}.")
+
+    def _need_expend_dim(self, x):
+        input_shape = x.shape
+        return 1 if len(input_shape) == 3 else 0
+
+
+class ReplicationPad3d(_ReplicationPadNd):
+    r"""
+    Pad on DHW dimension of input `x` according to `padding`.
+
+    Args:
+        padding (int, tuple): the size of the padding. If is `int`, uses the same padding in all boundaries.
+            If a 6-`tuple`, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+
+    Inputs:
+        - **x** (Tensor) - 4D or 5D,
+          shape: :math:`(C, D_{in}, H_{in}, W_{in})` or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, after padding, shape: :math:`(C, D_{out}, H_{out}, W_{out})` or
+            :math:`(N, C, D_{out}, H_{out}, W_{out})`, where
+            :math:`D_{out} = D_{in} + pad_{front} + pad_{back}`,
+            :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`,
+            :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
+
+    Raises:
+        TypeError: If 'padding' is neither a tuple nor an int.
+        TypeError: If there is an element in 'padding' that is not int.
+        ValueError: If `padding` is tuple and the length of 'padding' is not divisible by 2.
+        ValueError: If `padding` is tuple and there is a dimension mismatch between the padding and the tensor.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples::
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn import ReplicationPad3d
+        >>> pad3d = ReplicationPad3d(1)
+        >>> input = Tensor(np.arange(0, 9).reshape(1, 1, 1, 3, 3), mindspore.float32)
+        >>> out = pad3d(input)
+        >>> print(out)
+        Tensor(shape=[1, 1, 7, 7], dtype=Float32, value=
+               [[[[[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
+                   [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]],
+                  [[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
+                   [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]],
+                  [[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
+                   [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]]]]])
+    """
+
+    def __init__(self, padding):
+        if isinstance(padding, int):
+            padding = (padding, padding, padding, padding, padding, padding)
+        super(ReplicationPad3d, self).__init__(padding, name="ReplicationPad3d")
+
+    @staticmethod
+    @constexpr
+    def _check_input_dim(shape, cls_name):
+        dim = len(shape)
+        if dim not in (4, 5):
+            raise ValueError(f"For '{cls_name}', the in_shape must have 4 or 5 dims, but got {dim}.")
+
+    def _need_expend_dim(self, x):
+        input_shape = x.shape
+        return 1 if len(input_shape) == 4 else 0

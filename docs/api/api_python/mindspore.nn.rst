@@ -208,6 +208,9 @@ Dropout层
     mindspore.nn.ConstantPad3d
     mindspore.nn.ReflectionPad1d
     mindspore.nn.ReflectionPad2d
+    mindspore.nn.ReplicationPad1d
+    mindspore.nn.ReplicationPad2d
+    mindspore.nn.ReplicationPad3d
     mindspore.nn.ZeroPad2d
 
 损失函数
