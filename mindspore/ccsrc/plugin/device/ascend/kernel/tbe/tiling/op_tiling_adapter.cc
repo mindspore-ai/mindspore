@@ -130,9 +130,9 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::
     auto input_node = input_node_with_idx.first;
     auto input_index = input_node_with_idx.second;
     auto ms_ori_shape = common::AnfAlgo::GetOutputInferShape(input_node, input_index);
-    auto ms_shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
-    auto ms_format = AnfAlgo::GetOutputFormat(input_node, input_index);
-    auto ms_dtype = AnfAlgo::GetOutputDeviceDataType(input_node, input_index);
+    auto ms_shape = AnfAlgo::GetInputDeviceShape(node, real_index);
+    auto ms_format = AnfAlgo::GetInputFormat(node, real_index);
+    auto ms_dtype = AnfAlgo::GetInputDeviceDataType(node, real_index);
 
     // ge info
     ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
