@@ -1,7 +1,7 @@
 mindspore.ops.approximate_equal
 ===============================
 
-.. py:class:: mindspore.ops.approximate_equal(x, y, tolerance=1e-05)
+.. py:function:: mindspore.ops.approximate_equal(x, y, tolerance=1e-05)
 
     逐元素计算abs(x-y)，如果小于tolerance则为True，否则为False。
     
