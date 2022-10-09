@@ -80,7 +80,7 @@ int CTCLossV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename S, typename T>
-void CTCLossV2CpuKernelMod::LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p, SoftParam params) {
+void CTCLossV2CpuKernelMod::LossCompute(const S *log_probs_p, S *log_alpha_p, const T *tar_p, SoftParam params) const {
   constexpr S neg_inf = -std::numeric_limits<S>::infinity();
   int64_t input_length = params.input_length;
   int64_t target_length = params.target_length;
@@ -112,7 +112,7 @@ void CTCLossV2CpuKernelMod::LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p
       } else {
         log_a3 = neg_inf;
       }
-      if (log_max == neg_inf) {
+      if (std::isinf(log_max) && std::signbit(log_max)) {
         log_max = 0;
       }
       S log_three_sum = std::log(std::exp(log_a1 - log_max) + std::exp(log_a2 - log_max) + std::exp(log_a3 - log_max)) +
@@ -124,7 +124,8 @@ void CTCLossV2CpuKernelMod::LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p
 }
 
 template <typename T>
-bool CTCLossV2CpuKernelMod::IndexProcessing(T *in_len_p, T *tar_len_p, std::vector<int64_t> *target_offsets) {
+bool CTCLossV2CpuKernelMod::IndexProcessing(const T *in_len_p, const T *tar_len_p,
+                                            std::vector<int64_t> *target_offsets) {
   const int64_t target_stride = max_target_length_;
   for (size_t i = 0; i < LongToSize(batch_sizes_); ++i) {
     if (tar_len_p[i] < 0 || tar_len_p[i] > target_stride) {
@@ -155,12 +156,12 @@ template <typename S, typename T>
 bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto log_probs_p = reinterpret_cast<S *>(inputs[kIndex0]->addr);
-  auto tar_p = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto in_len_p = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto tar_len_p = reinterpret_cast<T *>(inputs[kIndex3]->addr);
-  auto neg_log_p = reinterpret_cast<S *>(outputs[kIndex0]->addr);
-  auto log_alpha_p = reinterpret_cast<S *>(outputs[kIndex1]->addr);
+  auto log_probs_p = static_cast<S *>(inputs[kIndex0]->addr);
+  auto tar_p = static_cast<T *>(inputs[kIndex1]->addr);
+  auto in_len_p = static_cast<T *>(inputs[kIndex2]->addr);
+  auto tar_len_p = static_cast<T *>(inputs[kIndex3]->addr);
+  auto neg_log_p = static_cast<S *>(outputs[kIndex0]->addr);
+  auto log_alpha_p = static_cast<S *>(outputs[kIndex1]->addr);
   std::vector<int64_t> target_offsets(LongToSize(batch_sizes_));
   if (!IndexProcessing<T>(in_len_p, tar_len_p, &target_offsets)) {
     return false;
@@ -184,7 +185,7 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
         S l1 = log_alpha_p[log_alpha_it(b, in_len - 1, tar_len * target_mul)];
         S l2 = log_alpha_p[log_alpha_it(b, in_len - 1, tar_len * target_mul - 1)];
         S m = std::max(l1, l2);
-        m = ((m == -std::numeric_limits<S>::infinity()) ? 0 : m);
+        m = ((std::isinf(m) && std::signbit(m)) ? 0 : m);
         S log_likelihood = std::log(std::exp(l1 - m) + std::exp(l2 - m)) + m;
         neg_log_p[b] = -log_likelihood;
       }

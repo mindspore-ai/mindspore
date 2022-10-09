@@ -58,7 +58,7 @@ class CTCLossV2GradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   // Dealing with multiple types
   template <typename scalar_t, typename target_t>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+                    const std::vector<kernel::AddressPtr> &outputs) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

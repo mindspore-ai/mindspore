@@ -132,9 +132,9 @@ bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr
                                             const std::vector<kernel::AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size,
                                             const int size) {
-  auto output_indices = reinterpret_cast<int64_t *>(outputs[kOutputIndicesStart]->addr);
-  auto output_values = reinterpret_cast<S *>(outputs[kOutputValuesStart]->addr);
-  auto output_shape = reinterpret_cast<int64_t *>(outputs[kOutputShapesStart]->addr);
+  auto output_indices = static_cast<int64_t *>(outputs[kOutputIndicesStart]->addr);
+  auto output_values = static_cast<S *>(outputs[kOutputValuesStart]->addr);
+  auto output_shape = static_cast<int64_t *>(outputs[kOutputShapesStart]->addr);
   auto input_coo_num = input_num_ / kCOOTensorNum;
   const auto &first_shape_ptr = reinterpret_cast<T *>(inputs[kSpInputShapesStart * input_coo_num]->addr);
   std::map<size_t, int64_t> dim_position_map = {};
@@ -147,9 +147,9 @@ bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr
   }
 
   for (unsigned int i = 0; i < input_coo_num; i++) {
-    const auto &indices_ptr = reinterpret_cast<int64_t *>(inputs[kSpInputIndicesStart * input_coo_num + i]->addr);
-    const auto &values_ptr = reinterpret_cast<S *>(inputs[kSpInputValuesStart * input_coo_num + i]->addr);
-    const auto &shape_ptr = reinterpret_cast<T *>(inputs[kOutputShapesStart * input_coo_num + i]->addr);
+    const auto &indices_ptr = static_cast<int64_t *>(inputs[kSpInputIndicesStart * input_coo_num + i]->addr);
+    const auto &values_ptr = static_cast<S *>(inputs[kSpInputValuesStart * input_coo_num + i]->addr);
+    const auto &shape_ptr = static_cast<T *>(inputs[kOutputShapesStart * input_coo_num + i]->addr);
     auto cur_axis_shape = *(shape_ptr + concat_dim_);
     for (unsigned int j = 0; j < inputs[kSpInputIndicesStart * input_coo_num + i]->size / sizeof(int64_t); j++) {
       if (static_cast<int>(j % shape_size) == concat_dim_) {
@@ -227,7 +227,7 @@ bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       }
     }
   }
-  SparseConcat<S, T>(inputs, workspace, outputs, shape_size, size);
+  (void)SparseConcat<S, T>(inputs, workspace, outputs, shape_size, size);
   return true;
 }
 
