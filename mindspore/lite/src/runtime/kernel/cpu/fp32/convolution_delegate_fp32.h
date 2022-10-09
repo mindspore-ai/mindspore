@@ -31,13 +31,16 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateCPUKernel() override {
     FreeCopiedData();
-    if (matmul_param_ != nullptr) {
-      matmul_param_ = nullptr;
-    }
     if (conv_kernel_ != nullptr) {
+      if (matmul_param_ != nullptr) {
+        free(op_parameter_);
+      }
       op_parameter_ = nullptr;  // op_parameter will be freed in conv_kernel
       delete conv_kernel_;
       conv_kernel_ = nullptr;
+    }
+    if (matmul_param_ != nullptr) {
+      matmul_param_ = nullptr;
     }
   };
   int Prepare() override;

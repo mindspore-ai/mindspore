@@ -233,7 +233,7 @@ bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_p
 kernel::LiteKernel *ConvolutionDelegateCPUKernel::CreateConv1x1MatmulKernel() {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
 
-  matmul_param_ = new (std::nothrow) MatMulParameter;
+  matmul_param_ = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param_ == nullptr) {
     MS_LOG(WARNING) << "Memory allocation failed, Create Conv1x1 Matmul Kernel failed.";
     return nullptr;
