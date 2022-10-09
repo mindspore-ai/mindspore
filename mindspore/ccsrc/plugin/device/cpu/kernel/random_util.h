@@ -170,7 +170,7 @@ class GuardedPhiloxRandom {
   random::MSPhiloxRandom ReserveSamples128(uint64_t samples);
 
   random::MSPhiloxRandom ReserveRandomOutputs(int64_t output_count, int multiplier) {
-    int64_t conservative_sample_count = output_count * multiplier;
+    int64_t conservative_sample_count = static_cast<uint64_t>(output_count * multiplier);
     return ReserveSamples128(conservative_sample_count);
   }
 
@@ -178,7 +178,7 @@ class GuardedPhiloxRandom {
   mutex mu_;
   random::MSPhiloxRandom generator_;
   bool initialized_;
-  uint64_t New64();
+  uint64_t New64() const;
 
   GuardedPhiloxRandom(const GuardedPhiloxRandom &) = delete;
   void operator=(const GuardedPhiloxRandom &) = delete;
@@ -201,7 +201,7 @@ class MSUniformDistribution<T, double> {
   using ResType = random::Array<double, kResultElementCount>;
   using ResultElementType = double;
 
-  ResType operator()(T *gen) {
+  ResType operator()(T *gen) const {
     typename T::ResType sample = (*gen)();
     ResType result;
     for (int i = 0; i < kResultElementCount; ++i) {
@@ -218,7 +218,7 @@ class MSNormalDistribution<T, double> {
   using ResType = random::Array<double, kResultElementCount>;
   using ResultElementType = double;
 
-  ResType operator()(T *gen) {
+  ResType operator()(T *gen) const {
     typename T::ResType sample = (*gen)();
     ResType result;
     for (int i = 0; i < kResultElementCount; i += kIndex2) {
