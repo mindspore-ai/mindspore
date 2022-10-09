@@ -47,6 +47,27 @@ def test_compile_axis():
     net(input_tensor)
 
 
+class Softmax2dNet(nn.Cell):
+    def __init__(self):
+        super(Softmax2dNet, self).__init__()
+        self.softmax2d = nn.Softmax2d()
+
+    def construct(self, x):
+        return self.softmax2d(x)
+
+
+def test_compile_softmax2d():
+    """
+    Feature: Test Softmax2d.
+    Description: Test Softma2d functional.
+    Expectation: Success.
+    """
+    net = Softmax2dNet()
+    input_tensor = Tensor(np.random.randn(2, 3, 4, 4).astype(np.float32))
+    net(input_tensor)
+    _cell_graph_executor.compile(net, input_tensor)
+
+
 class SoftminNet(nn.Cell):
     """Softmin."""
     def __init__(self, dim):

@@ -129,6 +129,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Sigmoid
     mindspore.nn.Softmin
     mindspore.nn.Softmax
+    mindspore.nn.Softmax2d
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
     mindspore.nn.Tanhshrink
