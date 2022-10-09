@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CORE_OPS_GRAD_BINARY_CROSS_ENTROPY_GRAD_H_
 #define MINDSPORE_CORE_OPS_GRAD_BINARY_CROSS_ENTROPY_GRAD_H_
-#include <vector>
 #include <memory>
 #include <string>
 #include "ops/base_operator.h"
