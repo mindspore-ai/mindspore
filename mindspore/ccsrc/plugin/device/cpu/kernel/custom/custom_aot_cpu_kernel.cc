@@ -20,6 +20,7 @@
 #endif
 
 #include <vector>
+#include <map>
 #include <string>
 #include <algorithm>
 #include <functional>
@@ -31,18 +32,19 @@ namespace mindspore {
 namespace kernel {
 CustomAOTCpuKernelMod::~CustomAOTCpuKernelMod() {
 #if !defined(_WIN32) && !defined(_WIN64)
+  attrs_.DestructKernelData();
+
   if (handle_ != nullptr) {
     dlclose(handle_);
   }
 
-  attrs_.DestructKernelData();
-
 #endif
 }
 
-void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  const auto &exec_info = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
+bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
     auto real_path = FileUtils::GetRealPath(path.c_str());
@@ -57,39 +59,27 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       << "' is illegal. Proper function path should follow the format of 'dir_path/file_name:func_name'";
   }
 
-  num_input_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  auto input_type_list = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
-  if (num_input_ != input_type_list.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, number of input types '" << input_type_list.size()
-                      << "' doesn't match number of input shapes '" << num_input_ << "'";
-  }
-
-  for (size_t i = 0; i < num_input_; i++) {
-    auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto in_shape = inputs[i]->GetShapeVector();
+    auto dtype = inputs[i]->GetDtype();
     (void)shape_list_.emplace_back(in_shape);
     ndims_.push_back(SizeToInt(in_shape.size()));
-    type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
+    type_list_.emplace_back(TypeIdToString(dtype, true));
   }
 
-  num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
-  if (num_output_ != output_type_list.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, number of outputs types '" << output_type_list.size()
-                      << "' doesn't match number of output shapes '" << num_output_ << "'";
-  }
-
-  for (size_t i = 0; i < num_output_; i++) {
-    auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+  for (size_t i = 0; i < outputs.size(); i++) {
+    auto out_shape = outputs[i]->GetShapeVector();
+    auto dtype = outputs[i]->GetDtype();
     (void)shape_list_.emplace_back(out_shape);
     ndims_.push_back(SizeToInt(out_shape.size()));
-    type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
+    type_list_.emplace_back(TypeIdToString(dtype, true));
   }
 
   (void)std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
                        [](auto &v) { return &v[0]; });
   (void)std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                        [](auto &str) { return str.c_str(); });
-  attrs_.SetKernelNode(kernel_node);
+  attrs_.SetKernelPrim(base_operator->GetPrim());
 
 #if !defined(_WIN32) && !defined(_WIN64)
   if (!handle_) {
@@ -97,7 +87,7 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     if (!handle_) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' on CPU, dlopen file '" << file_path_
                     << "' should be successful, but error occurs! Error message is: " << dlerror();
-      return;
+      return false;
     }
   }
   init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtra *)>::type>(
@@ -112,7 +102,7 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' on CPU, operator failed when executing user defined file "
                     << file_path_ << "! "
                     << "Error message is " << e.what();
-      return;
+      return false;
     }
 
     if (ret != 0) {
@@ -125,40 +115,22 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 #else
   MS_LOG(EXCEPTION) << "Custom AOT Operator doesn't support Windows currently";
 #endif
-  InitSizeLists();
-}
-
-void CustomAOTCpuKernelMod::InitSizeLists() {
-  for (size_t i = 0; i < num_input_; i++) {
-    size_t this_size =
-      LongToSize(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
-    this_size *= GetDtypeNbyte(type_list_[i]);
-    input_size_list_.push_back(this_size);
-  }
-  for (size_t i = num_input_; i < (num_input_ + num_output_); i++) {
-    size_t this_size =
-      LongToSize(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
-
-    this_size *= GetDtypeNbyte(type_list_[i]);
-    output_size_list_.push_back(this_size);
-  }
-  workspace_size_list_.clear();
-  workspace_size_list_ = attrs_.WorkSpace();
+  return true;
 }
 
 bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs) {
   std::vector<void *> params;
 
-  for (size_t i = 0; i < num_input_; i++) {
-    params.push_back(GetDeviceAddress<void>(inputs, i));
+  for (size_t i = 0; i < inputs.size(); i++) {
+    params.push_back(reinterpret_cast<void *>(inputs[i]->addr));
   }
-  for (size_t i = 0; i < num_output_; i++) {
-    params.push_back(GetDeviceAddress<void>(outputs, i));
+  for (size_t i = 0; i < outputs.size(); i++) {
+    params.push_back(reinterpret_cast<void *>(outputs[i]->addr));
   }
 
-  for (size_t i = 0; i < attrs_.WorkSpace().size(); i++) {
-    params.push_back(GetDeviceAddress<void>(workspace, i));
+  for (size_t i = 0; i < workspace.size(); i++) {
+    params.push_back(reinterpret_cast<void *>(workspace[i]->addr));
   }
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -205,6 +177,17 @@ bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 #endif
 
   return true;
+}
+
+int CustomAOTCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
+  }
+  workspace_size_list_ = attrs_.WorkSpace();
+  return static_cast<int>(KRET_OK);
 }
 }  // namespace kernel
 }  // namespace mindspore

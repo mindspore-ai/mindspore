@@ -34,8 +34,6 @@ class add_kernel_attr : public AotKernelData {
   float padding;
 };
 
-void foo_destroy(void *kernel_ptr) { delete static_cast<add_kernel_attr *>(kernel_ptr); }
-
 extern "C" int CustomAddInit(int *ndims, int64_t **shapes, const char **dtypes, AotExtra *extra) {
   size_t workspace_size = 1;
   for (size_t i = 0; i < ndims[0]; i++) {

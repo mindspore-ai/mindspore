@@ -84,7 +84,7 @@ bool BiShengKernelMod::InitKernel(const AnfNodePtr &kernel_node) {
   (void)std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                        [](auto &str) { return str.c_str(); });
   auto cnode = kernel_node->cast<CNodePtr>();
-  attrs_.SetKernelNode(cnode);
+  attrs_.SetKernelPrim(common::AnfAlgo::GetCNodePrimitive(cnode));
 
   if (!handle_) {
     handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);

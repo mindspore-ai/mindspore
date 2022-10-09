@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H
-#define MINDSPORE_CCSRC_KERNEL_GPU_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H
 
 #ifdef _MSC_VER
 #include <windows.h>
@@ -24,6 +24,7 @@
 #endif
 #include <vector>
 #include <string>
+#include <map>
 #include <algorithm>
 #include <functional>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -34,10 +35,12 @@
 
 namespace mindspore {
 namespace kernel {
-class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CustomAOTGpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
+  CustomAOTGpuKernelMod() : handle_(nullptr), aot_func_(nullptr) {}
   ~CustomAOTGpuKernelMod() override {
+    attrs_.DestructKernelData();
+
     if (handle_ != nullptr) {
 #ifdef _MSC_VER
       FreeLibrary(handle_);
@@ -45,22 +48,20 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       dlclose(handle_);
 #endif
     }
-
-    attrs_.DestructKernelData();
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     std::vector<void *> params;
 
-    for (size_t i = 0; i < num_input_; i++) {
-      params.push_back(GetDeviceAddress<void>(inputs, i));
+    for (size_t i = 0; i < inputs.size(); i++) {
+      params.push_back(reinterpret_cast<void *>(inputs[i]->addr));
     }
-    for (size_t i = 0; i < num_output_; i++) {
-      params.push_back(GetDeviceAddress<void>(outputs, i));
+    for (size_t i = 0; i < outputs.size(); i++) {
+      params.push_back(reinterpret_cast<void *>(outputs[i]->addr));
     }
-    for (size_t i = 0; i < attrs_.WorkSpace().size(); i++) {
-      params.push_back(GetDeviceAddress<void>(workspace, i));
+    for (size_t i = 0; i < workspace.size(); i++) {
+      params.push_back(reinterpret_cast<void *>(workspace[i]->addr));
     }
     if (!handle_) {
 #ifdef _MSC_VER
@@ -120,10 +121,10 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    const auto &exec_info = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
-    kernel_node_ = kernel_node;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->GetPrim()->name();
+    const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
       auto path = exec_info.substr(0, pos);
       auto real_path = FileUtils::GetRealPath(path.c_str());
@@ -138,33 +139,20 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         << "' is illegal. Proper function path should follow the format of 'dir_path/file_name:func_name'";
     }
 
-    num_input_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    auto input_type_list = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
-    if (num_input_ != input_type_list.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on GPU, number of input types '" << input_type_list.size()
-                        << "' doesn't match number of input shapes '" << num_input_ << "'";
-    }
-
-    for (size_t i = 0; i < num_input_; i++) {
-      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
+    for (size_t i = 0; i < inputs.size(); i++) {
+      auto in_shape = inputs[i]->GetShapeVector();
+      auto dtype = inputs[i]->GetDtype();
+      type_list_.emplace_back(TypeIdToString(dtype, true));
       ndims_.push_back(SizeToInt(in_shape.size()));
       shape_list_.emplace_back(in_shape);
     }
 
-    num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
-
-    if (num_output_ != output_type_list.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on GPU, number of outputs types '" << output_type_list.size()
-                        << "' doesn't match number of output shapes '" << num_output_ << "'";
-    }
-
-    for (size_t i = 0; i < num_output_; i++) {
-      auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+    for (size_t i = 0; i < outputs.size(); i++) {
+      auto out_shape = outputs[i]->GetShapeVector();
+      auto dtype = outputs[i]->GetDtype();
       shape_list_.emplace_back(out_shape);
       ndims_.push_back(SizeToInt(out_shape.size()));
-      type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
+      type_list_.emplace_back(TypeIdToString(dtype, true));
     }
 
     std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
@@ -172,7 +160,7 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                    [](auto &str) { return str.c_str(); });
 
-    attrs_.SetKernelNode(kernel_node);
+    attrs_.SetKernelPrim(base_operator->GetPrim());
 
     if (!handle_) {
 #ifdef _MSC_VER
@@ -218,34 +206,21 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                              "terminate execution. If termination is not your purpose, please set return value to 0.";
       }
     }
-
-    InitSizeLists();
     return true;
   }
 
- protected:
-  void InitSizeLists() override {
-    for (size_t i = 0; i < num_input_; i++) {
-      size_t this_size = LongToSizeClipNeg(
-        std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), int64_t(1), std::multiplies<int64_t>()));
-      this_size *= GetDtypeNbyte(type_list_[i]);
-      input_size_list_.push_back(this_size);
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+    if (ret != 0) {
+      return ret;
     }
-    for (size_t i = num_input_; i < (num_input_ + num_output_); i++) {
-      size_t this_size = LongToSizeClipNeg(
-        std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), int64_t(1), std::multiplies<int64_t>()));
-
-      this_size *= GetDtypeNbyte(type_list_[i]);
-      output_size_list_.push_back(this_size);
-    }
-
-    workspace_size_list_.clear();
     workspace_size_list_ = attrs_.WorkSpace();
+    return static_cast<int>(KRET_OK);
   }
 
  private:
-  size_t num_input_;
-  size_t num_output_;
   std::string file_path_;
   std::string func_name_;
 #ifdef _MSC_VER
@@ -268,4 +243,4 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H

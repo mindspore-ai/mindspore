@@ -24,7 +24,7 @@
 class AotKernelData {
  public:
   AotKernelData() = default;
-  virtual ~AotKernelData() = 0;
+  virtual ~AotKernelData() = default;
 };
 
 class AotExtra {
@@ -43,10 +43,8 @@ class AotExtra {
   AotKernelData *KernelData() const { return kernel_data_; }
 
   void DestructKernelData() {
-    if (kernel_data_ != nullptr) {
-      delete kernel_data_;
-      kernel_data_ = nullptr;
-    }
+    delete kernel_data_;
+    kernel_data_ = nullptr;
   }
 
  private:
