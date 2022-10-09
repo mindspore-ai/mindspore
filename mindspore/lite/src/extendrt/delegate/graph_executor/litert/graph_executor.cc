@@ -106,8 +106,10 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(buf), kMindIR_Lite, data_size, helpers_.get());
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Load model by meta graph failed";
+    free(buf);
     return false;
   }
+  free(buf);
   return true;
 }
 
