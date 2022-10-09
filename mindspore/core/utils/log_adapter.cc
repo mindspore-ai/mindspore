@@ -305,11 +305,6 @@ void DisplayDevExceptionMessage(std::ostringstream &oss, const std::vector<std::
   }
 
   if (display) {
-    const std::string CPP_CALL_STACK_TITLE = "- C++ Call Stack: (For framework developers)";
-    std::ostringstream cpp_call_stack_content;
-    cpp_call_stack_content << location.file_ << ":" << location.line_ << " " << location.func_ << "\n";
-    CombineExceptionMessageWithSameTitle(oss, CPP_CALL_STACK_TITLE, cpp_call_stack_content.str());
-
     size_t size = dmsg.size();
     if ((size != 0) && (size % kStep == 0)) {
       for (size_t i = 0; i < size; i += kStep) {
@@ -318,6 +313,11 @@ void DisplayDevExceptionMessage(std::ostringstream &oss, const std::vector<std::
         CombineExceptionMessageWithSameTitle(oss, dmsg_title.str(), dmsg[i + 1]);
       }
     }
+
+    const std::string CPP_CALL_STACK_TITLE = "- C++ Call Stack: (For framework developers)";
+    std::ostringstream cpp_call_stack_content;
+    cpp_call_stack_content << location.file_ << ":" << location.line_ << " " << location.func_ << "\n";
+    CombineExceptionMessageWithSameTitle(oss, CPP_CALL_STACK_TITLE, cpp_call_stack_content.str());
   }
 }
 
