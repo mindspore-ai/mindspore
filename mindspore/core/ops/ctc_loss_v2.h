@@ -48,6 +48,11 @@ class MIND_API CTCLossV2 : public BaseOperator {
   ///
   /// \return reduction.
   std::string get_reduction() const;
+
+  /// \brief Get zero_infinity.
+  ///
+  /// \return zero_infinity.
+  bool get_zero_infinity() const;
 };
 
 abstract::AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

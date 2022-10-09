@@ -8158,7 +8158,7 @@ class CTCLossV2(Primitive):
         RuntimeError: If the shape of `target_lengths` does not match {batch_size|N}.
         RuntimeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         RuntimeError: If the value of `blank` is not in range [0, num_labels|C).
-        RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
+        RuntimeError: If any value of `input_lengths` is larger than (time_series|T).
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
