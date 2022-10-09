@@ -1344,6 +1344,7 @@ def get_bprop_mirror_pad(self):
 def get_bprop_roi_align(self):
     """Grad definition for `ROIAlign` operation."""
     shape_op = P.Shape()
+    dyn_shape = P.TensorShape()
     pooled_height = self.pooled_height
     pooled_width = self.pooled_width
     spatial_scale = self.spatial_scale
@@ -1351,12 +1352,9 @@ def get_bprop_roi_align(self):
 
     def bprop(inputs, rois, out, dout):
         inputs_shape = shape_op(inputs)
-        dx = G.ROIAlignGrad(inputs_shape,
-                            pooled_height,
-                            pooled_width,
-                            spatial_scale,
-                            sample_num,
-                            )(dout, rois)
+        if is_shape_unknown(inputs_shape):
+            inputs_shape = dyn_shape(inputs)
+        dx = G.ROIAlignGrad(pooled_height, pooled_width, spatial_scale, sample_num)(dout, rois, inputs_shape)
         return dx, zeros_like(rois)
 
     return bprop

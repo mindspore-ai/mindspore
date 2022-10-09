@@ -31,28 +31,28 @@ class MIND_API ROIAlign : public BaseOperator {
   MIND_API_BASE_MEMBER(ROIAlign);
   /// \brief Constructor.
   ROIAlign() : BaseOperator(kNameROIAlign) { InitIOName({"feature", "rois"}, {"output"}); }
-  void Init(const int pooled_height, const int pooled_weight, const float spatial_scale, const int sample_num = 2,
-            const int roi_end_mode = 1);
+  void Init(const int64_t pooled_height, const int64_t pooled_weight, const float spatial_scale,
+            const int64_t sample_num = 2, const int64_t roi_end_mode = 1);
 
   /// \brief Method to set pooled_height attribute.
   ///
   /// \param[in] pooled_height Define the height of the output.
-  void set_pooled_height(const int pooled_height);
+  void set_pooled_height(const int64_t pooled_height);
 
   /// \brief Method to get pooled_height attribute.
   ///
   /// \return the height of the output.
-  int get_pooled_height() const;
+  int64_t get_pooled_height() const;
 
   /// \brief Method to set pooled_width attribute.
   ///
   /// \param[in] pooled_width Define the width of the output.
-  void set_pooled_width(const int pooled_width);
+  void set_pooled_width(const int64_t pooled_width);
 
   /// \brief Method to get pooled_width attribute.
   ///
   /// \return the height of the output.
-  int get_pooled_width() const;
+  int64_t get_pooled_width() const;
 
   /// \brief Method to set spatial_scale attribute.
   ///
@@ -67,26 +67,23 @@ class MIND_API ROIAlign : public BaseOperator {
   /// \brief Method to set sample num attribute.
   ///
   /// \param[in] sample_num Define sample_num.
-  void set_sample_num(const int sample_num);
+  void set_sample_num(const int64_t sample_num);
 
   /// \brief Method to get sample_num attribute.
   ///
   /// \return the sample_num.
-  int get_sample_num() const;
+  int64_t get_sample_num() const;
 
   /// \brief Method to set roi_end_mode attribute.
   ///
   /// \param[in] sample_num Define roi_end_mode.
-  void set_roi_end_mode(const int roi_end_mode);
+  void set_roi_end_mode(const int64_t roi_end_mode);
 
   /// \brief Method to get roi_end_mode attribute.
   ///
   /// \return the roi_end_mode.
-  int get_roi_end_mode() const;
+  int64_t get_roi_end_mode() const;
 };
-
-abstract::AbstractBasePtr ROIAlignInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_ROI_ALIGN_H_

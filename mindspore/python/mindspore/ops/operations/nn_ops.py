@@ -4647,7 +4647,7 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         return true_classes_type, true_classes_type, weights_type
 
 
-class ROIAlign(PrimitiveWithInfer):
+class ROIAlign(Primitive):
     r"""
     Computes the Region of Interest (RoI) Align operator.
 
@@ -4710,16 +4710,6 @@ class ROIAlign(PrimitiveWithInfer):
         self.spatial_scale = spatial_scale
         self.sample_num = sample_num
         self.roi_end_mode = roi_end_mode
-
-    def infer_shape(self, inputs_shape, rois_shape):
-        validator.check("input shape rank", len(inputs_shape), "", 4, Rel.LE, self.name)
-        return [rois_shape[0], inputs_shape[1], self.pooled_height, self.pooled_width]
-
-    def infer_dtype(self, inputs_type, rois_type):
-        valid_dtypes = (mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid("inputs_type", inputs_type, valid_dtypes, self.name)
-        validator.check_tensor_dtype_valid("rois_type", rois_type, valid_dtypes, self.name)
-        return inputs_type
 
 
 class Adam(Primitive):
