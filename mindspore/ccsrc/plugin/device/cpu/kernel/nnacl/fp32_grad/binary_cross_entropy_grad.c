@@ -19,23 +19,37 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 int BinaryCrossEntropyGrad(const int input_size, const int reduction, const float *input_x, const float *input_y,
-                           const float *weight, const float *dloss, float *dx) {
+                           const float *weight, const float *dloss, float *dx, bool weight_defined) {
   const float epsilon = 1e-12f;
-  if (reduction == 0) {
-    for (int i = 0; i < input_size; i++) {
-      float denominator = MAX(input_x[i] * (1 - input_x[i]), epsilon);
-      float value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-      dx[i] = value * dloss[i];
+  if (reduction == Reduction_None) {
+    if (weight_defined) {
+      for (int i = 0; i < input_size; i++) {
+        float denominator = MAX(input_x[i] * (1 - input_x[i]), epsilon);
+        float value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss[i];
+      }
+    } else {
+      for (int i = 0; i < input_size; i++) {
+        float denominator = MAX(input_x[i] * (1 - input_x[i]), epsilon);
+        float value = (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss[i];
+      }
     }
   } else {
     float dloss1 = dloss[0];
-    if (reduction == 1) {
+    if (reduction == Reduction_Sum) {
       dloss1 = dloss[0] / input_size;
     }
     for (int i = 0; i < input_size; i++) {
-      float denominator = MAX(input_x[i] * (1 - input_x[i]), epsilon);
-      float value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-      dx[i] = value * dloss1;
+      if (weight_defined) {
+        float denominator = MAX(input_x[i] * (1 - input_x[i]), epsilon);
+        float value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss1;
+      } else {
+        float denominator = MAX(input_x[i] * (1 - input_x[i]), epsilon);
+        float value = (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss1;
+      }
     }
   }
   return 0;

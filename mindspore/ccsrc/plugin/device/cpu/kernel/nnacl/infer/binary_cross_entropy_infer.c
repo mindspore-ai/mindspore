@@ -27,8 +27,8 @@ int BinaryCrossEntropyInferShape(const TensorC *const *inputs, size_t inputs_siz
   TensorC *out = outputs[0];
   SetDataTypeFormat(out, x);
   BinaryCrossEntropyParameter *param = (BinaryCrossEntropyParameter *)parameter;
-  int reduction = param->reduction;
-  if (reduction == 1 || reduction == 2) {
+  ReductionType reduction = (ReductionType)(param->reduction);
+  if (reduction == Reduction_Mean || reduction == Reduction_Sum) {
     out->shape_size_ = 1;
     out->shape_[0] = 1;
   } else {
