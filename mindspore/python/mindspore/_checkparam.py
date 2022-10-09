@@ -971,9 +971,13 @@ class Validator:
             err_msg1 = "For CSRTensor, indices and values must equal in their shape, "
             err_msg2 = f"but got indices shape: {indices_shp[0]}, values shape: {values_shp[0]}."
             raise ValueError(err_msg1 + err_msg2)
+        if len(values_shp) + 1 != len(csr_shp):
+            raise ValueError(f"Values' dimension should equal to CSRTensor's dimension - 1, but got"\
+                            f"Values' dimension: {len(values_shp)} , CSRTensor's dimension: "\
+                            f"{len(csr_shp)}")
         if values_shp[1: ] != csr_shp[2: ]:
-            raise ValueError(f"csr_tensor's shape[2: ] must be equal to  value's shape[1: ],"\
-                            f"but csr_tensor's shape[2: ] got: {csr_shp[2: ]} and value's shape[1: ]"\
+            raise ValueError(f"CSRTensor's shape[2: ] must be equal to value's shape[1: ],"\
+                            f"but CSRTensor's shape[2: ] got: {csr_shp[2: ]} and value's shape[1: ]"\
                             f"got: {values_shp[1: ]}")
 
     @staticmethod
@@ -996,11 +1000,15 @@ class Validator:
         """Checks input tensors' shapes for COOTensor."""
         if len(coo_shp) != 2:
             raise ValueError(f"For COOTensor, the length of 'shape' must be 2, but got {coo_shp}.")
+        shp_mul = 1
         for sh in coo_shp:
             if sh <= 0:
                 raise ValueError(f"For COOTensor, the element of 'shape' must be positive, but got {sh} in {coo_shp}.")
             if not isinstance(sh, int):
                 raise TypeError(f"For COOTensor, the element type of 'shape' must be int, but got {type(sh)}")
+            shp_mul *= sh
+        if shp_mul < values_shp[0]:
+            raise ValueError(f"For COOTensor, shape is too small: ({shp_mul}) to hold all values({values_shp[0]}).")
         if len(indices_shp) != 2:
             raise ValueError(f"For COOTensor, 'indices' must be a 2-dimensional tensor, but got a {len(indices_shp)}"
                              f"-dimensional tensor.")
