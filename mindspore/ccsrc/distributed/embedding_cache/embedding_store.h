@@ -23,24 +23,32 @@
 #include <utility>
 
 #include "distributed/persistent/storage/storage.h"
-#include "distributed/embedding_cache/embedding_cache.h"
+#include "distributed/embedding_cache/embedding_lru_cache.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
+// Default path to save embedding table.
+static constexpr auto kDefaultEmbeddingRemoteStoragePath = "./embedding_storage";
+
+static constexpr auto kEnvEmbeddingRemoteStoragePath = "MS_EMBEDDING_REMOTE_STORAGE_PATH";
+
+std::string GetEmbeddingRemoteStoragePath();
+
 // This class uses external storage to store Parameter of embedding.
-template <typename K_T, typename V_T>
-class EmbeddingStore {
+template <typename K, typename V>
+class BACKEND_EXPORT EmbeddingStore {
  public:
   EmbeddingStore(size_t cache_capacity, size_t emb_dim) : cache_capacity_(cache_capacity), emb_dim_(emb_dim) {}
   ~EmbeddingStore() = default;
 
-  bool Initialize(const std::map<std::string, std::string> &storage_config);
+  bool Initialize();
   bool Finalize() { return true; }
 
   // Get values which is indexed by keys at input. Input is a tensor data address from Parameter of embedding.
   // Values save the get result. Keys is lookup indices.
   // When keys not exist in input, will get values from persistent storage.
-  bool Get(const void *input, size_t key_num, const void *keys, void *values);
+  bool Get(const void *input, size_t key_num, const void *keys, void *values) { return true; }
 
   // Get values which is indexed by keys at persistent storage.
   bool Get(size_t key_num, const void *keys, void *values) { return true; }
@@ -48,7 +56,7 @@ class EmbeddingStore {
   // Put values which is indexed by keys to input. Input is a tensor data address from Parameter of embedding.
   // Values is data to be update to input. Keys is update indices.
   // When input is full, save evicted values to persistent storage.
-  bool Put(void *input, size_t key_num, const void *keys, const void *values);
+  bool Put(void *input, size_t key_num, const void *keys, const void *values) { return true; }
 
   // Flush input to persistent storage.
   bool Flush(void *input);

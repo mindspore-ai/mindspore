@@ -36,7 +36,7 @@ class EmbeddingCache {
                    void *evicted_keys, void *evicted_values) = 0;
 
   // Check if cache is full.
-  virtual bool IsFull();
+  virtual bool IsFull() = 0;
 };
 }  // namespace distributed
 }  // namespace mindspore

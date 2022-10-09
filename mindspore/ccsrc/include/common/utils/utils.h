@@ -665,6 +665,8 @@ constexpr auto kAttrBinaryOutput = "binary_output";
 constexpr auto kAttrMinLength = "minlength";
 constexpr auto kAttrMaxLength = "maxlength";
 constexpr auto kAttrIouThreshold = "iou_threshold";
+constexpr auto kAttrUseEmbeddingStore = "UseEmbeddingStore";
+constexpr auto kAttrParameterKey = "ParameterKey";
 
 // FuncGraph Flags
 constexpr auto kFlagsIsCutGraph = "is_cut_graph";

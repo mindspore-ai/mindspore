@@ -26,6 +26,7 @@
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "distributed/embedding_cache/embedding_cache.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
@@ -75,27 +76,28 @@ class LRUCache {
   size_t capacity_;
 };
 
-using KeysLRUCache = LRUCache<uint32_t, uint32_t>;
-
 // Use LRU algorithm to cache index of saved value of Parameter of embedding.
-class EmbeddingLRUCache : public EmbeddingCache {
+template <typename K, typename V>
+class BACKEND_EXPORT EmbeddingLRUCache : public EmbeddingCache {
  public:
   explicit EmbeddingLRUCache(size_t capacity) : capacity_(capacity) {}
   ~EmbeddingLRUCache() = default;
 
-  bool Initialize(size_t capacity_);
+  bool Initialize();
   bool Finalize() { return true; }
 
-  bool Get(void *input, size_t key_num, const void *keys, void *values) override;
+  bool Get(void *input, size_t key_num, const void *keys, void *values) override { return true; }
   bool Put(void *input, size_t key_num, const void *keys, const void *values, size_t evicted_num, void *evicted_keys,
-           void *evicted_values) override;
-  bool IsFull() override;
+           void *evicted_values) override {
+    return true;
+  }
+  bool IsFull() override { return true; }
 
  private:
   size_t capacity_;
 
   // Cache the index of saved value in the Parameter of embedding.
-  std::unique_ptr<KeysLRUCache> keys_lru_cache_;
+  std::unique_ptr<LRUCache<K, size_t>> keys_lru_cache_;
 };
 }  // namespace distributed
 }  // namespace mindspore

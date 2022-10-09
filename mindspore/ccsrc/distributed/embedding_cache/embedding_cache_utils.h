@@ -281,6 +281,8 @@ class BACKEND_EXPORT EmbeddingStoreManager {
   }
   std::shared_ptr<EmbeddingStore<size_t, float_t>> Get(const std::string &name) { return embedding_stores_[name]; }
 
+  bool IsExists(const std::string &name) const { return embedding_stores_.find(name) != embedding_stores_.end(); }
+
  private:
   EmbeddingStoreManager() = default;
   ~EmbeddingStoreManager() = default;

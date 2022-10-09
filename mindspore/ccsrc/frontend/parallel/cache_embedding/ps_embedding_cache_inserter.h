@@ -53,6 +53,10 @@ class PsEmbeddingCacheInserter {
   // Create RpcRecv node for server to receive request.
   CNodePtr CreateRecvNode() const;
 
+  // Build Embedding store for each param which enable cache. Embedding store can read/write embedding from/to
+  // persistent storage.
+  void BuildEmbeddingStores();
+
   // Construct the embedding cache services subgraphs, including embedding lookup and update operations, and package the
   // subgraphs corresponding to the related operations into the partial.
   bool ConstructEmbeddingCacheServicesSubGraphs(const std::vector<CNodePtr> &recv_outputs,
@@ -67,7 +71,8 @@ class PsEmbeddingCacheInserter {
   // Construct updating embedding service sub graph:
   // Input(param, indices, update_values) --> Sub --> ScatterUpdate --> Return
   // The Sub is used to rectify the id via offset for embedding slice.
-  FuncGraphPtr ConstructUpdateEmbeddingSubGraph(const ParameterPtr &param, const AnfNodePtr &node) const;
+  FuncGraphPtr ConstructUpdateEmbeddingSubGraph(const ParameterPtr &param, const AnfNodePtr &node,
+                                                int32_t param_key) const;
 
   // Create return node for subgraph, using depend node to return a fake value node to ensure that the output abstract
   // of each subgraph is the same.

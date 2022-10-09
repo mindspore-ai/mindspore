@@ -136,7 +136,7 @@ class ParamInfo {
   std::vector<int64_t> parameter_shape_;
   // Used at embedding cache. The slice after cut huge parameter to a small one.
   std::vector<int64_t> parameter_persistent_slice_shape_;
-  bool use_persistent_storage_;
+  bool use_persistent_storage_{false};
   // Used to identify the same Parameter for Worker and Server in the embedding cache scenario.
   int32_t key_{-1};
 };
