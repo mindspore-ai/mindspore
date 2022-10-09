@@ -899,7 +899,7 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
     new_func_graph->add_parameter(std::move(param_debug_info))->set_abstract(param->abstract());
   }
 
-  Cloner cloner{};
+  Cloner cloner({}, true);
   cloner.AddClone(func_graph, new_func_graph, new_func_graph->parameters());
   AnfNodePtr output = cloner[func_graph->output()];
   new_func_graph->set_output(output);
