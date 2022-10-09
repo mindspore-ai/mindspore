@@ -2638,9 +2638,8 @@ class BiasAdd(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
-          The data type should be float16 or float32.
         - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
-          `input_x`. The data type should be float16 or float32.
+          `input_x`.
 
     Outputs:
         Tensor, with the same shape and data type as `input_x`.
@@ -2670,10 +2669,6 @@ class BiasAdd(Primitive):
         """Initialize BiasAdd."""
         self.init_prim_io_names(inputs=['x', 'b'], outputs=['output'])
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
-        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'data_format' is {self.format} and "
-                             f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
 
 

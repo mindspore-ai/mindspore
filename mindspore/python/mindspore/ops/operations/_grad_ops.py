@@ -177,8 +177,6 @@ class BiasAddGrad(Primitive):
     def __init__(self, data_format="NCHW"):
         self.init_prim_io_names(inputs=['dout'], outputs=['output'])
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
-        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
         if self.format == "NCDHW":
             self.format = "NCHW"
         self.add_prim_attr('data_format', self.format)
