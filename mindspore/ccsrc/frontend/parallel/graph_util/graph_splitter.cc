@@ -274,6 +274,19 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
       recv_inputs.push_back(monad_input);
 
       recv_node_abs = param_node->abstract();
+    } else if (src_node->isa<CNode>() && common::AnfAlgo::GetCNodeName(src_node) == distributed::kDataSyncSrcOpName) {
+      auto kernel_with_index =
+        common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(src_node->cast<CNodePtr>(), kIndex0), kIndex0);
+      auto param_node = kernel_with_index.first;
+      recv_inputs.push_back(param_node);
+
+      ValuePtr monad_value = kUMonad;
+      auto monad_input = NewValueNode(monad_value);
+      MS_EXCEPTION_IF_NULL(monad_input);
+      monad_input->set_abstract(monad_value->ToAbstract());
+      recv_inputs.push_back(monad_input);
+
+      recv_node_abs = param_node->abstract();
     } else {
       // Use the same shape as origin node's.
       auto mock_value = CreateFakeValueNode(true, src_node, false);
@@ -412,6 +425,76 @@ bool GraphHasLabel(const FuncGraphPtr &func_graph) {
     }
   }
   return false;
+}
+
+CNodePtrList GetSideEffectNodeList(const AnfNodePtrList &nodes) {
+  CNodePtrList side_effect_nodes;
+  for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_EXCEPTION_IF_NULL(prim);
+    if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM)) {
+      side_effect_nodes.emplace_back(cnode);
+      MS_LOG(DEBUG) << "CNode with side effect mem: " << cnode->fullname_with_scope();
+    }
+  }
+  return side_effect_nodes;
+}
+
+AnfNodePtrList GetRefInputs(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  AnfNodePtrList ref_inputs;
+  for (size_t i = kIndex1; i < cnode->size(); ++i) {
+    auto &input = cnode->inputs().at(i);
+    if (common::AnfAlgo::HasAbstractRef(input)) {
+      ref_inputs.push_back(input);
+      MS_LOG(DEBUG) << "The ref input " << input->fullname_with_scope() << " of node " << cnode->fullname_with_scope();
+    }
+  }
+  return ref_inputs;
+}
+
+CNodePtr FindNextUpdateStateNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto cnode_users = func_graph->manager()->node_users()[cnode];
+  for (const auto &user : cnode_users) {
+    auto user_node = user.first;
+    MS_EXCEPTION_IF_NULL(user_node);
+    if (common::AnfAlgo::GetCNodeName(user_node) == kUpdateStateOpName) {
+      return user_node->cast<CNodePtr>();
+    }
+  }
+  return nullptr;
+}
+
+ValueNodePtr CreateUMonadNode() {
+  ValuePtr monad_value = kUMonad;
+  auto monad_input = NewValueNode(monad_value);
+  MS_EXCEPTION_IF_NULL(monad_input);
+  monad_input->set_abstract(monad_value->ToAbstract());
+  return monad_input;
+}
+
+CNodePtr CreateUpdateStateNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &update_state_inputs) {
+  if (update_state_inputs.empty()) {
+    MS_LOG(EXCEPTION) << "The inputs of UpdateState should not be empty.";
+  }
+  // The first input of UpdateState is an 'U'.
+  ValueNodePtr umonad_input = CreateUMonadNode();
+  MS_EXCEPTION_IF_NULL(umonad_input);
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimUpdateState), umonad_input};
+  inputs.insert(inputs.end(), update_state_inputs.begin(), update_state_inputs.end());
+
+  auto update_state_node = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(update_state_node);
+  update_state_node->set_abstract(umonad_input->abstract());
+  return update_state_node;
 }
 
 void ParameterServerMode::PreBuildDistributedGraph() {
@@ -718,8 +801,8 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
   // Step 1: Create multiple inputs of new node including extra nodes.
   std::vector<AnfNodePtr> new_node_inputs;
   new_node_inputs.resize(total_inputs_number);
-  std::vector<AnfNodePtr> mock_node_inputs = {NewValueNode(
-    std::make_shared<Primitive>(IsPrimitiveCNode(real_input, prim::kPrimUpdateState) ? "UpdateState" : kVirtualNode))};
+  std::vector<AnfNodePtr> mock_node_inputs = {NewValueNode(std::make_shared<Primitive>(
+    IsPrimitiveCNode(real_input, prim::kPrimUpdateState) ? kUpdateStateOpName : kVirtualNode))};
   for (size_t i = 0; i < new_node_inputs.size(); i++) {
     new_node_inputs[i] = func_graph_->NewCNode(mock_node_inputs);
     MS_EXCEPTION_IF_NULL(new_node_inputs[i]);
@@ -1097,6 +1180,13 @@ void GraphSplitter::Run() {
     return;
   }
 
+  if (mode_ == distributed::DistExecutionMode::kGeneralMode) {
+    // Only use ref sync mechanism when in general mode.
+    ProcessRefNodes();
+    // Add some control edges between different labels.
+    AddExtraControlEdgeAcrossProcess();
+  }
+
   // Step 4: Create inter-process operators for segments with different labels.
   InterProcessOpEdgesInfo comm_edges = GenerateInterProcessOperators();
 
@@ -1124,6 +1214,11 @@ void GraphSplitter::Run() {
     // Step 7: Postbuild the graph after splitting.
     exec_mode_->PostBuildDistributedGraph(comm_edges);
   }
+  // Only eliminate the data-sync node pairs in general mode.
+  if (mode_ == distributed::DistExecutionMode::kGeneralMode) {
+    EliminateDataSyncNode();
+    EliminateControlEdgeNode();
+  }
 }
 
 void GraphSplitter::DyeGraph() {
@@ -1147,6 +1242,23 @@ void GraphSplitter::DyeGraph() {
       node_labels_[node] = this_process_label_;
     }
   });
+}
+
+void GraphSplitter::ProcessRefNodes() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  // Traverse all nodes and find each nodes with side effect.
+  CNodePtrList cnodes_with_side_effect = GetSideEffectNodeList(all_nodes);
+  for (const auto &cnode : cnodes_with_side_effect) {
+    // Filter out all ref inputs which need to be synchronized between different processes.
+    AnfNodePtrList ref_inputs = GetRefInputs(cnode);
+    // Get the user node(UpdateState) of side effect node.
+    CNodePtr update_state_node = FindNextUpdateStateNode(func_graph_, cnode);
+    MS_EXCEPTION_IF_NULL(update_state_node);
+
+    // The key method to keep the correctness of reference nodes across computing graph nodes.
+    AddDataSyncNode(cnode, update_state_node, ref_inputs);
+  }
 }
 
 void GraphSplitter::CreateExecutionMode() {
@@ -1197,6 +1309,8 @@ std::vector<SplitGraphSegment> GraphSplitter::GenerateSplitSegments() {
   MS_LOG(INFO) << "Segments number with different distributed split labels is " << results.size();
   return results;
 }
+
+void GraphSplitter::AddExtraControlEdgeAcrossProcess() { AddControlEdgeForProcessWithoutIndegree(); }
 
 InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOperators() {
   InterProcessOpEdgesInfo comm_edges;
@@ -1250,6 +1364,244 @@ void GraphSplitter::SplitGraph(const FusedInterProcessOpPairMap &fused_inter_pro
 
   // Step 2: Connect output for send nodes.
   AddDependencyForSend(fused_inter_process_op_pairs);
+}
+
+void GraphSplitter::AddDataSyncNode(const CNodePtr &side_effect_node, const CNodePtr &update_state_node,
+                                    const AnfNodePtrList &ref_nodes) {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  MS_EXCEPTION_IF_NULL(side_effect_node);
+  MS_EXCEPTION_IF_NULL(update_state_node);
+
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    (node_labels_.count(side_effect_node) != 0),
+    "The node label for side effect node " + side_effect_node->fullname_with_scope() + " is not set.");
+  auto side_effect_node_label = node_labels_[side_effect_node];
+
+  for (const auto &ref : ref_nodes) {
+    std::set<OperatorLabel> diff_labels;
+    for (const auto &user : func_graph_->manager()->node_users()[ref]) {
+      const auto &user_node = user.first;
+      if (node_labels_[user_node] != side_effect_node_label) {
+        diff_labels.insert(node_labels_[user_node]);
+      }
+    }
+    // If the ref is used in multiple compute graph nodes, it needs to be synchronized.
+    if (diff_labels.empty()) {
+      MS_LOG(INFO) << "No need to synchronize ref node " << ref->fullname_with_scope()
+                   << " because the user nodes are on the same process.";
+      continue;
+    }
+
+    //  Create data-sync nodes and connect them to UpdateState node.
+    auto data_sync_node_list = CreateDataSyncNodes(side_effect_node, ref, diff_labels);
+    for (const auto &node_pair : data_sync_node_list) {
+      CNodePtr src_node = node_pair.first;
+      CNodePtr dst_node = node_pair.second;
+      func_graph_->manager()->AddEdge(update_state_node, dst_node);
+    }
+  }
+}
+
+DataSyncNodePairList GraphSplitter::CreateDataSyncNodes(const CNodePtr &side_effect_node, const AnfNodePtr &ref,
+                                                        const std::set<OperatorLabel> &diff_labels) {
+  MS_EXCEPTION_IF_NULL(side_effect_node);
+  MS_EXCEPTION_IF_NULL(ref);
+
+  DataSyncNodePairList result;
+  for (const auto &label : diff_labels) {
+    // Data sync src node.
+    std::vector<AnfNodePtr> sync_src_node_inputs = {
+      NewValueNode(std::make_shared<Primitive>(distributed::kDataSyncSrcOpName))};
+    sync_src_node_inputs.emplace_back(ref);
+    sync_src_node_inputs.emplace_back(side_effect_node);
+    CNodePtr sync_src_node = func_graph_->NewCNode(sync_src_node_inputs);
+    MS_EXCEPTION_IF_NULL(sync_src_node);
+    sync_src_node->set_abstract(ref->abstract());
+    node_labels_[sync_src_node] = node_labels_[side_effect_node];
+
+    // Data sync dst node.
+    std::vector<AnfNodePtr> sync_dst_node_inputs = {
+      NewValueNode(std::make_shared<Primitive>(distributed::kDataSyncDstOpName))};
+    sync_dst_node_inputs.emplace_back(sync_src_node);
+    CNodePtr sync_dst_node = func_graph_->NewCNode(sync_dst_node_inputs);
+    MS_EXCEPTION_IF_NULL(sync_dst_node);
+    auto fake_value = CreateFakeValueNode(false);
+    MS_EXCEPTION_IF_NULL(fake_value);
+    sync_dst_node->set_abstract(fake_value->abstract());
+    node_labels_[sync_dst_node] = label;
+
+    MS_LOG(INFO) << "Data sync pair: " << sync_src_node->fullname_with_scope() << "_"
+                 << node_labels_[sync_src_node].to_string() << "->" << sync_dst_node->fullname_with_scope() << "_"
+                 << label.to_string();
+    result.push_back(std::make_pair(sync_src_node, sync_dst_node));
+  }
+  return result;
+}
+
+void GraphSplitter::AddControlEdgeForProcessWithoutIndegree() {
+  std::for_each(node_labels_.begin(), node_labels_.end(),
+                [this](const auto &node_label_pair) { all_labels_.insert(node_label_pair.second); });
+
+  std::set<OperatorLabel> labels_has_indegree;
+  AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  for (const auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    for (size_t i = kIndex1; i < cnode->size(); ++i) {
+      const auto &input = cnode->inputs().at(i);
+      if (NodeHasLabel(input) && NodeHasLabel(cnode) && node_labels_[input] != node_labels_[cnode] &&
+          input->isa<CNode>()) {
+        MS_LOG(DEBUG) << "Label " << node_labels_[cnode].to_string() << " has indegree from label "
+                      << node_labels_[input].to_string() << ", edge: " << input->fullname_with_scope() << " to "
+                      << cnode->fullname_with_scope();
+        labels_has_indegree.insert(node_labels_[cnode]);
+      }
+    }
+  }
+
+  ControlEdgeNodePairList control_edge_node_pair_list;
+  for (const OperatorLabel &label : all_labels_) {
+    // If this label has no indegree, add extra control edge nodes.
+    if (labels_has_indegree.count(label) == 0) {
+      ControlEdgeNodePair control_edge_nodes = CreateControlEdgeNode(default_label_, label);
+      control_edge_node_pair_list.emplace_back(control_edge_nodes);
+    }
+  }
+
+  if (!control_edge_node_pair_list.empty()) {
+    // Connect the dangling control dst nodes to the output.
+    AnfNodePtrList make_tuple_inputs;
+    std::for_each(control_edge_node_pair_list.begin(), control_edge_node_pair_list.end(),
+                  [&make_tuple_inputs](const auto &node_pair) {
+                    CNodePtr control_dst_node = node_pair.second;
+                    make_tuple_inputs.emplace_back(control_dst_node);
+                  });
+
+    // Make tuple for all control-edge dst nodes.
+    MS_EXCEPTION_IF_NULL(func_graph_);
+    auto tuple_of_control_dst_nodes = CreateMakeTupleNode(func_graph_, make_tuple_inputs);
+    MS_EXCEPTION_IF_NULL(tuple_of_control_dst_nodes);
+    node_labels_[tuple_of_control_dst_nodes] = default_label_;
+
+    // Add dependency to the Return node so control-edge nodes won't be optimized out.
+    AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), func_graph_->output(), tuple_of_control_dst_nodes};
+    auto final_output_node = func_graph_->NewCNode(depend_inputs);
+    MS_EXCEPTION_IF_NULL(final_output_node);
+    node_labels_[final_output_node] = default_label_;
+
+    final_output_node->set_abstract(func_graph_->output()->abstract());
+    (void)func_graph_->manager()->SetEdge(func_graph_->get_return(), kIndex1, final_output_node);
+  }
+  return;
+}
+
+ControlEdgeNodePair GraphSplitter::CreateControlEdgeNode(const OperatorLabel &src_label,
+                                                         const OperatorLabel &dst_label) {
+  // Control src node's input is a value node. It has not practical meaning.
+  auto fake_tensor = std::make_shared<tensor::Tensor>(1.0);
+  MS_EXCEPTION_IF_NULL(fake_tensor);
+  auto fake_value = NewValueNode(fake_tensor);
+  MS_EXCEPTION_IF_NULL(fake_value);
+  fake_value->set_abstract(fake_tensor->ToAbstract());
+
+  AnfNodePtrList control_src_inputs = {NewValueNode(std::make_shared<Primitive>(distributed::kControlSrcOpName)),
+                                       fake_value};
+  CNodePtr control_src_node = func_graph_->NewCNode(control_src_inputs);
+  MS_EXCEPTION_IF_NULL(control_src_node);
+  control_src_node->set_abstract(fake_value->abstract());
+  node_labels_[control_src_node] = src_label;
+
+  // Control dst node's input is control src node.
+  AnfNodePtrList control_dst_inputs = {NewValueNode(std::make_shared<Primitive>(distributed::kControlDstOpName)),
+                                       control_src_node};
+  CNodePtr control_dst_node = func_graph_->NewCNode(control_dst_inputs);
+  MS_EXCEPTION_IF_NULL(control_dst_node);
+  control_dst_node->set_abstract(control_src_node->abstract());
+  node_labels_[control_dst_node] = dst_label;
+
+  // At this phase, the control_dst_node is still a dangling node. We need to connect it to the output to avoid
+  // optimizing out.
+  return std::make_pair(control_src_node, control_dst_node);
+}
+
+void GraphSplitter::EliminateDataSyncNode() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  for (const auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kDataSyncSrcOpName) {
+      if (cnode->inputs().size() != kSizeThree) {
+        MS_LOG(EXCEPTION) << "Node DataSyncSrc's input number should be 3, but got " << cnode->inputs().size();
+      }
+      // The first input is parameter and the second input is side effect node.
+      auto param_node = cnode->inputs()[kIndex1];
+      MS_EXCEPTION_IF_NULL(param_node);
+      auto side_effect_node = cnode->inputs()[kIndex2];
+      MS_EXCEPTION_IF_NULL(side_effect_node);
+      MS_LOG(DEBUG) << "Parameter node is " << param_node->fullname_with_scope() << ", side effect node is "
+                    << side_effect_node->fullname_with_scope();
+
+      AnfNodePtrList update_state_inputs = {side_effect_node};
+      CNodePtr update_state_node = CreateUpdateStateNode(func_graph_, update_state_inputs);
+      MS_EXCEPTION_IF_NULL(update_state_node);
+
+      // For parameter, connect it to a 'Load' node so that the control arrow could be correctly linked.
+      AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), param_node, update_state_node};
+
+      auto load_node_replace_data_sync_src = func_graph_->NewCNode(load_inputs);
+      MS_EXCEPTION_IF_NULL(load_node_replace_data_sync_src);
+      load_node_replace_data_sync_src->set_abstract(cnode->abstract());
+      func_graph_->manager()->Replace(cnode, load_node_replace_data_sync_src);
+    } else if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kDataSyncDstOpName) {
+      if (cnode->inputs().size() != kSizeTwo) {
+        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->inputs().size();
+      }
+      auto input_node = cnode->inputs()[kIndex1];
+      MS_EXCEPTION_IF_NULL(input_node);
+
+      auto users = func_graph_->manager()->node_users()[cnode];
+      for (const auto &user_pair : users) {
+        auto user_node = user_pair.first;
+        int input_index = user_pair.second;
+        func_graph_->manager()->SetEdge(user_node, input_index, input_node);
+      }
+    }
+  }
+}
+
+void GraphSplitter::EliminateControlEdgeNode() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  for (const auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kControlSrcOpName) {
+      // ControlSrc->RpcSend is converted to FakeValue->RpcSend.
+      auto fake_value_node = CreateFakeValueNode(false);
+      MS_EXCEPTION_IF_NULL(fake_value_node);
+      (void)func_graph_->manager()->Replace(cnode, fake_value_node);
+    } else if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kControlDstOpName) {
+      if (cnode->inputs().size() != kSizeTwo) {
+        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->inputs().size();
+      }
+      auto input_node = cnode->inputs()[kIndex1];
+      MS_EXCEPTION_IF_NULL(input_node);
+      (void)func_graph_->manager()->Replace(cnode, input_node);
+    }
+  }
 }
 
 void GraphSplitter::DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {
@@ -1437,13 +1789,13 @@ InOutDegreeList GraphSplitter::GenerateInOutDegreeList(const std::vector<SplitGr
                         << " is not the same as segment label " << segment.label.to_string();
     }
 
-    // Prepare for adding Depend between in-degree and out-degree of this segment because the execution order should be
-    // kept consistent.
+    // Prepare for adding Depend between in-degree and out-degree of this segment because the execution order should
+    // be kept consistent.
     std::vector<AnfNodePtr> concerned_in_degree_nodes = FindInterProcessInDegree(nodes, comm_edges);
     std::vector<AnfNodePtr> concerned_out_degree_nodes = FindInterProcessOutDegree(nodes, comm_edges);
-    if (concerned_in_degree_nodes.empty()) {
-      continue;
-    }
+    // if (concerned_in_degree_nodes.empty()) {
+    //   continue;
+    // }
     (void)in_out_degree_list.emplace_back(std::make_pair(concerned_in_degree_nodes, concerned_out_degree_nodes));
   }
   MS_LOG(INFO) << "End finding inter-process in-degrees.";
@@ -1625,5 +1977,7 @@ bool GraphSplitter::NeedSplitGraph() const {
            return node_to_label.second != this_process_label_;
          }) != node_labels_.end();
 }
+
+bool GraphSplitter::NodeHasLabel(const AnfNodePtr &node) { return node_labels_.count(node) != 0; }
 }  // namespace parallel
 }  // namespace mindspore
