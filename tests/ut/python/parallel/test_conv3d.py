@@ -80,28 +80,6 @@ def test_conv3d_pad_mode_overlap_is_negative():
         compile_net(net, _x3, _b)
 
 
-def test_conv3d_pad_mode():
-    """
-    Feature: test pad mode and overlap is non-negative
-    Description: shard d/h
-    Expectation: compile success
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy1 = ((1, 1, 2, 4, 1), (1, 1, 1, 1, 1))
-    strategy2 = ((1, 1, 2, 4, 1),)
-    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="pad", stride=1, pad=(3, 3, 3, 3, 3, 3),
-              strategy1=strategy1, strategy2=strategy2)
-    phase = compile_net(net, _x3, _b)
-    validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs('Neg-0', ['Conv3D-0'])
-    assert validator.check_node_inputs('Conv3D-0', ['Transpose-1', 'Load-0'])
-    assert validator.check_node_inputs_fuzzy_match('Transpose-0', ['StridedSlice', '(4, 0, 1, 2, 3)'])
-    assert validator.check_node_inputs_fuzzy_match('Transpose-1', ['Reshape', '(1, 2, 3, 4, 0)'])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-0', ['Transpose', '(512, 16, 8, 4)'])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-1', ['NeighborExchangeV2', '(16, 32, 16, 9, 4)'])
-    assert validator.check_node_attrs('NeighborExchangeV2-0', {'send_lens': '[0, 1, 0, 2]'})
-
-
 def test_conv3d_pad_mode_unet_3d_rank0():
     """
     Feature: test pad mode unet 3d
