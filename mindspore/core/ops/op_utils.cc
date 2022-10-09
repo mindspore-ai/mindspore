@@ -134,9 +134,9 @@ ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, const int64_t 
     if (SizeToLong(x_shape.size()) < axis_shape) {
       return out_shape;
     }
-    (void)out_shape.insert(out_shape.end(), x_shape.size() - axis_shape, -1);
+    (void)out_shape.insert(out_shape.end(), x_shape.size() - axis_shape, -1LL);
   } else {
-    (void)out_shape.insert(out_shape.end(), x_shape.size(), -1);
+    (void)out_shape.insert(out_shape.end(), x_shape.size(), -1LL);
   }
   return out_shape;
 }

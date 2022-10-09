@@ -247,7 +247,7 @@ bool RemoveNonScalarConstTensorFromParameter(const FuncGraphPtr &fg, AnfNodePtrL
 
   auto mng = GkUtils::GetFuncGraphManager(fg);
   for (const auto &iter : param_const_map) {
-    mng->Replace(iter.first, iter.second);
+    (void)mng->Replace(iter.first, iter.second);
   }
 
   std::vector<AnfNodePtr> new_params;
@@ -362,7 +362,7 @@ bool EliminateMaketupleGetitem(const FuncGraphPtr &fg) {
       continue;
     }
     auto idx = AnfUtils::GetIntValue(gt->input(kInputNodeOutputIndexInTupleGetItem));
-    mng->Replace(node, mt->input(idx + 1));
+    (void)mng->Replace(node, mt->input(idx + 1));
     changed = true;
   }
   return changed;

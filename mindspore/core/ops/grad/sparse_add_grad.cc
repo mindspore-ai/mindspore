@@ -74,7 +74,7 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   const size_t kInputNum = 4;
   constexpr size_t kIndicesShapeSize = 2;
   constexpr size_t kValuesShapeSize = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, SizeToLong(kInputNum), name);
   auto bvg = input_args.at(kSparseAddGradIndex0);
   auto x1_indices = input_args.at(kSparseAddGradIndex1);
   auto x2_indices = input_args.at(kSparseAddGradIndex2);
