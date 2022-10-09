@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CTCLOSS_V2_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CTCLOSS_V2_CPU_KERNEL_H_
 
+#include <cmath>
 #include <memory>
 #include <map>
 #include <utility>
@@ -55,7 +56,7 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
     int64_t batch;
   };
   template <typename target_t>
-  inline int64_t GetBlankPaddedTarget(const target_t *target, int64_t offset, int64_t idx) {
+  inline int64_t GetBlankPaddedTarget(const target_t *target, int64_t offset, int64_t idx) const {
     constexpr int64_t interval = 2;
     if (idx % interval == 0) {
       return blank_;
@@ -64,9 +65,9 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
     }
   }
   template <typename S, typename T>
-  void LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p, SoftParam params);
+  void LossCompute(const S *log_probs_p, S *log_alpha_p, const T *tar_p, SoftParam params) const;
   template <typename T>
-  bool IndexProcessing(T *in_len_p, T *tar_len_p, std::vector<int64_t> *target_offsets);
+  bool IndexProcessing(const T *in_len_p, const T *tar_len_p, std::vector<int64_t> *target_offsets);
   // Variables for the operator itself
   int64_t blank_{0};
   // Stands for T

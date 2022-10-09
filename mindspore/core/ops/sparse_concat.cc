@@ -91,8 +91,9 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
     auto ind_type = inputs_indices[i]->BuildType();
     auto sha_type = inputs_shapes[i]->BuildType();
     (void)values_types.emplace(elementi, inputs_values[i]->BuildType());
-    CheckAndConvertUtils::CheckTensorTypeValid("indices" + std::to_string(i), ind_type, {kInt64}, prim_name);
-    CheckAndConvertUtils::CheckTensorTypeValid("shapes" + std::to_string(i), sha_type, {kInt64, kInt32}, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices" + std::to_string(i), ind_type, {kInt64}, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("shapes" + std::to_string(i), sha_type, {kInt64, kInt32},
+                                                     prim_name);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(values_types, common_valid_types_with_complex_and_bool, prim_name);
   std::vector<TypePtr> out_type = {};
@@ -139,7 +140,7 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
                                         << indices_element0_shape[0] << ", but the value element number is "
                                         << values_element0_shape[0] << ".";
   }
-  primitive->AddAttr("N", MakeValue(SizeToLong(inputs_indices.size())));
+  (void)primitive->AddAttr("N", MakeValue(SizeToLong(inputs_indices.size())));
   std::vector<int64_t> out_indices_shape = {};
   out_indices_shape.push_back(0);
   out_indices_shape.push_back(indices_element0_shape[1]);
