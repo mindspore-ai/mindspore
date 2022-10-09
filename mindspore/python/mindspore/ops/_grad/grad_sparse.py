@@ -85,6 +85,8 @@ def get_bprop_sparse_tensor_dense_matmul(self):
     adj_s = self.adjoint_st
     adj_d = self.adjoint_dt
     sparse_tensor_dense_mat_mul = P.SparseTensorDenseMatmul(not adj_s)
+    split = P.Split(-1, 2)
+    reduce_sum = P.ReduceSum()
 
     def bprop(indices, values, dense_shape, dense, out, dout):
         dense_grad = sparse_tensor_dense_mat_mul(indices, values, dense_shape, dout)
@@ -96,11 +98,12 @@ def get_bprop_sparse_tensor_dense_matmul(self):
             dense = P.Cast()(dense, mstype.float32)
             dout = P.Cast()(dout, mstype.float32)
             is_half = True
-        rows = indices[:, 0]
-        cols = indices[:, 1]
+        split_indices = split(indices)
+        rows = reduce_sum(split_indices[0], -1)
+        cols = reduce_sum(split_indices[1], -1)
         parts_a = F.gather(dout, cols if adj_s else rows, 0)
         parts_b = F.gather(F.transpose(dense, perm) if adj_d else dense, rows if adj_s else cols, 0)
-        values_grad = F.reduce_sum(parts_a * parts_b, 1)
+        values_grad = F.reduce_sum(parts_a * parts_b, -1)
         if is_half:
             values_grad = P.Cast()(values_grad, mstype.float16)
         return zeros_like(indices), values_grad, zeros_like(dense_shape), dense_grad
