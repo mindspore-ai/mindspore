@@ -29,7 +29,6 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base
                                                      const std::vector<KernelTensorPtr> &inputs,
                                                      const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  prev_batch = -1;
   if (kernel_name_ != prim::kPrimSparseTensorToCSRSparseMatrix->name()) {
     MS_LOG(ERROR) << "For 'SparseTensorToCSRSparseMatrixGpuKernelMod',"
                      "the kernel name must be 'SparseTensorToCSRSparseMatrix', but got "
@@ -54,18 +53,12 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base
     elements[i] = input_elements_;
     size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).first);
     input_size_list_.push_back(input_elements_ * unit_size_);
-    if (i == kZero) {
-      total_nnz = static_cast<int>(input_shape[0]);
-      x_indices_ptr_test.resize(elements[kZero]);
-    }
-    if (i == kRankWithoutBatch) {
+    if (i == kTwo) {
       x_dense_shape_ptr_test.resize(input_elements_);
     }
   }
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
   workspace_size_list_.push_back(elements[kOne] * unit_size_);
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
-  workspace_size_list_.push_back((elements[kZero] + 1) * unit_size_);
   for (size_t i = 0; i < outputs.size(); i++) {
     std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(i)->GetDeviceShapeAdaptively().begin(),
                                                              outputs.at(i)->GetDeviceShapeAdaptively().end());
@@ -101,39 +94,23 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
   IndiceType *y_col_indices_ptr = GetDeviceAddress<IndiceType>(outputs, kIndex3);
   DataType *y_value_ptr = GetDeviceAddress<DataType>(outputs, kIndex4);
   IndiceType *x_row_indices_ptr = GetDeviceAddress<IndiceType>(workspace, kIndex0);
-  IndiceType *batch_ptr = GetDeviceAddress<IndiceType>(workspace, kIndex1);
 
-  cudaMemcpyAsync(x_indices_ptr_test.data(), x_indices_ptr, elements[kZero] * sizeof(IndiceType),
-                  cudaMemcpyDeviceToHost, stream);
   cudaMemcpyAsync(x_dense_shape_ptr_test.data(), x_dense_shape_ptr, elements[kTwo] * sizeof(IndiceType),
                   cudaMemcpyDeviceToHost, stream);
-  cudaMemcpyAsync(y_dense_shape_ptr, x_dense_shape_ptr, elements[kTwo] * sizeof(IndiceType), cudaMemcpyDeviceToDevice,
+  cudaMemcpyAsync(y_value_ptr, x_value_ptr, elements[kOne] * sizeof(DataType), cudaMemcpyDeviceToDevice, stream);
+  cudaMemcpyAsync(y_dense_shape_ptr, x_dense_shape_ptr, elements[kTwo] * sizeof(DataType), cudaMemcpyDeviceToDevice,
                   stream);
-  cudaMemcpyAsync(y_value_ptr, x_value_ptr, elements[kOne] * sizeof(IndiceType), cudaMemcpyDeviceToDevice, stream);
-  SparseTensorToCSRSparseMatrix<IndiceType>(x_indices_ptr, x_row_indices_ptr, y_col_indices_ptr, batch_ptr,
+  SparseTensorToCSRSparseMatrix<IndiceType>(x_indices_ptr, x_row_indices_ptr, y_col_indices_ptr, y_batch_pointers_ptr,
                                             elements[kOne], elements[kTwo], stream, device_id_);
   if (elements[kTwo] == kRankWithoutBatch) {
-    y_batch_pointers_ptr_test[kOne] = total_nnz;
     row_num = x_dense_shape_ptr_test[kZero];
     cusparseXcoo2csr(handle_, x_row_indices_ptr, elements[kOne], row_num, y_row_pointers_ptr, CUSPARSE_INDEX_BASE_ZERO);
-    cudaMemcpyAsync(y_batch_pointers_ptr, y_batch_pointers_ptr_test.data(), elements[kTwo] * sizeof(IndiceType),
-                    cudaMemcpyHostToDevice, stream);
   } else {
-    batch_size = x_dense_shape_ptr_test[kZero] + 1;
+    batch_size = x_dense_shape_ptr_test[kZero];
     row_num = x_dense_shape_ptr_test[kOne];
-    for (int i = 0; i < total_nnz; ++i) {
-      rank_ = i * elements[kTwo];
-      cur_batch = x_indices_ptr_test[rank_];
-      while (prev_batch < SizeToLong(cur_batch)) {
-        y_batch_pointers_ptr_test[prev_batch + 1] = i;
-        ++prev_batch;
-      }
-    }
-    while (prev_batch < SizeToLong(batch_size - 1)) {
-      y_batch_pointers_ptr_test[prev_batch + 1] = total_nnz;
-      ++prev_batch;
-    }
-    for (int i = 0; i < batch_size - 1; i++) {
+    cudaMemcpyAsync(y_batch_pointers_ptr_test.data(), y_batch_pointers_ptr, (batch_size + 1) * sizeof(IndiceType),
+                    cudaMemcpyDeviceToHost, stream);
+    for (int i = 0; i < batch_size; ++i) {
       int *temp_row_indices_addr = x_row_indices_ptr + y_batch_pointers_ptr_test[i];
       int *temp_row_pointers_addr = y_row_pointers_ptr + i * (row_num + 1);
       temp_nnz = y_batch_pointers_ptr_test[i + 1] - y_batch_pointers_ptr_test[i];
@@ -142,8 +119,6 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
                          CUSPARSE_INDEX_BASE_ZERO);
       }
     }
-    cudaMemcpyAsync(y_batch_pointers_ptr, y_batch_pointers_ptr_test.data(), batch_size * sizeof(IndiceType),
-                    cudaMemcpyHostToDevice, stream);
   }
   return true;
 }
@@ -179,7 +154,7 @@ std::vector<std::pair<KernelAttr, SparseTensorToCSRSparseMatrixGpuKernelMod::Spa
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeComplex64),
-     &SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel<int32_t, complex<float>>},
+     &SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel<int32_t, std::complex<float>>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeComplex128)
@@ -189,7 +164,7 @@ std::vector<std::pair<KernelAttr, SparseTensorToCSRSparseMatrixGpuKernelMod::Spa
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeComplex128),
-     &SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel<int32_t, complex<double>>},
+     &SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel<int32_t, std::complex<double>>},
 };
 
 std::vector<KernelAttr> SparseTensorToCSRSparseMatrixGpuKernelMod::GetOpSupport() {

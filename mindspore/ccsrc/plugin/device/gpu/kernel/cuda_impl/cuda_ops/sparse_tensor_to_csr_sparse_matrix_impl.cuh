@@ -22,7 +22,7 @@ template <typename IndiceType>
 CUDA_LIB_EXPORT void SparseTensorToCSRSparseMatrix(const IndiceType* x_indices_ptr,
                                                    IndiceType *out_row_indices_ptr,
                                                    IndiceType *out_col_indices_ptr,
-                                                   IndiceType *batch_ptr,
+                                                   IndiceType *out_batch_pointers_ptr,
                                                    int total_num,
                                                    int rank,
                                                    cudaStream_t cuda_stream,

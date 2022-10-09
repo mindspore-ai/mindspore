@@ -67,19 +67,11 @@ class SparseTensorToCSRSparseMatrixGpuKernelMod : public NativeGpuKernelMod {
   cudaStream_t stream;
   cusparseHandle_t handle_{nullptr};
   int row_num;
-  int prev_batch;
   int batch_size;
-  int cur_batch;
-  int total_nnz;
-  int rank_;
   int temp_nnz;
-  std::vector<int> x_indices_ptr_test;
   std::vector<int> y_batch_pointers_ptr_test;
-  std::vector<int> batch_size_ptr;
   std::vector<int> x_dense_shape_ptr_test;
   SparseTensorToCSRSparseMatrixFunc kernel_func_{};
-  template <typename _Tp>
-  class complex;
 };
 }  // namespace kernel
 }  // namespace mindspore
