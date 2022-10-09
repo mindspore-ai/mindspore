@@ -336,6 +336,10 @@ int ArithmeticBaseCPUKernel::ChooseThreadCuttingStrategy() {
 }
 
 int ArithmeticBaseCPUKernel::DoArithmetic(int task_id) {
+  if (task_id < 0 || static_cast<size_t>(task_id) >= block_boundary_infos_.size()) {
+    MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
+    return RET_ERROR;
+  }
   if (block_boundary_infos_[task_id].a_offset.empty()) {
     ComputeOffset(task_id);
   }
