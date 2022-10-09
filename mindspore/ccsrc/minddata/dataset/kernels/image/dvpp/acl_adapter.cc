@@ -35,8 +35,8 @@ void AclAdapter::InitPlugin() {
 #if !defined(_WIN32) && !defined(_WIN64)
   plugin_handle_ = dlopen(kAclPluginFileName, RTLD_LAZY | RTLD_LOCAL);
   if (plugin_handle_ == nullptr) {
-    MS_LOG(WARNING) << "Dlopen " << kAclPluginFileName << " failed, result = " << GetDlErrorMsg()
-                    << ", it can be ignored if not running on ascend.";
+    MS_LOG(INFO) << "Cannot dlopen " << kAclPluginFileName << ", result = " << GetDlErrorMsg()
+                 << ", it can be ignored if not running on ascend.";
     return;
   }
 
