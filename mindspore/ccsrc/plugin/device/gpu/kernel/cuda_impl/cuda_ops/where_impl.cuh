@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ONE_HOT_IMPL_CUH_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ONE_HOT_IMPL_CUH_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_WHERE_IMPL_CUH_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_WHERE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
-template <typename T, typename S>
-CUDA_LIB_EXPORT void OneHot(const S *indices, size_t depth_, const T *on_value, const T *off_value,
-                            size_t left_dim_size, size_t right_dim_size, T *output, const uint32_t &device_id,
-                            cudaStream_t cuda_stream);
-
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ONE_HOT_IMPL_CUH_
+template <typename T>
+void Where(const int *cond, const T *input_x, const T *input_y, T *output, int element_cnt, const uint32_t &device_id,
+           cudaStream_t stream);
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_WHERE_IMPL_CUH_
