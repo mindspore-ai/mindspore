@@ -324,8 +324,8 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
     *precision_reduce = true;
   }
   if (int64_reduce) {
-    MS_LOG(WARNING) << "Operator:[" << cnode->fullname_with_scope()
-                    << "] don't support int64, reduce precision from int64 to int32.";
+    MS_LOG(INFO) << "Operator:[" << cnode->fullname_with_scope()
+                 << "] don't support int64, reduce precision from int64 to int32.";
   }
   return filtered_kernel_info_list;
 }
