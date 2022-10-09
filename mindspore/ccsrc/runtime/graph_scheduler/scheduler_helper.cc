@@ -94,6 +94,31 @@ std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *act
   return actors;
 }
 
+bool SchedulerHelper::HasMonadControl(const AnfNodePtr &input_node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(graph);
+  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> auto_monad_prims = {
+    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad};
+  if (IsOneOfPrimitiveCNode(input_node, auto_monad_prims) || HasAbstractMonad(input_node)) {
+    return true;
+  }
+
+  // The subgraph input.
+  if (IsInternalParameter(input_node, graph)) {
+    auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(input_node);
+    auto front_output_node = front_output_with_index.first;
+    MS_EXCEPTION_IF_NULL(front_output_node);
+    if (IsOneOfPrimitiveCNode(front_output_node, auto_monad_prims) || HasAbstractMonad(front_output_node)) {
+      MS_LOG(INFO) << "The graph " << graph->graph_id()
+                   << " has monad control from internal parameter: " << input_node->DebugString()
+                   << ", front output node: " << front_output_node->fullname_with_scope();
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void SchedulerHelper::AddDeviceTensorStore(const AnfNode *anf_node, const DeviceTensorPtr &device_tensor) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(device_tensor);

@@ -107,7 +107,10 @@ bool IsNeedAllocMem(const AnfNodePtr &node, size_t index) {
     return true;
   }
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-  return find(outputs.begin(), outputs.end(), KernelWithIndex(node, index)) == outputs.end();
+  return std::find_if(outputs.begin(), outputs.end(), [&node, &index](const KernelWithIndex &output) {
+           const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+           return ((real_output.first == node) && (real_output.second == index));
+         }) == outputs.end();
 }
 }  // namespace
 constexpr size_t kMinInputSize = 2;

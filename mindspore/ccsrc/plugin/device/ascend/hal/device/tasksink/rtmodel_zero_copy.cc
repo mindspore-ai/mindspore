@@ -132,7 +132,11 @@ size_t FetchInputNumByInputNode(const AnfNodePtr &node, const KernelWithIndex &i
 // If the output node is output of kernel graph or the input of output ref node, the output should be replaced.
 bool IsOutputZeroCopy(const KernelWithIndex &node, const std::vector<KernelWithIndex> &graph_outputs,
                       const std::set<KernelWithIndex> &zero_copy_ref_nodes) {
-  return ((find(graph_outputs.begin(), graph_outputs.end(), node) != graph_outputs.end()) ||
+  return ((std::find_if(graph_outputs.begin(), graph_outputs.end(),
+                        [&node](const KernelWithIndex &output) {
+                          const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+                          return real_output == node;
+                        }) != graph_outputs.end()) ||
           (zero_copy_ref_nodes.find(node) != zero_copy_ref_nodes.end()));
 }
 
@@ -360,7 +364,11 @@ void GenerateZeroCopyTaskForInput(const AnfNodePtr &node, const TaskPtr &task, c
                     << " ptr from parameter input:" << input->DebugString();
     } else if (input->isa<CNode>()) {
       // 2. Input which is graph output.
-      if (find(output_with_indexs.begin(), output_with_indexs.end(), input_with_index) != output_with_indexs.end()) {
+      if (std::find_if(output_with_indexs.begin(), output_with_indexs.end(),
+                       [&input_with_index](const KernelWithIndex &output) {
+                         const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+                         return real_output == input_with_index;
+                       }) != output_with_indexs.end()) {
         zero_copy_tasks->emplace_back(std::make_shared<tasksink::CNodeZeroCopyTask>(
           input, input_with_index.second, task->Args(), i * sizeof(void *), task->task_name()));
         node_to_offset->emplace(node, i);

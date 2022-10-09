@@ -68,7 +68,8 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
   // Need to insert TensorMove if the output of FusedCommunicationOp is GraphOutput
   std::set<AnfNodePtr> candidate_set;
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-  for (const auto &output_with_index : outputs) {
+  for (const auto &output : outputs) {
+    const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     if (!common::AnfAlgo::IsFusedCommunicationOp(output_with_index.first) ||
         common::AnfAlgo::GetOutputTensorNum(output_with_index.first) == kSingleOutput) {
       continue;

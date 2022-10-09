@@ -327,7 +327,10 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
 void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
-  for (const auto &[output_node, i] : outputs) {
+  for (const auto &output : outputs) {
+    const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+    auto &output_node = output_with_index.first;
+    auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
     AnfAlgo::SetOutputAddr(
       std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0), i,
@@ -423,7 +426,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
   }
 
   for (size_t i = 0; i < graph_outputs.size(); ++i) {
-    const auto &[output_node, idx] = graph_outputs[i];
+    const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
     const auto &tensor = ge_outputs[i];
     auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx);
     output_addr->set_ptr(device_context_->device_res_manager_->AllocateMemory(tensor->GetSize()));

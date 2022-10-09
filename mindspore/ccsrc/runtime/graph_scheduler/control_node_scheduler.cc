@@ -745,7 +745,8 @@ void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor
   MS_EXCEPTION_IF_NULL(parser);
 
   for (size_t to_index = 0; to_index < to_actor->formal_parameters_.size(); ++to_index) {
-    const auto &formal_parameter = to_actor->formal_parameters_[to_index];
+    const auto &formal_parameter =
+      common::AnfAlgo::FetchRealNodeSkipMonadControl(to_actor->formal_parameters_[to_index]);
     const auto &from_node = formal_parameter.first;
     MS_EXCEPTION_IF_NULL(from_node);
     if (from_node->isa<ValueNode>()) {
@@ -782,20 +783,21 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
                                                       const KernelWithIndex &from_node_with_index,
                                                       const KernelWithIndex &to_node_with_index,
                                                       const GraphCompilerInfo &graph_compiler_info) const {
-  const auto &from_node = from_node_with_index.first;
+  const auto &real_from_node_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(from_node_with_index);
+  const auto &from_node = real_from_node_with_index.first;
   MS_EXCEPTION_IF_NULL(from_node);
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_LOG(DEBUG) << "Link arrow by formal parameter, from node:" << from_node->DebugString()
-                << " from index:" << from_node_with_index.second << " to actor:" << to_actor->GetAID()
+                << " from index:" << real_from_node_with_index.second << " to actor:" << to_actor->GetAID()
                 << " to index:" << to_node_with_index.second;
   if (from_node->isa<ValueNode>()) {
-    LinkArrowByValueNode(from_node, to_actor, from_node_with_index.second, to_node_with_index.second);
+    LinkArrowByValueNode(from_node, to_actor, real_from_node_with_index.second, to_node_with_index.second);
   } else if (from_node->isa<Parameter>()) {
-    LinkArrowByParameter(from_node, to_actor, from_node_with_index, to_node_with_index,
+    LinkArrowByParameter(from_node, to_actor, real_from_node_with_index, to_node_with_index,
                          graph_compiler_info.control_node_parser_);
   } else if (common::AnfAlgo::IsCallNode(from_node)) {
     // Link arrow by call node.
-    LinkArrowByCallNode(from_node, to_actor, from_node_with_index, to_node_with_index,
+    LinkArrowByCallNode(from_node, to_actor, real_from_node_with_index, to_node_with_index,
                         graph_compiler_info.control_node_parser_);
   } else if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
              common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
@@ -806,9 +808,11 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
     const auto &switch_actor = dynamic_cast<SwitchActor *>(actor);
     MS_EXCEPTION_IF_NULL(switch_actor);
     if (IsPartialInput(from_node)) {
-      SchedulerHelper::AddPartialArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
+      SchedulerHelper::AddPartialArrow(switch_actor, to_actor, real_from_node_with_index.second,
+                                       to_node_with_index.second);
     } else {
-      SchedulerHelper::AddDataArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
+      SchedulerHelper::AddDataArrow(switch_actor, to_actor, real_from_node_with_index.second,
+                                    to_node_with_index.second);
     }
   } else if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) {
     // If the funcgraph of the partial node is a deadnode, in order to ensure the correspondence between formal
@@ -827,10 +831,11 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
     }
     const auto &gather_actor = dynamic_cast<GatherActor *>(actor);
     MS_EXCEPTION_IF_NULL(gather_actor);
-    SchedulerHelper::AddPartialArrow(gather_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
+    SchedulerHelper::AddPartialArrow(gather_actor, to_actor, real_from_node_with_index.second,
+                                     to_node_with_index.second);
   } else if (from_node->isa<CNode>()) {
     // Link arrow by kernel.
-    LinkArrowByKernel(from_node, to_actor, from_node_with_index, to_node_with_index, graph_compiler_info);
+    LinkArrowByKernel(from_node, to_actor, real_from_node_with_index, to_node_with_index, graph_compiler_info);
   }
 }
 

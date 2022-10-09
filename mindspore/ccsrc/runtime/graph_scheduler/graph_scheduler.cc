@@ -1205,11 +1205,14 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
     if (parser->IsControlFlowDataArrow(graph, input_node)) {
       continue;
     }
-    if (HasAbstractMonad(input_node)) {
+    if (SchedulerHelper::HasMonadControl(input_node, graph)) {
       MS_LOG(INFO) << "The graph:" << graph->graph_id()
                    << " has abstract monad input node:" << input_node->DebugString() << ", input index:" << node_index;
       LinkControlArrowByAutoMonad(to_actor, input_node, graph);
-      continue;  // No data arrow for monad input.
+    }
+    // No data arrow for monad input.
+    if (HasAbstractMonad(input_node)) {
+      continue;
     }
 
     UpdateRefCount(input_node, 0, true);
@@ -1254,8 +1257,6 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(auto_monad_actors);
   MS_EXCEPTION_IF_NULL(communication_nodes);
 
-  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> auto_monad_prims = {
-    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad};
   auto &execution_order = graph->execution_order();
   // Foreach the execution order to link the actors.
   for (const auto &kernel : execution_order) {
@@ -1275,7 +1276,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
       auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
-      if (IsOneOfPrimitiveCNode(input_node, auto_monad_prims) || HasAbstractMonad(input_node)) {
+      if (SchedulerHelper::HasMonadControl(input_node, graph)) {
         LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_);
       }
       if (HasAbstractMonad(input_node)) {
@@ -1344,7 +1345,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   MS_EXCEPTION_IF_NULL(internal_parameter);
 
   // Parameter ---> front node.
-  auto front_output_with_index = graph->GetFrontNodeByInternalParameter(internal_parameter);
+  auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(internal_parameter);
   auto front_output_node = front_output_with_index.first;
   MS_EXCEPTION_IF_NULL(front_output_node);
   if (IsSwitchActor(front_output_node)) {
@@ -1373,7 +1374,8 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
                  << " with index:" << actor_pair.second.second << ", to actor:" << to_actor->GetAID().Name()
                  << " with index:" << to_kernel_with_input_idx.second;
     real_from_actor = actor_pair.first;
-    real_from_kernel_with_output_idx = actor_pair.second;
+    // The data arrow need skip the monad node.
+    real_from_kernel_with_output_idx = common::AnfAlgo::FetchRealNodeSkipMonadControl(actor_pair.second);
     kernel_type = actor_pair.first->type_;
   }
 
@@ -1653,7 +1655,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     auto real_depend_kernel = real_depend_input_with_idx.first;
     // Update the real depend kernel in the subgraphs connecting scene.
     if (IsInternalParameter(real_depend_kernel, graph)) {
-      auto front_output_with_index = graph->GetFrontNodeByInternalParameter(real_depend_kernel);
+      auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(real_depend_kernel);
       MS_EXCEPTION_IF_NULL(front_output_with_index.first);
       if (IsTakenOverByControlFlow(front_output_with_index.first, graph, parser)) {
         MS_LOG(DEBUG) << "Skip in control flow from node:" << front_output_with_index.first->DebugString()
@@ -1876,13 +1878,14 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
       MS_LOG(DEBUG) << "Link control arrow from:" << from_node->fullname_with_scope()
                     << " in graph:" << graph->ToString() << " to actor:" << to_actor->GetAID();
       if (IsInternalParameter(from_node, graph) && (!parser->IsControlFlowDataArrow(graph, from_node))) {
-        auto front_output_with_index = graph->GetFrontNodeByInternalParameter(from_node);
+        auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(from_node);
         auto front_output_node = front_output_with_index.first;
         MS_EXCEPTION_IF_NULL(front_output_node);
         if (IsSwitchActor(front_output_node) || (graph_output_to_actor_.count(front_output_with_index) == 0)) {
           continue;
         }
-        auto real_from_node = graph_output_to_actor_[front_output_with_index].second.first;
+        auto real_from_node =
+          common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_output_to_actor_[front_output_with_index].second).first;
         auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_node);
         if (AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_node)) {
           from_actor = graph_output_to_actor_[front_output_with_index].first;
@@ -2122,9 +2125,9 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
       }
       (void)unique_outputs.insert(output);
     }
-    for (const auto &output_with_index : unique_outputs) {
-      MS_EXCEPTION_IF_NULL(output_with_index.first);
-      auto origin_output_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
+    for (const auto &unique_output : unique_outputs) {
+      MS_EXCEPTION_IF_NULL(unique_output.first);
+      auto origin_output_with_index = graph->GetFrontNodeWithIndexByGraphOutput(unique_output);
       const auto &iter = graph_compiler_info.origin_outputs_order_.find(origin_output_with_index);
       if (iter == graph_compiler_info.origin_outputs_order_.end()) {
         continue;
@@ -2135,6 +2138,9 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         continue;
       }
       (void)unique_output_positions.insert(iter->second);
+      // The data arrow need skip the monad node.
+      const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(unique_output);
+      MS_EXCEPTION_IF_NULL(output_with_index.first);
       for (auto &output_position : iter->second) {
         if (output_position >= to_actor->device_contexts_.size()) {
           MS_LOG(EXCEPTION) << "The output position is out of range.";

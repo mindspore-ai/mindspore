@@ -180,8 +180,10 @@ const AnfNodePtr EliminateRedundantOp::Process(const FuncGraphPtr &func_graph, c
   // Graph output cannot be eliminated.
   if (func_graph->output() != nullptr) {
     const auto &graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(func_graph->output());
-    if ((std::find(graph_outputs.begin(), graph_outputs.end(), session::KernelWithIndex(node, 0)) !=
-         graph_outputs.end())) {
+    if (std::find_if(graph_outputs.begin(), graph_outputs.end(), [&node](const session::KernelWithIndex &output) {
+          const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+          return ((real_output.first == node) && (real_output.second == 0));
+        }) != graph_outputs.end()) {
       return nullptr;
     }
   }

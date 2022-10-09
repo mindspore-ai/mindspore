@@ -981,7 +981,8 @@ void Somas::SummaryInputProcess(const session::KernelGraph &graph) {
 void Somas::GraphOutputProcess(const session::KernelGraph &graph) {
   size_t count = 0;
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph.output());
-  for (auto output_with_index : outputs) {
+  for (auto &output : outputs) {
+    auto output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto output_kernel = output_with_index.first;
     MS_EXCEPTION_IF_NULL(output_kernel);
     while (AnfUtils::IsRealCNodeKernel(output_kernel) && nodes_map_.find(output_kernel.get()) == nodes_map_.end()) {
