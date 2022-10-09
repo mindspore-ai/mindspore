@@ -169,11 +169,14 @@ bool ClusterContext::BuildCluster() {
     node_id = ps::core::CommUtil::GenerateUUID();
   }
   // Init the node according to the process role.
+  size_t retry_num;
   if (node_role_ == kEnvRoleOfScheduler) {
     auto node_num = node_num_each_role_[kEnvRoleOfWorker] + node_num_each_role_[kEnvRoleOfServer];
     node_base_ = std::make_shared<topology::MetaServerNode>(node_id, node_role_, node_num);
+    retry_num = topology::kMsnExecuteRetryNum;
   } else {
     node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id, node_role_);
+    retry_num = topology::kCgnExecuteRetryNum;
   }
   MS_EXCEPTION_IF_NULL(node_base_);
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");
@@ -184,7 +187,7 @@ bool ClusterContext::BuildCluster() {
     MsException::Instance().CheckException();
     return this->node_base_->Initialized();
   };
-  EXECUTE_WITH_RETRY(check_func, topology::kExecuteRetryNum, topology::kExecuteInterval, "Topology build timed out.");
+  EXECUTE_WITH_RETRY(check_func, retry_num, topology::kExecuteInterval, "Topology build timed out.");
 
   MS_LOG(INFO) << "Cluster is successfully initialized.";
   return true;
@@ -203,6 +206,9 @@ void ClusterContext::InitNodeRole() {
   }
 
   if (common::GetEnv(kEnvWorkerNum).empty()) {
+    if (node_role_ == kEnvRoleOfWorker) {
+      MS_LOG(EXCEPTION) << "Please set env 'WORKER_NUM' to a number greater than 0.";
+    }
     node_num_each_role_[kEnvRoleOfWorker] = 0;
   } else {
     TRY_AND_CATCH_WITH_EXCEPTION(
@@ -212,6 +218,9 @@ void ClusterContext::InitNodeRole() {
 
   // MS_PSERVER is supported for now. It should be deprecated after we use cluster for distributed training.
   if (common::GetEnv(kEnvServerNum).empty()) {
+    if (node_role_ == kEnvRoleOfServer || node_role_ == kEnvRoleOfPServer) {
+      MS_LOG(EXCEPTION) << "Please set env 'SERVER_NUM' to a number greater than 0.";
+    }
     node_num_each_role_[kEnvRoleOfServer] = 0;
     node_num_each_role_[kEnvRoleOfPServer] = 0;
   } else {
