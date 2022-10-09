@@ -340,24 +340,7 @@ Image Processing Layer
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.CentralCrop
-    mindspore.nn.ImageGradients
-    mindspore.nn.MSSSIM
-    mindspore.nn.PSNR
     mindspore.nn.ResizeBilinear
-    mindspore.nn.SSIM
-
-Matrix Processing
------------------
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.MatrixDiag
-    mindspore.nn.MatrixDiagPart
-    mindspore.nn.MatrixSetDiag
 
 Tools
 -----
@@ -367,22 +350,4 @@ Tools
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.ClipByNorm
     mindspore.nn.Flatten
-    mindspore.nn.L1Regularizer
-    mindspore.nn.Norm
-    mindspore.nn.OneHot
-    mindspore.nn.Range
-    mindspore.nn.Roll
-    mindspore.nn.Tril
-    mindspore.nn.Triu
-
-Mathematical Operations
------------------------
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.Moments
