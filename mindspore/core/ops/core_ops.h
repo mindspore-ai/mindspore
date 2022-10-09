@@ -156,6 +156,7 @@ constexpr auto kTensorShape = "TensorShape";
 constexpr auto kCheckNumerics = "CheckNumerics";
 constexpr auto kStack = "Stack";
 constexpr auto kUnstack = "Unstack";
+constexpr auto kUnstackWithNum = "UnstackWithNum";
 constexpr auto kTupleGetItem = "TupleGetItem";
 constexpr auto kListGetItem = "list_getitem";
 constexpr auto kSliceGetItem = "SliceGetItem";
