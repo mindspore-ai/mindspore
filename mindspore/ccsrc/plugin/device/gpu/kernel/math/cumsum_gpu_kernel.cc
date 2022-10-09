@@ -102,14 +102,24 @@ bool CumSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     return false;
   }
   if (is_dynamic_shape_) {
-    auto axis_addr = GetDeviceAddress<T>(inputs, kIndex1);
-    if (axis_addr == nullptr) {
+    const auto &axis_addr = inputs.at(kIndex1);
+    MS_EXCEPTION_IF_NULL(axis_addr);
+    if (axis_addr->size == sizeof(int)) {
+      int axis_tmp;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
+        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+      axis_ = axis_tmp;
+    } else if (inputs.at(kIndex1)->size == sizeof(int64_t)) {
+      int64_t axis_tmp;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
+        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+      axis_ = static_cast<int>(axis_tmp);
+    } else {
+      MS_LOG(ERROR) << "The dtype of 'axis' should be int or int64";
       return false;
     }
-    int64_t axis_tmp;
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost),
-                                       "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
-    axis_ = static_cast<int>(axis_tmp);
     Reshape();
   }
   CumSum(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_, stride2_,
@@ -162,6 +172,28 @@ std::vector<std::pair<KernelAttr, CumSumGpuKernelMod::CumSumLaunchFunc>> CumSumG
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
    &CumSumGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   &CumSumGpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+   &CumSumGpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+   &CumSumGpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &CumSumGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &CumSumGpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+   &CumSumGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+   &CumSumGpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+   &CumSumGpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+   &CumSumGpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+   &CumSumGpuKernelMod::LaunchKernel<half>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+   &CumSumGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
    &CumSumGpuKernelMod::LaunchKernel<double>},
 };
 
