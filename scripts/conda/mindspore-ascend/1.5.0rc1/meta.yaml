@@ -11,9 +11,9 @@ build:
     - /usr/local/Ascend/nnae/latest/fwkacllib/lib64/plugin/opskernel
     - /usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64/plugin/opskernel
     - /usr/local/Ascend/fwkacllib/lib64/plugin/opskernel
-    - /usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling
-    - /usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling
-    - /usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling
+    - /usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling
+    - /usr/local/Ascend/nnae/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling
+    - /usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling
 
 requirements:
   build:

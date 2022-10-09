@@ -160,7 +160,12 @@ class CustomDense(nn.Dense):
                 x = self.reshape(x, new_shape)
             x = self.matmul(x, self.weight)
             if self.has_bias:
-                x = self.bias_add(x, self.bias)
+                if self.bias.dtype != mstype.float16:
+                    ori_dtype = x.dtype
+                    x = self.bias_add(self.cast(x, mstype.float16), self.cast(self.bias, mstype.float16))
+                    x = self.cast(x, ori_dtype)
+                else:
+                    x = self.bias_add(x, self.bias)
             if self.activation_flag:
                 x = self.activation(x)
             if len(x_dyn_shape) != 2:

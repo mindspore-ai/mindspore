@@ -377,6 +377,11 @@ bool TbeKernelSelect::FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_
 
 bool TbeKernelSelect::IsShapeMatchFormat(const ShapeVector &shape, const std::string &format) {
   // if format is default, it means support all format
+  if (common::AnfAlgo::GetCNodeName(cnode_ptr_) == prim::kPrimBNTrainingReduce->name()) {
+    if ((format == kOpFormat_DEFAULT) && common::AnfAlgo::IsDynamicShape(cnode_ptr_)) {
+      return false;
+    }
+  }
   if (format == kOpFormat_DEFAULT) {
     return true;
   }

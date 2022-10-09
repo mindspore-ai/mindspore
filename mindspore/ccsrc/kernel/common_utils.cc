@@ -94,6 +94,7 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
   {FusionType::BATCH_MATMUL, "BatchMatmul"},
   {FusionType::CONFUSION_TRANSPOSE, "confusiontranspose"},
   {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
+  {FusionType::GATHER_ASCEND, "Gather"},
   {FusionType::UNKNOWN_FUSION_TYPE, ""}};
 
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
