@@ -3,7 +3,7 @@ mindspore.dataset.audio.Resample
 
 .. py:class:: mindspore.dataset.audio.Resample(orig_freq=16000, new_freq=16000, resample_method=ResampleMethod.SINC_INTERPOLATION, lowpass_filter_width=6, rolloff=0.99, beta=None)
 
-    将音频波形从一个频率重新采样到另一个频率，必要时可以指定重采样方法。
+    将音频波形从一个频率重新采样到另一个频率。必要时可以指定重采样方法。
 
     参数：
         - **orig_freq** (float, 可选) - 音频波形的原始频率，必须为正，默认值：16000。

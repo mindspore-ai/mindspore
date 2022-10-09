@@ -3,7 +3,7 @@ mindspore.ops.Einsum
 
 .. py:class:: mindspore.ops.Einsum(equation)
 
-    此算子使用爱因斯坦求和约定（Einsum）进行Tensor计算，支持对角线、约和、转置、矩阵乘、乘积、内积运算等。
+    此算子使用爱因斯坦求和约定（Einsum）进行Tensor计算。支持对角线、约和、转置、矩阵乘、乘积、内积运算等。
 
     输入必须是Tensor的tuple。当输入只有一个Tensor时，可以输入(Tensor, )，支持数据类型float16、float32、float64。
 

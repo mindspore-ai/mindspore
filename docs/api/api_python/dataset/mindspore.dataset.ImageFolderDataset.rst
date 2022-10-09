@@ -3,9 +3,9 @@ mindspore.dataset.ImageFolderDataset
 
 .. py:class:: mindspore.dataset.ImageFolderDataset(dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, extensions=None, class_indexing=None, decode=False, num_shards=None, shard_id=None, cache=None, decrypt=None)
 
-    从树状结构的文件目录中读取图片构建源数据集，同一个文件夹中的所有图片将被分配相同的label。
+    从树状结构的文件目录中读取图片构建源数据集。同一个文件夹中的所有图片将被分配相同的label。
 
-    生成的数据集有两列：`[image, label]`。`image` 列的数据类型为uint8，`label` 列的数据类型为uint32。
+    生成的数据集有两列：`[image, label]`。`image` 列的数据类型为uint8。 `label` 列的数据类型为uint32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录的路径。

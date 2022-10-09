@@ -5,7 +5,7 @@ mindspore.dataset.SVHNDataset
 
     读取和解析SVHN数据集的源文件构建数据集。
 
-    生成的数据集有两列: `[image, label]` 。 `image` 列的数据类型是uint8， `label` 列的数据类型是uint32。
+    生成的数据集有两列: `[image, label]` 。 `image` 列的数据类型是uint8。 `label` 列的数据类型是uint32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
@@ -59,7 +59,7 @@ mindspore.dataset.SVHNDataset
 
     SVHN数据集是从谷歌街景图像中的门牌号码中获得的，由10位数字组成。
 
-    以下是原始SVHN数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
+    以下是原始SVHN数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
     .. code-block::
 

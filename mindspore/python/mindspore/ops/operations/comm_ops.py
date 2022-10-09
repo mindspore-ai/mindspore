@@ -876,7 +876,7 @@ class NeighborExchangeV2(Primitive):
     Supported Platforms:
         ``Ascend``
 
-    Example:
+    Examples:
         >>> # This example should be run with 2 devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> import os
         >>> import mindspore as ms
