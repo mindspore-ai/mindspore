@@ -231,17 +231,19 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   }
   auto top_graph = Parser::GetTopFuncGraph();
   std::vector<AnfNodePtr> input_params;
+  auto resolved_graph_count = resolved_graph->fv_param_count();
   for (auto const &param : resolved_graph->parameters()) {
     auto param_ptr = dyn_cast<Parameter>(param);
     MS_EXCEPTION_IF_NULL(param_ptr);
     if (param_ptr->has_default()) {
       param_ptr->set_func_graph(top_graph);
       func_graph->add_parameter_obj_node(param_ptr);
-
       // Update top_graph
       top_graph->add_parameter(param_ptr);
       size_t fv_param_count = top_graph->fv_param_count();
-      top_graph->set_fv_param_count(fv_param_count + 1);
+      top_graph->set_fv_param_count(++fv_param_count);
+      resolved_graph->DropNode(param_ptr);
+      resolved_graph->set_fv_param_count(--resolved_graph_count);
     } else {
       input_params.push_back(param_ptr);
     }
