@@ -26,7 +26,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 const int kHalfNum = 2;
-void CalculatePad(const int64_t &shape, const int64_t &kernel, const int64_t &stride, int64_t *pad1, int64_t *pad2) {
+void CalculatePad(const int64_t &shape, const int64_t &kernel, const int64_t &stride, const std::string &name,
+                  int64_t *pad1, int64_t *pad2) {
+  (void)CheckAndConvertUtils::CheckInteger("strides size", stride, kGreaterThan, 0, name);
   int64_t tail = shape % stride;
   int64_t pad = tail > 0 ? (kernel - tail) : (kernel - stride);
   pad = IntToLong(std::max(LongToInt(pad), 0));
@@ -61,9 +63,12 @@ abstract::ShapePtr MaxPool3DGradGradInferShape(const PrimitivePtr &primitive,
                                            primitive->name());
   std::vector<int64_t> pads = {0, 0, 0, 0, 0, 0};
   if (pad_mode == "SAME") {
-    CalculatePad(origin_input_shape[kDim2], kernels[kDim2], strides[kDim2], &pads[kDim0], &pads[kDim1]);
-    CalculatePad(origin_input_shape[kDim3], kernels[kDim3], strides[kDim3], &pads[kDim2], &pads[kDim3]);
-    CalculatePad(origin_input_shape[kDim4], kernels[kDim4], strides[kDim4], &pads[kDim4], &pads[kDim5]);
+    CalculatePad(origin_input_shape[kDim2], kernels[kDim2], strides[kDim2], primitive->name(), &pads[kDim0],
+                 &pads[kDim1]);
+    CalculatePad(origin_input_shape[kDim3], kernels[kDim3], strides[kDim3], primitive->name(), &pads[kDim2],
+                 &pads[kDim3]);
+    CalculatePad(origin_input_shape[kDim4], kernels[kDim4], strides[kDim4], primitive->name(), &pads[kDim4],
+                 &pads[kDim5]);
   }
   for (size_t i = 0; i < pads.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger("element of pad_list ", pads[i], kGreaterEqual, 0, primitive->name());
