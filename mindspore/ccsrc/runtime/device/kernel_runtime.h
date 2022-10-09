@@ -196,12 +196,6 @@ class BACKEND_EXPORT KernelRuntime {
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, const session::KernelGraph &graph) const;
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
   DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) const;
-#ifdef WITH_BACKEND
-  void GetFirstPSEmbeddingCache(const session::KernelGraph &graph, AnfNodePtr *const first_cache_input_index,
-                                size_t *const first_cache_size) const;
-  void CheckIfSupportPSEmbeddingCache(const session::KernelGraph &graph);
-  void CheckSparsePSEmbeddingCache(const CNodePtr &node) const;
-#endif
   void GetCommunicationInputInfo(const AnfNodePtr &node, size_t *total_size, DeviceAddressPtrList *address_list,
                                  std::vector<size_t> *align_size_list) const;
   void GetCommunicationOutputInfo(const AnfNodePtr &node, size_t *total_size, DeviceAddressPtrList *address_list,

@@ -28,7 +28,7 @@
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"
 #endif
 
@@ -601,7 +601,7 @@ void SetMindRTEnable() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_ps_mode() && !ps::PSContext::instance()->enable_distributed_mindrt()) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
     return;

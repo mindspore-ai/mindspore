@@ -410,37 +410,6 @@ void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
   }
 }
 
-#ifdef WITH_BACKEND
-// Get all users of this node
-void GetNodeUsedList(const FuncGraphPtr &kernel_graph, const AnfNodePtr &node,
-                     std::vector<AnfNodePtr> *node_users_list) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_EXCEPTION_IF_NULL(node);
-  auto manager = kernel_graph->manager();
-  if (manager == nullptr) {
-    auto new_manager = MakeManager({kernel_graph});
-    MS_EXCEPTION_IF_NULL(new_manager);
-    new_manager->AddFuncGraph(kernel_graph);
-    kernel_graph->set_manager(new_manager);
-    manager = new_manager;
-  }
-
-  auto iter = manager->node_users().find(node);
-  if (iter == manager->node_users().end()) {
-    return;
-  }
-
-  auto node_users = iter->second;
-  for (const auto &node_user : node_users) {
-    if (common::AnfAlgo::GetCNodeName(node_user.first) == prim::kPrimLoad->name()) {
-      GetNodeUsedList(kernel_graph, node_user.first, node_users_list);
-    } else {
-      (void)node_users_list->emplace_back(node_user.first);
-    }
-  }
-}
-#endif
-
 void IterateFindTensor(std::vector<ValuePtr> *msTensors, const VectorRef &ref_list) {
   for (size_t i = 0; i < ref_list.size(); ++i) {
     if (utils::isa<tensor::TensorPtr>(ref_list[i])) {

@@ -30,12 +30,8 @@ namespace py = pybind11;
 namespace mindspore {
 namespace device {
 DataQueueMgr &DataQueueMgr::GetInstance() noexcept {
-  std::call_once(instance_flag_, []() {
-    if (instance_ == nullptr) {
-      instance_ = std::make_shared<DataQueueMgr>();
-    }
-  });
-  return *instance_;
+  static DataQueueMgr instance;
+  return instance;
 }
 
 void DataQueueMgr::RegisterDataQueueCreator(const std::string &device_name, DataQueueCreator &&creator) {

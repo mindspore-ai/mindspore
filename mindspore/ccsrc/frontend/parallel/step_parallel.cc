@@ -50,7 +50,7 @@
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
 #include "frontend/parallel/parallel_optimizer/opt_param_mgr.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -3113,7 +3113,7 @@ static void HandlGlobalNormScale(const FuncGraphPtr &root, const FuncGraphManage
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }
