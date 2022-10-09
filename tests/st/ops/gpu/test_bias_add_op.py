@@ -16,8 +16,10 @@
 import numpy as np
 import pytest
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 
 def test_bias_add_forward_functional(nptype):
@@ -46,3 +48,33 @@ def test_bias_add_forward_float32_functional():
     test_bias_add_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     test_bias_add_forward_functional(np.float32)
+
+
+class Net(nn.Cell):
+    def __init__(self, data_format="NCHW"):
+        super(Net, self).__init__()
+        self.bias_add = P.BiasAdd(data_format)
+
+    def construct(self, x, b):
+        return self.bias_add(x, b)
+
+
+def run_bias_add(dtype):
+    x = Tensor(np.random.normal(0, 10, (2, 3)).astype(dtype))
+    b = Tensor(np.ones((3,)).astype(dtype))
+    net = Net()
+    net(x, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bias_add_gpu_valid_type():
+    """
+    Feature: test bias_add.
+    Description: test all gpu valid type of bias_add.
+    Expectation: run without exception.
+    """
+    run_bias_add(np.float32)
+    run_bias_add(np.float16)
+    run_bias_add(np.int8)
