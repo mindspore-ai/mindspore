@@ -113,7 +113,7 @@ def standard_laplace(shape, seed=0, seed2=0):
         ValueError: If shape is a tuple containing non-positive items.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import ops

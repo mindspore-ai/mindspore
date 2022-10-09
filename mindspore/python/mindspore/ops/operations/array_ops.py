@@ -5036,7 +5036,7 @@ class ScatterNdMax(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_max` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.array_ops import ScatterNdMax
@@ -5083,7 +5083,7 @@ class ScatterNdMin(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_min` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.ones(8) * 10, mindspore.float32), name="x")
