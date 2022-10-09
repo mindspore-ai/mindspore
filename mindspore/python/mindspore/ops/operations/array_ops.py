@@ -2178,7 +2178,7 @@ class ArgMinWithValue(Primitive):
     """
     Calculates the minimum value with corresponding index, and returns indices and values.
 
-    Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
+    Calculates the minimum value along with the given axis for the input tensor, and returns the minimum values and
     indices.
 
     Note:
@@ -3893,8 +3893,6 @@ class ScatterNd(Primitive):
 
 class ResizeNearestNeighbor(Primitive):
     r"""
-    Resizes the input tensor by using the nearest neighbor algorithm.
-
     Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
     neighbor algorithm selects the value of the nearest point and does not consider the
     values of neighboring points at all, yielding a piecewise-constant interpolant.
@@ -4108,7 +4106,7 @@ class ScatterNdUpdate(Primitive):
 
     The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
 
-    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    `updates` is a tensor of rank `Q-1+P-N`, and its shape is:
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -4179,7 +4177,8 @@ class ScatterMax(_ScatterOpDynamic):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    the relatively highest priority data type. A RuntimeError will be reported
+    when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
         use_locking (bool): Whether to protect the assignment by a lock. Default: False.
@@ -4701,7 +4700,8 @@ class ScatterDiv(_ScatterOpDynamic):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    the relatively highest priority data type. A RuntimeError will be reported
+    when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
         use_locking (bool): Whether to protect the assignment by a lock. Default: False.

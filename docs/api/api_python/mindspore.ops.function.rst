@@ -279,7 +279,6 @@ Tensor创建
     mindspore.ops.gamma
     mindspore.ops.laplace
     mindspore.ops.multinomial
-    mindspore.ops.poisson
     mindspore.ops.random_poisson
     mindspore.ops.random_categorical
     mindspore.ops.random_gamma

@@ -3,7 +3,7 @@ mindspore.ops.UniformInt
 
 .. py:class:: mindspore.ops.UniformInt(seed=0, seed2=0)
 
-    根据均匀分布在区间 `[minval, maxval)` 中生成随机数。即根据离散概率函数分布：
+    根据均匀分布在区间 `[minval, maxval)` 中生成随机数，即根据离散概率函数分布：
 
     .. math::
         \text{P}(i|a,b) = \frac{1}{b-a+1},

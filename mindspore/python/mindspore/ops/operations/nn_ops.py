@@ -1811,7 +1811,7 @@ class MaxPoolWithArgmax(Primitive):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
+    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
@@ -1902,7 +1902,7 @@ class MaxPool3D(PrimitiveWithInfer):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, MaxPool outputs
     regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
@@ -2975,6 +2975,8 @@ class ApplyMomentum(Primitive):
 
 class SmoothL1Loss(Primitive):
     r"""
+    Calculate the smooth L1 loss, and the L1 loss function has robustness.
+
     Refer to :func:`mindspore.ops.smooth_l1_loss` for more detail.
 
     Supported Platforms:
@@ -5495,8 +5497,8 @@ class KLDivLoss(Primitive):
         \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    where :math:`x` represents `logits`.
-    :math:`target` represents `labels`.
+    where :math:`x` represents `logits`,
+    :math:`target` represents `labels`, and
     :math:`\ell(x, target)` represents `output`.
 
     Note:

@@ -3,7 +3,7 @@ mindspore.ops.ReduceMean
 
 .. py:class:: mindspore.ops.ReduceMean(keep_dims=False)
 
-    默认情况下，使用指定维度的平均值代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
+    默认情况下，使用指定维度的平均值代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。
 
     通过指定 `keep_dims` 参数，来控制输出和输入的维度是否相同。
 

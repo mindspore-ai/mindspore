@@ -1101,7 +1101,7 @@ class ReduceProd(_Reduce):
 
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default : False.
+                          If false, don't keep these dimensions. Default: False.
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
@@ -3128,7 +3128,7 @@ class TruncateMod(Primitive):
 
     .. warning::
         - The input data does not support 0.
-        - When the elements of input exceed 2048 , the accuracy of operator cannot guarantee the requirement of
+        - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
@@ -4662,7 +4662,7 @@ class Atan2(_MathBinaryOp):
 
 class SquareSumAll(Primitive):
     r"""
-    Returns the square sum of a tensor element-wise
+    Returns the square sum of a tensor element-wise.
 
     .. math::
 
@@ -4670,13 +4670,13 @@ class SquareSumAll(Primitive):
         \\out_{y} = {\textstyle \sum_{0}^{N}} (y_{i})^2
         \end{matrix}\right.
 
+    Note:
+        SquareSumAll only supports float16 and float32 data type.
+
     Inputs:
         - **x** (Tensor) - The input tensor. The data type must be float16 or float32.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **y** (Tensor) - The input tensor has the same type and shape as the `x`.
-
-    Note:
-        SquareSumAll only supports float16 and float32 data type.
 
     Outputs:
         - **output_x** (Tensor) - The same type as the `x`.
@@ -5501,7 +5501,9 @@ class IndexAdd(Primitive):
 
 class Erfinv(Primitive):
     r"""
-    Computes the inverse error function of input. The inverse error function is defined in the range (-1, 1) as:
+    Computes the inverse error function of input. The inverse error function is defined in the range (-1, 1).
+
+    The formula is defined as:
 
     .. math::
                                 erfinv(erf(x)) = x

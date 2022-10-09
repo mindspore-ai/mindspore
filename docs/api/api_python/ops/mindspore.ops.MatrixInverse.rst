@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.MatrixInverse(adjoint=False)
 
-    计算输入矩阵的逆矩阵，如果输入矩阵不可逆，将产生错误或者返回一个未知结果。
+    计算输入矩阵的逆矩阵。如果输入矩阵不可逆，将产生错误或者返回一个未知结果。
 
     .. note::
         参数 `adjoint` 目前只支持False，因为目前该算子不支持复数。
