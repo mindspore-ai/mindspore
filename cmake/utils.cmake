@@ -133,7 +133,7 @@ function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
         endif()
         set(_LIB_TYPE SHARED)
         if(${pkg_name}_USE_STATIC_LIBS)
-            set(_LIB_SEARCH_NAME "${CMAKE_STATIC_LIBRARY_PREFIX}${_LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}")
+            set(_LIB_SEARCH_NAME "${CMAKE_STATIC_LIBRARY_PREFIX}${_LIB_SEARCH_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}")
             set(_LIB_TYPE STATIC)
         endif()
         set(${_LIB_NAME}_LIB ${_LIB_NAME}_LIB-NOTFOUND)
@@ -384,7 +384,11 @@ function(mindspore_add_pkg pkg_name)
                     -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ${${pkg_name}_SOURCE_DIR}/${PKG_CMAKE_PATH}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
                 if(MSVC)
-                    __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --config Release --target install --
+                    set(CONFIG_TYPE Release)
+                    if(DEBUG_MODE)
+                        set(CONFIG_TYPE Debug)
+                    endif()
+                    __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --config ${CONFIG_TYPE} --target install --
                         WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
                 else()
                     __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
