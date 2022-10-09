@@ -252,12 +252,12 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     auto dst_param = dst_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(dst_param);
     if (!dst_param->IsUsedByRealKernelInGraph(graph_->graph_id())) {
-      return true;
+      continue;
     }
     auto dst_device_tensor = AnfAlgo::GetMutableOutputAddr(dst_node, 0, false);
     MS_EXCEPTION_IF_NULL(dst_device_tensor);
     if (src_device_tensor->GetPtr() == dst_device_tensor->GetPtr()) {
-      return true;
+      continue;
     }
 
     // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
@@ -265,7 +265,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     if (!dst_device_tensor->is_ptr_persisted()) {
       if (src_device_tensor->GetDeviceType() == dst_device_tensor->GetDeviceType()) {
         MS_LOG(DEBUG) << "Disable copy for device tensor:" << dst_device_tensor;
-        return true;
+        continue;
       }
 
       if (copy_input_device_tensors_[i] == nullptr) {
@@ -283,7 +283,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
         MS_LOG(ERROR) << "Device(id:" << std::to_string((device_contexts_[0])->device_context_key().device_id_)
                       << ") memory isn't enough and alloc failed, kernel name: " << GetAID()
                       << ", alloc size: " + std::to_string(dst_device_tensor->GetSize()) << "B.";
-        return false;
+        continue;
       }
       MS_LOG(DEBUG) << "Alloc memory for device tensor:" << dst_device_tensor << " ptr:" << dst_device_tensor->GetPtr()
                     << " index:" << i << " for actor:" << GetAID();
@@ -295,7 +295,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
                  << ", type:" << dst_device_tensor->GetDeviceType() << ".";
     if (!Copy(dst_device_tensor.get(), src_device_tensor)) {
       MS_LOG(ERROR) << "Copy data failed.";
-      return false;
+      continue;
     }
     input_device_tensors_[i] = dst_device_tensor.get();
     if (is_parameters_need_copy_[i] && ref_node_addr_map_.count(dst_node) == 0) {
