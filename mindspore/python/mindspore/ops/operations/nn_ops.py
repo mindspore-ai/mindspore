@@ -19,7 +19,6 @@ from __future__ import division
 
 import math
 from functools import partial
-
 from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore import context
@@ -3003,51 +3002,11 @@ class SmoothL1Loss(Primitive):
 
 class MultiMarginLoss(Primitive):
     r"""
-    Creates a criterion that optimizes a multi-class classification hinge
-    loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`) and
-    output :math:`y` (which is a 1D tensor of target class indices,
-    :math:`0 \leq y \leq \text{x.size}(1)-1`):
+    Creates a criterion that optimizes a multi-class classification hinge loss (margin-based loss)
+    between input xx (a 2D mini-batch Tensor) and output yy (which is a 1D tensor of target class
+    indices, 0 \leq y \leq \text{x.size}(1)-10≤y≤x.size(1)−1):
 
-    For each mini-batch sample, the loss in terms of the 1D input :math:`x` and scalar
-    output :math:`y` is:
-
-    .. math::
-        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p)}{\text{x.size}(0)}
-
-    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
-    and :math:`i \neq y`.
-
-    Optionally, you can give non-equal weighting on the classes by passing
-    a 1D input `weight` tensor w into the constructor.
-
-    Args:
-        p (int): Optional. The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
-        margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
-
-    Inputs:
-        - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
-        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
-          value of target should be non-negative, less than C.
-        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
-          support float32, float16 or float64. Default: None.
-
-    Outputs:
-        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
-        Otherwise, it is a scalar. Has the same data type with `x`.
-
-    Raises:
-        TypeError: If dtype of `p` or `target` is not int.
-        TypeError: If dtype of `margin` is not float.
-        TypeError: If dtype of `reduction` is not str.
-        TypeError: If dtype of `x` is not float16, float or float64.
-        TypeError: If dtype of `weight` and `x` is not the same.
-        ValueError: If 'p' is not 1 or 2.
-        ValueError: If 'reduction' is not one of {'none','sum','mean'}.
-        ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
-        ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
-        ValueError: IF rank of `weight` is not 1.
-        ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
+    Refer to :func:`mindspore.ops.multi_margin_loss` for more detail.
 
     Supported Platforms:
         ``Ascend``  ``CPU``
@@ -7877,91 +7836,7 @@ class Conv3D(Primitive):
     r"""
     3D convolution layer.
 
-    Applies a 3D convolution over an input tensor which is typically of shape
-    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`D` is depth, :math:`H` is height, :math:`W` is width.
-    the formula is defined as:
-
-    .. math::
-
-        \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
-        \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
-        \operatorname{input}\left(N_{i}, k\right))
-
-    where :math:`k` is kernel, :math:`ccor` is the cross-correlation operator.
-
-    If the 'pad_mode' is set to be "valid", the output depth, height and width will be
-    :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
-    (\text{ks_d} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
-    (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
-    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively. Where
-    :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
-    :math:`padding` is zero-padding added to both sides of the input.
-
-    Args:
-        out_channel (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
-            and width of the 3D convolution window. Single int means the value is for the depth, height and width
-            of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
-            width of the kernel.
-        mode (int): Modes for different convolutions. It is currently not used. Default: 1.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the depth, height and width of movement are both strides, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid" and "pad". Default: "valid".
-
-            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
-              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
-              left and right directions possiblily.
-              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
-              If this mode is set, `pad` must be 0.
-
-            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
-              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
-              must be 0.
-
-            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
-              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
-
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
-                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
-                    pad[3], pad[4] and pad[5] correspondingly.
-        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
-                                      :math:`(dilation_d, dilation_h, dilation_w)`.
-                                      Currently, dilation on depth only supports the case of 1.
-                                      Specifies the dilation rate to use for dilated convolution.
-                                      If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
-                                      for each sampling location. Its value must be greater than or equal to 1 and
-                                      bounded by the height and width of the input. Default: 1.
-        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by the number of groups. Default: 1. Only 1 is currently supported.
-        data_format (str): The optional value for data format. Currently only support "NCDHW".
-
-    Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
-          Currently input data type only support float16 and float32.
-        - **weight** (Tensor) - Set size of kernel is :math:`(k_d, K_h, K_w)`, then the shape is
-          :math:`(C_{out}, C_{in}/groups, k_d, K_h, K_w)`.
-          Currently weight data type only support float16 and float32.
-        - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none.
-
-    Outputs:
-        Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
-
-    Raises:
-        TypeError: If `out_channel` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
-        ValueError: If `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
-        ValueError: If `pad` is less than 0.
-        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
-        ValueError: If `pad` is a tuple whose length is not equal to 6.
-        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
-        ValueError: If `data_format` is not 'NCDHW'.
+    Refer to :func:`mindspore.ops.conv3d` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9171,45 +9046,8 @@ class MultilabelMarginLoss(Primitive):
     Creates a criterion that optimizes a multi-class multi-classification
     hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
     and output :math:`y` (which is a 2D `Tensor` of target class indices).
-    For each sample in the mini-batch:
 
-    .. math::
-        \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
-
-    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
-    :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
-    :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
-    and :math:`i \neq y[j]` for all :math:`i` and :math:`j`.
-
-    :math:`y` and :math:`x` must have the same size.
-
-    The criterion only considers a contiguous block of non-negative targets that
-    starts at the front.
-
-    This allows for different samples to have variable amounts of target classes.
-
-    Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
-
-    Inputs:
-        - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
-          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
-          label targets padded by -1.
-
-    Outputs:
-        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
-          is :math:`(N)`. Otherwise, a scalar value will be returned.
-        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
-          data type must be int32.
-
-    Raises:
-        TypeError: If `x` or `target` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        TypeError: If dtype of `target` is not int32.
-        ValueError: If length of shape of `x` is neither 1 nor 2.
-        ValueError: If shape of `x` is not the same as `target`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+    Refer to :func:`mindspore.ops.multi_label_margin_loss` for more detail.
 
     Supported Platforms:
         ``Ascend``

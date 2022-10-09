@@ -323,6 +323,8 @@ from .nn_func import (
     relu6,
     conv3d,
     glu,
+    multi_margin_loss,
+    multi_label_margin_loss,
 )
 from .linalg_func import (
     svd,
