@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include "utils/label.h"
 #include "utils/hash_map.h"
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
@@ -138,12 +139,15 @@ struct SubGraphIRInfo {
   OrderedMap<AnfNodePtr, int32_t> local_var_map;
 };
 
-void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer) {
+void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer,
+                         OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *const sub_graphs) {
   if (graph == nullptr) {
     return;
   }
 
   buffer << "#IR entry      : @" << graph->ToString() << std::endl;
+  buffer << "#Total subgraph : " << sub_graphs->size() << std::endl;
+  buffer << std::endl;
   buffer << "#attrs         :" << std::endl;
   for (const auto &attr : graph->attrs()) {
     buffer << attr.first << " : ";
@@ -561,6 +565,20 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, OrderedMap<A
   DumpDebugInfo(node, gsub, dump_location);
 }
 
+void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
+  auto &order_list = sub_graph->order_list();
+  if (order_list.empty()) {
+    return;
+  }
+  constexpr int width = 4;
+  oss << "# order:\n";
+  int i = 1;
+  for (auto &node : order_list) {
+    oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
+    ++i;
+  }
+}
+
 void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,
                       OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *const sub_graphs, int32_t total_para,
                       bool dump_full_name = false, LocDumpMode dump_location = kOff) {
@@ -606,10 +624,6 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   if (sub_graphs == nullptr || graph == nullptr) {
     return;
   }
-
-  oss << "#Total subgraph : " << sub_graphs->size() << std::endl;
-  oss << std::endl;
-
   for (const auto &sg : *sub_graphs) {
     oss << "subgraph attr:" << std::endl;
     MS_EXCEPTION_IF_NULL(sg.first);
@@ -623,6 +637,12 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
       oss << std::endl;
     }
     oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
+    if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+      oss << trace::GetDebugInfo(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "#"
+          << label_manage::Label(sg.first->debug_info()) << "\n";
+    } else {
+      oss << trace::GetDebugInfo(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
+    }
     oss << "subgraph @" << sg.first->ToString() << "(";
     if (sg.first != graph) {
       std::vector<AnfNodePtr> parameters = sg.first->parameters();
@@ -644,6 +664,8 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
     MS_EXCEPTION_IF_NULL(sg.second);
     oss << sg.second->buffer.str();
     oss << "}" << std::endl;
+    OutputOrderList(sg.first, oss);
+    oss << std::endl;
     oss << std::endl;
   }
 }
@@ -777,6 +799,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 
   ChangeFileMode(realpath.value(), S_IWUSR);
   std::ofstream fout(realpath.value());
+  std::ostringstream oss;
   std::ostringstream buffer;
   if (!fout.is_open()) {
     MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
@@ -786,13 +809,14 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
   OrderedMap<AnfNodePtr, int32_t> para_map;
   // Dump global info
-  DumpGlobalInfoEntry(graph, buffer);
-  int32_t total_para = DumpParams(graph, buffer, &para_map);
+  int32_t total_para = DumpParams(graph, oss, &para_map);
 
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
   // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
 
+  DumpGlobalInfoEntry(graph, buffer, &sub_graphs);
+  buffer << oss.str();
   // Output global info
   fout << buffer.str() << std::endl;
   buffer.str(std::string());
@@ -813,16 +837,20 @@ void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool du
   if (graph == nullptr) {
     return;
   }
+  std::ostringstream oss;
   auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
   OrderedMap<AnfNodePtr, int32_t> para_map;
-  // Dump global info
-  DumpGlobalInfoEntry(graph, graph_buffer);
-  int32_t total_para = DumpParams(graph, graph_buffer, &para_map);
+  int32_t total_para = DumpParams(graph, oss, &para_map);
+
   graph_buffer << "\n";
 
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
   // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
+
+  // Dump global info
+  DumpGlobalInfoEntry(graph, graph_buffer, &sub_graphs);
+  graph_buffer << oss.str();
   // Output each sub graph
   DumpSubgraph(&sub_graphs, graph, &para_map, graph_buffer);
 }
@@ -850,14 +878,12 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
 
   auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
   OrderedMap<AnfNodePtr, int32_t> para_map;
-  // Dump global info
-  DumpGlobalInfoEntry(graph, buffer);
   int32_t total_para = DumpParams(graph, buffer, &para_map);
-
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
   // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
-
+  // Dump global info
+  DumpGlobalInfoEntry(graph, buffer, &sub_graphs);
   // Output global info
   fout << buffer.str() << std::endl;
   buffer.str(std::string());

@@ -850,9 +850,15 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
         auto fg_name = "opt_pass_" + std::to_string(counter) + "_" + pass.first;
         auto func_graph = resource->func_graph();
         MS_EXCEPTION_IF_NULL(func_graph);
-        DumpIR(fg_name + ".ir", func_graph);
-        ExportIR(fg_name + ".dat", func_graph);
-        draw::Draw(fg_name + ".dot", func_graph);
+        static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
+        if (switch_order) {
+          ExportIR(fg_name + ".ir", func_graph);
+        } else {
+          DumpIR(fg_name + ".ir", func_graph);
+        }
+        if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+          draw::Draw(fg_name + ".dot", func_graph);
+        }
         MS_LOG(DEBUG) << "Dump " << fg_name << " func graph.";
       }
 #endif

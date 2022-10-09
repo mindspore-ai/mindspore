@@ -89,8 +89,8 @@ def test_save_graphs1():
 
     ir, dat, dot = count_ir_files("test_save_graphs1")
     assert ir > 15
-    assert dat > 15
-    assert dot > 15
+    assert dat == 0
+    assert dot == 0
     remove_path("./test_save_graphs1")
     context.set_context(save_graphs=False)
 
@@ -131,8 +131,8 @@ def test_save_graphs2():
 
     ir, dat, dot = count_ir_files("test_save_graphs2/tmp")
     assert ir > 15
-    assert dat > 15
-    assert dot > 15
+    assert dat == 0
+    assert dot == 0
     remove_path("./test_save_graphs2")
     context.set_context(save_graphs=False)
 
@@ -175,7 +175,7 @@ def test_save_graphs3():
 
     ir, dat, dot = count_ir_files("test_save_graphs3")
     assert ir > 15
-    assert dat > 15
-    assert dot > 15
+    assert dat == 0
+    assert dot == 0
     remove_path("./test_save_graphs3")
     context.set_context(save_graphs=False)

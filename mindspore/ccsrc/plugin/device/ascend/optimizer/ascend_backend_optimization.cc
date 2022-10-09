@@ -570,7 +570,9 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
-    draw::Draw("hwopt_d_end.dot", kernel_graph);
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+      draw::Draw("hwopt_d_end.dot", kernel_graph);
+    }
   }
 #endif
   PROF_END(ascend_backend_optimization);

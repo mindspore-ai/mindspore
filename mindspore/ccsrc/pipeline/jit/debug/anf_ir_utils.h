@@ -94,7 +94,7 @@ class AnfExporter {
                              const std::map<AnfNodePtr, int> &apply_map);
   void OutputParameters(std::ostringstream &oss, const std::vector<AnfNodePtr> &parameters, ParamIndexMap *param_map);
 
-  void OutputStatementComment(std::ostringstream &oss, const CNodePtr &node);
+  void OutputStatementComment(const CNodePtr &node, const FuncGraphPtr &func_graph, std::ostringstream &oss);
 
   void OutputOrderList(std::ostringstream &oss, const FuncGraphPtr &func_graph) const;
 

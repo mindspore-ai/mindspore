@@ -44,6 +44,7 @@
 #include "include/common/debug/common.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "include/common/utils/anfalgo.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -62,28 +63,74 @@ struct AnfDumpHandlerRegister {
 } callback_register;
 }  // namespace
 // ============================================= MindSpore IR Exporter =============================================
+void PrintTupleNodeUsedFlagsOnDat(const abstract::AbstractSequencePtr &sequence_abs, std::ostringstream &buffer) {
+  if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
+    return;
+  }
+
+  buffer << ", sequence_nodes={";
+  for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+    auto node = (*sequence_abs->sequence_nodes())[i].lock();
+    if (node == nullptr) {
+      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+      buffer << "node={<freed node>}";
+    } else {
+      buffer << "node={" << node->DebugString();
+      auto flags = GetSequenceNodeElementsUseFlags(node);
+      if (flags != nullptr) {
+        buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+      }
+      buffer << "}";
+    }
+    if (i != sequence_abs->sequence_nodes()->size() - 1) {
+      buffer << ", ";
+    }
+  }
+  buffer << "}";
+}
+
 std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   MS_EXCEPTION_IF_NULL(nd);
   ValuePtr tensor_value = nullptr;
+  StringImmPtr ref_key = nullptr;
+  abstract::AbstractSequencePtr sequence_abs = nullptr;
   auto abstract = nd->abstract();
-  if (abstract != nullptr && abstract->isa<abstract::AbstractTensor>()) {
-    tensor_value = abstract->BuildValue();
+  if (abstract != nullptr) {
+    if (abstract->isa<abstract::AbstractTensor>()) {
+      tensor_value = abstract->BuildValue();
+    }
+    if (auto ref_tensor = abstract->cast_ptr<abstract::AbstractRefTensor>(); ref_tensor != nullptr) {
+      ref_key = dyn_cast<StringImm>(ref_tensor->ref_key_value());
+    } else if (auto map_tensor = abstract->cast_ptr<abstract::AbstractMapTensor>(); map_tensor != nullptr) {
+      ref_key = dyn_cast<StringImm>(map_tensor->ref_key_value());
+    }
+    sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
   }
   abstract::BaseShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::BaseShape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
   if ((shape != nullptr) && (type != nullptr)) {
-    oss << type->DumpText() << shape->DumpText();
+    oss << "<" << type << ", " << shape->ToString();
     if (tensor_value != nullptr && tensor_value != kAnyValue) {
-      oss << "(...)";
+      oss << ", value=...";
     }
+    if (ref_key != nullptr) {
+      oss << ", ref_key=:" << ref_key->value();
+    }
+    PrintTupleNodeUsedFlagsOnDat(sequence_abs, oss);
+    oss << ">";
   } else if (type != nullptr) {
-    oss << type->DumpText();
+    oss << "<" << type;
     if (tensor_value != nullptr && tensor_value != kAnyValue) {
-      oss << "(...)";
+      oss << ", value=...";
     }
+    if (ref_key != nullptr) {
+      oss << ", ref_key=:" << ref_key->value();
+    }
+    PrintTupleNodeUsedFlagsOnDat(sequence_abs, oss);
+    oss << ">";
   } else {
-    oss << "Undefined";
+    oss << "<null>";
   }
   return oss.str();
 }
@@ -410,10 +457,12 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const An
   } else if (node->isa<Parameter>()) {
     // Parameter maybe a free variable, so check it in its own funcgraph.
     oss << "%para" << GetParamIndex(node->func_graph(), node, check_integrity_);
+    oss << "_" << node->ToString();
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
-    oss << fg->type_name() << "::fg_" << fg->debug_info()->get_id();
-
+    if (fg != nullptr) {
+      oss << "call @" << fg->ToString();
+    }
     if (!func_graph_set.contains(fg) && exported.find(fg) == exported.end() && export_used_) {
       func_graph_set.add(fg);
     }
@@ -430,6 +479,13 @@ void AnfExporter::OutputParameters(std::ostringstream &oss, const std::vector<An
                                    ParamIndexMap *param_map) {
   bool first_flag = true;
   for (const AnfNodePtr &param : parameters) {
+    if (param == nullptr) {
+      continue;
+    }
+    auto parameter_ptr = param->cast<ParameterPtr>();
+    if (parameter_ptr == nullptr) {
+      MS_LOG(EXCEPTION) << "param cannot cast to ParameterPtr";
+    }
     if (first_flag) {
       first_flag = false;
       oss << "        ";
@@ -440,56 +496,52 @@ void AnfExporter::OutputParameters(std::ostringstream &oss, const std::vector<An
     std::string type_info = GetNodeType(param);
     // Output parameter and type
     if (type_info == "Undefined") {
-      oss << "%para" << param_index;
+      oss << "%para" << param_index << "_" << parameter_ptr->name();
     } else {
-      oss << "%para" << param_index << " : " << type_info;
+      oss << "%para" << param_index << "_" << parameter_ptr->name() << " : " << type_info;
     }
     // Output comment
-    oss << "    # " << param->DumpText() << "\n";
+    if (parameter_ptr->has_default()) {
+      oss << "  :  has_default";
+    }
+    auto kernel_info = param->kernel_info();
+    if (kernel_info != nullptr && kernel_info->has_build_info()) {
+      oss << "  :  ";
+      oss << AnfDumpHandler::PrintOutputTypeShapeFormat(param, 0);
+      oss << "  :  IsWeight: " << std::boolalpha << common::AnfAlgo::IsParameterWeight(parameter_ptr);
+    }
+    oss << std::endl;
     param_index += 1;
   }
 }
 
-void AnfExporter::OutputStatementComment(std::ostringstream &oss, const CNodePtr &node) {
+void AnfExporter::OutputStatementComment(const CNodePtr &node, const FuncGraphPtr &func_graph,
+                                         std::ostringstream &oss) {
   if (node == nullptr) {
     return;
   }
-
   // Output type of each input argument
   auto &inputs = node->inputs();
-  if (inputs.size() > 1) {
-    oss << "    #(";
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if (i != 1) {
-        oss << ", ";
+  if (node != func_graph->get_return()) {
+    if (inputs.size() > 1) {
+      oss << "\n      :(";
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        if (i != 1) {
+          oss << ", ";
+        }
+        AnfNodePtr arg = inputs[i];
+        oss << GetNodeType(arg);
       }
-      AnfNodePtr arg = inputs[i];
-      oss << GetNodeType(arg);
+      oss << ")"
+          << " -> "
+          << "(" << GetNodeType(node) << ")";
     }
-    oss << ")";
+  } else {
+    oss << "\n      :(" << GetNodeType(node) << ")";
   }
   // Output other comment, map the graph name to original representation(containing unicode character)
-  std::ostringstream comment;
-  comment << "    #";
-  bool has_comment = false;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    AnfNodePtr arg = inputs[i];
-    if (!IsValueNode<FuncGraph>(arg)) {
-      continue;
-    }
-    if (!has_comment) {
-      has_comment = true;
-    } else {
-      comment << ",";
-    }
-    FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(arg);
-    auto func_graph_id = fg->debug_info()->get_id();
-    comment << " fg_" << func_graph_id << "=" << fg->ToString();
-  }
-  if (has_comment) {
-    oss << comment.str();
-  }
-  oss << " #scope: " << node->scope()->name();
+  oss << "\n";
+  oss << "      #scope: " << node->scope()->name();
 }
 
 void AnfExporter::OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
@@ -507,13 +559,9 @@ void AnfExporter::OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode
   if (cnode != func_graph->get_return()) {
     int apply_idx = (*idx)++;
     (*apply_map)[cnode] = apply_idx;
-    std::string type_info = GetNodeType(cnode);
     std::string func_str = GetNodeFuncStr(inputs[0]);
-    if (type_info == "Undefined") {
-      oss << "    %" << apply_idx << " = " << fv_text << op_text;
-    } else {
-      oss << "    %" << apply_idx << " : " << fv_text << type_info << " = " << op_text;
-    }
+    oss << "  %" << apply_idx << "(" << cnode->ToString() << ")"
+        << " = " << fv_text << op_text;
     if (!func_str.empty()) {
       oss << "[" << func_str << "]"
           << "(";
@@ -521,7 +569,7 @@ void AnfExporter::OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode
       oss << "(";
     }
   } else {
-    oss << "    " << fv_text << op_text << "(";
+    oss << "  " << fv_text << op_text << "(";
   }
 
   for (size_t i = 1; i < inputs.size(); ++i) {
@@ -538,7 +586,7 @@ void AnfExporter::OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, co
                               std::map<AnfNodePtr, int> *const apply_map) {
   OutputCNodeText(oss, cnode, func_graph, idx, apply_map);
   // Output comment
-  OutputStatementComment(oss, cnode);
+  OutputStatementComment(cnode, func_graph, oss);
   oss << "\n";
 }
 
@@ -569,8 +617,10 @@ void AnfExporter::OutputCNodes(std::ostringstream &oss, const std::vector<AnfNod
       oss << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
           << label_manage::Label(cnode->debug_info()) << "\n";
     } else {
-      oss << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#" << cnode->ToString()
-          << "\n";
+      std::string dgi = trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
+      if (dgi != "") {
+        oss << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+      }
     }
   }
 }
@@ -605,17 +655,26 @@ void AnfExporter::ExportOneFuncGraph(std::ostringstream &oss, const FuncGraphPtr
   if (*(func_graph->switch_layer_input())) {
     oss << "switch_layer_input: " << *(func_graph->switch_layer_input()) << "\n";
   }
-  oss << "# [No." << (exported.size() + 1) << "] " << func_graph->DumpText() << "\n";
+  oss << "subgraph attr:" << std::endl;
+  oss << "subgraph instance: " << func_graph->ToString() << " : " << func_graph.get() << std::endl;
+  for (const auto &attr : func_graph->attrs()) {
+    oss << attr.first << " : ";
+    if (attr.second->isa<BoolImm>()) {
+      oss << GetValue<bool>(attr.second);
+    } else if (attr.second->isa<StringImm>()) {
+      oss << (GetValue<std::string>(attr.second));
+    }
+    oss << std::endl;
+  }
   if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
     oss << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
         << label_manage::Label(func_graph->debug_info()) << "\n";
   } else {
     oss << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
   }
-  oss << "funcgraph fg_" << func_graph->debug_info()->get_id();
-  // Output name of parent of graph if exists
+  oss << "subgraph @" << func_graph->ToString();
   if (func_graph->parent() != nullptr) {
-    oss << "[fg_" << func_graph->parent()->debug_info()->get_id() << "]";
+    oss << " parent: [subgraph @" << func_graph->parent()->ToString() << "]";
   }
   oss << "(\n";
 
@@ -631,6 +690,27 @@ void AnfExporter::ExportOneFuncGraph(std::ostringstream &oss, const FuncGraphPtr
   OutputOrderList(oss, func_graph);
 }
 
+void ExportGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, int graph_size) {
+  if (graph == nullptr) {
+    return;
+  }
+
+  buffer << "###Deep Sort Order###\n";
+  buffer << "#IR entry      : @" << graph->ToString() << std::endl;
+  buffer << "#Total subgraph: " << graph_size;
+  buffer << std::endl;
+  buffer << "#attrs         :" << std::endl << std::endl;
+  for (const auto &attr : graph->attrs()) {
+    buffer << attr.first << " : ";
+    if (attr.second->isa<BoolImm>()) {
+      buffer << GetValue<bool>(attr.second);
+    } else if (attr.second->isa<StringImm>()) {
+      buffer << (GetValue<std::string>(attr.second));
+    }
+    buffer << std::endl;
+  }
+}
+
 void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return;
@@ -643,17 +723,19 @@ void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPt
   }
 
   param_index = 1;
-  std::ostringstream buffer;
+  std::ostringstream oss;
   TaggedNodeMap tagged_cnodes_map;
   func_graph_set.add(func_graph);
   while (!func_graph_set.empty()) {
     FuncGraphPtr fg = *func_graph_set.cbegin();
-    ExportOneFuncGraph(buffer, fg, tagged_cnodes_map);
-    buffer << "\n\n";
+    ExportOneFuncGraph(oss, fg, tagged_cnodes_map);
+    oss << "\n\n";
     (void)func_graph_set.erase(fg);
   }
-  buffer << "# num of total function graphs: " << exported.size();
-  ofs << buffer.str();
+  size_t graph_size = exported.size();
+  std::ostringstream buffer;
+  ExportGlobalInfoEntry(func_graph, buffer, graph_size);
+  ofs << buffer.str() << oss.str();
   ofs.close();
 }
 
@@ -663,7 +745,7 @@ void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
     return;
   }
 
-  auto filepath = GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
+  auto filepath = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
   auto real_filepath = Common::CreatePrefixPath(filepath);
   if (!real_filepath.has_value()) {
     MS_LOG(ERROR) << "The export ir path: " << filepath << " is not illegal.";
@@ -683,7 +765,7 @@ void ExportIR(const std::string &, const FuncGraphPtr &) {
   }
   already_printed = true;
   MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
-                  << "please recompile source to enable it. See help of building script.";
+                  << "please recompile to enable it. See help of building script.";
 }
 #endif
 }  // namespace mindspore

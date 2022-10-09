@@ -303,9 +303,13 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
       if (enable_dump_pass_ir && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
         auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->CurPass_.counter) + "_" +
                        optimizer->CurPass_.name + "_" + substitution->name_;
-        DumpIR(fg_name + ".ir", func_graph);
-        if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-          ExportIR(fg_name + ".dat", func_graph);
+        static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
+        if (switch_order) {
+          ExportIR(fg_name + ".ir", func_graph);
+        } else {
+          DumpIR(fg_name + ".ir", func_graph);
+        }
+        if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
           draw::Draw(fg_name + ".dot", func_graph);
         }
       }

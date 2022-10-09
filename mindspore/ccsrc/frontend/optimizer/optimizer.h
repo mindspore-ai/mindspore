@@ -207,9 +207,13 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             auto fg_name =
               "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
             MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
-            DumpIR(fg_name + ".ir", func_graph);
-            if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-              ExportIR(fg_name + ".dat", func_graph);
+            static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
+            if (switch_order) {
+              ExportIR(fg_name + ".ir", func_graph);
+            } else {
+              DumpIR(fg_name + ".ir", func_graph);
+            }
+            if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
               draw::Draw(fg_name + ".dot", func_graph);
             }
             MS_LOG(DEBUG) << "Dump " << pass_names_[i] << " func graph.";
