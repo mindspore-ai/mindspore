@@ -85,7 +85,7 @@ int RandomShuffleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 template <typename T>
 bool RandomShuffleCpuKernelMod::ScalarShuffle(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &outputs,
-                                              const std::vector<size_t> &perm) {
+                                              const std::vector<size_t> &perm) const {
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   for (size_t i = 0; i < perm.size(); i++) {
