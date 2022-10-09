@@ -39,9 +39,9 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto size_ptr = input_args[kInputIndex1]->BuildValue();
-  size_t long_kdim1 = SizeToLong(kDim1);
-  size_t long_kdim2 = SizeToLong(kDim2);
-  size_t long_kdim4 = SizeToLong(kDim4);
+  int64_t long_kdim1 = SizeToLong(kDim1);
+  int64_t long_kdim2 = SizeToLong(kDim2);
+  int64_t long_kdim4 = SizeToLong(kDim4);
   (void)CheckAndConvertUtils::CheckInteger("dimension of size", SizeToLong(size_shape.size()), kEqual, long_kdim1,
                                            prim_name);
 
@@ -85,7 +85,7 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
   } else {
     MS_EXCEPTION_IF_NULL(size_ptr);
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("input size", size_ptr, prim_name);
-    if (size_value.size() != long_kdim2) {
+    if (size_value.size() != static_cast<size_t>(long_kdim2)) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements number of 'size' should be 2, but get "
                                << size_value.size() << " number.";
     }
