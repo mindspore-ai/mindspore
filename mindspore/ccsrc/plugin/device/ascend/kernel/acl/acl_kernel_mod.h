@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,13 +40,19 @@ class AclKernelMod : public AscendKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  void SetNodeName(const std::string &node_name) { node_name_ = node_name; }
+  void SetOpType(const std::string &op_type) { op_type_ = op_type; }
+  void SetInputDescList(const std::vector<GeTensorDescPtr> &input_desc_list) { input_desc_list_ = input_desc_list; }
+  void SetOutputDescList(const std::vector<GeTensorDescPtr> &output_desc_list) { output_desc_list_ = output_desc_list; }
+  void SetAttrList(const std::map<std::string, ValuePtr> &attr_list) { attr_list_ = attr_list; }
 
  protected:
   void SyncData() override;
 
  private:
-  std::string node_name_;
+  std::vector<GeTensorDescPtr> input_desc_list_{};
+  std::vector<GeTensorDescPtr> output_desc_list_{};
+  std::map<std::string, ValuePtr> attr_list_{};
+  std::string op_type_{};
 };
 
 using AclKernelModPtr = std::shared_ptr<AclKernelMod>;

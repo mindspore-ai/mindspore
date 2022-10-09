@@ -53,6 +53,18 @@ using HcomBroadcast = ::ge::op::HcomBroadcast;
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
+
+class GeOpConvertor {
+ public:
+  static std::map<std::string, ValuePtr> GetAttrAndValue(const AnfNodePtr &node, const bool training);
+
+  static std::string GetOpType(const AnfNodePtr &node, const bool training);
+
+  static std::shared_ptr<GeTensorDesc> GetTensorDesc(const ShapeVector &dev_shape, const TypeId &dev_type,
+                                                     const std::string &dev_format, const ShapeVector &ori_shape,
+                                                     const std::string &ori_format);
+};
+
 class DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
@@ -214,10 +226,10 @@ class DfGraphConvertor {
 
   // Identity Optimization
   void IdentityOptimization();
-  std::string GetGNodeName(const ge::GNode &node) const;
-  std::string GetGNodeType(const ge::GNode &node) const;
-  bool IsIdentityRedundant(const ge::GNode &node) const;
-  void RemoveIdentity(ge::GNode identity_node);
+  std::string GetGNodeName(const ::ge::GNode &node) const;
+  std::string GetGNodeType(const ::ge::GNode &node) const;
+  bool IsIdentityRedundant(const ::ge::GNode &node) const;
+  void RemoveIdentity(::ge::GNode identity_node);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};

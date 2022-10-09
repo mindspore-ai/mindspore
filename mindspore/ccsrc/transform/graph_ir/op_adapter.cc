@@ -16,6 +16,7 @@
 #include "transform/graph_ir/op_adapter.h"
 #include <algorithm>
 #include <utility>
+#include <map>
 #include "utils/check_convert_utils.h"
 #include "ops/split_combination_ops.h"
 
@@ -634,6 +635,27 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
     }
   }
   return 0;
+}
+
+std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const PrimitivePtr &prim) const {
+  MS_EXCEPTION_IF_NULL(prim);
+  std::map<std::string, ValuePtr> attr_list;
+  for (auto &it : attr_map_) {
+    auto value = prim->GetAttr(it.first);
+    if (value != nullptr) {
+      // convert parts of attr to str eg. data_format or change ir attr to op attr eg. axis[0]
+      (void)CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), it.first, &value);
+      (void)CheckAndConvertUtils::CheckIrAttrtoOpAttr(prim->name(), it.first, &value);
+    } else {
+      // set attr from extra_attr
+      auto it_extra = extra_attr_->find(it.first);
+      if (it_extra != extra_attr_->end()) {
+        value = it_extra->second;
+      }
+    }
+    (void)attr_list.emplace(it.second.name, value);
+  }
+  return attr_list;
 }
 
 int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &prim) {

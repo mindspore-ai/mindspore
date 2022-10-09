@@ -16,6 +16,7 @@
 
 #include "include/transform/graph_ir/utils.h"
 
+#include <string>
 #include <utility>
 #include <map>
 
@@ -35,6 +36,7 @@ void Operator::OutputRegister(char const *, char const *) {}
 void Operator::OptionalInputRegister(char const *, char const *) {}
 void Operator::DynamicInputRegister(char const *, unsigned int, char const *, bool) {}
 void Operator::DynamicOutputRegister(char const *, unsigned int, char const *, bool) {}
+std::string Operator::GetOpType() const { return ""; }
 }  // namespace ge
 
 namespace mindspore {
@@ -80,6 +82,7 @@ int OpAdapterImpl::setInput(const OperatorPtr &op, int index,
 }
 void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                      const AnfNodePtr &node) {}
+std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const PrimitivePtr &prim) const { return {}; }
 OutHandler OpAdapterImpl::getOutput(const OperatorPtr &op, int index) {
   OutHandler handler;
   return handler;

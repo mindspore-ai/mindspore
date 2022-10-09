@@ -51,11 +51,18 @@ enum MatchCountPriority : size_t {
   MATCH_OUTPUT_DTYPE_COUNT,
   MATCH_COUNT_PRIORITY_END
 };
-static const std::set<std::string> kAclKernelSet = {
-  kConv2DOpName,           kConv2DBackpropFilterOpName, kConv2DBackpropInputOpName,
-  kBNInferOpName,          kBNTrainingUpdateGradOpName, kBNTrainingReduceGradOpName,
-  kBNTrainingReduceOpName, kBNTrainingUpdateOpName,     kMatMulOpName,
-  kBatchMatMulOpName};
+static const std::set<std::string> kAclKernelSet = {kConv2DOpName,
+                                                    kConv2DBackpropFilterOpName,
+                                                    kConv2DBackpropInputOpName,
+                                                    kBNInferOpName,
+                                                    kBNTrainingUpdateGradOpName,
+                                                    kBNTrainingReduceGradOpName,
+                                                    kBNTrainingReduceOpName,
+                                                    kBNTrainingUpdateOpName,
+                                                    kMatMulOpName,
+                                                    kBatchMatMulOpName,
+                                                    kCastOpName,
+                                                    kReluOpName};
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 

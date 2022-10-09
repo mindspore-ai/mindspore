@@ -17,6 +17,7 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <algorithm>
 #include "ir/value.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
@@ -26,40 +27,28 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-static const std::map<TypeId, aclDataType> kMsTypeToAclType = {
-  {kNumberTypeBool, ACL_BOOL},     {kNumberTypeInt, ACL_INT32},     {kNumberTypeInt8, ACL_INT8},
-  {kNumberTypeInt16, ACL_INT16},   {kNumberTypeInt32, ACL_INT32},   {kNumberTypeInt64, ACL_INT64},
-  {kNumberTypeUInt, ACL_UINT32},   {kNumberTypeUInt8, ACL_UINT8},   {kNumberTypeUInt16, ACL_UINT16},
-  {kNumberTypeUInt32, ACL_UINT32}, {kNumberTypeUInt64, ACL_UINT64}, {kNumberTypeFloat16, ACL_FLOAT16},
-  {kNumberTypeFloat, ACL_FLOAT},   {kNumberTypeFloat32, ACL_FLOAT}, {kNumberTypeFloat64, ACL_DOUBLE}};
+static const std::map<::ge::DataType, aclDataType> kMsTypeToAclType = {
+  {::ge::DT_BOOL, ACL_BOOL},       {::ge::DT_INT8, ACL_INT8},     {::ge::DT_INT16, ACL_INT16},
+  {::ge::DT_INT32, ACL_INT32},     {::ge::DT_INT64, ACL_INT64},   {::ge::DT_UINT8, ACL_UINT8},
+  {::ge::DT_UINT16, ACL_UINT16},   {::ge::DT_UINT32, ACL_UINT32}, {::ge::DT_UINT64, ACL_UINT64},
+  {::ge::DT_FLOAT16, ACL_FLOAT16}, {::ge::DT_FLOAT, ACL_FLOAT},   {::ge::DT_DOUBLE, ACL_DOUBLE},
+  {::ge::DT_STRING, ACL_STRING}};
 
-static const std::map<std::string, aclFormat> kMsFormatToAclFormat = {{kOpFormat_DEFAULT, ACL_FORMAT_NCHW},
-                                                                      {kOpFormat_NCHW, ACL_FORMAT_NCHW},
-                                                                      {kOpFormat_NHWC, ACL_FORMAT_NHWC},
-                                                                      {kOpFormat_ND, ACL_FORMAT_ND},
-                                                                      {kOpFormat_NC1HWC0, ACL_FORMAT_NC1HWC0},
-                                                                      {kOpFormat_FRACTAL_Z, ACL_FORMAT_FRACTAL_Z},
-                                                                      {kOpFormat_NC1HWC0_C04, ACL_FORMAT_NC1HWC0_C04},
-                                                                      {kOpFormat_NDHWC, ACL_FORMAT_NDHWC},
-                                                                      {kOpFormat_FRAC_NZ, ACL_FORMAT_FRACTAL_NZ},
-                                                                      {kOpFormat_NCDHW, ACL_FORMAT_NCDHW},
-                                                                      {kOpFormat_NDC1HWC0, ACL_FORMAT_NDC1HWC0}};
+static const std::map<::ge::Format, aclFormat> kMsFormatToAclFormat = {
+  {::ge::FORMAT_NCHW, ACL_FORMAT_NCHW},
+  {::ge::FORMAT_NHWC, ACL_FORMAT_NHWC},
+  {::ge::FORMAT_ND, ACL_FORMAT_ND},
+  {::ge::FORMAT_FRACTAL_Z_3D, ACL_FRACTAL_Z_3D},
+  {::ge::FORMAT_NC1HWC0, ACL_FORMAT_NC1HWC0},
+  {::ge::FORMAT_FRACTAL_Z, ACL_FORMAT_FRACTAL_Z},
+  {::ge::FORMAT_NC1HWC0_C04, ACL_FORMAT_NC1HWC0_C04},
+  {::ge::FORMAT_NDHWC, ACL_FORMAT_NDHWC},
+  {::ge::FORMAT_FRACTAL_NZ, ACL_FORMAT_FRACTAL_NZ},
+  {::ge::FORMAT_NCDHW, ACL_FORMAT_NCDHW},
+  {::ge::FORMAT_NDC1HWC0, ACL_FORMAT_NDC1HWC0}};
 
 static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatMul", ACL_FORMAT_ND},
                                                                      {"MatMul", ACL_FORMAT_ND}};
-
-std::map<std::string, std::string> GetConvertAttr(const std::string &op_type) {
-  std::map<std::string, std::string> attrs;
-  static const std::map<std::string, std::map<std::string, std::string>> op_type_map = {
-    {"Conv2D", {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}, {"format", "data_format"}}},
-    {"Conv2DBackpropInput",
-     {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}, {"format", "data_format"}}},
-    {"Conv2DBackpropFilter",
-     {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}, {"format", "data_format"}}},
-    {"BatchMatMul", {{"transpose_x1", "adj_x1"}, {"transpose_x2", "adj_x2"}}}};
-  auto iter = op_type_map.find(op_type);
-  return iter == op_type_map.end() ? attrs : iter->second;
-}
 }  // namespace
 
 AclOpDesc::AclOpDesc(const std::string &op_type) {
@@ -87,100 +76,77 @@ AclOpDesc::~AclOpDesc() {
   }
 }
 
-void AclOpDesc::AddInputTensor(const AnfNodePtr &anf_node, const size_t input_num,
-                               const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
-                               const std::string &op_type) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  for (size_t i = 0; i < input_num; ++i) {
-    auto real_index = AnfAlgo::GetInputIndexInGraph(anf_node, i);
-    if (real_index >= input_num) {
-      MS_LOG(EXCEPTION) << "Error index for current node:" << anf_node->fullname_with_scope() << " and index is "
-                        << real_index;
-    }
-    auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_index);
+aclTensorDesc *AclOpDesc::CreateTensorDesc(const GeTensorDescPtr &tensor_desc) {
+  MS_EXCEPTION_IF_NULL(tensor_desc);
+  auto ori_shape = tensor_desc->GetOriginShape().GetDims();
+  auto dev_shape = tensor_desc->GetShape().GetDims();
+  auto dev_type = tensor_desc->GetDataType();
+  auto dev_format = tensor_desc->GetFormat();
 
-    auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, real_index);
-    auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, real_index);
-    auto input_format = AnfAlgo::GetInputFormat(anf_node, real_index);
+  auto acl_type = AclUtils::ConvertTypeIdToAclType(dev_type);
+  auto acl_format = AclUtils::ConvertFormatToAclFormat(dev_format);
 
-    auto acl_type = AclUtils::ConvertTypeIdToAclType(input_type);
-    auto acl_format = AclUtils::ConvertFormatToAclFormat(input_format);
-    auto ori_iter = kMsSpecOriginFormat.find(op_type);
-    auto ori_format = (ori_iter == kMsSpecOriginFormat.end()) ? ACL_FORMAT_NCHW : ori_iter->second;
+  auto ori_format = tensor_desc->GetOriginFormat();
+  auto acl_ori_format = AclUtils::ConvertFormatToAclFormat(ori_format);
+  auto ori_iter = kMsSpecOriginFormat.find(op_type_);
+  acl_ori_format = (ori_iter == kMsSpecOriginFormat.end()) ? acl_ori_format : ori_iter->second;
 
-    auto input_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), ori_format);
-    MS_EXCEPTION_IF_NULL(input_desc);
-    if (aclSetTensorShape(input_desc, input_shape.size(), input_shape.data())) {
-      MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
-    }
-    if (aclSetTensorFormat(input_desc, acl_format)) {
-      MS_LOG(EXCEPTION) << "Acl set tensor format failed!";
-    }
-    auto input_data = aclCreateDataBuffer(inputs[i]->addr, input_size_list[real_index]);
-    MS_EXCEPTION_IF_NULL(input_data);
-    (void)input_tensor_desc_.emplace_back(input_desc);
-    (void)input_tensor_data_.emplace_back(input_data);
+  auto acl_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), acl_ori_format);
+  MS_EXCEPTION_IF_NULL(acl_desc);
+  if (aclSetTensorShape(acl_desc, dev_shape.size(), dev_shape.data())) {
+    MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
+  }
+  if (aclSetTensorFormat(acl_desc, acl_format)) {
+    MS_LOG(EXCEPTION) << "Acl set tensor format failed!";
+  }
+  return acl_desc;
+}
+
+aclDataBuffer *AclOpDesc::CreateDataBuf(const AddressPtr &address, const size_t op_size) {
+  MS_EXCEPTION_IF_NULL(address);
+  auto data_buf = aclCreateDataBuffer(address->addr, op_size);
+  MS_EXCEPTION_IF_NULL(data_buf);
+  return data_buf;
+}
+
+void AclOpDesc::AddTensorDesc(const std::vector<GeTensorDescPtr> &inputs, const std::vector<GeTensorDescPtr> &outputs) {
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_tensor_desc_),
+                       [this](const GeTensorDescPtr &desc) { return CreateTensorDesc(desc); });
+  (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_tensor_desc_),
+                       [this](const GeTensorDescPtr &desc) { return CreateTensorDesc(desc); });
+}
+
+void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
+                           const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list) {
+  for (size_t i = 0; i < input_size_list.size(); ++i) {
+    auto data_buf = CreateDataBuf(inputs[i], input_size_list[i]);
+    (void)input_tensor_data_.emplace_back(data_buf);
+  }
+  for (size_t i = 0; i < output_size_list.size(); ++i) {
+    auto data_buf = CreateDataBuf(outputs[i], output_size_list[i]);
+    (void)output_tensor_data_.emplace_back(data_buf);
   }
 }
 
-void AclOpDesc::AddOutputTensor(const AnfNodePtr &anf_node, const size_t output_num,
-                                const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list,
-                                const std::string &op_type) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  for (size_t i = 0; i < output_num; ++i) {
-    auto ori_shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
-
-    auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, i);
-    auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
-    auto output_format = AnfAlgo::GetOutputFormat(anf_node, i);
-
-    auto acl_type = AclUtils::ConvertTypeIdToAclType(output_type);
-    auto acl_format = AclUtils::ConvertFormatToAclFormat(output_format);
-    auto ori_iter = kMsSpecOriginFormat.find(op_type);
-    auto ori_format = (ori_iter == kMsSpecOriginFormat.end()) ? ACL_FORMAT_NCHW : ori_iter->second;
-
-    auto output_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), ori_format);
-    MS_EXCEPTION_IF_NULL(output_desc);
-    if (aclSetTensorShape(output_desc, output_shape.size(), output_shape.data())) {
-      MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
-    }
-    if (aclSetTensorFormat(output_desc, acl_format)) {
-      MS_LOG(EXCEPTION) << "Acl set tensor format failed!";
-    }
-
-    auto output_data = aclCreateDataBuffer(outputs[i]->addr, output_size_list[i]);
-    MS_EXCEPTION_IF_NULL(output_data);
-    (void)output_tensor_desc_.emplace_back(output_desc);
-    (void)output_tensor_data_.emplace_back(output_data);
-  }
-}
-
-void AclOpDesc::AddTensorAttr(const std::string &attr_name, const ValuePtr &value, const std::string &op_type) {
+void AclOpDesc::AddTensorAttr(const std::string &attr_name, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (acl_attr_ == nullptr) {
     MS_LOG(EXCEPTION) << "Acl attr create failed!";
   }
 
   aclError ret = 0;
-  auto to_convert_attr = GetConvertAttr(op_type);
-  auto new_name = attr_name;
-  auto iter = to_convert_attr.find(new_name);
-  if (iter != to_convert_attr.end()) {
-    new_name = iter->second;
-  }
-
   if (value->isa<BoolImm>()) {
-    ret = aclopSetAttrBool(acl_attr_, new_name.c_str(), GetValue<bool>(value));
+    ret = aclopSetAttrBool(acl_attr_, attr_name.c_str(), GetValue<bool>(value));
   } else if (value->isa<Int64Imm>()) {
-    ret = aclopSetAttrInt(acl_attr_, new_name.c_str(), GetValue<int64_t>(value));
+    ret = aclopSetAttrInt(acl_attr_, attr_name.c_str(), GetValue<int64_t>(value));
   } else if (value->isa<FP32Imm>()) {
-    ret = aclopSetAttrFloat(acl_attr_, new_name.c_str(), GetValue<float>(value));
+    ret = aclopSetAttrFloat(acl_attr_, attr_name.c_str(), GetValue<float>(value));
   } else if (value->isa<StringImm>()) {
-    ret = aclopSetAttrString(acl_attr_, new_name.c_str(), GetValue<std::string>(value).c_str());
+    ret = aclopSetAttrString(acl_attr_, attr_name.c_str(), GetValue<std::string>(value).c_str());
   } else if (value->isa<ValueSequence>()) {
-    SetListAttr(new_name, value);
+    SetListAttr(attr_name, value);
   } else {
-    MS_LOG(INFO) << "Currently not support to Add the attr '" << new_name << "' with value: " << value->ToString()
+    MS_LOG(INFO) << "Currently not support to Add the attr '" << attr_name << "' with value: " << value->ToString()
                  << ", perhaps you should add more supported type.";
   }
 
@@ -220,20 +186,73 @@ void AclOpDesc::SetListAttr(const std::string &attr_name, const ValuePtr &value)
   }
 }
 
-aclDataType AclUtils::ConvertTypeIdToAclType(const TypeId &type_id) {
-  auto iter = kMsTypeToAclType.find(type_id);
+aclDataType AclUtils::ConvertTypeIdToAclType(const ::ge::DataType &type) {
+  auto iter = kMsTypeToAclType.find(type);
   if (iter == kMsTypeToAclType.end()) {
-    MS_LOG(EXCEPTION) << "Unsupported op data type:" << type_id << " when convert to acl data type";
+    MS_LOG(EXCEPTION) << "Unsupported op data type:" << type << " when convert to acl data type";
   }
   return iter->second;
 }
 
-aclFormat AclUtils::ConvertFormatToAclFormat(const std::string &format) {
+aclFormat AclUtils::ConvertFormatToAclFormat(const ::ge::Format &format) {
   auto iter = kMsFormatToAclFormat.find(format);
   if (iter == kMsFormatToAclFormat.end()) {
     MS_LOG(EXCEPTION) << "Unsupported op format:" << format << " when convert to acl data type";
   }
   return iter->second;
+}
+
+bool AclUtils::UpdateTensorDesc(const AnfNodePtr &anf_node, std::vector<GeTensorDescPtr> *inputs,
+                                std::vector<GeTensorDescPtr> *outputs) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  const auto &new_inputs = GetInputTensorDesc(anf_node);
+  if (new_inputs.size() != inputs->size()) {
+    return false;
+  }
+  *inputs = new_inputs;
+  const auto &new_outputs = GetOutputTensorDesc(anf_node);
+  if (new_outputs.size() != outputs->size()) {
+    return false;
+  }
+  *outputs = new_outputs;
+  return true;
+}
+
+std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
+  std::vector<GeTensorDescPtr> res;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto index = AnfAlgo::GetInputIndexInGraph(anf_node, i);
+    if (index >= input_num) {
+      MS_LOG(EXCEPTION) << "Error real index:" << index;
+    }
+    auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, index);
+    auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, index);
+    auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, index);
+    auto input_format = AnfAlgo::GetInputFormat(anf_node, index);
+    auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, kOpFormat_DEFAULT);
+    MS_EXCEPTION_IF_NULL(input_desc);
+    (void)res.emplace_back(input_desc);
+  }
+  return res;
+}
+
+std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  std::vector<GeTensorDescPtr> res;
+  for (size_t i = 0; i < output_num; ++i) {
+    auto ori_shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
+    auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, i);
+    auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
+    auto output_format = AnfAlgo::GetOutputFormat(anf_node, i);
+    auto output_desc =
+      GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, kOpFormat_DEFAULT);
+    MS_EXCEPTION_IF_NULL(output_desc);
+    (void)res.emplace_back(output_desc);
+  }
+  return res;
 }
 }  // namespace kernel
 }  // namespace mindspore
