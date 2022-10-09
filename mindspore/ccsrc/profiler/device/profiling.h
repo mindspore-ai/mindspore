@@ -100,6 +100,7 @@ class BACKEND_EXPORT Profiler {
     single_op_launch_start_time_end_time_ = launch_start_end;
   }
   bool GetParallelStrategyEnableFlag() const { return is_parallel_strategy; }
+  void SyncEnable(const bool enable_flag);
 
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
@@ -127,6 +128,7 @@ class BACKEND_EXPORT Profiler {
   uint32_t iter_end_op_index_ = 0;
   uint32_t fp_start_op_index_ = 1;
   uint32_t constom_vector_size_ = 0;
+  bool sync_enable_flag_ = true;
   std::string op_type_ = "GetNext";
 
  private:

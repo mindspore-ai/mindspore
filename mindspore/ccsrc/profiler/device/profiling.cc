@@ -36,6 +36,11 @@ std::shared_ptr<Profiler> Profiler::GetInstance(const std::string &name) noexcep
   return nullptr;
 }
 
+void Profiler::SyncEnable(const bool enable_flag) {
+  MS_LOG(INFO) << "Profiler synchronous enable flag:" << enable_flag;
+  sync_enable_flag_ = enable_flag;
+}
+
 bool Profiler::Register(const std::string &name, const std::shared_ptr<Profiler> &instance) {
   if (GetInstanceMap().find(name) != GetInstanceMap().end()) {
     MS_LOG(WARNING) << name << " has been registered.";
