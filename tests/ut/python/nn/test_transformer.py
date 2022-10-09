@@ -544,3 +544,79 @@ class TestBasicWarningValidator:
         # Force to rebuild the logger
         test_transformer_decoder()
         self.check_warning_log()
+
+
+def test_attention_with_wrong_batch_3d_inputs():
+    """
+    Feature: Test Transformer batch error when the input's batch size is different
+    Description: Test the input's batch size is different between the tensors. The input is 3d
+    Expectation: Raise a reshape error exception
+    """
+    model = MultiHeadAttention(hidden_size=15, src_seq_length=20, tgt_seq_length=20,
+                               batch_size=None, num_heads=3)
+    from_tensor = Tensor(np.ones((3, 20, 15)), dtype.float32)
+    to_tensor = Tensor(np.ones((5, 20, 15)), dtype.float16)
+    attention_mask = Tensor(np.ones((3, 20, 20)), dtype.float16)
+
+    with pytest.raises(ValueError):
+        _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+
+
+def test_attention_with_wrong_batch_2d_inputs():
+    """
+    Feature: Test Transformer batch error when the input's batch size is different
+    Description: Test the input's batch size is different between the tensors. The inputs is 2d
+    Expectation: Raise a reshape error exception
+    """
+    model = MultiHeadAttention(hidden_size=15, src_seq_length=20, tgt_seq_length=20,
+                               batch_size=None, num_heads=3)
+    from_tensor = Tensor(np.ones((60, 15)), dtype.float32)
+    to_tensor = Tensor(np.ones((100, 15)), dtype.float16)
+    attention_mask = Tensor(np.ones((3, 20, 20)), dtype.float16)
+
+    with pytest.raises(ValueError):
+        _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+
+
+def test_incremental_prediction_first_iterator():
+    """
+    Feature: Test MultiHeadAttention with incremental prediction
+    Description: Test MultiHeadAttention with incremental prediction in the first iterator
+    Expectation: No Expectation
+    """
+    # Step 1: set is_first_iteration=True, and input the full sequence length's state.
+    # We need to prepare the memory parameters for saving key and value states firstly.
+    from_tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
+    to_tensor = Tensor(np.ones((2, 20, 15)), dtype.float16)
+    attention_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+    key_past = Tensor(np.zeros(shape=(2, 3, 5, 20)), dtype.float16)
+    value_past = Tensor(np.zeros(shape=(2, 3, 20, 5)), dtype.float16)
+    batch_valid_length = Tensor(np.ones((2,)), dtype.int32)
+
+    model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
+                               num_heads=3, use_past=True)
+    model.add_flags_recursive(is_first_iteration=True)
+    model(from_tensor, to_tensor, to_tensor, attention_mask, key_past, value_past,
+          batch_valid_length)
+
+
+def test_incremental_prediction_second_iterator():
+    """
+    Feature: Test MultiHeadAttention with incremental prediction
+    Description: Test MultiHeadAttention with incremental prediction in the second iterator
+    Expectation: No Expectation
+    """
+    model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
+                               num_heads=3, use_past=True)
+    key_past = Tensor(np.zeros(shape=(2, 3, 5, 20)), dtype.float16)
+    value_past = Tensor(np.zeros(shape=(2, 3, 20, 5)), dtype.float16)
+    batch_valid_length = Tensor(np.ones((2,)), dtype.int32)
+    # Set is_first_iteration=True to generate the full memory states
+    from_tensor = Tensor(np.ones((2, 1, 15)), dtype.float32)
+    to_tensor = Tensor(np.ones((2, 1, 15)), dtype.float16)
+    attention_mask = Tensor(np.ones((2, 1, 20)), dtype.float16)
+    # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the
+    # full sequence.
+    model.add_flags_recursive(is_first_iteration=False)
+    model(from_tensor, to_tensor, to_tensor, attention_mask, key_past, value_past,
+          batch_valid_length)

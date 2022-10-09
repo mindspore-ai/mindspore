@@ -12,7 +12,7 @@
         - **hidden_size** (int) - 表示输入的维度。
         - **ffn_hidden_size** (int) - 表示中间隐藏大小。
         - **dropout_rate** (float) - 表示第二个线性层输出的丢弃率。
-        - **hidden_act** (str, nn.Cell) - 表示前馈层的激活行为。其值可为'relu'、'relu6'、'tanh'、'gelu'、'fast_gelu'、'elu'、'sigmoid'、'prelu'、'leakyrelu'、'hswish'、'hsigmoid'、'logsigmoid'等等。用户可以传入自定义的激活函数。如果用户要想在并行模式下运行此网络，自定义的激活函数必须提供 `activation_shard` 类方法。请查看类 `mindspore.nn.transformer.FeedForward` 的示例。默认值：gelu。     
+        - **hidden_act** (str, nn.Cell) - 表示前馈层的激活行为。其值可为'relu'、'relu6'、'tanh'、'gelu'、'fast_gelu'、'elu'、'sigmoid'、'prelu'、'leakyrelu'、'hswish'、'hsigmoid'、'logsigmoid'等等。用户可以传入自定义的激活函数。如果用户要想在并行模式下运行此网络，自定义的激活函数必须提供 `activation_shard` 类方法。请查看类 `mindspore.nn.transformer.FeedForward` 的示例。默认值：gelu。
         - **expert_num** (int) - 表示线性层中使用的专家数量。对于expert_num > 1用例，使用BatchMatMul。BatchMatMul中的第一个维度表示expert_num。默认值：1。
         - **expert_group_size** (int) - 表示每个数据并行组收到的词语（token）数量。默认值：None。该参数只在自动并行且非策略传播模式下起作用。
         - **param_init_type** (dtype.Number) - 表示参数初始化类型。其值应为mstype.float32或mstype.float16。默认值：mstype.float32。
