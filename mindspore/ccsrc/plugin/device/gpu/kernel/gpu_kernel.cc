@@ -124,7 +124,7 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
       const auto &type_id = cur_input_attr.first;
       if (type_id == from_precision && cur_kernel_attr.GetInputAttr(iidx % attr_size).first == to_precision) {
         (void)input_reduce_index.emplace_back(iidx, from_precision, to_precision);
-        MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast input " << iidx << " to int32.";
+        MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast input " << iidx << " to int32.";
       }
     }
     for (size_t oidx = 0; oidx < kernel_attr_to_check.GetOutputSize(); oidx++) {
@@ -132,8 +132,7 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
       const auto &type_id = cur_output_attr.first;
       if (type_id == from_precision && cur_kernel_attr.GetOutputAttr(oidx % attr_size).first == to_precision) {
         (void)output_reduce_index.emplace_back(oidx, from_precision, to_precision);
-        MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast output " << oidx
-                        << " to int32.";
+        MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast output " << oidx << " to int32.";
       }
     }
   }
@@ -155,7 +154,7 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
     reduce_kernel_attr.SetOutputAttr(reduce_idx, std::get<kTwo>(reduce_item), cur_attr.second);
   }
 
-  MS_LOG(WARNING) << "Kernel [" << kernel_name << "] reduce precision attr: " << reduce_kernel_attr;
+  MS_LOG(INFO) << "Kernel [" << kernel_name << "] reduce precision attr: " << reduce_kernel_attr;
   return std::make_tuple(CheckSupport(kernel_name, reduce_kernel_attr), input_reduce_index, output_reduce_index);
 }
 
