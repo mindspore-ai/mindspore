@@ -1548,6 +1548,13 @@ void FetchRealInputByNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *input
       MS_EXCEPTION_IF_NULL(input);
       FetchRealInputByNode(input, inputs);
     }
+  } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->inputs().size() <= kInputNodeOutputIndexInTupleGetItem) {
+      MS_LOG(EXCEPTION) << "Invalid tuple get item node:" << cnode->DebugString();
+    }
+    (void)inputs->emplace_back(cnode->inputs()[kRealInputNodeIndexInTupleGetItem]);
   } else {
     (void)inputs->emplace_back(node);
   }
