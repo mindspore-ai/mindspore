@@ -524,7 +524,6 @@ Parameter操作算子
     mindspore.ops.AllReduce
     mindspore.ops.AlltoAll
     mindspore.ops.Broadcast
-    mindspore.ops.NeighborExchange
     mindspore.ops.NeighborExchangeV2
     mindspore.ops.ReduceOp
     mindspore.ops.ReduceScatter

@@ -522,7 +522,6 @@ For the GPU device, users need to prepare the host file and mpi, please see the 
     mindspore.ops.AllReduce
     mindspore.ops.AlltoAll
     mindspore.ops.Broadcast
-    mindspore.ops.NeighborExchange
     mindspore.ops.NeighborExchangeV2
     mindspore.ops.ReduceOp
     mindspore.ops.ReduceScatter

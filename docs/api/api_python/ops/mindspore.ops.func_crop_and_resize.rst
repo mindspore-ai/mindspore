@@ -6,7 +6,7 @@ mindspore.ops.crop_and_resize
     对输入图像进行裁剪并调整其大小。
 
     .. note::
-        输出的shape依赖`crop_size`, `crop_size` 必须为常量。
+        输出的shape依赖 `crop_size` ，`crop_size` 必须为常量。
         当前该算子的反向仅支持"bilinear"模式，其他模式将会返回0。
 
     参数：
