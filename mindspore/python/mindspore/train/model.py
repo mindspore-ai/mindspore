@@ -128,9 +128,10 @@ class Model:
                              :func: `mindindex.nn.metric.set_indexes` is recommended instead of `eval_indexes`.
                              Default: None.
         amp_level (str): Option for argument `level` in :func:`mindspore.build_train_network`, level for mixed
-            precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
+            precision training. Supports ["O0", "O1", "O2", "O3", "auto"]. Default: "O0".
 
             - "O0": Do not change.
+            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
             - "O2": Cast network to float16, keep BatchNorm run in float32, using dynamic loss scale.
             - "O3": Cast network to float16, the BatchNorm is also cast to float16, loss scale will not be used.
             - auto: Set level to recommended level in different devices. Set level to "O2" on GPU, set
@@ -147,7 +148,6 @@ class Model:
             training. Supports ["O0", "O1", "O2"]. Default: "O0".
 
             - "O0": Do not change.
-            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
             - "O1": Enable the boost mode, the performance is improved by about 20%, and
               the accuracy is the same as the original accuracy.
             - "O2": Enable the boost mode, the performance is improved by about 30%, and
