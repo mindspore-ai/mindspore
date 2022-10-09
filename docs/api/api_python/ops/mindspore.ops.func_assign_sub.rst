@@ -12,7 +12,7 @@ mindspore.ops.assign_sub
 
     参数：
         - **variable** (Parameter) - 待更新的网络参数，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其轶应小于8。
-        - **value** (Union[numbers.Number, Tensor]) - 从 `variable` 减去的值。如果类型为Tensor则应与 `variable` 的shape相同。使用此操作时推荐使用相同的数据类型。
+        - **value** (Tensor) - 从 `variable` 减去的值，应与 `variable` 的shape相同。使用此操作时推荐使用相同的数据类型。
 
     返回：
         Tensor，shape和数据类型与 `variable` 相同。

@@ -24,11 +24,34 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr AssignAddInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = input_args[kInputIndex1]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x_shape);
-  auto output_shape = x_shape->cast<abstract::ShapePtr>();
-  return output_shape;
+abstract::ShapePtr AssignAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto variable_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto value_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto variable_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(variable_shape_ptr)[kShape];
+  auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_shape_ptr)[kShape];
+  auto shape_element = variable_shape_ptr->cast<abstract::ShapePtr>();
+  if (variable_shape.size() != value_shape.size()) {
+    if (variable_shape.size() == 1 && variable_shape[0] == 1 && value_shape.empty()) {
+      return shape_element;
+    } else if (value_shape.size() == 1 && value_shape[0] == 1 && variable_shape.empty()) {
+      return shape_element;
+    } else {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', 'value' must have the same rank as 'variable'. But got 'value' rank: "
+                               << value_shape.size() << ", 'variable' rank: " << variable_shape.size() << ".";
+    }
+  }
+  for (uint64_t i = 0; i < variable_shape.size(); i++) {
+    if (variable_shape[i] != value_shape[i]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', 'value' must have the same shape as 'variable'. But got 'value' shape: "
+                               << value_shape_ptr->ToString()
+                               << ", 'variable' shape: " << variable_shape_ptr->ToString() << ".";
+    }
+  }
+  return shape_element;
 }
 
 TypePtr AssignAddInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

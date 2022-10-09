@@ -15,6 +15,8 @@
     :math:`t` 代表更新步长，而 :math:`m` 代表第一个动量矩阵， :math:`m_{t}` 是 :math:`m_{t+1}` 的最后时刻， :math:`lr` 代表学习率 `lr` ， :math:`g` 代表 `grad` ， :math:`\alpha` 代表 `alpha` ， :math:`\beta` 代表 `beta` 。
 
     `var` 、 `accum` 和 `grad` 的输入遵循隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
+    Ascend上支持的输入数据类型为：float16和float32；CPU和GPU上支持的输入数据类型为：float16、float32和float64。
+
 
     输入：
         - **var** (Parameter) - 要更新的权重。任意维度，其数据类型为float32或float16。
