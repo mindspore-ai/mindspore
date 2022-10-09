@@ -65,7 +65,8 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
     auto input_shape = shape_element->shape();
     const size_t input_rank = 4;
     if (input_shape.size() != input_rank) {
-      MS_EXCEPTION(ValueError) << "Rank of input_x should be 4, but got " << shape_element->shape().size();
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', rank of input_x should be 4, but got "
+                               << shape_element->shape().size();
     }
     if (mindspore::IsDynamicRank(shape_element->shape())) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
@@ -81,7 +82,8 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
       auto x_block_prod = input_shape[i] * block_size;
       auto crop_sum = crops[i - height_dim_index][0] + crops[i - height_dim_index][1];
       if (x_block_prod <= crop_sum) {
-        MS_EXCEPTION(ValueError) << "x block shape prod should be greater or equal to crops sum, got x_block_prod: "
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', x block shape prod should be greater or equal to crops sum, got x_block_prod: "
                                  << x_block_prod << ", crop_sum: " << crop_sum;
       }
       output_shape[i] = x_block_prod - crop_sum;
