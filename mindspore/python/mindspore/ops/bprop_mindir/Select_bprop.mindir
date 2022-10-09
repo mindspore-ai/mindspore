@@ -1,31 +1,35 @@
 
-0.1.1	MindSpore*1.9.0:ø
-š
-bprop.130:condbprop.130:[CNode]131:1bprop.130:[CNode]131:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op94
-—
-bprop.130:xbprop.130:[CNode]132:3bprop.130:[CNode]132:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op95
-š
-bprop.130:cond
-bprop.130:dout
-bprop.130:[CNode]132:3bprop.130:[CNode]133:4bprop.130:[CNode]133:4"REF::S-Prim-Select:5:Default/S-Prim-Select-op96
-—
-bprop.130:ybprop.130:[CNode]134:6bprop.130:[CNode]134:6"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op97
-š
-bprop.130:cond
-bprop.130:[CNode]134:6
-bprop.130:doutbprop.130:[CNode]135:7bprop.130:[CNode]135:7"REF::S-Prim-Select:5:Default/S-Prim-Select-op98
-°
-bprop.130:[CNode]131:1
-bprop.130:[CNode]133:4
-bprop.130:[CNode]135:7bprop.130:[CNode]136:8bprop.130:[CNode]136:8"REF::S-Prim-MakeTuple:9:Default/S-Prim-MakeTuple-op99	bprop.130*
-bprop.130:cond*
-bprop.130:x*
-bprop.130:y*
-bprop.130:out*
-bprop.130:dout2
-bprop.130:[CNode]136:8:@d82d0e96513b178a69796dee11468e4c4c093f51dc346fed97eeb1154262a8f9Pb&
-S-Prim-MakeTuple:9S-Prim-MakeTuplebH
+0.1.1	MindSpore*2.0.0:Ç
+•
+bprop.32:condbprop.32:[CNode]33:1bprop.32:[CNode]33:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op21
+’
+
+bprop.32:xbprop.32:[CNode]34:3bprop.32:[CNode]34:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op22
+’
+bprop.32:cond
+bprop.32:dout
+bprop.32:[CNode]34:3bprop.32:[CNode]35:4bprop.32:[CNode]35:4"REF::S-Prim-Select:5:Default/S-Prim-Select-op23
+’
+
+bprop.32:ybprop.32:[CNode]36:6bprop.32:[CNode]36:6"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op24
+’
+bprop.32:cond
+bprop.32:[CNode]36:6
+bprop.32:doutbprop.32:[CNode]37:7bprop.32:[CNode]37:7"REF::S-Prim-Select:5:Default/S-Prim-Select-op25
+¦
+bprop.32:[CNode]33:1
+bprop.32:[CNode]35:4
+bprop.32:[CNode]37:7bprop.32:[CNode]38:8bprop.32:[CNode]38:8"REF::S-Prim-MakeTuple:9:Default/S-Prim-MakeTuple-op26bprop.32*
+bprop.32:cond*
+
+bprop.32:x*
+
+bprop.32:y*
+bprop.32:out*
+bprop.32:dout2
+bprop.32:[CNode]38:8:@8b2494fe0a857090936b9d7dc834b06fcfe48e34f2e733ebd6ba21148e98fbecPbH
 #S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]bv
 S-Prim-Select:5S-Prim-Select
 output_names€ŠZoutput€3
-input_names€ŠZ	condition€ŠZx€ŠZy€h
+input_names€ŠZ	condition€ŠZx€ŠZy€b&
+S-Prim-MakeTuple:9S-Prim-MakeTupleh

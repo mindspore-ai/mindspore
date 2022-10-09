@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_STACK_H_
-#define MINDSPORE_CORE_OPS_STACK_H_
+#ifndef MINDSPORE_CORE_OPS_UNSTACK_WITH_NUM_H_
+#define MINDSPORE_CORE_OPS_UNSTACK_WITH_NUM_H_
 
 #include <map>
 #include <vector>
@@ -28,25 +28,29 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameStack = "Stack";
-/// \brief Stacks a list of tensors in specified axis. Refer to Python API @ref mindspore.ops.Tile for more details.
-class MIND_API Stack : public BaseOperator {
+constexpr auto kNameUnstackWithNum = "UnstackWithNum";
+/// \brief UnstackWithNums tensor in specified axis with specified output number.
+class MIND_API UnstackWithNum : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(Stack);
+  MIND_API_BASE_MEMBER(UnstackWithNum);
   /// \brief Constructor.
-  Stack() : BaseOperator(kNameStack) {}
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Stack for the inputs.
-  void Init(const int64_t axis);
+  UnstackWithNum() : BaseOperator(kNameUnstackWithNum) { InitIOName({"x"}, {"y"}); }
+  /// \brief Init.
+  void Init(const int64_t num, const int64_t axis);
   /// \brief Set axis.
   void set_axis(const int64_t axis);
   /// \brief Get axis.
   ///
   /// \return axis.
   int64_t get_axis() const;
+  /// \brief Set output num.
+  void set_num(const int64_t num);
+  /// \brief Get output num.
+  ///
+  /// \return output num.
+  int64_t get_num() const;
 };
-
-abstract::AbstractBasePtr StackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_STACK_H_
+
+#endif  // MINDSPORE_CORE_OPS_UNSTACK_WITH_NUM_H_
