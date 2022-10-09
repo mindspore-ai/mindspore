@@ -77,19 +77,7 @@ class ModelPool {
   Status SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
                          int thread_num);
 
-  Status SplitInputTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<std::vector<MSTensor>> *new_inputs,
-                                 size_t batch_split_num);
-  Status SplitOutputTensorByBatch(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs,
-                                  size_t batch_split_num);
-  Status ConcatPredictOutput(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs,
-                             int numa_id);
-  Status FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs,
-                         std::vector<std::vector<MSTensor>> *new_outputs);
   std::shared_ptr<ModelWorker> GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num);
-
-  Status PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                             const MSKernelCallBack &before, const MSKernelCallBack &after,
-                             int max_wait_worker_node_id);
 
   PredictTask *CreatePredictTask(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                                  const MSKernelCallBack &before, const MSKernelCallBack &after, size_t *task_id);
@@ -158,7 +146,6 @@ class ModelPool {
   std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
 
   // split batch
-  bool use_split_batch_ = false;
   bool is_user_data_ = false;
 
   bool can_use_all_physical_core_ = true;
