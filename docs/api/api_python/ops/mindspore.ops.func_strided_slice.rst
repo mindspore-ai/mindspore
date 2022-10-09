@@ -21,12 +21,12 @@ mindspore.ops.strided_slice
 
     mask（掩码）的工作原理：
 
-    对于每个特定的mask，内部先将其转化为二进制表示，然后倒序排布后进行计算。比如，对于一个shape为 :math:`(5, 6, 7)` 的Tensor，mask设置为3，3转化为二进制表示为ob011，倒序后为ob110，则该mask只在第0维和第1维产生作用。下面各自举例说明，为简化表达，后面提到的mask都表示转换为二进制并且倒序后的值。
+    对于每个特定的mask，内部先将其转化为二进制表示，然后倒序排布后进行计算。比如，对于一个shape为 :math:`(5, 6, 7)` 的Tensor，mask设置为3，3转化为二进制表示为0b011，倒序后为0b110，则该mask只在第0维和第1维产生作用。下面各自举例说明，为简化表达，后面提到的mask都表示转换为二进制并且倒序后的值。
 
     - `begin_mask` 和 `end_mask`
 
       如果 `begin_mask` 的第i位为1，则忽略 `begin[i]`，第i维从索引0开始取；若 `end_mask` 的第i位为1，则忽略 `end[i]`，结束的位置为可以取到的最大范围。
-      对于shape为 :math:`(5, 6, 7, 8)` 的Tensor，若 `begin_mask` 为ob110，`end_mask` 为ob011，将得到切片 `input_x[0:3, 0:6, 2:7:2]` 。
+      对于shape为 :math:`(5, 6, 7, 8)` 的Tensor，若 `begin_mask` 为0b110，`end_mask` 为0b011，将得到切片 `input_x[0:3, 0:6, 2:7:2]` 。
 
     - `ellipsis_mask`
 
@@ -36,12 +36,12 @@ mindspore.ops.strided_slice
     - `new_axis_mask`
 
       如果 `new_axis_mask` 的第i位为1，则在输出的第i维添加新的长度为1的维度，并忽略第i维的 `begin` 、 `end` 和 `strides` 。
-      对于shape为 :math:`(5, 6, 7)` 的Tensor，若 `new_axis_mask` 为ob010，则第二维将新增一维，输出shape为 :math:`(5, 1, 6, 7)` 的Tensor。
+      对于shape为 :math:`(5, 6, 7)` 的Tensor，若 `new_axis_mask` 为0b010，则第二维将新增一维，输出shape为 :math:`(5, 1, 6, 7)` 的Tensor。
 
     - `shrink_axis_mask`
 
       如果 `shrink_axis_mask` 的第i位为1，则第i维被收缩掉，忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
-      对于shape为 :math:`(5, 6, 7)` 的Tensor，若 `shrink_axis_mask` 为ob010，则第1维收缩掉，相当于切片 `x[:, 5, :]` 使得输出shape为 :math:`(5, 7)` 。
+      对于shape为 :math:`(5, 6, 7)` 的Tensor，若 `shrink_axis_mask` 为0b010， 则第1维收缩掉，相当于切片`x[:, 5, :]` 使得输出shape为 :math:`(5, 7)` 。
 
     .. note:: 
         `new_axis_mask` 和 `shrink_axis_mask` 不建议同时使用，可能会产生预料之外的结果。

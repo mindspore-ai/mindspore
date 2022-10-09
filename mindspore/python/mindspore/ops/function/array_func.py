@@ -1100,16 +1100,16 @@ def strided_slice(input_x,
     Here's how a mask works:
     For each specific mask, it will be converted to a binary representation internally, and then
     reverse the result to start the calculation. For a 5*6*7 Tensor with a given mask value of 3 which
-    can be represented as ob011. Reverse that we get ob110, which implies the first and second dim of the
+    can be represented as 0b011. Reverse that we get 0b110, which implies the first and second dim of the
     original Tensor will be effected by this mask. See examples below, for simplicity all mask mentioned
     below are all in their reverted binary form:
 
-    - `begin_mask` 和 `end_mask`
+    - `begin_mask` and `end_mask`
 
       If the ith bit of `begin_mask` is 1, `begin[i]` is ignored and the fullest
       possible range in that dimension is used instead. `end_mask` is analogous,
       except with the end range. For a 5*6*7*8 Tensor `input_x`,  if `begin_mask`
-      is ob110, `end_mask` is ob011, the slice `input_x[0:3, 0:6, 2:7:2]` is produced.
+      is 0b110, `end_mask` is 0b011, the slice `input_x[0:3, 0:6, 2:7:2]` is produced.
 
     - `ellipsis_mask`
 
@@ -1124,14 +1124,14 @@ def strided_slice(input_x,
       If the ith bit of `new_axis_mask` is 1, `begin`, `end` and `strides` are
       ignored and a new length 1 dimension is added at the specified position
       in the output Tensor. For a 5*6*7 Tensor `input_x`, if `new_axis_mask`
-      is ob110,  a new dim is added to the second dim, which will produce
+      is 0b110,  a new dim is added to the second dim, which will produce
       a Tensor with shape :math:`(5, 1, 6, 7)`.
 
     - `shrink_axis_mask`
 
       If the ith bit of `shrink_axis_mask` is 1, `begin`, `end` and `strides`
       are ignored and dimension i will be shrunk to 0. For a 5*6*7 Tensor `input_x`,
-      if `shrink_axis_mask` is ob010, it is equivalent to slice `x[:, 5, :]`
+      if `shrink_axis_mask` is 0b010, it is equivalent to slice `x[:, 5, :]`
       and results in an output shape of :math:`(5, 7)`.
 
     Note:
@@ -1159,9 +1159,10 @@ def strided_slice(input_x,
     Raises:
         TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or
             `shrink_axis_mask` is not an int.
-        TypeError: If `begin` 、 `end` or `strides` is not tuple[int].
+        TypeError: If `begin`, `end` or `strides` is not tuple[int].
         ValueError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or
             `shrink_axis_mask` is less than 0.
+        ValueError: If `begin`, `end` and `strides` have different shapes.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

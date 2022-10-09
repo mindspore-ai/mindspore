@@ -17,6 +17,9 @@ mindspore.ops.EditDistance
 
     其中 :math:`a` 表示预测值， :math:`b` 表示真实值。为了便于理解，这里的i和j可以被视为a和b的长度。
 
+    .. warning::
+        - 如果输入 `truth_indices` 或者 `hypothesis_indices` 不是有序的， 可能会导致计算结果不符合预期， 建议调用该接口之前确保输入的稀疏张量 `truth_indices` 和 `hypothesis_indices` 都是升序排列的。
+
     参数：
         - **normalize** (bool) - 如果为True，则编辑距离将按真实值长度标准化。默认值：True。
 
