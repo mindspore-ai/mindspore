@@ -366,6 +366,23 @@ void KernelPack::ParseKernelList(const std::string &key, const nlohmann::json &j
   kernel_json_info->has_kernel_list = (js.find(key) != js.end());
 }
 
+void KernelPack::ParseArgsRemap(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info) {
+  // Parse json["args_remap"], the value is a list of list, e.g. [[0, 1], [2]]
+  MS_EXCEPTION_IF_NULL(kernel_json_info);
+  if (js.find(key) != js.end()) {
+    try {
+      auto args_remap = js.at(key);
+      for (const auto &item : args_remap) {
+        std::vector<size_t> indices;
+        (void)std::copy(item.begin(), item.end(), std::back_inserter(indices));
+        kernel_json_info->args_remap.push_back(indices);
+      }
+    } catch (std::exception &e) {
+      MS_LOG(ERROR) << "Parse json['" << key << "'] failed, error info: " << e.what();
+    }
+  }
+}
+
 void KernelPack::ParseKernelJson(const nlohmann::json &js) {
   using KernelJsonParser = std::function<void(const std::string &, const nlohmann::json &, KernelJsonInfo *)>;
   const std::map<std::string, KernelJsonParser> kernel_json_map = {{"magic", ParseMagic},
@@ -382,7 +399,8 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
                                                                    {"KBHit", ParseKBHit},
                                                                    {"kernelList", ParseKernelList},
                                                                    {"modeInArgsFirstField", ParseModeInArgsFirstField},
-                                                                   {"batchBindOnly", ParseBatchBindOnly}};
+                                                                   {"batchBindOnly", ParseBatchBindOnly},
+                                                                   {"args_remap", ParseArgsRemap}};
   auto iter = kernel_json_map.begin();
   while (iter != kernel_json_map.end()) {
     iter->second(iter->first, js, &kernel_json_info_);

@@ -33,6 +33,7 @@ using std::string;
 using TbeTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TbeTaskInfo>;
 using tbe::KernelManager;
 constexpr uint32_t DEFAULT_BLOCK_DIM = 1;
+constexpr size_t ARGS_REMAP_LEN = 2;
 /**
  * @brief infotable contain func_stub\blockdim\kernel file buffer
  */
@@ -40,6 +41,7 @@ AkgKernelMod::AkgKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kern
   if (kernel_pack != nullptr) {
     auto kernel_json_info = kernel_pack->kernel_json_info();
     kernel_name_ = kernel_json_info.kernel_name;
+    args_remap_ = kernel_json_info.args_remap;
   }
 }
 
@@ -63,10 +65,32 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
 
   // pack all addresses into a vector.
   std::vector<void *> runtime_args;
-  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtime_args),
-                       [](const AddressPtr &input) { return input->addr; });
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtime_args),
-                       [](const AddressPtr &output) { return output->addr; });
+  if (args_remap_.size() == ARGS_REMAP_LEN) {
+    for (const auto &idx : args_remap_[0]) {
+      if (idx >= inputs.size()) {
+        MS_LOG(ERROR) << "Input index must be in range [0, " << inputs.size() << "), but got " << idx;
+        return false;
+      }
+      runtime_args.push_back(inputs[idx]->addr);
+    }
+    auto io_size = inputs.size() + outputs.size();
+    for (const auto &idx : args_remap_[1]) {
+      if (idx >= io_size) {
+        MS_LOG(ERROR) << "Output index must be in range [0, " << io_size << "), but got " << idx;
+        return false;
+      }
+      if (idx < inputs.size()) {
+        runtime_args.push_back(inputs[idx]->addr);
+      } else {
+        runtime_args.push_back(outputs[idx - inputs.size()]->addr);
+      }
+    }
+  } else {
+    (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtime_args),
+                         [](const AddressPtr &input) { return input->addr; });
+    (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtime_args),
+                         [](const AddressPtr &output) { return output->addr; });
+  }
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtime_args),
                          [](const AddressPtr &addr) { return addr->addr; });
@@ -102,11 +126,39 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
   std::vector<void *> output_data_addrs;
   std::vector<void *> workspace_addrs;
 
-  // pack all addresses into a vector.
-  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
-                       [](const AddressPtr &input) { return input->addr; });
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
-                       [](const AddressPtr &output) { return output->addr; });
+  if (args_remap_.size() == ARGS_REMAP_LEN) {
+    // Example: inputs indices =  [0, 1, 2]
+    //          outputs indices = [0, 1]
+    //          args_remap = [[0, 1], [3, 2]]
+    // The index in args_remap will consider inputs and outputs as a whole, which means, the index in inputs
+    //   will keep same in args_remap, but the index in outputs will become index + inputs.size
+    //   inputs indices = [0, 1, 2] --> [0, 1, 2]
+    //   outputs indices = [0, 1]   --> [3, 4]
+    // For the above example, the real inputs number is 2, which comes from original inputs[0], inputs[1]
+    //   the real outputs number is 2, which comes from original outputs[0], inputs[2]
+    for (const auto &idx : args_remap_[0]) {
+      if (idx >= inputs.size()) {
+        MS_LOG(EXCEPTION) << "Input index must be in range [0, " << inputs.size() << "), but got " << idx;
+      }
+      input_data_addrs.push_back(inputs[idx]->addr);
+    }
+    auto io_size = inputs.size() + outputs.size();
+    for (const auto &idx : args_remap_[1]) {
+      if (idx >= io_size) {
+        MS_LOG(EXCEPTION) << "Output index must be in range [0, " << io_size << "), but got " << idx;
+      }
+      if (idx < inputs.size()) {
+        output_data_addrs.push_back(inputs[idx]->addr);
+      } else {
+        output_data_addrs.push_back(outputs[idx - inputs.size()]->addr);
+      }
+    }
+  } else {
+    (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
+                         [](const AddressPtr &input) { return input->addr; });
+    (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
+                         [](const AddressPtr &output) { return output->addr; });
+  }
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(workspace_addrs),
                          [](const AddressPtr &workspace) { return workspace->addr; });
