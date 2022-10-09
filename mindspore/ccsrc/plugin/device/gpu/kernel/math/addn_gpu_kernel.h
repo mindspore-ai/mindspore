@@ -24,9 +24,13 @@
 #include "plugin/device/gpu/kernel/math/broadcast_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 template <typename T>
 class AddNFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -50,8 +54,13 @@ class AddNFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
     for (size_t i = 0; i < num_input_; i++) {
       T *input_addr = GetDeviceAddress<T>(inputs, i);
-      ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      if constexpr (std::is_same<T, Complex<float>>::value || std::is_same<T, Complex<double>>::value) {
+        ElewiseComplexArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
+                            reinterpret_cast<cudaStream_t>(stream_ptr));
+      } else {
+        ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
+      }
     }
     if (work_addr != output_addr) {
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
@@ -61,6 +70,7 @@ class AddNFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
