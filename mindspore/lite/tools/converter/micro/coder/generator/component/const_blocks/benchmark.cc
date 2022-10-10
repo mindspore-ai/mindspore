@@ -305,6 +305,8 @@ const char benchmark_source_cortex[] = R"RAW(/**
 #include <stdlib.h>
 #include <string.h>
 
+uint8_t g_WorkSpace[WORK_SPACE_SIZE];
+
 // Print data in tensor
 void PrintTensorHandle(MSTensorHandle tensor) {
   printf("name: %s, ", MSTensorGetName(tensor));
@@ -352,7 +354,7 @@ void PrintTensorHandle(MSTensorHandle tensor) {
   }
 }
 
-int benchmark(char *work_space, unsigned int work_space_size) {
+int benchmark() {
   int ret;
   printf("========run benchmark======\n");
   printf("========Model build========\n");
@@ -362,11 +364,11 @@ int benchmark(char *work_space, unsigned int work_space_size) {
     return kMSStatusLiteNullptr;
   }
   size_t workspace_size = MSModelCalcWorkspaceSize(model_handle);
-  if (workspace_size > work_space_size) {
+  if (workspace_size > WORK_SPACE_SIZE) {
     printf("This Model inference requires %ul bytes of memory.\n", workspace_size);
     return kMSStatusLiteError;
   }
-  MSModelSetWorkspace(model_handle, work_space, work_space_size);
+  MSModelSetWorkspace(model_handle, g_WorkSpace, WORK_SPACE_SIZE);
   ret = MSModelBuild(model_handle, NULL, 0, kMSModelTypeMindIR, NULL);
   if (ret != kMSStatusSuccess) {
     printf("MSModelBuildFromFile failed, ret : %d.\n", ret);
@@ -429,33 +431,5 @@ int benchmark(char *work_space, unsigned int work_space_size) {
   return kMSStatusSuccess;
 }
 
-)RAW";
-
-const char benchmark_h_cortex[] = R"RAW(/**
- * Copyright 2022 Huawei Technologies Co., Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#ifndef MINDSPORE_LITE_MICRO_BENCHMARK_H_
-#define MINDSPORE_LITE_MICRO_BENCHMARK_H_
-#ifdef __cplusplus
-extern "C" {
-#endif
-int benchmark(char *work_space, unsigned int work_space_size);
-#ifdef __cplusplus
-}
-#endif
-#endif //MINDSPORE_LITE_MICRO_BENCHMARK_H_
 )RAW";
 }  // namespace mindspore::lite::micro

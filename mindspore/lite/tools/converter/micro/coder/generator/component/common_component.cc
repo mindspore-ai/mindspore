@@ -156,7 +156,13 @@ void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderCont
           << "    buffer_size += " << outputs[i]->shape().size() * sizeof(int64_t) << ";\n";
     }
     ofs << "  }\n";
-
+    ofs << R"RAW(
+  if (buffer_size > workspace_size) {
+    micro_model->runtime_buffer = NULL;
+    SetBuffer(NULL);
+    return;
+  }
+)RAW";
     auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
       ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
           << ";\n";
@@ -302,6 +308,12 @@ void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
     if (config->support_parallel()) {
       ofs << "  ClearThreadPool();\n";
     }
+  } else {
+    ofs << "  if (*model) {\n"
+           "    MicroModel *micro_model = (MicroModel *)*model;\n";
+    ofs << "    micro_model->runtime_buffer = NULL;\n"
+           "    *model = NULL;\n"
+           "  }\n";
   }
   ofs << "}\n";
 }
@@ -315,6 +327,9 @@ MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, M
   MicroModel *micro_model = (MicroModel *)model;
   if (micro_model == NULL) {
     return kMSStatusLiteNullptr;
+  }
+  if (micro_model->runtime_buffer == NULL) {
+    return kMSStatusLiteMemoryFailed;
   }
 )RAW";
   ofs << "  if (inputs.handle_num != " << inputs_num << ") {\n";
@@ -464,9 +479,6 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
       << "}\n";
   ofs << "int "
       << "SetBuffer( void *buffer) {\n";
-  ofs << "  if (buffer == NULL) {\n"
-         "    return RET_ERROR;\n"
-         "  }\n";
   ofs << "  " << ctx->buffer_name() << " = (unsigned char *)buffer;\n"
       << "  return RET_OK;\n"
          "}\n";
