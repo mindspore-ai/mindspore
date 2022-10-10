@@ -170,7 +170,7 @@ class GuardedPhiloxRandom {
   random::MSPhiloxRandom ReserveSamples128(uint64_t samples);
 
   random::MSPhiloxRandom ReserveRandomOutputs(int64_t output_count, int multiplier) {
-    int64_t conservative_sample_count = static_cast<uint64_t>(output_count * multiplier);
+    uint64_t conservative_sample_count = static_cast<uint64_t>(output_count * multiplier);
     return ReserveSamples128(conservative_sample_count);
   }
 
