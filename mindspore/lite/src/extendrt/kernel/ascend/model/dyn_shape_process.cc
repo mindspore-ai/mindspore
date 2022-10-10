@@ -73,6 +73,10 @@ std::string GenResultStr(const std::vector<int64_t> &input_vec) {
 
 int DynShapeProcess::CheckBatchSize(std::vector<KernelTensorPtr> *const original_datas,
                                     std::vector<KernelTensorPtr> *const inputs) {
+  if (is_first_invoked_) {
+    is_first_invoked_ = false;
+    return lite::RET_OK;
+  }
   if (input_data_idx_ >= inputs->size()) {
     MS_LOG(ERROR) << " Input data index " << input_data_idx_ << " is larger than input size " << inputs->size();
     return lite::RET_ERROR;

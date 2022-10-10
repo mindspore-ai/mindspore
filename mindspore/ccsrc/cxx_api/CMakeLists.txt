@@ -142,7 +142,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_options(mindspore_shared_lib PRIVATE -Wl,-init,common_log_init)
 endif()
 
-if(MODE_ASCEND_ACL)
+if(MODE_ASCEND_ACL OR MSLITE_ENABLE_ACL)
     # 310 mode
     add_compile_definitions(ENABLE_DVPP_INTERFACE)
     find_library(acl libascendcl.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
