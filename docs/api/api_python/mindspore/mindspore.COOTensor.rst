@@ -3,7 +3,7 @@ mindspore.COOTensor
 
 .. py:class:: mindspore.COOTensor(indices=None, values=None, shape=None, coo_tensor=None)
 
-    用来表示某一张量在给定索引上非零元素的集合，其中索引(indices)指示了每一个非零元素的位置。
+    用来表示某一Tensor在给定索引上非零元素的集合，其中索引(indices)指示了每一个非零元素的位置。
 
     对一个稠密Tensor `dense` 来说，它对应的COOTensor(indices, values, shape)，满足 `dense[indices[i]] = values[i]` 。
 
@@ -15,13 +15,16 @@ mindspore.COOTensor
          [0, 0, 2, 0],
          [0, 0, 0, 0]]
 
+
+    COOTensor的算术运算包括：加（+）、减（-）、乘（*）、除（/）。详细的算术运算支持请参考 `运算符 <https://www.mindspore.cn/docs/zh-CN/master/note/static_graph_syntax_support.html#%E8%BF%90%E7%AE%97%E7%AC%A6>`_。
+
     .. note::
         这是一个实验特性，在未来可能会发生API的变化。目前COOTensor中相同索引的值不会进行合并。如果索引中包含界外值，则得出未定义结果。
 
     参数：
-        - **indices** (Tensor) - 形状为 `[N, ndims]` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和COOTensor维度的数量。目前 `ndims` 只能为2。请确保indices的值在所给shape范围内。
-        - **values** (Tensor) - 形状为 `[N]` 的一维张量，用来给 `indices` 中的每个元素提供数值。
-        - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。
+        - **indices** (Tensor) - shape为 :math:`(N, ndims)` 的二维整数Tensor，其中N和ndims分别表示稀疏Tensor中 `values` 的数量和COOTensor维度的数量。目前 `ndims` 只能为2。请确保indices的值在所给shape范围内。支持的数据类型为int16， int32和int64。
+        - **values** (Tensor) - shape为 :math:`(N)` 的一维Tensor，用来给 `indices` 中的每个元素提供数值。
+        - **shape** (tuple(int)) - shape为ndims的整数元组，用来指定稀疏矩阵的稠密shape。
         - **coo_tensor** (COOTensor) - COOTensor对象，用来初始化新的COOTensor。
 
     返回：
@@ -100,7 +103,7 @@ mindspore.COOTensor
     .. py:method:: shape
         :property:
 
-        返回稀疏矩阵的稠密形状。
+        返回稀疏矩阵的稠密shape。
 
     .. py:method:: size
         :property:
@@ -126,7 +129,7 @@ mindspore.COOTensor
 
     .. py:method:: to_tuple()
 
-        将COOTensor的索引，非零元素，以及形状信息作为tuple返回。
+        将COOTensor的索引，非零元素，以及shape信息作为tuple返回。
 
         返回：
             tuple(Tensor, Tensor, tuple(int))。
