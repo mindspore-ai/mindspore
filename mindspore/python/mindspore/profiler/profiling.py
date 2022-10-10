@@ -727,8 +727,7 @@ class Profiler:
 
         self._check_output_path(output_path=self._output_path)
         source_path = os.path.join(self._output_path, job_id)
-        op_parser_obj = self._ascend_graph_op_analyse(source_path)
-        framework_parser, aicpu_data_parser, optime_parser, op_task_dict = op_parser_obj
+        framework_parser, aicpu_data_parser, optime_parser, op_task_dict = self._ascend_graph_op_analyse(source_path)
         self._ascend_graph_minddata_analyse(source_path)
 
         # analyse op compute time info
@@ -748,14 +747,6 @@ class Profiler:
         # analyse step trace info
         points = None
         is_training_mode_flag = False
-        if not self._dynamic_status:
-            try:
-                logger.info("Profiling: analyzing the step trace data.")
-                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
-            except ProfilerException as err:
-                logger.warning(err.message)
-            finally:
-                pass
 
         # analyse timeline info
         try:
@@ -766,18 +757,26 @@ class Profiler:
         finally:
             pass
 
-        self._ascend_graph_memory_analyse(points)
-        self._ascend_graph_hccl_analyse()
-
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
         if not self._dynamic_status:
+            try:
+                logger.info("Profiling: analyzing the step trace data.")
+                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
+            except ProfilerException as err:
+                logger.warning(err.message)
+            finally:
+                pass
+
             flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
                                        self._dev_id, self._rank_id, is_training_mode_flag)
             logger.info("Profiling: analyzing the operation FLOPs.")
             flops_parser.execute()
-        if self._dynamic_status:
+        else:
             dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
             dynamic_parser.write_dynamic_shape_data()
+
+        self._ascend_graph_memory_analyse(points)
+        self._ascend_graph_hccl_analyse()
 
     def _ascend_pynative_start(self):
         """Ascend pynative mode start profiling."""
