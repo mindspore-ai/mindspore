@@ -1446,7 +1446,7 @@ BaseShapePtrList AbstractSparseTensor::ElementsShapeTupleRecursive() const {
 
 const TypeId AbstractSparseTensor::GetTensorTypeIdAt(size_t index) const {
   size_t shape_idx = size() - 1;
-  if (index >= shape_idx || index < 0) {
+  if (index >= shape_idx) {
     MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape_idx << "), but got " << index << " for "
                       << ToString();
   }
@@ -1456,7 +1456,7 @@ const TypeId AbstractSparseTensor::GetTensorTypeIdAt(size_t index) const {
 }
 
 const TypeId AbstractSparseTensor::GetShapeTypeIdAt(size_t index) const {
-  if (index >= shape()->size() || index < 0) {
+  if (index >= shape()->size()) {
     MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape()->size() << "), but got " << index << " for "
                       << ToString();
   }
