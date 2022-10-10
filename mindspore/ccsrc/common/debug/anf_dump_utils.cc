@@ -24,7 +24,7 @@ std::string GetAbstractFuncStr(const abstract::AbstractFunctionPtr &abs) {
   if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
     const auto &abstract_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
     if (abstract_func_graph->func_graph() != nullptr) {
-      oss << abstract_func_graph->func_graph()->ToString();
+      oss << "@" << abstract_func_graph->func_graph()->ToString();
     }
   }
   if (abs->isa<abstract::PartialAbstractClosure>()) {
@@ -33,7 +33,7 @@ std::string GetAbstractFuncStr(const abstract::AbstractFunctionPtr &abs) {
     if (abstract_fn->isa<abstract::FuncGraphAbstractClosure>()) {
       const auto &abstract_func_graph = abstract_fn->cast<abstract::FuncGraphAbstractClosurePtr>();
       if (abstract_func_graph->func_graph() != nullptr) {
-        oss << "Partial(" << abstract_func_graph->func_graph()->ToString() << ")";
+        oss << "Partial(@" << abstract_func_graph->func_graph()->ToString() << ")";
       }
     }
   }

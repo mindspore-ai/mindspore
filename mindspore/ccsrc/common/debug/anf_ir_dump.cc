@@ -252,7 +252,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
       gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
     }
     if (!func_str.empty()) {
-      gsub->buffer << "[" << func_str << "]";
+      gsub->buffer << "[@" << func_str << "]";
     }
   } else if (op->isa<ValueNode>()) {
     auto value = GetValueNode(op);
@@ -270,7 +270,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     }
     std::string func_str = GetNodeFuncStr(op);
     if (!func_str.empty()) {
-      gsub->buffer << "[" << func_str << "]";
+      gsub->buffer << "[@" << func_str << "]";
     }
   }
 }
