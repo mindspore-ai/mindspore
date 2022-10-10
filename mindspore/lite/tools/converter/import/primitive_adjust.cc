@@ -611,12 +611,12 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return true;
   }
-  static auto root_func_manager = Manage(func_graphs);
+  manager_ = Manage(func_graphs);
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graphs, &all_func_graphs);
   int i = 0;
   for (auto func_graph : all_func_graphs) {
-    func_graph->set_manager(root_func_manager);
+    func_graph->set_manager(manager_);
     auto make_int_ptr = MakeValue(static_cast<int>(FmkType::kFmkTypeMs));
     MS_CHECK_TRUE_MSG(make_int_ptr != nullptr, false, "make_int_ptr is nullptr.");
     func_graph->set_attr("fmk", make_int_ptr);

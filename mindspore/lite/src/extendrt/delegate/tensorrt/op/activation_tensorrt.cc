@@ -54,9 +54,11 @@ int ActivationTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const st
   if (activation_op->HasAttr(ops::kActivationType)) {
     activation_type = activation_op->get_activation_type();
   }
+  if (activation_type == ActivationType::HSWISH) {
+    return RET_OK;
+  }
   auto activation_params_opt = TryConvertActivationType(activation_type);
-  bool has_custom_plugin = HasCustomActivationPlugin(activation_type);
-  if (!activation_params_opt && !has_custom_plugin) {
+  if (!activation_params_opt) {
     MS_LOG(ERROR) << "Unsupported op action type for TensorRT: " << activation_type;
     return RET_ERROR;
   }
@@ -85,8 +87,8 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   auto activation_layer = ActivationTensorRT::AddActivation(
     ctx, activation_type, alpha, std::isfinite(activation_op->get_min_val()) ? activation_op->get_min_val() : FLT_MIN,
-    std::isfinite(activation_op->get_max_val()) ? activation_op->get_max_val() : FLT_MAX, activation_input, device_id_,
-    quant_type_, runtime_precision_mode);
+    std::isfinite(activation_op->get_max_val()) ? activation_op->get_max_val() : FLT_MAX, activation_input, op_name_,
+    device_id_, quant_type_, runtime_precision_mode);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
@@ -104,10 +106,79 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = activation_layer;
   return RET_OK;
 }
+
+nvinfer1::ILayer *ActivationTensorRT::AddHSwishActivation(TensorRTContext *ctx, nvinfer1::ITensor *trt_in_tensor,
+                                                          const std::string &op_name) {
+  if (trt_in_tensor->getDimensions().nbDims <= 0) {
+    MS_LOG(ERROR) << "Invalid input dims count " << trt_in_tensor->getDimensions().nbDims << ", " << op_name;
+    return nullptr;
+  }
+  size_t dims_size = mindspore::IntToSize(trt_in_tensor->getDimensions().nbDims);
+  static const float add_3_const = 3.0f;
+  auto add_input1 =
+    ConvertScalarToITensor(ctx, dims_size, &add_3_const, DataType::kNumberTypeFloat32, op_name + "_add3");
+  if (add_input1 == nullptr) {
+    MS_LOG(ERROR) << "Failed to add const input 3 for hard swish: " << op_name;
+    return nullptr;
+  }
+  auto add_3 = ctx->network()->addElementWise(*trt_in_tensor, *add_input1, nvinfer1::ElementWiseOperation::kSUM);
+  if (add_3 == nullptr) {
+    MS_LOG(ERROR) << "Failed to add layer x+3 for hard swish: " << op_name;
+    return nullptr;
+  }
+  add_3->setName((op_name + "_add3").c_str());
+  auto add_3_output = add_3->getOutput(0);
+  if (add_3_output == nullptr) {
+    MS_LOG(ERROR) << "Failed to get output of layer x+3 for hard swish: " << op_name;
+    return nullptr;
+  }
+  auto relu6 = ctx->network()->addActivation(*add_3_output, nvinfer1::ActivationType::kCLIP);
+  if (relu6 == nullptr) {
+    MS_LOG(ERROR) << "Failed to add layer relu6 for hard swish: " << op_name;
+    return nullptr;
+  }
+  relu6->setAlpha(0.0f);
+  relu6->setBeta(6.0f);
+  relu6->setName((op_name + "_relu6").c_str());
+  auto relu6_output = relu6->getOutput(0);
+  if (relu6_output == nullptr) {
+    MS_LOG(ERROR) << "Failed to get output of layer relu6 for hard swish: " << op_name;
+    return nullptr;
+  }
+  auto mul = ctx->network()->addElementWise(*trt_in_tensor, *relu6_output, nvinfer1::ElementWiseOperation::kPROD);
+  if (mul == nullptr) {
+    MS_LOG(ERROR) << "Failed to add layer mul for hard swish: " << op_name;
+    return nullptr;
+  }
+  mul->setName((op_name + "_mul").c_str());
+  auto mul_output = mul->getOutput(0);
+  if (mul_output == nullptr) {
+    MS_LOG(ERROR) << "Failed to get output of layer mul for hard swish: " << op_name;
+    return nullptr;
+  }
+  static const float div_6_const = 6.0f;
+  auto div_input1 =
+    ConvertScalarToITensor(ctx, dims_size, &div_6_const, DataType::kNumberTypeFloat32, op_name + "_div6");
+  if (div_input1 == nullptr) {
+    MS_LOG(ERROR) << "Failed to add const input 6 for hard swish: " << op_name;
+    return nullptr;
+  }
+  auto real_div = ctx->network()->addElementWise(*mul_output, *div_input1, nvinfer1::ElementWiseOperation::kDIV);
+  if (real_div == nullptr) {
+    MS_LOG(ERROR) << "Failed to add layer real div for hard swish: " << op_name;
+    return nullptr;
+  }
+  return real_div;
+}
+
 nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, ActivationType activation_type, float alpha,
                                                     float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
-                                                    uint32_t device_id, schema::QuantType quant_type,
+                                                    const std::string &op_name, uint32_t device_id,
+                                                    schema::QuantType quant_type,
                                                     RuntimePrecisionMode runtime_precision_mode) {
+  if (activation_type == ActivationType::HSWISH) {
+    return AddHSwishActivation(ctx, trt_in_tensor, op_name);
+  }
   // Just some action_code correct, unfind code is set to default relu. need double check.
   auto action_param_opt = TryConvertActivationType(activation_type);
   if (!action_param_opt) {

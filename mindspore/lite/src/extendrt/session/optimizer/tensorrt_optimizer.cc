@@ -228,9 +228,8 @@ bool TensorRtOptimizer::OptResizeHeightWidth(const FuncGraphPtr &func_graph, con
   if (!common::AnfAlgo::CheckPrimitiveType(gather_input0, prim::kPrimConcat)) {
     return false;
   }
-  auto manager = func_graph->manager();
   // input 0 is primitive, real input 1 index is kIndex1 + 1
-  manager->SetEdge(resize_node, kIndex1 + 1, gather_input0);
+  resize_node->set_input(kIndex1 + 1, gather_input0);
   return true;
 }
 

@@ -35,9 +35,13 @@ class ActivationTensorRT : public TensorRTOp {
 
   static nvinfer1::ILayer *AddActivation(
     TensorRTContext *ctx, ActivationType activation_type, float alpha, float min_value, float max_value,
-    nvinfer1::ITensor *trt_in_tensor, uint32_t device_id = 0,
+    nvinfer1::ITensor *trt_in_tensor, const std::string &op_name, uint32_t device_id = 0,
     schema::QuantType quant_type = schema::QuantType_QUANT_NONE,
     RuntimePrecisionMode runtime_precision_mode = RuntimePrecisionMode::RuntimePrecisionMode_FP32);
+
+ private:
+  static nvinfer1::ILayer *AddHSwishActivation(TensorRTContext *ctx, nvinfer1::ITensor *trt_in_tensor,
+                                               const std::string &op_name);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_

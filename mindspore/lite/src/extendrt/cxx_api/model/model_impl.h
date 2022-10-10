@@ -35,17 +35,25 @@
 #include <dlfcn.h>
 #endif
 namespace mindspore {
+typedef mindspore::api::FuncGraphPtr (*ConverterFunc)(const char *, const size_t &, const std::shared_ptr<Context> &,
+                                                      const ConfigInfos &);
+
+class ConverterPlugin {
+ public:
+  ConverterPlugin() = default;
+  ~ConverterPlugin();
+  static ConverterPlugin &Instance();
+  ConverterFunc GetConverterFunc();
+
+ private:
+  void *handle_ = nullptr;
+  ConverterFunc converter_func_ = nullptr;
+};
+
 class ModelImpl {
  public:
   ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {}
-  ~ModelImpl() {
-#ifndef _WIN32
-    if (handle_ != nullptr) {
-      (void)dlclose(handle_);
-      handle_ = nullptr;
-    }
-#endif
-  }
+  ~ModelImpl() {}
 
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
                const std::shared_ptr<Context> &model_context);
@@ -79,9 +87,6 @@ class ModelImpl {
   std::shared_ptr<Context> context_ = nullptr;
   ConfigInfos config_info_;
   std::map<std::string, TypeId> execution_plan_;
-#ifndef _WIN32
-  void *handle_ = nullptr;
-#endif
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_

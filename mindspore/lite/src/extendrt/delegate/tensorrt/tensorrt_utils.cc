@@ -76,6 +76,21 @@ nvinfer1::Dims ConvertCudaDims(const TensorInfo &ms_tensor) {
   return dims;
 }
 
+std::string CudaDimsAsString(const nvinfer1::Dims &dims) {
+  std::stringstream str_stream;
+  str_stream << "[" << dims.nbDims << ":";
+  if (dims.nbDims > 0) {
+    for (int i = 0; i < dims.nbDims; i++) {
+      str_stream << dims.d[i];
+      if (i + 1 != dims.nbDims) {
+        str_stream << ",";
+      }
+    }
+  }
+  str_stream << "]";
+  return str_stream.str();
+}
+
 std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor) {
   if (!ms_tensor.IsConst()) {
     MS_LOG(ERROR) << "Expect tensor to be const tensor, but got var tensor";
