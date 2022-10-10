@@ -459,6 +459,7 @@ constexpr auto kAttrFactor = "factor";
 constexpr auto kAttrIsRef = "isRef";
 constexpr auto kAttrDataShape = "data_shape";
 constexpr auto kAttrFormat = "format";
+constexpr auto kAttrOriginFormat = "origin_format";
 constexpr auto kAttrReshapeType = "reshape_type";
 constexpr auto kAttrAxis = "axis";
 constexpr auto kAttrAxes = "axes";

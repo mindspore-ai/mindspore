@@ -452,8 +452,9 @@ from .bessel_i0e_ds import _bessel_i0e_ds_tbe
 from .bessel_i1e import _bessel_i1e_tbe
 from .bessel_i1e_ds import _bessel_i1e_ds_tbe
 from .batch_to_space_nd import _batch_to_space_nd_tbe
-from .space_to_batch_nd import _space_to_batch_nd_tbe
 from .batch_to_space_nd_ds import _batch_to_space_nd_ds_tbe
+from .batch_to_space_nd_v2 import _batch_to_space_nd_v2_tbe
+from .space_to_batch_nd import _space_to_batch_nd_tbe
 from .bitwise_and import _bitwise_and_tbe
 from .bitwise_and_ds import _bitwise_and_ds_tbe
 from .bitwise_or import _bitwise_or_tbe

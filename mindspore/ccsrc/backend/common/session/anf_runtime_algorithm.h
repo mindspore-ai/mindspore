@@ -183,6 +183,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static bool IsShapesDynamic(const std::vector<ShapeVector> &shapes);
 
   static void AddOutInRefToGraph(const KernelGraphPtr &graph);
+  static bool HasOriginFormat(const AnfNodePtr &anf_node);
+  static std::string GetOriginFormat(const AnfNodePtr &anf_node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
