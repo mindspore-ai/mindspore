@@ -157,6 +157,7 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
     auto latter_input = latter_cnode->input(kFirstDataInputIndex);
     auto depend1 = kg->NewCNode({NewValueNode(prim::kPrimDepend), latter_input, former});
     MS_EXCEPTION_IF_NULL(depend1);
+    MS_EXCEPTION_IF_NULL(latter_input);
     depend1->set_abstract(latter_input->abstract());
     latter_cnode->set_input(kFirstDataInputIndex, depend1);
 

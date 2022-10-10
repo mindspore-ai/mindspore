@@ -432,6 +432,7 @@ class CallInfoFinder {
       return;
     }
     // Update directly called sub-graphs.
+    MS_EXCEPTION_IF_NULL(kernel_graph_);
     kernel_graph_->UpdateChildGraphOrder();
     // Find Call/Switch/SwitchLayer nodes, and make CallSites for them.
     AnfNodePtr last_monad = nullptr;
