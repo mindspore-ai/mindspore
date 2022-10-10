@@ -25,13 +25,13 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t nTwo = 2;
-constexpr size_t kPaddingsSizeTwo = 2;
-constexpr size_t kPaddingsSizeFour = 4;
+constexpr int64_t kPaddingsSizeTwo = 2;
+constexpr int64_t kPaddingsSizeFour = 4;
 void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_size, const int64_t size) {
-  constexpr size_t kPaddingsSizeSix = 6;
-  constexpr size_t nThree = 3;
-  constexpr size_t nFour = 4;
-  constexpr size_t nFive = 5;
+  constexpr int64_t kPaddingsSizeSix = 6;
+  constexpr int64_t nThree = 3;
+  constexpr int64_t nFour = 4;
+  constexpr int64_t nFive = 5;
   auto prim_name = primitive->name();
   auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
   if (mode == kConstant) {
@@ -62,7 +62,7 @@ void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_siz
 }
 void ReflectModeCheck(std::string prim_name, const int64_t paddings_size, std::vector<int64_t> x_shape,
                       std::vector<int64_t> paddings_arg, const int64_t size) {
-  constexpr size_t kReflectMaxDims = 4;
+  constexpr int64_t kReflectMaxDims = 4;
   constexpr size_t padding_pos_2 = 2;
   constexpr size_t padding_pos_3 = 3;
   (void)CheckAndConvertUtils::CheckInteger("input dims for reflect mode", size, kLessEqual, kReflectMaxDims, prim_name);
@@ -92,7 +92,7 @@ void ReflectModeCheck(std::string prim_name, const int64_t paddings_size, std::v
 }
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr size_t kEdgeMaxDims = 5;
-  constexpr size_t kOtherMinDims = 3;
+  constexpr int64_t kOtherMinDims = 3;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto paddings = input_args[1]->BuildValue();
@@ -115,7 +115,8 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   if (mode == kReflect) {
     ReflectModeCheck(prim_name, paddings_size, x_shape, paddings_arg, size);
   } else if (mode == kEdge) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims for edge mode", size, kLessEqual, kEdgeMaxDims, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input dims for edge mode", size, kLessEqual, SizeToLong(kEdgeMaxDims),
+                                             prim_name);
   }
   PaddingsSizeCheck(primitive, paddings_size, size);
   for (int64_t i = 0; i < paddings_size; ++i) {
@@ -126,9 +127,9 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     std::vector<int64_t> tmp = paddings_val;
     for (int64_t i = 0; i < paddings_size; ++i) {
       if (i % nTwo == 0) {
-        paddings_val[i] = tmp[i / nTwo];
+        paddings_val[LongToSize(i)] = tmp[LongToSize(i / nTwo)];
       } else {
-        paddings_val[i] = tmp[(i + paddings_size) / nTwo];
+        paddings_val[LongToSize(i)] = tmp[LongToSize((i + paddings_size) / nTwo)];
       }
     }
   }

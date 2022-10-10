@@ -36,7 +36,7 @@ abstract::ShapePtr RGBToHSVInferShape(const PrimitivePtr &primitive, const std::
   return std::make_shared<abstract::Shape>(input_shape);
 }
 
-TypePtr RGBToHSVInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr RGBToHSVInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("type of input 'images'", input_dtype, input_valid_types,

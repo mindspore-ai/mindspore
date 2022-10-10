@@ -34,12 +34,13 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
   auto set_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto set_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   auto set_indices_shape_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices", set_indices_shape.size(), kEqual,
-                                           set_indices_shape_num, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_values", set_values_shape.size(), kEqual, 1,
+  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices",
+                                           SizeToLong(set_indices_shape.size()), kEqual, set_indices_shape_num,
                                            op_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_shape", set_shape_shape.size(), kEqual, 1,
-                                           op_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_values", SizeToLong(set_values_shape.size()),
+                                           kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_shape", SizeToLong(set_shape_shape.size()),
+                                           kEqual, 1, op_name);
   (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices or set_shape", set_indices_shape[1],
                                            kEqual, set_shape_shape[0], op_name);
   (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices or set_values", set_indices_shape[0],
@@ -60,7 +61,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
       auto set_shape_value_tensor = set_shape_value->cast<tensor::TensorPtr>();
       auto value = reinterpret_cast<int64_t *>(set_shape_value_tensor->data_c());
       MS_EXCEPTION_IF_NULL(value);
-      for (size_t i = 0; i < (unsigned int)shape_size_dim; ++i) {
+      for (size_t i = 0; i < LongToSize(shape_size_dim); ++i) {
         set_shape_value_vec[i] = value[i];
       }
       gen_value_succ = true;
@@ -82,7 +83,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     ShapeVector output_shape;
     auto set_values_index = 2;
     auto dense_size =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[set_values_index]->BuildShape())[kShape];
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[IntToSize(set_values_index)]->BuildShape())[kShape];
     if (dense_size.size() == 1 && dense_size[0] < set_values_index) {
       output_shape.push_back(1);
     } else {

@@ -65,7 +65,7 @@ abstract::ShapePtr ParameterizedTruncatedNormalInferShape(const PrimitivePtr &pr
   if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
     auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
     (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, op_name);
-    (void)ParameterizedTruncatedNormalCheckdims(input_args, out_shape[0]);
+    ParameterizedTruncatedNormalCheckdims(input_args, out_shape[0]);
 
     return std::make_shared<abstract::Shape>(out_shape);
   } else {

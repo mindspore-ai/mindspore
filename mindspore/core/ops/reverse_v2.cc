@@ -30,8 +30,8 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto axis_ptr = primitive->GetAttr("axis");
   auto input_axis = GetValue<std::vector<int64_t>>(axis_ptr);
-  int64_t axis_dims = input_axis.size();
-  int64_t x_dims = x_shape.size();
+  int64_t axis_dims = SizeToLong(input_axis.size());
+  int64_t x_dims = SizeToLong(x_shape.size());
   (void)primitive->AddAttr("axis", MakeValue(input_axis));
   const int64_t input_max_dim = 8;
 
@@ -50,16 +50,17 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
       reverse_shape.push_back(false);
     }
     for (int64_t i = 0; i < axis_dims; ++i) {
-      int64_t realdim = input_axis[i] < 0 ? x_dims + input_axis[i] : input_axis[i];
-      input_axis[i] = realdim;
+      int64_t realdim = input_axis[LongToSize(i)] < 0 ? x_dims + input_axis[LongToSize(i)] : input_axis[LongToSize(i)];
+      input_axis[LongToSize(i)] = realdim;
       if (realdim < 0 || realdim >= x_dims) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the 'axis[" << i << "]' must be in range of [-"
-                                 << x_dims << ", " << x_dims << "), but got " << input_axis[i] << " with type 'int'.";
-      } else if (realdim >= 0 && reverse_shape[realdim] == true) {
+                                 << x_dims << ", " << x_dims << "), but got " << input_axis[LongToSize(i)]
+                                 << " with type 'int'.";
+      } else if (realdim >= 0 && reverse_shape[LongToSize(realdim)] == true) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", 'axis' cannot contain duplicate dimensions"
                                  << ", but got " << realdim;
-      } else if (realdim >= 0 && reverse_shape[realdim] == false) {
-        reverse_shape[realdim] = true;
+      } else if (realdim >= 0 && reverse_shape[LongToSize(realdim)] == false) {
+        reverse_shape[LongToSize(realdim)] = true;
       }
     }
   }
