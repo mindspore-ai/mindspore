@@ -969,11 +969,11 @@ def _check_key_mode_type(file_format, **kwargs):
         enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
 
     if file_format in ('AIR', 'ONNX'):
-        raise RuntimeError(f"AIR/ONNX only support customized encryption, but got {enc_mode}.")
+        raise ValueError(f"AIR/ONNX only support customized encryption, but got {enc_mode}.")
 
     if enc_mode in ('AES-CBC', 'AES-GCM'):
         return enc_key, enc_mode
-    raise RuntimeError(f"MindIR only support AES-GCM/AES-CBC encryption, but got {enc_mode}")
+    raise ValueError(f"MindIR only support AES-GCM/AES-CBC encryption, but got {enc_mode}")
 
 
 def _save_air(net, file_name, *inputs, **kwargs):
