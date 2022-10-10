@@ -70,7 +70,7 @@ abstract::ShapePtr UpsampleTrilinear3DInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckInteger("the elements number of scales", SizeToLong(scales.size()), kEqual,
                                              SizeToLong(kDim3), prim_name);
     for (size_t idx = 0; idx < kDim3; ++idx) {
-      output_shape.emplace_back(int64_t(floor(x_shape[idx + kDim2] * scales[idx])));
+      output_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + kDim2] * scales[idx])));
     }
   } else if (output_size.empty() && scales.empty()) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
