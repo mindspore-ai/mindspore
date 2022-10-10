@@ -952,6 +952,9 @@ def jacfwd(fn, grad_position=0, has_aux=False):
         For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
         like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
 
+    Raises:
+        TypeError: `grad_position` or `has_aux` does not belong to required types.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1140,6 +1143,9 @@ def jacrev(fn, grad_position=0, has_aux=False):
         Function, returns the Jacobian function for the input function or cell.
         For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
         like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
+
+    Raises:
+        TypeError: `grad_position` or `has_aux` does not belong to required types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
