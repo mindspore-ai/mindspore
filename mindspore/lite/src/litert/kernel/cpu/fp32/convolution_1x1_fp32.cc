@@ -45,7 +45,11 @@ int Convolution1x1CPUKernel::ReSize() {
     MS_LOG(ERROR) << "conv base init failed.";
     return error_code;
   }
-  InitConv1x1MatmulParam();
+  error_code = InitConv1x1MatmulParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Convolution Matmul parameters init failed.";
+    return error_code;
+  }
   error_code = InitConv1x1Param();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution base init failed.";
@@ -54,16 +58,19 @@ int Convolution1x1CPUKernel::ReSize() {
   return RET_OK;
 }
 
-void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
+int Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->col_ = conv_param_->output_channel_;
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->row_align_ = UP_ROUND(matmul_param_->row_, row_tile_);
   matmul_param_->col_align_ = UP_ROUND(matmul_param_->col_, col_tile_);
   matmul_param_->act_type_ = conv_param_->act_type_;
+  return RET_OK;
 }
 
 int Convolution1x1CPUKernel::InitConv1x1Param() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(row_tile_, op_parameter_->thread_num_, RET_ERROR);
   if ((matmul_param_->row_ > (row_tile_ * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
     multi_thread_by_hw_ = true;
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, row_tile_));
@@ -85,6 +92,7 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
   pre_trans_input_ = (conv_param_->pad_u_ != 0 || conv_param_->pad_l_ != 0 || conv_param_->stride_h_ != 1 ||
                       conv_param_->stride_w_ != 1);
   if (pre_trans_input_) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul_param_->row_, matmul_param_->deep_, RET_ERROR);
     input_ptr_ = reinterpret_cast<float *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float)));
     if (input_ptr_ == nullptr) {
       MS_LOG(ERROR) << "Conv1x1 Malloc input_ptr_ error!";
@@ -124,7 +132,9 @@ int Convolution1x1CPUKernel::Prepare() {
     CHECK_NULL_RETURN(filter_tensor);
     auto input_channel = filter_tensor->Channel();
     auto output_channel = filter_tensor->Batch();
-    int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
+    int output_tile_size = UP_ROUND(output_channel, col_tile_);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, output_tile_size, RET_ERROR);
+    int size = input_channel * output_tile_size * sizeof(float);
     set_workspace_size(size);
   }
   int error_code = InitConvWeightBias();
@@ -146,20 +156,24 @@ void Convolution1x1CPUKernel::PackMatmulInput(const float *src_ptr, float *dst_p
 }
 
 int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
-  int res_stride = matmul_param_->col_ - task_id * thread_stride_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_stride_, RET_ERROR);
+  int total_thead_stride_ = task_id * thread_stride_;
+  int res_stride = matmul_param_->col_ - total_thead_stride_;
   int cur_oc = MSMIN(thread_stride_, res_stride);
   if (cur_oc <= 0) {
     return RET_OK;
   }
   CHECK_NULL_RETURN(out_tensors()[0]);
   auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_, matmul_param_->deep_, RET_ERROR);
   if (out_tensors()[0]->format() == NC4HW4) {
-    MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
-              output_ptr_ + task_id * thread_stride_ * matmul_param_->row_, bias, matmul_param_->act_type_,
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_, matmul_param_->row_, RET_ERROR);
+    MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + total_thead_stride_ * matmul_param_->deep_,
+              output_ptr_ + total_thead_stride_ * matmul_param_->row_, bias, matmul_param_->act_type_,
               matmul_param_->deep_, matmul_param_->row_, cur_oc, matmul_param_->row_, OutType_NC4HW4);
   } else {
-    MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
-              output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
+    MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + total_thead_stride_ * matmul_param_->deep_,
+              output_ptr_ + total_thead_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
               matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
   }
   return RET_OK;
@@ -176,19 +190,28 @@ int Convolution1x1Run(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
-  int res_stride = matmul_param_->row_ - task_id * thread_stride_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_stride_, RET_ERROR);
+  int total_thead_stride_ = task_id * thread_stride_;
+  int res_stride = matmul_param_->row_ - total_thead_stride_;
   int cur_hw_ = MSMIN(thread_stride_, res_stride);
   if (cur_hw_ <= 0) {
     return RET_OK;
   }
 
-  float *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
-  float *thread_pack_input = pack_input_ + task_id * row_tile_ * matmul_param_->deep_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_, matmul_param_->deep_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, row_tile_, RET_ERROR);
+  int total_row_tile_ = task_id * row_tile_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(total_row_tile_, matmul_param_->deep_, RET_ERROR);
+  float *thread_input_ptr = input_ptr_ + total_thead_stride_ * matmul_param_->deep_;
+  float *thread_pack_input = pack_input_ + total_row_tile_ * matmul_param_->deep_;
   float *thread_output_ptr = nullptr;
   if (out_tensors()[0]->format() != NC4HW4) {
-    thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_, matmul_param_->col_, RET_ERROR);
+    thread_output_ptr = output_ptr_ + total_thead_stride_ * matmul_param_->col_;
   } else {
-    thread_output_ptr = output_ptr_ + task_id * thread_stride_ * MSMIN(matmul_param_->col_, C4NUM);
+    auto col_min = MSMIN(matmul_param_->col_, C4NUM);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_, col_min, RET_ERROR);
+    thread_output_ptr = output_ptr_ + total_thead_stride_ * col_min;
   }
   float *cur_intput = thread_input_ptr;
   float *cur_output = thread_output_ptr;
@@ -229,8 +252,16 @@ int Convolution1x1CPUKernel::Run() {
   auto src_out = reinterpret_cast<float *>(out_tensors_[0]->data());
   CHECK_NULL_RETURN(src_in);
   CHECK_NULL_RETURN(src_out);
-  int pack_input_size = multi_thread_by_hw_ ? (thread_count_ * row_tile_ * matmul_param_->deep_)
-                                            : (matmul_param_->row_align_ * matmul_param_->deep_);
+  int pack_input_size = 0;
+  if (multi_thread_by_hw_) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(thread_count_, row_tile_, RET_ERROR);
+    int total_row_tile_ = thread_count_ * row_tile_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(total_row_tile_, matmul_param_->deep_, RET_ERROR);
+    pack_input_size = total_row_tile_ * matmul_param_->deep_;
+  } else {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul_param_->row_align_, matmul_param_->deep_, RET_ERROR);
+    pack_input_size = matmul_param_->row_align_ * matmul_param_->deep_;
+  }
   pack_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(pack_input_size * sizeof(float)));
   if (pack_input_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
@@ -241,9 +272,17 @@ int Convolution1x1CPUKernel::Run() {
     return RET_ERROR;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul_param_->row_, matmul_param_->col_, RET_ERROR);
+  int matmul_size = matmul_param_->row_ * matmul_param_->col_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((conv_param_->input_batch_ - 1), matmul_size, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+  int conv_input_hw = conv_param_->input_h_ * conv_param_->input_w_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_input_hw, conv_param_->input_channel_, RET_ERROR);
+  int conv_input_bhw = conv_input_hw * conv_param_->input_channel_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((conv_param_->input_batch_ - 1), conv_input_bhw, RET_ERROR);
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    output_ptr_ = src_out + batch_index * matmul_param_->row_ * matmul_param_->col_;
-    auto tmp_in = src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_;
+    output_ptr_ = src_out + batch_index * matmul_size;
+    auto tmp_in = src_in + batch_index * conv_input_bhw;
     if (pre_trans_input_) {
       Conv1x1InputPack(tmp_in, input_ptr_, conv_param_, sizeof(float));
     } else {
@@ -303,6 +342,7 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
   MS_CHECK_TRUE_RET(input_channel > 0 && output_channel > 0, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, UP_ROUND(output_channel, col_tile_), RET_ERROR);
   int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size);

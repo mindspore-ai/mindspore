@@ -48,7 +48,12 @@ int DeconvolutionDepthwiseCPUKernel::InitPackedInputOutput() {
   if (conv_param_->input_channel_ % C4NUM != 0) {
     need_align_ = true;
     int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-    int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM * IC4;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+    int input_hw = conv_param_->input_h_ * conv_param_->input_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_batch_, input_hw, RET_ERROR);
+    int input_bhw = conv_param_->input_batch_ * input_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, C4NUM * IC4, RET_ERROR);
+    int pack_input_size = input_bhw * C4NUM * IC4;
     packed_input_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(float)));
     if (packed_input_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -56,7 +61,12 @@ int DeconvolutionDepthwiseCPUKernel::InitPackedInputOutput() {
     }
 
     int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
-    int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * OC4;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
+    int output_hw = conv_param_->output_h_ * conv_param_->output_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_batch_, output_hw, RET_ERROR);
+    int output_bhw = conv_param_->output_batch_ * output_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, C4NUM * OC4, RET_ERROR);
+    int pack_output_size = output_bhw * C4NUM * OC4;
     packed_output_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_output_size * sizeof(float)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -81,7 +91,10 @@ int DeconvolutionDepthwiseCPUKernel::Prepare() {
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
-    int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_tensor->Height(), weight_tensor->Width(), RET_ERROR);
+    int weight_size_hw = weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(C4NUM * OC4, weight_size_hw, RET_ERROR);
+    int pack_weight_size = C4NUM * OC4 * weight_size_hw;
     set_workspace_size(pack_weight_size * sizeof(float));
   }
   auto ret = InitConvWeightBias();

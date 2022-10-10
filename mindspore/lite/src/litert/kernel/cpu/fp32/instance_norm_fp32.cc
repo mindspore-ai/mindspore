@@ -39,6 +39,7 @@ int InstanceNormCPUKernel::Prepare() {
 int InstanceNormCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
   param_->batch_ = in_tensor->Batch();
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(in_tensor->Height(), in_tensor->Width(), RET_ERROR);
   param_->inner_size_ = in_tensor->Height() * in_tensor->Width();
   param_->channel_ = in_tensor->Channel();
   param_->op_parameter_.thread_num_ = MSMIN(UP_DIV(param_->channel_, C8NUM), op_parameter_->thread_num_);

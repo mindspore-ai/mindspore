@@ -52,6 +52,7 @@ int FillCPUKernel::ReSize() {
 }
 
 int FillCPUKernel::DoFill(int task_id) {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_sz_stride_, RET_ERROR);
   int size = MSMIN(thread_sz_stride_, data_size_ - task_id * thread_sz_stride_);
   if (size <= 0) {
     return RET_OK;

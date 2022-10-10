@@ -48,9 +48,13 @@ int ConvolutionSWCPUKernel::Prepare() {
     auto output_channel = filter_tensor->Batch();
     int kernel_h = filter_tensor->Height();
     int kernel_w = filter_tensor->Width();
-    int kernel_plane = kernel_h * kernel_w;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(kernel_h, kernel_w, RET_ERROR);
+    int kernel_hw = kernel_h * kernel_w;
     int oc_block_num = UP_DIV(output_channel, oc_tile_);
-    int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, kernel_hw, RET_ERROR);
+    int kernel_chw = input_channel * kernel_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(oc_block_num * oc_tile_, kernel_chw, RET_ERROR);
+    int pack_weight_size = oc_block_num * oc_tile_ * kernel_chw;
     set_workspace_size(pack_weight_size * sizeof(float));
   }
   auto ret = InitConvWeightBias();
@@ -119,15 +123,19 @@ int ConvolutionSWCPUKernel::InitTmpBuffer() {
     int in_channel = conv_param_->input_channel_;
     int ic_block_num = UP_DIV(in_channel, in_tile_);
     MS_ASSERT(ctx_->allocator != nullptr);
-    input_data_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(conv_param_->input_batch_ * conv_param_->input_h_ *
-                                                                    conv_param_->input_w_ * ic_block_num * in_tile_ *
-                                                                    sizeof(float)));
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+    int input_hw = conv_param_->input_h_ * conv_param_->input_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_batch_, input_hw, RET_ERROR);
+    int input_bhw = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, ic_block_num * in_tile_, RET_ERROR);
+    input_data_ =
+      reinterpret_cast<float *>(ctx_->allocator->Malloc(input_bhw * ic_block_num * in_tile_ * sizeof(float)));
     if (input_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc tmp input_data_ failed.";
       return RET_NULL_PTR;
     }
-    PackNHWCToNHWCXFp32(input_data, input_data_, conv_param_->input_batch_,
-                        conv_param_->input_w_ * conv_param_->input_h_, conv_param_->input_channel_, oc_tile_);
+    PackNHWCToNHWCXFp32(input_data, input_data_, conv_param_->input_batch_, input_hw, conv_param_->input_channel_,
+                        oc_tile_);
   } else {
     input_data_ = input_data;
   }
@@ -140,9 +148,13 @@ int ConvolutionSWCPUKernel::InitTmpBuffer() {
     int out_channel = conv_param_->output_channel_;
     int oc_block_num = UP_DIV(out_channel, oc_tile_);
     MS_ASSERT(ctx_->allocator != nullptr);
-    output_data_ = reinterpret_cast<float *>(
-      ctx_->allocator->Malloc(conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ *
-                              oc_block_num * oc_tile_ * sizeof(float)));
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
+    int output_hw = conv_param_->output_h_ * conv_param_->output_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_batch_, output_hw, RET_ERROR);
+    int output_bhw = conv_param_->output_batch_ * output_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc_block_num * oc_tile_, RET_ERROR);
+    output_data_ =
+      reinterpret_cast<float *>(ctx_->allocator->Malloc(output_bhw * oc_block_num * oc_tile_ * sizeof(float)));
     if (output_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc tmp output data failed.";
       return RET_NULL_PTR;

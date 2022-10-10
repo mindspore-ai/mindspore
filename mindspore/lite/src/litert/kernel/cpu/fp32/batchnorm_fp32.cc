@@ -34,6 +34,10 @@ int BatchnormCPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[kMeanInput]);
   CHECK_NULL_RETURN(in_tensors_[kVarInput]);
+  if (in_tensors_[0]->data_type() != kNumberTypeFloat16 && in_tensors_[0]->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Invalid in_tensor[0] data_type: " << in_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   if (in_tensors_[kMeanInput]->data_type() != kNumberTypeFloat16 &&
       in_tensors_[kMeanInput]->data_type() != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "Invalid in_tensor[1] data_type: " << in_tensors_[kMeanInput]->data_type();
@@ -46,6 +50,10 @@ int BatchnormCPUKernel::Prepare() {
   }
 
   CHECK_NULL_RETURN(out_tensors_[0]);
+  if (out_tensors_[0]->data_type() != kNumberTypeFloat16 && out_tensors_[0]->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Invalid out_tensors[0] data_type: " << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -92,6 +100,7 @@ int BatchnormCPUKernel::FillParam() {
   param->channel_ = input_shapes[in_n_dim - 1];
   param->unit_ = 1;
   for (size_t i = 0; i < in_n_dim - 1; i++) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param->unit_, input_shapes[i]), RET_ERROR, "mul overflow.");
     param->unit_ *= input_shapes[i];
   }
   if (default_momentum_ < 0.0f) {
