@@ -110,8 +110,8 @@ bool LinSpaceCpuKernelMod::LaunchVmapKernel(const std::vector<AddressPtr> &input
   auto stops = reinterpret_cast<T *>(inputs[kIndex1]->addr);
   const int64_t num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
 
-  auto steps = reinterpret_cast<T *>(workspace[kIndex0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto steps = static_cast<T *>(workspace[kIndex0]->addr);
+  auto output = static_cast<T *>(outputs[kIndex0]->addr);
 
   for (int64_t i = 0; i < batch_num_; ++i) {
     steps[i] = ((stops[i] - starts[i]) / (num - 1));

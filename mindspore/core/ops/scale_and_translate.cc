@@ -44,16 +44,18 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   auto scale_shape_size = scale_shape.size();
   auto translation_shape_size = translation_shape.size();
   // check images' rank must be 4
-  (void)CheckAndConvertUtils::CheckInteger("images's rank'", images_shape_size, kEqual, kImagesShapeSize, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("images's rank'", SizeToLong(images_shape_size), kEqual, kImagesShapeSize,
+                                           prim_name);
   // check size' rank must be 1, must have 2 elements
-  (void)CheckAndConvertUtils::CheckInteger("size's rank'", size_shape_size, kEqual, kShapeSize, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("size's rank'", SizeToLong(size_shape_size), kEqual, kShapeSize, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("size's elements'", size_shape[0], kEqual, kElementsNumber, prim_name);
   // check scale' rank must be 1, must have 2 elements
-  (void)CheckAndConvertUtils::CheckInteger("scale's rank'", scale_shape_size, kEqual, kShapeSize, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scale's rank'", SizeToLong(scale_shape_size), kEqual, kShapeSize,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("scale's elements'", scale_shape[0], kEqual, kElementsNumber, prim_name);
   // check translation' rank must be 1, must have 2 elements
-  (void)CheckAndConvertUtils::CheckInteger("translation's rank'", translation_shape_size, kEqual, kShapeSize,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("translation's rank'", SizeToLong(translation_shape_size), kEqual,
+                                           kShapeSize, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("translation's elements'", translation_shape[0], kEqual, kElementsNumber,
                                            prim_name);
   // check scale greater than zero
@@ -72,7 +74,7 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
     auto scale_tensor = scale_v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(scale_tensor);
     size_t data_size = scale_tensor->DataSize();
-    auto data_c = reinterpret_cast<float *>(scale_tensor->data_c());
+    auto data_c = static_cast<float *>(scale_tensor->data_c());
     MS_EXCEPTION_IF_NULL(data_c);
     for (size_t i = 0; i < data_size; i++) {
       scale_value.push_back(static_cast<float>(*data_c));
