@@ -550,7 +550,7 @@ std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &inputs, con
   return PrimOp::InferShape(inputs, attrs);
 }
 
-NodePtr ShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
+NodePtr ShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &) {
   auto tensor = std::make_shared<tensor::Tensor>(this->type, this->shape, inputs[0]->shape.data(), kNumberTypeInt64);
   return std::make_shared<ConstTensorNode>(tensor);
 }
@@ -806,10 +806,11 @@ tensor::TensorPtr ConcatOp::CalcConcat(const NodePtrList &inputs, const DAttrs &
     const size_t first_dim_size = all_shps[0][first_dim];
     for (size_t i = 0; i < first_dim_size; i++) {
       for (size_t t = 0; t < inputs_tm.size(); t++) {
-        for (size_t j = 0; j < all_shps[t][second_dim]; j++)
+        for (size_t j = 0; j < all_shps[t][second_dim]; j++) {
           for (size_t k = 0; k < third_dim_size; k++) {
             (void)res.emplace_back(inputs_tm[t][i * all_shps[t][second_dim] * third_dim_size + j * third_dim_size + k]);
           }
+        }
       }
     }
     return std::make_shared<tensor::Tensor>(this->type, this->shape, &res[0], this->type);
@@ -985,11 +986,11 @@ std::vector<DShape> StandardNormalOp::InferShape(const NodePtrList &, const DAtt
 }
 
 void StridedSliceOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) {
-  primitive->AddAttr("new_axis_mask", MakeValue((int64_t(0))));
-  primitive->AddAttr("shrink_axis_mask", MakeValue((int64_t(0))));
-  primitive->AddAttr("end_mask", MakeValue((int64_t(0))));
-  primitive->AddAttr("begin_mask", MakeValue((int64_t(0))));
-  primitive->AddAttr("ellipsis_mask", MakeValue((int64_t(0))));
+  (void)primitive->AddAttr("new_axis_mask", MakeValue((int64_t(0))));
+  (void)primitive->AddAttr("shrink_axis_mask", MakeValue((int64_t(0))));
+  (void)primitive->AddAttr("end_mask", MakeValue((int64_t(0))));
+  (void)primitive->AddAttr("begin_mask", MakeValue((int64_t(0))));
+  (void)primitive->AddAttr("ellipsis_mask", MakeValue((int64_t(0))));
   const mindspore::HashSet<size_t> &convert_input_list{1, 2, 3};
   auto input_names = primitive->GetAttr(kAttrInputNames);
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
@@ -997,7 +998,7 @@ void StridedSliceOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBase
 }
 
 template <typename TM>
-tensor::TensorPtr StridedSliceOnnxOp::CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &attrs) {
+tensor::TensorPtr StridedSliceOnnxOp::CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &) {
   constexpr size_t input_index = 0;
   constexpr size_t begin_index = 1;
   constexpr size_t end_index = 2;

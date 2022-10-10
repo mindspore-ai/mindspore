@@ -32,7 +32,7 @@ class COMMON_EXPORT OpDescFactory {
     return instance;
   }
   bool HasOp(const std::string &op) const { return creators.find(op) != creators.end(); }
-  std::shared_ptr<OpDesc> GetOp(const std::string &op) {
+  std::shared_ptr<OpDesc> GetOp(const std::string &op) const {
     if (auto iter = creators.find(op); iter != creators.end()) {
       auto op_desc = iter->second();
       op_desc->name_ = op;

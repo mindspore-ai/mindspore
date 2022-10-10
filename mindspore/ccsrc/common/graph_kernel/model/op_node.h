@@ -189,7 +189,7 @@ class ShapeOp : public OpaqueOp {
  public:
   explicit ShapeOp(const std::string &op) : OpaqueOp(op) {}
   ~ShapeOp() = default;
-  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
+  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &) override;
 
  protected:
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &) override {
@@ -335,7 +335,7 @@ class StridedSliceOnnxOp : public OpaqueOp {
 
  protected:
   template <typename TM>
-  tensor::TensorPtr CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &attrs);
+  tensor::TensorPtr CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &);
   std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override {
     return GetValue<std::vector<DShape>>(attrs.find("output_shape")->second);
   }

@@ -153,8 +153,9 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
       }
     }
   };
-  float block_size =
-    SizeToLong(kGrainSize) > output_slice_size ? static_cast<float>(kGrainSize / output_slice_size) : 1.0;
+  float block_size = SizeToLong(kGrainSize) > output_slice_size
+                       ? static_cast<float>(kGrainSize) / static_cast<float>(output_slice_size)
+                       : 1.0;
   CPUKernelUtils::ParallelFor(loop3d, channels, block_size);
   // memcopy and cast for fp16
   if (is_fp16) {

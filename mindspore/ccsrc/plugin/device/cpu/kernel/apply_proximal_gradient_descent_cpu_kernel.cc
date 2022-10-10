@@ -131,7 +131,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
                   << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
     return KRET_RESIZE_FAILED;
   }
-  input_elements_ = input_elements_ / batch_size_;
+  input_elements_ = input_elements_ / SizeToInt(batch_size_);
   if (batch_rank_ > 1) {
     if (var_shape.size() < alpha_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
@@ -169,11 +169,12 @@ void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::ve
 
       for (size_t pos = 0; pos < cur_input_elements; pos++) {
         T prox_var = var_cur[pos] - alpha_addr[b] * delta_cur[pos];
-        if (l1_addr[b] > T(0)) {
-          var_cur[pos] = (T)Sgn(prox_var) * Max(Abs(prox_var) - alpha_addr[b] * l1_addr[b], T(0)) /
-                         (T(1) + alpha_addr[b] * l2_addr[b]);
+        if (l1_addr[b] > static_cast<T>(0)) {
+          var_cur[pos] = static_cast<T>(Sgn(prox_var)) *
+                         Max(Abs(prox_var) - alpha_addr[b] * l1_addr[b], static_cast<T>(0)) /
+                         (static_cast<T>(1) + alpha_addr[b] * l2_addr[b]);
         } else {
-          var_cur[pos] = prox_var / (T(1) + alpha_addr[b] * l2_addr[b]);
+          var_cur[pos] = prox_var / (static_cast<T>(1) + alpha_addr[b] * l2_addr[b]);
         }
       }
     }

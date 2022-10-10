@@ -87,7 +87,7 @@ std::vector<std::vector<T>> GetGradIndex(const std::vector<std::vector<T>> &reve
 }
 
 template <typename T, typename S>
-size_t SetOuputValue(S *addr, const std::vector<T> &grad_reduce_idx, size_t input_num) {
+size_t SetOuputValue(S *addr, const std::vector<T> &grad_reduce_idx) {
   size_t index_num = grad_reduce_idx.size();
   for (size_t i = 0; i < index_num; i++) {
     addr[i] = static_cast<S>(grad_reduce_idx[index_num - 1 - i]);
@@ -126,8 +126,8 @@ bool DynamicBroadcastGradientArgsCpuKernelMod::LaunchKernel(const std::vector<ke
     grad_reduce_idx = GetGradIndex(reverse_shapes, max_rank);
   }
 
-  r0_size_ = SetOuputValue(r0_addr, grad_reduce_idx[0], input_size_list_[0] / sizeof(T));
-  r1_size_ = SetOuputValue(r1_addr, grad_reduce_idx[1], input_size_list_[1] / sizeof(T));
+  r0_size_ = SetOuputValue(r0_addr, grad_reduce_idx[0]);
+  r1_size_ = SetOuputValue(r1_addr, grad_reduce_idx[1]);
 
   return true;
 }

@@ -20,7 +20,7 @@
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
-bool TuningSplitSchemer::ReadCache(const std::string &filename, nlohmann::json *result) {
+bool TuningSplitSchemer::ReadCache(const std::string &filename, nlohmann::json *result) const {
   std::ifstream json_reader(filename);
   if (!json_reader.is_open()) {
     MS_LOG(ERROR) << "Read json file(" << filename << ") error.";
