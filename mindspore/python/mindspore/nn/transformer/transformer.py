@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -737,7 +737,7 @@ class VocabEmbedding(Cell):
         _check_input_shape(F.shape(input_ids), "input_ids", self.cls_name, 2)
         _check_input_dtype(F.dtype(input_ids), "input_ids", [mstype.int32], self.cls_name)
         output = self.gather(self.embedding_table, input_ids, 0)
-        return output, self.embedding_table
+        return output, self.embedding_table.value()
 
 
 class MultiHeadAttention(Cell):
