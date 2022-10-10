@@ -14,6 +14,7 @@
 # ============================================================================
 
 """utils for operator"""
+from __future__ import absolute_import
 
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator

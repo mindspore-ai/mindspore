@@ -49,7 +49,7 @@ class RandomShuffleCpuKernelMod : public NativeCpuKernelMod {
 
   template <typename T>
   bool ScalarShuffle(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                     const std::vector<size_t> &perm);
+                     const std::vector<size_t> &perm) const;
 
   template <typename T>
   bool ScalarShuffleWithBatchRank(const std::vector<kernel::AddressPtr> &inputs,
