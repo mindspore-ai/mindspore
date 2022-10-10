@@ -369,7 +369,8 @@ ShapeVector ConvertTensorListToShapeVector(const tensor::TensorPtrList &tensor_l
     tensorptr->data_sync(false);
     return *(static_cast<int64_t *>(tensorptr->data_c()));
   };
-  std::transform(tensor_list.begin() + index, tensor_list.end(), std::back_inserter(shape), converter);
+  auto offset = static_cast<tensor::TensorPtrList::difference_type>(index);
+  (void)std::transform(tensor_list.begin() + offset, tensor_list.end(), std::back_inserter(shape), converter);
   if (shape.empty()) {
     MS_LOG(ERROR) << "ShapeVector is empty!";
   }
