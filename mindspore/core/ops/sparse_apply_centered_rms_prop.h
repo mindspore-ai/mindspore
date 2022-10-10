@@ -35,6 +35,12 @@ class MIND_API SparseApplyCenteredRMSProp : public BaseOperator {
   SparseApplyCenteredRMSProp() : BaseOperator(kNameSparseApplyCenteredRMSProp) {
     InitIOName({"var", "mg", "ms", "mom", "lr", "rho", "momentum", "epsilon", "grad", "indices"}, {"var"});
   }
+
+  void Init(bool use_locking = false);
+
+  void set_use_locking(bool use_locking);
+
+  bool get_use_locking();
 };
 
 abstract::AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &,

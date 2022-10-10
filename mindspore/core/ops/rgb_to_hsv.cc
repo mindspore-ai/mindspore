@@ -24,14 +24,20 @@ namespace ops {
 namespace {
 abstract::ShapePtr RGBToHSVInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-
-  const int64_t input_dims = SizeToLong(input_shape.size());
-  const int64_t input_last_dims = input_shape.cend()[-1];
-  const int64_t numberofRGB_3 = 3;
-  (void)CheckAndConvertUtils::CheckInteger("last dimension of input 'images'", input_last_dims, kEqual, numberofRGB_3,
-                                           kNameRGBToHSV);
-  if (input_dims < 1) {
-    MS_LOG(EXCEPTION) << "For " << primitive->name() << ", the dimension of input 'images' must be 1-D or higher rank.";
+  auto input_shape_ptr = input_args[0]->BuildShape();
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+  if (!input_shape_ptr->IsDynamic()) {
+    const int64_t input_dims = SizeToLong(input_shape.size());
+    const int64_t input_last_dims = input_shape.cend()[-1];
+    const int64_t numberofRGB_3 = 3;
+    (void)CheckAndConvertUtils::CheckInteger("last dimension of input 'images'", input_last_dims, kEqual, numberofRGB_3,
+                                             kNameRGBToHSV);
+    if (input_dims < 1) {
+      MS_LOG(EXCEPTION) << "For " << primitive->name()
+                        << ", the dimension of input 'images' must be 1-D or higher rank.";
+    }
   }
   return std::make_shared<abstract::Shape>(input_shape);
 }

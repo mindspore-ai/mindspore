@@ -8762,7 +8762,7 @@ class SparseApplyCenteredRMSProp(Primitive):
         ValueError: If shape of `grad` is not same as shape of `var` except first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
