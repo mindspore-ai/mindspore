@@ -1,5 +1,5 @@
 ﻿mindspore.dataset.serialize
-===========================
+============================
 
 .. py:function:: mindspore.dataset.serialize(dataset, json_filepath='')
 
@@ -16,5 +16,4 @@
         Dict，包含序列化数据集图的字典。
 
     异常：
-        - **ValueError** - 不支持用户定义的Python函数的序列化。
         - **OSError** - 无法打开文件。

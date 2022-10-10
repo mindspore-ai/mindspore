@@ -3219,12 +3219,12 @@ class StridedSlice(PrimitiveWithInfer):
         shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: 0.
 
     Inputs:
-        input_x (Tensor): The input Tensor to be extracted from.
-        begin (tuple[int]): A tuple which represents the location where to start.
-            Only non-negative int is allowed.
-        end (tuple[int]): A tuple or which represents the maximum location where to end.
-            Only non-negative int is allowed.
-        strides (tuple[int]): - A tuple which represents the strides is continuously added
+        - **input_x** (Tensor) - The input Tensor to be extracted from.
+        - **begin** (tuple[int]) - A tuple which represents the location where to start.
+          Only non-negative int is allowed.
+        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
+          Only non-negative int is allowed.
+        - **strides** (tuple[int]) - A tuple which represents the strides is continuously added
           before reaching the maximum location. Only int is allowed, it can be negative
           which results in reversed slicing.
 
