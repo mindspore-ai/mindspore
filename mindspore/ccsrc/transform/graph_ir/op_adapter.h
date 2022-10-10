@@ -179,7 +179,7 @@ class OpAdapter : public BaseOpAdapter {
       if (type == nullptr) {
         MS_LOG(EXCEPTION) << "Dynamic output node:" << op->GetName() << "'s Type is a nullptr!";
       }
-      size_t num = type->isa<Tuple>() ? (type->cast<std::shared_ptr<Tuple>>()->size()) : 1;
+      auto num = GetOutputSize(type);
       MS_LOG(INFO) << "create_dyn_output for node:" << anf->fullname_with_scope() << ", type:" << type->ToString()
                    << ", num:" << num;
       dyn_output_map_.begin()->second.create_dyn_output(op, static_cast<unsigned int>(num));
@@ -491,6 +491,20 @@ class OpAdapter : public BaseOpAdapter {
   // convert any value to tensor
   static GeTensor ConvertAny(const ValuePtr &value, const AnyTraits<AnyValue> anyTraitsValue) {
     return ConvertAnyUtil(value, anyTraitsValue);
+  }
+
+  size_t GetOutputSize(const TypePtr &type) const {
+    if (!type->isa<Tuple>()) {
+      return 1;
+    }
+    size_t output_size = 0;
+    auto tuple_type = type->cast<std::shared_ptr<Tuple>>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    auto elements = tuple_type->elements();
+    for (const auto &element : elements) {
+      output_size = output_size + GetOutputSize(element);
+    }
+    return output_size;
   }
 
   static const mindspore::HashMap<int, InputDesc> input_map_;

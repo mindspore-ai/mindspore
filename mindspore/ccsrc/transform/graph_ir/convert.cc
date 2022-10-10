@@ -1828,6 +1828,14 @@ std::vector<OutHandler> DfGraphConvertor::GetAllInputHandle(const CNodePtr &node
   std::vector<OutHandler> handles;
   for (size_t i = 1; i < inputs.size(); i++) {
     auto input = inputs[i];
+    // MakeTuple's input is MakeTuple
+    if (IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+      auto cnode = input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto make_tuple_inputs = GetAllInputHandle(cnode);
+      handles.insert(handles.end(), make_tuple_inputs.begin(), make_tuple_inputs.end());
+      continue;
+    }
     TransformConstOp(node, input);
     auto handler = GetNormalOpInput(node, input);
     if (handler.op == nullptr) {
@@ -1960,8 +1968,8 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     }
     int ret = adpt->setInput(src, SizeToInt(i), handle);
     if (ret != SUCCESS) {
-      MS_LOG(WARNING) << "Set node input handle failed, node:" << node->fullname_with_scope()
-                      << ", input node: " << pred->fullname_with_scope() << ", index: " << i;
+      MS_LOG(DEBUG) << "Set node input handle failed, node:" << node->fullname_with_scope()
+                    << ", input node: " << pred->fullname_with_scope() << ", index: " << i;
     } else {
       DrawOpInput(node, pred, i);
       AddGraphConstInput(handle.op);
@@ -2210,9 +2218,13 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
 
   // get Operator from op_cache_
   OperatorPtr op = Convert(node);
+  std::string name = op->GetOpType();
+  if (name == kTypeIdentityN || name == kTypeNoOp) {
+    MS_LOG(DEBUG) << "No need set IdentityN and NoOp OpDesc, node: " << node->fullname_with_scope();
+    return;
+  }
   adpt->updateOutputDesc(op, node->Shape(), node->Type(), node);
 
-  std::string name = op->GetOpType();
   if (name == prim::kPrimNonZeroWithValueShape->name()) {
     MS_EXCEPTION_IF_NULL(op);
     auto op_desc = ::ge::OpDescUtils::GetOpDescFromOperator(*op);
