@@ -7,7 +7,7 @@ mindspore.ops.ReduceScatter
 
     .. note::
         在集合的所有过程中，Tensor必须具有相同的shape和格式。
-        在运行以下示例之前，用户需要预设环境变量。请参考
+        在运行以下示例之前，用户需要预设环境变量，请参考
         `MindSpore官方网站 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.ops.html#%E9%80%9A%E4%BF%A1%E7%AE%97%E5%AD%90>`_。
 
     参数：

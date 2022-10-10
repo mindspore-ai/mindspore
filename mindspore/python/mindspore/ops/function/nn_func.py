@@ -3045,10 +3045,12 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
     :math:`D` is depth, :math:`H` is height, :math:`W` is width.
     the formula is defined as:
+
     .. math::
         \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
         \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
         \operatorname{input}\left(N_{i}, k\right))
+
     where :math:`k` is kernel, :math:`ccor` is the cross-correlation operator.
     If the 'pad_mode' is set to be "valid", the output depth, height and width will be
     :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
@@ -3059,6 +3061,7 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively. Where
     :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
+
     Args:
         inputs (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]},
@@ -3094,8 +3097,10 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
             Its value must be greater than or equal to 1 and bounded by the height and width of the input. Default: 1.
         group (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. Default: 1. Only 1 is currently supported.
+
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
+
     Raises:
         TypeError: If `out_channel` or `group` is not an int.
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
@@ -3103,8 +3108,10 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple whose length is not equal to 4.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
@@ -3167,27 +3174,29 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
     :math:`0 \leq y \leq \text{x.size}(1)-1`):
     For each mini-batch sample, the loss in terms of the 1D input :math:`x` and scalar
     output :math:`y` is:
+
     .. math::
         \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p)}{\text{x.size}(0)}
+
     where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
     and :math:`i \neq y`.
     Optionally, you can give non-equal weighting on the classes by passing
     a 1D input `weight` tensor into the constructor.
 
     Args:
-        - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
-        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
-          value of target should be non-negative, less than C.
-        - **p** (int, optional) - The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
-        - **margin** (int, optional) - A parameter to change pairwise distance. Default: 1.
-        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
-          support float16, float32 or float64. Default: None.
-        - **reduction** (str, optional) - Apply specific reduction method to the output: 'none', 'mean',
-          'sum'. Default: 'mean'.
+        inputs (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        target (Tensor): Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+            value of target should be non-negative, less than C.
+        p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
+        margin (int, optional): A parameter to change pairwise distance. Default: 1.
+        weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
+            support float16, float32 or float64. Default: None.
+        reduction** (str, optional): Apply specific reduction method to the output: 'none', 'mean',
+            'sum'. Default: 'mean'.
 
-          - 'none': no reduction will be applied.
-          - 'mean': the sum of the output will be divided by the number of elements in the output.
-          - 'sum': the output will be summed.
+            - 'none': no reduction will be applied.
+            - 'mean': the sum of the output will be divided by the number of elements in the output.
+            - 'sum': the output will be summed.
 
     Returns:
         Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
@@ -3228,12 +3237,15 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
 def multi_label_margin_loss(inputs, target, reduction='mean'):
     r"""
     MultilabelMarginLoss operation.
+
     Creates a criterion that optimizes a multi-class multi-classification
     hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
     and output :math:`y` (which is a 2D `Tensor` of target class indices).
     For each sample in the mini-batch:
+
     .. math::
         \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
+
     where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
     :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
     :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
@@ -3244,16 +3256,16 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
     This allows for different samples to have variable amounts of target classes.
 
     Args:
-        - **inputs** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
-          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
-          label targets padded by -1.
-        - **reduction** (str, optional) - Apply specific reduction method to the output: 'none', 'mean',
-          'sum'. Default: 'mean'.
+        inputs (Tensor): Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+            is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
+        target (Tensor): Ground truth data, with the same shape as `x`, data type must be int32 and
+            label targets padded by -1.
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
+            'sum'. Default: 'mean'.
 
-          - 'none': no reduction will be applied.
-          - 'mean': the sum of the output will be divided by the number of elements in the output.
-          - 'sum': the output will be summed.
+            - 'none': no reduction will be applied.
+            - 'mean': the sum of the output will be divided by the number of elements in the output.
+            - 'sum': the output will be summed.
 
     Returns:
         - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape

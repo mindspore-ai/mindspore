@@ -36,7 +36,6 @@ def serialize(dataset, json_filepath=""):
         a related warning message is reported and the obtained JSON file cannot be deserialized
         into a usable data pipeline.
 
-
     Args:
         dataset (Dataset): The starting node.
         json_filepath (str): The filepath where a serialized JSON file will be generated (default="").

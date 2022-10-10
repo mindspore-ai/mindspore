@@ -7,7 +7,7 @@ mindspore.ops.jacfwd
 
     参数：
         - **fn** (Union[Function, Cell]) - 待求导的函数或网络。以Tensor为入参，返回Tensor或Tensor数组。
-        - **grad_position** (Union[NoneType, int, tuple[int]]) - 指定求导输入位置的索引。若为int类型，表示对单个输入求导；若为tuple类型，表示对tuple内索引的位置求导，其中索引从0开始。默认值：0。
+        - **grad_position** (Union[int, tuple[int]]) - 指定求导输入位置的索引。若为int类型，表示对单个输入求导；若为tuple类型，表示对tuple内索引的位置求导，其中索引从0开始。默认值：0。
         - **has_aux** (bool) - 若 `has_aux` 为True，只有 `fn` 的第一个输出参与 `fn` 的求导，其他输出将直接返回。此时， `fn` 的输出数量必须超过一个。默认值：False。
 
     返回：
