@@ -639,7 +639,7 @@ class RandomChoiceWithMask(Primitive):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
 
-    Refer to :func:'mindspore.ops.choice_with_mask' for more detail.
+    Refer to :func:`mindspore.ops.choice_with_mask` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
