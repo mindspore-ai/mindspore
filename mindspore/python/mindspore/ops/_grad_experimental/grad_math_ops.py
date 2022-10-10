@@ -661,17 +661,15 @@ def get_bprop_betainc(self):
     exp = P.Exp()
     log1p = P.Log1p()
     xlogy = P.Xlogy()
-    reduce_sum = P.ReduceSum()
+    dyn_shape = P.TensorShape()
 
     def bprop(input_a, input_b, input_x, out, dout):
-        sa = F.shape(input_a)
-        sx = F.shape(input_x)
-        _, rx = F.broadcast_gradient_args(sa, sx)
-
+        if is_shape_unknown(F.shape(input_x)):
+            sx = dyn_shape(input_x)
+        else:
+            sx = F.shape(input_x)
         log_beta = (lgamma(input_a) + lgamma(input_b) - lgamma(input_a + input_b))
         partial_x = exp((input_b - 1) * log1p(-input_x) + xlogy(input_a - 1, input_x) - log_beta)
-        if rx != ():
-            return (zeros_like(input_a), zeros_like(input_b), F.reshape(reduce_sum(partial_x * dout, rx), sx))
         return (zeros_like(input_a), zeros_like(input_b), F.reshape(partial_x * dout, sx))
 
     return bprop
