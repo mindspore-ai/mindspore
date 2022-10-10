@@ -48,6 +48,30 @@ SET_ITEM_BY_ONE_TENSOR = 0
 SET_ITEM_BY_TUPLE_OF_TENSOR = 1
 SET_ITEM_BY_NON_TENSOR = 2
 
+type_priority_map = {
+    mstype.bool_: 0,
+    mstype.uint8: 1,
+    mstype.int8: 2,
+    mstype.uint16: 3,
+    mstype.int16: 4,
+    mstype.uint32: 5,
+    mstype.int32: 6,
+    mstype.uint64: 7,
+    mstype.int64: 8,
+    mstype.float16: 9,
+    mstype.float32: 10,
+    mstype.float64: 11
+}
+
+complex_priority_map = {
+    mstype.float32: 0,
+    mstype.float64: 1,
+    mstype.complex64: 2,
+    mstype.complex128: 4
+}
+
+complex_types = [mstype.complex64, mstype.complex128]
+
 
 @constexpr
 def raise_value_error(msg):
@@ -892,3 +916,30 @@ def use_copy_slice(tuple_index):
 @constexpr
 def gen_exception_msg(msg_format, *args):
     return msg_format.format(*args)
+
+
+@constexpr
+def get_output_dtype(dtype_1, dtype_2, use_complex=False):
+    """Returns output dtype after type promotion."""
+    if use_complex:
+        priority_map = complex_priority_map
+        type_str = "Complex binary"
+    else:
+        priority_map = type_priority_map
+        type_str = "Binary"
+    priority_1 = priority_map.get(dtype_1, None)
+    priority_2 = priority_map.get(dtype_2, None)
+    if not priority_1 or not priority_2:
+        raise ValueError(f"{type_str} op type promotion not supported for {dtype_1} and {dtype_2}")
+    if priority_1 > priority_2:
+        return dtype_1
+    return dtype_2
+
+
+@constexpr
+def promote_binary_dtype(dtype_1, dtype_2):
+    if dtype_1 == dtype_2:
+        return dtype_1
+    if dtype_1 in complex_types or dtype_2 in complex_types:
+        return get_output_dtype(dtype_1, dtype_2, True)
+    return get_output_dtype(dtype_1, dtype_2, False)

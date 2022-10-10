@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """Tensor implementation."""
-from __future__ import absolute_import
+from __future__ import absolute_import, annotations
 
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 
 import math
 import numbers
+from typing import Tuple
 import numpy as np
 
 from mindspore.communication.management import get_rank, get_group_size
@@ -6459,21 +6460,41 @@ class COOTensor(COOTensor_):
         return self.__div__(other)
 
     @property
-    def indices(self):
+    def indices(self) -> Tensor:
         """Return COOTensor's indices."""
         return Tensor(self._indices)
 
     @property
-    def values(self):
+    def values(self) -> Tensor:
         """Return COOTensor's non-zero values."""
         return Tensor(self._values)
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int, ...]:
         """Return COOTensor's shape."""
         return self._shape
 
-    def coalesce(self):
+    @property
+    def dtype(self) -> mstype:
+        """Return the dtype of the values of COOTensor (:class:`mindspore.dtype`)."""
+        return self._dtype
+
+    @property
+    def size(self) -> int:
+        """Return the number of non-zero values."""
+        return self.values.size
+
+    @property
+    def itemsize(self) -> int:
+        """Return the length of one tensor element in bytes."""
+        return self.values.itemsize
+
+    @property
+    def ndim(self) -> int:
+        """Return the number of tensor dimensions."""
+        return len(self.shape)
+
+    def coalesce(self) -> COOTensor:
         """
         Return the coalesced sparse tensor of the input.
 
@@ -6488,7 +6509,7 @@ class COOTensor(COOTensor_):
                                                                               self.values, shape)
         return COOTensor(res_indices.transpose(), res_values, self.shape)
 
-    def to_csr(self):
+    def to_csr(self) -> CSRTensor:
         """
         Converts COOTensor to CSRTensor.
 
@@ -6512,7 +6533,7 @@ class COOTensor(COOTensor_):
         indptr = tensor_operator_registry.get("coo2csr")(row_indices, self.shape[0])
         return CSRTensor(indptr, col_indices, values, self.shape)
 
-    def to_dense(self):
+    def to_dense(self) -> Tensor:
         """
         Converts COOTensor to Dense Tensor.
 
@@ -6526,27 +6547,7 @@ class COOTensor(COOTensor_):
         return tensor_operator_registry.get("tensor_scatter_add")(
             zeros_tensor, self.indices, self.values)
 
-    @property
-    def dtype(self):
-        """Return the dtype of the values of COOTensor (:class:`mindspore.dtype`)."""
-        return self._dtype
-
-    @property
-    def size(self):
-        """Return the number of non-zero values."""
-        return self.values.size
-
-    @property
-    def itemsize(self):
-        """Return the length of one tensor element in bytes."""
-        return self.values.itemsize
-
-    @property
-    def ndim(self):
-        """Return the number of tensor dimensions."""
-        return len(self.shape)
-
-    def astype(self, dtype):
+    def astype(self, dtype: mstype) -> COOTensor:
         """
         Return a copy of the COOTensor, cast its values to a specified type.
 
@@ -6572,7 +6573,7 @@ class COOTensor(COOTensor_):
         data = self.values.astype(dtype)
         return COOTensor(self.indices, data, self.shape)
 
-    def to_tuple(self):
+    def to_tuple(self) -> Tuple[Tensor, Tensor, Tuple[int, ...]]:
         """
         Return indices, values and shape as a tuple.
 
@@ -6584,7 +6585,7 @@ class COOTensor(COOTensor_):
         """
         return self.indices, self.values, self.shape
 
-    def abs(self):
+    def abs(self) -> COOTensor:
         """
         Return absolute value element-wisely.
 
@@ -6597,7 +6598,7 @@ class COOTensor(COOTensor_):
         data = self.values.abs()
         return COOTensor(self.indices, data, self.shape)
 
-    def add(self, other, thresh):
+    def add(self, other: COOTensor, thresh: Tensor) -> COOTensor:
         """
         Return the sum with another COOTensor.
 
@@ -6760,46 +6761,46 @@ class CSRTensor(CSRTensor_):
         raise TypeError("Subtract with %s is not supported." % type(other))
 
     @property
-    def indptr(self):
+    def indptr(self) -> Tensor:
         """Return CSRTensor's row indices pointers."""
         return Tensor(self._indptr)
 
     @property
-    def indices(self):
+    def indices(self) -> Tensor:
         """Return CSRTensor's column indices."""
         return Tensor(self._indices)
 
     @property
-    def values(self):
+    def values(self) -> Tensor:
         """Return CSRTensor's non-zero values."""
         return Tensor(self._values)
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int, ...]:
         """Return CSRTensor's shape."""
         return self._shape
 
     @property
-    def dtype(self):
+    def dtype(self) -> mstype:
         """Return the dtype of the values of CSRTensor (:class:`mindspore.dtype`)."""
         return self._dtype
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Return the number of non-zero values."""
         return self.values.size
 
     @property
-    def itemsize(self):
+    def itemsize(self) -> int:
         """Return the length of one tensor element in bytes."""
         return self.values.itemsize
 
     @property
-    def ndim(self):
+    def ndim(self) -> int:
         """Return the number of tensor dimensions."""
         return len(self.shape)
 
-    def to_tuple(self):
+    def to_tuple(self) -> Tuple[Tensor, Tensor, Tensor, Tuple[int, ...]]:
         """
         Return indptr, indices, values and shape as a tuple.
 
@@ -6811,7 +6812,7 @@ class CSRTensor(CSRTensor_):
         """
         return self.indptr, self.indices, self.values, self.shape
 
-    def to_coo(self):
+    def to_coo(self) -> COOTensor:
         """
         Converts CSRTensor to COOTensor.
 
@@ -6830,7 +6831,7 @@ class CSRTensor(CSRTensor_):
         coo_indices = tensor_operator_registry.get("stack")((row_indices, self.indices), 1)
         return COOTensor(coo_indices, self.values, self.shape)
 
-    def to_dense(self):
+    def to_dense(self) -> Tensor:
         """
         Converts CSRTensor to Dense Tensor.
 
@@ -6842,7 +6843,7 @@ class CSRTensor(CSRTensor_):
         """
         return tensor_operator_registry.get("csr_to_dense")(self)
 
-    def astype(self, dtype):
+    def astype(self, dtype: mstype) -> CSRTensor:
         """
         Return a copy of the CSRTensor, cast its values to a specified type.
 
@@ -6869,7 +6870,7 @@ class CSRTensor(CSRTensor_):
         data = self.values.astype(dtype)
         return CSRTensor(self.indptr, self.indices, data, self.shape)
 
-    def mv(self, dense_vector):
+    def mv(self, dense_vector: Tensor) -> Tensor:
         """
         Return the matrix multiplication result of the right-multiply dense matrix of the CSRTensor.
         The CSRTensor with shape `[M, N]` needs to adapt the dense vector with shape `[N, 1]`
@@ -6903,7 +6904,7 @@ class CSRTensor(CSRTensor_):
         validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
-    def mm(self, dense_matrix):
+    def mm(self, dense_matrix: Tensor) -> Tensor:
         """
         Return the matrix multiplication result of the right-multiply dense matrix of the CSRTensor.
         The CSRTensor with shape `[M, N]` needs to adapt the dense matrix with shape `[N, K]`
@@ -6938,7 +6939,7 @@ class CSRTensor(CSRTensor_):
         return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values,
                                                         self.shape, dense_matrix)
 
-    def sum(self, axis):
+    def sum(self, axis: int) -> Tensor:
         """
         Reduces a dimension of a CSRTensor by summing all elements in the dimension.
 
@@ -6968,7 +6969,7 @@ class CSRTensor(CSRTensor_):
         """
         return tensor_operator_registry.get("csr_reduce_sum")(self, axis)
 
-    def abs(self):
+    def abs(self) -> CSRTensor:
         """
         Return absolute value element-wisely.
 
@@ -6981,7 +6982,7 @@ class CSRTensor(CSRTensor_):
         data = self.values.abs()
         return CSRTensor(self.indptr, self.indices, data, self.shape)
 
-    def add(self, b, alpha, beta):
+    def add(self, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTensor:
         """
         Addition of two CSR Tensors : C = alpha * A + beta * B
 
