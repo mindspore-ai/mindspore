@@ -118,6 +118,9 @@ class ReshapeInfer : public abstract::OpInferBase {
               MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(shape_value[0]) == shape_vector.size(),
                                          "Illegal shape of shape value");
               output_shape = shape_vector;
+              if (std::count_if(output_shape.begin(), output_shape.end(), [](int64_t s) { return s < 0; }) > 1) {
+                return std::make_shared<abstract::Shape>(output_shape);
+              }
             }
           }
         }
