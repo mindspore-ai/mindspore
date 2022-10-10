@@ -70,9 +70,10 @@ class ForwardExecutor {
   void PopForwardCell() { forward_cell_stack_.pop(); }
   void ExecuteLazyTask();
   void Sync();
+  void PrintPyObjInfo(const py::object &cell, const std::string &str) const;
   void ProcessBeforeNewGraph(const py::object &cell, const py::args &args);
   void ProcessBeforeEndGraph(const py::object &cell);
-  void ProcessAfterEndGraph() const;
+  void ProcessAfterEndGraph(const py::object &cell) const;
   bool CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info);
   void set_is_ms_function_compiling(bool is_compiling) { is_ms_function_compiling_ = is_compiling; }
   inline DynamicShapePtr dynamic_shape() const {

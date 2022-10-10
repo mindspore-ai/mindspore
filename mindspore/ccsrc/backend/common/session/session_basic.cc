@@ -380,7 +380,7 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
                       << "] of kernel: " << common::AnfAlgo::GetCNodeName(kernel) << trace::DumpSourceLines(kernel);
   }
   for (size_t i = 0; i < tensor_shape.size(); i++) {
-    if (tensor_shape[i] < 0 || tensor_shape[i] != input_shape[i]) {
+    if (tensor_shape[i] < 0 || (tensor_shape[i] != input_shape[i] && input_shape[i] >= 0)) {
       MS_LOG(EXCEPTION) << "The input tensor's shape: " << tensor_shape
                         << " is not equal to expected shape: " << input_shape << " for input[" << input_index
                         << "] of kernel: " << common::AnfAlgo::GetCNodeName(kernel) << trace::DumpSourceLines(kernel);

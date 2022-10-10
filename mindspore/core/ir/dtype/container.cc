@@ -24,6 +24,9 @@
 namespace mindspore {
 static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext) {
   std::ostringstream oss;
+  if (elements.empty() || elements.front().get() == nullptr) {
+    return oss.str();
+  }
   bool begin = true;
   size_t cnt = 0;
   // write 'Tuple[Bool, Bool, Bool, Int, Float, Float]' as 'Tuple[Bool...3, Int, Float...2]'

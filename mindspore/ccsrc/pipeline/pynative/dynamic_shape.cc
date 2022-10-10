@@ -424,9 +424,9 @@ void DynamicShape::FindMatchTopCell(const TopCellInfoPtr &top_cell, const py::ar
     size_t cur_shape_size = cur_shape_list[i].size();
     ShapeVector new_shape;
     // Rank dynamic
-    if (change_to_unknown_rank || cur_shape_size != elem_shape_list.size()) {
+    if (change_to_unknown_rank || cur_shape_size != elem_shape_list[i].size()) {
       MS_LOG(DEBUG) << "The " << i << "th args shape size is not the same, cur is " << cur_shape_size
-                    << " and the elem is " << elem_shape_list.size() << ", change shape to dynamic rank";
+                    << " and the elem is " << elem_shape_list[i].size() << ", change shape to dynamic rank";
       new_shape.emplace_back(abstract::Shape::kShapeRankAny);
       change_to_unknown_rank = true;
     } else {
