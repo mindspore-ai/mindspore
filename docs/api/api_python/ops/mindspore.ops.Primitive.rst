@@ -15,20 +15,13 @@ mindspore.ops.Primitive
         参数：
             - **name** (str) - 属性名称。
             - **value** (Any) - 属性值。
-    
-    .. py:method:: set_device(device_target)
-
-        设置Primitive执行后端。
-
-        参数：
-            - **device_target** (str) - 后端名称，支持CPU、GPU、Ascend。
 
     .. py:method:: check_elim(*args)
 
         检查是否可以消除此Primitive。有需要的子类可以重写该方法。
 
         参数：
-            - **args** (Primitive参数的类型) - 与当前Primitive的参数相同。
+            - **args** (Primitive args) - 与当前Primitive的参数相同。
 
         返回：
             由两个元素组成的元组。第一个元素是指是否能在编译阶段计算Primitive，第二个元素是计算结果。
@@ -60,6 +53,13 @@ mindspore.ops.Primitive
 
         参数：
             - **mode** (bool) - Primitive是否设置了重计算。默认值：True。
+
+    .. py:method:: set_device(device_target)
+
+        设置Primitive执行后端。
+
+        参数：
+            - **device_target** (str) - 后端名称，支持CPU、GPU、Ascend。
 
     .. py:method:: set_prim_instance_name(instance_name)
 

@@ -270,11 +270,11 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
             \otimes\left(G_{i}^{(k)}+\lambda I\right)^{-1}\right) \nabla_{w_{i}} J^{(k)}
         \end{array}
 
-    :math:`a_{i-1}` represents the input of i-th layer,and which is the activations of previous layer,
-    :math:`D_{s_i}` represents the derivative of the loss function of the output of the i-th layer,
-    :math:`I` represents the identity matrix,
-    :math:`\lambda` represents :math:`damping`, :math:`g_i` represents gradients of the i-th layer,
-    :math:`\otimes` represents Kronecker product, :math:`\gamma` represents 'learning rate'
+    :math:`a_{i-1}` represents the input of i-th layer,and which is the activations of previous layer.
+    :math:`D_{s_i}` represents the derivative of the loss function of the output of the i-th layer.
+    :math:`I` represents the identity matrix.
+    :math:`\lambda` represents :math:`damping`, :math:`g_i` represents gradients of the i-th layer.
+    :math:`\otimes` represents Kronecker product, :math:`\gamma` represents 'learning rate'.
 
     Note:
         When a parameter group is separated, 'weight_decay' of each group is applied to the corresponding parameter.

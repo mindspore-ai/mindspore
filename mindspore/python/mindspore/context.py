@@ -636,7 +636,7 @@ def get_auto_parallel_context(attr_key):
 
 def reset_auto_parallel_context():
     """
-    Reset auto parallel context attributes to the default values:
+    Reset auto parallel context attributes to the default values.
 
     - device_num: 1.
     - global_rank: 0.

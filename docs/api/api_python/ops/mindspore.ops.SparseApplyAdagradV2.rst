@@ -11,6 +11,8 @@ mindspore.ops.SparseApplyAdagradV2
             var -= lr * grad * \frac{1}{\sqrt{accum} + \epsilon}
         \end{array}
 
+    :math:`\epsilon` 代表 `epsilon`。
+
     `var` 、 `accum` 和 `grad` 的输入遵循隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 
     参数：

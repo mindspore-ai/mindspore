@@ -160,7 +160,7 @@ mindspore.rewrite
 
     .. py:method:: mindspore.rewrite.SymbolTree.save_network_to_file()
 
-        将SymbolTree对应的网络保存到文件中，默认文件名为 `network_define.py`。
+        将SymbolTree对应的网络保存到文件中。默认文件名为 `network_define.py`。
 
     .. py:method:: mindspore.rewrite.SymbolTree.set_output(index: int, return_value: str)
 

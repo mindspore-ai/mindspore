@@ -5,6 +5,8 @@
 
     对输入的多维数据进行三维的平均池化运算。
 
+    在输入Tensor上应用3D average pooling，可被视为3D输入平面。
+
     一般，输入shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` ，AvgPool3D在 :math:`(D_{in}, H_{in}, W_{in})` 维度上输出区域平均值。给定 `kernel_size` 为 :math:`(kD,kH,kW)` 和 `stride` ，运算如下：
 
     .. warning::

@@ -21,7 +21,7 @@ import numpy as np
 def auc(x, y, reorder=False):
     """
     Computes the AUC(Area Under the Curve) using the trapezoidal rule. This is a general function, given points on a
-    curve. For computing the area under the ROC-curve.
+    curve, for computing the area under the ROC-curve.
 
     Args:
         x (Union[np.array, list]): From the ROC curve(fpr), np.array with false positive rates. If multiclass,
