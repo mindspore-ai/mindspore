@@ -72,7 +72,7 @@ class MyCallback(Callback):
             dataset._reset(self.reset_point * self.dataset_size)  # pylint: disable=W0212
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("fast_recovery", (False, True))
