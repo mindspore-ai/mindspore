@@ -32,6 +32,7 @@ parse_device()
   do
     if [[ "X$D" == "Xgpu" ]]; then
       export ENABLE_GPU="on"
+      export GPU_BACKEND="cuda"
       ENABLE_CPU="on"
       ENABLE_MPI="on"
       # version default 10.1
@@ -46,6 +47,12 @@ parse_device()
       export CUDA_VERSION="$DEVICE_VERSION"
       export ENABLE_AKG="on"
       export DEVICE_VERSION=
+    elif [[ "X$D" == "Xrocm" ]]; then
+      export ENABLE_GPU="on"
+      export GPU_BACKEND="rocm"
+      ENABLE_CPU="on"
+      ENABLE_MPI="on"
+      export ENABLE_AKG="off"
     elif [[ "X$D" == "Xd" || "X$D" == "Xascend" ]]; then
       # version default 910
       if [[ "X$DEVICE_VERSION" == "X" ]]; then
