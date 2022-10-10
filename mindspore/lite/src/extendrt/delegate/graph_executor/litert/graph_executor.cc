@@ -114,9 +114,11 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Load model by meta graph failed";
     free(buf);
+    delete meta_graph_t;
     return false;
   }
   free(buf);
+  delete meta_graph_t;
   return true;
 }
 
