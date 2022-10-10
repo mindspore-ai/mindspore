@@ -115,7 +115,12 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
       }
       continue;
     }
-
+    if (device_info->GetDeviceType() == kAscend) {
+      auto ascend_device = device_info->Cast<AscendDeviceInfo>();
+      if (!ascend_device) {
+        continue;
+      }
+    }
     if (device_info->GetDeviceType() == kCPU) {
       auto cpu_device = device_info->Cast<CPUDeviceInfo>();
       if (!cpu_device) {
@@ -136,6 +141,9 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
     for (auto device_context : device_contexts) {
       MS_EXCEPTION_IF_NULL(device_context);
       if (device_context->GetDeviceType() == kAscend) {
+        if (device_context->GetProvider() == "ge") {
+          return kDelegateSession;
+        }
         return kSingleOpSession;
       }
       if (device_context->GetDeviceType() == kGPU || device_context->GetDeviceType() == kCPU) {

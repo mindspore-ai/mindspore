@@ -28,9 +28,9 @@ constexpr auto kFunCreateTRTPluginImp = "CreateTensorRTPluginImpl";
 TensorRTExecutorPlugin::TensorRTExecutorPlugin() = default;
 TensorRTExecutorPlugin::~TensorRTExecutorPlugin() {
 #if !defined(_WIN32)
-  MS_LOG(DEBUG) << "~AscendKernelPlugin() begin.";
+  MS_LOG(DEBUG) << "~TensorRTExecutorPlugin() begin.";
   DLSoClose(handle_);
-  MS_LOG(DEBUG) << "~AscendKernelPlugin() end.";
+  MS_LOG(DEBUG) << "~TensorRTExecutorPlugin() end.";
 #endif
 }
 

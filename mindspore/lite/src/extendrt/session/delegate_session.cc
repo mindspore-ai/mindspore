@@ -26,8 +26,42 @@
 #include "extendrt/session/optimizer/tensorrt_optimizer.h"
 
 namespace mindspore {
+namespace {
+constexpr auto kAscendProviderGe = "ge";
+}  // namespace
+
+GraphSinkSession::~GraphSinkSession() {
+  DelegateRegistry::GetInstance().UnRegDelegate(kAscend, kAscendProviderGe);
+  ge_context_->Destroy();
+}
+
+Status GraphSinkSession::GeDeviceContextInit() {
+  ge_context_ = std::make_shared<GeDeviceContext>();
+  if (ge_context_ == nullptr) {
+    MS_LOG(ERROR) << "Create GeDeviceContext failed.";
+    return kLiteUninitializedObj;
+  }
+  ge_context_->Initialize();
+  return kSuccess;
+}
+
 Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "GraphSinkSession::Init";
+  if (graph_executor_ == nullptr) {
+    MS_LOG(ERROR) << "GraphSinkSession::Init failed, graph executor is nullptr.";
+    return kLiteUninitializedObj;
+  }
+  auto device_list = context->MutableDeviceInfo();
+  for (const auto &device_info : device_list) {
+    if (device_info == nullptr) {
+      MS_LOG(ERROR) << "GraphSinkSession::Init failed, device info is nullptr.";
+      return kLiteUninitializedObj;
+    }
+    if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == kAscendProviderGe) {
+      GeDeviceContextInit();
+      break;
+    }
+  }
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
   context_ = context;
   return kSuccess;
@@ -129,7 +163,6 @@ Status GraphSinkSession::InitGraphInputsOutputs() {
 Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
                                   const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_LOG(INFO) << "GraphSinkSession::RunGraph";
-  MS_EXCEPTION_IF_NULL(graph_executor_);
   MS_EXCEPTION_IF_NULL(outputs);
   graph_executor_->SetBefore(before);
   graph_executor_->SetAfter(after);
@@ -213,7 +246,9 @@ static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_pt
     return nullptr;
   }
   auto session = std::make_shared<GraphSinkSession>(delegate);
-  session->Init(ctx);
+  if (provider != kAscendProviderGe) {
+    session->Init(ctx);
+  }
   return session;
 }
 REG_SESSION(kDelegateSession, DelegateSessionCreator);

@@ -487,6 +487,10 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
     }
     std::shared_ptr<AscendDeviceInfo> ascend_device_info = std::make_shared<AscendDeviceInfo>();
     ascend_device_info->SetDeviceID(device_id);
+    auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
+    if (back_policy_env != nullptr) {
+      ascend_device_info->SetProvider(back_policy_env);
+    }
     device_list.push_back(ascend_device_info);
   }
 

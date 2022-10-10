@@ -40,7 +40,7 @@ namespace py = pybind11;
 namespace mindspore {
 namespace transform {
 std::shared_ptr<::ge::Session> GraphRunner::NewSession(const SessionOptions &sess_options) {
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   std::shared_ptr<::ge::Session> ret;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -63,14 +63,14 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
   if (ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::ONE_DEVICE) {
     MS_LOG(INFO) << "ME run in ONE_DEVICE strategy mode";
   }
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 #endif
   if (options.sess_ptr != nullptr) {
     sess_ = options.sess_ptr;
   } else {
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
     if (ms_context->backend_policy() == "ge") {
       sess_ = NewSession(options.options);
       if (sess_ == nullptr) {
@@ -85,10 +85,11 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     MS_LOG(INFO) << "The GraphManager is empty!!";
     return;
   }
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   if (ms_context->backend_policy() != "ge") {
     return;
   }
+#ifndef ENABLE_LITE_ACL
   // register the callback function
   if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "Register callback failed!";
@@ -96,7 +97,7 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
   if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "Register summary callback failed!";
   }
-
+#endif
   for (auto &it : wrappers) {
     std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
     auto iter_find = saved_graph.find(std::to_string(it->id_));
@@ -144,7 +145,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
