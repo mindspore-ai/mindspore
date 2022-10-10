@@ -51,12 +51,12 @@ int OnehotTensorRT::AddInnerOp(TensorRTContext *ctx) {
                                        input(ctx, ON_VALUE_INDEX).trt_tensor_, input(ctx, OFF_VALUE_INDEX).trt_tensor_};
   ITensorHelper indice_helper = input(ctx, 0);
   if (indice_helper.trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
-    inputTensors[0] = TRTTensorCast(ctx, input(ctx, 0).trt_tensor_, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
+    inputTensors[0] = TRTTensorCast(ctx, input(ctx, 0).trt_tensor_, nvinfer1::DataType::kINT32, op_name_ + "_cast_in");
   }
   ITensorHelper depth_helper = input(ctx, DEPTH_INDEX);
   if (depth_helper.trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
     inputTensors[DEPTH_INDEX] =
-      TRTTensorCast(ctx, input(ctx, DEPTH_INDEX).trt_tensor_, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
+      TRTTensorCast(ctx, input(ctx, DEPTH_INDEX).trt_tensor_, nvinfer1::DataType::kINT32, op_name_ + "_cast_in");
   }
   mindspore::MSTensor &depth_tensor = in_tensors_[DEPTH_INDEX];
   if (depth_tensor.Data() == nullptr) {
@@ -65,7 +65,9 @@ int OnehotTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   const int *depth_ptr = reinterpret_cast<const int *>(depth_tensor.Data().get());
   int depth = *depth_ptr;
-  auto plugin = std::make_shared<OnehotPlugin>(op_name_, depth, op_primitive_->value_type());
+  auto onehot_op = op_primitive_->value_as_OneHot();
+  int axis = onehot_op->axis();
+  auto plugin = std::make_shared<OnehotPlugin>(op_name_, axis, depth, op_primitive_->value_type());
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create OnehotPlugin failed for " << op_name_;
     return RET_ERROR;
@@ -98,12 +100,19 @@ int OnehotPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvi
 
 int OnehotPlugin::RunCudaOneHot(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs,
                                 void *const *outputs, cudaStream_t stream) {
+  int left_dims = 1;
+  int right_dims = 1;
   for (int i = 0; i != inputDesc[0].dims.nbDims; ++i) {
-    feature_dims_ *= inputDesc[0].dims.d[i];
+    if (axis_ == -1 || i < IntToSize(axis_)) {
+      left_dims *= inputDesc[0].dims.d[i];
+    }
+    if (axis_ != -1 && i >= IntToSize(axis_)) {
+      right_dims *= inputDesc[0].dims.d[i];
+    }
   }
   if (inputDesc[0].type == nvinfer1::DataType::kINT32 && inputDesc[ON_VALUE_INDEX].type == nvinfer1::DataType::kFLOAT) {
     OneHot<float, int>(static_cast<const int *>(inputs[0]), depth_, static_cast<const float *>(inputs[ON_VALUE_INDEX]),
-                       static_cast<const float *>(inputs[OFF_VALUE_INDEX]), batch_dims_, feature_dims_,
+                       static_cast<const float *>(inputs[OFF_VALUE_INDEX]), left_dims, right_dims,
                        static_cast<float *>(outputs[0]), device_id_, stream);
   } else {
     MS_LOG(ERROR) << "invalid onehot type: " << static_cast<int>(primitive_type_);
@@ -117,16 +126,22 @@ nvinfer1::DimsExprs OnehotPlugin::getOutputDimensions(int32_t index, const nvinf
   nvinfer1::DimsExprs dims;
   dims.nbDims = inputs[0].nbDims + 1;
   auto indice_dims = inputs[0].nbDims;
-  if (indice_dims == 1) {
-    dims.d[0] = inputs[0].d[0];
-    auto depth = exprBuilder.constant(depth_);
-    dims.d[1] = depth;
-  } else {
+  if (axis_ == -1) {
     for (int i = 0; i != inputs[0].nbDims; ++i) {
       dims.d[i] = inputs[0].d[i];
     }
     auto depth = exprBuilder.constant(depth_);
-    dims.d[inputs[0].nbDims] = depth;
+    dims.d[dims.nbDims - 1] = depth;
+  } else {
+    for (int i = 0; i != indice_dims; ++i) {
+      if (i >= axis_) {
+        dims.d[i + 1] = inputs[0].d[i];
+      } else {
+        dims.d[i] = inputs[0].d[i];
+      }
+    }
+    auto depth = exprBuilder.constant(depth_);
+    dims.d[axis_] = depth;
   }
   return dims;
 }
@@ -137,11 +152,15 @@ nvinfer1::IPluginV2DynamicExt *OnehotPlugin::clone() const noexcept {
   return plugin;
 }
 
-size_t OnehotPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType) + 3 * sizeof(int); }
+size_t OnehotPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType) + 2 * sizeof(int); }
+
+nvinfer1::DataType OnehotPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
+  noexcept {
+  return inputTypes[ON_VALUE_INDEX];
+}
 
 void OnehotPlugin::serialize(void *buffer) const noexcept {
-  SerializeValue(&buffer, &batch_dims_, sizeof(int));
-  SerializeValue(&buffer, &feature_dims_, sizeof(int));
+  SerializeValue(&buffer, &axis_, sizeof(int));
   SerializeValue(&buffer, &depth_, sizeof(int));
   SerializeValue(&buffer, &primitive_type_, sizeof(schema::PrimitiveType));
 }

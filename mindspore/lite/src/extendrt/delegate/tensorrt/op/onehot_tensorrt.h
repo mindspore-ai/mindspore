@@ -41,20 +41,23 @@ class OnehotTensorRT : public TensorRTOp {
 constexpr char *ONEHOT_PLUGIN_NAME{"OnehotPlugin"};
 class OnehotPlugin : public TensorRTPlugin {
  public:
-  OnehotPlugin(const std::string name, int depth, schema::PrimitiveType primitive_type)
-      : TensorRTPlugin(name, std::string(ONEHOT_PLUGIN_NAME)), depth_(depth), primitive_type_(primitive_type) {}
+  OnehotPlugin(const std::string name, int axis, int depth, schema::PrimitiveType primitive_type)
+      : TensorRTPlugin(name, std::string(ONEHOT_PLUGIN_NAME)),
+        axis_(axis),
+        depth_(depth),
+        primitive_type_(primitive_type) {}
 
   OnehotPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(ONEHOT_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
-    depth_ = static_cast<const int *>(fields[0].data)[0];
-    primitive_type_ = static_cast<const schema::PrimitiveType *>(fields[1].data)[0];
+    axis_ = static_cast<const int *>(fields[0].data)[0];
+    depth_ = static_cast<const int *>(fields[1].data)[0];
+    primitive_type_ = static_cast<const schema::PrimitiveType *>(fields[2].data)[0];
   }
 
   OnehotPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(ONEHOT_PLUGIN_NAME)) {
-    DeserializeValue(&serialData, &serialLength, &batch_dims_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &feature_dims_, sizeof(int));
+    DeserializeValue(&serialData, &serialLength, &axis_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &depth_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &primitive_type_, sizeof(schema::PrimitiveType));
   }
@@ -65,6 +68,8 @@ class OnehotPlugin : public TensorRTPlugin {
   int enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
               const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept override;
   size_t getSerializationSize() const noexcept override;
+  nvinfer1::DataType getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
+    noexcept override;
   void serialize(void *buffer) const noexcept override;
   nvinfer1::DimsExprs getOutputDimensions(int32_t index, const nvinfer1::DimsExprs *inputs, int nbInputDims,
                                           nvinfer1::IExprBuilder &exprBuilder) noexcept override;
@@ -72,10 +77,8 @@ class OnehotPlugin : public TensorRTPlugin {
  private:
   int RunCudaOneHot(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs, void *const *outputs,
                     cudaStream_t stream);
-
-  int batch_dims_{1};
-  int feature_dims_{1};
   int depth_{1};
+  int axis_{-1};
   schema::PrimitiveType primitive_type_;
 };
 class OnehotPluginCreater : public TensorRTPluginCreater<OnehotPlugin> {
