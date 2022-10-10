@@ -14,13 +14,14 @@
 # ============================================================================
 import json
 import time
-
+import os
 from mindspore._extends.parallel_compile.tbe_compiler.tbe_job_manager import TbeJobManager
 
 MAX_COMPILE_SECONDS = 400
 QUERY_INTERVAL = 10
 
-class TestCompile:
+
+class Compiler:
 
     def __init__(self):
         self.tbe_compiler = TbeJobManager()
@@ -37,6 +38,10 @@ class TestCompile:
             if res_json["status"] == "FAILED":
                 print("Initialize Failed")
                 return False
+
+            kernel_meta_temp_dir = init_job_json["job_content"]["SocInfo"]["kernel_meta_temp_dir"]
+            if not os.path.exists(kernel_meta_temp_dir):
+                os.mkdir(kernel_meta_temp_dir)
 
             print("\n################# Initialize Success #################\n")
             return True
@@ -121,7 +126,7 @@ class TestCompile:
             self.source_id = compile_result_json["source_id"]
             self.job_id = compile_result_json["job_id"]
             if compile_result_json["status"] != "RUNNING":
-                return TestCompile.process_finish_job(compile_result_json)
+                return Compiler.process_finish_job(compile_result_json)
 
             return self.process_running_job(compile_result_json)
 
@@ -147,15 +152,22 @@ class TestCompile:
         print("\n################# Finalize Success #################\n")
         return True
 
-    def test_parallel_compilation(self):
-        if not self.initialize():
-            return False
 
-        if not self.compile():
-            return False
+def test_parallel_compilation():
+    """
+    Feature: Test TBE Python Parallel compiler
+    Description: python debug script for tbe python compiler
+    Expectation: success with correct Initialize.info and op.info
+    """
+    compiler = Compiler()
+    if not compiler.initialize():
+        return False
 
-        return self.finilize()
+    if not compiler.compile():
+        return False
 
+    if not compiler.finilize():
+        return False
 
-if __name__ == "__main__":
-    TestCompile().test_parallel_compilation()
+    print("Test Pass")
+    return True

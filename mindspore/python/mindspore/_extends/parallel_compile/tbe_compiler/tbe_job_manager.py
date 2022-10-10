@@ -20,7 +20,7 @@ import traceback
 from enum import Enum
 
 from .tbe_adapter import tbe_initialize, get_auto_tune_support_op_list, tbe_finalize, check_support, select_op_format, \
-    parallel_pre_compile_op, do_fuzz_build_tbe_op, before_build_process, build_single_pre_op, sync_fusion_env, \
+    parallel_pre_compile_op, do_fuzz_build_tbe_op, before_build_process, build_single_pre_op, \
     parallel_compile_fusion_op, rl_tune_single_op, rl_tune_fusion_op, ga_tune, get_finish_tasks, get_prebuild_output
 from .tbe_helper import check_job_json, get_compute_op_list, get_func_names
 from .tbe_job import TbeJob, JobStatus, JobType
@@ -169,7 +169,6 @@ class TbeJobManager:
         if not res:
             job.error("Process CheckSupport Job failed, job json string:{}".format(job.json_string))
             return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
-        self._update_imported_op_module(job)
         return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
 
     def select_format_handler(self, job: TbeJob):
@@ -196,9 +195,6 @@ class TbeJobManager:
             return self.single_op_compile(job)
 
         before_build_process(job)
-        if self.fusion_need_sync:
-            sync_fusion_env(self.fusion_need_sync, self.imported_module)
-            self.fusion_need_sync = 0
         res = parallel_compile_fusion_op(job)
         if not res:
             job.error("Parallel_compile_fusion_op Job failed, job json string:{}".format(job.json_string))
@@ -245,25 +241,17 @@ class TbeJobManager:
                     "Tune Job failed, tune type {}, job json string:{}".format(tune_mode, job.json_string))
                 return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
         else:
-            if self.fusion_need_sync:
-                sync_fusion_env(self.fusion_need_sync, self.imported_module)
-                self.fusion_need_sync = 0
             res = ga_tune(job)
             if not res:
                 job.error("ga tune Job failed, job json string:{}".format(job.json_string))
                 return self.compile_handler(job)
         if job.status == JobStatus.JOB_RUNNING:
-            if tune_mode == TuneMode.RL_TUNE:
-                self._update_imported_op_module(job)
             return self.add_to_running_jobs(job)
         return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
 
     def fusion_op_tune(self, job: TbeJob):
         """Fusion operator tune"""
         tune_mode = self._select_tune_mode(job)
-        if self.fusion_need_sync:
-            sync_fusion_env(self.fusion_need_sync, self.imported_module)
-            self.fusion_need_sync = 0
         if tune_mode == TuneMode.RL_TUNE:
             res = rl_tune_fusion_op(job)
         else:
@@ -418,20 +406,6 @@ class TbeJobManager:
         if initialize_job.content["SocInfo"]["coreNum"].isdigit():
             self.core_num = int(initialize_job.content["SocInfo"]["coreNum"])
         self.op_bank_path = initialize_job.content["SocInfo"]["op_bank_path"]
-
-    def _update_imported_op_module(self, job):
-        """
-        update imported op module info according to new job
-        :param job:
-        :return:
-        """
-        compute_op_info = get_compute_op_list(job.content)[0]
-        op_module_name = compute_op_info["module_name"]
-        if op_module_name in self.imported_module.keys():
-            self.imported_module[op_module_name] = self.imported_module[op_module_name] + 1
-        else:
-            self.imported_module[op_module_name] = 1
-        self.fusion_need_sync = self.fusion_need_sync + 1
 
     def _select_tune_mode(self, job):
         """
