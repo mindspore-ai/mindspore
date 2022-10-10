@@ -76,6 +76,7 @@ int L2NormCPUKernel::ReSize() {
   }
 
   l2_norm_param_->data_num_ = in_tensors_.at(kInputIndex)->ElementsNum();
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.at(kOutputIndex)->ElementsNum(), l2_norm_param_->data_num_);
   auto shape = in_tensors_.at(kInputIndex)->shape();
   l2_norm_param_->shape_num_ = shape.size();
   for (size_t i = 0; i < shape.size(); i++) {
