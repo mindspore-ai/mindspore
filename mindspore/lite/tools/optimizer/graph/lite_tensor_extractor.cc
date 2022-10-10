@@ -98,7 +98,7 @@ int ConvertToLiteTensor(const std::vector<lite::DataInfo> &data_infos, std::vect
           MS_LOG(ERROR) << "tensor list is invalid.";
           return lite::RET_ERROR;
         }
-        if (tensor_list->Decode(reinterpret_cast<const int *>(data_info.data_.data())) != lite::RET_OK) {
+        if (tensor_list->Decode(reinterpret_cast<const int *>(data_info.data_.data()), tensor_size) != lite::RET_OK) {
           MS_LOG(ERROR) << "Decode tensorlist data failed.";
           return lite::RET_ERROR;
         }
@@ -139,7 +139,7 @@ TensorPtr GetCNodeTensorListVarInput(const lite::DataInfo &data_info) {
     MS_LOG(ERROR) << "tensor list is invalid.";
     return nullptr;
   }
-  auto status = tensor_list->Decode(reinterpret_cast<const int *>(data_info.data_.data()));
+  auto status = tensor_list->Decode(reinterpret_cast<const int *>(data_info.data_.data()), data_info.data_.size());
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "decode tensor list failed.";
     return nullptr;

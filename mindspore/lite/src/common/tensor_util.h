@@ -58,7 +58,7 @@ int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16);
 int CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist, bool support_fp16);
 TypeId TensorListDataType(Tensor *tensor);
 TensorList *MallocTensorListDataAccordingToTensorListC(Tensor *tensor, TensorListC *tensor_list_c);
-int DecodeTensorLsit(Tensor *tensor, const int *src_data);
+int DecodeTensorLsit(Tensor *tensor, const int *src_data, size_t length);
 Tensor *CreateTensorList(const std::vector<int> &shape, const Category &src_category, const void *src_data);
 int CopyTensorListTensorDataType(TensorList *dst_tensorlist, TensorList *src_tensorlist);
 void SetTensorListTensorDataType(const TypeId &data_type, Tensor *tensor);
