@@ -207,8 +207,8 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
   const size_t unary_input_num = 1;
   const size_t binary_input_num = 2;
   if (inputs.size() > 0) {
-    bool all_shape_equal =
-      std::all_of(inputs.begin(), inputs.end(), [&inputs](const NodePtr &t) { return t->shape == inputs[0]->shape; });
+    bool all_shape_equal = std::all_of(inputs.begin(), inputs.end(),
+                                       [&inputs](const NodePtr &t) -> bool { return t->shape == inputs[0]->shape; });
     if (!all_shape_equal) {
       return nullptr;
     }
@@ -225,14 +225,14 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
       {"Exp", [](const TM &a) { return exp(a); }},
       {"Reciprocal",
        [](const TM &a) {
-         if (a == TM(0)) {
+         if (a == static_cast<TM>(0)) {
            MS_LOG(EXCEPTION) << "During graph kernel constant fold for reciprocal, divisor is zero.";
          }
          return TM(1) / a;
        }},
       {"Rsqrt",
        [](const TM &a) {
-         if (a == TM(0)) {
+         if (a == static_cast<TM>(0)) {
            MS_LOG(EXCEPTION) << "During graph kernel constant fold for rsqrt, divisor is zero.";
          }
          return TM(1) / sqrt(a);
@@ -253,7 +253,7 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
       {"Mul", [](const TM &a, const TM &b) { return a * b; }},
       {"RealDiv",
        [](const TM &a, const TM &b) {
-         if (b == TM(0)) {
+         if (b == static_cast<TM>(0)) {
            MS_LOG(EXCEPTION) << "During graph kernel constant fold for realdiv, divisor is zero.";
          }
          return a / b;

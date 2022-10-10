@@ -28,7 +28,7 @@ namespace mindspore::graphkernel::expanders {
 class COMMON_EXPORT OpDescFactory {
  public:
   static OpDescFactory &Instance() {
-    static OpDescFactory instance = OpDescFactory();
+    static OpDescFactory instance{};
     return instance;
   }
   bool HasOp(const std::string &op) const { return creators.find(op) != creators.end(); }

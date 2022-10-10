@@ -32,7 +32,6 @@ bool GetGatherDimValue(const AbstractBasePtr dim_ptr, int64_t *dim_v) {
   MS_EXCEPTION_IF_NULL(dim_value_ptr);
   auto dim_type_ptr = dim_ptr->BuildType();
   MS_EXCEPTION_IF_NULL(dim_type_ptr);
-  bool dim_value_type_error = false;
   if (dim_value_ptr->isa<tensor::Tensor>()) {
     auto dim_tensor = dim_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(dim_tensor);
@@ -55,21 +54,15 @@ bool GetGatherDimValue(const AbstractBasePtr dim_ptr, int64_t *dim_v) {
       MS_EXCEPTION_IF_NULL(dim_data32);
       *dim_v = static_cast<int64_t>(*dim_data32);
       return true;
-    } else {
-      dim_value_type_error = true;
     }
   } else {
     if (dim_value_ptr->isa<Int32Imm>() || dim_value_ptr->isa<Int64Imm>()) {
       *dim_v = GetValue<int64_t>(dim_value_ptr);
       return true;
-    } else {
-      dim_value_type_error = true;
     }
   }
 
-  if (dim_value_type_error) {
-    MS_LOG(EXCEPTION) << "For GatherD, 'dim' must be one of these types: [int32/int64].";
-  }
+  MS_LOG(EXCEPTION) << "For GatherD, 'dim' must be one of these types: [int32/int64].";
   return false;
 }
 

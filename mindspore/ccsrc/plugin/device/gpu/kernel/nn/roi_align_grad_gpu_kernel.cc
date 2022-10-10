@@ -60,11 +60,11 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
       return KRET_OK;
     }
   }
+  constexpr size_t dx_dy_shape_size = 4;
+  constexpr size_t rois_shape_size = 2;
   // Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
-  constexpr size_t dx_dy_shape_size = 4;
-  constexpr size_t rois_shape_size = 2;
   if (dy_shape.size() != dx_dy_shape_size) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of dy must be equal to 4, but got " << dy_shape.size()
                   << ".";

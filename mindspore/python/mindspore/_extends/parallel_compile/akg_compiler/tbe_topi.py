@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """tbe topi"""
+from __future__ import absolute_import
 import math
 import functools
 from enum import Enum
 
 
 class OpPattern(Enum):
+    """OpPattern Enum."""
     ELEMWISE = "ELEMWISE"
     BROADCAST = "BROADCAST"
     REDUCE = "REDUCE"

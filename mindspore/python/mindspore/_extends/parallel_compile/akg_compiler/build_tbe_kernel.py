@@ -14,6 +14,7 @@
 
 """build tbe kernel"""
 
+from __future__ import absolute_import
 import os
 import json
 import functools
@@ -101,10 +102,13 @@ class TransShape:
             from impl.add import _add_check_format, _infer_shape
             format_pattern = _add_check_format({"shape": shapes[0], "format": formats[0]},
                                                {"shape": shapes[1], "format": formats[1]})
-            ori_shape0 = ori_shapes[0] if ori_shapes[0] is not None else \
-                infer_ori_shape(shapes[0], formats[0], ori_formats[0])
-            ori_shape1 = ori_shapes[1] if ori_shapes[1] is not None else \
-                infer_ori_shape(shapes[1], formats[1], ori_formats[1])
+
+            ori_shape0 = ori_shapes[0]
+            if ori_shape0 is None:
+                ori_shape0 = infer_ori_shape(shapes[0], formats[0], ori_formats[0])
+            ori_shape1 = ori_shapes[1]
+            if ori_shape1 is None:
+                ori_shape1 = infer_ori_shape(shapes[1], formats[1], ori_formats[1])
             new_shapes = [None, None]
             new_shapes[0], new_shapes[1] = _infer_shape(format_pattern,
                                                         {"shape": shapes[0], "ori_shape": ori_shape0},
@@ -315,7 +319,7 @@ def create_fusion_op_name(op_names):
     fusion_op_name = "te_fusion" if len(op_names) > 1 else ""
     for op_name in op_names:
         kernel_name = get_op_reg_info(op_name, "kernel_name")
-        fusion_op_name = fusion_op_name + "_" + kernel_name
+        fusion_op_name = "{}_{}".format(fusion_op_name, kernel_name)
     return fusion_op_name
 
 
