@@ -84,7 +84,7 @@ class Primitive(Primitive_):
 
     def set_device(self, device_target):
         """
-        Set primitive been executed device
+        Set primitive been executed device.
 
         Args:
             device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
