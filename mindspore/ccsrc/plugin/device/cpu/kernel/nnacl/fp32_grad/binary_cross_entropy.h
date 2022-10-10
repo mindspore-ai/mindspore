@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 void BinaryCrossEntropy(const int input_size, const int reduction, const float *input_x, const float *input_y,
-                        const float *weight, float *loss, float *tmp_loss);
+                        const float *weight, float *loss, float *tmp_loss, bool weight_defined);
 
 #ifdef __cplusplus
 }
