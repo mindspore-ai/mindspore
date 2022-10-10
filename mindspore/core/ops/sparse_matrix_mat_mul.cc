@@ -22,13 +22,14 @@
 #include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-void SparseMatrixMatMulCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+void SparseMatrixMatMulCheckShape(const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> x1_dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   const int64_t rank_x1 = x1_dense_shape[0];
@@ -42,7 +43,7 @@ void SparseMatrixMatMulCheckShape(const PrimitivePtr &primitive, const std::vect
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
   std::vector<int64_t> x2_dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  const int64_t rank_x2 = x2_dense_shape.size();
+  const int64_t rank_x2 = (SizeToLong)(x2_dense_shape.size());
   if (rank_x1 != rank_x2) {
     MS_EXCEPTION(ValueError) << "For SparseMatrixMatMul, x1_dense_shape.shape[0] and rank of x2_dense must be the "
                                 "same, but got x1_dense_shape.shape[0] = "
@@ -77,9 +78,9 @@ void SparseMatrixMatMulCheckShape(const PrimitivePtr &primitive, const std::vect
                              << rank_x1 << ".";
   }
   if (rank_x2 == kInputWithBatch) {
-    size_t x1_batch_num =
+    int64_t x1_batch_num =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape][0] - 1;
-    size_t x2_batch_num =
+    int64_t x2_batch_num =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape][0];
     if (x1_batch_num != x2_batch_num) {
       MS_EXCEPTION(ValueError) << "For SparseMatrixMatMul, x1_dense_shape[0] and x2_dense.shape[0] must be the "
@@ -91,13 +92,13 @@ void SparseMatrixMatMulCheckShape(const PrimitivePtr &primitive, const std::vect
 
 abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
-  SparseMatrixMatMulCheckShape(primitive, input_args);
+  SparseMatrixMatMulCheckShape(input_args);
   std::vector<int64_t> x1_dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   const int64_t rank_x1 = x1_dense_shape[0];
   std::vector<int64_t> x2_dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  const int64_t rank_x2 = x2_dense_shape.size();
+  const int64_t rank_x2 = (SizeToLong)(x2_dense_shape.size());
   ShapeVector y_dense_shape;
   auto transpose_x1 = GetValue<bool>(primitive->GetAttr("transpose_x1"));
   auto transpose_x2 = GetValue<bool>(primitive->GetAttr("transpose_x2"));
@@ -141,10 +142,10 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
     }
     row_x1 = (adjoint_x1 || transpose_x1) ? col_x1 : row_x1;
 
-    size_t row_y = row_x1;
-    size_t col_y = col_x2;
+    int64_t row_y = row_x1;
+    int64_t col_y = col_x2;
     if (transpose_output) {
-      int temp = col_y;
+      int64_t temp = col_y;
       col_y = row_y;
       row_y = temp;
     }
