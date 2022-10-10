@@ -63,7 +63,7 @@ bool ComputeGraphNode::Initialize() {
   bool success = false;
   if (!enable_ssl) {
     success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
-                                "Failed to register and try to reconnect to the meta server.", kExecuteRetryNum);
+                                "Failed to register and try to reconnect to the meta server.", kCgnExecuteRetryNum);
   } else {
     const auto &server_url = meta_server_addr_.GetUrl();
     size_t retry = 10;
