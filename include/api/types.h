@@ -28,31 +28,35 @@
 
 namespace mindspore {
 enum ModelType : uint32_t {
-  kMindIR = 0,
-  kAIR = 1,
-  kOM = 2,
-  kONNX = 3,
-  kMindIR_Lite = 4,
-  // insert new data type here
-  kUnknownType = 0xFFFFFFFF
+  kMindIR = 0,               ///< Model type is MindIR
+  kAIR = 1,                  ///< Model type is AIR
+  kOM = 2,                   ///< Model type is OM
+  kONNX = 3,                 ///< Model type is ONNX
+  kMindIR_Lite = 4,          ///< Model type is MindIR_LITE
+  kUnknownType = 0xFFFFFFFF  ///< Unknown model type
 };
 
-enum QuantizationType : uint32_t { kNoQuant = 0, kWeightQuant = 1, kFullQuant = 2, kUnknownQuantType = 0xFFFFFFFF };
+enum QuantizationType : uint32_t {
+  kNoQuant = 0,                   ///< Do not quantize
+  kWeightQuant = 1,               ///< Only Quantize weight
+  kFullQuant = 2,                 ///< Quantize whole network
+  kUnknownQuantType = 0xFFFFFFFF  ///< Quantization type unknown
+};
 
 enum OptimizationLevel : uint32_t {
-  kO0 = 0,    // Do not change
-  kO2 = 2,    // Cast network to float16, keep batchnorm and loss in float32,
-  kO3 = 3,    // Cast network to float16, including bacthnorm
-  kAuto = 4,  // Choose optimization based on device
-  kOptimizationType = 0xFFFFFFFF
+  kO0 = 0,                        ///< Do not optimize
+  kO2 = 2,                        ///< Cast network to float16, keep batchnorm and loss in float32,
+  kO3 = 3,                        ///< Cast network to float16, including bacthnorm
+  kAuto = 4,                      ///< Choose optimization based on device
+  kOptimizationType = 0xFFFFFFFF  ///< Unknown optimization type
 };
 
 struct QuantParam {
-  int bit_num;
-  double scale;
-  int32_t zero_point;
-  double min;
-  double max;
+  int bit_num;         ///< Quantization bit num
+  double scale;        ///< Quantization scale
+  int32_t zero_point;  ///< Quantization zero point
+  double min;          ///< Quantization min value
+  double max;          ///< Quantization max value
 };
 
 class Allocator;
