@@ -179,6 +179,7 @@ constexpr auto kExpOpName = "Exp";
 constexpr auto kExtractGlimpse = "ExtractGlimpse";
 constexpr auto kExtractImagePatchesOpName = "ExtractImagePatches";
 constexpr auto kEyeOpName = "Eye";
+constexpr auto kFillOpName = "Fill";
 constexpr auto kFive2FourOpName = "Five2Four";
 constexpr auto kFlattenGradOpName = "FlattenGrad";
 constexpr auto kFour2FiveOpName = "Four2Five";

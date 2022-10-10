@@ -21,22 +21,17 @@
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "abstract/dshape.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFill = "Fill";
-/// \brief Creates a tensor filled with a scalar value. Refer to Python API @ref mindspore.ops.Fill for more details.
 class MIND_API Fill : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Fill);
-  /// \brief Constructor.
-  Fill() : BaseOperator(kNameFill) {}
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Fill for the inputs.
+  Fill() : BaseOperator(kNameFill) { InitIOName({"type", "shape", "value"}, {"y"}); }
   void Init() const {}
 };
-
-abstract::AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
