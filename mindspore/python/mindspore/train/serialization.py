@@ -27,7 +27,6 @@ import threading
 from threading import Thread, Lock
 from collections import defaultdict, OrderedDict
 from io import BytesIO
-from inspect import isfunction
 
 import math
 import sys
@@ -851,9 +850,11 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     Note:
         1. When exporting AIR, ONNX format, the size of a single tensor can not exceed 2GB.
         2. When file_name does not have a suffix, the system will automatically add one according to the file_format.
+        3. Mindspore functions (ms_function) export as mindir format is enabled.
+        4. When export ms_function, the function should not involve class properties in calculations.
 
     Args:
-        net (Cell): MindSpore network.
+        net (Union[Cell, ms_function]): MindSpore network.
         inputs (Union[Tensor, Dataset, List, Tuple, Number, Bool]): It represents the inputs
              of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
              it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
@@ -1157,7 +1158,7 @@ def _cell_info(net, *inputs):
 def _save_mindir(net, file_name, *inputs, **kwargs):
     """Save MindIR format file."""
     model = mindir_model()
-    if isfunction(net):
+    if not isinstance(net, nn.Cell):
         mindir_stream, net_dict = _msfunc_info(net, *inputs)
     else:
         mindir_stream, net_dict = _cell_info(net, *inputs)
