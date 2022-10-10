@@ -21,7 +21,7 @@ mindspore.ops.Primitive
         检查是否可以消除此Primitive。有需要的子类可以重写该方法。
 
         参数：
-            - **args** (Primitive参数的类型) - 与当前Primitive的参数相同。
+            - **args** (Primitive args) - 与当前Primitive的参数相同。
 
         返回：
             由两个元素组成的元组。第一个元素是指是否能在编译阶段计算Primitive，第二个元素是计算结果。
