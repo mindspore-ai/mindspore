@@ -2171,6 +2171,24 @@ def ms_len(data):
     return data.__len__()
 
 
+@constexpr
+def python_len_with_check(data):
+    """Return the result of python built-in len function with iterable check"""
+    if not hasattr(data, "__iter__"):
+        raise TypeError(str(type(data)) + " object is not iterable in graph mode.")
+    return len(data)
+
+
+def ms_len_with_iterable_check(data):
+    """Implementation of `len` with iterable check, used in len of condition."""
+    if not isinstance(data, Tensor) and F.isconstant(data):
+        return python_len_with_check(data)
+    if not hasattr(data, "__len__"):
+        type_str = str(F.typeof(data))
+        const_utils.raise_type_error(type_str + " object is not iterable in graph mode.")
+    return data.__len__()
+
+
 def floor(x):
     """Rounds a tensor down to the closest integer element-wise."""
     return x.__floor__()

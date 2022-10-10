@@ -35,6 +35,7 @@
 #include "pipeline/jit/debug/trace.h"
 #include "mindspore/core/ir/cell.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace parse {
@@ -2120,7 +2121,10 @@ CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter
 FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For by loop variable";
   MS_EXCEPTION_IF_NULL(block);
-  AnfNodePtr op_len = block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
+
+  const py::function len_with_check = python_adapter::GetPyFn(kStandardMethodModelName, kMsLenWithCheck);
+  auto len_with_check_fg = ParsePythonCode(len_with_check);
+  auto op_len_with_check = NewValueNode(len_with_check_fg);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
 
   // Get variable name of 'x' in statement 'for x in xs'
@@ -2134,7 +2138,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   if (iter_node->interpret() && !IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret)) {
     iter_node = HandleInterpret(block, iter_node, iter_obj);
   }
-  CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
+  CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len_with_check, iter_node});
   FunctionBlockPtr header_block = GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
   MS_EXCEPTION_IF_NULL(header_block);
   // Create loop variable 'i'

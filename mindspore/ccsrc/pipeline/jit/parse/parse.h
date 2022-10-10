@@ -50,6 +50,9 @@ enum ParseStatusCode : int64_t {
   PARSE_FAILURE = 0xFF
 };
 
+constexpr char kStandardMethodModelName[] = "mindspore._extends.parse.standard_method";
+constexpr char kMsLenWithCheck[] = "ms_len_with_iterable_check";
+
 // Max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 // will be sunk(i.e. not unrolled)
 // NOTE: Since when the for loop was unrolled, it depends backend operators `tuple_getitem` and `scalar_add` which were

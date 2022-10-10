@@ -156,7 +156,7 @@ def test_single_for_wrong_xs():
 
     with pytest.raises(TypeError) as info:
         control_flow_for()
-    assert "has no len" in str(info.value)
+    assert "object is not iterable in graph mode" in str(info.value)
 
 
 def test_single_for_wrong_xs_2():
@@ -175,4 +175,4 @@ def test_single_for_wrong_xs_2():
 
     with pytest.raises(TypeError) as info:
         control_flow_for()
-    assert "has no len" in str(info.value)
+    assert "object is not iterable in graph mode" in str(info.value)
