@@ -523,12 +523,6 @@ class BaseTimelineGenerator:
     """
     Analyse timeline data from file.
     """
-    __col_names = ['op_name', 'stream_id', 'start_time', 'duration']
-    _output_timeline_data_file_path = 'output_timeline_data_{}.txt'
-    _timeline_meta = []
-    _format_meta_data_list = []
-    _thread_processed_list = []
-
     # AI Core Op pid is device_id
     _AI_CPU_PID = 9000
     _COMMUNICATION_OP_PID = 10000
@@ -550,6 +544,11 @@ class BaseTimelineGenerator:
     _SINGLE_TID = 0
 
     _STEPS_SORT_INDEX = -4
+
+    _output_timeline_data_file_path = 'output_timeline_data_{}.txt'
+    _timeline_meta = []
+    _format_meta_data_list = []
+    _thread_processed_list = []
 
     _map_tid_name_to_int = {
         "Steps": (-4, _STEPS_TID),
@@ -579,6 +578,8 @@ class BaseTimelineGenerator:
     _op_name_list = []
     _device_target = DeviceTarget.ASCEND.value
     _model = context.GRAPH_MODE
+
+    __col_names = ['op_name', 'stream_id', 'start_time', 'duration']
 
     def __init__(self, device_target, model):
         self._tid_dict = {
