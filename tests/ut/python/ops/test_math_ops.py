@@ -407,6 +407,15 @@ class LdexpFunc(nn.Cell):
         return self.ldexp(x, other)
 
 
+class CopysignFunc(nn.Cell):
+    def __init__(self):
+        super(CopysignFunc, self).__init__()
+        self.copysign = ops.copysign
+
+    def construct(self, x, other):
+        return self.copysign(x, other)
+
+
 class HypotFunc(nn.Cell):
     def __init__(self):
         super(HypotFunc, self).__init__()
@@ -678,6 +687,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([1.]), dtype=ms.float32),
                         Tensor(np.array([1, 2, 3, 4]), dtype=ms.int32)],
         'skip': ['backward']
+    }),
+    ('Copysign', {
+        'block': CopysignFunc(),
+        'desc_inputs': [Tensor(np.array([[0.3, -0.7], [0.5, 0.5]])),
+                        Tensor(np.array([[-0.4, 0.6], [0.4, -0.6]]))]
     }),
     ('LogAddExp2', {
         'block': LogAddExp2Func(),
