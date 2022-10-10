@@ -21,6 +21,8 @@ from mindspore.ops import composite as C
 from mindspore.ops.operations.math_ops import Igamma, Igammac
 from mindspore.ops.operations._grad_ops import IgammaGradA
 from mindspore.nn import Cell
+from mindspore.ops import functional as F
+from mindspore.common import dtype as mstype
 
 
 class IgammaNet(Cell):
@@ -197,3 +199,75 @@ def test_igammagrada_fp64():
     output_ms = net(Tensor(a_np), Tensor(x_np))
     expect_output = np.array([[0, 0], [0, 0]])
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-5, 1e-5)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_igamma_functional_api_modes(mode):
+    """
+    Feature: Test igamma functional api.
+    Description: Test igamma functional api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    a = Tensor([2.0, 4.0, 6.0, 8.0], mstype.float32)
+    x = Tensor([2.0, 3.0, 4.0, 5.0], mstype.float32)
+    output = F.igamma(a, x)
+    expected = np.array([0.593994, 0.35276785, 0.21486944, 0.13337152])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_igamma_tensor_api_modes(mode):
+    """
+    Feature: Test igamma tensor api.
+    Description: Test igamma tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    a = Tensor([2.0, 4.0, 6.0, 8.0], mstype.float32)
+    x = Tensor([2.0, 3.0, 4.0, 5.0], mstype.float32)
+    output = a.igamma(x)
+    expected = np.array([0.593994, 0.35276785, 0.21486944, 0.13337152])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_igammac_functional_api_modes(mode):
+    """
+    Feature: Test igamma functional api.
+    Description: Test igamma functional api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    a = Tensor([2.0, 4.0, 6.0, 8.0], mstype.float32)
+    x = Tensor([2.0, 3.0, 4.0, 5.0], mstype.float32)
+    output = F.igammac(a, x)
+    expected = np.array([0.40600586, 0.6472318, 0.7851304, 0.8666283])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_igammac_tensor_api_modes(mode):
+    """
+    Feature: Test igamma tensor api.
+    Description: Test igamma tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    a = Tensor([2.0, 4.0, 6.0, 8.0], mstype.float32)
+    x = Tensor([2.0, 3.0, 4.0, 5.0], mstype.float32)
+    output = a.igammac(x)
+    expected = np.array([0.40600586, 0.6472318, 0.7851304, 0.8666283])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)

@@ -335,6 +335,11 @@ BuiltInTypeMap &GetMethodMap() {
        {"equal", std::string("equal")},                                    // equal()
        {"expm1", std::string("expm1")},                                    // expm1()
        {"dim", prim::kPrimRank},                                           // P.Rank()
+       {"index_add", std::string("index_add")},                            // index_add()
+       {"greater", std::string("greater")},                                // greater()
+       {"greater_equal", std::string("greater_equal")},                    // greater_equal()
+       {"igamma", std::string("igamma")},                                  // igamma()
+       {"igammac", std::string("igammac")},                                // igammac()
      }},
     {kObjectTypeRowTensorType,
      {

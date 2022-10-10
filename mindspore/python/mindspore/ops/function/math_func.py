@@ -56,6 +56,8 @@ from mindspore.ops.operations.math_ops import (
     Sinc,
     SparseSegmentMean,
     InplaceUpdateV2,
+    Igamma,
+    Igammac,
 )
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
@@ -6578,6 +6580,157 @@ def cumprod(input, dim, dtype=None):
     return output
 
 
+def greater(input, other):
+    r"""
+    Computes the boolean value of :math:`input > other` element-wise.
+
+    Args:
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+        >>> output = ops.greater(x, y)
+        >>> print(output)
+        [False True False]
+    """
+    greater_op = _get_cache_prim(P.Greater)()
+    return greater_op(input, other)
+
+
+def greater_equal(input, other):
+    r"""
+    Computes the boolean value of :math:`input >= other` element-wise.
+
+    Args:
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+        >>> output = ops.greater_equal(x, y)
+        >>> print(output)
+        [True True False]
+    """
+    greater_equal_op = _get_cache_prim(P.GreaterEqual)()
+    return greater_equal_op(input, other)
+
+
+def igamma(input, other):
+    r"""
+    Calculates lower regularized incomplete Gamma function.
+    If we define `input` as `a` and `other` as `x`, the lower regularized incomplete Gamma function is defined as:
+
+    .. math::
+        P(a, x) = gamma(a, x) / Gamma(a) = 1 - Q(a, x)
+
+    where
+
+    .. math::
+        gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
+
+    is the lower incomplete Gamma function.
+
+    Above :math:`Q(a, x)` is the upper regularized complete Gamma function.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        input (Tensor): The first input tensor. With type of float32 or float64.
+        other (Tensor): The second input tensor. With float32 or float64 type. `other` should have
+          the same dtype with `input`.
+
+    Outputs:
+        Tensor, has the same dtype as `input` and `other`.
+
+    Raises:
+        TypeError: If `input` or `other` is not a Tensor.
+        TypeError: If dtype of input `other` and a is not float32 nor float64.
+        TypeError: If `other` has different dtype with `input`.
+        ValueError: If `input` could not be broadcast to a tensor with shape of `other`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+        >>> output = ops.igamma(a, x)
+        >>> print(output)
+        [0.593994 0.35276785 0.21486944 0.13337152]
+    """
+    igamma_op = _get_cache_prim(Igamma)()
+    return igamma_op(input, other)
+
+
+def igammac(input, other):
+    r"""
+    Calculates upper regularized incomplete Gamma function.
+
+    If we define `input` as `a` and `other` as `x`, the upper regularized incomplete Gamma function is defined as:
+    \(Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)\)
+    where
+    \(Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt\)
+    is the upper incomplete Gama function.
+
+    Note, above P(a, x) (Igamma) is the lower regularized complete Gamma function.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        input (Tensor): The first input tensor. With type of float32 or float64.
+        other (Tensor): The second input tensor. With float32 or float64 type. `other` should have
+          the same dtype with `input`.
+
+    Outputs:
+        Tensor, has the same dtype as `input` and `other`.
+
+    Raises:
+        TypeError: If `input` or `other` is not a Tensor.
+        TypeError: If dtype of input `other` and a is not float32 nor float64.
+        TypeError: If `other` has different dtype with `input`.
+        ValueError: If `input` could not be broadcast to a tensor with shape of `other`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+        >>> output = ops.igammac(a, x)
+        >>> print (output)
+        [0.40600586 0.6472318 0.7851304 0.8666283]
+    """
+    igammac_op = _get_cache_prim(Igammac)()
+    return igammac_op(input, other)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -6734,5 +6887,9 @@ __all__ = [
     'erfinv',
     'less_equal',
     'cumprod',
+    'greater',
+    'greater_equal',
+    'igamma',
+    'igammac',
 ]
 __all__.sort()

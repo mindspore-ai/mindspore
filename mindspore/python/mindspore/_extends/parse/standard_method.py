@@ -26,6 +26,7 @@ from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _r
     _count, _extend, _dict_clear, _haskey, _update, _fromkeys
 
 from ..._checkparam import Validator as validator
+from ..._checkparam import check_is_number
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
@@ -3420,3 +3421,45 @@ def expm1(input_x):
     Computes exponential then minus 1 of a tensor element-wise.
     """
     return F.expm1(input_x)
+
+
+@constexpr
+def _check_index_add_alpha(alpha):
+    check_is_number(alpha, (int, float))
+
+
+def index_add(input, dim, index, source, *, alpha=1):
+    r"""
+    Adds tensor `alpha` times `source`  to specified `dim` and `index` of input tensor.
+    """
+    _check_index_add_alpha(alpha)
+    source = source * alpha
+    return F.index_add(input, indices=index, y=source, axis=dim)
+
+
+def greater(input, other):
+    r"""
+    Computes the boolean value of :math:`input > other` element-wise.
+    """
+    return F.greater(input, other)
+
+
+def greater_equal(input, other):
+    r"""
+    Computes the boolean value of :math:`input >= other` element-wise.
+    """
+    return F.greater_equal(input, other)
+
+
+def igamma(input, other):
+    r"""
+    Computes lower regularized incomplete Gamma function.
+    """
+    return F.igamma(input, other)
+
+
+def igammac(input, other):
+    r"""
+    Computes upper regularized incomplete Gamma function.
+    """
+    return F.igammac(input, other)
