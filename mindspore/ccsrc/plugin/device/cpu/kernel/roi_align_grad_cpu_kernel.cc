@@ -165,7 +165,7 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return ret;
   }
   if (is_xdiff_shape_dyn_) {
-    get_xdiff_shape_value_ = GetDynamicAttrIntValue(inputs, kIndex2, inputsOnHost, kernel_name_, &xdiff_shape_);
+    get_xdiff_shape_value_ = GetDynamicAttrIntValue(inputs, kIndex2, inputsOnHost, kernel_name_, &xdiff_shape_, false);
     if (!get_xdiff_shape_value_) {
       return KRET_OK;
     }

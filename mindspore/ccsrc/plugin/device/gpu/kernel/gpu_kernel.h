@@ -449,6 +449,28 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
     return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end());
   }
 
+  inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index,
+                                                const std::string &kernel_name) {
+    std::vector<int64_t> tensor_value;
+    MS_EXCEPTION_IF_NULL(input_tensor);
+    size_t data_size = input_tensor->DataSize();
+    auto tensor_type = input_tensor->Dtype();
+    if (tensor_type->type_id() == kNumberTypeInt32) {
+      auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      tensor_value.assign(tensor_data, tensor_data + data_size);
+    } else if (tensor_type->type_id() == kNumberTypeInt64) {
+      auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      tensor_value.assign(tensor_data, tensor_data + data_size);
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name << "', the " << input_index
+                              << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
+                              << input_tensor->ToString();
+    }
+    return tensor_value;
+  }
+
   inline bool GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index,
                                      std::vector<int64_t> *attr_value,
                                      const std::map<uint32_t, tensor::TensorPtr> &depends) {
