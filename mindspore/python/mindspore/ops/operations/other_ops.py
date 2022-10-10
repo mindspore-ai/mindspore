@@ -113,20 +113,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
     This operator will calculate the offset between the predicted bounding boxes and the real bounding boxes,
     and this offset will be used as a variable for the loss.
 
-    Args:
-        means (tuple): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
-
-    Inputs:
-        - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be (n, 4).
-        - **groundtruth_box** (Tensor) - Ground truth boxes. Which has the same shape with anchor_box.
-
-    Outputs:
-        Tensor, encoded bounding boxes. It has the same data type and shape as input `anchor_box`.
-
-    Raises:
-        TypeError: If `means` or `stds` is not a tuple.
-        TypeError: If `anchor_box` or `groundtruth_box` is not a Tensor.
+    Refer to :func:`mindspore.ops.boundingbox_encode` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -140,7 +127,6 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         [[ -1.  0.25  0.  0.40551758]
          [ -1.  0.25  0.  0.40551758]]
     """
-
     @prim_attr_register
     def __init__(self, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
         """Initialize BoundingBoxEncode."""
@@ -223,23 +209,7 @@ class BoundingBoxDecode(Primitive):
     The function of the operator is to calculate the offset, and this operator converts the offset into a Bbox,
     which is used to mark the target in the subsequent images, etc.
 
-    Args:
-        means (tuple): The means of deltas calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
-        max_shape (tuple): The max size limit for decoding box calculation.
-        wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
-
-    Inputs:
-        - **anchor_box** (Tensor) - Anchor boxes. The shape of `anchor_box` must be (n, 4).
-        - **deltas** (Tensor) - Delta of boxes. Which has the same shape with `anchor_box`.
-
-    Outputs:
-        Tensor, decoded boxes. It has the same data type and shape as `anchor_box`.
-
-    Raises:
-        TypeError: If `means`, `stds` or `max_shape` is not a tuple.
-        TypeError: If `wh_ratio_clip` is not a float.
-        TypeError: If `anchor_box` or `deltas` is not a Tensor.
+    Refer to :func:`mindspore.ops.boundingbox_decode` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -255,7 +225,6 @@ class BoundingBoxDecode(Primitive):
          [ 2.140625   0.         3.859375  60.59375  ]]
 
     """
-
     @prim_attr_register
     def __init__(self, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0), wh_ratio_clip=0.016):
         """Initialize BoundingBoxDecode."""

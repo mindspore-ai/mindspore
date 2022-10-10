@@ -22,6 +22,8 @@ mindspore.ops.function
     mindspore.ops.avg_pool3d
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
+    mindspore.ops.boundingbox_encode
+    mindspore.ops.boundingbox_decode
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.conv2d
     mindspore.ops.conv3d
