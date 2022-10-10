@@ -20,7 +20,6 @@
 
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
-#include "pipeline/jit/pipeline.h"
 #endif
 
 namespace mindspore {
