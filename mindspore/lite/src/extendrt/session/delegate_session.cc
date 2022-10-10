@@ -31,17 +31,21 @@ constexpr auto kAscendProviderGe = "ge";
 }  // namespace
 
 GraphSinkSession::~GraphSinkSession() {
+#ifdef ENABLE_HELPER
   DelegateRegistry::GetInstance().UnRegDelegate(kAscend, kAscendProviderGe);
   ge_context_->Destroy();
+#endif
 }
 
 Status GraphSinkSession::GeDeviceContextInit() {
+#ifdef ENABLE_HELPER
   ge_context_ = std::make_shared<GeDeviceContext>();
   if (ge_context_ == nullptr) {
     MS_LOG(ERROR) << "Create GeDeviceContext failed.";
     return kLiteUninitializedObj;
   }
   ge_context_->Initialize();
+#endif
   return kSuccess;
 }
 
