@@ -17,6 +17,6 @@ mindspore.reset_auto_parallel_context
     - strategy_ckpt_save_file：''。
     - full_batch：False。
     - enable_parallel_optimizer：False。
-    - enable_alltoall: False。
+    - enable_alltoall：False。
     - pipeline_stages：1。
-    - fusion_threshold: 64。
+    - fusion_threshold：64。
