@@ -47,7 +47,7 @@ int Convolution1x1CPUKernel::ReSize() {
   }
   error_code = InitConv1x1MatmulParam();
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Convolution Matmul parameters init failed.";
+    MS_LOG(ERROR) << "init convolution 1x1(matmul) parameters failed.";
     return error_code;
   }
   error_code = InitConv1x1Param();

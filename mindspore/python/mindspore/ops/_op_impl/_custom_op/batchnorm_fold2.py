@@ -78,7 +78,7 @@ def batchnorm_fold2(x, beta, gamma, batch_std, batch_mean, running_std, y, kerne
     util.check_shape_size(shape, SHAPE_SIZE_LIMIT)
     check_list = ["float16", "float32"]
     inp_dtype = x.get("dtype").lower()
-    if not inp_dtype in check_list:
+    if inp_dtype not in check_list:
         raise RuntimeError("Dtype of input only support float16, float32")
     data_format = x.get("format")
     ori_format = x.get("ori_format")
