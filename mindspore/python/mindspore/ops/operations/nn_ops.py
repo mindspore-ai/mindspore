@@ -893,14 +893,15 @@ class Elu(Primitive):
         alpha (float): The alpha value of ELU, the data type is float. Only support '1.0' currently. Default: 1.0.
 
     Inputs:
-        - **input_x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of float16 or float32.
+        - **input_x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of
+        float16, float32 or float64.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
 
     Raises:
         TypeError: If `alpha` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is neither float16, float32 nor float64.
         ValueError: If `alpha` is not equal to 1.0.
 
     Supported Platforms:

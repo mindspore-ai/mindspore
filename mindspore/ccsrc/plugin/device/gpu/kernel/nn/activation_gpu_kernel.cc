@@ -46,7 +46,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
     {kElu,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &ActivationFwdGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationFwdGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
@@ -99,7 +101,8 @@ bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   mode_ = mode_iter->second;
 
   const auto dtype = inputs.at(kIndex0)->GetDtype();
-  if ((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) {
+  if ((dtype == kNumberTypeFloat64 && kernel_name_ != kElu) || (dtype == kNumberTypeComplex64) ||
+      (dtype == kNumberTypeComplex128)) {
     is_additional_dtype_ = true;
   }
   return true;
@@ -185,7 +188,6 @@ bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
                                              const std::vector<kernel::AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-
   if (is_additional_dtype_) {
     if (kernel_name_ == kTanh) {
       Tanh(input, output, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
@@ -195,11 +197,21 @@ bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     return true;
   }
 
-  constexpr float alpha = 1;
-  constexpr float beta = 0;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_,
-                                                             input, &beta, data_descriptor_, output),
-                                      "For 'Activation', cudnnActivationForward failed.");
+  if constexpr (std::is_same_v<T, double>) {
+    constexpr double alpha = 1.0;
+    constexpr double beta = 0.0;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, input, &beta, data_descriptor_,
+                             output),
+      "For 'Activation', cudnnActivationForward failed.");
+  } else {
+    constexpr float alpha = 1.0;
+    constexpr float beta = 0.0;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, input, &beta, data_descriptor_,
+                             output),
+      "For 'Activation', cudnnActivationForward failed.");
+  }
 
   return true;
 }
