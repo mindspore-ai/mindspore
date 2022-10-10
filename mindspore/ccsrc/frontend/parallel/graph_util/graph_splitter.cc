@@ -1381,8 +1381,23 @@ void GraphSplitter::AddDataSyncNode(const CNodePtr &side_effect_node, const CNod
     std::set<OperatorLabel> diff_labels;
     for (const auto &user : func_graph_->manager()->node_users()[ref]) {
       const auto &user_node = user.first;
+      MS_LOG(DEBUG) << "The user of ref " << ref->fullname_with_scope() << " is " << user_node->fullname_with_scope()
+                    << ", side-effect node label: " << side_effect_node_label.to_string()
+                    << ", user node label: " << node_labels_[user_node].to_string();
       if (node_labels_[user_node] != side_effect_node_label) {
         diff_labels.insert(node_labels_[user_node]);
+      } else {
+        // If the user node is Load, we need to find one next user of it so the node could be correctly split.
+        if (IsPrimitiveCNode(user_node, prim::kPrimLoad)) {
+          for (const auto &load_user : func_graph_->manager()->node_users()[user_node]) {
+            const auto &load_user_node = load_user.first;
+            MS_LOG(DEBUG) << "Load user is " << load_user_node
+                          << ", label: " << node_labels_[load_user_node].to_string();
+            if (node_labels_[load_user_node] != side_effect_node_label) {
+              diff_labels.insert(node_labels_[load_user_node]);
+            }
+          }
+        }
       }
     }
     // If the ref is used in multiple compute graph nodes, it needs to be synchronized.
