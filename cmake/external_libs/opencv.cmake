@@ -44,7 +44,7 @@ endif()
 if(MSVC)
     mindspore_add_pkg(opencv
             VER 4.5.2
-            LIBS opencv_core452.lib opencv_imgcodecs452.lib opencv_imgproc452.lib
+            LIBS opencv_core452 opencv_imgcodecs452 opencv_imgproc452
             LIB_PATH x64/*/lib
             URL ${REQ_URL}
             MD5 ${MD5}
@@ -126,9 +126,9 @@ endif()
 
 if(MSVC)
     include_directories(${opencv_INC})
-    add_library(mindspore::opencv_core ALIAS opencv::opencv_core452.lib)
-    add_library(mindspore::opencv_imgcodecs ALIAS opencv::opencv_imgcodecs452.lib)
-    add_library(mindspore::opencv_imgproc ALIAS opencv::opencv_imgproc452.lib)
+    add_library(mindspore::opencv_core ALIAS opencv::opencv_core452)
+    add_library(mindspore::opencv_imgcodecs ALIAS opencv::opencv_imgcodecs452)
+    add_library(mindspore::opencv_imgproc ALIAS opencv::opencv_imgproc452)
 elseif(WIN32)
     include_directories(${opencv_INC})
     add_library(mindspore::opencv_core ALIAS opencv::libopencv_core452.dll.a)
