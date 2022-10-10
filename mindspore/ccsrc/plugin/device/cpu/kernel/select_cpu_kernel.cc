@@ -62,9 +62,12 @@ bool SelectCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   auto *input_x = reinterpret_cast<T *>(inputs[1]->addr);
   auto *input_y = reinterpret_cast<T *>(inputs[2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  for (size_t pos = 0; pos < element_num_; pos++) {
-    output[pos] = input_cond[pos] ? input_x[pos] : input_y[pos];
-  }
+  auto task = [&input_x, &input_y, &output, &input_cond](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      output[i] = input_cond[i] ? input_x[i] : input_y[i];
+    }
+  };
+  ParallelLaunchAutoSearch(task, element_num_, this, &parallel_search_info_);
   return true;
 }
 
