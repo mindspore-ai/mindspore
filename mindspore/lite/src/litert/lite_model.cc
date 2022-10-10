@@ -242,6 +242,35 @@ int LiteModel::SubGraphVerify() const {
   return RET_OK;
 }
 
+int LiteModel::GraphInOutVerify() const {
+  std::unordered_set<uint32_t> all_subgraphs_inputs;
+  std::unordered_set<uint32_t> all_subgraphs_outputs;
+  for (auto subgraph : this->graph_.sub_graphs_) {
+    for (auto input_idx : subgraph->input_indices_) {
+      all_subgraphs_inputs.emplace(input_idx);
+    }
+    for (auto output_idx : subgraph->output_indices_) {
+      all_subgraphs_outputs.emplace(output_idx);
+    }
+  }
+
+  for (auto input_idx : this->graph_.input_indices_) {
+    if (all_subgraphs_inputs.count(input_idx) == 0) {
+      MS_LOG(ERROR) << "The graph input is not valid.";
+      return RET_ERROR;
+    }
+  }
+
+  for (auto output_idx : this->graph_.output_indices_) {
+    if (all_subgraphs_outputs.count(output_idx) == 0) {
+      MS_LOG(ERROR) << "The graph output is not valid.";
+      return RET_ERROR;
+    }
+  }
+
+  return RET_OK;
+}
+
 int LiteModel::SubGraphInOutVerify(const LiteGraph::SubGraph *graph) const {
   auto from_node = [&, this](uint32_t cur_idx) -> bool {
     for (auto node_idx : graph->node_indices_) {
@@ -326,6 +355,11 @@ bool LiteModel::ModelVerify() const {
   if (std::any_of(graph_.output_indices_.begin(), graph_.output_indices_.end(),
                   [&all_tensors_size](const uint32_t &idx) { return idx >= all_tensors_size; })) {
     MS_LOG(ERROR) << "Graph output indices is beyond tensor_size.";
+    return false;
+  }
+
+  if (GraphInOutVerify() != RET_OK) {
+    MS_LOG(ERROR) << "The model has invalid input and output.";
     return false;
   }
 
