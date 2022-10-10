@@ -43,8 +43,8 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
                             << input_args[1]->BuildType()->ToString() << " .";
   }
   for (auto p : p_value_raw) {
-    p = (p >= 0) ? p : (p_value_raw.size() + p);
-    p_value.emplace_back(p);
+    p = (p >= 0) ? p : (SizeToLong(p_value_raw.size()) + p);
+    (void)p_value.emplace_back(p);
   }
   if (x_shape.size() != p_value.size()) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dimension of x " << x_shape.size() << " and perm "

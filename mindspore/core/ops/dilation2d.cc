@@ -74,12 +74,6 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   std::string pad_mode = GetValue<std::string>(primitive->GetAttr("pad_mode"));
   std::vector<int64_t> kernel_size{filter_shape[h_axis - 1], filter_shape[w_axis - 1]};
   int64_t depth = filter_shape[c_axis - 1];
-  // if (depth != x_shape[c_axis]) {
-  //   MS_EXCEPTION(ValueError) << "For " << prim_name
-  //                            << ", the number of input channels for x must be the same as the depth of filter, but
-  //                            got "
-  //                            << x_shape[c_axis] << " vs " << depth;
-  // }
   std::vector<int64_t> stride = GetValue<std::vector<int64_t>>(primitive->GetAttr("stride"));
   std::vector<int64_t> dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr("dilation"));
   int window_h = static_cast<int>((kernel_size[0] - 1) * dilation[h_axis] + 1);
@@ -108,10 +102,10 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   }
   std::vector<int64_t> output_hw;
   if (pad_mode == "VALID") {
-    output_hw.push_back(static_cast<int64_t>(
-      std::ceil(((x_shape[h_axis] * 1.0) - dilation[h_axis] * (kernel_size[0] - 1)) / stride[h_axis])));
-    output_hw.push_back(static_cast<int64_t>(
-      std::ceil(((x_shape[w_axis] * 1.0) - dilation[w_axis] * (kernel_size[1] - 1)) / stride[w_axis])));
+    output_hw.push_back(static_cast<int64_t>(std::ceil(
+      ((x_shape[h_axis] * 1.0) - dilation[h_axis] * (kernel_size[0] - 1)) / static_cast<double>(stride[h_axis]))));
+    output_hw.push_back(static_cast<int64_t>(std::ceil(
+      ((x_shape[w_axis] * 1.0) - dilation[w_axis] * (kernel_size[1] - 1)) / static_cast<double>(stride[w_axis]))));
   } else if (pad_mode == "SAME") {
     output_hw.push_back(static_cast<int64_t>(std::ceil((x_shape[h_axis] * 1.0) / stride[h_axis])));
     output_hw.push_back(static_cast<int64_t>(std::ceil((x_shape[w_axis] * 1.0) / stride[w_axis])));

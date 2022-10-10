@@ -72,8 +72,8 @@ class EmbeddingLookupInfer : public abstract::OpInferBase {
     auto indices_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, kInputIndex1);
     MS_EXCEPTION_IF_NULL(indices_shape_ptr);
     auto indices_shape = indices_shape_ptr->shape();
-    (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of indices ", indices_shape.size(), kGreaterThan, 0,
-                                                    op_name);
+    (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of indices ", SizeToLong(indices_shape.size()),
+                                                    kGreaterThan, 0, op_name);
 
     ShapeVector out_shape;
     if (!params_shape_ptr->IsDimUnknown() && !indices_shape_ptr->IsDimUnknown()) {

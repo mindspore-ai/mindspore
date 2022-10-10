@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t kMaxShapeAdaptiveAvgPool3DGrap = 100;
-abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive,
+abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto orig_input_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
@@ -51,7 +51,7 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive
       auto orig_input_shape_tensor = orig_input_shape_value->cast<tensor::TensorPtr>();
       auto value = static_cast<int32_t *>(orig_input_shape_tensor->data_c());
       MS_EXCEPTION_IF_NULL(value);
-      for (int64_t i = 0; i < input_grad_dims; ++i) {
+      for (size_t i = 0; i < LongToSize(input_grad_dims); ++i) {
         orig_input_shape_value_vec[i] = value[i] > 0 ? static_cast<int64_t>(value[i]) : static_cast<int64_t>(1);
       }
       gen_value_succ = true;
@@ -75,7 +75,7 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive
   }
 }
 
-TypePtr InferTypeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferTypeAdaptiveAvgPool3DGrad(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_grad_dtype = input_args[0]->BuildType();
   auto orig_input_shape_dtype = input_args[1]->BuildType();
   const std::set<TypePtr> input_grad_valid = {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kFloat64};

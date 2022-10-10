@@ -38,11 +38,11 @@ abstract::ShapePtr CompareAndBitpackInferShape(const PrimitivePtr &primitive,
   const size_t kShapeSize_ = 0;
   const size_t divisible_num = 8;
   auto threshold_shape_size = threshold_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("threshold's rank'", SizeToLong(threshold_shape_size), kEqual, kShapeSize_,
+  (void)CheckAndConvertUtils::CheckInteger("threshold's rank'", threshold_shape_size, kEqual, kShapeSize_,
                                            primitive->name());
 
   // Input should be at least a vector
-  (void)CheckAndConvertUtils::CheckInteger("x's rank'", SizeToLong(x_rank), kNotEqual, kShapeSize_, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("x's rank'", x_rank, kNotEqual, kShapeSize_, primitive->name());
 
   // check the innermost dimension of `x`'s shape is disvisible by 8.
   if (x_shape[x_rank - 1] != -1) {
