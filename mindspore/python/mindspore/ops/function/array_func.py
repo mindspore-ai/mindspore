@@ -151,6 +151,43 @@ def eye(n, m, t):
     return eye_(n, m, t)
 
 
+def reverse(x, axis):
+    """
+    Reverses specific dimensions of a tensor.
+
+    .. warning::
+        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+
+    Args:
+        - **x** (Tensor) - The target tensor. The data type is Number except float64.
+        The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **axis** (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
+
+    Outputs:
+        Tensor, has the same shape and type as `x`.
+
+    Raises:
+        TypeError: If `axis` is neither list nor tuple.
+        TypeError: If element of `axis` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
+        >>> output = ops.reverse(input_x, axis=[1])
+        >>> print(output)
+        [[4 3 2 1]
+         [8 7 6 5]]
+        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
+        >>> output = ops.reverse(input_x, axis=[1, 0])
+        >>> print(output)
+        [[8 7 6 5]
+         [4 3 2 1]]
+    """
+    return P.ReverseV2(axis)(x)
+
+
 def matrix_band_part(x, lower, upper):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
@@ -4770,6 +4807,7 @@ __all__ = [
     'ones_like',
     'shape',
     'shape_',
+    'reverse',
     'reverse_sequence',
     'dyn_shape',
     'rank',

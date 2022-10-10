@@ -2258,6 +2258,41 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('amin')(self, axis, keep_dims)
 
+    def reverse(self, axis):
+        """
+        Reverses specific dimensions of a tensor.
+
+        .. warning::
+            The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+
+        Args:
+            - **axis** (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
+
+        Outputs:
+            Tensor, has the same shape and type as `x`.
+
+        Raises:
+            TypeError: If `axis` is neither list nor tuple.
+            TypeError: If element of `axis` is not an int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
+            >>> output = input_x.reverse(axis=[1])
+            >>> print(output)
+            [[4 3 2 1]
+             [8 7 6 5]]
+            >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
+            >>> output = input_x.reverse(axis=[1, 0])
+            >>> print(output)
+            [[8 7 6 5]
+             [4 3 2 1]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('reverse')(axis)(self)
+
     def amax(self, axis=(), keep_dims=False):
         """
         Reduces a dimension of a tensor by the maximum value in the dimension, by default. And also can

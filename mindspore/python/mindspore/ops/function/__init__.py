@@ -45,6 +45,7 @@ from .array_func import (
     rank,
     reshape,
     reshape_,
+    reverse,
     reverse_sequence,
     flatten,
     concat,

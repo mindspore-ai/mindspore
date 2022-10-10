@@ -15,10 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/reversev2_cpu_kernel.h"
-
+#include <map>
 #include <algorithm>
 #include <utility>
-
 #include "Eigen/Core"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
@@ -31,20 +30,11 @@ constexpr size_t kReverseV2OutputsNum = 1;
 constexpr int64_t kInputDim = 9;
 }  // namespace
 
-void ReverseV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (common::AnfAlgo::HasNodeAttr("axis", kernel_node)) {
-    axis_shape_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "axis");
-  }
-  input_dims_ = input_shape_.size();
-  axis_dims_ = axis_shape_.size();
-  if (input_dims_ >= kInputDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should less than " << kInputDim
-                      << ", but got " << input_dims_;
-  }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool ReverseV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "For ReverseV2, ReverseV2 type should be uint8_t, uint16_t, int8_t, int16_t, "
@@ -52,6 +42,26 @@ void ReverseV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int ReverseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
+  if (base_operator->HasAttr("axis")) {
+    axis_shape_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr("axis"));
+  }
+  input_dims_ = input_shape_.size();
+  axis_dims_ = axis_shape_.size();
+  if (input_dims_ >= kInputDim) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should less than " << kInputDim
+                      << ", but got " << input_dims_;
+  }
+  return KRET_OK;
 }
 
 template <typename T>
