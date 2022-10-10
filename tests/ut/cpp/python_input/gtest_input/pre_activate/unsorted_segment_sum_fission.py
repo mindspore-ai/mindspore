@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
+from mindspore.common.tensor import Tensor
+import mindspore.common.dtype as mstype
 
 make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
@@ -23,6 +25,8 @@ num_segments = 4
 padding = Primitive('Padding')
 op_slice = Primitive('Slice')
 op_unsorted_segment_sum = Primitive('UnsortedSegmentSumD')
+begin_value = Tensor((0, 0, 0), mstype.int64)
+size_value = Tensor((4, 39, 1), mstype.int64)
 
 
 class FnDict:
@@ -48,7 +52,7 @@ def test_unsorted_segment_sum_fission(tag):
     def after1(input0, input1):
         x = padding(input0)
         x = op_unsorted_segment_sum(x, input1)
-        x = op_slice(x)
+        x = op_slice(x, begin_value, size_value)
         return make_tuple(x)
 
     @fns

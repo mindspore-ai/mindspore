@@ -114,16 +114,16 @@ CNodePtr UnsortedSegmentSumDFission::CreateSlice(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(unsort_segment_sum);
   MS_EXCEPTION_IF_NULL(unsorted_segment_sum8);
+  auto orig_sum_shape = common::AnfAlgo::GetOutputInferShape(unsort_segment_sum, 0);
+  std::vector<int64_t> offsets(orig_sum_shape.size(), 0);
+  auto offsets_input = CreateShapeValueNode(graph, offsets, true);
+  auto size_input = CreateShapeValueNode(graph, orig_sum_shape, true);
   std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)),
-                                          unsorted_segment_sum8};
+                                          unsorted_segment_sum8, offsets_input, size_input};
   auto slice = NewCNode(slice_inputs, graph);
   MS_EXCEPTION_IF_NULL(slice);
   slice->set_scope(unsort_segment_sum->scope());
   slice->set_abstract(unsort_segment_sum->abstract());
-  auto unsort_segment_sum_shape = common::AnfAlgo::GetOutputInferShape(unsort_segment_sum, 0);
-  std::vector<size_t> offsets(unsort_segment_sum_shape.size(), 0);
-  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
-  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(unsort_segment_sum_shape), slice);
   return slice;
 }
 
