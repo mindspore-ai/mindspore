@@ -3,7 +3,7 @@ mindspore.ops.ExtractVolumePatches
 
 .. py:class:: mindspore.ops.ExtractVolumePatches(kernel_size, strides, padding)
 
-    提取立体中的一块数据，是 :class:`mindspore.ops.ExtractImagePatches` 的3D格式扩展。
+    从输入中提取数据，并将它放入"depth"输出维度中。
 
     参数：
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 长度为3或5的int列表。输入每个维度表示滑动窗口大小。必须是：[1, 1, k_d, k_h, k_w]或[k_d, k_h, k_w]。如果k_d = k_h = k_w，则可以输入整数。
