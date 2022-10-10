@@ -49,14 +49,15 @@ class OptimizeResults(NamedTuple):
 
 def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bounds=None, constraints=(),
              tol=None, callback=None, options=None):
-    """Minimization of scalar function of one or more variables.
+    r"""
+    Minimization of scalar function of one or more variables.
 
     This API for this function matches SciPy with some minor deviations:
 
     - Gradients of ``func`` are calculated automatically using MindSpore's autodiff
       support when the value of jac is None.
     - The ``method`` argument is required. A exception will be thrown if you don't specify a solver.
-    - Various optional arguments `"hess"` `"hessp"` `"bounds"` `"constraints"` `"tol"` `"callback" `
+    - Various optional arguments `"hess"` `"hessp"` `"bounds"` `"constraints"` `"tol"` `"callback"`
       in the SciPy interface have not yet been implemented.
     - Optimization results may differ from SciPy due to differences in the line
       search implementation.
@@ -67,30 +68,30 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
 
         - `minimize` is not supported on Windows platform yet.
 
-    Parameters:
-      func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
-          where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
-          of the fixed parameters needed to completely specify the function.
-          `fun` must support differentiation if jac is None.
-      x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
-          the number of independent variables.
-      args (Tuple): extra arguments passed to the objective function. Default: ().
-      method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`.
-      jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
-          if it is None, the gradient will be estimated with gradient of ``func``.
-          if it is a callable, it should be a function that returns the gradient vector:
-              :math:`jac(x, *args) -> array_like, shape (n,)`
-          where x is an array with shape (n,) and args is a tuple with the fixed parameters.
-      tol (float, optional): tolerance for termination. For detailed control, use solver-specific
-          options. Default: None.
-      options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
-          generic options, Default: None.
+    Args:
+        func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
+            where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
+            of the fixed parameters needed to completely specify the function.
+            `fun` must support differentiation if jac is None.
+        x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
+            the number of independent variables.
+        args (Tuple): extra arguments passed to the objective function. Default: ().
+        method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`.
+        jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
+            if it is None, the gradient will be estimated with gradient of ``func``.
+            if it is a callable, it should be a function that returns the gradient vector:
+            :math:`jac(x, *args) -> array\_like, shape (n,)`
+            where x is an array with shape (n,) and args is a tuple with the fixed parameters.
+        tol (float, optional): tolerance for termination. For detailed control, use solver-specific
+            options. Default: None.
+        options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
+            generic options, Default: None.
 
-          - history_size (int): size of buffer used to help to update inv hessian, only used with method="LBFGS".
-            Default: 20.
+            - history_size (int): size of buffer used to help to update inv hessian, only used with method="LBFGS".
+              Default: 20.
 
-          - maxiter (int): Maximum number of iterations to perform. Depending on the
-            method each iteration may use several function evaluations.
+            - maxiter (int): Maximum number of iterations to perform. Depending on the
+              method each iteration may use several function evaluations.
 
     Returns:
         OptimizeResults, object holding optimization results.
