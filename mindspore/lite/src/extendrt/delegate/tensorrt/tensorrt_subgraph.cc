@@ -300,7 +300,7 @@ nvinfer1::Dims TensorRTSubGraph::SetInputDimsProfile(const TensorInfo &in_tensor
 
 nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const TensorInfo &in_tensor, int index) {
   nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
-  if (input_batchsize_index_ != -1) {
+  if (input_batchsize_index_ != -1 && input_dims.d[0] != 1) {
     input_dims.d[0] = -1;
   }
   // only support NHWC HW dim resize

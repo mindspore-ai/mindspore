@@ -97,6 +97,7 @@ int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "create transpose_in_layer failed for " << op_name_;
     return RET_ERROR;
   }
+  this->layer_ = transpose_in_layer;
   nvinfer1::Permutation transpose_perm{{1, 0, INPUT_SIZE_INDEX}};
   transpose_in_layer->setFirstTranspose(transpose_perm);
   transpose_in_layer->setName((op_name_ + "transpose_in").c_str());
