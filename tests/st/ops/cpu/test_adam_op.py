@@ -230,7 +230,7 @@ def test_apply_adam_witm_adam_op_vmap():
     def cal_amsgrad(var, m, v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
         return P.Adam()(var, m, v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
 
-    error = 1e-4
+    error = 1e-3
     grad_np = np.random.randn(*shape).astype(np.float32)
     grad = Tensor(grad_np)
 
