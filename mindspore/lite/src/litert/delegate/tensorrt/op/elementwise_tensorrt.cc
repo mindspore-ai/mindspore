@@ -266,7 +266,9 @@ int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   nvinfer1::ITensor *constant_input =
     ConvertConstantTensorWithDims(ctx, in_tensors_[const_tensor_index], expect_shape, op_name_);
   CHECK_NULL_RETURN(constant_input);
-  auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true};
+  bool is_tensor = !in_tensors_[const_tensor_index].Shape().empty();
+  auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_,
+                                    input(ctx, 1 - const_tensor_index).same_format_, is_tensor};
   ctx->RegisterTensor(const_helper, in_tensors_[const_tensor_index].Name());
   return RET_OK;
 }
