@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,8 @@ static std::map<std::string, cudnnDataType_t> kCudnnDtypeMap = {
   {"UInt8", CUDNN_DATA_UINT8}};
 // Used by mixprecision, cuda dtype select
 static std::map<std::string, cudaDataType_t> kCudaDtypeMap = {
-  {"Float64", CUDA_R_64F}, {"Float32", CUDA_R_32F}, {"Float16", CUDA_R_16F}, {"Complex64", CUDA_C_32F}};
+  {"Float64", CUDA_R_64F},    {"Float32", CUDA_R_32F}, {"Float16", CUDA_R_16F}, {"Complex64", CUDA_C_32F},
+  {"Complex128", CUDA_C_64F}, {"Int8", CUDA_R_8I},     {"Int32", CUDA_R_32I}};
 }  // namespace kernel
 }  // namespace mindspore
 

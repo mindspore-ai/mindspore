@@ -54,8 +54,9 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
   dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
   dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
-  if (dtype_a_ != dtype_b_ || dtype_a_ != dtype_c_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input and output types are not the same.";
+
+  if (dtype_a_ != dtype_b_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the types of inputs are not the same.";
   }
   if (dtype_a_ == CUDA_R_16F && dtype_b_ == CUDA_R_16F && dtype_c_ == CUDA_R_16F) {
     MS_LOG(INFO) << "input and output type is float16, allow to use Tensor Core operations if possible";
@@ -107,6 +108,24 @@ int MatMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
+#if CUDA_VERSION >= 11000
+cublasComputeType_t MatMulGpuKernelMod::GetComputeType() {
+  cublasComputeType_t compute_type = CUBLAS_COMPUTE_16F;
+  if (dtype_a_ == CUDA_R_16F && dtype_c_ == CUDA_R_16F) {
+    compute_type = CUBLAS_COMPUTE_32F;
+  } else if (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32I) {
+    compute_type = CUBLAS_COMPUTE_32I;
+  } else if (dtype_a_ == CUDA_R_16F || dtype_a_ == CUDA_R_32F || (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32F)) {
+    compute_type = CUBLAS_COMPUTE_32F;
+  } else if ((dtype_a_ == CUDA_R_32F && dtype_b_ == CUDA_R_32F) || (dtype_a_ == CUDA_C_32F && dtype_b_ == CUDA_C_32F)) {
+    compute_type = CUBLAS_COMPUTE_32F;
+  } else if ((dtype_a_ == CUDA_R_64F && dtype_b_ == CUDA_R_64F) || (dtype_a_ == CUDA_C_64F && dtype_b_ == CUDA_C_64F)) {
+    compute_type = CUBLAS_COMPUTE_64F;
+  }
+  return compute_type;
+}
+#endif
+
 template <typename T, typename S>
 bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
@@ -118,11 +137,6 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   // The kernel registration is responsible for types consistency.
   S alpha = static_cast<S>(1.0f);
   S beta = static_cast<S>(0.0f);
-  cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
-  if (dtype_a_ == CUDA_C_32F) {
-    compute_type = CUDA_C_32F;
-  }
-
   const int lda = (transpose_x1_ == CUBLAS_OP_T) ? SizeToInt(m_) : SizeToInt(k_);
   const int ldb = (transpose_x2_ == CUBLAS_OP_T) ? SizeToInt(k_) : SizeToInt(n_);
   const int ldc = n_;
@@ -133,6 +147,24 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
       Fill(m_, n_, input3_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
       beta = static_cast<S>(1.0f);
     }
+
+#if CUDA_VERSION >= 11000
+    cublasComputeType_t compute_type = GetComputeType();
+    if (compute_type == CUBLAS_COMPUTE_32I) {
+      constexpr size_t bytes = 4;
+      if (lda % bytes != 0 || ldb % bytes != 0) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "' the lda and ldb must be multiples of 4 when the compute_type is CUBLAS_COMPUTE_32I."
+                             "But got lda:"
+                          << lda << ", got ldb:" << ldb;
+      }
+    }
+#else
+    cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
+    if (dtype_a_ == CUDA_C_32F) {
+      compute_type = CUDA_C_32F;
+    }
+#endif
 
     // Use cublasGemmEx to get high performance when batch_ is 1
     if (batch_ == 1) {
@@ -180,7 +212,19 @@ std::map<std::string, std::vector<std::pair<KernelAttr, MatMulGpuKernelMod::MatM
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &MatMulGpuKernelMod::LaunchKernel<float, float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &MatMulGpuKernelMod::LaunchKernel<half, float>}}},
+       &MatMulGpuKernelMod::LaunchKernel<half, float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+       &MatMulGpuKernelMod::LaunchKernel<int8_t, int32_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &MatMulGpuKernelMod::LaunchKernel<Complex<float>, Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &MatMulGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>}}},
     {kFusedMatMulBiasAddName,
      {{KernelAttr()
          .AddInputAttr(kNumberTypeFloat64)

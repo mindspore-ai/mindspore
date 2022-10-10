@@ -379,13 +379,13 @@ def test_batchmatmul_type_int8():
     input_list.append(input_x1)
     input_list.append(input_x2)
     fact = BatchMatMulTestNet(inputs=input_list)
-    int8_out = fact.forward_mindspore_impl()
+    out = fact.forward_mindspore_impl()
     expect = np.array([[[3, 3, 3, 3]],
                        [[3, 3, 3, 3]],
                        [[3, 3, 3, 3]],
                        [[3, 3, 3, 3]]], np.int8)
-    assert (int8_out.asnumpy() == expect).all()
-    assert str(int8_out.dtype) == "Int8"
+    assert (out.asnumpy() == expect).all()
+    assert str(out.dtype) == "Int32"
 
 
 @pytest.mark.level0
@@ -561,3 +561,89 @@ def test_batchmatmul_type_uint64():
                        [[3, 3, 3, 3]]], np.uint64)
     assert (uint64_out.asnumpy() == expect).all()
     assert str(uint64_out.dtype) == "UInt64"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_complex64():
+    """
+    Feature: test bmm with dtype complex64.
+    Description: test bmm with dtype complex64.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]]]).astype(np.complex64))
+    input_x2 = Tensor(np.array([[[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]]]).astype(np.complex64))
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    out = fact.forward_mindspore_impl()
+    expect = np.array([[[8+0j, 8+0j, 8+0j, 8+0j]],
+                       [[8+0j, 8+0j, 8+0j, 8+0j]],
+                       [[8+0j, 8+0j, 8+0j, 8+0j]],
+                       [[8+0j, 8+0j, 8+0j, 8+0j]]], np.complex64)
+    assert (out.asnumpy() == expect).all()
+    assert str(out.dtype) == "Complex64"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_type_complex128():
+    """
+    Feature: test bmm with dtype complex128.
+    Description: test bmm with dtype complex128.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_list = []
+    input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]]]).astype(np.complex128))
+    input_x2 = Tensor(np.array([[[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]]]).astype(np.complex128))
+    input_list.append(input_x1)
+    input_list.append(input_x2)
+    fact = BatchMatMulTestNet(inputs=input_list)
+    out = fact.forward_mindspore_impl()
+    expect = np.array([[[8+0j, 8+0j, 8+0j, 8+0j]],
+                       [[8+0j, 8+0j, 8+0j, 8+0j]],
+                       [[8+0j, 8+0j, 8+0j, 8+0j]],
+                       [[8+0j, 8+0j, 8+0j, 8+0j]]], np.complex128)
+    assert (out.asnumpy() == expect).all()
+    assert str(out.dtype) == "Complex128"

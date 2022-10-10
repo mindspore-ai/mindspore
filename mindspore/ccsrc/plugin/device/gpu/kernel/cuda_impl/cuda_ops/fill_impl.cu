@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,5 +41,9 @@ template CUDA_LIB_EXPORT void Fill<half>(const size_t &m, const size_t &n, const
                                          cudaStream_t stream);
 template CUDA_LIB_EXPORT void Fill<double>(const size_t &m, const size_t &n, const double *input, double *output,
                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void Fill<int8_t>(const size_t &m, const size_t &n, const int8_t *input, int8_t *output,
+                                           cudaStream_t stream);
 template CUDA_LIB_EXPORT void Fill<Complex<float>>(const size_t &m, const size_t &n, const Complex<float> *input,
-                                           Complex<float> *output, cudaStream_t stream);
+                                                   Complex<float> *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Fill<Complex<double>>(const size_t &m, const size_t &n, const Complex<double> *input,
+                                                    Complex<double> *output, cudaStream_t stream);
