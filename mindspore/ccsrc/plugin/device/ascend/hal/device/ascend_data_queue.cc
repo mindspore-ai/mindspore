@@ -263,7 +263,7 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
   }
   auto wingman = DataQueueMgr::GetInstance().GetDataQueue(channel_name_);
   if (wingman != nullptr && wingman->IsOpen() && !data.empty()) {
-    wingman->Push(data);
+    (void)wingman->Push(data);
   }
   return DataQueueStatus::SUCCESS;
 }
@@ -666,7 +666,7 @@ void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
 }
 
 namespace {
-std::shared_ptr<DataQueue> CreateAscendDataQueue(const std::string &channel_name, bool dynamic_shape, size_t capacity,
+std::shared_ptr<DataQueue> CreateAscendDataQueue(const std::string &channel_name, bool, size_t capacity,
                                                  const std::vector<size_t> &) {
   int32_t is_heterogeneous = 0;
   (void)rtGetIsHeterogenous(&is_heterogeneous);
