@@ -17,13 +17,10 @@
 #ifndef MINDSPORE_CORE_OPS_SPARSE_SLICE_H_
 #define MINDSPORE_CORE_OPS_SPARSE_SLICE_H_
 #include <vector>
-#include <set>
 #include <memory>
+
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -37,10 +34,8 @@ class MIND_API SparseSlice : public BaseOperator {
   SparseSlice() : BaseOperator(kNameSparseSlice) {
     InitIOName({"indices", "values", "shape", "start", "size"}, {"y_indices", "y_values", "y_shape"});
   }
-  void Init() {}
+  void Init() const {}
 };
-AbstractBasePtr SparseSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
