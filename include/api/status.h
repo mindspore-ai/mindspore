@@ -68,7 +68,7 @@ enum StatusCode : uint32_t {
   kMCInvalidInput = kMC | 0x3,
   kMCInvalidArgs = kMC | 0x4,
 
-  // Lite  // Common error code, range: [-1, -100）
+  // Lite  // Common error code, range: [-1, -100)
   kLiteError = kLite | (0x0FFFFFFF & -1),            /**< Common error code. */
   kLiteNullptr = kLite | (0x0FFFFFFF & -2),          /**< NULL pointer returned.*/
   kLiteParamInvalid = kLite | (0x0FFFFFFF & -3),     /**< Invalid parameter.*/
