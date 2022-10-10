@@ -128,6 +128,10 @@ Format BiasAdd::get_format() const {
   auto value_ptr = GetAttr(kFormat);
   return Format(GetValue<int64_t>(value_ptr));
 }
+std::string BiasAdd::get_str_format() const {
+  auto value_ptr = GetAttr("format");
+  return GetValue<std::string>(value_ptr);
+}
 void BiasAdd::Init(const Format &format) { this->set_format(format); }
 AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,10 @@ TypePtr BiasAddGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(BiasAddGrad, BaseOperator);
+std::string BiasAddGrad::get_str_format() const {
+  auto value_ptr = GetAttr("format");
+  return GetValue<std::string>(value_ptr);
+}
 AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(BiasAddGradInferShape(primitive, input_args),

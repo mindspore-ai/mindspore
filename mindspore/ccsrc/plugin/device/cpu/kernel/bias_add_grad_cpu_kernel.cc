@@ -44,6 +44,10 @@ int BiasAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
   input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
+
+  deformable_kernel_operator_ = std::make_shared<ops::BiasAddGrad>(base_operator->GetPrim());
+  data_format_ = deformable_kernel_operator_->get_str_format();
+
   if (input_shape_.size() < k2Dims) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension must be at least 2, but got "
                       << input_shape_.size();
@@ -65,7 +69,25 @@ bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  if (input_shape_.size() > k2Dims) {
+  if (data_format_ == "NHWC") {
+    int64_t input_shape_size = input_shape_.size();
+    size_t kStep = input_shape_[input_shape_size - 1];
+    size_t num_value = 1;
+    for (size_t i = 0; i < kStep; i++) {
+      output_addr[i] = (T)0;
+    }
+    for (size_t i = 0; i < input_shape_.size(); ++i) {
+      num_value *= input_shape_[i];
+    }
+
+    for (size_t i = 0; i < num_value; i++) {
+      if (kStep == 0) {
+        MS_LOG(EXCEPTION) << "For kStep, The value can not be 0 " << kStep;
+      } else {
+        output_addr[i % kStep] += input_addr[i];
+      }
+    }
+  } else if (input_shape_.size() > k2Dims) {
     size_t hw_size = 1;
     for (size_t i = k2Dims; i < input_shape_.size(); ++i) {
       hw_size *= input_shape_[i];
