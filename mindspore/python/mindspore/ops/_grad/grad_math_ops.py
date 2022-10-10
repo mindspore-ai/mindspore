@@ -1027,7 +1027,7 @@ def get_bprop_reduce_mean(self):
             shape_out = dyn_shape_op(out)
             shape_x = P.Cast()(shape_x, ms.float64)
             shape_out = P.Cast()(shape_out, ms.float64)
-            div_shape = reduce_prod(shape_x) / reduce_prod(shape_out)
+            div_shape = reduce_prod(cast(shape_x, mstype.float32)) / reduce_prod(cast(shape_out, mstype.float32))
             dx = div_op(grad, cast(div_shape, dtype(grad)))
         else:
             div_shape = F.shape_mul(shape_x) / F.shape_mul(shape_out)
