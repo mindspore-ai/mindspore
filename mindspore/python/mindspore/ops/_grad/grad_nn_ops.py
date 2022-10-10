@@ -82,15 +82,15 @@ def get_bprop_bias_add_grad(self):
         reshape = P.Reshape()
         tile = P.Tile()
         dyn_shape = P.TensorShape()
-        if is_shape_unknown(dy) or is_shape_unknown(dout):
+        dy_shape = dy.shape
+        dout_shape = dout.shape
+        if is_shape_unknown(dy_shape) or is_shape_unknown(dout_shape):
             dy_shape = dyn_shape(dy)
             dout_shape = dyn_shape(dout)
             expanded_shape, tile_mults = bias_add_gradgrad_helper_dynamic(dy_shape, dout_shape, data_format)
             expanded_grad = reshape(dout, create_tensor_by_element(expanded_shape))
             tiled_grad = tile(expanded_grad, create_tensor_by_element(tile_mults))
         else:
-            dy_shape = dy.shape
-            dout_shape = dout.shape
             expanded_shape, tile_mults = bias_add_gradgrad_helper(dy_shape, dout_shape, data_format)
             expanded_grad = reshape(dout, expanded_shape)
             tiled_grad = tile(expanded_grad, tile_mults)
