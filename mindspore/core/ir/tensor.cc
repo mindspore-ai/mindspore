@@ -593,7 +593,8 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
     default:
       break;
   }
-  MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
+  MS_LOG(ERROR) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
+  return nullptr;
 }
 
 TensorDataPtr MakeTensorSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {

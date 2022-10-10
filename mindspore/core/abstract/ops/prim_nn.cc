@@ -254,7 +254,9 @@ AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &prim
   std::vector<ValuePtr> paddings = padding_attr->cast<ValueTuplePtr>()->value();
   std::vector<std::vector<int64_t>> paddings_vec;
   for (ValuePtr paddings_elements : paddings) {
-    std::vector<ValuePtr> paddings_elements_tuple = paddings_elements->cast<ValueTuplePtr>()->value();
+    auto item = paddings_elements->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(item);
+    std::vector<ValuePtr> paddings_elements_tuple = item->value();
     std::vector<int64_t> paddings_vec_item;
     (void)std::transform(std::begin(paddings_elements_tuple), std::end(paddings_elements_tuple),
                          std::back_inserter(paddings_vec_item),
