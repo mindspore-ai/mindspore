@@ -16,6 +16,7 @@
 #include "plugin/device/cpu/kernel/fused_ada_factor_cpu_kernel.h"
 #include <functional>
 #include <algorithm>
+#include "mindspore/core/ops/fused_ada_factor.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -27,9 +28,6 @@ constexpr size_t kScalarIndex = 0;
 constexpr size_t kStandardInputNum = 12;
 constexpr size_t kWorkSpaceNum = 3;
 constexpr size_t kBatchSize = 1000;
-auto constexpr kEnableScaleParameter = "enable_scale_parameter";
-auto constexpr kEnableFirstMoment = "enable_first_moment";
-auto constexpr kEnableWeightDecay = "enable_weight_decay";
 constexpr size_t kLastRowIndex = 1;
 constexpr size_t kLastColIndex = 2;
 constexpr float kEps = 1e-30;
@@ -51,21 +49,28 @@ constexpr size_t kWorkSpaceRFactorIndex = 1;
 constexpr size_t kWorkSpaceCFactorIndex = 2;
 }  // namespace
 
-void FusedAdaFactorCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat32);
-  (void)workspace_size_list_.emplace_back((elem_num_ / last_row_dim_size_) * kSizeFloat32);
-  (void)workspace_size_list_.emplace_back((elem_num_ / last_col_dim_size_) * kSizeFloat32);
+bool FusedAdaFactorCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  param_dtype_ = inputs[kParamIndex]->GetDtype();
+  auto op_ptr = std::dynamic_pointer_cast<ops::FusedAdaFactor>(base_operator);
+  MS_EXCEPTION_IF_NULL(op_ptr);
+  enable_scale_parameter_ = op_ptr->get_enable_scale_parameter();
+  enable_first_moment_ = op_ptr->get_enable_first_moment();
+  enable_weight_decay_ = op_ptr->get_enable_weight_decay();
+  return true;
 }
 
-void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  param_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kParamIndex);
-  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, kParamIndex);
-  if (AnfAlgo::IsShapesDynamic({shape})) {
-    return;
+int FusedAdaFactorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
   }
+
+  auto shape = inputs[kParamIndex]->GetShapeVector();
   elem_num_ = std::accumulate(shape.begin(), shape.end(), 1UL, std::multiplies<size_t>());
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the elem num of 'param' can not be zero.";
@@ -79,15 +84,11 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
   }
 
-  if (common::AnfAlgo::HasNodeAttr(kEnableScaleParameter, kernel_node)) {
-    enable_scale_parameter_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableScaleParameter);
-  }
-  if (common::AnfAlgo::HasNodeAttr(kEnableFirstMoment, kernel_node)) {
-    enable_first_moment_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableFirstMoment);
-  }
-  if (common::AnfAlgo::HasNodeAttr(kEnableWeightDecay, kernel_node)) {
-    enable_weight_decay_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableWeightDecay);
-  }
+  workspace_size_list_.clear();
+  (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat32);
+  (void)workspace_size_list_.emplace_back((elem_num_ / last_row_dim_size_) * kSizeFloat32);
+  (void)workspace_size_list_.emplace_back((elem_num_ / last_col_dim_size_) * kSizeFloat32);
+  return KRET_OK;
 }
 
 template <typename T>

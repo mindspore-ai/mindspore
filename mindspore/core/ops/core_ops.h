@@ -901,6 +901,8 @@ GVAR_DEF(PrimitivePtr, kPrimApplyRMSProp, std::make_shared<Primitive>(kApplyRMSP
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyFtrl, std::make_shared<Primitive>("SparseApplyFtrl"));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyProximalAdagrad, std::make_shared<Primitive>("SparseApplyProximalAdagrad"));
 GVAR_DEF(PrimitivePtr, kPrimFusedAdam, std::make_shared<Primitive>("FusedAdam"));
+GVAR_DEF(PrimitivePtr, kPrimFusedAdaFactor, std::make_shared<Primitive>("FusedAdaFactor"));
+GVAR_DEF(PrimitivePtr, kPrimFusedAdaFactorWithGlobalNorm, std::make_shared<Primitive>("FusedAdaFactorWithGlobalNorm"));
 GVAR_DEF(PrimitivePtr, kPrimFusedAdamWeightDecay, std::make_shared<Primitive>("FusedAdamWeightDecay"));
 GVAR_DEF(PrimitivePtr, kPrimSGD, std::make_shared<Primitive>("SGD"));
 GVAR_DEF(PrimitivePtr, kPrimBCEWithLogitsLoss, std::make_shared<Primitive>("BCEWithLogitsLoss"));
