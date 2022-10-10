@@ -547,9 +547,9 @@ void ClipPointsComponent(const std::string &points, const std::string &clipped, 
 
 namespace while_loop_export {
 namespace {
-const char CONTROL_PATTERN[] = "\u21B5";     // ↵
-const char LOOP_BODY_PATTERN[] = "\u21BB";   // ↻
-const char AFTER_LOOP_PATTERN[] = "\u2193";  // ↓
+const char CONTROL_PATTERN[] = "\u21B5";
+const char LOOP_BODY_PATTERN[] = "\u21BB";
+const char AFTER_LOOP_PATTERN[] = "\u2193";
 
 const size_t LOOP_BODY_INPUT = 2;
 const size_t AFTER_LOOP_INPUT = 3;

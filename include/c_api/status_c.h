@@ -35,7 +35,7 @@ typedef enum MSStatus {
   // Core
   kMSStatusCoreFailed = kMSCompCodeCore | 0x1,
 
-  // Lite  // Common error code, range: [-1, -100）
+  // Lite  // Common error code, range: [-1, -100)
   kMSStatusLiteError = kMSCompCodeLite | (0x0FFFFFFF & -1),            /**< Common error code. */
   kMSStatusLiteNullptr = kMSCompCodeLite | (0x0FFFFFFF & -2),          /**< NULL pointer returned.*/
   kMSStatusLiteParamInvalid = kMSCompCodeLite | (0x0FFFFFFF & -3),     /**< Invalid parameter.*/
