@@ -26,11 +26,11 @@ from mindspore.ops.operations.sparse_ops import (
     CSRSparseMatrixToDense
 )
 from mindspore.common import dtype as mstype
-from ..primitive import constexpr, Primitive
-from ..operations.array_ops import GatherNd, Coalesce
-from ..operations import _csr_ops
-from ...common import CSRTensor, COOTensor, Tensor
-from ..composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor
+from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.operations.array_ops import GatherNd, Coalesce
+from mindspore.ops.operations import _csr_ops
+from mindspore.common import CSRTensor, COOTensor, Tensor
+from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor
 
 # utility functions and values
 gather_nd = GatherNd()
