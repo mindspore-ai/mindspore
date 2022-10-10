@@ -54,6 +54,7 @@ int GatherNdCPUKernel::ReSize() {
   int indices_rank = indices_shape.size();
   count_ = 1;
   for (int i = 0; i < indices_rank - 1; ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(count_, indices_shape[i]), RET_ERROR, "mul overflow.");
     count_ *= indices_shape[i];
   }
   if (count_ >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {

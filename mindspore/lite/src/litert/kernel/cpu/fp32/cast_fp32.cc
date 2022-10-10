@@ -178,6 +178,7 @@ int CastCPUKernel::DoCast(int thread_id) {
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(thread_id, stride_, RET_ERROR);
   int data_num = MSMIN(stride_, data_num_ - thread_id * stride_);
   if (data_num <= 0) {
     return RET_OK;

@@ -75,11 +75,13 @@ int CumSumCPUKernel::ReSize() {
   }
   out_dim_ = 1;
   for (int i = 0; i < param_->axis_; ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(out_dim_, input_tensor->shape().at(i)), RET_ERROR, "mul overflow.");
     out_dim_ *= input_tensor->shape().at(i);
   }
   axis_dim_ = input_tensor->shape().at(param_->axis_);
   in_dim_ = 1;
   for (int i = param_->axis_ + 1; i < static_cast<int>(input_tensor->shape().size()); ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(in_dim_, input_tensor->shape().at(i)), RET_ERROR, "mul overflow.");
     in_dim_ *= input_tensor->shape().at(i);
   }
   MS_CHECK_FALSE(op_parameter_->thread_num_ == 0, RET_ERROR);

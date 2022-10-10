@@ -48,18 +48,22 @@ int LayerNormCPUKernel::ReSize() {
   MS_CHECK_LT(param_->begin_params_axis_, static_cast<int>(shape.size()), RET_ERROR);
   param_->norm_outer_size_ = 1;
   for (int i = 0; i < param_->begin_norm_axis_; ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->norm_outer_size_, shape.at(i)), RET_ERROR, "mul overflow.");
     param_->norm_outer_size_ *= shape.at(i);
   }
   param_->norm_inner_size_ = 1;
   for (size_t i = param_->begin_norm_axis_; i < shape.size(); ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->norm_inner_size_, shape.at(i)), RET_ERROR, "mul overflow.");
     param_->norm_inner_size_ *= shape.at(i);
   }
   param_->params_outer_size_ = 1;
   for (int i = 0; i < param_->begin_params_axis_; ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->params_outer_size_, shape.at(i)), RET_ERROR, "mul overflow.");
     param_->params_outer_size_ *= shape.at(i);
   }
   param_->params_inner_size_ = 1;
   for (size_t i = param_->begin_params_axis_; i < shape.size(); ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->params_inner_size_, shape.at(i)), RET_ERROR, "mul overflow.");
     param_->params_inner_size_ *= shape.at(i);
   }
   if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_LayerNormFusion), param_->norm_inner_size_, param_->norm_inner_size_,

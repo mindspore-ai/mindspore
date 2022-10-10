@@ -52,7 +52,18 @@ int BatchToSpaceCPUKernel::Processinput() {
 int BatchToSpaceCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   MS_ASSERT(in_tensors_[0]->format() == mindspore::NHWC);
+  if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Invalid in_tensor[0] data_type: " << in_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
+
+  if (out_tensors_[0]->data_type() != kNumberTypeFloat32 && out_tensors_[0]->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Invalid out_tensors_[0] data_type: " << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
