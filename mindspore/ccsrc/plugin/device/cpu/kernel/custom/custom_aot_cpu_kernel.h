@@ -27,7 +27,7 @@ namespace kernel {
 
 class CustomAOTCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  CustomAOTCpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
+  CustomAOTCpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), init_func_(nullptr), aot_func_(nullptr) {}
   ~CustomAOTCpuKernelMod();
 
   void InitKernel(const CNodePtr &kernel_node) override;

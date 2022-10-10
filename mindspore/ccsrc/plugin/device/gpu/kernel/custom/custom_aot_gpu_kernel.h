@@ -24,6 +24,7 @@
 #endif
 #include <vector>
 #include <string>
+#include <utility>
 #include <algorithm>
 #include <functional>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -36,7 +37,7 @@ namespace mindspore {
 namespace kernel {
 class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
-  CustomAOTGpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
+  CustomAOTGpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), init_func_{nullptr}, aot_func_(nullptr) {}
   ~CustomAOTGpuKernelMod() override {
     if (handle_ != nullptr) {
 #ifdef _MSC_VER
@@ -147,9 +148,9 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     for (size_t i = 0; i < num_input_; i++) {
       auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
+      type_list_.push_back(TypeIdToString(input_type_list[i], true));
       ndims_.push_back(SizeToInt(in_shape.size()));
-      shape_list_.emplace_back(in_shape);
+      (void)shape_list_.emplace_back(std::move(in_shape));
     }
 
     num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -162,9 +163,9 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     for (size_t i = 0; i < num_output_; i++) {
       auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
-      shape_list_.emplace_back(out_shape);
       ndims_.push_back(SizeToInt(out_shape.size()));
-      type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
+      type_list_.push_back(TypeIdToString(output_type_list[i], true));
+      (void)shape_list_.emplace_back(std::move(out_shape));
     }
 
     std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),

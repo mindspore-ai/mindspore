@@ -1057,7 +1057,7 @@ ShapeVector AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr 
     auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](int64_t size) {
       return size < 0 ? kDefaultValueForDynamicDim : size;
     };
-    std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
     auto format = GetInputFormat(anf_node, index);
     auto dtype = GetInputDeviceDataType(anf_node, index);
     (void)trans::TransShapeToDevice(ret_shape, format, anf_node, index, dtype, false);

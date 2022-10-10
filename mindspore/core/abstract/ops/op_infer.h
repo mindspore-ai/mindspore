@@ -70,7 +70,7 @@ class OpInferBase {
   /// \param[in] input_args Operator's inputs.
   ///
   /// \return AbstractBasePtr with inferred shape and inferred type.
-  virtual AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  virtual AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) const {
     auto type = InferType(primitive, input_args);
     auto shape = InferShape(primitive, input_args);

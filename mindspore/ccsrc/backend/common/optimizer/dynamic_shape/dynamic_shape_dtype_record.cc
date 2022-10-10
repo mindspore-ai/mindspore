@@ -49,7 +49,6 @@ TypePtrList DynamicShapeDtypeManager::GetDeviceType(const AnfNodePtr &node) {
 bool DynamicShapeDtypeRecord::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto nodes = TopoSort(func_graph->get_return());
-  // auto manager = DynamicShapeDtypeManager::GetInstance();
   for (const auto &node : nodes) {
     CNodePtr cnode = node->cast<CNodePtr>();
     if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) {

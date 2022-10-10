@@ -124,12 +124,12 @@ inline void GetRangeByShape(const AnfNodePtr &anf_node, const ShapeVector &shape
     if (val < 0) {
       // for "Conv2Dxxx" operators, the upper bound of range can not exceed 4096
       if (name.find("Conv2D") != std::string::npos) {
-        range->emplace_back(std::make_pair(1L, kConv2DMaxShape));
+        (void)range->emplace_back(std::make_pair(1L, kConv2DMaxShape));
       } else {
-        range->emplace_back(std::make_pair(1L, -1L));
+        (void)range->emplace_back(std::make_pair(1L, -1L));
       }
     } else {
-      range->emplace_back(std::make_pair(val, val));
+      (void)range->emplace_back(std::make_pair(val, val));
     }
   }
 }

@@ -31,6 +31,8 @@ class AotKernelData {
 
 class AotExtra {
  public:
+  AotExtra() = default;
+  virtual ~AotExtra() = default;
   virtual bool HasAttr(std::string name) = 0;
 
   template <typename T>
@@ -70,6 +72,7 @@ class AotExtra {
 class AotExtraImpl : public AotExtra {
  public:
   AotExtraImpl() : cnode_(nullptr) {}
+  virtual ~AotExtraImpl() = default;
   void SetKernelNode(const CNodePtr &cnode) { cnode_ = cnode; }
   bool HasAttr(std::string name) final { return common::AnfAlgo::HasNodeAttr(name, cnode_); }
 

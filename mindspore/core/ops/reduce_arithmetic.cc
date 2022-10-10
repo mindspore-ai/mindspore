@@ -52,7 +52,7 @@ class ReduceArithmeticInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     std::set<TypePtr> bool_types = {kBool};
     const std::string &op_name = primitive->name();
-    static const std::map<std::string, std::set<TypePtr>> check_list_map{
+    const std::map<std::string, std::set<TypePtr>> check_list_map{
       {prim::kPrimReduceAll->name(), bool_types},
       {prim::kPrimReduceAny->name(), bool_types},
       {prim::kPrimReduceMax->name(), common_valid_types_with_complex_and_bool},

@@ -195,7 +195,7 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   dy_size_ = std::accumulate(dy_shape.begin(), dy_shape.end(), 1, std::multiplies{}) * dy_type_size;
 
   auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
-  rois_size_ = std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{}) * rois_type_size;
+  rois_size_ = LongToSize(std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{})) * rois_type_size;
   roi_rows_ = LongToInt(rois_shape[kIndex0]);
   roi_cols_ = LongToInt(rois_shape[kIndex1]);
 
@@ -236,9 +236,9 @@ template <typename T>
 bool ROIAlignGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &workspace,
                                             const std::vector<AddressPtr> &outputs) {
-  const T *dy = reinterpret_cast<T *>(inputs[0]->addr);
-  const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
-  T *dx = reinterpret_cast<T *>(outputs[0]->addr);
+  const T *dy = static_cast<T *>(inputs[0]->addr);
+  const T *rois = static_cast<T *>(inputs[1]->addr);
+  T *dx = static_cast<T *>(outputs[0]->addr);
 
   int size_init = batch_ * channels_ * height_ * width_;
   auto task1 = [this, &dx](size_t start, size_t end) {

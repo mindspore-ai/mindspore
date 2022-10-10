@@ -174,8 +174,8 @@ int ROIAlignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   // Calculate the sizes of inputs and output
   auto x_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
   auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
-  x_size_ = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies{}) * x_type_size;
-  rois_size_ = std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{}) * rois_type_size;
+  x_size_ = LongToSize(std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies{}) * x_type_size);
+  rois_size_ = LongToSize(std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{}) * rois_type_size);
   output_size_ = rois_shape[kIndex0] * x_shape[kIndex1] * pooled_height_ * pooled_width_ * x_type_size;
 
   channels_ = LongToInt(x_shape[kIndex1]);
@@ -195,9 +195,9 @@ template <typename T>
 bool ROIAlignCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &workspace,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  const T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
-  auto out_data = reinterpret_cast<T *>(outputs[0]->addr);
+  const T *input = static_cast<T *>(inputs[0]->addr);
+  const T *rois = static_cast<T *>(inputs[1]->addr);
+  auto out_data = static_cast<T *>(outputs[0]->addr);
 
   size_t elem_num = IntToSize(roi_rows_ * channels_ * pooled_height_ * pooled_width_);
   auto task = [this, &input, &rois, &out_data](size_t start, size_t end) {

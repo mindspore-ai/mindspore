@@ -40,7 +40,7 @@ abstract::ShapePtr ApplyProximalGradientDescentInferShape(const PrimitivePtr &pr
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto delta_shape = input_args[kInputIndex4]->BuildShape();
 
-  size_t batch_rank = 0;
+  int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);

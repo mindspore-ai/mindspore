@@ -110,9 +110,9 @@ std::vector<PrimitivePtr> GkUtils::FilterExcludedOps(const std::vector<Primitive
   for (auto op : ops) {
     if (limited_capacity_ops.find(op->name()) != limited_capacity_ops.end() &&
         limited_capacity_ops[op->name()] != major_compute_capability) {
-      final_filter_ops.emplace_back(op->name());
+      (void)final_filter_ops.emplace_back(op->name());
     } else {
-      dst_ops.emplace_back(op);
+      (void)dst_ops.emplace_back(op);
     }
   }
   // Give hint for excluded src_ops.

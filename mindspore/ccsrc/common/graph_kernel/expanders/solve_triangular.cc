@@ -100,8 +100,8 @@ class SolveTriangular : public OpDesc {
         std::vector<int64_t> final_indicse_value;
         for (int64_t u = (i + 1) * kBlock; u < num; ++u) {
           for (int64_t v = 0; v < kBlock; ++v) {
-            (void)final_indicse_value.emplace_back(u);
-            (void)final_indicse_value.emplace_back(v);
+            final_indicse_value.push_back(u);
+            final_indicse_value.push_back(v);
           }
         }
         auto final_indices_tensor =

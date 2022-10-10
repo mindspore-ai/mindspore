@@ -38,8 +38,8 @@ void ReduceSuitForDynamicShape(const FuncGraphPtr &func_graph, const CNodePtr &r
   auto prim = common::AnfAlgo::GetCNodePrimitive(reduce_node);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<std::string> input_names = {"x", "axis"};
-  prim->AddAttr("input_names", MakeValue(input_names));
-  prim->AddAttr("output_names", MakeValue("y"));
+  (void)prim->AddAttr("input_names", MakeValue(input_names));
+  (void)prim->AddAttr("output_names", MakeValue("y"));
   // When axis is empty, some additional processing needs to be done for the axis
   // under dynamic shape (Refer to the ReduceSumOptimizer pass):
   auto x_node = reduce_node->inputs()[1];

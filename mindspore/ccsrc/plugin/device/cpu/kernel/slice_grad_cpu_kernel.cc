@@ -134,7 +134,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
   output_shape_ = common::AnfAlgo::GetOutputInferShape(cnode, 0);
   std::string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
   auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
-  auto begin_ptr = reinterpret_cast<T *>(inputs[2]->addr);
+  auto begin_ptr = static_cast<T *>(inputs[2]->addr);
   std::vector<T> begin{begin_ptr, begin_ptr + begin_shape[0]};
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_),
                        [](const T &value) { return static_cast<int>(value); });
@@ -149,8 +149,8 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
                         << ", and the dimension of 'strides': " << stride_shape.size();
     }
 
-    auto end_ptr = reinterpret_cast<T *>(inputs[3]->addr);
-    auto strides_ptr = reinterpret_cast<T *>(inputs[4]->addr);
+    auto end_ptr = static_cast<T *>(inputs[3]->addr);
+    auto strides_ptr = static_cast<T *>(inputs[4]->addr);
 
     std::vector<T> end{end_ptr, end_ptr + end_shape[0]};
     std::vector<T> strides{strides_ptr, strides_ptr + stride_shape[0]};
@@ -171,7 +171,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
                         << "', the dimensions of 'begin', 'end' must be 1, but got the dimension of 'begin': "
                         << begin_shape.size() << ", and the dimension of 'end': " << size_shape.size();
     }
-    auto size_ptr = reinterpret_cast<T *>(inputs[3]->addr);
+    auto size_ptr = static_cast<T *>(inputs[3]->addr);
     std::vector<T> size{size_ptr, size_ptr + size_shape[0]};
     (void)std::transform(size.begin(), size.end(), std::back_inserter(size_),
                          [](const T &value) { return static_cast<int>(value); });
