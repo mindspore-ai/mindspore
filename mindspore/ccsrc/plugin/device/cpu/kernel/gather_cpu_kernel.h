@@ -64,8 +64,9 @@ class GatherCpuKernelMod : public NativeCpuKernelMod {
     if (is_dynamic_shape_) {
       input_size_list_.push_back(axis_type_size_);
     }
-    auto output_size = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies{});
-    output_size_list_.push_back(LongToSize(output_size) * input_type_size_);
+    auto output_size =
+      std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<size_t>(1), std::multiplies{});
+    output_size_list_.push_back(output_size * input_type_size_);
   }
 
  private:
