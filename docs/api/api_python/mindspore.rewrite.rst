@@ -465,7 +465,7 @@ mindspore.rewrite
     PatternEngine实现了如何通过PattenNode修改SymbolTree。
 
     参数：
-        - **pattern** (Union[PatternNode,List]) - PatternNode的实例或用于构造 `Pattent` 的Cell类型列表。
+        - **pattern** (Union[PatternNode, List]) - PatternNode的实例或用于构造 `Pattent` 的Cell类型列表。
         - **replacement** (callable) - 生成新节点的接口实现，如果为None则不进行任何匹配操作。
 
     .. py:method:: mindspore.rewrite.PatternEngine.apply(stree: SymbolTree)
@@ -505,7 +505,7 @@ mindspore.rewrite
         为当前节点添加一个输入。
 
         参数：
-            - **node** (PattenNode) - 新增的输入节点。
+            - **node** (PatternNode) - 新增的输入节点。
 
         异常：
             - **TypeError** - 如果参数 `node` 不是PattenNode类型。

@@ -940,7 +940,7 @@ def jacfwd(fn, grad_position=0, has_aux=False):
     reverse mode to get better performance.
 
     Args:
-        fn (Union[Cell, function]): Function to do GradOperation.
+        fn (Union[Cell, Function]): Function to do GradOperation.
         grad_position (Union[int, tuple[int]]): If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
@@ -1132,7 +1132,7 @@ def jacrev(fn, grad_position=0, has_aux=False):
     forward mode to get better performance.
 
     Args:
-        fn (Union[Cell, function]): Function to do GradOperation.
+        fn (Union[Cell, Function]): Function to do GradOperation.
         grad_position (Union[int, tuple[int]]): If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs

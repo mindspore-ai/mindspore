@@ -1131,7 +1131,7 @@ def strided_slice(input_x,
 
       If the ith bit of `shrink_axis_mask` is 1, `begin`, `end` and `strides`
       are ignored and dimension i will be shrunk to 0. For a 5*6*7 Tensor `input_x`,
-      if `shrink_axis_mask` is ob010`, it is equivalent to slice x[:, 5, :]`
+      if `shrink_axis_mask` is ob010, it is equivalent to slice `x[:, 5, :]`
       and results in an output shape of :math:`(5, 7)`.
 
     Note:
@@ -1144,9 +1144,9 @@ def strided_slice(input_x,
             Only non-negative int is allowed.
         end (tuple[int]): A tuple or which represents the maximum location where to end.
             Only non-negative int is allowed.
-        strides (tuple[int]): - A tuple which represents the strides is continuously added
-          before reaching the maximum location. Only int is allowed, it can be negative
-          which results in reversed slicing.
+        strides (tuple[int]): A tuple which represents the strides is continuously added
+            before reaching the maximum location. Only int is allowed, it can be negative
+            which results in reversed slicing.
         begin_mask (int, optional): Starting index of the slice. Default: 0.
         end_mask (int, optional): Ending index of the slice. Default: 0.
         ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: 0.

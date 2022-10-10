@@ -168,7 +168,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
         extrapolation_value (float): An optional float value used extrapolation, if applicable. Default: 0.0.
 
     Returns:
-        A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth] with type: float32.
+        A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth] with type(float32).
 
     Raises:
         TypeError: If `image` or `boxes` or `box_indices` is not a Tensor.
