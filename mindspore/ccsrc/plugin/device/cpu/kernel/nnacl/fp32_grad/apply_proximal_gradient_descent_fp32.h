@@ -17,7 +17,6 @@
 #define MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_GRADIENT_DESCENT_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {

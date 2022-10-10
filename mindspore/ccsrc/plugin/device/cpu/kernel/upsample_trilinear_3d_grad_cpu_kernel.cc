@@ -75,7 +75,7 @@ template <typename T, typename S>
 bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                        const std::vector<kernel::AddressPtr> &outputs) {
   // the input grad of backward process is the output of forward process
-  auto grad_output_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto grad_output_ptr = static_cast<T *>(inputs[kIndex0]->addr);
   const int64_t total = CPUKernelUtils::CalcElementNum(input_shape_);
   S *grad_input_ptr = nullptr;
   bool is_fp16 = std::is_same<T, float16>::value;
@@ -85,7 +85,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
     grad_input_copy.resize(total, 0);
     grad_input_ptr = grad_input_copy.data();
   } else {
-    grad_input_ptr = reinterpret_cast<S *>(outputs[kIndex0]->addr);
+    grad_input_ptr = static_cast<S *>(outputs[kIndex0]->addr);
     std::fill_n(grad_input_ptr, total, S(0));
   }
   // treat nbatch and channels as one dimension
@@ -159,7 +159,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   CPUKernelUtils::ParallelFor(loop3d, channels, block_size);
   // memcopy and cast for fp16
   if (is_fp16) {
-    T *real_input_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+    T *real_input_ptr = static_cast<T *>(outputs[kIndex0]->addr);
     for (int64_t idx = 0; idx < total; ++idx) {
       real_input_ptr[idx] = static_cast<T>(grad_input_ptr[idx]);
     }

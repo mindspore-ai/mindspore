@@ -38,10 +38,10 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
       (y_shape.size() == dynamic_rank_len && y_shape[0] == dynamic_rank_value)) {
     return std::vector<int64_t>({dynamic_rank_value});
   }
+  std::vector<int64_t> broadcast_shape;
   auto x_length = static_cast<int64_t>(x_shape.size());
   auto y_length = static_cast<int64_t>(y_shape.size());
   auto length = x_length < y_length ? x_length : y_length;
-  std::vector<int64_t> broadcast_shape;
   if (x_length == length) {
     (void)std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
   } else {
@@ -98,8 +98,8 @@ void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t>
   }
 }
 
-ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const ShapeVector &x_shape,
-                                        const std::vector<int64_t> &axis, bool keep_dims_value) {
+ShapeVector ReduceFuncCalShapeInferImpl(const ShapeVector &x_shape, const std::vector<int64_t> &axis,
+                                        bool keep_dims_value) {
   ShapeVector out_shape;
   ShapeVector axis_value;
   (void)axis_value.insert(axis_value.end(), axis.begin(), axis.end());
@@ -217,7 +217,7 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
     out_shape = ReduceFuncCalShapeAxisDyn(x_shape, axis_shape, keep_dims);
     return std::make_shared<abstract::Shape>(out_shape);
   }
-  out_shape = ReduceFuncCalShapeInferImpl(primitive, x_shape, axis_value, keep_dims);
+  out_shape = ReduceFuncCalShapeInferImpl(x_shape, axis_value, keep_dims);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

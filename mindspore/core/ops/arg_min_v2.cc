@@ -45,7 +45,7 @@ abstract::ShapePtr ArgminV2InferShape(const PrimitivePtr &primitive, const std::
     out_shape = ReduceFuncCalShapeAxisDyn(input_shape, axis_shape);
     return std::make_shared<abstract::Shape>(out_shape);
   }
-  out_shape = ReduceFuncCalShapeInferImpl(primitive, input_shape, axis_value);
+  out_shape = ReduceFuncCalShapeInferImpl(input_shape, axis_value);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

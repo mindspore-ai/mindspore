@@ -125,7 +125,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
   if (!alpha_shape.empty()) {
     batch_size_ = std::accumulate(alpha_shape.begin(), alpha_shape.end(), batch_size_, std::multiplies<int64_t>());
   }
-  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ = LongToSize(std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>()));
   if (batch_size_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
@@ -155,11 +155,11 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
 template <typename T>
 void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::vector<AddressPtr> &inputs,
                                                                    const std::vector<AddressPtr> &) {
-  auto var_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto alpha_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto l1_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto l2_addr = reinterpret_cast<T *>(inputs[3]->addr);
-  auto delta_addr = reinterpret_cast<T *>(inputs[4]->addr);
+  auto var_addr = static_cast<T *>(inputs[0]->addr);
+  auto alpha_addr = static_cast<T *>(inputs[1]->addr);
+  auto l1_addr = static_cast<T *>(inputs[2]->addr);
+  auto l2_addr = static_cast<T *>(inputs[3]->addr);
+  auto delta_addr = static_cast<T *>(inputs[4]->addr);
   auto task = [this, &var_addr, &alpha_addr, &l1_addr, &l2_addr, &delta_addr](size_t start, size_t end) {
     auto cur_input_elements = end - start;
     for (int64_t b = 0; b < batch_size_; b++) {
@@ -184,11 +184,11 @@ void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::ve
 
 void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelOptFp32(const std::vector<kernel::AddressPtr> &inputs,
                                                                    const std::vector<kernel::AddressPtr> &) {
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto alpha = reinterpret_cast<float *>(inputs[kAlphaIndex]->addr);
-  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr);
-  auto delta = reinterpret_cast<float *>(inputs[kDeltaIndex]->addr);
+  auto var = static_cast<float *>(inputs[kVarIndex]->addr);
+  auto alpha = static_cast<float *>(inputs[kAlphaIndex]->addr);
+  auto l1 = static_cast<float *>(inputs[kL1Index]->addr);
+  auto l2 = static_cast<float *>(inputs[kL2Index]->addr);
+  auto delta = static_cast<float *>(inputs[kDeltaIndex]->addr);
 
   auto task = [this, &var, &alpha, &l1, &l2, &delta](size_t start, size_t end) {
     auto cur_input_elements = end - start;

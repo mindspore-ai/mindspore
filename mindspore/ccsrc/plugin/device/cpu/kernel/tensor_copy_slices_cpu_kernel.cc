@@ -92,9 +92,9 @@ bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
                         << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
                         << ", and the dimension of 'strides': " << stride_shape.size();
     }
-    auto begin_ptr = reinterpret_cast<int64_t *>(inputs[2]->addr);
-    auto end_ptr = reinterpret_cast<int64_t *>(inputs[3]->addr);
-    auto strides_ptr = reinterpret_cast<int64_t *>(inputs[4]->addr);
+    auto begin_ptr = static_cast<int64_t *>(inputs[2]->addr);
+    auto end_ptr = static_cast<int64_t *>(inputs[3]->addr);
+    auto strides_ptr = static_cast<int64_t *>(inputs[4]->addr);
     std::vector<int64_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
     std::vector<int64_t> end{end_ptr, end_ptr + end_shape[0]};
     std::vector<int64_t> stride{strides_ptr, strides_ptr + stride_shape[0]};

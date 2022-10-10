@@ -357,11 +357,11 @@ inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tens
   size_t data_size = input_tensor->DataSize();
   auto tensor_type = input_tensor->Dtype();
   if (tensor_type->type_id() == kNumberTypeInt32) {
-    auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
+    auto tensor_data = static_cast<int32_t *>(input_tensor->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data);
     tensor_value.assign(tensor_data, tensor_data + data_size);
   } else if (tensor_type->type_id() == kNumberTypeInt64) {
-    auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
+    auto tensor_data = static_cast<int64_t *>(input_tensor->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data);
     tensor_value.assign(tensor_data, tensor_data + data_size);
   } else {

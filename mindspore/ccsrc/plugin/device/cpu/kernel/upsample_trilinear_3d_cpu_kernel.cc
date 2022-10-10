@@ -86,8 +86,8 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   MS_EXCEPTION_IF_CHECK_FAIL(channels > 0 && output_depth > 0 && output_height > 0 && output_width > 0,
                              "Invalid output shape.");
 
-  auto x_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto y_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto x_ptr = static_cast<T *>(inputs[kIndex0]->addr);
+  auto y_ptr = static_cast<T *>(outputs[kIndex0]->addr);
 
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);

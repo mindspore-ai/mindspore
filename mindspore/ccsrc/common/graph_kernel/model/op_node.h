@@ -73,7 +73,7 @@ class PrimOp : public Node {
 
   // calculate const inputs, used for InferValue
   template <typename TM>
-  tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const DAttrs &);
+  tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const DAttrs &) const;
 
   // Gen PrimitiveC and abstract list to call PrimitiveC's inference function.
   std::pair<PrimitivePtr, AbstractBasePtrList> GenPrimAndAbstract(const NodePtrList &inputs, const DAttrs &attrs) const;
@@ -83,7 +83,7 @@ class PrimOp : public Node {
 
   // set abstracts from attrs.
   void SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
-                              AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec);
+                              AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec) const;
 
   std::string op_;
   ComputeType compute_type_;
@@ -253,7 +253,7 @@ class GatherOp : public OpaqueOp {
 
  protected:
   template <typename TM>
-  tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs);
+  tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs) const;
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
@@ -335,7 +335,7 @@ class StridedSliceOnnxOp : public OpaqueOp {
 
  protected:
   template <typename TM>
-  tensor::TensorPtr CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &);
+  tensor::TensorPtr CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &) const;
   std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override {
     return GetValue<std::vector<DShape>>(attrs.find("output_shape")->second);
   }

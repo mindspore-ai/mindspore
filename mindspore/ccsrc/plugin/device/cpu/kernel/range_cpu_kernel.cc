@@ -82,7 +82,7 @@ void RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t max_size = outputs[0]->size / sizeof(T);
-  if (Sign(delta) * Sign(limit - start) >= 0) {
+  if (Sign(static_cast<float>(delta)) * Sign(static_cast<float>(limit - start)) >= 0) {
     if (std::is_integral<T>::value) {
       output_size_ = static_cast<size_t>((std::abs(limit - start) + std::abs(delta) - 1) / std::abs(delta));
     } else {

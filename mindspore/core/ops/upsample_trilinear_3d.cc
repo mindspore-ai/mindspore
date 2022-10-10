@@ -57,20 +57,20 @@ abstract::ShapePtr UpsampleTrilinear3DInferShape(const PrimitivePtr &primitive,
   auto scales = GetValue<std::vector<float>>(scales_ptr);
 
   ShapeVector output_shape;
-  output_shape.emplace_back(x_shape[kInputIndex0]);
-  output_shape.emplace_back(x_shape[kInputIndex1]);
+  output_shape.push_back(x_shape[kInputIndex0]);
+  output_shape.push_back(x_shape[kInputIndex1]);
 
   if (!output_size.empty() && scales.empty()) {
     (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("the elements number of output_size", SizeToLong(output_size.size()),
-                                             kEqual, SizeToLong(kDim3), prim_name);
-    output_shape.insert(output_shape.end(), output_size.begin(), output_size.end());
+                                             kEqual, SizeToLong(static_cast<size_t>(kDim3)), prim_name);
+    (void)output_shape.insert(output_shape.end(), output_size.begin(), output_size.end());
   } else if (output_size.empty() && !scales.empty()) {
     (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("the elements number of scales", SizeToLong(scales.size()), kEqual,
-                                             SizeToLong(kDim3), prim_name);
+                                             SizeToLong(static_cast<size_t>(kDim3)), prim_name);
     for (size_t idx = 0; idx < kDim3; ++idx) {
-      output_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + kDim2] * scales[idx])));
+      output_shape.push_back(static_cast<int64_t>(floor(x_shape[idx + kDim2] * scales[idx])));
     }
   } else if (output_size.empty() && scales.empty()) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
