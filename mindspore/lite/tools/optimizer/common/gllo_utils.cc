@@ -1101,8 +1101,9 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
     abstract_base = abstract_tuple->elements().front();
   }
   if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << anf_node->fullname_with_scope();
-    return RET_ERROR;
+    MS_LOG(INFO) << "Abstract of parameter is nullptr, " << anf_node->fullname_with_scope();
+    *type_id = kTypeUnknown;
+    return lite::RET_NOT_SUPPORT;
   }
   if (utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
