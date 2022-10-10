@@ -60,7 +60,7 @@ IF "%1%" == "lite" (
 ) ELSE (
     IF "%1%" == "ms_vs_gpu" (
         echo "======Start gen VS2019 Project for MS gpu ======"
-        cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_GPU=ON -DMS_REQUIRE_CUDA_VERSION=11.1 -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
+        cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_GPU=ON -DGPU_BACKEND_CUDA=ON -DMS_REQUIRE_CUDA_VERSION=11.1 -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
             -G "Visual Studio 16 2019" -A x64 ../..
     ) ELSE (
         IF "%1%" == "ms_vs_cpu" (
