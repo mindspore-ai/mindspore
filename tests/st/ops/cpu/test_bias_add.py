@@ -194,6 +194,37 @@ def test_bias_add_forward_float32_functional():
     test_bias_add_forward_functional(np.float32)
 
 
+def run_bias_add(dtype):
+    x = Tensor(np.random.normal(0, 10, (2, 3)).astype(dtype))
+    b = Tensor(np.ones((3,)).astype(dtype))
+    net = Net()
+    net(x, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_bias_add_cpu_valid_type():
+    """
+    Feature: test bias_add.
+    Description: test all cpu valid type of bias_add.
+    Expectation: run without exception.
+    """
+    run_bias_add(np.float16)
+    run_bias_add(np.float32)
+    run_bias_add(np.float64)
+    run_bias_add(np.int8)
+    run_bias_add(np.int16)
+    run_bias_add(np.int32)
+    run_bias_add(np.int64)
+    run_bias_add(np.uint8)
+    run_bias_add(np.uint16)
+    run_bias_add(np.uint32)
+    run_bias_add(np.uint64)
+    run_bias_add(np.complex64)
+    run_bias_add(np.complex128)
+
+
 if __name__ == '__main__':
     test_biasadd_vmap()
     test_bias_add_forward_float32_functional()
