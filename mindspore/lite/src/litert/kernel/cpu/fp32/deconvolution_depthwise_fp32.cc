@@ -81,6 +81,9 @@ int DeconvolutionDepthwiseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(conv_param_);
+  CHECK_NOT_EQUAL_RETURN(conv_param_->dilation_h_, C1NUM);
+  CHECK_NOT_EQUAL_RETURN(conv_param_->dilation_w_, C1NUM);
+
   UpdateOriginWeightAndBias();
 
   sliding_ = new (std::nothrow) SlidingWindowParam;

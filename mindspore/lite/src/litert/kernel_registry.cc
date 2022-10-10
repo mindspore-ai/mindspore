@@ -256,7 +256,7 @@ int KernelRegistry::GetKernelExec(const std::vector<Tensor *> &in_tensors, const
       return RET_OK;
     }
   }
-  MS_LOG(ERROR) << "common cpu kernel registry failed" << parameter->name_;
+  MS_LOG(ERROR) << "common cpu kernel registry failed";
   return RET_ERROR;
 }
 
