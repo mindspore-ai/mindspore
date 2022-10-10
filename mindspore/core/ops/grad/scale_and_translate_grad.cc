@@ -41,16 +41,18 @@ abstract::ShapePtr ScaleAndTranslateGradInferShape(const PrimitivePtr &primitive
   const int64_t kShapeSize2 = 4;
   const int64_t kElementsNumber = 2;
   // check grads rank'4
-  (void)CheckAndConvertUtils::CheckInteger("grads's rank'", grads_shape.size(), kEqual, kShapeSize2, prim_name);
-  // check original_image's rank 4
-  (void)CheckAndConvertUtils::CheckInteger("original_image's rank'", original_image_shape.size(), kEqual, kShapeSize2,
+  (void)CheckAndConvertUtils::CheckInteger("grads's rank'", SizeToLong(grads_shape.size()), kEqual, kShapeSize2,
                                            prim_name);
+  // check original_image's rank 4
+  (void)CheckAndConvertUtils::CheckInteger("original_image's rank'", SizeToLong(original_image_shape.size()), kEqual,
+                                           kShapeSize2, prim_name);
   // check scale' rank must be 1, must have 2 elements
-  (void)CheckAndConvertUtils::CheckInteger("scale's rank'", scale_shape.size(), kEqual, kShapeSize1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scale's rank'", SizeToLong(scale_shape.size()), kEqual, kShapeSize1,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("scale's elements'", scale_shape[0], kEqual, kElementsNumber, prim_name);
   // check translation' rank must be 1, must have 2 elements
-  (void)CheckAndConvertUtils::CheckInteger("translation's rank'", translation_shape.size(), kEqual, kShapeSize1,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("translation's rank'", SizeToLong(translation_shape.size()), kEqual,
+                                           kShapeSize1, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("translation's elements'", translation_shape[0], kEqual, kElementsNumber,
                                            prim_name);
   //  infer output shape

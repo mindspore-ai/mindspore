@@ -30,8 +30,8 @@ namespace {
 #define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<AnyValue>()))
 TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
 
   auto start_dtype = input_args[kInputIndex0]->BuildType();
   auto stop_dtype = input_args[kInputIndex1]->BuildType();

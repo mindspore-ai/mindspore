@@ -31,9 +31,9 @@ bool HSigmoidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidOutputsNum, kernel_name_);
-  T *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  T *x = static_cast<T *>(inputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  T *y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *y = static_cast<T *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(y, false);
   auto zero = static_cast<T>(0);
   auto one = static_cast<T>(1);

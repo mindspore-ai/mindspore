@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UTILS_SAMPLING_KERNELS_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UTILS_SAMPLING_KERNELS_H_
 
-#include <stdio.h>
 #include <cmath>
 #include <string>
 
@@ -76,7 +75,7 @@ struct ComputerBoxKernel {
     input = std::abs(input);
     if (input < 0.5f) {
       result = kRValue1;
-    } else if (input == 0.5f) {
+    } else if (input == static_cast<float>(0.5f)) {
       result = 0.5f;
     } else {
       result = kRValue0;
