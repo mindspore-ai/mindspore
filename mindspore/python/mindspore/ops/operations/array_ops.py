@@ -6868,7 +6868,7 @@ class TensorScatterElements(Primitive):
 
 class ExtractVolumePatches(Primitive):
     r"""
-    Extract patches from input and put them in the "depth" output dimension. 3D extension of extract_image_patches.
+    Extract patches from input and put them in the "depth" output dimension.
 
     Args:
         kernel_size (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
