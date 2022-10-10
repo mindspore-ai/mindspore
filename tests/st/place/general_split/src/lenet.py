@@ -95,6 +95,8 @@ class Net(nn.Cell):
         self.fc1.place("MS_WORKER", 0)
         self.fc2.place("MS_WORKER", 1)
         self.fc3.place("MS_WORKER", 2)
+        self.conv1.place("MS_WORKER", 3)
+        self.conv2.place("MS_WORKER", 4)
 
     def construct(self, x):
         x = self.conv1(x)
