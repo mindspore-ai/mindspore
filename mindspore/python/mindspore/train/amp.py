@@ -57,14 +57,16 @@ class _OutputTo16(nn.Cell):
 
 
 class _OutputTo32(nn.Cell):
-    "Wrap cell for amp. Cast network output back to float32"
+    "Wrap loss for amp. Cast network output back to float32"
 
-    def __init__(self, op):
+    def __init__(self, backbone):
         super(_OutputTo32, self).__init__(auto_prefix=False)
-        self._op = op
+        self._backbone = backbone
+        self._jit_config_dict = backbone.jit_config_dict
 
-    def construct(self, x):
-        return F.cast(self._op(x), mstype.float32)
+    def construct(self, *inputs):
+        out = self._backbone(*inputs)
+        return F.mixed_precision_cast(mstype.float32, out)
 
 
 def _auto_white_list(network, white_list=None):
@@ -126,12 +128,17 @@ def auto_mixed_precision(network, amp_level="O0"):
         pass
     elif amp_level == "O1":
         _auto_white_list(network)
+        return network
     elif amp_level == "O2":
         _auto_black_list(network)
     elif amp_level == "O3":
         network.to_float(mstype.float16)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
+
+    if amp_level in ("O2", "O3"):
+        network = _OutputTo32(network)
+    return network
 
 
 def _do_keep_batchnorm_fp32(network):
