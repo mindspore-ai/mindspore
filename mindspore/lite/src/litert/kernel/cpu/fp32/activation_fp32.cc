@@ -87,6 +87,7 @@ int ActivationCPUKernel::DoActivationInt32(int task_id) {
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, RET_ERROR);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -116,6 +117,7 @@ int ActivationCPUKernel::DoActivationFp32(int task_id) {
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, RET_ERROR);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;

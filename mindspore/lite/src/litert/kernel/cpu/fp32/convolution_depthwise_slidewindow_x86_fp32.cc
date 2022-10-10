@@ -35,8 +35,12 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitPackedInputOutput() {
   if (conv_param_->input_channel_ % oc_tile_ != 0) {
     input_need_align_ = true;
     int ic_algin = UP_DIV(conv_param_->input_channel_, oc_tile_);
-    int pack_input_size =
-      conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * oc_tile_ * ic_algin;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+    int input_hw = conv_param_->input_h_ * conv_param_->input_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_batch_, input_hw, RET_ERROR);
+    int input_bhw = conv_param_->input_batch_ * input_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, oc_tile_ * ic_algin, RET_ERROR);
+    int pack_input_size = input_bhw * oc_tile_ * ic_algin;
     packed_input_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(float)));
     if (packed_input_ == nullptr) {
       MS_LOG(ERROR) << "Malloc packed_input_ buffer is failed.";
@@ -46,8 +50,12 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitPackedInputOutput() {
   if (conv_param_->output_channel_ % oc_tile_ != 0) {
     output_need_align_ = true;
     int oc_algin = UP_DIV(conv_param_->output_channel_, oc_tile_);
-    int pack_output_size =
-      conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc_tile_ * oc_algin;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, conv_param_->output_w_, RET_ERROR);
+    int output_hw = conv_param_->output_h_ * conv_param_->output_w_;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_batch_, output_hw, RET_ERROR);
+    int output_bhw = conv_param_->output_batch_ * output_hw;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc_tile_ * oc_algin, RET_ERROR);
+    int pack_output_size = output_bhw * oc_tile_ * oc_algin;
     packed_output_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_output_size * sizeof(float)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc packed_output_ buffer is failed.";
@@ -67,7 +75,10 @@ int ConvolutionDepthwiseSWCPUKernelX86::Prepare() {
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
-    int pack_weight_size = oc_algin * oc_tile_ * weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_tensor->Height(), weight_tensor->Width(), RET_ERROR);
+    int weight_size_hw = weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(oc_algin * oc_tile_, weight_size_hw, RET_ERROR);
+    int pack_weight_size = oc_algin * oc_tile_ * weight_size_hw;
     set_workspace_size(pack_weight_size * sizeof(float));
   }
   sliding_ = new (std::nothrow) SlidingWindowParam;

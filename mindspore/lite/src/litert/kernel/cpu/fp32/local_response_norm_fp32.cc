@@ -58,14 +58,19 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) const {
   int width = in_shape.at(kNHWC_W);
   int channel = in_shape.at(kNHWC_C);
 
-  int outer_size = batch * width * height;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(batch, width, RET_ERROR);
+  int size_bw = batch * width;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(size_bw, height, RET_ERROR);
+  int outer_size = size_bw * height;
   MS_CHECK_TRUE_RET(thread_count_ != 0, RET_ERROR);
   int stride = UP_DIV(outer_size, thread_count_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, RET_ERROR);
-  int count = MSMIN(stride, outer_size - stride * task_id);
+  int start = stride * task_id;
+  int count = MSMIN(stride, outer_size - start);
 
-  input_ptr += stride * task_id * channel;
-  output_ptr += stride * task_id * channel;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(start, channel, RET_ERROR);
+  input_ptr += start * channel;
+  output_ptr += start * channel;
 
   auto error_code = LocalResponseNorm(input_ptr, count, channel, output_ptr,
                                       reinterpret_cast<LocalResponseNormParameter *>(op_parameter_));

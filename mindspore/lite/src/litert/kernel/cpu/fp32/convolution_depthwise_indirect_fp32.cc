@@ -47,7 +47,10 @@ int ConvolutionDepthwiseIndirectCPUKernel::Prepare() {
     int div_flag = C4NUM;
 #endif
     int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
-    int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_tensor->Height(), weight_tensor->Width(), RET_ERROR);
+    int weight_size_hw = weight_tensor->Height() * weight_tensor->Width();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(div_flag * batch_flag, weight_size_hw, RET_ERROR);
+    int pack_weight_size = div_flag * batch_flag * weight_size_hw;
     set_workspace_size(pack_weight_size * sizeof(float));
   }
   auto ret = InitConvWeightBias();
@@ -64,9 +67,15 @@ int ConvolutionDepthwiseIndirectCPUKernel::Prepare() {
 int ConvolutionDepthwiseIndirectCPUKernel::MallocIndirectBuffer() {
   // malloc indirect buffer
   step_w = conv_param_->dilation_w_ == 1 ? conv_param_->stride_w_ : conv_param_->kernel_w_;
-  step_h =
-    (conv_param_->kernel_h_ * conv_param_->kernel_w_) + (conv_param_->output_w_ - 1) * step_w * conv_param_->kernel_h_;
-  int buffer_size = conv_param_->output_batch_ * conv_param_->output_h_ * step_h;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->kernel_h_, conv_param_->kernel_w_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(step_w, conv_param_->kernel_h_, RET_ERROR);
+  int step_w_2d = step_w * conv_param_->kernel_h_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW((conv_param_->output_w_ - 1), step_w_2d, RET_ERROR);
+  step_h = (conv_param_->kernel_h_ * conv_param_->kernel_w_) + (conv_param_->output_w_ - 1) * step_w_2d;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_h_, step_h, RET_ERROR);
+  int step_h_2d = conv_param_->output_h_ * step_h;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->output_batch_, step_h_2d, RET_ERROR);
+  int buffer_size = conv_param_->output_batch_ * step_h_2d;
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, buffer_size * sizeof(float *));
   indirect_buffer_ = reinterpret_cast<float **>(malloc(buffer_size * sizeof(float *)));
   if (indirect_buffer_ == nullptr) {
@@ -122,7 +131,12 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocPackedInput() {
   int div_flag = C4NUM;
 #endif
   int IC_DIV = UP_DIV(conv_param_->input_channel_, div_flag);
-  int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * div_flag * IC_DIV;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_h_, conv_param_->input_w_, RET_ERROR);
+  int conv_input_hw = conv_param_->input_h_ * conv_param_->input_w_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param_->input_batch_, conv_input_hw, RET_ERROR);
+  int conv_input_bhw = conv_param_->input_batch_ * conv_input_hw;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_input_bhw, div_flag * IC_DIV, RET_ERROR);
+  int pack_input_size = conv_input_bhw * div_flag * IC_DIV;
   packed_input_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(float)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";

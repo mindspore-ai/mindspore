@@ -81,6 +81,7 @@ int EmbeddingLookupRun(void *cdata, int task_id, float lhs_scale, float rhs_scal
 }
 
 int EmbeddingLookupCPUKernel::Run() {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(param_->layer_size_, param_->layer_num_, RET_ERROR);
   input_addr_ =
     reinterpret_cast<float *>(ms_context_->allocator->Malloc(sizeof(float) * param_->layer_size_ * param_->layer_num_));
   param_->is_regulated_ = reinterpret_cast<bool *>(ms_context_->allocator->Malloc(sizeof(bool) * param_->layer_num_));

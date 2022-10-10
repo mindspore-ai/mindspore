@@ -214,6 +214,7 @@ bool ConvolutionDelegateCPUKernel::CheckAvxUseSW1x1Conv(const ConvParameter *con
 
 bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_param) {
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->input_w_, conv_param->input_h_, false);
     if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
         conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % C8NUM == 0 &&
         (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
@@ -241,6 +242,7 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CreateConv1x1MatmulKernel() {
     return nullptr;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->output_h_, conv_param->output_w_, nullptr);
   matmul_param_->row_ = conv_param->output_h_ * conv_param->output_w_;
   matmul_param_->col_ = conv_param->output_channel_;
   matmul_param_->deep_ = conv_param->input_channel_;

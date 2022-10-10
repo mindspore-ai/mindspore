@@ -131,12 +131,14 @@ int GatherNdCPUKernel::InitOffset() {
 }
 
 int GatherNdCPUKernel::DoGatherNd(int task_id) const {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_sz_stride_, RET_ERROR);
   int count = MSMIN(thread_sz_stride_, count_ - task_id * thread_sz_stride_);
   if (count <= 0) {
     return RET_OK;
   }
   int offset = task_id * thread_sz_stride_;
   int dtype_len = lite::DataTypeSize(in_tensors_.front()->data_type());
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(offset, area_, RET_ERROR);
   auto ret = GatherNd(in_ptr_, static_cast<int8_t *>(out_ptr_) + offset * area_ * dtype_len, in_offset_ + offset, area_,
                       count, dtype_len);
   if (ret != RET_OK) {

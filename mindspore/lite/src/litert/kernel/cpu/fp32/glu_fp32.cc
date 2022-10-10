@@ -90,6 +90,7 @@ int GluCPUKernel::ReSize() {
 
   // split_count means the previous dims num before split dim
   // e.g. input dims is [1, 3, 4, 8], split axis is 2, num_split is 2, so split_count_ is 1*3, num_unit_ is 1*3*2
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(split_param_.split_count_, split_param_.num_split_, RET_ERROR);
   num_unit_ = split_param_.split_count_ * split_param_.num_split_;
   usable_thread_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
   if (usable_thread_num_ != 0) {

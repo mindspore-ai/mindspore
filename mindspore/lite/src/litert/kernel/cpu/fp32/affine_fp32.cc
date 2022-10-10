@@ -129,6 +129,7 @@ int AffineFp32CPUKernel::FullRunInit() {
   splice_src_col_ = src_shape.at(kInputCol);
   splice_dst_row_ = dst_shape.at(kInputRow);
   splice_dst_col_ = dst_shape.at(kInputCol);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(splice_src_col_, affine_parameter_->context_size_, RET_ERROR);
   if (splice_src_col_ * affine_parameter_->context_size_ != splice_dst_col_) {
     MS_LOG(ERROR) << "splice kernel src_col not match dst_col";
     return RET_ERROR;
@@ -154,6 +155,7 @@ int AffineFp32CPUKernel::IncrementInit() {
   auto out_shape = out_tensor->shape();
   matmul_col_ = out_shape.at(kInputCol);
   matmul_row_ = out_shape.at(kInputRow);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul_row_, matmul_col_, RET_ERROR);
   if (out_tensor->Size() != matmul_row_ * matmul_col_ * sizeof(float)) {
     MS_LOG(ERROR) << "size mismatch!";
     MS_LOG(ERROR) << "out_tensor->Size() = " << out_tensor->Size();
@@ -281,6 +283,7 @@ kernel::LiteKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
   int context_dims = affine_parameter_->context_size_;
   int affine_splice_output_col = affine_parameter_->output_dim_;
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(context_dims, src_col, nullptr);
   if (context_dims * src_col != affine_splice_output_col) {
     MS_LOG(ERROR) << "context_dims * src_col_ != affine_splice_output_col: " << context_dims << " * " << src_col
                   << " != " << affine_splice_output_col;
