@@ -33,20 +33,6 @@ class MIND_API BatchMatMul : public MatMul {
   MIND_API_BASE_MEMBER(BatchMatMul);
   /// \brief Constructor.
   BatchMatMul() : MatMul(kNameBatchMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchMatmul for the inputs.
-  void Init(bool transpose_a = false, bool transpose_b = false);
-  /// \brief Set transpose_a.
-  void set_transpose_a(bool transpose_a);
-  /// \brief Set transpose_b.
-  void set_transpose_b(bool transpose_b);
-  /// \brief Get transpose_a.
-  ///
-  /// \return transpose_a.
-  bool get_transpose_a() const;
-  /// \brief Get transpose_b.
-  ///
-  /// \return transpose_b.
-  bool get_transpose_b() const;
 };
 abstract::AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args);
