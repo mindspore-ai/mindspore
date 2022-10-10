@@ -101,10 +101,10 @@ class TransShape:
             from impl.add import _add_check_format, _infer_shape
             format_pattern = _add_check_format({"shape": shapes[0], "format": formats[0]},
                                                {"shape": shapes[1], "format": formats[1]})
-            ori_shape0 = ori_shapes[0] if ori_shapes[0] is not None else \
-                infer_ori_shape(shapes[0], formats[0], ori_formats[0])
-            ori_shape1 = ori_shapes[1] if ori_shapes[1] is not None else \
-                infer_ori_shape(shapes[1], formats[1], ori_formats[1])
+            ori_shape0 = ori_shapes[0] if ori_shapes[0] is not None else infer_ori_shape(
+                shapes[0], formats[0], ori_formats[0])
+            ori_shape1 = ori_shapes[1] if ori_shapes[1] is not None else infer_ori_shape(
+                shapes[1], formats[1], ori_formats[1])
             new_shapes = [None, None]
             new_shapes[0], new_shapes[1] = _infer_shape(format_pattern,
                                                         {"shape": shapes[0], "ori_shape": ori_shape0},
@@ -257,7 +257,6 @@ def create_placeholders(inputs):
         shape = v["shape"]
         if "new_shape" in v:
             shape = v["new_shape"]
-            print("[{}] shape: {} --> new shape: {}".format(k, v["shape"], v["new_shape"]))
         attr = {
             "format": v.get("format"),
             "sub_format": v.get("sub_format", ""),
