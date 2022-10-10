@@ -1628,7 +1628,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get("renorm")(self, p, dim, maxnorm)
 
-    def approximate_equal(self, other, tolerance=1e-5):
+    def approximate_equal(self, y, tolerance=1e-5):
         r"""
         Returns True if abs(x-y) is smaller than tolerance element-wise, otherwise False.
 
@@ -1646,7 +1646,7 @@ class Tensor(Tensor_):
         the relatively highest precision data type.
 
         Args:
-            other (Tensor): Second tensor to compare, with data type belongs to float32, float16.
+            y (Tensor): Second tensor to compare, with data type belongs to float32, float16.
             tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
 
         Returns:
@@ -1670,11 +1670,11 @@ class Tensor(Tensor_):
             [ True  False  False]
         """
         validator.check_isinstance("x", self, Tensor)
-        validator.check_isinstance("y", other, Tensor)
+        validator.check_isinstance("y", y, Tensor)
         validator.check_isinstance("tolerance", tolerance, float)
         self._init_check()
         input_x = self.copy() if self.dtype == mstype.float32 else self.astype(mstype.float16)
-        input_y = other.copy() if other.dtype == mstype.float32 else other.astype(mstype.float16)
+        input_y = y.copy() if y.dtype == mstype.float32 else y.astype(mstype.float16)
         return tensor_operator_registry.get('__lt__')(tensor_operator_registry.get('abs')()(
             tensor_operator_registry.get('__sub__')(input_x, input_y)
         ), tolerance)
