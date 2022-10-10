@@ -29,7 +29,7 @@ constexpr auto kValidResidualStructureIndex = 1;
 constexpr auto kBNParametersStartIndex = 2;
 // Pattern 1
 // Add -> BatchNorm -> Conv2D -> Relu ... -> End
-//     ↘  BatchNorm -> Conv2D -> -> -> -> ↗
+//     BatchNorm -> Conv2D -> -> -> ->
 constexpr auto kFirstBranchPattern1 = 12;
 constexpr auto kSecondBranchPattern1 = 3;
 constexpr auto kFirstBranchStartIndexPattern1 = 4;
@@ -45,7 +45,7 @@ const std::vector<kStructureTuple> ResidualStructureBasePattern{
    {kSecondBranchStartIndexPattern1, kSecondBranchEndIndexPattern1}}};
 // Pattern 2
 // Add -> BatchNorm -> Conv2D -> Relu ... -> End
-//     ↘  -> ->     ...   ... ...    -> -> ↗
+//       -> ->     ...   ... ...    -> ->
 constexpr auto kFirstBranchPattern2 = 12;
 constexpr auto kSecondBranchPattern2 = 1;
 constexpr auto kFirstBranchStartIndexPattern2 = 4;
@@ -59,7 +59,7 @@ const std::vector<kStructureTuple> ResidualStructureShortCutPattern{
   {kSecondBranchPattern2, {prim::kPrimRelu}, {kSecondBranchStartIndexPattern2, kSecondBranchEndIndexPattern2}}};
 // Pattern 3
 // Add -> BatchNorm -> Conv2D -> Relu ... BatchNorm -> Conv2D -> End
-//     ↘  BatchNorm -> Conv2D -> ->   ...   ...   ...   -> -> ↗
+//       BatchNorm -> Conv2D -> ->   ...   ...   ...   -> ->
 constexpr auto kFirstBranchPattern3 = 11;
 constexpr auto kSecondBranchPattern3 = 3;
 constexpr auto kFirstBranchStartIndexPattern3 = 4;
