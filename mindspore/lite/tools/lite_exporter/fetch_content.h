@@ -63,6 +63,7 @@ int FetchConstData(const CNodePtr &cnode, size_t index, converter::FmkType fmk_t
 int RemoveIfDepend(const CNodePtr &cnode);
 
 int RemoveIfMakeTuple(const CNodePtr &cnode);
+int GetFlattenInputsIfMakeTuple(const CNodePtr &cnode, std::vector<AnfNodePtr> *inputs, bool *has_make_tuple);
 
 // Notes:The op_parameter allocates memory through malloc, and may need to manually free op_parameter.
 int FetchOpParameterFromNode(const AnfNodePtr &node, OpParameter **op_parameter);

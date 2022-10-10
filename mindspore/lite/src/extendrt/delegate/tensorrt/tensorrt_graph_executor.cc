@@ -29,6 +29,7 @@
 #include "ccsrc/include/common/utils/convert_utils.h"
 #include "src/extendrt/utils/kernel_graph_utils.h"
 #include "common/config_infos.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite {
 namespace {
@@ -92,52 +93,20 @@ tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node) {
   return nullptr;
 }
 
-abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
-  // Other abstract class, such as AbstractCSRTensor and AbstractCOOTensor, is converted to AbstractTensor early time.
-  abstract::BaseShapePtr res_shape;
-  if (abs->isa<abstract::AbstractTensor>()) {
-    res_shape = abs->BuildShape();
-  } else if (abs->isa<abstract::AbstractScalar>()) {
-    res_shape = std::make_shared<abstract::Shape>(ShapeVector{});
-  } else if (abs->isa<abstract::AbstractType>()) {
-    res_shape = std::make_shared<abstract::Shape>(ShapeVector{});
-  } else {
-    MS_EXCEPTION(TypeError) << "The abstract must be a Scalar or Tensor, but got " << abs->ToString();
-  }
-  return res_shape;
-}
+TensorInfo KernelTensorAsTensorInfo(const session::KernelWithIndex &tensor_id) {
+  auto prev_node = tensor_id.first;
+  auto tensor_val = GetConstNodeValue(prev_node);
 
-kernel::KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type,
-                                           size_t idx, const ShapeVector &device_shape_adaptively,
-                                           const std::string &format_str) {
-  auto tag_abstract = cur_abstract->Clone();
-  if (cur_abstract->isa<abstract::AbstractTuple>()) {
-    auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(abs_tuple);
-    auto abs_element = abs_tuple->elements();
-    MS_EXCEPTION_IF_CHECK_FAIL((idx < abs_element.size()), "Index is out of range.");
-    tag_abstract = abs_element.at(idx);
-  }
-
-  TypePtr tag_type_ptr = TypeIdToType(real_type);
-  auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
-  auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
-  kernel::TensorInfo tensor_info{kernel::GetFormatFromStrToEnum(format_str), new_abstract, device_shape_adaptively};
-  kernel::KernelTensorPtr res_tensor = std::make_shared<kernel::KernelTensor>();
-  res_tensor->SetTensorInfo(tensor_info);
-  return res_tensor;
-}
-
-TensorInfo KernelTensorAsTensorInfo(const session::KernelWithIndex &tensor_id,
-                                    const kernel::KernelTensorPtr &kernel_tensor, const tensor::TensorPtr &tensor_val) {
   constexpr auto tensorrt_format = mindspore::Format::NCHW;
   auto name = tensor_id.first->UniqueName();
   if (tensor_id.second > 0) {
     name += ":" + std::to_string(tensor_id.second);
   }
-  auto datatype = static_cast<enum DataType>(kernel_tensor->GetDtype());
+  auto shape = common::AnfAlgo::GetOutputInferShape(tensor_id.first, tensor_id.second);
+  auto type_id = common::AnfAlgo::GetOutputInferDataType(tensor_id.first, tensor_id.second);
+
+  auto datatype = static_cast<enum DataType>(type_id);
   auto format = tensorrt_format;
-  auto shape = kernel_tensor->GetShapeVector();
   const void *data = nullptr;
   size_t data_len = 0;
   if (tensor_val) {
@@ -174,48 +143,21 @@ Status GetAbstractArgsFromCNode(const CNodePtr &cnode, std::vector<NodeWithOutpu
   MS_EXCEPTION_IF_NULL(*base_operator);
   // Makeup input tensors.
   input_tensors->clear();
-  auto real_input_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
-    const auto &[prev_node, output_idx] = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
-    session::KernelWithIndex tensor_id = {prev_node, output_idx};
-
+  auto input_nodes = opt::GetNodeInputs(cnode);
+  for (auto &tensor_id : input_nodes) {
     auto it = std::find_if(tensor_info_list.begin(), tensor_info_list.end(),
                            [&tensor_id](const NodeWithOutputIndex &index) { return index.kernel_index == tensor_id; });
     if (it != tensor_info_list.end()) {
       input_tensors->push_back(it->tensor_info);
     } else {
-      auto prev_abstract = prev_node->abstract();
-      auto real_input_type = real_input_types[input_idx];
-      ShapeVector device_shape_adaptively;
-      try {
-        device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
-      } catch (const std::exception &) {
-        device_shape_adaptively = {};
-      }
-      auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-      auto input_tensor =
-        CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str);
-      auto tensor_val = GetConstNodeValue(prev_node);
-      auto tensor_info = KernelTensorAsTensorInfo(tensor_id, input_tensor, tensor_val);
+      auto tensor_info = KernelTensorAsTensorInfo(tensor_id);
       input_tensors->push_back(tensor_info);
       tensor_info_list.push_back(NodeWithOutputIndex(tensor_id, tensor_info));
     }
   }
   // Makeup output tensors.
   output_tensors->clear();
-  auto real_output_types = AnfAlgo::GetAllOutputDeviceTypes(cnode);
-  auto cur_abstract = cnode->abstract();
-  size_t output_num = 1;
-  if (cur_abstract->isa<abstract::AbstractTuple>()) {
-    auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(abs_tuple);
-    output_num = abs_tuple->elements().size();
-  }
-  if (real_output_types.size() != output_num) {
-    MS_LOG_ERROR << "Output datatype number " << real_output_types.size() << " != output num " << output_num;
-    return mindspore::kLiteError;
-  }
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
     session::KernelWithIndex tensor_id = {cnode, output_idx};
     auto it = std::find_if(tensor_info_list.begin(), tensor_info_list.end(),
@@ -223,17 +165,7 @@ Status GetAbstractArgsFromCNode(const CNodePtr &cnode, std::vector<NodeWithOutpu
     if (it != tensor_info_list.end()) {
       output_tensors->push_back(it->tensor_info);
     } else {
-      auto real_output_type = real_output_types[output_idx];
-      ShapeVector device_shape_adaptively;
-      try {
-        device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
-      } catch (const std::exception &) {
-        device_shape_adaptively = {};
-      }
-      auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-      auto output_tensor =
-        CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str);
-      auto tensor_info = KernelTensorAsTensorInfo(tensor_id, output_tensor, nullptr);
+      auto tensor_info = KernelTensorAsTensorInfo(tensor_id);
       output_tensors->push_back(tensor_info);
       tensor_info_list.push_back(NodeWithOutputIndex(tensor_id, tensor_info));
     }

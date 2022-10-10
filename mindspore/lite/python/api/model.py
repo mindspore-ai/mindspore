@@ -64,7 +64,7 @@ class Model:
         res = f"model_path: {self.model_path_}."
         return res
 
-    def build_from_file(self, model_path, model_type, context):
+    def build_from_file(self, model_path, model_type, context, config_file=""):
         """
         Load and build a model from file.
 
@@ -78,6 +78,7 @@ class Model:
                   The recommended model file suffix is ".ms".
 
             context (Context): Define the context used to store options during execution.
+            config_file (str): Define the config file used to store options during build model.
 
         Raises:
             TypeError: `model_path` is not a str.
@@ -97,12 +98,17 @@ class Model:
         check_isinstance("model_path", model_path, str)
         check_isinstance("model_type", model_type, ModelType)
         check_isinstance("context", context, Context)
+        check_isinstance("config_file", config_file, str)
         if not os.path.exists(model_path):
             raise RuntimeError(f"build_from_file failed, model_path does not exist!")
         self.model_path_ = model_path
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
         if model_type is ModelType.MINDIR:
             model_type_ = _c_lite_wrapper.ModelType.kMindIR
+        if config_file:
+            ret = self._model.load_config(config_file)
+            if not ret.IsOk():
+                raise RuntimeError(f"load config failed! Error is {ret.ToString()}")
         ret = self._model.build_from_file(self.model_path_, model_type_, context._context)
         if not ret.IsOk():
             raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")

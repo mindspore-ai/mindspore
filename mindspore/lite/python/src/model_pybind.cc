@@ -68,6 +68,7 @@ void ModelPyBind(const py::module &m) {
     .def("build_from_file_with_decrypt",
          py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &, const Key &,
                            const std::string &, const std::string &>(&Model::Build))
+    .def("load_config", py::overload_cast<const std::string &>(&Model::LoadConfig))
     .def("resize", &Model::Resize)
     .def("predict", py::overload_cast<const std::vector<MSTensor> &, std::vector<MSTensor> *, const MSKernelCallBack &,
                                       const MSKernelCallBack &>(&Model::Predict))

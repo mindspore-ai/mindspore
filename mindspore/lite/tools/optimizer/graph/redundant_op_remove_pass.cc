@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include "include/errorcode.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "ops/make_tuple.h"
@@ -26,6 +27,7 @@
 #include "ops/fusion/pad_fusion.h"
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -366,10 +368,81 @@ int RemoveRedundantOpPass::RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, 
   return ReplaceOp(anf_node, manager);
 }
 
+int RemoveRedundantOpPass::FlattenMakeTuple(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(manager != nullptr);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    auto cnode = node->cast<CNodePtr>();
+    if (!cnode) {
+      continue;
+    }
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+      std::vector<AnfNodePtr> new_inputs;
+      auto inputs = cnode->inputs();
+      new_inputs.push_back(inputs[0]);
+      bool has_make_tuple = false;
+      if (lite::GetFlattenInputsIfMakeTuple(cnode, &new_inputs, &has_make_tuple) != RET_OK) {
+        MS_LOG_WARNING << "Failed to get flatten inputs of cnode, node " << cnode->fullname_with_scope();
+        continue;
+      }
+      if (has_make_tuple) {
+        auto new_cnode = func_graph->NewCNode(new_inputs);
+        MS_CHECK_TRUE_MSG(new_cnode != nullptr, RET_ERROR, "Failed to create New node.");
+        new_cnode->set_abstract(cnode->abstract());
+        new_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_flatten");
+        manager->Replace(cnode, new_cnode);
+      }
+    } else if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+      auto real_node = opt::GetTupleGetItemRealInput(cnode);
+      if (!real_node) {
+        MS_LOG_WARNING << "Failed to get tuple real input, node " << cnode->fullname_with_scope();
+        continue;
+      }
+      auto real_node_as_cnode = real_node->cast<CNodePtr>();
+      if (real_node_as_cnode && CheckPrimitiveType(real_node, prim::kPrimMakeTuple)) {
+        auto idx = opt::GetTupleGetItemOutIndex(cnode);
+        manager->Replace(cnode, real_node_as_cnode->input(idx));
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int RemoveRedundantOpPass::RemoveUmonad(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(manager != nullptr);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    auto cnode = node->cast<CNodePtr>();
+    if (!cnode) {
+      continue;
+    }
+    if (!opt::CheckPrimitiveType(cnode, prim::kPrimDepend)) {
+      continue;
+    }
+    if (cnode->size() < kDependInputSize) {
+      MS_LOG(ERROR) << "Depend input size " << cnode->size() << " cannot less than " << kDependInputSize;
+      continue;
+    }
+    auto depend_src = cnode->input(kIndex1);
+    auto depend_dst = cnode->input(kIndex2);
+    auto depend_dst_as_cnode = depend_dst->cast<CNodePtr>();
+    if (depend_dst_as_cnode && opt::CheckPrimitiveType(depend_dst_as_cnode, prim::kPrimUpdateState)) {
+      manager->Replace(cnode, depend_src);
+    }
+  }
+  return RET_OK;
+}
+
 bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
+  if (!is_train_model_) {
+    RemoveUmonad(func_graph, manager);
+  }
+
   auto node_list = TopoSort(func_graph->get_return());
   int status = RET_OK;
   for (auto &node : node_list) {
@@ -419,6 +492,7 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
   for (auto &node : remove_cnode_) {
     func_graph->DropNode(node);
   }
+  FlattenMakeTuple(func_graph, manager);
   return true;
 }
 }  // namespace mindspore::opt

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "src/litert/delegate/tensorrt/op/gather_nd_tensorrt.h"
-#include "src/litert/delegate/tensorrt/tensorrt_utils.h"
+#include "src/extendrt/delegate/tensorrt/op/gather_nd_tensorrt.h"
+#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "ops/gather_nd.h"
 
 namespace mindspore::lite {
-int GatherNDTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                                const std::vector<mindspore::MSTensor> &out_tensors) {
+int GatherNDTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                const std::vector<TensorInfo> &out_tensors) {
 #if TRT_VERSION_GE(8, 2)
   if (in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
@@ -71,5 +72,5 @@ int GatherNDTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_ERROR;
 #endif
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_GatherNd, GatherNDTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameGatherNd, GatherNDTensorRT)
 }  // namespace mindspore::lite

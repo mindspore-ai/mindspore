@@ -686,7 +686,8 @@ int TensorRTSubGraph::OnNewInputShapes(const std::vector<ShapeVector> &new_shape
     }
 
     if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
-      MS_LOG(ERROR) << "invalid input dims of " << inputs_[i].Name();
+      MS_LOG(ERROR) << "invalid input dims of " << inputs_[i].Name() << ", profile index: " << profile_index_
+                    << ", dst dims: " << CudaDimsAsString(input_dims);
       return RET_ERROR;
     }
   }

@@ -128,6 +128,8 @@ class TensorRTOp {
   static std::shared_ptr<OpsT> AsOps(const BaseOperatorPtr &base_operator) {
     return std::make_shared<OpsT>(base_operator->GetPrim());
   }
+  void PrintTrtInputs(TensorRTContext *ctx);
+  void PrintTrtOutputs(TensorRTContext *ctx);
 
  private:
   int SetTransposeDynamicRange();
