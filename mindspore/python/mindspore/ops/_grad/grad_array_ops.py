@@ -311,7 +311,7 @@ def get_bprop_tile(self):
             offset = F.expand_dims(ranky - rankx + 1, 0)
             shape_x = concat((dyn_ones(offset, mstype.int64), shapex))
             shape_x = shape_x[1:]
-            shapey = concat((dyn_ones((1,), mstype.int64), shapey))
+            shapey = concat((P.Ones()((1,), mstype.int64), shapey))
             shapey = shapey[1:]
             tile_shape = transpose(stack_op((shapey, shape_x)), (1, 0))
             r_shape = P.Reshape()(tile_shape, (-1,))

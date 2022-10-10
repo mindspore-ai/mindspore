@@ -82,7 +82,6 @@ def test_dynamic_tile_gpu():
     dynamic_rank()
 
 
-@pytest.mark.skip(reason="compute tiling failed")
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
