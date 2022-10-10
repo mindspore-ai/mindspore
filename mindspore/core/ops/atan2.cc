@@ -23,6 +23,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -49,7 +50,17 @@ TypePtr Atan2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kFloat64}, prim->name());
+
+  auto context_ptr = MsContext::GetInstance();
+  auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  auto is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  if (is_gpu) {
+    return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  } else if (is_cpu) {
+    return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kFloat64}, prim->name());
+  } else {
+    return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32}, prim->name());
+  }
 }
 }  // namespace
 
