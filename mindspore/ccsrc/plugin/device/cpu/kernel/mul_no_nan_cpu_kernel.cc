@@ -75,7 +75,7 @@ template <typename T>
 void MulNoNanCPUKernelMod::NoBcastCompute(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &outputs) {
   T *input_addr_0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input_addr_1 = reinterpret_cast<T *>(inputs[1]->addr);
+  T *input_addr_1 = static_cast<T *>(inputs[1]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t in0_elements_nums = inputs[0]->size / sizeof(T);
   size_t in1_elements_nums = inputs[1]->size / sizeof(T);
