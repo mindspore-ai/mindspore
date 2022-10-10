@@ -109,6 +109,7 @@ Nonlinear Activation Function Layer
     mindspore.nn.ELU
     mindspore.nn.FastGelu
     mindspore.nn.GELU
+    mindspore.nn.GLU
     mindspore.nn.get_activation
     mindspore.nn.Hardtanh
     mindspore.nn.HShrink

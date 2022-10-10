@@ -109,6 +109,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.ELU
     mindspore.nn.FastGelu
     mindspore.nn.GELU
+    mindspore.nn.GLU
     mindspore.nn.get_activation
     mindspore.nn.Hardtanh
     mindspore.nn.HShrink
