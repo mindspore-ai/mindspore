@@ -264,7 +264,7 @@ class Addcdiv(Primitive):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1/x2)`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
@@ -310,7 +310,7 @@ class Addcmul(Primitive):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
@@ -1718,7 +1718,7 @@ class InplaceUpdate(PrimitiveWithInfer):
         TypeError: If `indices` is a tuple and its element is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = (0, 1)
@@ -3335,7 +3335,7 @@ class Xlogy(Primitive):
     Refer to :func:`mindspore.ops.xlogy` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
@@ -3962,7 +3962,7 @@ class IsNan(Primitive):
     Refer to :func:`mindspore.ops.isnan` for more detail.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> is_nan = ops.IsNan()
@@ -4002,7 +4002,7 @@ class IsInf(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> is_inf = ops.IsInf()
@@ -5636,7 +5636,7 @@ class Trunc(Primitive):
     Refer to :func:`mindspore.ops.trunc` for more detail.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register

@@ -414,7 +414,7 @@ class SparseToDense(PrimitiveWithInfer):
         ValueError: If `sparse_shape`, shape of `indices` and shape of `values` don't meet the parameter description.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]])
