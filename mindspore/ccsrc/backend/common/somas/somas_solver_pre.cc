@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace somas {
+constexpr auto kSolBytesThreshold = 100 * 1024 * 1024;
 constexpr auto kSolNumThresholdMultiThread = 8;
 Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const {
   auto tensors = *pTensors;
@@ -100,6 +101,26 @@ vector<TensorsDescMap> SomasSolverPre::CreateTensorsMaps(const TensorsDescMap &t
   }
   return vecTensorsMap;
 }
+void FindBest(size_t total_sol, const vector<std::shared_ptr<SomasSolverCore>> &solvers, BestInfo *best_info) {
+  for (size_t sol = 0; sol < total_sol; sol++) {
+    auto &solver = solvers[sol];
+    auto &upperbound = solver->GetUpperbound();
+    if (upperbound > best_info->worst) {
+      best_info->worst = upperbound;
+    }
+    if (upperbound >= best_info->best) {
+      continue;
+    }
+    if (best_info->best_algo == kManyObjects && solver->algorithm_ == kSingleObject &&
+        best_info->best - upperbound <= kSolBytesThreshold) {
+      continue;
+    }
+    best_info->best = upperbound;
+    best_info->best_sol = sol;
+    best_info->best_algo = solver->algorithm_;
+    best_info->best_timing = LongToSize(solver->timing_);
+  }
+}
 Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap *ptensors,
                                const std::vector<DynamicBitSet> *pConstraints,
                                const vector<vector<size_t>> &continuous_v, bool bVerifySolution, bool ball,
@@ -111,29 +132,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap
     constexpr size_t numFittingTypes = static_cast<size_t>(kNumFittingTypes);
     constexpr size_t numAlgorithmTypes = static_cast<size_t>(kNumAlgorithmTypes);
     constexpr size_t total_sol = numSortingTypes * numFittingTypes * numAlgorithmTypes;
-    size_t process_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-    bool isMultiThreadPermit = ball && process_num >= total_sol && total_sol > 1;
-    bool isMultiThreadValid = isMultiThreadPermit && (total_sol > kSolNumThresholdMultiThread ||
-                                                      kParallelComputeSizeThreshold <= tensors.size());
     const double giga = 1024. * 1024. * 1024.;
-    if (!isMultiThreadValid) {
-      if (AddContiguousInfoInMap(continuous_v, ptensors) == FAILED) {
-        return FAILED;
-      }
-      std::shared_ptr<SomasSolverCore> pSolver = std::make_shared<SomasSolverCore>(tensors, pConstraints, 0, false);
-      pSolver->SetAlgorithmStrategy(algorithm);
-      pSolver->SetSortingStrategy(sorting);
-      pSolver->SetFittingStrategy(fitting);
-      pSolver->SetAllStrategies(ball);
-      pSolver->VerifySolution(bVerifySolution);
-      if (SUCCESS == (pSolver->MemoryAllocationSolver())) {
-        max_offset_ = pSolver->GetUpperbound();
-        MS_LOG(INFO) << "SomasSolver::Solving SUCCESS";
-        MS_LOG(INFO) << "SomasSolver::Solving RESULT: " << max_offset_ << " (" << max_offset_ / (giga) << " GB)";
-      }
-      Log(graph, tensors, pConstraints, continuous_v);
-      return ret;
-    }
 
     vector<std::shared_ptr<SomasSolverCore>> solvers;
     std::vector<common::Task> tasks;
@@ -150,7 +149,6 @@ Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap
           pSolver->SetAlgorithmStrategy(AlgorithmType(algorithm_strategy));
           pSolver->SetSortingStrategy(SortingType(sort_strategy));
           pSolver->SetFittingStrategy(FittingType(branching_strategy));
-          pSolver->SetAllStrategies(false);
           pSolver->VerifySolution(bVerifySolution);
           auto task = [pSolver]() {
             return pSolver->MemoryAllocationSolver() == SUCCESS ? common::SUCCESS : common::FAIL;
@@ -162,38 +160,29 @@ Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap
       }
     }
     common::ThreadPool::GetInstance().SyncRun(tasks);
-    size_t best_sol = 0, worst = 0, best = SIZE_MAX, best_timing = SIZE_MAX;
-    for (size_t sol = 0; sol < total_sol; sol++) {
-      auto &solver = solvers[sol];
-      auto &upperbound = solver->GetUpperbound();
-      if (upperbound > worst) {
-        worst = upperbound;
-      }
-      if (upperbound <= best) {
-        best = upperbound;
-        best_sol = sol;
-        best_timing = LongToSize(solver->timing_);
-      }
-    }
+    BestInfo best_info;
+    FindBest(total_sol, solvers, &best_info);
     auto end = std::chrono::system_clock::now();
     size_t total_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    auto &best_solver = solvers[best_sol];
+    auto &best_solver = solvers[best_info.best_sol];
     for (auto &tensor : tensors) {
-      *(tensor.second.get()) = *(vecTensorsMap[best_sol][tensor.first]);
+      *(tensor.second.get()) = *(vecTensorsMap[best_info.best_sol][tensor.first]);
     }
     max_offset_ = best_solver->GetUpperbound();
     constexpr float kFloatPresent = 100.0;
     MS_LOG(INFO) << "SOMAS SOLVER RESUME:";
-    MS_LOG(INFO) << "Best Solution:[" << 1 + best_sol << "/" << total_sol << "] ";
-    MS_LOG(INFO) << "Best result:" << best << " Bytes " << (best) / (giga) << " GB ("
-                 << (best - best_solver->Getlifelongmemory()) / (giga) << " GB + "
+    MS_LOG(INFO) << "Best Solution:[" << 1 + best_info.best_sol << "/" << total_sol << "] ";
+    MS_LOG(INFO) << "Best result:" << best_info.best << " Bytes " << (best_info.best) / (giga) << " GB ("
+                 << (best_info.best - best_solver->Getlifelongmemory()) / (giga) << " GB + "
                  << best_solver->Getlifelongmemory() / (giga) << " GB from lifelong tensors)";
-    MS_LOG(INFO) << "Best timing:" << best_timing << " ms";
+    MS_LOG(INFO) << "Best timing:" << best_info.best_timing << " ms";
     MS_LOG(INFO) << "Best algorithm: " << algorithmTypeNames[best_solver->algorithm_];
     MS_LOG(INFO) << "Best sorting strategy: " << sortingNames[best_solver->sort_strategy_];
     MS_LOG(INFO) << "Best offset strategy: " << branchingNames[best_solver->branching_strategy_];
     MS_LOG(INFO) << "Time elapsed: " << total_time << " ms";
-    MS_LOG(INFO) << "Spread:" << static_cast<double>((worst - best) / static_cast<double>(best * kFloatPresent))
+    MS_LOG(INFO) << "Spread:"
+                 << static_cast<double>((best_info.worst - best_info.best) /
+                                        static_cast<double>(best_info.best * kFloatPresent))
                  << " %%";
     Log(graph, tensors, pConstraints, continuous_v);
   } catch (const std::exception &e) {

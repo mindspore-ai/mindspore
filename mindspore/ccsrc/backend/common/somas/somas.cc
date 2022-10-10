@@ -69,6 +69,7 @@ constexpr auto kLifeStart = "life_start";
 constexpr auto kLifeEnd = "life_end";
 constexpr auto kOffset = "offset";
 constexpr auto kCachedResultThreshold = 2000;
+constexpr size_t kLogMergedBlockSize = 10;
 
 // set somas result
 void SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_somas_result,
@@ -304,25 +305,33 @@ void Somas::SaveSomasResult(const session::KernelGraph &graph) {
 void Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
   auto &execution_nodes = graph.execution_order();
   std::vector<Block> block_list;
+  for (const auto &tensor : tensors_list_) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor->GetAlignedSize() > 0) {
+      block_list.emplace_back(tensor->GetOffset(), tensor->GetAlignedSize());
+    }
+  }
+
+  // Contiguous gaps postprocessing
+  for (auto list : contiguous_tensors_list_) {
+    size_t offset = tensors_list_[list[0]]->offset_;
+    size_t all_size = 0;
+    for (auto i : list) {
+      offset = std::min(offset, tensors_list_[i]->offset_);
+      all_size += tensors_list_[i]->aligned_size_;
+    }
+    if (all_size > 0) {
+      block_list.emplace_back(offset, all_size);
+    }
+    // for allocator
+    tensors_list_[list[0]]->offset_ += communication_gap_size_;
+  }
+
   for (auto &node : execution_nodes) {
     auto kernel_mod = AnfAlgo::GetKernelMod(node);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_somas_result = GetNodeOutputSomasResult(node);
     auto workspace_somas_result = GetNodeWorkSpaceSomasResult(node);
-    ProcessContiguous(node, &block_list);
-
-    for (const auto &somas_offset_aligned_size : output_somas_result) {
-      if (somas_offset_aligned_size.second > 0) {
-        block_list.emplace_back(somas_offset_aligned_size.first, somas_offset_aligned_size.second);
-      }
-    }
-
-    for (const auto &somas_offset_aligned_size : workspace_somas_result) {
-      if (somas_offset_aligned_size.second > 0) {
-        block_list.emplace_back(somas_offset_aligned_size.first, somas_offset_aligned_size.second);
-      }
-    }
-
     SetSomasResult(std::move(output_somas_result), std::move(workspace_somas_result), node.get());
   }
 
@@ -330,11 +339,25 @@ void Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
   MergeBlocks(&block_list, &merged_blocks);
   session::SomasInfo *somas_info = graph.MutableSomasInfo();
   somas_info->whole_block_size_ = reused_memory_size_;
+  std::vector<std::pair<size_t, size_t>> log_merged_blocks;
+  size_t all_block_size = 0;
   while (!merged_blocks.empty()) {
     auto block = merged_blocks.top();
     merged_blocks.pop();
     somas_info->merged_blocks_map_[block.start_offset_] = block.size_;
     dump_merged_blocks_.emplace_back(block.start_offset_, block.size_);
+    log_merged_blocks.emplace_back(block.start_offset_, block.size_);
+    all_block_size = std::max(block.start_offset_ + block.size_, all_block_size);
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(all_block_size == reused_memory_size_,
+                             "All block size and Reused memory size not equal: " + std::to_string(all_block_size) +
+                               ", " + std::to_string(reused_memory_size_));
+  std::sort(log_merged_blocks.begin(), log_merged_blocks.end(),
+            [](const std::pair<size_t, size_t> &A, const std::pair<size_t, size_t> &B) { return A.second > B.second; });
+  MS_LOG(INFO) << "Merged Block size: " << log_merged_blocks.size();
+  for (size_t i = 0; i < std::min(kLogMergedBlockSize, log_merged_blocks.size()); i++) {
+    MS_LOG(INFO) << "Merged Block: " << i << ", offset: " << log_merged_blocks[i].first
+                 << ", size: " << log_merged_blocks[i].second;
   }
 }
 
@@ -1624,11 +1647,6 @@ void Somas::UpdateContiguousTensorsOffset(const std::map<size_t, size_t> &contig
         tensors_list_[contiguous_tensors_list_[index_first][x]]->aligned_size_;
     }
   }
-
-  // Contiguous gaps postprocessing
-  for (auto list : contiguous_tensors_list_) {
-    tensors_list_[list[0]]->offset_ += communication_gap_size_;
-  }
 }
 
 void Somas::UpdateUnionTensorsOffset() {
@@ -2012,37 +2030,6 @@ void Somas::GenGraphStatisticInfo() {
                << "Total LifeLong Start Tensor Size:\t" << lifelong_start_total_size_ << "\n"
                << "Total LifeLong End Tensor Size:\t" << lifelong_end_total_size_ << "\n"
                << "Reused Size(Allocate Size):\t" << reused_memory_size_ << "\n\n\n";
-}
-
-void Somas::ProcessContiguous(const AnfNodePtr &node, std::vector<Block> *block_list) const {
-  MS_EXCEPTION_IF_NULL(node);
-  auto key = node.get();
-  auto iter = nodes_map_.find(key);
-  if (iter != nodes_map_.end()) {
-    auto &somas_node = iter->second.at(0);
-    MS_EXCEPTION_IF_NULL(somas_node);
-    if (somas_node->GetType() != kCommunicationNode) {
-      return;
-    }
-    if ((!somas_node->output_tensors_.empty()) && (somas_node->output_tensors_[0]->contiguous_)) {
-      size_t offset = somas_node->output_tensors_[0]->offset_;
-      size_t all_size = 0;
-      for (auto &tensor : somas_node->output_tensors_) {
-        offset = std::min(offset, tensor->offset_);
-        all_size += tensor->aligned_size_;
-      }
-      block_list->emplace_back(offset, all_size);
-    }
-    if ((!somas_node->input_tensors_.empty()) && (somas_node->input_tensors_[0]->contiguous_)) {
-      size_t offset = somas_node->input_tensors_[0]->offset_;
-      size_t all_size = 0;
-      for (auto &tensor : somas_node->input_tensors_) {
-        offset = std::min(offset, tensor->offset_);
-        all_size += tensor->aligned_size_;
-      }
-      block_list->emplace_back(offset, all_size);
-    }
-  }
 }
 
 std::vector<std::pair<size_t, size_t>> Somas::GetNodeOutputSomasResult(const AnfNodePtr &node) const {

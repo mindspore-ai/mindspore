@@ -44,7 +44,6 @@ class SomasSolverCore {
         constraints_(*constraints),
         upperbound_(SIZE_MAX),
         verify_(false),
-        all_(true),
         is_multi_thread_valid_(isMultiThreadValid) {}
   ~SomasSolverCore() = default;
 
@@ -55,12 +54,9 @@ class SomasSolverCore {
   void SortTensors();
   void BuildBlocks();
   void Clean();
-  void SetBestSolution() { RestoreSolution(best_sol_); }
-  void RestoreSolution(uint32_t sol_id);
   void SetSortingStrategy(SortingType sort_strategy) { sort_strategy_ = sort_strategy; }
   void SetFittingStrategy(FittingType branching_strategy) { branching_strategy_ = branching_strategy; }
   void SetAlgorithmStrategy(AlgorithmType algorithm_strategy) { algorithm_ = algorithm_strategy; }
-  void SetAllStrategies(bool all) { all_ = all; }
   const size_t &GetUpperbound() const { return upperbound_; }
   const size_t &Getlifelongmemory() const { return lifelong_memory_; }
 
@@ -78,7 +74,6 @@ class SomasSolverCore {
   size_t upperbound_{0};
   size_t lifelong_memory_{0};
   bool verify_{false};
-  bool all_{false};
   bool is_multi_thread_valid_{true};
 
   size_t FindSolutions();

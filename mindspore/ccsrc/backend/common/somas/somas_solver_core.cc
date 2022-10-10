@@ -33,84 +33,19 @@ using std::vector;
 
 namespace mindspore {
 namespace somas {
+constexpr auto kSolBytesThreshold = 100 * 1024 * 1024;
 Status SomasSolverCore::MemoryAllocationSolver() {
-  auto start = std::chrono::system_clock::now();
   Status retval = SUCCESS;
-  size_t best = SIZE_MAX;
-  if (all_) {  // loop over all heuristics
-    FittingType best_branching = kBest;
-    SortingType best_sorting = kGreaterSizeSmallerIndex;
-    AlgorithmType best_algorithm = kManyObjects;
-    int64_t best_timing = INT64_MAX;
-    uint32_t best_sol = 0;
-    size_t worst = 0;
-    BuildBlocks();
-    Clean();
-    MS_LOG(INFO) << "time\tSol#\tResult\t\t\t\tAlgorithm\tSorting Strategy\tOffset Strategy";
-    for (size_t algorithm = 0; algorithm < static_cast<size_t>(kNumAlgorithmTypes); algorithm++) {
-      algorithm_ = static_cast<AlgorithmType>(algorithm);
-      for (size_t sort_strategy = 0; sort_strategy < static_cast<size_t>(kNumSortingTypes); sort_strategy++) {
-        sort_strategy_ = static_cast<SortingType>(sort_strategy);
-        SortTensors();
-        for (size_t branching_strategy = 0; branching_strategy < static_cast<size_t>(kNumFittingTypes);
-             branching_strategy++) {
-          branching_strategy_ = static_cast<FittingType>(branching_strategy);
-          Clean();
-          MS_LOG(DEBUG) << "Timing Start " << tensors_.size() << " Tensors";
-          auto start_upper = std::chrono::system_clock::now();
-          upperbound_ = FindSolutions();
-          MS_LOG(DEBUG) << "Elapsed time of upper bound testing: "
-                        << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() -
-                                                                                 start_upper)
-                             .count()
-                        << " ms";
-          if (upperbound_ > worst) {
-            worst = upperbound_;
-          }
-          if (upperbound_ < best || upperbound_ == best) {
-            best = upperbound_;
-            best_algorithm = algorithm_;
-            best_branching = branching_strategy_;
-            best_sorting = sort_strategy_;
-            best_sol = sol_count_;
-            best_timing = timing_;
-          }
-          Verify();
-          sol_count_++;
-        }
-      }
-    }
-    upperbound_ = best;
-    auto end = std::chrono::system_clock::now();
-    size_t total_time = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();
-    const double giga = 1024. * 1024. * 1024.;
-    const double cent = 100.;
-    MS_LOG(INFO) << "SOMAS SOLVER RESUME:";
-    MS_LOG(INFO) << "Best Solution:[" << 1 + best_sol << "/" << sol_count_ << "] ";
-    MS_LOG(INFO) << "Best result:" << best << " Bytes " << (best) / (giga) << " GB ("
-                 << (best - lifelong_memory_) / (giga) << " GB + " << lifelong_memory_ / (giga)
-                 << " GB from lifelong tensors)";
-
-    MS_LOG(INFO) << "Best timing:" << best_timing << " ms";
-    MS_LOG(INFO) << "Best algorithm: " << algorithmTypeNames[best_algorithm];
-    MS_LOG(INFO) << "Best sorting strategy: " << sortingNames[best_sorting];
-    MS_LOG(INFO) << "Best offset strategy: " << branchingNames[best_branching];
-    MS_LOG(INFO) << "Time elapsed: " << total_time << " ms";
-    MS_LOG(INFO) << "Spread:" << static_cast<double>((worst - best) / static_cast<double>(best * cent)) << " %%";
-    best_sol_ = best_sol;
-    SetBestSolution();
-  } else {
-    // print only for single heuristic no multi thread
-    if (!is_multi_thread_valid_) {
-      MS_LOG(INFO) << "Algorithm strategy: " << algorithmTypeNames[algorithm_];
-      MS_LOG(INFO) << "Sorting strategy: " << sortingNames[sort_strategy_];
-      MS_LOG(INFO) << "Offset strategy: " << branchingNames[branching_strategy_];
-    }
-    BuildBlocks();
-    SortTensors();
-    upperbound_ = FindSolutions();
-    Verify();
+  // print only for single heuristic no multi thread
+  if (!is_multi_thread_valid_) {
+    MS_LOG(INFO) << "Algorithm strategy: " << algorithmTypeNames[algorithm_];
+    MS_LOG(INFO) << "Sorting strategy: " << sortingNames[sort_strategy_];
+    MS_LOG(INFO) << "Offset strategy: " << branchingNames[branching_strategy_];
   }
+  BuildBlocks();
+  SortTensors();
+  upperbound_ = FindSolutions();
+  Verify();
   return retval;
 }
 
@@ -288,22 +223,6 @@ void SomasSolverCore::SortTensors() {  // need to sort the tensors for Fast Heur
   }
 }
 
-void SomasSolverCore::RestoreSolution(uint32_t sol_id) {
-  for (auto block : block_tensors_) {
-    if (block.offsets_.count(sol_id) == 0) {
-      MS_ASSERT(0);
-    }
-    size_t bestOffset = block.offsets_[sol_id];
-    size_t offset = bestOffset;
-    SomasSolverTensorDescPtr pTensor = block.m_start_tensor_;
-
-    while (pTensor) {
-      pTensor->offset_ = offset;
-      offset += pTensor->size_;
-      pTensor = pTensor->right_;
-    }
-  }
-}
 size_t SomasSolverCore::Search(const std::shared_ptr<FootPrint> &pFootprint) {
   size_t result = 0;
   FastHeuristic fh;
@@ -314,7 +233,7 @@ size_t SomasSolverCore::Search(const std::shared_ptr<FootPrint> &pFootprint) {
     auto end = std::chrono::system_clock::now();
     timing_ = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();
     // print for serial all_ or multi thread solver
-    if (all_ || is_multi_thread_valid_) {
+    if (is_multi_thread_valid_) {
       const double giga = 1073741824.;
       MS_LOG(INFO) << timing_ << " ms\t" << sol_count_ + 1 << "/"
                    << static_cast<size_t>(kNumFittingTypes) * static_cast<size_t>(kNumAlgorithmTypes) *
