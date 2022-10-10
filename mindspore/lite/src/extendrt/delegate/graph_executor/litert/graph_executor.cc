@@ -23,6 +23,7 @@
 #include "extendrt/delegate/graph_executor/litert/graph_executor.h"
 #include "tools/converter/converter.h"
 #include "src/litert/lite_model.h"
+#include "src/litert/cpu_info.h"
 #include "include/errorcode.h"
 #include "flatbuffers/flatbuffers.h"
 #include "extendrt/delegate/graph_executor/litert/converters.h"
@@ -85,6 +86,12 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     MS_LOG(WARNING) << "LiteRTGraphExecutor not support kernel garph, please pass func graph instead";
     return false;
   }
+
+  if (!PlatformInstructionSetSupportCheck()) {
+    MS_LOG(ERROR) << "The platform exist don't support's instruction.";
+    return false;
+  }
+
   auto converter = std::make_shared<mindspore::lite::ConverterImpl>();
   auto param = std::make_shared<ConverterPara>();
   param->fmk_type = converter::kFmkTypeMs;
