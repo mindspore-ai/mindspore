@@ -124,6 +124,7 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
       MS_LOG(ERROR) << "Run function is null! ";
       return RET_ERROR;
     }
+    MS_CHECK_TRUE_RET(out_tensors_.at(0)->data_type() == kNumberTypeFloat32, RET_ERROR);
     float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data());
     float *output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
     CHECK_NULL_RETURN(input_ptr);

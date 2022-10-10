@@ -402,6 +402,11 @@ int MatmulBaseInt8CPUKernel::InitTmpBuffer() {
 int MatmulBaseInt8CPUKernel::InitBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_[kBiasIndex];
+    if (bias_tensor->data_type() != kNumberTypeInt32) {
+      MS_LOG(ERROR) << "Invalid bias tensor type.";
+      FreeTmpBuffer();
+      return RET_MEMORY_FAILED;
+    }
     bias_ptr_ = reinterpret_cast<int *>(bias_tensor->data());
     if (bias_ptr_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";
