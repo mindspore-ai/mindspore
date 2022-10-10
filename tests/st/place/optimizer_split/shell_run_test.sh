@@ -22,13 +22,14 @@ LOCAL_WORKER_NUM=$3
 export MS_SCHED_HOST=$4
 export MS_SCHED_PORT=$5
 LOCAL_SCHED=$6
+NET_NAME=$7
 
 if [ "${LOCAL_SCHED}" == "true" ]; then
   export MS_ROLE=MS_SCHED
   rm -rf ${execute_path}/sched/
   mkdir ${execute_path}/sched/
   cd ${execute_path}/sched/ || exit
-  python ${self_path}/../test_general_split_lenet.py --device_target=$DEVICE_TARGET > sched.log 2>&1 &
+  python ${self_path}/../test_optimizer_split.py --device_target=$DEVICE_TARGET --net_name=$NET_NAME > sched.log 2>&1 &
   sched_pid=`echo $!`
 fi
 
@@ -39,7 +40,7 @@ do
   rm -rf ${execute_path}/worker_$i/
   mkdir ${execute_path}/worker_$i/
   cd ${execute_path}/worker_$i/ || exit
-  python ${self_path}/../test_general_split_lenet.py --device_target=$DEVICE_TARGET > worker_$i.log 2>&1 &
+  python ${self_path}/../test_optimizer_split.py --device_target=$DEVICE_TARGET --net_name=$NET_NAME > worker_$i.log 2>&1 &
   worker_pids[${i}]=`echo $!`
 done
 
@@ -47,7 +48,7 @@ for((i=0; i<${LOCAL_WORKER_NUM}; i++)); do
   wait ${worker_pids[i]}
   status=`echo $?`
   if [ "${status}" != "0" ]; then
-      echo "[ERROR] test_general_split_lenet failed. Failed to wait worker_{$i}, status: ${status}"
+      echo "[ERROR] test_optimizer_split failed. Failed to wait worker_{$i}, status: ${status}"
       exit 1
   fi
 done
@@ -57,7 +58,7 @@ if [ "${LOCAL_SCHED}" == "true" ]; then
     wait ${sched_pid}
     status=`echo $?`
     if [ "${status}" != "0" ]; then
-      echo "[ERROR] test_general_split_lenet failed. Failed to wait scheduler, status: ${status}"
+      echo "[ERROR] test_optimizer_split failed. Failed to wait scheduler, status: ${status}"
       exit 1
     fi
   fi
