@@ -319,12 +319,6 @@ bool LiteModel::ModelVerify() const {
     return false;
   }
 
-  if (graph_.output_indices_.size() !=
-      std::unordered_set<uint32_t>(graph_.output_indices_.begin(), graph_.output_indices_.end()).size()) {
-    MS_LOG(ERROR) << "Graph output indices contain duplicate.";
-    return false;
-  }
-
   return NodeVerify() == RET_OK && SubGraphVerify() == RET_OK;
 }
 
