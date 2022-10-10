@@ -225,7 +225,7 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
 }
 
 void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
-                                                   const device::DeviceContext *device_context) {
+                                                   const device::DeviceContext *device_context, bool no_control_flow) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(DEBUG) << "Update start";
   auto value_node_ref_counts = GetValue<std::vector<size_t>>(graph->get_attr(kAttrBpropValueNodeRefCount));
@@ -254,7 +254,7 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
     tensor->set_device_address(device_address);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     MS_EXCEPTION_IF_NULL(front_node);
-    if (device_address->GetDeviceType() != device::DeviceType::kCPU) {
+    if (device_address->GetDeviceType() != device::DeviceType::kCPU && no_control_flow) {
       address_ref_count[device_address] += value_node_ref_count;
       device_address->AddHeldByNode(front_node->cast<ValueNodePtr>());
     }

@@ -508,6 +508,10 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
                       << device_contexts.size();
   }
 
+  // KernelByKernel: The size of control_nodes is at least 1 since there is return node in the graph.
+  // GraphMode: No control nodes.
+  bool no_control_flow = control_nodes_.size() <= 1 && graphs.size() == 1;
+
   auto actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   if (actor_set == nullptr) {
     // Need to compile graph for the first step.
@@ -517,9 +521,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
       graph->set_flag(kFlagPyNativeRunInGraph, true);
       graph->set_flag(kFlagIsPynativeBpropGraph, root_graph_->has_flag(kFlagIsPynativeBpropGraph));
 
-      // KernelByKernel: The size of control_nodes is at least 1 since there is return node in the graph.
-      // GraphMode: No control nodes.
-      if (control_nodes_.size() <= 1 && graphs.size() == 1) {
+      if (no_control_flow) {
         MS_LOG(INFO) << "Replace parameter format";
         // The input tensors of heterogeneous graphs or control flow graphs are null.
         // Need to get tensor after ParseControlNodes.
@@ -539,7 +541,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     MS_EXCEPTION_IF_NULL(actor_set);
     constexpr auto kKernelActorThreshold = 5000;
     // Turning off multithreading may cause stack overflow in control flow scenarios.
-    if (control_nodes_.size() == 1 && actor_set->kernel_actors_.size() < kKernelActorThreshold) {
+    if (no_control_flow && actor_set->kernel_actors_.size() < kKernelActorThreshold) {
       // Multithreading can cause spikes in memory usage and performance fluctuations.
       actor_set->is_multi_thread_execution_ = false;
       MS_LOG(INFO) << "Actor Multithreading is turned off!";
@@ -554,7 +556,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
     for (size_t i = 0; i < graphs.size(); ++i) {
-      pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i]);
+      pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i], no_control_flow);
       pynative::GraphAdapter::UpdateDynamicValueNodeAbstract(graphs[i]);
     }
   }
