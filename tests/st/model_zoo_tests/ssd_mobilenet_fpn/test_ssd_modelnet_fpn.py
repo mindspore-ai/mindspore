@@ -37,7 +37,7 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "config/ssd_mobilenet_v1_fpn_config.yaml"))
 
     exec_network_shell = "cd {0}; sh -x scripts/run_distribute_train.sh 8 {1} 0.2 coco \
-        {2} ssd_mobilenet_v1_fpn_config.yaml".format(model_name, 60, utils.rank_table_path)
+        {2} config/ssd_mobilenet_v1_fpn_config.yaml".format(model_name, 60, utils.rank_table_path)
     os.system(exec_network_shell)
     cmd = "ps -ef | grep train.py | grep coco | grep device_num | grep device_id | grep -v grep"
     ret = utils.process_check(120, cmd)
