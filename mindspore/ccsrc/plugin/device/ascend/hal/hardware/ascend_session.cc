@@ -895,6 +895,7 @@ void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kern
 }
 
 void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Status record: start adjust kernel. graph id: " << kernel_graph->graph_id();
   opt::HideNopNode(kernel_graph.get());
   auto execution_order = kernel_graph->execution_order();
@@ -934,6 +935,7 @@ void AscendSession::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) co
 }
 
 void AscendSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Status record: start build kernel, graph id: " << kernel_graph->graph_id();
   BuildKernel(kernel_graph->execution_order());
   MS_LOG(INFO) << "Status record: end build kernel, graph id: " << kernel_graph->graph_id();
@@ -1083,8 +1085,8 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
 }
 
 void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
-  MS_LOG(INFO) << "Status record: start memory alloc. graph id: " << kernel_graph->graph_id();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Status record: start memory alloc. graph id: " << kernel_graph->graph_id();
   InitMemReuseExecOrder(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
