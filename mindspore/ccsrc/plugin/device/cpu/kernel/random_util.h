@@ -151,7 +151,7 @@ class MSPhiloxRandom {
     return result;
   }
 
-  void RaiseKey(Key *key) {
+  void RaiseKey(Key *const key) {
     (*key)[kIndex0] += kMSPhiloxW32A;
     (*key)[kIndex1] += kMSPhiloxW32B;
   }
