@@ -15,13 +15,14 @@
 
 
 """Define the grad rules of clip operations."""
-from .grad_base import bprop_getters
+from .grad_base import bprop_getters, dyn_fill
 from .. import operations as P
 from ..operations import _inner_ops as inner
 from ..operations import _grad_ops as G
 from ...common import dtype as mstype
 from .._grad.grad_math_ops import _sum_grad
 from .._grad.grad_math_ops import binop_grad_common
+from .._utils.utils import is_shape_unknown
 
 
 @bprop_getters.register(inner.ClipByNorm)
@@ -33,6 +34,7 @@ def get_bprop_clip_by_norm(self):
     fill_op = P.Fill()
     type_op = P.DType()
     shape_op = P.Shape()
+    dyn_shape_op = P.TensorShape()
     cast_op = P.Cast()
     sqrt_op = P.Sqrt()
     max_op = P.Maximum()
@@ -67,7 +69,12 @@ def get_bprop_clip_by_norm(self):
         # grad for square operation
         temp_num = 2.0
         temp_out = mul_op(reduce_sum_dout_x, cast_x)
-        square_dout_x = mul_op(fill_op(type_op(temp_out), shape_op(cast_x), temp_num), temp_out)
+        shape_cast_x = shape_op(cast_x)
+        if is_shape_unknown(shape_cast_x):
+            fill_x = dyn_fill(type_op(temp_out), dyn_shape_op(cast_x), temp_num)
+        else:
+            fill_x = fill_op(type_op(temp_out), shape_cast_x, temp_num)
+        square_dout_x = mul_op(fill_x, temp_out)
         # grad for cast operation
         x_dout = cast_op((mul_dout_x + square_dout_x), type_op(x))
         clip_norm_dout = cast_op((mul_dout_y + max_dout_y), type_op(clip_norm))
