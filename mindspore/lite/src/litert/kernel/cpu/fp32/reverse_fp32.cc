@@ -72,6 +72,7 @@ int ReverseCPUKernel::ReSize() {
     free(tmp_);
     tmp_ = nullptr;
   }
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(data_size_, static_cast<int>(sizeof(int)), RET_ERROR);
   tmp_ = reinterpret_cast<int *>(malloc(data_size_ * static_cast<int>(sizeof(int))));
   if (tmp_ == nullptr) {
     MS_LOG(ERROR) << "Reverse Malloc tmp_ error!";
