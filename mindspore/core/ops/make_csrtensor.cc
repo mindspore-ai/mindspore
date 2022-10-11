@@ -56,11 +56,8 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   CheckSparseShape(indices_shp.size(), kSizeOne, "Indices");
 
   auto values_shp = values->shape()->shape();
-  if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {
-    MS_EXCEPTION(ValueError) << "Indices and values must have same size, but got: values length: "
-                             << values_shp[kIndexZero] << ", indices length " << indices_shp[kIndexZero];
-  }
 
+  // convert shape from tuple to shapevector(shape_vec)
   auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   auto shp = shape_value->value();
@@ -69,14 +66,29 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
     auto elem = GetValue<int64_t>(e);
     return elem;
   });
+
   if (values_shp.size() + 1 != shape_vec.size()) {
     MS_EXCEPTION(ValueError) << "Values' dimension should equal to CSRTensor's dimension - 1, but got"
                              << "Values' dimension: " << values_shp.size()
                              << ", CSRTensor's dimension: " << shape_vec.size() << ".";
   }
+
+  if (IsDynamicShape(indptr_shp) || IsDynamicShape(indices_shp) || IsDynamicShape(values_shp) ||
+      IsDynamicShape(shape_vec)) {
+    MS_LOG(DEBUG) << "Dynamic shape in MakeCSRTensor's inputs! Ignore shape check.";
+    std::vector<abstract::AbstractBasePtr> element_list{indptr, indices, values, shape};
+    return std::make_shared<abstract::AbstractCSRTensor>(element_list);
+  }
+
+  if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {
+    MS_EXCEPTION(ValueError) << "Indices and values must have same size, but got: values length: "
+                             << values_shp[kIndexZero] << ", indices length " << indices_shp[kIndexZero];
+  }
+
   if (shape_vec[kIndexZero] + 1 != indptr_shp[kIndexZero]) {
     MS_EXCEPTION(ValueError) << "Indptr must have length (1 + shape[0]), but got: " << indptr_shp[kIndexZero];
   }
+
   size_t shape_size = 1;
   auto shape_types = shape->ElementsType();
   for (size_t i = 0; i < shape_vec.size(); ++i) {
