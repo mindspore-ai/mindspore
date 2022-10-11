@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ class MIND_API BiasAddGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(BiasAddGrad);
   BiasAddGrad() : BaseOperator(kNameBiasAddGrad) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
+  std::string get_str_format() const;
 };
 abstract::AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args);

@@ -19,12 +19,17 @@
 
 #include <vector>
 #include <map>
+#include <memory>
+#include <string>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/grad/bias_add_grad.h"
 
 namespace mindspore {
 namespace kernel {
+using OpsBiasAddGradPtr = std::shared_ptr<ops::BiasAddGrad>;
+
 class BiasAddGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<BiasAddGradCpuKernelMod> {
  public:
   BiasAddGradCpuKernelMod() = default;
@@ -47,6 +52,8 @@ class BiasAddGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
                     const std::vector<AddressPtr> &outputs);
 
   std::vector<size_t> input_shape_;
+  OpsBiasAddGradPtr deformable_kernel_operator_;
+  std::string data_format_ = "NCHW";
 };
 }  // namespace kernel
 }  // namespace mindspore

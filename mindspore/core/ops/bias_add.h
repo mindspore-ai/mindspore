@@ -42,6 +42,7 @@ class MIND_API BiasAdd : public BaseOperator {
   ///
   /// \return format.
   Format get_format() const;
+  std::string get_str_format() const;
 };
 abstract::AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<abstract::AbstractBasePtr> &input_args);
