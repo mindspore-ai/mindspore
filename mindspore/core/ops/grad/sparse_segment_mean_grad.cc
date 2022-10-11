@@ -56,7 +56,7 @@ abstract::ShapePtr SparseSegmentMeanGradInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
     auto output_dim0_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
-    int dim_zero = output_dim0_value_ptr_tensor[kShapeNum0];
+    int dim_zero = LongToInt(output_dim0_value_ptr_tensor[kShapeNum0]);
     if (dim_zero <= kDimNum0) {
       MS_EXCEPTION(ValueError) << "Input output_dim0 must > 0!";
     } else {
@@ -93,7 +93,7 @@ AbstractBasePtr SparseSegmentMeanGradInfer(const abstract::AnalysisEnginePtr &, 
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t input_num = kInputIndex4;
+  const int64_t input_num = SizeToLong(kInputIndex4);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = SparseSegmentMeanGradInferType(prim, input_args);
   auto shapes = SparseSegmentMeanGradInferShape(prim, input_args);

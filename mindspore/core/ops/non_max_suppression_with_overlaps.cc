@@ -57,12 +57,12 @@ abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &p
     (void)CheckAndConvertUtils::CheckInteger("rank of scores", scores_shape->shape().size(), kEqual, 1, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("length of scores", scores_shape->shape()[0], kEqual,
                                              overlaps_shape->shape()[0], prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("rank of max_output_size", max_output_size_shape->shape().size(), kEqual,
-                                             0, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("rank of overlap_threshold", overlap_threshold_shape->shape().size(),
-                                             kEqual, 0, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("rank of score_threshold", score_threshold_shape->shape().size(), kEqual,
-                                             0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of max_output_size",
+                                             SizeToLong(max_output_size_shape->shape().size()), kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of overlap_threshold",
+                                             SizeToLong(overlap_threshold_shape->shape().size()), kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of score_threshold",
+                                             SizeToLong(score_threshold_shape->shape().size()), kEqual, 0, prim_name);
   }
 
   // calculate output shape
