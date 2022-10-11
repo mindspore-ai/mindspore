@@ -3,7 +3,7 @@ mindspore.ops.inplace_sub
 
 .. py:function:: mindspore.ops.inplace_sub(x, v, indices)
 
-    将 `v` 依照索引 `indices` 从 `x` 中减去。
+    将 `v` 依照索引 `indices` 从 `x` 中减去。计算 `y` = `x`; y[i,] -= `v`。
 
     .. note::
         `indices` 只能沿着最高轴进行索引。
