@@ -1282,8 +1282,6 @@ def slice(input_x, begin, size):
 
 def concat(input_x, axis=0):
     r"""
-    Connect tensor in the specified axis.
-
     Connect input tensors along with the given axis.
 
     The input data is a tuple of tensors. These tensors have the same rank :math:`R`. Set the given axis as :math:`m`,
@@ -1553,7 +1551,8 @@ def scatter_mul(input_x, indices, updates):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    the relatively highest priority data type. A RuntimeError will be reported
+    when the data types of parameters need to be converted.
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
@@ -1730,7 +1729,8 @@ def scatter_min(input_x, indices, updates):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    the relatively highest priority data type. A RuntimeError will be reported
+    when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
@@ -2918,7 +2918,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
     The output tensor's batch dimension is the product of the original batch and the product of `block_size`.
     Before division, the spatial dimensions of the input are zero padded according to paddings if necessary.
     Assume input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with
-    :math:`block\_size` and :math:`paddings`. Then the shape of the output tensor will be
+    :math:`block\_size` and :math:`paddings`, then the shape of the output tensor will be
     :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
 
     .. math::
@@ -2977,6 +2977,16 @@ def batch_to_space_nd(input_x, block_shape, crops):
     This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
     is the corresponding number of blocks after division. The output tensor's H, W dimension is the product of
     original H, W dimension and block_shape with given amount to crop from dimension, respectively.
+
+    If the input shape is :math:`(n, c, h, w)`, the output shape is :math:`(n', c', h', w')`.
+
+    :math:`n' = n//(block\_shape[0]*block\_shape[1])`
+
+    :math:`c' = c`
+
+    :math:`h' = h*block\_shape[0]-crops[0][0]-crops[0][1]`
+
+    :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
 
     Args:
         input_x (Tensor): The input tensor. It must be greater or equal to 4-D tensor(equal to 4-D tensor on Ascend),

@@ -3,7 +3,7 @@ mindspore.ops.inplace_add
 
 .. py:function:: mindspore.ops.inplace_add(x, v, indices)
 
-    根据 `indices`，将 `x` 中的对应位置加上 `v` 。
+    根据 `indices`，将 `x` 中的对应位置加上 `v` 。计算 `y` = `x`; y[i,] += `v`。
 
     .. note::
         `indices` 只能沿着最高轴进行索引。

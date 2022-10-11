@@ -3,7 +3,7 @@ mindspore.ops.logit
 
 .. py:function:: mindspore.ops.logit(x, eps=None)
 
-    逐元素计算张量的logit值，当 eps 不是 None 时， `x` 中的元素被截断到范围[eps, 1-eps]内。
+    逐元素计算张量的logit值。当 eps 不是 None 时， `x` 中的元素被截断到范围[eps, 1-eps]内。
     当 eps 为 None 时，输入 `x` 不进行数值截断。
 
     .. math::
