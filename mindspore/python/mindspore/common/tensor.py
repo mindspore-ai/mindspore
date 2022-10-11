@@ -3510,7 +3510,7 @@ class Tensor(Tensor_):
             return self
         origin_dtype = self.dtype
         x = self
-        logical_not_op = tensor_operator_registry.get('logical_not')()
+        logical_not_op = tensor_operator_registry.get('logical_not')
         if origin_dtype == mstype.bool_:
             return logical_not_op(logical_not_op(x))
         if origin_dtype != mstype.float64:
@@ -7179,6 +7179,305 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('igammac')(self, other)
+
+
+    def isinf(self):
+        r"""
+        Determines which elements are inf or -inf for each position.
+
+        .. math::
+
+            out_i = \begin{cases}
+            & \text{ if } x_{i} = \text{Inf},\ \ True \\
+            & \text{ if } x_{i} \ne \text{Inf},\ \ False
+            \end{cases}
+
+        where :math:`Inf` means not a number.
+
+        Returns:
+            Tensor, has the same shape of input, and the dtype is bool.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+
+        Supported Platforms:
+            ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+            >>> output = x.isinf()
+            >>> print(output)
+            [False False True]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('isinf')(self)
+
+
+    def isnan(self):
+        r"""
+        Determines which elements are NaN for each position.
+
+        .. math::
+
+            out_i = \begin{cases}
+              & \ True,\ \text{ if } x_{i} = \text{Nan} \\
+              & \ False,\ \text{ if } x_{i} \ne  \text{Nan}
+            \end{cases}
+
+        where :math:`Nan` means not a number.
+
+        Returns:
+            Tensor, has the same shape of input, and the dtype is bool.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+            >>> output = x.isnan()
+            >>> print(output)
+            [True False False]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('isnan')(self)
+
+
+    def le(self, other):
+        r"""
+        Computes the boolean value of :math:`input <= other` element-wise.
+
+        .. math::
+
+            out_{i} =\begin{cases}
+                & \text{True,    if } input_{i}<=other_{i} \\
+                & \text{False,   if } input_{i}>other_{i}
+                \end{cases}
+
+        .. note::
+            - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data
+              types consistent.
+            - The inputs must be two tensors or one tensor and one scalar.
+            - When the inputs are two tensors,
+              dtypes of them cannot be both bool , and the shapes of them can be broadcast.
+            - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+        Args:
+            y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+                the second input should be a number.Number or bool value, or a Tensor whose data type is
+                number or bool\_. When the first input is Scalar, the second input must be a Tensor whose
+                data type is number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If neither `other` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = x.less(y)
+            >>> print(output)
+            [True False True]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('le')(self, other)
+
+
+    def less(self, other):
+        r"""
+        Computes the boolean value of :math:`input < other` element-wise.
+
+        .. math::
+
+            out_{i} =\begin{cases}
+                & \text{True,    if } input_{i}<other_{i} \\
+                & \text{False,   if } input_{i}>=other_{i}
+                \end{cases}
+
+        .. note::
+            - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+              consistent.
+            - The inputs must be two tensors or one tensor and one scalar.
+            - When the inputs are two tensors,
+              dtypes of them cannot be both bool , and the shapes of them can be broadcast.
+            - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+        Args:
+            y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+                the second input should be a number.Number or bool value, or a Tensor whose data type is
+                number or bool\_. When the first input is Scalar, the second input must be a Tensor whose
+                data type is number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If neither `input` nor `other` is a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = x.less(y)
+            >>> print(output)
+            [False False True]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('less')(self, other)
+
+
+    def logical_and(self, other):
+        r"""
+        Computes the "logical AND" of two tensors element-wise.
+
+        Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+        consistent. The inputs must be two tensors or one tensor and one bool.
+        When the inputs are two tensors, the shapes of them could be broadcast,
+        and the data types of them must be bool.
+        When the inputs are one tensor and one bool, the bool object could only be a constant,
+        and the data type of the tensor must be bool.
+
+        .. math::
+
+            out_{i} = input_{i} \wedge other_{i}
+
+        Note:
+            LogicalAnd supports broadcasting.
+
+        Args:
+            other (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
+                a tensor whose data type is bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If `other` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+            >>> y = Tensor(np.array([True, True, False]), mindspore.bool_)
+            >>> output = x.logical_and(x)
+            >>> print(output)
+            [True False False]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('logical_and')(self, other)
+
+
+    def logical_not(self):
+        r"""
+        Computes the "logical NOT" of a tensor element-wise.
+
+        .. math::
+
+            out_{i} = \\neg x_{i}
+
+        Returns:
+            Tensor, the shape is the same as the input, and the dtype is bool.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+            TypeError: If dtype of input is not a bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+            >>> output = x.logical_not()
+            >>> print(output)
+            [False True False]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('logical_not')(self)
+
+
+    def logical_or(self, other):
+        r"""
+        Computes the "logical OR" of two tensors element-wise.
+
+        Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+        consistent. The inputs must be two tensors or one tensor and one bool.
+        When the inputs are two tensors, the shapes of them could be broadcast,
+        and the data types of them must be bool.
+        When the inputs are one tensor and one bool, the bool object could only be a constant,
+        and the data type of the tensor must be bool.
+
+        .. math::
+
+            out_{i} = input_{i} \\vee other_{i}
+
+        Note:
+            Logical Or supports broadcasting.
+
+        Args:
+            other (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
+                a tensor whose data type is bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If `other` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+            >>> y = Tensor(np.array([True, True, False]), mindspore.bool_)
+            >>> output = ops.logical_or(x, y)
+            >>> print(output)
+            [True True True]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('logical_or')(self, other)
+
+
+    def logical_xor(self, other):
+        r"""
+        Computes the "logical XOR" of two tensors element-wise.
+
+        .. math::
+
+            out_{i} = x_{i} \oplus y_{i}
+
+        Args:
+            other (Tensor): This input is a the tensor to compute XOR with the input ensor.
+              Datatype must be bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If `other` is a Tensor whose data type is not bool.
+            ValueError: If the shape of two inputs cannot be broadcast.
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+            >>> y = Tensor(np.array([True, True, False]), mindspore.bool_)
+            >>> output = x.logical_xor(y)
+            >>> print(output)
+            [False True True]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('logical_xor')(self, other)
 
 
 class RowTensorInner(RowTensor_):

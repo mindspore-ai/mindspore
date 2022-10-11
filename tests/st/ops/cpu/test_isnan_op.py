@@ -74,3 +74,20 @@ def test_is_nan_cpu_dynamic_shape():
     output = net(Tensor(x, ms.float32))
     except_shape = (1, 32, 9, 9)
     assert output.asnumpy().shape == except_shape
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_isnan_tensor_api_modes(mode):
+    """
+    Feature: Test isnan tensor api.
+    Description: Test isnan tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mstype.float32)
+    output = x.isnan()
+    expected = np.array([True, False, False])
+    np.testing.assert_array_equal(output.asnumpy(), expected)

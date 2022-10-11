@@ -95,6 +95,10 @@ mindspore.Tensor
     mindspore.Tensor.lerp
     mindspore.Tensor.log
     mindspore.Tensor.log1p
+    mindspore.Tensor.logical_and
+    mindspore.Tensor.logical_not
+    mindspore.Tensor.logical_or
+    mindspore.Tensor.logical_xor
     mindspore.Tensor.logit
     mindspore.Tensor.negative
     mindspore.Tensor.pow
@@ -149,6 +153,10 @@ Reduction方法
     mindspore.Tensor.has_init
     mindspore.Tensor.isclose
     mindspore.Tensor.isfinite
+    mindspore.Tensor.isinf
+    mindspore.Tensor.isnan
+    mindspore.Tensor.le
+    mindspore.Tensor.less
     mindspore.Tensor.top_k
 
 线性代数方法

@@ -289,6 +289,8 @@ from .math_func import (
     greater_equal,
     igamma,
     igammac,
+    isinf,
+    logical_xor,
 )
 from .nn_func import (
     adaptive_avg_pool1d,

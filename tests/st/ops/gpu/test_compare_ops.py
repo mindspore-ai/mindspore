@@ -96,3 +96,39 @@ def test_greater_tensor_api_modes(mode):
     output = x.greater(y)
     expected = np.array([False, True, False])
     np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_le_tensor_api_modes(mode):
+    """
+    Feature: Test le tensor api.
+    Description: Test le tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([1, 2, 3], mstype.int32)
+    y = Tensor([1, 1, 4], mstype.int32)
+    output = x.le(y)
+    expected = np.array([True, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_less_tensor_api_modes(mode):
+    """
+    Feature: Test less tensor api.
+    Description: Test less tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([1, 2, 3], mstype.int32)
+    y = Tensor([1, 1, 4], mstype.int32)
+    output = x.less(y)
+    expected = np.array([False, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)

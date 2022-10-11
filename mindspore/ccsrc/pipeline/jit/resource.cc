@@ -345,6 +345,14 @@ BuiltInTypeMap &GetMethodMap() {
        {"greater_equal", std::string("greater_equal")},                    // greater_equal()
        {"igamma", std::string("igamma")},                                  // igamma()
        {"igammac", std::string("igammac")},                                // igammac()
+       {"isinf", std::string("isinf")},                                    // isinf()
+       {"isnan", std::string("isnan")},                                    // isnan()
+       {"le", std::string("le")},                                          // le()
+       {"less", std::string("less")},                                      // less()
+       {"logical_and", std::string("logical_and")},                        // logical_and()
+       {"logical_not", std::string("logical_not")},                        // logical_not()
+       {"logical_or", std::string("logical_or")},                          // logical_or()
+       {"logical_xor", std::string("logical_xor")},                        // logical_xor()
      }},
     {kObjectTypeRowTensorType,
      {

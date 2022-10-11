@@ -6731,6 +6731,76 @@ def igammac(input, other):
     return igammac_op(input, other)
 
 
+def isinf(input):
+    r"""
+    Determines which elements are inf or -inf for each position.
+
+    .. math::
+
+        out_i = \begin{cases}
+        & \text{ if } x_{i} = \text{Inf},\ \ True \\
+        & \text{ if } x_{i} \ne \text{Inf},\ \ False
+        \end{cases}
+
+    where :math:`Inf` means not a number.
+
+    Args:
+        input (Tensor): The input tensor.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape of input, and the dtype is bool.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> output = ops.isinf(x)
+        >>> print(output)
+        [False False True]
+    """
+    isinf_op = _get_cache_prim(P.IsInf)()
+    return isinf_op(input)
+
+
+def logical_xor(input, other):
+    r"""
+    Computes the "logical XOR" of two tensors element-wise.
+
+    .. math::
+
+        out_{i} = x_{i} \oplus y_{i}
+
+    Args:
+        input (Tensor): The first input is a tensor whose data type is bool.
+        other (Tensor): The second input is a the tensor to compute XOR with the first input.
+          Datatype must be bool.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Raises:
+        TypeError: If neither `input` nor `other` is a Tensor whose data type is bool.
+        ValueError: If the shape of two inputs cannot be broadcast.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+        >>> y = Tensor(np.array([True, True, False]), mindspore.bool_)
+        >>> output = ops.logical_xor(x, y)
+        >>> print(output)
+        [False True True]
+    """
+    logical_xor_op = _get_cache_prim(P.LogicalXor)()
+    return logical_xor_op(input, other)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -6891,5 +6961,7 @@ __all__ = [
     'greater_equal',
     'igamma',
     'igammac',
+    'isinf',
+    'logical_xor',
 ]
 __all__.sort()
