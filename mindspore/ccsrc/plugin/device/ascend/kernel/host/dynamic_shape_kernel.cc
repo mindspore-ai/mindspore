@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace kernel {
 void TensorShapeKernelMod::Execute(void *stream_ptr) const {
-  MS_LOG(INFO) << "Execute TensorShapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -44,7 +43,7 @@ void TensorShapeKernelMod::Execute(void *stream_ptr) const {
   MS_EXCEPTION_IF_NULL(output_tensor_for_sync);
   auto data_ptr = static_cast<int64_t *>(output_tensor_for_sync->data_c());
   for (size_t i = 0; i < prev_output_shape.size(); ++i) {
-    MS_LOG(INFO) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];
+    MS_LOG(DEBUG) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];
     *(data_ptr + i) = prev_output_shape[i];
   }
 
@@ -67,8 +66,6 @@ void TensorShapeKernelMod::Execute(void *stream_ptr) const {
       MS_LOG(EXCEPTION) << "Execute TensorShapeKernel rtMemcpyAsync failed!";
     }
   }
-
-  MS_LOG(INFO) << "Execute TensorShapeKernel End";
 }
 
 bool TensorShapeKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,

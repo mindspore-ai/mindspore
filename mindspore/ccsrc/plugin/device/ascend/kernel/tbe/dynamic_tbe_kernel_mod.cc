@@ -114,7 +114,7 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = inputsOnHost;
   ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
-  MS_LOG(INFO) << "Start compute tiling of: " << cnode->fullname_with_scope();
+  MS_LOG(DEBUG) << "Start compute tiling of: " << cnode->fullname_with_scope();
   if (!atomic_clean_nodes_.empty()) {
     atomic_compile_info_ = ParseCompileJson(atomic_clean_nodes_[0].lock());
   }

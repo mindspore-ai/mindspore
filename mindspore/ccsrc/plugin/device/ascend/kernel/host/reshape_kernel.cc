@@ -127,7 +127,6 @@ std::vector<int64_t> GetOutputShapes(const CNodePtr &cnode) {
 }  // namespace
 
 void ReshapeKernelMod::Execute() const {
-  MS_LOG(INFO) << "Execute host ReshapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -155,12 +154,10 @@ void ReshapeKernelMod::Execute() const {
       MS_LOG(EXCEPTION) << "Host Reshape sync device to device failed.";
     }
   }
-  MS_LOG(INFO) << "Execute host ReshapeKernel End";
 }
 
 void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                                void *stream_ptr) const {
-  MS_LOG(INFO) << "Execute host ReshapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -184,7 +181,6 @@ void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std:
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtMemcpyAsync failed, ret = 0x" << status;
   }
-  MS_LOG(INFO) << "Execute host ReshapeKernel End";
 }
 
 bool ReshapeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

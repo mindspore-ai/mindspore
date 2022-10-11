@@ -391,7 +391,7 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
 
 void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info, bool *get_flag) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Get compile info from json file start. [" << node->fullname_with_scope() << "]";
+  MS_LOG(DEBUG) << "Get compile info from json file start. [" << node->fullname_with_scope() << "]";
   std::string json_name;
   if (common::AnfAlgo::HasNodeAttr(kAttrJsonFileName, node->cast<CNodePtr>())) {
     json_name = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrJsonFileName);
@@ -430,11 +430,11 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   *compile_info = build_res_json.dump();
   file.close();
   file.clear();
-  MS_LOG(INFO) << "Get compile info from json file success.";
+  MS_LOG(DEBUG) << "Get compile info from json file success.";
 }
 
 void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag) {
-  MS_LOG(INFO) << "Save compile info to json file start, op: [" << json_name << "].";
+  MS_LOG(DEBUG) << "Save compile info to json file start, op: [" << json_name << "].";
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string path = config_path + kCceKernelMeta + json_name + kJsonSuffix;
   if (path.size() > PATH_MAX) {
@@ -466,7 +466,7 @@ void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &
   file_write << info << std::endl;
   file_write.close();
   file_write.clear();
-  MS_LOG(INFO) << "Save compile info to json file success";
+  MS_LOG(DEBUG) << "Save compile info to json file success.";
 }
 
 bool TbeUtils::CheckOfflineTune() {
