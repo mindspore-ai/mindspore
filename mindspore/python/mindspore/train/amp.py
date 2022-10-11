@@ -130,6 +130,8 @@ def auto_mixed_precision(network, amp_level="O0"):
         >>> amp_level = "O1"
         >>> net = amp.auto_mixed_precision(network, amp_level)
     """
+    if not isinstance(network, nn.Cell):
+        raise TypeError("The network type should be Cell.")
     if amp_level == "O0":
         pass
     elif amp_level == "O1":
