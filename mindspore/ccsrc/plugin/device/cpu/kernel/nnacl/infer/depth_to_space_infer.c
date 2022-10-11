@@ -41,6 +41,9 @@ int DepthToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   ShapeSet(input_shape, &input_shape_size, input->shape_, input->shape_size_);
 
   int32_t block_size = param->block_size_;
+  if (INT_MUL_OVERFLOW(block_size, block_size)) {
+    return NNACL_PARAM_INVALID;
+  }
   if (block_size == 0 || input_shape[kNHWC_C] % (block_size * block_size) != 0 || input_shape[kNHWC_C] == 0) {
     return NNACL_PARAM_INVALID;
   }
