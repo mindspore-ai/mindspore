@@ -73,8 +73,8 @@ def data_sink(fn, dataset, steps, sink_size=1, jit=False):
                            :class:`mindspore.dataset`, such as :class:`mindspore.dataset.ImageFolderDataset`.
         steps (int): The total running steps. `steps` must be positive integer.
         sink_size (int): Control the amount of data in each sink. `sink_size` must be positive integer. Default: 1.
-        jit (bool): Controls the execution mode(graph mode/pynative mode) of the generated function. Default: False,
-                    means running in pynative mode.
+        jit (bool): Controls the execution mode(Graph mode/PyNative mode) of the generated function. Default: False,
+                    means running in PyNative mode.
 
     Returns:
         Function, the generated function will be executed in data sinking mode.
