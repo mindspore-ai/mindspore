@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 from mindspore.common import dtype as mstype
+from mindspore import ms_function
 from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
@@ -86,3 +87,26 @@ def test_backward():
 
     expect = (Tensor(np.array(9), mstype.int32), Tensor(np.array(3), mstype.int32))
     assert graph_mode_grads == expect
+
+
+def test_if_in_for_dict():
+    """
+    Feature: Dictionary in for of control flow
+    Description: Execute 'for x in xs' when xs is dictionary.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for(xs):
+        result = 0
+        ys = {'b': 0, 'g': 0}
+        for x in xs:
+            if x >= 'b':
+                result += 1
+        for y in ys:
+            if y == 'b':
+                result -= 1
+        return result
+
+    x = {'a': 1, 'd': 100, 'b': -10, 'c': 0}
+    res = control_flow_for(x)
+    assert res == 2

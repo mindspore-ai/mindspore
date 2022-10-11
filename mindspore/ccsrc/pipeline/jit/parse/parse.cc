@@ -2126,6 +2126,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   auto len_with_check_fg = ParsePythonCode(len_with_check);
   auto op_len_with_check = NewValueNode(len_with_check_fg);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
+  AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
 
   // Get variable name of 'x' in statement 'for x in xs'
   py::object target_node = python_adapter::GetPyObjAttr(node, "target");
@@ -2160,7 +2161,8 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   if (iter_node->interpret() || interpret_without_internal) {
     target_var = GenerateInterpretGetItem(body_func_graph, iter_node, loop_var);
   } else {
-    target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
+    CNodePtr iterated_node = body_func_graph->NewCNodeInOrder({op_iter, iter_node});
+    target_var = body_func_graph->NewCNodeInOrder({op_getitem, iterated_node, loop_var});
   }
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
