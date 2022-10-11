@@ -79,3 +79,16 @@ def test_convert_tuple_get_item():
     Expectation: success
     """
     utils.run_testcase('ge_convert', 'test_convert_tuple_get_item')
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_convert_make_tuple_make_tuple():
+    """
+    Feature: convert ge graph
+    Description: test MakeTuple's input is MakeTuple
+    Expectation: success
+    """
+    utils.run_testcase('ge_convert', 'test_convert_make_tuple_make_tuple')
