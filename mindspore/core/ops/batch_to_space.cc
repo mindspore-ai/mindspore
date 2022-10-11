@@ -65,7 +65,7 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
     auto input_shape = shape_element->shape();
     const size_t input_rank = 4;
     if (input_shape.size() != input_rank) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', rank of input_x should be 4, but got "
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', rank of 'input_x' should be 4, but got "
                                << shape_element->shape().size();
     }
     if (mindspore::IsDynamicRank(shape_element->shape())) {
@@ -83,16 +83,17 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
       auto crop_sum = crops[i - height_dim_index][0] + crops[i - height_dim_index][1];
       if (x_block_prod <= crop_sum) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                 << "', x block shape prod should be greater or equal to crops sum, got x_block_prod: "
-                                 << x_block_prod << ", crop_sum: " << crop_sum;
+                                 << "', prod of 'block_size' and 'input_x' shape should be greater than sum of 'crops',"
+                                 << " but got prod of 'block_size' and 'input_x' shape: " << x_block_prod
+                                 << ", sum of 'crops': " << crop_sum;
       }
       output_shape[i] = x_block_prod - crop_sum;
     }
     auto block_size_prod = block_size * block_size;
     if (output_shape[0] % block_size_prod != 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of output with index 0 must be divided exactly "
-                               << "by block_size_prod, but got the shape of output: " << output_shape << " and "
-                               << "block_size_prod: " << block_size_prod << ".";
+                               << "by square of 'block_size', but got the shape of output: " << output_shape
+                               << " and square of 'block_size': " << block_size_prod << ".";
     }
     output_shape[0] = output_shape[0] / block_size_prod;
     return std::make_shared<abstract::Shape>(output_shape);
