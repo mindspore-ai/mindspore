@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
+
 import mindspore as ms
 import mindspore.nn as nn
 
@@ -49,3 +51,57 @@ def test_cell_call_cell_methods():
     x = ms.Tensor(1)
     y = ms.Tensor(2)
     print(net(x, y))
+
+
+def test_construct_require_self():
+    """
+    Feature: Support use Cell method and attribute.
+    Description: Test function construct require self.
+    Expectation: No exception.
+    """
+    x = ms.Tensor(1)
+    class ConstructRequireSelf(nn.Cell):
+        def construct(x):
+            return x
+
+    net = ConstructRequireSelf()
+    with pytest.raises(TypeError) as info:
+        net(x)
+    assert "construct" in str(info.value)
+    assert "self" in str(info.value)
+
+
+def test_init_require_self():
+    """
+    Feature: Support use Cell method and attribute.
+    Description: Test function __init__ require self.
+    Expectation: No exception.
+    """
+    class InitRequireSelf(nn.Cell):
+        def __init__():
+            pass
+
+    with pytest.raises(TypeError):
+        InitRequireSelf()
+
+
+def test_construct_exist():
+    """
+    Feature: Support use Cell method and attribute.
+    Description: Test function construct not exist.
+    Expectation: No exception.
+    """
+    class ConstructNotExist1(nn.Cell):
+        def cnosrtuct(self):
+            pass
+
+    class ConstructNotExist2(nn.Cell):
+        pass
+
+    net1 = ConstructNotExist1()
+    with pytest.raises(AttributeError):
+        net1()
+
+    net2 = ConstructNotExist2()
+    with pytest.raises(AttributeError):
+        net2()

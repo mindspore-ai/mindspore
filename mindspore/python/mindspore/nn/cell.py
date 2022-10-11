@@ -329,6 +329,9 @@ class Cell(Cell_):
         if context.get_context is not None and context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.del_cell(self)
 
+        init_inputs_names = self.__init__.__code__.co_varnames
+        if "self" not in init_inputs_names:
+            raise TypeError("For 'Cell', the method '__init__' must have parameter 'self'. ")
         # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
         # here using pop(id(self), None) to avoid KeyError exception
         cells_compile_cache.pop(id(self), None)
@@ -443,6 +446,10 @@ class Cell(Cell_):
                             f"and loss functions are configured with set_inputs.")
 
         if len(inputs) > positional_args + default_args:
+            construct_inputs_names = self.construct.__code__.co_varnames
+            if 'self' not in construct_inputs_names:
+                raise TypeError(f"For 'Cell', the method 'construct' must have parameter 'self'. ")
+
             raise TypeError(f"For 'Cell', the function construct requires {positional_args} positional argument and "
                             f"{default_args} default argument, total {positional_args + default_args}, "
                             f"but got {len(inputs)}.")
@@ -575,8 +582,8 @@ class Cell(Cell_):
 
     def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
-            logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
-                           f"it will call the super class(Cell) 'construct'.")
+            raise AttributeError("For 'Cell', the method 'construct' is not defined. ")
+
         if kwargs:
             bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
             bound_arguments.apply_defaults()
