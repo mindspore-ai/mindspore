@@ -39,6 +39,9 @@ void SetPythonPath(const std::string &path) {
   // check the path is exist?
   bool is_exist = false;
   for (size_t i = 0; i < sys_path.size(); i++) {
+    if (!py::isinstance<py::str>(sys_path[i])) {
+      continue;
+    }
     std::string path_str = py::cast<std::string>(sys_path[i]);
     if (path_str == path) {
       is_exist = true;
