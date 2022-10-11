@@ -868,6 +868,7 @@ class TensorShape(Primitive):
 
 class Unsqueeze(PrimitiveWithCheck):
     """Unsqueeze"""
+
     @prim_attr_register
     def __init__(self, axis):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
@@ -1826,40 +1827,6 @@ class TupleToArray(PrimitiveWithInfer):
         else:
             args.append(x)
         return _run_op(self, self.name, args)
-
-
-class ScalarToArray(PrimitiveWithInfer):
-    """
-    Converts a scalar to a `Tensor`.
-
-    Refer to :func:`mindspore.ops.scalar_to_array` for more detail.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> op = ops.ScalarToArray()
-        >>> input_x = 1.0
-        >>> print(type(input_x))
-        <class 'float'>
-        >>> output = op(input_x)
-        >>> print(type(output))
-        <class 'mindspore.common.tensor.Tensor'>
-        >>> print(output)
-        1.0
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        pass
-
-    def infer_value(self, x):
-        validator.check_value_type("x", x, [int, float], self.name)
-        if isinstance(x, int):
-            ret = np.array(x, np.int32)
-        else:
-            ret = np.array(x, np.float32)
-        return Tensor(ret)
 
 
 class ScalarToTensor(PrimitiveWithInfer):

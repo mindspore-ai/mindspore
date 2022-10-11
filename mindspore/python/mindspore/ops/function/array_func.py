@@ -77,7 +77,6 @@ tensor_scatter_mul_ = P.TensorScatterMul()
 tensor_scatter_div_ = P.TensorScatterDiv()
 tensor_scatter_min_ = P.TensorScatterMin()
 tensor_scatter_max_ = P.TensorScatterMax()
-scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
 tuple_to_array_ = P.TupleToArray()
 masked_select_ = P.MaskedSelect()
@@ -3959,35 +3958,6 @@ def tensor_scatter_div(input_x, indices, updates):
     return tensor_scatter_div_(input_x, indices, updates)
 
 
-def scalar_to_array(input_x):
-    """
-    Converts a scalar to a `Tensor`.
-
-    Args:
-        input_x (Union[int, float]): The input is a scalar. Only constant value is allowed.
-
-    Returns:
-        Tensor. 0-D Tensor and the content is the input.
-
-    Raises:
-        TypeError: If `input_x` is neither int nor float.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> input_x = 1.0
-        >>> print(type(input_x))
-        <class 'float'>
-        >>> output = ops.scalar_to_array(input_x)
-        >>> print(type(output))
-        <class 'mindspore.common.tensor.Tensor'>
-        >>> print(output)
-        1.0
-    """
-    return scalar_to_array_(input_x)
-
-
 def scalar_to_tensor(input_x, dtype=mstype.float32):
     """
     Converts a scalar to a `Tensor`, and converts the data type to the specified type.
@@ -4787,7 +4757,6 @@ __all__ = [
     'stack',
     'unstack',
     'scalar_cast',
-    'scalar_to_array',
     'scalar_to_tensor',
     'space_to_batch_nd',
     'batch_to_space_nd',

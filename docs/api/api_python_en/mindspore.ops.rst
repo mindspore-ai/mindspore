@@ -466,7 +466,6 @@ Type Conversion
     :template: classtemplate.rst
 
     mindspore.ops.ScalarCast
-    mindspore.ops.ScalarToArray
     mindspore.ops.ScalarToTensor
     mindspore.ops.TupleToArray
     
