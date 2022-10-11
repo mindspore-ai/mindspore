@@ -45,6 +45,7 @@ constexpr char kAxis[] = "axis";
 constexpr char kTypeInt32[] = "Int32";
 constexpr auto kStridedSliceMaxDims = 8;
 constexpr auto kQuad = 4;
+constexpr size_t kInputFirstIndex = 0;
 
 // Define all patterns here for different schedule
 const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
@@ -1083,6 +1084,10 @@ void KernelAttr::SetInputAttrList(const std::vector<DataType> &addr_list) {
   input_type_.assign(addr_list.begin(), addr_list.end());
 }
 
+void KernelAttr::SetOutputAttrList(const std::vector<DataType> &addr_list) {
+  output_type_.assign(addr_list.begin(), addr_list.end());
+}
+
 std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
   std::stringstream ss;
   ss << "[Kernel Attr] all same: " << kernel_attr.GetAllSame();
@@ -1110,6 +1115,56 @@ std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
   }
 
   return os << ss.str();
+}
+
+std::pair<bool, size_t> MatchMultiDynamicKernelAttr(const KernelAttr &kernel_attr,
+                                                    const std::vector<int64_t> &dyn_input_sizes,
+                                                    const std::vector<KernelAttr> &kernel_attr_list) {
+  auto output_num = kernel_attr.GetOutputSize();
+  for (size_t index = 0; index < kernel_attr_list.size(); ++index) {
+    // support multi dynamic inputs.
+    const auto &cur_kernel_attr = kernel_attr_list[index];
+    auto cur_input_num = cur_kernel_attr.GetInputSize();
+    if (dyn_input_sizes.size() != cur_input_num) {
+      MS_LOG(EXCEPTION) << "Kernel attr's input num: " << cur_input_num
+                        << ", is not equal to dynamic input size: " << dyn_input_sizes.size();
+    }
+    bool mis_match = false;
+    size_t input_index = kInputFirstIndex;
+    for (size_t i = 0; i < cur_input_num; ++i) {
+      int64_t dyn_input_size = dyn_input_sizes[i];
+      if (dyn_input_size < 0) {
+        dyn_input_size = 1;
+      }
+      auto dtype = cur_kernel_attr.GetInputAttr(i).first;
+      for (size_t j = 0; j < LongToSize(dyn_input_size); ++j) {
+        if (kernel_attr.GetInputAttr(input_index).first != dtype) {
+          mis_match = true;
+          break;
+        }
+        ++input_index;
+      }
+      if (mis_match) {
+        break;
+      }
+    }
+    if (mis_match) {
+      continue;
+    }
+
+    // only support one dynamic output. TODO: support multi dynamic output.
+    for (size_t i = 0; i < output_num; ++i) {
+      auto dtype = cur_kernel_attr.GetOutputAttr(i).first;
+      if (kernel_attr.GetInputAttr(i).first != dtype) {
+        mis_match = true;
+        break;
+      }
+    }
+    if (!mis_match) {
+      return std::make_pair(true, index);
+    }
+  }
+  return std::make_pair(false, 0);
 }
 
 std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
@@ -1296,14 +1351,24 @@ void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<Ke
   }
 
   auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
+  std::vector<int64_t> dyn_input_sizes = {};
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, apply_kernel)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(apply_kernel, kAttrDynInputSizes);
+  }
+  std::pair<bool, int64_t> match_result;
   if (kernel_attrs[0].GetSkipCheck()) {
     // If kernel skips attr check, we need to synchronize the ref map in case it's discarded.
     SyncOutInRef(kernel_attrs[0], &kernel_attr);
     kernel_attrs[0] = kernel_attr;
-    is_match = true;
-    index = 0;
+    match_result = {true, 0};
+  } else if (kernel_attrs[0].GetAllSame()) {
+    match_result = MatchKernelAttr(kernel_attr, kernel_attrs);
+  } else if (dyn_input_sizes.empty()) {
+    match_result = MatchKernelAttr(kernel_attr, kernel_attrs);
+  } else {
+    match_result = MatchMultiDynamicKernelAttr(kernel_attr, dyn_input_sizes, kernel_attrs);
   }
+  auto [is_match, index] = match_result;
   if (!is_match) {
     MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
                       << " does not support this kernel data type: " << kernel_attr;

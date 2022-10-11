@@ -363,6 +363,7 @@ class BACKEND_EXPORT KernelAttr {
   void SetInputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
   void SetOutputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
   void SetInputAttrList(const std::vector<DataType> &addr_list);
+  void SetOutputAttrList(const std::vector<DataType> &addr_list);
 
  private:
   std::vector<DataType> input_type_;
