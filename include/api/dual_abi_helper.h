@@ -180,5 +180,32 @@ inline void TensorMapCharToString(const std::map<std::vector<char>, T> *c, std::
     s->insert(std::pair<std::string, T>(key, val));
   }
 }
+
+inline std::map<std::string, std::map<std::string, std::string>> MapMapCharToString(
+  const std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> &c) {
+  std::map<std::string, std::map<std::string, std::string>> ret;
+  for (auto iter : c) {
+    std::map<std::string, std::string> item;
+    std::transform(iter.second.begin(), iter.second.end(), std::inserter(item, item.begin()), [](auto ch) {
+      return std::pair<std::string, std::string>(std::string(ch.first.begin(), ch.first.end()),
+                                                 std::string(ch.second.begin(), ch.second.end()));
+    });
+    ret[CharToString(iter.first)] = item;
+  }
+  return ret;
+}
+
+inline std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> MapMapStringToChar(
+  const std::map<std::string, std::map<std::string, std::string>> &s) {
+  std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> ret;
+  for (auto iter : s) {
+    std::map<std::vector<char>, std::vector<char>> item;
+    std::transform(iter.second.begin(), iter.second.end(), std::inserter(item, item.begin()), [](auto ch) {
+      return std::pair<std::vector<char>, std::vector<char>>(StringToChar(ch.first), StringToChar(ch.second));
+    });
+    ret[StringToChar(iter.first)] = item;
+  }
+  return ret;
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_DUAL_ABI_HELPER_H_

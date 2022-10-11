@@ -75,6 +75,9 @@ public class RunnerConfig {
      * @param config_info The config info.
      */
     public void setConfigInfo(String section, HashMap<String, String> config) {
+        if (section == null || config == null) {
+            return;
+        }
         setConfigInfo(runnerConfigPtr, section, config);
     }
 
@@ -84,6 +87,9 @@ public class RunnerConfig {
      * @param config_path The config path.
      */
     public void setConfigPath(String config_path) {
+        if (config_path == null) {
+            return;
+        }
         setConfigPath(runnerConfigPtr, config_path);
     }
 
