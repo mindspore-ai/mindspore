@@ -144,6 +144,7 @@ class Tensor(Tensor_):
     delta_seed = 0
 
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
+        self.init_finished = False
         if internal:
             Tensor_.__init__(self, input_data)
         else:
@@ -180,10 +181,7 @@ class Tensor(Tensor_):
         self.const_arg = const_arg
         self.virtual_flag = False
         self.init = init
-        if init is not None:
-            self.init_finished = False
-        else:
-            self.init_finished = True
+        self.init_finished = True
 
         # if cur Tensor is a index value of another Tensor,
         # parent_tensor_ set to another Tensor
@@ -220,14 +218,10 @@ class Tensor(Tensor_):
         return new_obj
 
     def __repr__(self):
-        Tensor_.data_sync(self, True)
-        repr = Tensor_.__repr__(self)
         if self.init_finished:
-            return repr
-        init_name = self.init.__class__.__name__.lower()
-        extend = f"initialized=False, init='{init_name}'"
-        repr = repr.replace('value=\n<uninitialized>', extend)
-        return repr
+            Tensor_.data_sync(self, True)
+            return Tensor_.__repr__(self)
+        return ''
 
     def __eq__(self, other):
         if not isinstance(other, (int, float, Tensor)):
@@ -417,7 +411,7 @@ class Tensor(Tensor_):
     def __str__(self):
         if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
-        return self.__repr__()
+        return str(self.asnumpy())
 
     @property
     def shape(self):

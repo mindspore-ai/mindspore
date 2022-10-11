@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-# pylint: disable=W0622
-# pylint: disable=E1120
+
 """Parameter for cell."""
 from __future__ import absolute_import
 
@@ -259,14 +258,11 @@ class Parameter(Tensor_):
         return new_obj
 
     def __str__(self):
-        return self.__repr__()
+        return f'Parameter (name={self.name}, shape={self.shape}, dtype={self.dtype}, ' \
+               f'requires_grad={self.requires_grad})'
 
     def __repr__(self):
-        Tensor_.data_sync(self, True)
-        repr = Tensor_.__repr__(self)
-        extend = f"Parameter(name={self.name}, requires_grad={self.requires_grad}, "
-        repr = repr.replace('Tensor(', extend)
-        return repr
+        return self.__str__()
 
     def __parameter__(self):
         """For parse check."""
