@@ -15,28 +15,36 @@
 
 import numpy as np
 import pytest
-import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class NetROIAlignGrad(nn.Cell):
-    def __init__(self, pooled_height, pooled_width, spatial_scale, sample_num):
+    def __init__(self, pooled_height, pooled_width, spatial_scale, sample_num, is_dyn_rank=False):
         super(NetROIAlignGrad, self).__init__()
         self.shape = ops.Shape()
         self.dyn_shape = ops.TensorShape()
         self.roi_align_grad = G.ROIAlignGrad(pooled_height, pooled_width, spatial_scale, sample_num)
+        self.is_dyn_rank = is_dyn_rank
+        self.convert_to_dynamic_rank = inner.ConvertToDynamic(is_dynamic_rank=is_dyn_rank).add_prim_attr(
+            "primitive_target", "CPU"
+        )
 
     def construct(self, dy, rois, xdiff):
+        if self.is_dyn_rank:
+            dy = self.convert_to_dynamic_rank(dy)
+            rois = self.convert_to_dynamic_rank(rois)
+            xdiff = self.convert_to_dynamic_rank(xdiff)
         xdiff_shape = self.shape(xdiff)
         if -1 in xdiff_shape or -2 in xdiff_shape:
             xdiff_shape = self.dyn_shape(xdiff)
         return self.roi_align_grad(dy, rois, xdiff_shape)
 
 
-def roi_align_grad_case(data_type=np.float16, is_dyn_shape=False):
+def roi_align_grad_case(data_type=np.float16, is_dyn_shape=False, is_dyn_rank=False):
     rois = Tensor(np.array([[0, -2.0, -2.0, 21.0, 21.0]], data_type))
     dy = Tensor(np.array([[[[0.1, 0.2, 0.3], [0.1, 0.2, 0.3], [0.1, 0.2, 0.3]]]], data_type))
 
@@ -45,12 +53,11 @@ def roi_align_grad_case(data_type=np.float16, is_dyn_shape=False):
 
     pooled_height, pooled_width, spatial_scale, sample_num = 3, 3, 0.25, 2
 
-    roi_align_grad = NetROIAlignGrad(pooled_height, pooled_width, spatial_scale, sample_num)
+    roi_align_grad = NetROIAlignGrad(pooled_height, pooled_width, spatial_scale, sample_num, is_dyn_rank)
 
     if is_dyn_shape:
-        dtype_map = {np.float16: ms.float16, np.float32: ms.float32}
-        dyn_dx_dy = Tensor(shape=(None, None, None, None), dtype=dtype_map.get(data_type))
-        dyn_rois = Tensor(shape=(None, None), dtype=dtype_map.get(data_type))
+        dyn_dx_dy = Tensor(shape=(None, None, None, None), dtype=dy.dtype)
+        dyn_rois = Tensor(shape=(None, None), dtype=dy.dtype)
         roi_align_grad.set_inputs(dyn_dx_dy, dyn_rois, dyn_dx_dy)
 
     output = roi_align_grad(dy, rois, xdiff)
@@ -75,33 +82,63 @@ def roi_align_grad_case(data_type=np.float16, is_dyn_shape=False):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-def test_roi_align_grad():
+def test_roi_align_grad_float16():
     """
     Feature: Test the operator ROIAlignGrad
-    Description:  Test in GRAPH and PYNATIVE mode using float32 and float16 inputs
+    Description:  Test in GRAPH and PYNATIVE mode using float16 inputs
     Expectation: Assert the result is equal to the expectation
     """
     context.set_context(mode=context.GRAPH_MODE)
-    roi_align_grad_case(np.float32)
     roi_align_grad_case(np.float16)
     context.set_context(mode=context.PYNATIVE_MODE)
-    roi_align_grad_case(np.float32)
     roi_align_grad_case(np.float16)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-def test_roi_align_grad_dynamic_shape():
+def test_roi_align_grad_float32():
+    """
+    Feature: Test the operator ROIAlignGrad
+    Description:  Test in GRAPH and PYNATIVE mode using float32 inputs
+    Expectation: Assert the result is equal to the expectation
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    roi_align_grad_case(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    roi_align_grad_case(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_roi_align_grad_float16_dynamic_shape():
     """
     Feature: Test the operator ROIAlignGrad with dynamic shape inputs
-    Description:  Test in GRAPH and PYNATIVE mode using float32 and float16 dynamic shape inputs
+    Description:  Test in GRAPH and PYNATIVE mode using float16 dynamic shape inputs
+    Expectation: Assert the result is equal to the expectation
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    roi_align_grad_case(np.float16, True)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    roi_align_grad_case(np.float16, True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_roi_align_grad_float32_dynamic_rank():
+    """
+    Feature: Test the operator ROIAlignGrad with dynamic rank inputs
+    Description:  Test in GRAPH and PYNATIVE mode using float32 dynamic rank inputs
     Expectation: Assert the result is equal to the expectation
     """
     context.set_context(mode=context.GRAPH_MODE)
     roi_align_grad_case(np.float32, True)
-    roi_align_grad_case(np.float16, True)
     context.set_context(mode=context.PYNATIVE_MODE)
     roi_align_grad_case(np.float32, True)
-    roi_align_grad_case(np.float16, True)

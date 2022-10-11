@@ -46,8 +46,7 @@ class ROIAlignInfer : public abstract::OpInferBase {
       constexpr size_t kFeatureShapeSize = 4;
       (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kLessEqual,
                                                kFeatureShapeSize, op_name);
-      const int64_t channel_index = kInputIndex1;
-      out_c = feature_shape[channel_index];
+      out_c = feature_shape[kInputIndex1];
     }
     if (IsDynamicRank(rois_shape)) {
       out_n = abstract::Shape::kShapeDimAny;
@@ -61,8 +60,7 @@ class ROIAlignInfer : public abstract::OpInferBase {
         (void)CheckAndConvertUtils::CheckInteger("second dim of rois shape", rois_second_dim, kEqual,
                                                  kRoisShapeSecondDim);
       }
-      const int64_t roi_num_index = kInputIndex0;
-      out_n = rois_shape[roi_num_index];
+      out_n = rois_shape[kInputIndex0];
     }
     ShapeVector output_shape;
     auto pooled_height_ptr = primitive->GetAttr(kPooledHeight);

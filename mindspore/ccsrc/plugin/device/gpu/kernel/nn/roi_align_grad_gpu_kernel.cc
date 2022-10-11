@@ -22,15 +22,15 @@ namespace kernel {
 bool ROIAlignGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
   // Check input and output numbers
-  constexpr size_t input_num_no_xshape = 2;
-  constexpr size_t input_num_with_xshape = 3;
-  constexpr size_t output_num = 1;
+  constexpr size_t kInputNumNoShape = 2;
+  constexpr size_t kInputNumWithShape = 3;
+  constexpr size_t kOutputNum = 1;
   kernel_name_ = base_operator->name();
-  if (inputs.size() != input_num_no_xshape && inputs.size() != input_num_with_xshape) {
+  if (inputs.size() != kInputNumNoShape && inputs.size() != kInputNumWithShape) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << inputs.size()
                       << ".";
   }
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
@@ -40,7 +40,7 @@ bool ROIAlignGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   pooled_width_ = op->get_pooled_width();
   spatial_scale_ = op->get_spatial_scale();
   sample_num_ = op->get_sample_num();
-  if (inputs.size() == input_num_with_xshape) {
+  if (inputs.size() == kInputNumWithShape) {
     is_xdiff_shape_dyn_ = true;
     return true;
   }
@@ -63,19 +63,19 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   // Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
-  constexpr size_t dx_dy_shape_size = 4;
-  constexpr size_t rois_shape_size = 2;
-  if (dy_shape.size() != dx_dy_shape_size) {
+  constexpr size_t kDiffDims = 4;
+  constexpr size_t kRoisDims = 2;
+  if (dy_shape.size() != kDiffDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of dy must be equal to 4, but got " << dy_shape.size()
                   << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (rois_shape.size() != rois_shape_size) {
+  if (rois_shape.size() != kRoisDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of rois must be equal to 2, but got "
                   << rois_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (xdiff_shape_.size() > dx_dy_shape_size) {
+  if (xdiff_shape_.size() > kDiffDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of xdiff_shape cannot be greater than 4, but got "
                   << xdiff_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
