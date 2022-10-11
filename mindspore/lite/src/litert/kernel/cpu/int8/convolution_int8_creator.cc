@@ -128,8 +128,7 @@ kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &
     kernel = CpuConvInt8KernelSelect(inputs, outputs, op_parameter, ctx);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
     kernel = CpuConvDwInt8KernelCreator(inputs, outputs, op_parameter, ctx, desc);
-  } else {
-    MS_ASSERT(conv_param->group_ > 1);
+  } else if (conv_param->group_ > 1) {
     kernel = CpuGroupConvInt8KernelCreator(inputs, outputs, op_parameter, ctx, conv_param->group_);
   }
   if (kernel == nullptr) {
