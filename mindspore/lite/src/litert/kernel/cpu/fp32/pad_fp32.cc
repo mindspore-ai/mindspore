@@ -36,6 +36,13 @@ int PadCPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[1]);
   CHECK_NULL_RETURN(out_tensors_[0]);
+
+  auto input_data_type = in_tensors_[0]->data_type();
+  if (!(input_data_type == kNumberTypeFloat32 || input_data_type == kNumberTypeFloat ||
+        input_data_type == kNumberTypeFloat16)) {
+    MS_LOG(ERROR) << "Unsupported data type of input tensor for Pad op: " << input_data_type;
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }

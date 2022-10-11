@@ -82,6 +82,12 @@ int ArithmeticSelfCPUKernel::Prepare() {
   CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
   CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
 
+  auto out_tensor_category = out_tensors_[0]->category();
+  if (out_tensor_category == mindspore::lite::CONST_SCALAR || out_tensor_category == mindspore::lite::CONST_TENSOR) {
+    MS_LOG(ERROR) << "out_tensor category is invalid.";
+    return RET_ERROR;
+  }
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
