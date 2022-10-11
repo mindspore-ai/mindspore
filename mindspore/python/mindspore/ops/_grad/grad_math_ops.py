@@ -232,7 +232,7 @@ def _min_or_max_grad(x, axis, out, dout):
     y = reshape(out, output_shape_kept_dims)
     grad = reshape(dout, output_shape_kept_dims)
     indicators = F.cast(F.equal(y, x), F.dtype(grad))
-    min_num = F.cast(F.scalar_to_array(1e-24), F.dtype(grad))
+    min_num = F.cast(F.scalar_to_tensor(1e-24), F.dtype(grad))
     num_selected = reshape(reduce_sum(indicators, axis), output_shape_kept_dims) + min_num
     return indicators / num_selected * grad
 
@@ -279,8 +279,8 @@ def _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout):
         if onehot_axis >= len(out_shape):
             onehot_axis = -1
     type_x = F.dtype(x)
-    on_value = F.cast(F.scalar_to_array(1.0), type_x)
-    off_value = F.cast(F.scalar_to_array(0.0), type_x)
+    on_value = F.cast(F.scalar_to_tensor(1.0), type_x)
+    off_value = F.cast(F.scalar_to_tensor(0.0), type_x)
     if not is_shape_unknown(x_shape):
         depth = 1
         if x_shape:
@@ -1048,7 +1048,7 @@ def get_bprop_reduce_mean(self):
             dx = div_op(grad, cast(div_shape, dtype(grad)))
         else:
             div_shape = F.shape_mul(shape_x) / F.shape_mul(shape_out)
-            dx = div_op(grad, cast(F.scalar_to_array(div_shape), dtype(grad)))
+            dx = div_op(grad, cast(F.scalar_to_tensor(div_shape, mstype.int32), dtype(grad)))
         return dx, zeros_like(axis)
 
     return bprop
