@@ -48,8 +48,9 @@ class GcdLcmHelperGpuKernel : public GpuKernelHelperBase {
     ResetResource();
     auto iter = kGcdLcmOpTypeMap.find(kernel_name_);
     if (iter == kGcdLcmOpTypeMap.end()) {
-      MS_LOG(ERROR) << "For 'GcdLcmOp', only support these types: " << kernel::Map2Str(kGcdLcmOpTypeMap)
-                    << " currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'GcdLcmOp', only support these types: "
+                    << kernel::Map2Str<std::map, GcdLcmOptype>(kGcdLcmOpTypeMap) << " currently, but got "
+                    << kernel_name_;
       return -1;
     }
     gcd_lcm_op_type_ = iter->second;
@@ -144,8 +145,9 @@ class GcdLcmHelperGpuKernel : public GpuKernelHelperBase {
         CalLcm(output_num_, x1_ptr, x2_ptr, y_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
       }
     } else {
-      MS_LOG(ERROR) << "For 'GcdLcmOp', only support these types: " << kernel::Map2Str(kGcdLcmOpTypeMap)
-                    << " currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'GcdLcmOp', only support these types: "
+                    << kernel::Map2Str<std::map, GcdLcmOptype>(kGcdLcmOpTypeMap) << " currently, but got "
+                    << kernel_name_;
       return -1;
     }
 

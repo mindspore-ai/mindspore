@@ -99,7 +99,9 @@ int GcdLcmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 std::vector<KernelAttr> GcdLcmGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map.find(kernel_type_);
   if (iter == kernel_attr_map.end()) {
-    MS_LOG(ERROR) << "For 'GcdLcmOp', only support these types: " << kernel::Map2Str(kernel_attr_map)
+    MS_LOG(ERROR) << "For 'GcdLcmOp', only support these types: "
+                  << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, GcdLcmPtrCreatorFunc>>>(
+                       kernel_attr_map)
                   << " currently, but got " << kernel_name_;
     return std::vector<KernelAttr>{};
   }
