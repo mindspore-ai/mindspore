@@ -36,11 +36,11 @@ class SparseDenseCwiseDivCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::vector<int64_t> indices_shape;
-  std::vector<int64_t> values_shape;
-  std::vector<int64_t> shape_shape;
-  std::vector<int64_t> dense_shape;
-  TypeId data_type = {kTypeUnknown};
+  std::vector<int64_t> indices_shape_;
+  std::vector<int64_t> values_shape_;
+  std::vector<int64_t> shape_shape_;
+  std::vector<int64_t> dense_shape_;
+  TypeId data_type_ = {kTypeUnknown};
   template <typename T>
   void ComputeDiv(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
