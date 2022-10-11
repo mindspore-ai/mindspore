@@ -16,13 +16,15 @@
 
 #include "plugin/device/cpu/kernel/list_diff_cpu_kernel.h"
 #include <unordered_set>
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr uint32_t kListDiffInputNum = 2;
-constexpr uint32_t kListDiffOutputNum = 2;
+constexpr size_t kListDiffInputNum = 2;
+constexpr size_t kListDiffOutputNum = 2;
 
 #define LIST_DIFF_COMPUTE_CASE(data_type, type)              \
   case (data_type): {                                        \
@@ -34,27 +36,50 @@ constexpr uint32_t kListDiffOutputNum = 2;
     break;                                                   \
   }
 }  // namespace
-void ListDiffCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  cnode_ptr_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  TypeId x_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  TypeId y_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
-  out_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
+
+bool ListDiffCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  is_need_retrieve_output_shape_ = true;
+  PrimitivePtr prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = prim->name();
+  TypeId x_type = inputs.at(kIndex0)->GetDtype();
+  TypeId y_type = inputs.at(kIndex1)->GetDtype();
+  out_type_ = outputs.at(kIndex0)->GetDtype();
   if (x_type != y_type || x_type != out_type_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input 'x', 'y' and output 'out' should be same type, but get x["
                       << TypeIdLabel(x_type) << "], y[" << TypeIdLabel(y_type) << "], out[" << TypeIdLabel(out_type_)
                       << "].";
   }
-  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  auto y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
-  x_size_ = x_shape[0];
-  y_size_ = y_shape[0];
-  auto out_idx = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, kAttrOutIdx);
-  MS_EXCEPTION_IF_NULL(out_idx);
-  idx_type_ = out_idx->type_id();
+  idx_type_ = outputs.at(kIndex1)->GetDtype();
   MS_EXCEPTION_IF_CHECK_FAIL((idx_type_ == kNumberTypeInt32 || idx_type_ == kNumberTypeInt64),
                              "attr 'out_idx' should be int32 or int64");
+  out_size_ = 0;
+  data_size_ = abstract::TypeIdSize(x_type);
+  index_size_ = abstract::TypeIdSize(idx_type_);
+  return true;
+}
+
+void ListDiffCPUKernelMod::ResetResource() noexcept {
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+}
+
+int ListDiffCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  ResetResource();
+  auto x_shape = inputs[kIndex0]->GetShapeVector();
+  auto y_shape = inputs[kIndex1]->GetShapeVector();
+  x_size_ = x_shape[0];
+  y_size_ = y_shape[0];
+  outputs_ = outputs;
+  input_size_list_.emplace_back(x_size_ * data_size_);
+  input_size_list_.emplace_back(y_size_ * data_size_);
+  output_size_list_.emplace_back(x_size_ * data_size_);
+  output_size_list_.emplace_back(x_size_ * index_size_);
+  return KRET_OK;
 }
 
 template <typename T, typename Tidx>
@@ -90,21 +115,7 @@ bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
       p++;
     }
   }
-  // update out
-  if (!cnode_ptr_.expired()) {
-    auto node_ = cnode_ptr_.lock();
-    if (!node_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
-    }
-    ShapeVector out_shape = {out_size_};
-    ShapeVector idx_shape = {out_size_};
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_);
-    std::vector<TypeId> dtypes(output_num);
-    for (size_t i = 0; i < output_num; i++) {
-      dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
-    }
-    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, idx_shape}, node_.get());
-  }
+
   return true;
 }
 
@@ -132,6 +143,7 @@ bool ListDiffCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   }
   return result;
 }
+
 std::vector<KernelAttr> ListDiffCPUKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {KernelAttr()
                                                    .AddInputAttr(kNumberTypeFloat16)
@@ -225,6 +237,17 @@ std::vector<KernelAttr> ListDiffCPUKernelMod::GetOpSupport() {
                                                    .AddOutputAttr(kNumberTypeInt64)};
 
   return support_list;
+}
+
+void ListDiffCPUKernelMod::SyncData() {
+  // update out
+  ShapeVector out_shape_ = {out_size_};
+  ShapeVector idx_shape_ = {out_size_};
+  // set output shape and dtype
+  outputs_[0]->SetShapeVector(out_shape_);
+  outputs_[0]->SetDtype(TypeIdToType(out_type_));
+  outputs_[1]->SetShapeVector(idx_shape_);
+  outputs_[1]->SetDtype(TypeIdToType(idx_type_));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ListDiff, ListDiffCPUKernelMod);

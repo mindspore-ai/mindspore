@@ -21,17 +21,24 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-class MatrixSetDiagV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatrixSetDiagV3CpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixSetDiagV3CpuKernelMod() = default;
   ~MatrixSetDiagV3CpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  // void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -53,6 +60,7 @@ class MatrixSetDiagV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void singleCal(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  std::string kernel_name_{};
   std::vector<int64_t> diagonal_shape_;
   std::vector<int64_t> k_shape_;
   std::vector<int64_t> x_shape_;

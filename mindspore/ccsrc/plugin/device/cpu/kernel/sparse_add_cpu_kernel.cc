@@ -69,6 +69,8 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  outputs_ = outputs;
+  dense_shape_ = inputs.at(kAShapeIdx)->GetShapeVector();
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kInputNum) {
@@ -79,6 +81,7 @@ int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     auto max_value_out_size = input_size_list_[kAValuesIdx] + input_size_list_[kBValuesIdx];
     output_size_list_[kSumIndicesIdx] = max_indices_out_size;
     output_size_list_[kSumValuesIdx] = max_value_out_size;
+    output_size_list_[kSumShapeIdx] = input_size_list_[kAShapeIdx];
   }
   return ret;
 }
@@ -195,7 +198,7 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   (void)out_values_shape.emplace_back(SizeToLong(whole_values.size()));
   outputs_[kSumIndicesIdx]->SetShapeVector(out_indices_shape);
   outputs_[kSumValuesIdx]->SetShapeVector(out_values_shape);
-
+  outputs_[kSumShapeIdx]->SetShapeVector(dense_shape_);
   return true;
 }
 

@@ -17,8 +17,42 @@ import numpy as np
 import pytest
 
 import mindspore.context as context
-from mindspore import Tensor
+import mindspore as ms
+from mindspore import Tensor, nn
 from mindspore.ops import operations as P
+
+
+class TopkNet(nn.Cell):
+
+    def __init__(self, isSorted=True):
+        super(TopkNet, self).__init__()
+        self.op = P.TopK(sorted=isSorted)
+
+    def construct(self, x, k):
+        return self.op(x, k)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_topk_dynamic_shape():
+    """
+    Feature: test TopK op in gpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = TopkNet()
+
+    x_dyn = Tensor(shape=[2, None], dtype=ms.float16)
+    k = 3
+    net.set_inputs(x_dyn, k)
+
+    x = Tensor([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]], ms.float16)
+    values, indices = net(x, k)
+    expect_shape = (2, 3)
+    assert values.asnumpy().shape == expect_shape
+    assert indices.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level1

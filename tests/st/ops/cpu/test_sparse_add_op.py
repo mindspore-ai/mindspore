@@ -26,12 +26,15 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class SparseAddNet(nn.Cell):
+
     def __init__(self):
         super().__init__()
         self.sparse_add = SparseAdd()
 
-    def construct(self, a_indices, a_values, a_shape, b_indices, b_values, b_shape, thresh):
-        return self.sparse_add(a_indices, a_values, a_shape, b_indices, b_values, b_shape, thresh)
+    def construct(self, a_indices, a_values, a_shape, b_indices, b_values,
+                  b_shape, thresh):
+        return self.sparse_add(a_indices, a_values, a_shape, b_indices,
+                               b_values, b_shape, thresh)
 
 
 def sparse_add_same_indices(value_type, thresh_type, np_type, thresh_value):
@@ -43,7 +46,9 @@ def sparse_add_same_indices(value_type, thresh_type, np_type, thresh_value):
     b_shape = Tensor([3, 4], ms.int64)
     thresh = Tensor(thresh_value, thresh_type)
     sparse_add = SparseAddNet()
-    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values, a_shape, b_indices, b_values, b_shape, thresh)
+    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values,
+                                                   a_shape, b_indices,
+                                                   b_values, b_shape, thresh)
 
     ground_truth_indices = np.array([[0, 1], [1, 2]], np.int64)
     ground_truth_value = np.array([2, 4], np_type)
@@ -53,7 +58,8 @@ def sparse_add_same_indices(value_type, thresh_type, np_type, thresh_value):
     assert np.allclose(sum_shape.asnumpy(), ground_truth_shape)
 
 
-def sparse_add_left_same_indices(value_type, thresh_type, np_type, thresh_value):
+def sparse_add_left_same_indices(value_type, thresh_type, np_type,
+                                 thresh_value):
     a_indices = Tensor([[0, 1], [1, 2]], ms.int64)
     a_values = Tensor([1, 2], value_type)
     a_shape = Tensor([3, 4], ms.int64)
@@ -62,7 +68,9 @@ def sparse_add_left_same_indices(value_type, thresh_type, np_type, thresh_value)
     b_shape = Tensor([3, 4], ms.int64)
     thresh = Tensor(thresh_value, thresh_type)
     sparse_add = SparseAddNet()
-    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values, a_shape, b_indices, b_values, b_shape, thresh)
+    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values,
+                                                   a_shape, b_indices,
+                                                   b_values, b_shape, thresh)
 
     ground_truth_indices = np.array([[0, 1], [1, 2], [1, 3]], np.int64)
     ground_truth_value = np.array([2, 2, 2], np_type)
@@ -72,7 +80,8 @@ def sparse_add_left_same_indices(value_type, thresh_type, np_type, thresh_value)
     assert np.allclose(sum_shape.asnumpy(), ground_truth_shape)
 
 
-def sparse_add_right_same_indices(value_type, thresh_type, np_type, thresh_value):
+def sparse_add_right_same_indices(value_type, thresh_type, np_type,
+                                  thresh_value):
     a_indices = Tensor([[0, 1], [1, 3]], ms.int64)
     a_values = Tensor([1, 2], value_type)
     a_shape = Tensor([3, 4], ms.int64)
@@ -81,7 +90,9 @@ def sparse_add_right_same_indices(value_type, thresh_type, np_type, thresh_value
     b_shape = Tensor([3, 4], ms.int64)
     thresh = Tensor(thresh_value, thresh_type)
     sparse_add = SparseAddNet()
-    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values, a_shape, b_indices, b_values, b_shape, thresh)
+    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values,
+                                                   a_shape, b_indices,
+                                                   b_values, b_shape, thresh)
 
     ground_truth_indices = np.array([[0, 1], [1, 2], [1, 3]], np.int64)
     ground_truth_value = np.array([1, 1, 4], np_type)
@@ -100,7 +111,9 @@ def sparse_add_no_same_indices(value_type, thresh_type, np_type, thresh_value):
     b_shape = Tensor([3, 4], ms.int64)
     thresh = Tensor(thresh_value, thresh_type)
     sparse_add = SparseAddNet()
-    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values, a_shape, b_indices, b_values, b_shape, thresh)
+    sum_indices, sum_value, sum_shape = sparse_add(a_indices, a_values,
+                                                   a_shape, b_indices,
+                                                   b_values, b_shape, thresh)
 
     ground_truth_indices = np.array([[0, 1], [1, 2], [1, 3], [2, 2]], np.int64)
     ground_truth_value = np.array([1, 1, 2, 2], np_type)
@@ -108,6 +121,46 @@ def sparse_add_no_same_indices(value_type, thresh_type, np_type, thresh_value):
     assert np.allclose(sum_indices.asnumpy(), ground_truth_indices)
     assert np.allclose(sum_value.asnumpy(), ground_truth_value)
     assert np.allclose(sum_shape.asnumpy(), ground_truth_shape)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_sparse_add_dynamic_shape():
+    """
+    Feature: test SparseAdd op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = SparseAddNet()
+    indics0_dyn = Tensor(shape=[None, None], dtype=ms.int64)
+    values0_dyn = Tensor(shape=[None], dtype=ms.int32)
+    shape0_dyn = Tensor(shape=[None], dtype=ms.int64)
+    indics1_dyn = Tensor(shape=[None, None], dtype=ms.int64)
+    values1_dyn = Tensor(shape=[None], dtype=ms.int32)
+    shape1_dyn = Tensor(shape=[None], dtype=ms.int64)
+    thres = Tensor(0, dtype=ms.int32)
+    net.set_inputs(indics0_dyn, values0_dyn, shape0_dyn, indics1_dyn,
+                   values1_dyn, shape1_dyn, thres)
+
+    indics0 = Tensor([[0, 1], [1, 2]], dtype=ms.int64)
+    values0 = Tensor([1, 2], dtype=ms.int32)
+    shape0 = Tensor([3, 4], dtype=ms.int64)
+    indics1 = Tensor([[0, 0], [1, 1]], dtype=ms.int64)
+    values1 = Tensor([3, 4], dtype=ms.int32)
+    shape1 = Tensor([3, 4], dtype=ms.int64)
+    outputs = net(indics0, values0, shape0, indics1, values1, shape1, thres)
+    print(outputs)
+    sum_indices = outputs[0]
+    sum_values = outputs[1]
+    sum_shape = outputs[2]
+    expect_indices_shape = (4, 2)
+    assert sum_indices.asnumpy().shape == expect_indices_shape
+    expect_sum_values_shape = (4,)
+    assert sum_values.asnumpy().shape == expect_sum_values_shape
+    expect_sum_shape_shape = (2,)
+    assert sum_shape.asnumpy().shape == expect_sum_shape_shape
 
 
 @pytest.mark.level0
