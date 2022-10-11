@@ -71,6 +71,7 @@ mindspore.ops.function
     mindspore.ops.celu
     mindspore.ops.dropout
     mindspore.ops.fast_gelu
+    mindspore.ops.glu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
