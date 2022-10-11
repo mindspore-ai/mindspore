@@ -196,6 +196,15 @@ int StrideSlicePreCheck(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (parameter == NULL || outputs[0] == NULL || inputs[0] == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (inputs_size >= kStridedSliceMultiInputNumMin) {
+    bool begins_type_ok =
+      (inputs[C1NUM]->data_type_ == kNumberTypeInt32) || (inputs[C1NUM]->data_type_ == kNumberTypeInt64);
+    bool ends_type_ok =
+      (inputs[C2NUM]->data_type_ == kNumberTypeInt32) || (inputs[C2NUM]->data_type_ == kNumberTypeInt64);
+    if (!(begins_type_ok && ends_type_ok)) {
+      return NNACL_PARAM_INVALID;
+    }
+  }
   return NNACL_OK;
 }
 
