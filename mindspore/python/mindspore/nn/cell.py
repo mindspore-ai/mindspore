@@ -2185,11 +2185,19 @@ class Cell(Cell_):
         """
         Set the label for all operators in this cell.
         This label tells MindSpore compiler on which process this cell should be launched.
-        Each process's identical id consists of inputs 'role' and 'rank_id'.
+        And each process's identical label consists of input 'role' and 'rank_id'.
+        So by setting different cells with different labels, which will be launched on different processes,
+        users can launch a distributed training job.
+
+        Note:
+            - 'role' only supports the value 'MS_WORKER' for now.
+            - This method is effective only after
+              "mindspore.communication.init()" is called for dynamic cluster building.
+            - The rank is unique in processes with the same role.
 
         Args:
             role (string): The role of the process on which this cell will be launched.
-            rank_id (string): The rank id of the process on which this cell will be launched.
+            rank_id (int): The rank id of the process on which this cell will be launched.
         """
         all_ops = self._get_prims_recursively()
         for op in all_ops:
