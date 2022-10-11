@@ -3286,82 +3286,6 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
     return outputs
 
 
-def boundingbox_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
-    """
-    Encodes bounding boxes locations.
-
-    This operator will calculate the offset between the predicted bounding boxes and the real bounding boxes,
-    and this offset will be used as a variable for the loss.
-
-    Args:
-        anchor_box(Tensor): Anchor boxes. The shape of anchor_box must be (n, 4).
-        groundtruth_box(Tensor): Ground truth boxes. Which has the same shape with anchor_box.
-        means (tuple): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
-
-    Returns:
-        Tensor, encoded bounding boxes. It has the same data type and shape as input `anchor_box`.
-
-    Raises:
-        TypeError: If `means` or `stds` is not a tuple.
-        TypeError: If `anchor_box` or `groundtruth_box` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> anchor_box = Tensor([[2, 2, 2, 3], [2, 2, 2, 3]], mindspore.float32)
-        >>> groundtruth_box = Tensor([[1, 2, 1, 4], [1, 2, 1, 4]], mindspore.float32)
-        >>> output = ops.boundingbox_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0),
-        ...                                 stds=(1.0, 1.0, 1.0, 1.0))
-        >>> print(output)
-        [[ -1.  0.25  0.  0.40551758]
-         [ -1.  0.25  0.  0.40551758]]
-    """
-    boundingbox_encode_op = _get_cache_prim(P.BoundingBoxEncode)(means, stds)
-    return boundingbox_encode_op(anchor_box, groundtruth_box)
-
-
-def boundingbox_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
-                       wh_ratio_clip=0.016):
-    """
-    Decodes bounding boxes locations.
-
-    The function of the operator is to calculate the offset, and this operator converts the offset into a Bbox,
-    which is used to mark the target in the subsequent images, etc.
-
-    Args:
-        anchor_box** (Tensor): Anchor boxes. The shape of `anchor_box` must be (n, 4).
-        deltas** (Tensor): Delta of boxes. Which has the same shape with `anchor_box`.
-        means (tuple): The means of deltas calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
-        max_shape (tuple): The max size limit for decoding box calculation.
-        wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
-
-    Returns:
-        Tensor, decoded boxes. It has the same data type and shape as `anchor_box`.
-
-    Raises:
-        TypeError: If `means`, `stds` or `max_shape` is not a tuple.
-        TypeError: If `wh_ratio_clip` is not a float.
-        TypeError: If `anchor_box` or `deltas` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> anchor_box = Tensor([[4, 1, 2, 1], [2, 2, 2, 3]], mindspore.float32)
-        >>> deltas = Tensor([[3, 1, 2, 2], [1, 2, 1, 4]], mindspore.float32)
-        >>> output = ops.boundingbox_decode(anchor_box, deltas, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
-        ...                                 max_shape=(768, 1280), wh_ratio_clip=0.016)
-        >>> print(output)
-        [[ 4.1953125  0.         0.         5.1953125]
-         [ 2.140625   0.         3.859375  60.59375  ]]
-    """
-    boundingbox_decode_op = _get_cache_prim(P.BoundingBoxDecode)(max_shape, means, stds, wh_ratio_clip)
-    return boundingbox_decode_op(anchor_box, deltas)
-
-
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -3412,8 +3336,6 @@ __all__ = [
     'conv3d',
     'glu',
     'multi_margin_loss',
-    'multi_label_margin_loss',
-    'boundingbox_decode',
-    'boundingbox_encode'
+    'multi_label_margin_loss'
 ]
 __all__.sort()
