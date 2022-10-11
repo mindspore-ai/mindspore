@@ -5,6 +5,8 @@ mindspore.ops.avg_pool2d
 
     对输入的多维数据进行二维平均池化运算。
 
+    在输入Tensor上应用2D average pooling，可被视为2D输入平面。
+
     一般地，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，输出 :math:`(H_{in}, W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`(k_{h}, k_{w})` 和 `strides` ，运算如下：
 
     .. math::

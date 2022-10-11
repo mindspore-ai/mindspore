@@ -12,8 +12,6 @@ mindspore.ops.isfinite
           & \text{ if } x_{i} \ne  \text{Finite},\ \ False
         \end{cases}
 
-    其中 :math:`Finite` 表示的不是number。
-
     参数：
         - **x** (Tensor) - IsFinite的输入，任意维度的Tensor。
 
