@@ -261,7 +261,6 @@ def create_placeholders(inputs):
         shape = v["shape"]
         if "new_shape" in v:
             shape = v["new_shape"]
-            print("[{}] shape: {} --> new shape: {}".format(k, v["shape"], v["new_shape"]))
         attr = {
             "format": v.get("format"),
             "sub_format": v.get("sub_format", ""),
