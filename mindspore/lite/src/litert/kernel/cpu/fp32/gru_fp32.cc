@@ -132,7 +132,7 @@ int GruCPUKernel::InitInputWeightBias() {
     MS_LOG(ERROR) << "GruCPUKernel malloc input_bias_ error.";
     return RET_ERROR;
   }
-  memset(input_bias_, 0, weight_size * sizeof(float));
+  (void)memset(input_bias_, 0, weight_size * sizeof(float));
   auto bias_g_data = reinterpret_cast<float *>(in_tensors_.at(bias_index)->data());
   CHECK_NULL_RETURN(bias_g_data);
   PackLstmBias(input_bias_, bias_g_data, weight_batch_, gru_param_->hidden_size_, gru_param_->input_col_align_,
@@ -170,7 +170,7 @@ int GruCPUKernel::InitStateWeightBias() {
     MS_LOG(ERROR) << "GruCPUKernel malloc state_bias_ error.";
     return RET_ERROR;
   }
-  memset(state_bias_, 0, weight_plane_size * sizeof(float));
+  (void)memset(state_bias_, 0, weight_plane_size * sizeof(float));
   auto bias_r_data = reinterpret_cast<float *>(in_tensors_.at(bias_index)->data());
   CHECK_NULL_RETURN(bias_r_data);
 
