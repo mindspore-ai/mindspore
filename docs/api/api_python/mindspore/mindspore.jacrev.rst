@@ -1,7 +1,7 @@
-mindspore.ops.jacrev
+mindspore.jacrev
 ====================
 
-.. py:function:: mindspore.ops.jacrev(fn, grad_position=0, has_aux=False)
+.. py:function:: mindspore.jacrev(fn, grad_position=0, has_aux=False)
 
     通过反向模式计算给定网络的雅可比矩阵，对应 `反向模式自动微分 <https://www.mindspore.cn/docs/zh-CN/master/design/auto_gradient.html#反向自动微分>`_。当网络输出数量远小于输入数量时，使用反向模式求雅可比矩阵比前向模式性能更好。
 

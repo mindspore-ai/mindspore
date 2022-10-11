@@ -120,7 +120,7 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, ops
-        >>> from mindspore.ops import grad
+        >>> from mindspore import grad
         >>>
         >>> # Cell object to be differentiated
         >>> class Net(nn.Cell):
@@ -234,7 +234,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
         >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor, ops, nn
-        >>> from mindspore.ops import value_and_grad
+        >>> from mindspore import value_and_grad
         >>>
         >>> # Cell object to be differentiated
         >>> class Net(nn.Cell):
@@ -593,7 +593,7 @@ def jvp(fn, inputs, v, has_aux=False):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import ops
+        >>> from mindspore import jvp
         >>> from mindspore import Tensor
         >>> import mindspore.nn as nn
         >>> class Net(nn.Cell):
@@ -602,7 +602,7 @@ def jvp(fn, inputs, v, has_aux=False):
         >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output = ops.jvp(Net(), (x, y), (v, v))
+        >>> output = jvp(Net(), (x, y), (v, v))
         >>> print(output[0])
         [[ 2. 10.]
          [30. 68.]]
@@ -612,7 +612,7 @@ def jvp(fn, inputs, v, has_aux=False):
         >>>
         >>> def fn(x, y):
         ...     return x ** 3 + y, y
-        >>> output, jvp_out, aux = ops.jvp(fn, (x, y), (v, v), has_aux=True)
+        >>> output, jvp_out, aux = jvp(fn, (x, y), (v, v), has_aux=True)
         >>> print(output)
         [[ 2. 10.]
          [30. 68.]]
@@ -785,7 +785,7 @@ def vjp(fn, *inputs, has_aux=False):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore.ops import vjp
+        >>> from mindspore import vjp
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
@@ -961,7 +961,7 @@ def jacfwd(fn, grad_position=0, has_aux=False):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore.ops import jacfwd
+        >>> from mindspore import jacfwd
         >>> from mindspore import Tensor
         >>> class MultipleInputsMultipleOutputsNet(nn.Cell):
         ...     def construct(self, x, y, z):
@@ -1153,7 +1153,7 @@ def jacrev(fn, grad_position=0, has_aux=False):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore.ops import jacrev
+        >>> from mindspore import jacrev
         >>> from mindspore import Tensor
         >>> class MultipleInputsMultipleOutputsNet(nn.Cell):
         ...     def construct(self, x, y, z):
