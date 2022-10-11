@@ -747,7 +747,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
             if the inputs do contain infinities or NaNs.
 
     Returns:
-        Tesnor, solution to the system
+        Tensor, solution to the system
 
     Supported Platforms:
         ``CPU`` ``GPU``
