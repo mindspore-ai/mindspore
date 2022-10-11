@@ -107,6 +107,7 @@ int SliceFusionTensorRT::AddInnerOp(TensorRTContext *ctx) {
     size_dims = nvinfer1::Dims{-1};
   }
   if (size.Data() == nullptr) {
+#if TRT_VERSION_GE(7, 2)
     size_tensor = input(ctx, INPUT_SIZE2).trt_tensor_;
     auto shape_vec_int64 = in_tensors_[0].Shape();
     slice_input.trt_tensor_ = ConvertConstantTensor(ctx, in_tensors_[0], op_name_ + "_input");
@@ -132,6 +133,10 @@ int SliceFusionTensorRT::AddInnerOp(TensorRTContext *ctx) {
                ->getOutput(0);
     size_tensor = ctx->network()->addElementWise(*x, *y, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
     size_dims = nvinfer1::Dims{-1};
+#else
+    MS_LOG(ERROR) << "Low version tensorrt don't support dynamic size for slice!";
+    return RET_ERROR;
+#endif
   }
   auto stride_dims = lite::ConvertCudaDims(1, begin.ElementNum());
 
