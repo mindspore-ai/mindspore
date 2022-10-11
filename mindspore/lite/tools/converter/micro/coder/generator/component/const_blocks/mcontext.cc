@@ -241,7 +241,11 @@ int32_t MSContextGetThreadNum(const MSContextHandle context) {
 void MSContextSetThreadAffinityMode(MSContextHandle context, int mode) {
   MicroContext *micro_context = (MicroContext *)context;
   if (micro_context) {
-    micro_context->affinity_mode = mode;
+    if (mode >= 0 && mode <= 2) {
+      micro_context->affinity_mode = mode;
+    } else {
+      micro_context->affinity_mode = 0;
+    }
   }
 }
 
