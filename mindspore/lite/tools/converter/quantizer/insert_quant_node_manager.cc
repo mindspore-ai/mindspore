@@ -306,7 +306,7 @@ int InsertQuantNodeManager::InsertFP32DtypeCastNode(const FuncGraphPtr &graph) {
     schema::QuantType curr_quant_type;
     if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
       MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
-      continue;
+      return RET_ERROR;
     }
     if (curr_quant_type != schema::QuantType_QUANT_ALL) {
       MS_LOG(INFO) << "Invalid cnode quant type, cnode name: " << cnode->fullname_with_scope()
