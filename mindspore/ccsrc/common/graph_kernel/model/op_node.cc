@@ -137,8 +137,10 @@ std::vector<DShape> PrimOp::InferShape(const NodePtrList &inputs, const DAttrs &
     return result;
   }
   auto shape = baseshape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape);
-  return {shape->shape()};
+  if (shape != nullptr) {
+    return {shape->shape()};
+  }
+  return {DShape()};
 }
 
 std::vector<TypeId> PrimOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
