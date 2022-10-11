@@ -72,6 +72,7 @@
 #define MS_MUL512_EPI32(src1, src2) _mm512_mullo_epi32(src1, src2)
 #define MS_FMADD512_F32(src1, src2, src3) _mm512_fmadd_ps(src1, src2, src3)
 #define MS_FMSUB512_F32(src1, src2, src3) _mm512_fmsub_ps(src1, src2, src3)
+#define MS_FSMUL512_F32(src1, src2, src3) _mm512_fnmadd_ps(src3, src2, src1)  // src1 - src2 * src3
 #define MS_DIV512_F32(src1, src2) _mm512_div_ps(src1, src2)
 #define MS_MUL512_N_F32(src1, src2) _mm512_mul_ps(src1, _mm512_set1_ps(src2))
 #define MS_MUL512_N_EPI32(src1, src2) _mm512_mullo_epi32(src1, _mm512_set1_epi32(src2))
