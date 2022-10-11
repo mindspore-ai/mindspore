@@ -249,10 +249,13 @@ ValuePtr ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
       out_real_value = result_v_list->value().front();
     }
   }
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
-    dynamic_shape()->UpdateValueBaseShape(out_real_value, op_run_info->base_op_run_info.abstract);
+  // Not use GetNext abs
+  if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
+    if (op_run_info->base_op_run_info.has_dynamic_output) {
+      dynamic_shape()->UpdateValueBaseShape(out_real_value, op_run_info->base_op_run_info.abstract);
+    }
+    SetNodeAbsMapByValue(op_run_info->base_op_run_info.op_name, out_real_value, op_run_info->base_op_run_info.abstract);
   }
-  SetNodeAbsMapByValue(op_run_info->base_op_run_info.op_name, out_real_value, op_run_info->base_op_run_info.abstract);
   return out_real_value;
 }
 
