@@ -29,9 +29,14 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
         "  return 0;\n"
         "}\n")
     # Build and run cu_file, get the result from properties.
+    if(NOT MSVC)
+        set(CUDA_LIB_PATH ${CUDA_PATH}/lib64/libcudart.so)
+    else()
+        set(CUDA_LIB_PATH ${CUDA_PATH}/lib/x64/cudart.lib)
+    endif()
     try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR ${CMAKE_SOURCE_DIR}/build/mindspore/ccsrc/ ${cu_file}
             CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${CUDA_INCLUDE_DIRS}"
-            LINK_LIBRARIES ${CUDA_PATH}/lib64/libcudart.so
+            LINK_LIBRARIES ${CUDA_LIB_PATH}
             RUN_OUTPUT_VARIABLE compute_cap)
     set(cuda_archs_bin)
     if(RUN_RESULT_VAR EQUAL 0)
