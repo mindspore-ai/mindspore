@@ -66,6 +66,8 @@
 #include "runtime/pynative/op_executor.h"
 #include "runtime/device/stream_synchronizer.h"
 #include "distributed/collective/collective_manager.h"
+#include "mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.h"
+#include "mindspore/ccsrc/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/constants.h"
@@ -442,6 +444,7 @@ py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std
   }
 
   if (ir_type == IR_TYPE_MINDIR) {
+    // obfuscate model
     std::string proto_str = GetBinaryProtoString(fg_ptr);
     if (proto_str.empty()) {
       MS_LOG(EXCEPTION) << "Export MINDIR format model failed.";
@@ -450,6 +453,24 @@ py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std
   }
 
   MS_LOG(EXCEPTION) << "Unknown ir type: " << ir_type;
+}
+
+py::bytes GraphExecutorPy::GetObfuscateFuncGraphProto(const std::string &phase, const float obf_ratio,
+                                                      const int obf_password, const int append_password) {
+  FuncGraphPtr fg_ptr = GetFuncGraph(phase);
+  // obfuscate model
+  if (obf_password == 0) {
+    (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().set_func_names();
+    MS_LOG(DEBUG) << "[GetObfuscateFuncGraphProto] set customized function names finished";
+  }
+  mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, obf_password, append_password);
+  mindspore::FuncGraphPtr obfuscated_graph = dynamic_obfuscator.ObfuscateMindIR(fg_ptr);
+
+  std::string proto_str = GetBinaryProtoString(obfuscated_graph);
+  if (proto_str.empty()) {
+    MS_LOG(EXCEPTION) << "GetBinaryProtoString failed.";
+  }
+  return proto_str;
 }
 
 py::bytes GraphExecutorPy::GetOptimizeGraphProto(const std::string &phase) {
@@ -1255,6 +1276,8 @@ void GraphExecutorPy::TerminateDebugger() {
 #endif
 
 py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_obj) {
+  // init for dynamic-obfuscated model infer
+  (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
   // Mindspore debugger notify main thread to exit after one step, and will not run next step
 #ifdef ENABLE_DEBUGGER
   TerminateDebugger();
@@ -1655,7 +1678,12 @@ void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::strin
 }
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const size_t key_len,
-                        const std::string &dec_mode, const py::object decrypt) {
+                        const std::string &dec_mode, const py::object decrypt, const bool obfuscated) {
+  if (obfuscated) {
+    MS_LOG(DEBUG) << "[LoadMindIR] Set customized function.";
+    (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().set_func_names();
+    (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
+  }
   FuncGraphPtr func_graph = nullptr;
   if (dec_mode == "Customized") {
     py::bytes key_bytes(dec_key);
@@ -1677,6 +1705,28 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const
   }
 #endif
   return func_graph;
+}
+
+FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int obf_password,
+                                    int append_password, char *dec_key, const size_t key_len,
+                                    const std::string &dec_mode) {
+  if (obf_password == 0) {
+    (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().set_func_names();
+    MS_LOG(DEBUG) << "[DynamicObfuscateMindIR] set function names finished.";
+  }
+  mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, obf_password, append_password);
+  MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
+  FuncGraphPtr func_graph = mindir_loader.LoadMindIR(file_name);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "[DynamicObfuscateMindIR] load mindir failed, please check the mindir file.";
+    return nullptr;
+  }
+  mindspore::FuncGraphPtr obfuscated_graph = dynamic_obfuscator.ObfuscateMindIR(func_graph);
+  if (obfuscated_graph == nullptr) {
+    MS_LOG(ERROR) << "[DynamicObfuscateMindIR] obfuscate model failed.";
+    return nullptr;
+  }
+  return obfuscated_graph;
 }
 
 void CloseTsd(bool force) {

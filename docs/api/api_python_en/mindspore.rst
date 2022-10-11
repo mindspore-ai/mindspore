@@ -234,6 +234,7 @@ Serialization
     mindspore.save_checkpoint
     mindspore.transform_checkpoint_by_rank
     mindspore.transform_checkpoints
+    mindspore.obfuscate_model
 
 JIT
 ---

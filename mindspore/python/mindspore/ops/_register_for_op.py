@@ -60,3 +60,13 @@ class PyFuncRegistry(UserDict):
         if key not in self:
             raise ValueError(f"Python function with key{key} not registered.")
         return self[key]
+
+
+class OpaquePredicateRegistry(PyFuncRegistry):
+    def __init__(self):
+        super(OpaquePredicateRegistry, self).__init__()
+        self.func_names = []
+
+    def register(self, key, value):
+        self[key] = value
+        self.func_names.append(key)

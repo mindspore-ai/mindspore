@@ -2219,18 +2219,18 @@ class Cell(Cell_):
             if isinstance(set_input, Tensor):
                 if not isinstance(net_input, Tensor):
                     raise TypeError(
-                        f"The {index+1}th input type of 'set_inputs' must be Tensor, but got {type(net_input)}.")
+                        f"The {index + 1}th input type of 'set_inputs' must be Tensor, but got {type(net_input)}.")
                 if set_input.dtype is not net_input.dtype:
                     raise ValueError(
-                        f"The {index+1}th input type of 'set_inputs' must be the same as network's input, "
+                        f"The {index + 1}th input type of 'set_inputs' must be the same as network's input, "
                         f"but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
                 if net_input.dim() != 0 and set_input.dim() != net_input.dim():
                     raise ValueError(
-                        f"The {index+1}th input dims of 'set_inputs' must be the same as network's input, "
+                        f"The {index + 1}th input dims of 'set_inputs' must be the same as network's input, "
                         f"but got 'set_inputs': {set_input.dim()} and network's input: {net_input.dim()}.")
                 if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
                     raise ValueError(
-                        f"The {index+1}th input shape of 'set_inputs' must be the same as network's input, "
+                        f"The {index + 1}th input shape of 'set_inputs' must be the same as network's input, "
                         f"but got 'set_inputs': {set_input.shape} and network's input: {net_input.shape}.")
 
 
@@ -2247,6 +2247,11 @@ class GraphCell(Cell):
             The key is the parameter name whose type is str, and the value is a Tensor or Parameter.
             If the parameter exists in the graph according to the name, update it's value.
             If the parameter does not exist, ignore it. Default: None.
+        obf_password (int): The password used for dynamic obfuscation. "dynamic obfuscation" is used for model
+            protection, which can refer to `mindspore.train.serialization.obfuscate_model()`. If the input 'graph' is a
+            func_graph loaded from a mindir file obfuscated in password mode, then obf_password should be provided.
+            obf_password should be larger than zero and less or equal than int_64 (9223372036854775807). default: None.
+
     Raises:
         TypeError: If the `graph` is not a FuncGraph.
         TypeError: If the `params_init` is not a dict.
@@ -2273,13 +2278,19 @@ class GraphCell(Cell):
            [6. 9. 6.]
            [4. 6. 4.]]]]
     """
-    def __init__(self, graph, params_init=None):
+
+    def __init__(self, graph, params_init=None, obf_password=None):
         super(GraphCell, self).__init__(auto_prefix=True)
         if not isinstance(graph, FuncGraph):
             raise TypeError(f"For 'GraphCell', the argument 'graph' must be a FuncGraph loaded from MindIR, "
                             f"but got type {type(graph)}.")
         self.graph = graph
-
+        self.obf_password = obf_password
+        int_64_max = 9223372036854775807
+        if (obf_password is not None) and (obf_password <= 0 or obf_password > int_64_max):
+            raise ValueError(
+                "'obf_password' must be larger than 0, and less or equal than int64 ({}),"
+                "but got {}.".format(int_64_max, obf_password))
         params_init = {} if params_init is None else params_init
         if not isinstance(params_init, dict):
             raise TypeError(f"For 'GraphCell', the argument 'params_init' must be a dict, but got {type(params_init)}.")
@@ -2299,7 +2310,21 @@ class GraphCell(Cell):
     def __call__(self, *inputs):
         self.phase = "graph_load_from_mindir"
         self._add_attr("graph_load_from_mindir", self.graph)
-        return self.compile_and_run(*inputs)
+        if not self.obf_password:
+            return self.compile_and_run(*inputs)
+        append_input_1, append_input_2 = _obf_appended_inputs(self.obf_password)
+        return self.compile_and_run(*inputs, append_input_1, append_input_2)
+
+
+def _obf_appended_inputs(obf_password):
+    seed_max = 2 ** 32 - 1
+    int_max = 2 ** 31 - 1
+    numpy.random.seed(obf_password % seed_max)
+    append_password = numpy.random.randint(int_max)
+    obf_password %= int_max
+    append_input_1 = Tensor((numpy.ones((1, 1)) * obf_password).astype(numpy.int32))
+    append_input_2 = Tensor((numpy.ones((1, 1)) * append_password).astype(numpy.int32))
+    return append_input_1, append_input_2
 
 
 def _check_param_list_tuple(value):

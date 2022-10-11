@@ -88,6 +88,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   FuncGraphPtr GetGradGraph(const std::string &phase);
   void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type);
+  py::bytes GetObfuscateFuncGraphProto(const std::string &phase, const float obf_ratio, const int obf_password,
+                                       const int append_password);
 #ifndef ENABLE_SECURITY
   py::bytes GetOptimizeGraphProto(const std::string &phase);
 #endif
@@ -185,7 +187,8 @@ void CloseTsd(bool force = false);
 void MemoryRecycle();
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const size_t key_len,
-                        const std::string &dec_mode, const py::object decrypt = py::none());
+                        const std::string &dec_mode, const py::object decrypt = py::none(),
+                        const bool obfuscated = false);
 
 // init and exec dataset sub graph
 bool ME_EXPORT InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
@@ -203,6 +206,9 @@ py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_le
 py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_len, const std::string &dec_mode);
 bool PyIsCipherFile(const std::string &file_path);
 void FinalizeCluster();
+FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int obf_password,
+                                    int append_password, char *dec_key, const size_t key_len,
+                                    const std::string &dec_mode);
 }  // namespace pipeline
 }  // namespace mindspore
 
