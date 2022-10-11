@@ -639,6 +639,14 @@ class MinddataProfilingAnalyzer:
 class BottleneckAnalyzer:
     """ analyzer for bottleneck """
 
+    # These are the threshold values used in the pipeline bottleneck analyzer algorithm
+    _AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM = 75.0
+    _AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM = 20.0
+    _LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 50
+    _DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 60
+    _IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM = 50
+    _IN_QUEUE_UTIL_PCT_MAXIMUM = 10
+
     def __init__(self, summary_dict):
         """ constructor for BottleneckAnalyzer """
         self.pipeline_ops = summary_dict["pipeline_ops"]
@@ -664,14 +672,6 @@ class BottleneckAnalyzer:
                                           "Skip",
                                           "Take",
                                           "Zip"])
-
-        # These are the threshold values used in the pipeline bottleneck analyzer algorithm
-        self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM = 75.0
-        self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM = 20.0
-        self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 50
-        self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 60
-        self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM = 50
-        self._IN_QUEUE_UTIL_PCT_MAXIMUM = 10
 
     def analyze(self):
         """ analyze all op's usage """

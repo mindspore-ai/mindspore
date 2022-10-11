@@ -773,10 +773,10 @@ class BaseTimelineGenerator:
             time_merged_segment_list = time_merged_segment_list[1:-1]
 
         # merged_res_list data used to compute overlap with other time_list.
-        merged_res_list = [
-            [display_name, tid, time_merged_segment_list[i * 2], time_merged_segment_list[i * 2 + 1], pid] for i in \
-            range(len(time_merged_segment_list) // 2)
-        ]
+        merged_res_list = []
+        for i in range(len(time_merged_segment_list) // 2):
+            merged_res_list.append([display_name, tid, time_merged_segment_list[i * 2],
+                                    time_merged_segment_list[i * 2 + 1], pid])
 
         # interval_display_list is interval time used for ui page.
         interval_display_list = [
