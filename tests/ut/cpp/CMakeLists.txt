@@ -124,12 +124,17 @@ else()
     endforeach()
 endif()
 
-file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+file(GLOB_RECURSE EXTEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        # dont remove the 4 lines above
         "../../../mindspore/ccsrc/pybind_api/*.cc"
         "../../../mindspore/ccsrc/frontend/optimizer/*.cc"
         "../../../mindspore/ccsrc/frontend/parallel/*.cc"
         "../../../mindspore/ccsrc/frontend/operator/*.cc"
-        # dont remove the 4 lines above
+        )
+list(REMOVE_ITEM EXTEND_SRC_LIST
+        "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
+
+file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc"
         "../../../mindspore/ccsrc/debug/common.cc"
         "../../../mindspore/ccsrc/debug/utils.cc"
@@ -226,8 +231,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_util.cc"
         )
 
-list(REMOVE_ITEM MINDSPORE_SRC_LIST
-  "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/util.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/scheduler.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/fl/server/kernel/sgd_kernel.cc")
@@ -269,15 +272,15 @@ endif()
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/parallel_strategy_profiling.cc")
 
-add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})
-add_library(_ut_ut_obj OBJECT ${UT_SRCS})
+add_library(_ut_mindspore_obj STATIC ${MINDSPORE_SRC_LIST})
+add_library(_ut_ut_obj OBJECT ${UT_SRCS} ${EXTEND_SRC_LIST})
 add_dependencies(_ut_ut_obj engine-cache-server)
 
 foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_obj_${number}>)
 endforeach()
 
-set(ut_objects ${CORE_OBJECT_LIST} $<TARGET_OBJECTS:_ut_ut_obj> $<TARGET_OBJECTS:_ut_mindspore_obj>
+set(ut_objects ${CORE_OBJECT_LIST} $<TARGET_OBJECTS:_ut_ut_obj>
         $<TARGET_OBJECTS:core_proto_obj> $<TARGET_OBJECTS:mindrt_mid>
         $<TARGET_OBJECTS:mindspore_shared_lib_obj> $<TARGET_OBJECTS:_mindspore_utils_obj>
         $<TARGET_OBJECTS:_mindspore_common_obj>)
@@ -306,22 +309,6 @@ if(MINDSPORE_PROTO_LIST)
     set_target_properties(proto_input_ut PROPERTIES COMPILE_FLAGS "-Wno-unused-variable -Wno-array-bounds")
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads
-                          mindspore::event_openssl mindspore::ssl mindspore::crypto ${PYTHON_LIBRARIES} pthread util dl)
-    if(ENABLE_MINDDATA)
-        target_link_libraries(ut_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
-                mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
-                mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
-                mindspore::icui18n)
-    endif()
-else()
-    target_link_libraries(ut_tests PRIVATE mindspore::gtest ${PYTHON_LIBRARIES})
-endif()
-if(USE_GLOG)
-    target_link_libraries(ut_tests PRIVATE mindspore::glog)
-endif()
-
 add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_debug_obj>
         $<TARGET_OBJECTS:_mindspore_common_debug_obj>
@@ -341,6 +328,23 @@ add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_runtime_hardware_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_pynative_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_data_queue_obj>)
-target_link_libraries(ut_tests PRIVATE mindspore securec -Wl,--start-group proto_input mindspore::protobuf
-        backend_static -Wl,--end-group)
-target_link_libraries(ut_tests PRIVATE mindspore::grpc++)
+target_link_libraries(ut_tests PRIVATE -Wl,--start-group mindspore backend_static proto_input _ut_mindspore_obj
+        -Wl,--end-group)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads
+                          mindspore::event_openssl mindspore::ssl mindspore::crypto ${PYTHON_LIBRARIES} pthread util dl)
+    if(ENABLE_MINDDATA)
+        target_link_libraries(ut_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
+                mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
+                mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
+                mindspore::icui18n)
+    endif()
+else()
+    target_link_libraries(ut_tests PRIVATE mindspore::gtest ${PYTHON_LIBRARIES})
+endif()
+if(USE_GLOG)
+    target_link_libraries(ut_tests PRIVATE mindspore::glog)
+endif()
+
+target_link_libraries(ut_tests PRIVATE securec mindspore::grpc++ mindspore::protobuf)
