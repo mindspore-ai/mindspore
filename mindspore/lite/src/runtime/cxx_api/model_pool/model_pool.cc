@@ -452,12 +452,6 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
           context->GetThreadNum() >= kNumDefaultInterOpParallel ? kNumDefaultInterOpParallel : 1;
         context->SetInterOpParallelNum(inter_op_parallel);
       }
-      auto cpu_context = device->Cast<CPUDeviceInfo>();
-      auto enable_fp16 = cpu_context->GetEnableFP16();
-      if (enable_fp16) {
-        MS_LOG(ERROR) << "model pool not support enable fp16.";
-        return nullptr;
-      }
     } else if (device->GetDeviceType() == kAscend) {
       if (context->GetInterOpParallelNum() == 0) {
         context->SetInterOpParallelNum(1);  // do not use InterOpParallel
@@ -624,7 +618,9 @@ ModelPoolConfig ModelPool::CreateCpuModelPoolConfig(const std::shared_ptr<Runner
       numa_allocator_.insert(std::make_pair(worker_config->numa_id, allocator));
     }
     device_info->SetAllocator(allocator);
-    device_info->SetEnableFP16(false);
+    auto init_cpu_info = init_context->MutableDeviceInfo().front()->Cast<CPUDeviceInfo>();
+    auto enable_fp16 = init_cpu_info->GetEnableFP16();
+    device_info->SetEnableFP16(enable_fp16);
     new_device_list.push_back(device_info);
     if (runner_config != nullptr) {
       worker_config->config_info = runner_config->GetConfigInfo();
