@@ -12,3 +12,14 @@ mindspore.ops.MultitypeFuncGraph
 
     异常：
         - **ValueError** - 找不到给定参数类型所匹配的函数。
+
+    .. py:method:: register(*type_names)
+
+        根据给出的字符串内容注册不同输入类型的函数。
+
+        参数：
+             - **type_names** (Union[str, :class:`mindspore.dtype`]) - 输入类型的名或者一个类型列表。
+
+        返回：
+            装饰器， 一个根据 `type_names` 指定输入类型的注册函数的装饰器。
+
