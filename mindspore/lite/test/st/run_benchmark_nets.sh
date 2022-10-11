@@ -84,6 +84,15 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_onnx" || $b
     fi
 fi
 
+if [[ $backend == "all" || $backend == "x86_cloud_onnx" || $backend == "x86_cloud_tf" ]]; then
+    sh $cur_path/scripts/run_benchmark_x86_cloud.sh -r $release_path -m $models_path -e $backend -l $level -p $fail_not_return
+    x86_status=$?
+    if [[ $x86_status -ne 0 ]]; then
+      echo "Run x86_cloud failed"
+      exit 1
+    fi
+fi
+
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx512" || $backend == "x86_avx512_onnx" || $backend == "x86_avx512_tf" || \
       $backend == "x86_avx512_tflite" || $backend == "x86_avx512_caffe" || $backend == "x86_avx512_mindir" ]]; then
     sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend -l $level -p $fail_not_return
@@ -179,6 +188,15 @@ fi
 
 if [[ $backend == "all" || $backend == "server_inference_x86_gpu" ]]; then
     sh $cur_path/scripts/run_benchmark_server_inference_tensorrt.sh -r $release_path -m $models_path -d $device_id -e $backend -l $level
+    server_inference_gpu_status=$?
+    if [[ server_inference_gpu_status -ne 0 ]]; then
+      echo "Run server inference gpu failed"
+      exit 1
+    fi
+fi
+
+if [[ $backend == "all" || $backend == "server_inference_x86_cloud_gpu" ]]; then
+    sh $cur_path/scripts/run_benchmark_server_inference_tensorrt_cloud.sh -r $release_path -m $models_path -d $device_id -e $backend -l $level
     server_inference_gpu_status=$?
     if [[ server_inference_gpu_status -ne 0 ]]; then
       echo "Run server inference gpu failed"

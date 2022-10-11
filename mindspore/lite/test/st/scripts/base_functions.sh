@@ -90,6 +90,21 @@ function Convert() {
           if [ ${model_fmk} != "TF" ]; then
             input_format="NHWC"
           fi
+        elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
+          export_mindir="MINDIR"
+          encryption_flag="false"
+          if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+            if [[ ${input_num} == "" ]]; then
+              input_num=1
+            fi
+            IFS="," read -r -a name_array <<< ${input_names}
+            IFS=":" read -r -a shape_array <<< ${input_shapes}
+            for i in $(seq 0 $((${input_num}-1)))
+            do
+              spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+            done
+        fi
+
         elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
           quant_type="PostTraining"
           output_file=${output_file}"_posttraining"
@@ -121,16 +136,21 @@ function Convert() {
         echo ${model_name} >> "$4"
         echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
              ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'" --fp16='${fp16_weight}\
-             ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
+             ' --configFile='${config_file}' --trainModel='${train_model}
         if [[ ${cfg_file_name} =~ "_ascend" ]]; then
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
               --configFile=${config_file} --trainModel=${train_model} --exportMindIR=${export_mindir} --device=${target_device}\
               --encryption=${encryption_flag} --inputDataFormat=${input_format} >> "$4"
+        elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
+            ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
+              --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
+              --configFile=${config_file} --exportMindIR=${export_mindir} --NoFusion=true --encryption=${encryption_flag} --trainModel=${train_model} >> "$4" 
         else
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
               --configFile=${config_file} --trainModel=${train_model} >> "$4"
+            
         fi
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
@@ -263,7 +283,11 @@ function Run_Benchmark() {
       elif [[ ${cfg_file_name} =~ "_compatibility" && ${spec_acc_limit} == "" ]]; then
         benchmark_mode="loop"
       fi
-      model_file=$2"/${model_name}${infix}.ms"
+      if [[ ${cfg_file_name} =~ "_cloud" ]]; then
+        model_file=$2"/${model_name}${infix}.mindir"
+      else
+        model_file=$2"/${model_name}${infix}.ms"
+      fi
       if [[ ${use_parallel_predict} == "true" ]]; then
         export BENCHMARK_WEIGHT_PATH=${model_file}
       fi
@@ -271,14 +295,29 @@ function Run_Benchmark() {
       output_file=""
       data_path=$3"/input_output/"
       if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
-        input_files=${data_path}'input/'${model_name}'.ms.bin'
+        if [[ ${cfg_file_name} =~ "_cloud" ]]; then
+          input_files=${data_path}'input/'${model_name}'.bin'
+        else 
+          input_files=${data_path}'input/'${model_name}'.ms.bin'
+        fi
       else
-        for i in $(seq 1 $input_num)
-        do
-          input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
-        done
+        if [[ ${cfg_file_name} =~ "_cloud" ]]; then
+          for i in $(seq 1 $input_num)
+          do
+            input_files=${input_files}${data_path}'input/'${model_name}'.bin_'$i','
+          done
+        else 
+          for i in $(seq 1 $input_num)
+          do
+            input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
+          done
+        fi
       fi
-      output_file=${data_path}'output/'${model_name}'.ms.out'
+      if [[ ${cfg_file_name} =~ "_cloud" ]]; then
+        output_file=${data_path}'output/'${model_name}'.out'
+      else
+        output_file=${data_path}'output/'${model_name}'.ms.out'
+      fi
       # adjust threads
       threads="2"
       if [[ ${spec_threads} != "" ]]; then
