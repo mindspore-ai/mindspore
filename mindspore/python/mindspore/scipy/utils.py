@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """internal utility functions"""
+from __future__ import division
 from .. import ops
 from .. import numpy as mnp
 from ..numpy import where, zeros_like, dot, greater

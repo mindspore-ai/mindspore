@@ -103,6 +103,7 @@ void BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
   auto per_weight = reinterpret_cast<float *>(weight_);
   auto per_post_weight = reinterpret_cast<float *>(post_weight_);
   auto *per_output = reinterpret_cast<float *>(output_);
+
   float *per_reduction_sum = nullptr;
   if (is_reduction_) {
     per_reduction_sum = reinterpret_cast<float *>(reduction_output_) + task_id;

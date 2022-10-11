@@ -682,7 +682,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
 }
 
 #ifdef ENABLE_DEBUGGER
-void MindRTBackendBase::SetDebuggerInit() {
+void MindRTBackendBase::SetDebuggerInit() const {
   auto debugger_ = Debugger::GetInstance();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

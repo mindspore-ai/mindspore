@@ -36,9 +36,15 @@ static inline void ComputeAxisDims(const int *shape, int shape_size, int axis, i
   *out_count = 1;
   *in_count = 1;
   for (int i = 0; i < shape_size; i++) {
-    if (i < axis) *out_count = (*out_count) * shape[i];
-    if (i == axis) *axis_count = shape[axis];
-    if (i > axis) *in_count = (*in_count) * shape[i];
+    if (i < axis) {
+      *out_count = (*out_count) * shape[i];
+    }
+    if (i == axis) {
+      *axis_count = shape[axis];
+    }
+    if (i > axis) {
+      *in_count = (*in_count) * shape[i];
+    }
   }
 }
 

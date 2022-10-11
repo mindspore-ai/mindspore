@@ -87,7 +87,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   void RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs);
 
 #ifdef ENABLE_DEBUGGER
-  void SetDebuggerInit();
+  void SetDebuggerInit() const;
 #endif
 
   // Get the device target.
