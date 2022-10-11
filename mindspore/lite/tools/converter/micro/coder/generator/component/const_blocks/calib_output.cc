@@ -48,7 +48,8 @@ typedef struct CalibTensor {
   float *data_;
 } CalibTensor;
 int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensots, int *calib_num);
-int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int calib_num);
+int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int calib_num,
+                   float cosine_distance_threshold);
 void FreeCalibTensors(CalibTensor **calib_tensors, int calib_num);
 
 #ifdef __cplusplus
@@ -154,7 +155,8 @@ int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensor_pointe
   return kMSStatusSuccess;
 }
 
-int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int calib_num) {
+int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int calib_num,
+                   float cosine_distance_threshold) {
   if (outputs.handle_num != (size_t)calib_num) {
     printf("error, outputs and calibs size is mismatch\n");
     return kMSStatusLiteError;
@@ -227,8 +229,8 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
       }
     }
     cosin = dot / (sqrt(normx) * sqrt(normy));
-    if (cosin < 0.9999) {
-      printf("cos-similarity of %s is %f, less than 0.9999.\n", output->name, cosin);
+    if (cosin < cosine_distance_threshold) {
+      printf("cos-similarity of %s is %f, less than %f.\n", output->name, cosin, cosine_distance_threshold);
       is_success = false;
     } else {
       printf("cos-similarity of %s is %f.\n", output->name, cosin);
