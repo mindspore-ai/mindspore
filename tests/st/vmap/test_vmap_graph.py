@@ -436,3 +436,33 @@ def test_vmap_with_celllist_input():
     assert np.allclose(m1.ref_b.asnumpy(), expect_res5.asnumpy())
     assert np.allclose(m2.ref_b.asnumpy(), expect_res5.asnumpy())
     assert np.allclose(m3.ref_b.asnumpy(), expect_res5.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_as_vmap_input():
+    """
+    Feature: vmap
+    Description: When the output of a vmap function is used as the input of another vmap function.
+    Expectation: success
+    """
+    class VmapNet(nn.Cell):
+        def __init__(self):
+            super(VmapNet, self).__init__()
+            self.tensor = Tensor(np.ones((3, 4), dtype=int), mstype.float32)
+            self.matmul_vmap = F.vmap(F.matmul, in_axes=(1, None), out_axes=1)
+            self.relu_vmap = F.vmap(nn.ReLU(), in_axes=1, out_axes=1)
+
+        def construct(self, x):
+            x = self.matmul_vmap(x, self.tensor)
+            x = self.relu_vmap(x)
+            return x
+
+    x = Tensor(np.ones((4, 4, 3), dtype=int), mstype.float32)
+    output = VmapNet()(x)
+    expect_res = Tensor(np.ones((4, 4, 4), dtype=int), mstype.float32) * 3
+    assert np.allclose(output.asnumpy(), expect_res.asnumpy())

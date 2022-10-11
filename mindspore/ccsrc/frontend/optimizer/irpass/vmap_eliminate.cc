@@ -312,6 +312,7 @@ int GetAxisSize(const CNodePtr &cnode, size_t cell_size, size_t parameters_size,
   std::vector<ValuePtr> corrected_in_axes;
   for (size_t i = 0; i < parameters_size; ++i) {
     auto sub_abs = cnode->input(i + 1)->abstract();
+    MS_EXCEPTION_IF_NULL(sub_abs);
     if (sub_abs->isa<abstract::AbstractMonad>()) {
       break;
     }
@@ -960,6 +961,8 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
       auto bind_axes_node =
         internal::BindInAxis(vmap_app, in_axes, &u_monad_offset, &io_monad_offset, &param_mapping_table);
       MS_EXCEPTION_IF_NULL(bind_axes_node);
+      MS_EXCEPTION_IF_NULL(vmap_app->abstract());
+      bind_axes_node->set_abstract(vmap_app->abstract());
       (void)manager->Replace(vmap_app, bind_axes_node);
       (void)orig_fg_param_info.emplace_back(u_monad_offset);
       (void)orig_fg_param_info.emplace_back(io_monad_offset);
