@@ -189,6 +189,16 @@ Context
     mindspore.get_algo_parameters
     mindspore.reset_algo_parameters
 
+Parallel
+---------------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.shard
+
 Dataset Helper
 ---------------
 

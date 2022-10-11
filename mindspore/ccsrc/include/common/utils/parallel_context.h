@@ -121,6 +121,7 @@ class COMMON_EXPORT ParallelContext {
   bool device_num_is_set() const { return device_num_is_set_; }
   bool global_rank_is_set() const { return global_rank_is_set_; }
   bool parameter_broadcast_is_set() const { return parameter_broadcast_is_set_; }
+  bool full_batch_is_set() const { return full_batch_is_set_; }
 
   void set_optimizer_weight_shard_size(int64_t optimizer_weight_shard_size);
   int64_t optimizer_weight_shard_size() const { return optimizer_weight_shard_size_; }
@@ -197,6 +198,7 @@ class COMMON_EXPORT ParallelContext {
 
   bool gradients_mean_;
   bool full_batch_;
+  bool full_batch_is_set_;
   bool gradient_fp32_sync_;
   bool loss_repeated_mean_;
   int64_t device_num_;
