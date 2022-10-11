@@ -33,8 +33,6 @@ bool MultinomialGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   seed_ = static_cast<int>(kernel_ptr->get_seed());
   seed2_ = static_cast<int>(kernel_ptr->get_seed2());
-  auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
-  rand_state_ = static_cast<curandState *>(allocator.AllocTensorMem(sizeof(curandState) * distributions_));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -61,9 +59,8 @@ int MultinomialGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     distributions_ = input_shape_0[0];
     categories_ = input_shape_0[1];
   }
-  size_t elem_num = std::accumulate(input_shape_0.begin(), input_shape_0.end(), 1, std::multiplies<size_t>());
-
-  workspace_size_list_.emplace_back(elem_num * sizeof(float));
+  auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
+  rand_state_ = static_cast<curandState *>(allocator.AllocTensorMem(sizeof(curandState) * distributions_));
   return ret;
 }
 
