@@ -45,6 +45,10 @@ int ReverseCPUKernel::ReSize() {
   }
 
   data_size_ = in_tensors_.at(0)->ElementsNum();
+  if (out_tensors_.at(0)->ElementsNum() != data_size_) {
+    MS_LOG(ERROR) << "The number of outputs and inputs must be equal.";
+    return RET_ERROR;
+  }
   thread_sz_count_ = MSMIN(op_parameter_->thread_num_, data_size_);
   if (thread_sz_count_ == 0) {
     MS_LOG(ERROR) << "thread_sz_count_ can not be 0";

@@ -103,7 +103,7 @@ class TensorList : public Tensor {
 
   bool IsCompatibleShape(const Tensor *src);
 
-  STATUS Decode(const int *data);
+  STATUS Decode(const int *data, size_t length);
 
   bool IsConst() const override;
 

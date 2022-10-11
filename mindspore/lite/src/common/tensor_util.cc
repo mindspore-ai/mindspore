@@ -595,9 +595,9 @@ TensorList *MallocTensorListDataAccordingToTensorListC(Tensor *tensor, TensorLis
   return tensor_list;
 }
 
-int DecodeTensorLsit(Tensor *tensor, const int *src_data) {
+int DecodeTensorLsit(Tensor *tensor, const int *src_data, size_t length) {
   auto tensor_list = reinterpret_cast<TensorList *>(tensor);
-  if (tensor_list->Decode(src_data) != RET_OK) {
+  if (tensor_list->Decode(src_data, length) != RET_OK) {
     MS_LOG(ERROR) << "Decode tensorlist data failed";
     return RET_ERROR;
   }
@@ -772,7 +772,7 @@ TensorList *MallocTensorListDataAccordingToTensorListC(Tensor *tensor, TensorLis
   return nullptr;
 }
 
-int DecodeTensorLsit(Tensor *tensor, const int *src_data) {
+int DecodeTensorLsit(Tensor *tensor, const int *src_data, size_t length) {
   MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
   return RET_ERROR;
 }

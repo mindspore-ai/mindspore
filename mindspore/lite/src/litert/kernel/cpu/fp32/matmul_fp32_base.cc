@@ -597,6 +597,7 @@ int MatmulFp32BaseCPUKernel::MatmulReSize() {
 }
 
 int MatmulFp32BaseCPUKernel::FullConnectionReSize() {
+  MS_CHECK_TRUE_MSG(out_tensors_.at(0)->shape().size() > 0, RET_ERROR, "Invalid output tensor shape");
   int row = 1;
   for (size_t i = 0; i < out_tensors_.at(0)->shape().size() - 1; ++i) {
     row *= (out_tensors_.at(0)->shape())[i];

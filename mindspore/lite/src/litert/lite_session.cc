@@ -156,7 +156,7 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
   /* tensor list convert */
   if (dst_tensor->data_type() == kObjectTypeTensorType) {
     const int *src_data = reinterpret_cast<const int *>(src_tensor->data());
-    return DecodeTensorLsit(dst_tensor, src_data);
+    return DecodeTensorLsit(dst_tensor, src_data, src_tensor->length());
   }
 
   /* normal tensor check */

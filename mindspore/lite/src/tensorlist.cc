@@ -217,11 +217,12 @@ bool TensorList::IsCompatibleShape(const Tensor *src) {
   return true;
 }
 
-STATUS TensorList::Decode(const int *data) {
+STATUS TensorList::Decode(const int *data, size_t length) {
   if (data == nullptr) {
     MS_LOG(ERROR) << "data is nullptr";
     return RET_ERROR;
   }
+  MS_CHECK_LT(1, length, RET_ERROR);
   tensors_data_type_ = TypeId(data[0]);
   if (tensors_data_type_ < kTypeUnknown || tensors_data_type_ > kMonadTypeEnd) {
     MS_LOG(ERROR) << "TypeId illegal.";
@@ -231,6 +232,8 @@ STATUS TensorList::Decode(const int *data) {
     MS_LOG(ERROR) << "element shape size illegal.";
     return RET_ERROR;
   }
+  constexpr int kShapeIndexStart = 2;
+  MS_CHECK_LT(static_cast<size_t>(data[1] + kShapeIndexStart), length, RET_ERROR);
   for (int j = 0; j < data[1]; ++j) {
     element_shape_.push_back(data[2 + j]);
   }
@@ -248,9 +251,11 @@ STATUS TensorList::Decode(const int *data) {
   tensors_.reserve(tensors_num);
   int tensor_index = 2 + data[1] + 1;
   for (int i = 0; i < tensors_num; i++) {
+    MS_CHECK_LT(static_cast<size_t>(tensor_index), length, RET_ERROR);
     int tensor_dims_size = data[tensor_index++];
     std::vector<int> shape(tensor_dims_size);
     for (int j = 0; j < tensor_dims_size; j++) {
+      MS_CHECK_LT(static_cast<size_t>(tensor_index), length, RET_ERROR);
       shape[j] = data[tensor_index++];
     }
     auto tensor = new (std::nothrow) Tensor(tensors_data_type_, shape);
