@@ -18,17 +18,23 @@ from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataTyp
 
 search_sorted_op_info = AiCPURegOp("SearchSorted") \
     .fusion_type("OPAQUE") \
-    .attr("out_int32", "bool") \
+    .attr("dtype", "Type") \
     .attr("right", "bool") \
-    .input(0, "sequence", "required") \
+    .input(0, "sorted_sequence", "required") \
     .input(1, "values", "required") \
     .output(0, "output", "required") \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I16_Default, DataType.I16_Default, DataType.I16_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default, DataType.I32_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I64_Default) \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.I64_Default) \
     .get_op_info()
 
 

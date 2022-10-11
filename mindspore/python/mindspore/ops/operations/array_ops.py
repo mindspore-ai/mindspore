@@ -6078,63 +6078,36 @@ class MaskedSelect(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid('x', x_dtype, (mstype.bool_,) + mstype.number_type, self.name)
 
 
-class SearchSorted(PrimitiveWithInfer):
+class SearchSorted(Primitive):
     """
-    Find the indices from the innermost dimension of `sequence` such that the order of the innermost dimension
-    within `sequence` would be preserved when the corresponding values in `values` were inserted before the indices.
+    Find the indices from the innermost dimension of `sorted_sequence` such that the order of the innermost dimension
+    within `sorted_sequence` would be preserved when the corresponding values in `values` were inserted before the
+    indices.
 
-      Args:
-        out_int32 (bool): Output datatype. Optional. If True, the output datatype will be int32;
-                          if False, the output datatype will be int64. Default is False.
-        right (bool): Search Strategy. Optional. If True, return the last suitable index found.
-                      If False, return the first such index. Default is False.
-
-      Inputs:
-        - **sequence** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
-                                  It must contain monitonically increasing sequence on the innermost dimension.
-        - **values** (Tensor) - The shape of tensor is : math:`(x_1, x_2, ..., x_R-1, x_S)`.
-
-    Outputs:
-        Tensor containing the indices from the innermost dimension of the input sequence such that,
-        if insert the corresponding value in the values tensor, the order of the tensor sequence would be preserved.
-        The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`,
-        whose datatype is int32 if out_int32 is True, otherwise int64, and shape is the same as the shape of values.
-
-    Raises:
-        ValueError: If `sequence` and `values` do not have proper shapes.
+    Refer to :func:`mindspore.ops.search_sorted` for more detail.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
-        >>> sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
+        >>> sorted_sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
         >>> values = Tensor(np.array([[3, 6, 9], [3, 6, 9]]), mindspore.float32)
-        >>> output = ops.SearchSorted()(sequence, values)
+        >>> output = ops.SearchSorted()(sorted_sequence, values)
         >>> print(output)
         [[2 4 5]
          [1 2 4]]
     """
 
     @prim_attr_register
-    def __init__(self, out_int32=False, right=False):
+    def __init__(self, dtype=mstype.int64, right=False):
         """Initialize SearchSorted"""
-        self.out_int32 = validator.check_value_type("out_int32", out_int32, [bool], self.name)
-        self.right = validator.check_value_type("right", right, [bool], self.name)
-        self.init_prim_io_names(inputs=['sequence', 'values'], outputs=['positions'])
-
-    def infer_shape(self, sequence_shape, values_shape):
-        if len(sequence_shape) != 1 and sequence_shape[:-1] != values_shape[:-1]:
-            raise ValueError(f"For '{self.name}', the 'sequence' must be 1 dimensional or "
-                             f"all dimensions except the last dimension of 'sequence' "
-                             f"must be the same as all dimensions except the last dimension of 'values'. "
-                             f"but got shape of 'sequence': {sequence_shape} "
-                             f"and shape of 'values': {values_shape}.")
-        return values_shape
-
-    def infer_dtype(self, sequence_dtype, values_dtype):
-        args = {"sequence_dtype": sequence_dtype, "values_dtype": values_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return mstype.tensor_type(mstype.int32) if self.out_int32 else mstype.tensor_type(mstype.int64)
+        validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
+        valid_values = (mstype.int64, mstype.int32)
+        self.dtype = validator.check_type_name(
+            "dtype", dtype, valid_values, self.name)
+        validator.check_value_type('right', right, [bool], self.name)
+        self.init_prim_io_names(
+            inputs=['sorted_sequence', 'values'], outputs=['output'])
 
 
 class _TensorScatterOp(PrimitiveWithInfer):

@@ -26,9 +26,9 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class SearchSortedNet(nn.Cell):
-    def __init__(self, out_int32=False, right=False):
+    def __init__(self, dtype=mstype.int64, right=False):
         super(SearchSortedNet, self).__init__()
-        self.searchsorted = P.SearchSorted(out_int32=out_int32, right=right)
+        self.searchsorted = P.SearchSorted(dtype=dtype, right=right)
 
     def construct(self, sequence, values):
         return self.searchsorted(sequence, values)
@@ -43,7 +43,7 @@ def test_right_out32():
     input2 = np.array(np.random.randint(10, size=(2, 3, 1)), dtype=np.int32)
     values = Tensor(input2, mstype.int32)
 
-    net = SearchSortedNet(out_int32=True, right=True)
+    net = SearchSortedNet(dtype=mstype.int32, right=True)
     output = net(sequence, values)
 
     expect = [[[9],
@@ -65,7 +65,7 @@ def test_out32():
     input2 = np.array(np.random.randint(10, size=(2, 3, 1)), dtype=np.int64)
     values = Tensor(input2, mstype.int64)
 
-    net = SearchSortedNet(out_int32=True, right=False)
+    net = SearchSortedNet(dtype=mstype.int32, right=False)
     output = net(sequence, values)
 
     expect = [[[8],
@@ -87,7 +87,7 @@ def test_right_out64():
     input2 = np.array(np.random.random((2, 3)), dtype=np.float32)
     values = Tensor(input2, mstype.float32)
 
-    net = SearchSortedNet(out_int32=False, right=True)
+    net = SearchSortedNet(dtype=mstype.int64, right=True)
     output = net(sequence, values)
 
     expect = [[4, 4, 2],
@@ -106,7 +106,7 @@ def test_out64():
     input2 = np.array(np.random.random((2, 3)), dtype=np.float64)
     values = Tensor(input2, mstype.float64)
 
-    net = SearchSortedNet(out_int32=False, right=False)
+    net = SearchSortedNet(dtype=mstype.int64, right=False)
     output = net(sequence, values)
 
     expect = [[1, 2, 3],
