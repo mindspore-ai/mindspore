@@ -83,6 +83,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"ArgminV2", "ArgMin"},
     {"CumSum", "Cumsum"},
     {"InplaceUpdateV2", "InplaceUpdate"},
+    {"BatchToSpaceNDV2", "BatchToSpaceND"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {

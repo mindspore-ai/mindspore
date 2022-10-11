@@ -3025,6 +3025,9 @@ def batch_to_space_nd(input_x, block_shape, crops):
         [[[[1.  2.]
            [3.  4.]]]]
     """
+    if isinstance(block_shape, Tensor):
+        _batch_to_space_ndv2 = _get_cache_prim(P.BatchToSpaceNDV2)()
+        return _batch_to_space_ndv2(input_x, block_shape, crops)
     _batch_to_space_nd = _get_cache_prim(P.BatchToSpaceND)(block_shape, crops)
     return _batch_to_space_nd(input_x)
 

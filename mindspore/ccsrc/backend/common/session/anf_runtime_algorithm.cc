@@ -1434,5 +1434,18 @@ void AnfRuntimeAlgorithm::AddOutInRefToGraph(const KernelGraphPtr &graph) {
     }
   }
 }
+
+bool AnfRuntimeAlgorithm::HasOriginFormat(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  return anf_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrOriginFormat, anf_node->cast<CNodePtr>());
+}
+
+std::string AnfRuntimeAlgorithm::GetOriginFormat(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  if (anf_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrOriginFormat, anf_node->cast<CNodePtr>())) {
+    return common::AnfAlgo::GetNodeAttr<std::string>(anf_node, kAttrOriginFormat);
+  }
+  return {};
+}
 }  // namespace session
 }  // namespace mindspore

@@ -5577,6 +5577,20 @@ class BatchToSpaceND(Primitive):
         self.crops = crops
 
 
+class BatchToSpaceNDV2(Primitive):
+    r"""
+    Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
+
+    Refer to :func:`mindspore.ops.batch_to_space_nd` for more detail.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BatchToSpaceNDV2"""
+        self.init_prim_io_names(inputs=['input_x', 'block_shape', 'crops'], outputs=['y'])
+        self.add_prim_attr('origin_format', 'NHWC')
+
+
 class BroadcastTo(Primitive):
     """
     Broadcasts input tensor to a given shape.
