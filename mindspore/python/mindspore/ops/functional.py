@@ -147,8 +147,8 @@ def _raise_arange_value_error(start, stop):
 
 def narrow(inputs, axis, start, length):
     """
-    Returns a narrowed tensor from input tensor.
-    The dimension axis is input from start to start + length.
+    Returns a narrowed tensor from input tensor, and
+    the dimension axis is input from start to start + length.
 
     Args:
         inputs (Tensor): the tensor to narrow.

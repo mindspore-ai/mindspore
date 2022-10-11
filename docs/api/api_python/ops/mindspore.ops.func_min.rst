@@ -5,7 +5,7 @@ mindspore.ops.min
 
     根据指定的索引计算最小值，并返回索引和值。
 
-    在给定轴上计算输入Tensor的最小值，并且返回最小值和索引。
+    在给定轴上计算输入Tensor的最小值。并且返回最小值和索引。
 
     .. note::
         在auto_parallel和semi_auto_parallel模式下，不能使用第一个输出索引。

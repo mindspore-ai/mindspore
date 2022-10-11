@@ -5,7 +5,7 @@ mindspore.ops.adaptive_max_pool3d
 
     三维自适应最大值池化。
 
-    对于任何输入尺寸，输出的大小为 :math:`(D, H, W)` ，其中输出特征的数量与输入特征的数量相同。
+    对于任何输入尺寸，输出的大小为 :math:`(D, H, W)` 。其中输出特征的数量与输入特征的数量相同。
 
     参数：
         - **x** (Tensor) - shape为 :math:`(C, D, H, W)` 或 :math:`(N，C, D, H, W)` 的Tensor，支持的数据类型包括int8、int16、int32、int64、uint8、uint16、uint32、uint64、float16、float32、float64。

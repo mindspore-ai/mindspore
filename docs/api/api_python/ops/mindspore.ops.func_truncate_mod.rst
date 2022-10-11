@@ -7,7 +7,7 @@ mindspore.ops.truncate_mod
 
     输入 `x` 和 `y` 应能遵循隐式类型转换规则使数据类型一致。
     输入必须为两个Tensor或一个Tensor和一个标量。
-    当输入为两个Tensor时，数据类型不能同时为bool类型。支持shape广播。
+    当输入为两个Tensor时，数据类型不能同时为bool类型，支持shape广播。
     当输入是一个Tensor和一个标量时，标量只能是一个常数。
 
     .. warning::

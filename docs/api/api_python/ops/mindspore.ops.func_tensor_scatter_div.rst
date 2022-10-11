@@ -9,7 +9,7 @@ mindspore.ops.tensor_scatter_div
 
     .. note::
         - 如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新为 `input_x` ，而不是抛出索引错误。
-        - 算子无法处理除0异常, 用户需保证 `updates` 中没有0值。
+        - 算子无法处理除0异常，用户需保证 `updates` 中没有0值。
 
     参数：
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 的维度必须不小于 `indices.shape[-1]` 。
