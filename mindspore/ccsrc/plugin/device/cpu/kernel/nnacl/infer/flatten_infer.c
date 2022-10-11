@@ -44,10 +44,10 @@ int FlattenInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   // The value for axis must be in the range[-r, r], where r is
   // the rank of the input tensor.Negative value means counting
   // dimensions from the back.
-  if (abs(axis) > (int)input_shape_size) {
+  axis = axis < 0 ? (int)input_shape_size - axis : axis;
+  if (axis >= (int)input_shape_size) {
     return NNACL_ERR;
   }
-  axis = axis < 0 ? (int)input_shape_size - axis : axis;
   int output_shape[2];
   output_shape[0] = axis == 0 ? 1 : input_shape[0];
   for (size_t i = 1; i < (size_t)axis; i++) {

@@ -52,6 +52,12 @@ int SparseToDenseCPUKernel::Prepare() {
 }
 
 int SparseToDenseCPUKernel::ReSize() {
+  if (in_tensors_.at(THIRD_INPUT)->data_type() != kNumberTypeFloat16 ||
+      in_tensors_.at(THIRD_INPUT)->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << in_tensors_.at(THIRD_INPUT)->tensor_name() << " data type "
+                  << in_tensors_.at(THIRD_INPUT)->data_type() << " is not support.";
+    return RET_ERROR;
+  }
   auto output = out_tensors_[kOutputIndex];
   int output_dim = static_cast<int>(output->shape().size());
   MS_CHECK_TRUE_MSG(output_dim <= DIMENSION_4D, RET_ERROR, "output_dim should <= 4");
