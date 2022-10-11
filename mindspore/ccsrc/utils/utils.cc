@@ -34,8 +34,7 @@ bool IsOneOfCacheBlackList(const std::string &name) {
 }
 
 bool IsOneOfNotSupportMultiThreadExec(const std::string &name) {
-  const std::set<std::string> kOpNotSupportMultiThreadExecList = {kBatchNorm, kBatchNormGradOpName};
-
+  const std::set<std::string> kOpNotSupportMultiThreadExecList = {};
   auto iter = kOpNotSupportMultiThreadExecList.find(name);
   return iter != kOpNotSupportMultiThreadExecList.end();
 }
