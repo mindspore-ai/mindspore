@@ -5682,7 +5682,7 @@ class ApplyAdadelta(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

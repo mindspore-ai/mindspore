@@ -310,7 +310,7 @@ class Addcmul(Primitive):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
@@ -3567,7 +3567,7 @@ class ApproximateEqual(_LogicBinaryOp):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -4655,7 +4655,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_and` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -4674,7 +4674,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_or` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -4693,7 +4693,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_xor` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -5636,7 +5636,7 @@ class Trunc(Primitive):
     Refer to :func:`mindspore.ops.trunc` for more detail.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register

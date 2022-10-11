@@ -350,7 +350,7 @@ def addcmul(input_data, x1, x2, value):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
@@ -2399,7 +2399,7 @@ def trunc(input_x):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
