@@ -70,7 +70,9 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     keep_dims_ = false;
     all_match_ = false;
     is_null_input_ = false;
+    complex_op_type = 0;
     input_size_ = 0;
+    output_size_ = 0;
     workspace_size_ = 0;
     kernel_name_ = "ArrayReduce";
     axis_.clear();
@@ -93,6 +95,9 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  template <typename T, typename S>
+  void LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                           const std::vector<AddressPtr> &outputs, void *stream_ptr);
   using ReduceFunc =
     std::function<bool(ArrayReduceGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
@@ -118,7 +123,9 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   bool need_skip_execute_;
   bool all_match_;
   bool is_null_input_;
+  int complex_op_type;
   size_t input_size_;
+  size_t output_size_;
   size_t workspace_size_;
   static constexpr size_t kAxisIndex_{1};
   std::string kernel_type_{"Unknown"};
