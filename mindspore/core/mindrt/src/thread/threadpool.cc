@@ -204,7 +204,7 @@ void Worker::Active(std::vector<TaskSplit> *task_list, int task_id_start, int ta
 }
 
 void Worker::Active() {
-  if (active_num_ != 0) {
+  if (active_num_ > 0) {
     return;
   }
   {
@@ -213,13 +213,6 @@ void Worker::Active() {
     status_ = kThreadBusy;
   }
   cond_var_.notify_one();
-}
-
-void Worker::FastActive() {
-  if (active_num_ == 0) {
-    active_num_++;
-    cond_var_.notify_one();
-  }
 }
 
 bool Worker::available() {
