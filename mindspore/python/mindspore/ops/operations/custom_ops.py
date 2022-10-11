@@ -959,8 +959,8 @@ class Custom(ops.PrimitiveWithInfer):
                                      for idx, val in enumerate(symbols)]
 
             if any(i[1] != -1 for i in inplace_assign_output):
-                self.add_prim_attr("inplace_assign_output", " ".join(
-                    (str(j) for i in inplace_assign_output for j in i)))
+                value = " ".join((str(j) for i in inplace_assign_output for j in i))
+                self.add_prim_attr("inplace_assign_output", value)
 
     def _auto_infer(self, *args):
         """

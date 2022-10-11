@@ -56,8 +56,8 @@ void ROIAlign::Init(const int64_t pooled_height, const int64_t pooled_width, con
   this->set_pooled_height(pooled_height);
   this->set_pooled_width(pooled_width);
   this->set_spatial_scale(spatial_scale);
-  this->set_spatial_scale(sample_num);
-  this->set_spatial_scale(roi_end_mode);
+  this->set_spatial_scale(LongToFloat(sample_num));
+  this->set_spatial_scale(LongToFloat(roi_end_mode));
 }
 
 TypePtr ROIAlignInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

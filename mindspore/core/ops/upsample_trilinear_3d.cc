@@ -15,15 +15,15 @@
  */
 
 #include "ops/upsample_trilinear_3d.h"
+#include <string>
+#include <vector>
 #include <algorithm>
 #include <memory>
 #include <set>
-#include <string>
-#include <vector>
+#include "mindapi/src/helper.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
