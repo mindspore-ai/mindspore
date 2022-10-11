@@ -163,6 +163,19 @@ class TestProfiler:
         self._check_gpu_profiling_file()
 
     @pytest.mark.level1
+    @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_gpu_profiler_pynative(self):
+        """
+        Feature: profiler support GPU pynative mode.
+        Description: profiling l2 GPU pynative mode data, analyze performance issues.
+        Expectation: No exception.
+        """
+        self._train_with_profiler(device_target="GPU", profile_memory=False, context_mode=context.PYNATIVE_MODE)
+        self._check_gpu_profiling_file()
+
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
@@ -171,8 +184,8 @@ class TestProfiler:
         self._train_with_profiler(device_target="Ascend", profile_memory=True)
         self._check_d_profiling_file()
 
-    def _train_with_profiler(self, device_target, profile_memory):
-        context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+    def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE):
+        context.set_context(mode=context_mode, device_target=device_target)
         ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
         if ds_train.get_dataset_size() == 0:
             raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")

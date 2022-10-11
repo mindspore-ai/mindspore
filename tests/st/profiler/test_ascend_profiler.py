@@ -81,6 +81,26 @@ def test_ascend_profiling():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
+def test_ascend_profiling_l2():
+    """
+    Feature: profiling l2 cache data.
+    Description: profiling l2 cache data, analyze performance issues.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        profiler = Profiler(output_path=tmpdir, l2_cache=True)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        profiler.analyse()
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/l2_cache.data*")) >= 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
 def test_ascend_pynative_profiling():
     """
     Feature: Test the ascend pynative model profiling
