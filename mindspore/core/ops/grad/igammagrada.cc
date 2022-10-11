@@ -18,6 +18,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <utility>
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -39,8 +40,8 @@ TypePtr IgammaGradAInferType(const PrimitivePtr &primitive, const std::vector<Ab
   auto x_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"a", a_type});
-  (void)args.insert({"x", x_type});
+  (void)args.insert(std::pair{"a", a_type});
+  (void)args.insert(std::pair{"x", x_type});
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   return a_type;
 }

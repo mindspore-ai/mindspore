@@ -113,7 +113,7 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr AffineGridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string op_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
   auto theta_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(theta_type);
   const std::set<TypePtr> theta_valid_types = {kFloat16, kFloat32};

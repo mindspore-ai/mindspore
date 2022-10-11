@@ -31,7 +31,6 @@ abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::v
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
   }
-  auto y_rank = x_shape.size();
   const int64_t min_dim = 0;
   (void)CheckAndConvertUtils::CheckInteger("rank of input", SizeToLong(x_shape.size()), kGreaterThan, min_dim,
                                            prim_name);
@@ -65,6 +64,7 @@ abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::v
                       << "', the second input type should be tensor or scalar, but got invalid abstract type:"
                       << input_args[kInputIndex1]->type_name() << ".";
   }
+  auto y_rank = SizeToLong(x_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-y_rank, y_rank - 1}, prim_name);
   return std::make_shared<abstract::Shape>(x_shape);
 }

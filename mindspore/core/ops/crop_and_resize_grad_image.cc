@@ -29,7 +29,7 @@ namespace ops {
 void CropAndResizeGradImage::Init(ResizeMethod method) { this->set_method(method); }
 
 void CropAndResizeGradImage::set_method(ResizeMethod method) {
-  auto swi = (int64_t)method;
+  auto swi = static_cast<int64_t>(method);
   (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 
@@ -61,7 +61,8 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
   auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("grads rank", input_shape0.size(), kEqual, ImagekGradsShapeLen, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, ImagekGradsShapeLen,
+                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
   auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
@@ -70,13 +71,13 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("box_index rank", input_shape2.size(), kEqual, ImagekBoxIndShapeLen,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape2.size()), kEqual,
+                                           ImagekBoxIndShapeLen, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
   auto input_shape3 =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("image_size rank", input_shape3.size(), kEqual, ImagekImageSizeShapeLen,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("image_size rank", SizeToLong(input_shape3.size()), kEqual,
+                                           ImagekImageSizeShapeLen, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("length of image_size", input_shape3[0], kEqual, ImagekGradsShapeLen,
                                            prim_name);
 
@@ -118,7 +119,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
       if (const_output_size_shape.size() == ImagekOutputSizeD) {
         auto value = static_cast<int32_t *>(output_size_tensor->data_c());
         MS_EXCEPTION_IF_NULL(value);
-        for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
+        for (size_t i = 0; i < LongToSize(ImagekOutputSizeLen); ++i) {
           if (value[i] > 0) {
             if (value[i] > kMaxLen) {
               MS_EXCEPTION(ValueError) << "The value in output_size must be no more than max length: " << kMaxLen
@@ -143,7 +144,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
     if (output_type == kFloat32) {
       maxshape_dim0 *= ImageKMaxshapeNum;
     }
-    maxshape_dim2 = sqrt(kMaxLen / maxshape_dim0);
+    maxshape_dim2 = static_cast<int64_t>(sqrt(static_cast<double>(kMaxLen) / maxshape_dim0));
     maxshape_dim1 = maxshape_dim2 / input_shape0[ImagekDepth];
     ShapeVector output_shape = {abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY,
                                 input_shape0[ImagekDepth]};

@@ -81,12 +81,12 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(d_shape_value_ptr);
   auto d_shape_value_ptr_tensor =
     CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", d_shape_value_ptr, primitive->name());
-  for (int64_t i = kZero; i < rank; i++) {
+  for (size_t i = LongToSize(kZero); i < LongToSize(rank); i++) {
     if (static_cast<int64_t>(d_shape_value_ptr_tensor[i]) <= kZero) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', each element of 'x_dense_shape' must be greater than 0.";
     }
-    y_shape.push_back(d_shape_value_ptr_tensor[static_cast<ShapeVector::size_type>(i)]);
+    y_shape.push_back(d_shape_value_ptr_tensor[i]);
   }
   int64_t batch_size = kOne;
   int64_t row_num = d_shape_value_ptr_tensor[kZero];

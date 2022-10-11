@@ -56,7 +56,8 @@ abstract::ShapePtr Dilation2DBackpropFilterInferShape(const PrimitivePtr &primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                           primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -120,12 +121,12 @@ abstract::ShapePtr Dilation2DBackpropFilterInferShape(const PrimitivePtr &primit
   std::vector<int64_t> out_backprop_expect_shape;
   if (pad_mode == "VALID") {
     out_backprop_expect_shape.push_back(
-      static_cast<int64_t>(std::ceil(((x_h * 1.0) - dilation_h * (filter_h - 1)) / stride_h)));
+      static_cast<int64_t>(std::ceil(((x_h * 1.0) - dilation_h * (filter_h - 1)) / static_cast<double>(stride_h))));
     out_backprop_expect_shape.push_back(
-      static_cast<int64_t>(std::ceil(((x_w * 1.0) - dilation_w * (filter_w - 1)) / stride_w)));
+      static_cast<int64_t>(std::ceil(((x_w * 1.0) - dilation_w * (filter_w - 1)) / static_cast<double>(stride_w))));
   } else if (pad_mode == "SAME") {
-    out_backprop_expect_shape.push_back(static_cast<int64_t>(std::ceil((x_h * 1.0) / stride_h)));
-    out_backprop_expect_shape.push_back(static_cast<int64_t>(std::ceil((x_w * 1.0) / stride_w)));
+    out_backprop_expect_shape.push_back(static_cast<int64_t>(std::ceil((x_h * 1.0) / static_cast<double>(stride_h))));
+    out_backprop_expect_shape.push_back(static_cast<int64_t>(std::ceil((x_w * 1.0) / static_cast<double>(stride_w))));
   }
   ShapeVector out_backprop_expect_shape_;
   if (data_format == "NHWC") {

@@ -111,7 +111,7 @@ abstract::ShapePtr FFTWithSizeInferShape(const PrimitivePtr &primitive,
         valid_size_odd.back() = valid_size_even.back() + 1;
         auto batch_rank = SizeToLong(y_shape.size()) - signal_ndim;
         for (size_t i = 0; i < LongToUlong(signal_ndim) - 1; i++) {
-          if (signal_sizes[i] != y_shape[i + batch_rank]) {
+          if (signal_sizes[i] != y_shape[i + LongToSize(batch_rank)]) {
             MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
                                      << "got invalid signal_sizes: " << ToString(signal_sizes)
                                      << ", a valid one should be " << ToString(valid_size_even) << ", or "
@@ -134,7 +134,7 @@ abstract::ShapePtr FFTWithSizeInferShape(const PrimitivePtr &primitive,
 
 TypePtr FFTWithSizeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string prim_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto input_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
