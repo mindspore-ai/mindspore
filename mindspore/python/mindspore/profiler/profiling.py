@@ -75,6 +75,20 @@ class Profiler:
             Default: False.
         start_profile (bool, optional): The start_profile parameter controls whether to enable or disable performance
             data collection based on conditions. Default: True.
+        aicore_metrics (int, optional): (Ascend only) Types of AICORE performance data collected. The value must be in
+            [-1, 0, 1, 2, 3, 4, 5], Default: 0, the data items contained in each metric are as follows:
+
+            - -1: Does not collect AICORE data.
+            - 0: ArithmeticUtilization contains mac_fp16/int8_ratio, vec_fp32/fp16/int32_ratio, vec_misc_ratio etc.
+            - 1: PipeUtilization contains vec_ratio, mac_ratio, scalar_ratio, mte1/mte2/mte3_ratio, icache_miss_rate
+              etc.
+            - 2: Memory contains ub_read/write_bw, l1_read/write_bw, l2_read/write_bw, main_mem_read/write_bw etc.
+            - 3: MemoryL0 contains l0a_read/write_bw, l0b_read/write_bw, l0c_read/write_bw etc.
+            - 4: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio, mte1/mte2/mte3_iq_full_ratio,
+              cube/vec_full_ratio ect.
+            - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub_/write_bw_scalar etc.
+
+        l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True. Default: False.
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,

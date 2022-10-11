@@ -10,6 +10,16 @@ mindspore.Profiler
         - **profile_communication** (bool, 可选) - （仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。在单台设备训练中，该参数的设置无效。默认值：False。
         - **profile_memory** (bool, 可选) - （仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。默认值：False。
         - **start_profile** (bool, 可选) - 该参数控制是否在Profiler初始化的时候开启数据采集。默认值：True。
+        - **aicore_metrics** (int, 可选) - （仅限Ascend）收集的AICORE性能数据类型。值必须包含在[-1, 0, 1, 2, 3, 4, 5]，默认值：0，每种类型包含的数据项如下：
+
+          - -1: 不收集任何AICORE数据。
+          - 0: ArithmeticUtilization，包含mac_fp16/int8_ratio、vec_fp32/fp16/int32_ratio、vec_misc_ratio等。
+          - 1: PipeUtilization，包含vec_ratio、mac_ratio、scalar_ratio、mte1/mte2/mte3_ratio、icache_miss_rate等。
+          - 2: Memory，包含ub\_read/write_bw、l1_read/write_bw、l2_read/write_bw、main_mem_read/write_bw等。
+          - 3: MemoryL0，包含l0a_read/write_bw、l0b_read/write_bw、l0c_read/write_bw等。
+          - 4: ResourceConflictRatio，包含vec_bankgroup/bank/resc_cflt_ratio、mte1/mte2/mte3_iq_full_ratio、cube/vec_full_ratio等。
+          - 5: MemoryUB，包含ub\_read/write_bw_mte, ub\_read/write_bw_vector, ub\_/write_bw_scalar等。
+        - **l2_cache** (bool, 可选) - （仅限Ascend）是否收集l2缓存数据，当值为True时，收集这些数据。默认值：False。
 
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
