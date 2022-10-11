@@ -120,6 +120,7 @@ constexpr auto kCombineMomentumOpName = "CombineMomentum";
 constexpr auto kCombineMomentumWeightOpName = "CombineMomentumWeight";
 constexpr auto kComputeAccidentalHitsOpName = "ComputeAccidentalHits";
 constexpr auto kConcatOpName = "Concat";
+constexpr auto kConcatOffsetOpName = "ConcatOffset";
 constexpr auto kConfusionMulGradOpName = "ConfusionMulGrad";
 constexpr auto kConfusionSoftmaxGradOpName = "ConfusionSoftmaxGrad";
 constexpr auto kConfusionTransposeDOpName = "ConfusionTransposeD";
