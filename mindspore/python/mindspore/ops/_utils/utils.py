@@ -76,8 +76,8 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x
                 raise ValueError(f"For '{prim_name}', {arg_name1}.shape and {arg_name2}.shape need to "
                                  f"broadcast. The value of {arg_name1}.shape[{i}] or {arg_name2}.shape[{i}]"
                                  f" must be 1 or -1 when they are not the same, "
-                                 f"but got {arg_name1}.shape[{i}] = {x_shape} "
-                                 f"and {arg_name2}.shape[{i}] = {y_shape}.")
+                                 f"but got {arg_name1}.shape = {x_shape} "
+                                 f"and {arg_name2}.shape = {y_shape}.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back
