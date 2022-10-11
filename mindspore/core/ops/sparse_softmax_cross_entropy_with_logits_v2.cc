@@ -56,8 +56,8 @@ TuplePtr SparseSoftmaxCrossEntropyWithLogitsV2InferType(const PrimitivePtr &prim
   const std::set<TypePtr> valid_features_types = {kFloat16, kFloat32};
   const std::set<TypePtr> valid_labels_types = {kInt32, kInt64};
   std::map<std::string, TypePtr> features_args, labels_args;
-  (void)features_args.insert({"logits_type(features_type)", features_type});
-  (void)labels_args.insert({"labels_type", labels_type});
+  (void)features_args.emplace("logits_type(features_type)", features_type);
+  (void)labels_args.emplace("labels_type", labels_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(features_args, valid_features_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(labels_args, valid_labels_types, primitive->name());
 

@@ -72,7 +72,8 @@ void SparseSliceCheckInputTensor(const std::vector<AbstractBasePtr> &input_args)
 }
 
 template <typename T>
-void SparseSliceIndicesBoundCheck(const T *indices_val, size_t indices_num, const T *shape_val, std::string name) {
+void SparseSliceIndicesBoundCheck(const T *indices_val, size_t indices_num, const T *shape_val,
+                                  const std::string &name) {
   if (shape_val[0] <= 0 || shape_val[1] <= 0) {
     MS_EXCEPTION(ValueError) << "For SparseSlice, " << name << "_shape should be positive, "
                              << "while got shape [" << shape_val[0] << ", " << shape_val[1] << "].";

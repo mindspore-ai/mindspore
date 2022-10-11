@@ -45,8 +45,8 @@ abstract::TupleShapePtr SparseReorderInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("values dim", SizeToLong(values_shape.size()), kEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("size dim", SizeToLong(shape_shape.size()), kEqual, 1, prim_name);
   // Indices shape must be equal to the first dimension of var
-  CheckAndConvertUtils::CheckInteger("size of values", values_shape[0], kEqual, indices_shape[0], prim_name);
-  CheckAndConvertUtils::CheckInteger("size of shape", shape_shape[0], kEqual, indices_shape[1], prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("size of values", values_shape[0], kEqual, indices_shape[0], prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("size of shape", shape_shape[0], kEqual, indices_shape[1], prim_name);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{indices_shape_ptr, values_shape_ptr});
 }

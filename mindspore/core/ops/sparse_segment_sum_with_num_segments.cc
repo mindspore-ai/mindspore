@@ -34,9 +34,10 @@ abstract::ShapePtr SparseSegmentSumWithNumSegmentsInferShape(const PrimitivePtr 
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto num_segments_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape", indices_shape.size(), kEqual, kInputIndex1, prim->name());
-  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", segment_ids_shape.size(), kEqual, kInputIndex1,
+  (void)CheckAndConvertUtils::CheckInteger("indices_shape", indices_shape.size(), kEqual, SizeToLong(kInputIndex1),
                                            prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", segment_ids_shape.size(), kEqual,
+                                           SizeToLong(kInputIndex1), prim->name());
   if (x_shape.size() < kInputIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
                              << "x's rank must be greater than 1, but got [" << x_shape.size() << "].";
@@ -53,7 +54,7 @@ abstract::ShapePtr SparseSegmentSumWithNumSegmentsInferShape(const PrimitivePtr 
   if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
     if (num_segments_shape.size() == kInputIndex1) {
-      if (num_segments_shape[kInputIndex0] != kInputIndex1) {
+      if (num_segments_shape[kInputIndex0] != SizeToLong(kInputIndex1)) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1, but got ["
                                  << num_segments_shape[kInputIndex0] << "].";
       }
@@ -64,7 +65,7 @@ abstract::ShapePtr SparseSegmentSumWithNumSegmentsInferShape(const PrimitivePtr 
     MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
     auto num_segments_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim->name());
-    size_t dim_zero = num_segments_value_ptr_tensor.back();
+    size_t dim_zero = LongToSize(num_segments_value_ptr_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
                                << ", num_segments must bigger than the last number of segment_ids, "
@@ -108,7 +109,7 @@ AbstractBasePtr SparseSegmentSumWithNumSegmentsInfer(const abstract::AnalysisEng
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   constexpr size_t kInputsNum = kInputIndex4;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, SizeToLong(kInputsNum), prim_name);
   auto types = SparseSegmentSumWithNumSegmentsInferType(prim, input_args);
   auto shapes = SparseSegmentSumWithNumSegmentsInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);

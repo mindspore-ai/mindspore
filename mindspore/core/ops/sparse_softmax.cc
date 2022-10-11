@@ -69,8 +69,8 @@ TypePtr SparseSoftmaxInferType(const PrimitivePtr &prim, const std::vector<Abstr
   auto infer_type_shape = input_args[kInputIndex2]->BuildType();
   const std::set<TypePtr> valid_types = {kInt64};
   std::map<std::string, TypePtr> types;
-  (void)types.insert({"indices", infer_type_indices});
-  (void)types.insert({"shape", infer_type_shape});
+  (void)types.emplace("indices", infer_type_indices);
+  (void)types.emplace("shape", infer_type_shape);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   const std::set<TypePtr> valid_types_values = {kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("values", infer_type_values, valid_types_values, prim_name);
