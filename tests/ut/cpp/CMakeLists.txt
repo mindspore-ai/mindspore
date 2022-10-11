@@ -75,6 +75,7 @@ if(ENABLE_MINDDATA)
             ./mindapi/*.cc
             ./runtime/graph_scheduler/*.cc
             ./plugin/device/cpu/hal/*.cc
+            ./place/*.cc
             )
     if(NOT ENABLE_SECURITY)
         file(GLOB_RECURSE UT_SRCS_DEBUG RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

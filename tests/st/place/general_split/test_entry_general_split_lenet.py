@@ -26,7 +26,7 @@ def test_general_split_lenet():
     Expectation: success.
     """
     return_code = os.system(
-        "bash shell_run_test.sh GPU 3 3 127.0.0.1 8082 true"
+        "bash shell_run_test.sh GPU 5 5 127.0.0.1 8082 true"
     )
     if return_code != 0:
         os.system(f"echo '\n**************** Worker Log ****************'")
