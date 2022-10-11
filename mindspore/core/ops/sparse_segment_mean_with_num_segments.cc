@@ -66,13 +66,13 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
     MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
     auto num_segments_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim_name);
-    size_t dim_zero = num_segments_value_ptr_tensor.back();
+    size_t dim_zero = LongToSize(num_segments_value_ptr_tensor.back());
     if (dim_zero < kDimOne) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
                                << ", num_segments must be bigger than the largest id of segment_ids.";
     } else {
       ShapeVector y_shape = x_shape;
-      y_shape[kShapeZero] = dim_zero;
+      y_shape[kShapeZero] = SizeToLong(dim_zero);
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {

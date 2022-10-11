@@ -33,6 +33,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   std::vector<int64_t> dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   std::vector<int64_t> batch_pointer =

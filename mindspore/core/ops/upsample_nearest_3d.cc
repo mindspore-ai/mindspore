@@ -60,7 +60,8 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual, long_kdim3,
                                              prim_name);
     for (int64_t idx = 0; idx < long_kdim3; ++idx) {
-      (void)y_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + long_kdim2] * scales[idx])));
+      (void)y_shape.emplace_back(
+        static_cast<int64_t>(floor(x_shape[LongToSize(idx + long_kdim2)] * scales[LongToSize(idx)])));
     }
   } else if (output_size.empty() && scales.empty()) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."

@@ -30,16 +30,16 @@ abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto segment_ids_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual, kInputIndex1,
-                                           prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual,
+                                           SizeToLong(kInputIndex1), prim->name());
   (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
-                                           kInputIndex1, prim->name());
+                                           SizeToLong(kInputIndex1), prim->name());
   if (x_shape.size() < kInputIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
                              << "x's rank must be greater than 1, but got [" << x_shape.size() << "].";
   }
   if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of indices and segment_ids must be the same, "
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of indices and segment_ids should be the same, "
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
@@ -49,13 +49,13 @@ abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);
     auto segment_ids_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr, prim->name());
-    size_t dim_zero = segment_ids_value_ptr_tensor.back() + kInputIndex1;
+    size_t dim_zero = LongToSize(segment_ids_value_ptr_tensor.back()) + kInputIndex1;
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids must be greater or equal to 0, "
                                << "but got [" << dim_zero << "].";
     } else {
       ShapeVector y_shape = x_shape;
-      y_shape[kInputIndex0] = dim_zero;
+      y_shape[kInputIndex0] = SizeToLong(dim_zero);
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {

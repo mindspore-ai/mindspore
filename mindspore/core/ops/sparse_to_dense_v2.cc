@@ -44,13 +44,14 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   auto output_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(output_shape_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto default_value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(default_value_shape_ptr)[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kLessEqual, Indiceselement,
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kLessEqual,
+                                           SizeToLong(Indiceselement), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("outshape dimension", output_shape_shape.size(), kEqual,
+                                           SizeToLong(OutShapeSize), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("values dimension", values_shape.size(), kLessEqual, SizeToLong(ValuesSize),
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("outshape dimension", output_shape_shape.size(), kEqual, OutShapeSize,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("values dimension", values_shape.size(), kLessEqual, ValuesSize, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("default_value dimension", default_value_shape.size(), kEqual, DefaultSize,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("default_value dimension", default_value_shape.size(), kEqual,
+                                           SizeToLong(DefaultSize), prim_name);
   size_t output_shape_numelement = LongToSize(output_shape_shape[0]);
   auto output_shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(output_shape);
@@ -121,14 +122,14 @@ TypePtr SparseToDenseV2InferType(const PrimitivePtr &prim, const std::vector<Abs
   auto infer_type_default_value = input_args[kInputIndex3]->BuildType();
   const std::set<TypePtr> valid_types = {kInt64, kInt32};
   std::map<std::string, TypePtr> types;
-  (void)types.insert({"indices", infer_type_indices});
-  (void)types.insert({"output_shape", infer_type_output_shape});
+  (void)types.emplace("indices", infer_type_indices);
+  (void)types.emplace("output_shape", infer_type_output_shape);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   const std::set<TypePtr> valid_types_value = {kInt64, kInt32,   kInt16,   kInt8,    kUInt16,
                                                kUInt8, kFloat16, kFloat32, kFloat64, kBool};
   std::map<std::string, TypePtr> types_value;
-  (void)types_value.insert({"values", infer_type_values});
-  (void)types_value.insert({"default_value", infer_type_default_value});
+  (void)types_value.emplace("values", infer_type_values);
+  (void)types_value.emplace("default_value", infer_type_default_value);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types_value, valid_types_value, prim_name);
   return infer_type_values;
 }

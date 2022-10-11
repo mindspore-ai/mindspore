@@ -28,6 +28,7 @@
 namespace mindspore {
 namespace ops {
 bool checkType(std::string name, TypePtr dtype, std::set<TypePtr> vtypes, const PrimitivePtr &primitive) {
+  MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
   (void)types.emplace(name, dtype);
   try {
@@ -38,6 +39,7 @@ bool checkType(std::string name, TypePtr dtype, std::set<TypePtr> vtypes, const 
   return true;
 }
 bool checkContainer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args, std::string *info) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const int kTwo = 2;
   const int kOne = 1;
   const int kZero = 0;
@@ -120,8 +122,12 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
     auto temp = GetValue<std::vector<int64_t>>(y_value);
     int64_t x1_row = temp[0], x1_col = temp[1];
     int64_t x2_row = x2_shape[0], x2_col = x2_shape[1];
-    if (adjoint_av) std::swap(x1_row, x1_col);
-    if (adjoint_bv) std::swap(x2_row, x2_col);
+    if (adjoint_av) {
+      std::swap(x1_row, x1_col);
+    }
+    if (adjoint_bv) {
+      std::swap(x2_row, x2_col);
+    }
     if (x1_col != x2_row) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the input sparse is "
                         << "not compatible with the input dense.";
@@ -138,8 +144,12 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   // directly
   int64_t x1_row = x1_shape_data[0], x1_col = x1_shape_data[1];
   int64_t x2_row = x2_shape[0], x2_col = x2_shape[1];
-  if (adjoint_av) std::swap(x1_row, x1_col);
-  if (adjoint_bv) std::swap(x2_row, x2_col);
+  if (adjoint_av) {
+    std::swap(x1_row, x1_col);
+  }
+  if (adjoint_bv) {
+    std::swap(x2_row, x2_col);
+  }
   if (x1_col != x2_row) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the input sparse tensor is "
                       << "not compatible with the input dense.";

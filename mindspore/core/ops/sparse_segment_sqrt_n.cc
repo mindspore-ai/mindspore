@@ -41,13 +41,13 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto segment_ids_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual, kInputIndex1,
-                                           prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual,
+                                           SizeToLong(kInputIndex1), prim->name());
   (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
-                                           kInputIndex1, prim->name());
+                                           SizeToLong(kInputIndex1), prim->name());
   if (x_shape.size() < kInputIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
-                             << "x's rank must be greater than 1, but got [" << x_shape.size() << "].";
+                             << "the x's rank must be greater than 1, but got [" << x_shape.size() << "].";
   }
   if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of indices and segment_ids must be the same, "
