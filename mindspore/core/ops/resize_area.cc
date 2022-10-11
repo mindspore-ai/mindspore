@@ -92,9 +92,7 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
     return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
   }
 }
-TypePtr ResizeAreaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  return kFloat32;
-}
+TypePtr ResizeAreaInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) { return kFloat32; }
 }  // namespace
 MIND_API_OPERATOR_IMPL(ResizeArea, BaseOperator);
 void ResizeArea::Init(const bool align_corners) { this->set_align_corners(align_corners); }

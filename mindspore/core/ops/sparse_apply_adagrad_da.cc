@@ -48,14 +48,14 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
                                            prim_name);
 
   std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.insert({"shape of grad_accum", grad_accum_shape});
-  (void)same_shape_args_map.insert({"shape of grad_square_accum", grad_square_accum_shape});
+  (void)same_shape_args_map.emplace("shape of grad_accum", grad_accum_shape);
+  (void)same_shape_args_map.emplace("shape of grad_square_accum", grad_square_accum_shape);
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }
 
   // Var dimension must be equal or greater than 1.
-  (void)CheckAndConvertUtils::CheckInteger("var dimension", var_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
 
   if (var_shape.size() != grad_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -71,7 +71,7 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   }
 
   // Indices must be rank 1.
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
   if (indices_shape[0] != grad_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "

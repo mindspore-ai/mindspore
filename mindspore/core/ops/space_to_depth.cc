@@ -62,7 +62,7 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
   if (input_args.size() != 1) {
     MS_EXCEPTION(ValueError) << "For SpaceToDepth, the input number must be 1, but got " << input_args.size();
   }
-  primitive->AddAttr("data_format", data_format_ptr);
+  (void)primitive->AddAttr("data_format", data_format_ptr);
   if (block_size < min_block_size) {
     MS_EXCEPTION(ValueError) << "For SpaceToDepth, block_size must greater than 2, but got the block_size is "
                              << block_size;
@@ -106,7 +106,7 @@ AbstractBasePtr SpaceToDepthInfer(const abstract::AnalysisEnginePtr &, const Pri
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto infer_type = SpaceToDepthInferType(primitive, input_args);
   auto infer_shape = SpaceToDepthInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

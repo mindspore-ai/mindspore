@@ -100,12 +100,11 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
                                << ", but got " << input1_shape_ptr[0] << " , " << input1_shape_ptr[1];
     }
     std::vector<int64_t> output_shape;
-    auto shape_m = 1;
     output_shape.push_back(shape0_v[0]);
     output_shape.push_back(input1_shape_ptr[0]);
     output_shape.push_back(input1_shape_ptr[1]);
-    output_shape.push_back(shape0_v[calnum3]);
-    shape_m = shape0_v[0] * input1_shape_ptr[0] * input1_shape_ptr[1] * shape0_v[calnum3];
+    output_shape.push_back(shape0_v[LongToSize(calnum3)]);
+    auto shape_m = shape0_v[0] * input1_shape_ptr[0] * input1_shape_ptr[1] * shape0_v[LongToSize(calnum3)];
     if (shape_m > kMaxLen) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', the number of elements of output must be less than max length: " << kMaxLen
@@ -125,7 +124,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   }
 }
 TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   auto prim_name = primitive->name();

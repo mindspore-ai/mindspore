@@ -151,7 +151,7 @@ AbstractBasePtr ScaleAndTranslateInfer(const abstract::AnalysisEnginePtr &, cons
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto infer_type = ScaleAndTranslateInferType(primitive, input_args);
   auto infer_shape = ScaleAndTranslateInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

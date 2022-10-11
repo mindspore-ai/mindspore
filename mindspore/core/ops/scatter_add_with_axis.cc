@@ -76,7 +76,7 @@ AbstractBasePtr ScatterAddWithAxisInfer(const abstract::AnalysisEnginePtr &, con
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputsNum, primitive->name());
   auto infer_type = ScatterAddWithAxisInferType(primitive, input_args);
   auto infer_shape = ScatterAddWithAxisInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

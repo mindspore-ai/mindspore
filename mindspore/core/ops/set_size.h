@@ -29,7 +29,7 @@ constexpr auto kNameSetSize = "SetSize";
 class MIND_API SetSize : public BaseOperator {
  public:
   SetSize() : BaseOperator(kNameSetSize) { InitIOName({"set_indices", "set_values", "set_shape"}, {"size"}); }
-  void Init() {}
+  void Init() const {}
   MIND_API_BASE_MEMBER(SetSize);
   void set_set_shape(const std::vector<int64_t> &set_shape);
 };
