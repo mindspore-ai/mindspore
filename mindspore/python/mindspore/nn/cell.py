@@ -310,6 +310,8 @@ class Cell(Cell_):
         if '_params' in self.__dict__:
             params = self.__dict__['_params']
             if name in params:
+                if context._get_mode() == context.PYNATIVE_MODE:
+                    return self.cast_param(params[name])
                 return params[name]
         if '_cells' in self.__dict__:
             cells = self.__dict__['_cells']
@@ -318,11 +320,16 @@ class Cell(Cell_):
         if '_tensor_list' in self.__dict__:
             tensor_list = self.__dict__['_tensor_list']
             if name in tensor_list:
-                return tensor_list[name]
+                return self.cast_param(tensor_list[name])
         if '_params_list' in self.__dict__:
             params_list = self.__dict__['_params_list']
             if name in params_list:
-                return ParameterTuple(params_list[name])
+                para_list = params_list[name]
+                cast_list = list()
+                for para in para_list:
+                    cast_list.append(self.cast_param(para))
+                para_list = ParameterTuple(cast_list)
+                return para_list
         raise AttributeError("The '{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
@@ -561,8 +568,6 @@ class Cell(Cell_):
         Returns:
             Tuple, the inputs after data type cast.
         """
-        msg = f"'auto_cast_inputs' is deprecated from version 2.0 and will be removed in a future version."
-        logger.warning(msg)
         cast_inputs = inputs
         mixed_type = self.get_mixed_precision_type()
         if mixed_type == MixedPrecisionType.FP16:
@@ -612,7 +617,8 @@ class Cell(Cell_):
 
         try:
             _pynative_executor.new_graph(self, *args, **kwargs)
-            output = self._run_construct(args, kwargs)
+            cast_inputs = self.auto_cast_inputs(args)
+            output = self._run_construct(cast_inputs, kwargs)
             _pynative_executor.end_graph(self, output, *args, **kwargs)
         except Exception as err:
             _pynative_executor.clear_res()
@@ -1038,8 +1044,6 @@ class Cell(Cell_):
         Returns:
             Parameter, the input parameter with type automatically cast.
         """
-        msg = f"'cast_param' is deprecated from version 2.0 and will be removed in a future version."
-        logger.warning(msg)
         mixed_type = self.get_mixed_precision_type()
         if mixed_type != MixedPrecisionType.NOTSET:
             if mixed_type == MixedPrecisionType.FP32:

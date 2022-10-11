@@ -282,19 +282,15 @@ ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_r
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(is_cast);
   MS_EXCEPTION_IF_NULL(v);
-  if (op_run_info->mix_type != kNotSet) {
-    auto dst_dtype = kFloat16;
-    if (op_run_info->mix_type == kFP32) {
-      dst_dtype = kFloat32;
-    }
-    const auto &tensor = v->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
+  const auto &tensor = v->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  const auto &cast_type = tensor->cast_dtype();
+  if (cast_type != nullptr) {
     auto source_dtype = tensor->Dtype();
-    if (source_dtype != nullptr && IsSubType(source_dtype, kFloat) && *source_dtype != *dst_dtype) {
-      MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
-                    << "th input, and to type " << dst_dtype->ToString();
+    if (source_dtype != nullptr && IsSubType(source_dtype, kFloat) && *source_dtype != *cast_type) {
+      MS_LOG(DEBUG) << "Cast to " << cast_type->ToString();
       *is_cast = true;
-      return DoAutoCast(op_run_info, tensor, dst_dtype->type_id(), op_name, index);
+      return DoAutoCast(op_run_info, tensor, cast_type->type_id(), op_name, index);
     }
   }
   return v;
