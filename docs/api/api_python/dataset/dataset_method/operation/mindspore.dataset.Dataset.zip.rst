@@ -13,4 +13,4 @@ mindspore.dataset.Dataset.zip
 
     异常：
         - **ValueError** - `datasets` 参数的长度为1。
-        - **TypeError** - datasets参数不是tuple。
+        - **TypeError** - `datasets` 参数不是tuple。

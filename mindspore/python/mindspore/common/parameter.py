@@ -590,12 +590,12 @@ class Parameter(Tensor_):
         Return the value of parameter object.
 
         Examples:
-        >>> from mindspore import Tensor, Parameter
-        >>> import numpy as np
-        >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
-        >>> x_value = x.value()
-        >>> print(x_value)
-        [1.  2.]
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x_value = x.value()
+            >>> print(x_value)
+            [1.  2.]
         """
         return self.load(self, monad.U)
 

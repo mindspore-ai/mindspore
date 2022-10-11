@@ -21,7 +21,7 @@ mindspore.ops.multi_label_margin_loss
         - **inputs** (Tensor) - 预测值。shape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
           为批量大小，:math:`C` 为类别数。数据类型必须为：float16或float32。
         - **target** (Tensor) - 真实标签，shape与 `inputs` 相同，数据类型必须为int32，标签目标由-1填充。
-        - **reduction** (str) - 可选，对输出应用特定的缩减方法：可选"none"、"mean"、"sum"。默认值：'mean'。
+        - **reduction** (str, 可选) - 可选，对输出应用特定的缩减方法：可选"none"、"mean"、"sum"。默认值：'mean'。
 
           - 'none'：不应用缩减方法。
           - 'mean'：输出的值总和除以输出的元素个数。
