@@ -73,30 +73,32 @@ class MirrorPadInfer : public abstract::OpInferBase {
     if (input_x_shape_ptr->IsDynamic()) {
       return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
     }
-    int64_t size = x_shape.size();
+    int64_t size = SizeToLong(x_shape.size());
     if (size < 0 || size > MAX_PADDINGS) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
                                << "', the dimension of input only supports less than or equal to 5 dims, but got "
                                << size << " dims";
     }
-    for (int64_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < LongToSize(size); i++) {
       if (paddings_attr[i].first < 0 || paddings_attr[i].second < 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
       }
       if (mode == "SYMMETRIC") {
-        if (paddings_attr[i].first > x_shape[i] || paddings_attr[i].second > x_shape[i])
+        if (paddings_attr[i].first > x_shape[i] || paddings_attr[i].second > x_shape[i]) {
           MS_EXCEPTION(ValueError) << "For '" << prim_name
                                    << "', paddings must be no greater "
                                       "than the dimension size: ["
                                    << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] greater than ["
                                    << x_shape[i] << "]";
+        }
       } else if (mode == "REFLECT") {
-        if (paddings_attr[i].first >= x_shape[i] || paddings_attr[i].second >= x_shape[i])
+        if (paddings_attr[i].first >= x_shape[i] || paddings_attr[i].second >= x_shape[i]) {
           MS_EXCEPTION(ValueError) << "For '" << prim_name
                                    << "', paddings must be no greater "
                                       "than the dimension size: ["
                                    << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] not less than ["
                                    << x_shape[i] << "]";
+        }
       }
     }
     std::vector<int64_t> out_shape;

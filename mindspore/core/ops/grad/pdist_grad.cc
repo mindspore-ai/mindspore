@@ -36,7 +36,7 @@ abstract::ShapePtr PdistGradInferShape(const PrimitivePtr &primitive, const std:
   auto x_size = x_shape.size();
   (void)CheckAndConvertUtils::CheckValue("y_grad shape", grad_shape, kEqual, "y shape", pdist_shape, prim_name);
   const int64_t x_dim = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x dim", x_size, kEqual, x_dim, "PdistGrad");
+  (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kEqual, x_dim, "PdistGrad");
   auto out_shape = input_args[1]->BuildShape();
   MS_EXCEPTION_IF_NULL(out_shape);
   auto out_element = out_shape->cast<abstract::ShapePtr>();

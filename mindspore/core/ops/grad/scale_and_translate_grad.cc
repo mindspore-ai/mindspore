@@ -116,7 +116,7 @@ AbstractBasePtr ScaleAndTranslateGradInfer(const abstract::AnalysisEnginePtr &, 
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto infer_type = ScaleAndTranslateGradInferType(primitive, input_args);
   auto infer_shape = ScaleAndTranslateGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

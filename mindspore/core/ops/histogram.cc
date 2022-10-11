@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr HistogramInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr HistogramInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) {
   auto bins_ptr = primitive->GetAttr(kBins);
   MS_EXCEPTION_IF_NULL(bins_ptr);
   auto min_ptr = primitive->GetAttr(kMin);
