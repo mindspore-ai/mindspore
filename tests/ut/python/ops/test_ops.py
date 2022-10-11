@@ -73,6 +73,7 @@ from mindspore.ops.operations.array_ops import ConcatOffsetV1
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
+from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops.operations.image_ops import NonMaxSuppressionWithOverlaps
 from mindspore.ops.operations.image_ops import ResizeArea
 from mindspore.ops.operations.image_ops import ScaleAndTranslate
@@ -3622,6 +3623,10 @@ test_case_array_ops = [
         'desc_const': [(2, 1, 1, 2)],
         'desc_inputs': [[2, 2, 2]],
         'desc_bprop': [[2, 2, 2, 4]]}),
+    ('LogNormalReverse', {
+        'block': LogNormalReverse(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0]]), mstype.float32)],
+        'skip': ['backward']}),
     ('ReverseV2', {
         'block': P.ReverseV2(axis=[1]),
         'desc_inputs': [(Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)))],
