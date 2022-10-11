@@ -79,6 +79,7 @@ int PReluCPUKernel::DoExcute(int task_id) const {
 int PReluCPUKernel::ReSize() {
   auto &input = in_tensors_[kInputIndex];
   param_->input_num_ = input->ElementsNum();
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.front()->ElementsNum(), param_->input_num_);
   param_->channel_num_ = input->Channel();
   return RET_OK;
 }
