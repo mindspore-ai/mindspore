@@ -117,12 +117,18 @@ def auto_mixed_precision(network, amp_level="O0"):
         amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: "O0".
 
             - "O0": Do not change.
-            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
+            - "O1": [DEMO] Cast the operators in white_list to float16, the remaining operators are kept in float32.
             - "O2": Cast network to float16, keep operators in black_list run in float32,
             - "O3": Cast network to float16.
 
     Raises:
         ValueError: If amp level is not supported.
+
+    Examples:
+        >>> from mindpsore import amp, nn
+        >>> network = LeNet5()
+        >>> amp_level = "O1"
+        >>> net = amp.auto_mixed_precision(network, amp_level)
     """
     if amp_level == "O0":
         pass
@@ -259,7 +265,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         level (str): Supports ["O0", "O1", "O2", "O3", "auto"]. Default: "O0".
 
             - "O0": Do not change.
-            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
+            - "O1": [DEMO] Cast the operators in white_list to float16, the remaining operators are kept in float32.
             - "O2": Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
             - "O3": Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
