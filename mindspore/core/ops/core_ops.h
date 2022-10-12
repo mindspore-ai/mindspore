@@ -396,8 +396,6 @@ constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kAssign = "Assign";
 constexpr auto kAssignAdd = "AssignAdd";
 constexpr auto kAssignSub = "AssignSub";
-constexpr auto kVmapStackAssign = "VmapStackAssign";
-constexpr auto kVmapUnstackAssign = "VmapUnstackAssign";
 constexpr auto kBartlettWindow = "BartlettWindow";
 constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
@@ -1301,8 +1299,6 @@ GVAR_DEF(PrimitivePtr, kPrimSwitchLayer, std::make_shared<Primitive>("switch_lay
 GVAR_DEF(PrimitivePtr, kPrimAssign, std::make_shared<Primitive>(kAssign));
 GVAR_DEF(PrimitivePtr, kPrimAssignAdd, std::make_shared<Primitive>(kAssignAdd));
 GVAR_DEF(PrimitivePtr, kPrimAssignSub, std::make_shared<Primitive>(kAssignSub));
-GVAR_DEF(PrimitivePtr, kPrimVmapStackAssign, std::make_shared<Primitive>(kVmapStackAssign));
-GVAR_DEF(PrimitivePtr, kPrimVmapUnstackAssign, std::make_shared<Primitive>(kVmapUnstackAssign));
 GVAR_DEF(PrimitivePtr, kPrimSelect, std::make_shared<Primitive>(kSelect));
 GVAR_DEF(PrimitivePtr, kPrimCall, std::make_shared<Primitive>("call"));
 GVAR_DEF(PrimitivePtr, kPrimRaise, std::make_shared<Primitive>("raise"));
