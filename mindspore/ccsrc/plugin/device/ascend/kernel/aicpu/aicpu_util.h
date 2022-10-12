@@ -66,6 +66,7 @@ constexpr auto kGather = "Gather";
 constexpr auto kHistogram = "Histogram";
 constexpr auto kIdentity = "Identity";
 constexpr auto kIdentityN = "IdentityN";
+constexpr auto kConcatOffset = "ConcatOffset";
 constexpr auto kConcatOffsetV1 = "ConcatOffsetV1";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
@@ -255,6 +256,7 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kReservoirReplayBufferSample,
                                               kReservoirReplayBufferDestroy,
                                               kGatherDGradV2,
+                                              kConcatOffset,
                                               kRandomShuffle,
                                               kRange};
 const std::set<std::string> kDynamicInputOps{kPrint,
