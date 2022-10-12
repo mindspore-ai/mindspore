@@ -98,7 +98,7 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, var must be at least 1D.";
   } else {
-    var_first_dim_size_ = var_shape[0];
+    var_first_dim_size_ = LongToSize(var_shape[0]);
   }
   if (var_shape.size() != grad_shape.size()) {
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, rank(grad) should be same as rank(var), but got rank(grad): "
@@ -111,12 +111,12 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(EXCEPTION) << "For SparseApplyMomentum, the shape of var and grad must equal in dimension " << i << ".";
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, indices must be 1D, but got " << indices_shape.size() << "D.";
   }
-  indices_size_ = indices_shape[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION)
       << "For SparseApplyMomentum, grad.shape[0] must be equal to indices.shape[0], but got grad.shape[0]: "

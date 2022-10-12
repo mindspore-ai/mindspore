@@ -88,7 +88,7 @@ int SparseToDenseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 template <typename I, typename T>
 void SparseToDenseV2CpuKernelMod::CheckValidate(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &workspace,
+                                                const std::vector<kernel::AddressPtr> &,
                                                 const std::vector<kernel::AddressPtr> &outputs, const bool dim_flag) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSize4, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSize1, kernel_name_);

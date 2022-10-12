@@ -119,7 +119,7 @@ bool SparseReorderCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   }
   sparse_tensor_.indices_ = y_indices_addr;
   sparse_tensor_.value_ = y_values_addr;
-  sparse_tensor_.dims_size_ = rank;
+  sparse_tensor_.dims_size_ = SizeToLong(rank);
   std::vector<int64_t> reorder(indices_shape_[0]);
   std::iota(reorder.begin(), reorder.end(), 0);
   // Sort to get order of indices

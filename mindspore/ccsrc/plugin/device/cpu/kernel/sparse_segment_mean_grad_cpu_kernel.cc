@@ -32,7 +32,7 @@ constexpr size_t kSparseSegmentMeanGradOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-void SparseSegmentMeanGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
+void SparseSegmentMeanGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kSparseSegmentMeanGradInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -76,7 +76,7 @@ void SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   auto y_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
 
   for (size_t i = 0; i < num_elements; i++) {
-    y_addr[i] = (T)0;
+    y_addr[i] = static_cast<T>(0);
   }
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {
@@ -97,7 +97,8 @@ void SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
     if (segment_ids_addr[i] != beginindex) {
       for (size_t j = 1; j <= countnum; j++) {
         for (size_t l = 0; l < n; l++) {
-          y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / (T)(countnum);
+          y_addr[indices_addr[i - j] * SizeToInt(n) + SizeToInt(l)] +=
+            x_addr[beginindex * SizeToInt(n) + SizeToInt(l)] / static_cast<T>(countnum);
         }
       }
       beginindex = segment_ids_addr[i];
@@ -107,10 +108,11 @@ void SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
     }
   }
 
-  int i = m;
+  size_t i = m;
   for (size_t j = 1; j <= countnum; j++) {
     for (size_t l = 0; l < n; l++) {
-      y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / (T)(countnum);
+      y_addr[indices_addr[i - j] * SizeToInt(n) + SizeToInt(l)] +=
+        x_addr[beginindex * SizeToInt(n) + SizeToInt(l)] / static_cast<T>(countnum);
     }
   }
 }

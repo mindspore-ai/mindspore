@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <utility>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -80,20 +81,20 @@ void UnionSparseIndicesAndValues(
   while (i < a_nnz && j < b_nnz) {
     switch (cmp(a_indices_mat, b_indices_mat, i, j, num_dims)) {
       case -1:
-        entries_to_copy->emplace_back(true, i);
+        (void)entries_to_copy->emplace_back(true, i);
         a_augmented_values->push_back(a_values(i));
         b_augmented_values->push_back(kZero);
         ++i;
         break;
       case 0:
-        entries_to_copy->emplace_back(true, i);
+        (void)entries_to_copy->emplace_back(true, i);
         a_augmented_values->push_back(a_values(i));
         b_augmented_values->push_back(b_values(j));
         ++i;
         ++j;
         break;
       case 1:
-        entries_to_copy->emplace_back(false, j);
+        (void)entries_to_copy->emplace_back(false, j);
         a_augmented_values->push_back(kZero);
         b_augmented_values->push_back(b_values(j));
         ++j;
@@ -102,12 +103,12 @@ void UnionSparseIndicesAndValues(
   }
   // Handles leftovers; at most one loop runs.
   while (i < a_nnz) {
-    entries_to_copy->emplace_back(true, i);
+    (void)entries_to_copy->emplace_back(true, i);
     a_augmented_values->push_back(a_values(i++));
     b_augmented_values->push_back(kZero);
   }
   while (j < b_nnz) {
-    entries_to_copy->emplace_back(false, j);
+    (void)entries_to_copy->emplace_back(false, j);
     a_augmented_values->push_back(kZero);
     b_augmented_values->push_back(b_values(j++));
   }
@@ -238,7 +239,7 @@ bool SparseSparseMaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   std::vector<std::pair<bool, int64_t>> entries_to_copy;  // from_a?, idx
   UnionSparseIndicesAndValues(a_indices_mat, a_values, a_nnz, b_indices_mat, b_values, b_nnz, num_dims,
                               &a_augmented_values, &b_augmented_values, &entries_to_copy);
-  const int64_t sum_nnz = a_augmented_values.size();
+  const int64_t sum_nnz = SizeToLong(a_augmented_values.size());
 
   auto output_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_indices]->addr);
   Eigen::DSizes<Eigen::DenseIndex, kIndex2> output_indices_size(static_cast<Eigen::DenseIndex>(sum_nnz),
