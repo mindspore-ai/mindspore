@@ -33,7 +33,7 @@ Status RandomHorizontalFlipOp::Compute(const TensorRow &input, TensorRow *output
   }
 
   if (distribution_(rnd_)) {
-    for (dsize_t i = 0; i < output_count; ++i) {
+    for (size_t i = 0; i < output_count; ++i) {
       auto input_shape = input[i]->shape();
       dsize_t rank = input_shape.Rank();
       if (rank <= kDefaultImageRank) {

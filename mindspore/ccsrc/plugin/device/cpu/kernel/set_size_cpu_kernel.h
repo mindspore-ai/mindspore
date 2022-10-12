@@ -40,10 +40,11 @@ class SetSizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  bool IndicesValid(int64_t n, const std::vector<kernel::AddressPtr> &inputs);
+  bool IndicesValid(int64_t n, const std::vector<kernel::AddressPtr> &inputs) const;
 
   template <typename T>
-  bool SetSizeCompute(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool SetSizeCompute(const std::vector<kernel::AddressPtr> &inputs,
+                      const std::vector<kernel::AddressPtr> &outputs) const;
 
   ShapeVector output_shape_;
   ShapeVector shape_;

@@ -85,16 +85,16 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
                                             const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != KRET_OK) {
+  if (ret != static_cast<int>(KRET_OK)) {
     return ret;
   }
   enum input_index : size_t { Var_no, Accum_no, Lr_no, Grad_no, Indices_no, Momentum_no };
-  ShapeVector var_shape = inputs[Var_no]->GetShapeVector();
-  ShapeVector accum_shape = inputs[Accum_no]->GetShapeVector();
-  ShapeVector lr_shape = inputs[Lr_no]->GetShapeVector();
-  ShapeVector grad_shape = inputs[Grad_no]->GetShapeVector();
-  ShapeVector indices_shape = inputs[Indices_no]->GetShapeVector();
-  ShapeVector momentum_shape = inputs[Momentum_no]->GetShapeVector();
+  auto var_shape = inputs[static_cast<size_t>(Var_no)]->GetShapeVector();
+  auto accum_shape = inputs[static_cast<size_t>(Accum_no)]->GetShapeVector();
+  auto lr_shape = inputs[static_cast<size_t>(Lr_no)]->GetShapeVector();
+  auto grad_shape = inputs[static_cast<size_t>(Grad_no)]->GetShapeVector();
+  auto indices_shape = inputs[static_cast<size_t>(Indices_no)]->GetShapeVector();
+  auto momentum_shape = inputs[static_cast<size_t>(Momentum_no)]->GetShapeVector();
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, var must be at least 1D.";
   } else {
@@ -129,23 +129,23 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, momentum is not a scalar, got shape: " << Vector2Str(momentum_shape)
                       << ".";
   }
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
 template <typename I, typename T>
 bool SparseApplyMomentumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs) {
+                                                   const std::vector<AddressPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyMomentumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyMomentumOutputsNum, kernel_name_);
 
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[1]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[3]->addr);
-  auto indices = reinterpret_cast<I *>(inputs[4]->addr);
-  auto lr_scalar = reinterpret_cast<T *>(inputs[2]->addr)[0];
-  auto momentum_scalar = reinterpret_cast<T *>(inputs[5]->addr)[0];
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto var = static_cast<T *>(inputs[0]->addr);
+  auto accum = static_cast<T *>(inputs[1]->addr);
+  auto grad = static_cast<T *>(inputs[3]->addr);
+  auto indices = static_cast<I *>(inputs[4]->addr);
+  auto lr_scalar = static_cast<T *>(inputs[2]->addr)[0];
+  auto momentum_scalar = static_cast<T *>(inputs[5]->addr)[0];
+  auto output = static_cast<T *>(outputs[0]->addr);
 
   for (size_t i = 0; i < indices_size_; ++i) {
     I index = indices[i];
@@ -155,7 +155,8 @@ bool SparseApplyMomentumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     }
     size_t start_index = var_outer_dim_size_ * static_cast<size_t>(index);
     size_t end_index = start_index + var_outer_dim_size_;
-    for (size_t j = start_index, k = var_outer_dim_size_ * i; j < end_index; ++j, ++k) {
+    for (int64_t j = SizeToLong(start_index), k = SizeToLong(var_outer_dim_size_) * i; j < SizeToLong(end_index);
+         ++j, ++k) {
       accum[j] = accum[j] * momentum_scalar + grad[k];
       if (use_nesterov_) {
         var[j] -= lr_scalar * grad[k] + lr_scalar * momentum_scalar * accum[j];

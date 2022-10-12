@@ -118,13 +118,13 @@ void TrilCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
     output = input.template triangularView<Eigen::Lower>();
     if (diagonal_ > 0) {
       for (int64_t i = 0; i < SizeToLong(matrix_width); i++) {
-        for (int64_t j = i + 1; j <= i + diagonal_ && j < SizeToLong(matrix_height); j++) {
+        for (int64_t j = i + 1; j <= i + SizeToLong(diagonal_) && j < SizeToLong(matrix_height); j++) {
           output(i, j) = input(i, j);
         }
       }
     } else {
       for (int64_t j = 0; j < SizeToLong(matrix_height); j++) {
-        for (int64_t i = j; i < j - diagonal_ && i < SizeToLong(matrix_width); i++) {
+        for (int64_t i = j; i < j - SizeToLong(diagonal_) && i < SizeToLong(matrix_width); i++) {
           output(i, j) = static_cast<T>(0.0);
         }
       }
