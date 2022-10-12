@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <string>
 #include <map>
+#include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ir/primitive.h"
 
@@ -29,6 +30,8 @@ constexpr size_t kStridedSliceGradDynamicInputsNum = 5;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kSliceGradMaxInputShapeSize = 8;
 }  // namespace
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
@@ -148,6 +151,24 @@ bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     ret = LaunchKernel<bool>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
     ret = LaunchKernel<double>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt16) {
+    ret = LaunchKernel<int16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt64) {
+    ret = LaunchKernel<int64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt8) {
+    ret = LaunchKernel<int8_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt64) {
+    ret = LaunchKernel<uint64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt32) {
+    ret = LaunchKernel<uint32_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt16) {
+    ret = LaunchKernel<uint16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt8) {
+    ret = LaunchKernel<uint8_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeComplex64) {
+    ret = LaunchKernel<complex64>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeComplex128) {
+    ret = LaunchKernel<complex128>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of input must be bool, int32, float32 or float64, but got "
@@ -212,7 +233,7 @@ bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<kernel::AddressPtr> &i
       size_t out_h_offset = out_start_offset[2];
       for (int k = begin_[2]; stride_signs[2] * k < stride_signs[2] * end_[2];
            k += strides_[2], in_h_offset += input_element_num_[2], out_h_offset += out_step_size[2]) {
-        if (can_copy_memory[2]) {
+        if (can_copy_memory[kSecondIndex]) {
           CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset, outputs,
                               out_n_offset + out_c_offset + out_h_offset, input_element_num_[2], 2);
           continue;
@@ -228,7 +249,7 @@ bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<kernel::AddressPtr> &i
           }
           size_t in_4_offset = 0;
           size_t out_4_offset = out_start_offset[4];
-          for (int m = begin_[4]; stride_signs[4] * m < stride_signs[4] * end_[4];
+          for (int m = begin_[kIndex]; stride_signs[kIndex] * m < stride_signs[kIndex] * end_[kIndex];
                m += strides_[4], in_4_offset += input_element_num_[4], out_4_offset += out_step_size[4]) {
             if (can_copy_memory[4]) {
               CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset + in_w_offset + in_4_offset, outputs,
@@ -352,6 +373,15 @@ void SliceGradCpuKernelMod::FormatArgs(bool stride) {
   }
 }
 
+#define STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2) \
+  KernelAttr()                                                \
+    .AddInputAttr(TYPEID_1)                                   \
+    .AddInputAttr(TYPEID_2)                                   \
+    .AddInputAttr(TYPEID_2)                                   \
+    .AddInputAttr(TYPEID_2)                                   \
+    .AddInputAttr(TYPEID_2)                                   \
+    .AddOutputAttr(TYPEID_1)
+
 std::vector<KernelAttr> SliceGradCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
     {kSliceGrad,
@@ -385,65 +415,44 @@ std::vector<KernelAttr> SliceGradCpuKernelMod::GetOpSupport() {
         .AddOutputAttr(kNumberTypeBool)}},
     {kStridedSliceGrad,
      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
       KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+      KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+      KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
       KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddOutputAttr(kNumberTypeInt32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat64)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeBool)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddOutputAttr(kNumberTypeBool),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat32)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeInt32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeBool)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeBool)}}};
+      KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64)}}};
 
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {
