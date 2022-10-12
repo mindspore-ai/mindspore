@@ -19,12 +19,54 @@ import os
 import glob
 import copy
 from collections import defaultdict
+import numpy as np
 import mindspore as ms
 from mindspore.parallel._parallel_serialization import _rank_list_for_transform_parallel_checkpoint, \
-    _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir
+    _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, _load_strategy_file, \
+    _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num
 
 
-__all__ = ["rank_list_for_transform", "transform_checkpoint_by_rank", "transform_checkpoints"]
+__all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_checkpoint_by_rank",
+           "transform_checkpoints"]
+
+
+def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
+    """
+    Merge parallel strategy between all pipeline stages in pipeline parallel mode.
+
+    Note:
+        Strategy file of each pipeline stage should be included in src_strategy_dirs.
+
+    Args:
+        src_strategy_dirs (str): The directory of strategy files including all pipeline stage which is saved by
+                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'
+        dst_strategy_file (str): The file merged strategy to save.
+    """
+    dst_strategy_dir, _ = os.path.split(dst_strategy_file)
+    if not os.path.exists(dst_strategy_dir):
+        _make_dir(dst_strategy_dir, "path")
+    if not os.path.isdir(src_strategy_dirs):
+        raise NotADirectoryError("src_strategy_dirs {} is not a directory.".format(src_strategy_dirs))
+    src_strategy_files = os.path.join(src_strategy_dirs, "*.ckpt")
+    dst_parallel_strategy_map = ms.train.node_strategy_pb2.ParallelStrategyMap()
+    merged_stage = []
+    for src_strategy_file in glob.glob(src_strategy_files):
+        src_parallel_strategy_map = _load_strategy_file(src_strategy_file)
+        strategy_items = src_parallel_strategy_map.parallel_strategy_item
+        layout_items = src_parallel_strategy_map.parallel_layout_item
+        if not strategy_items or not layout_items:
+            raise ValueError("The strategy file {} is empty".format(src_strategy_file))
+        pipeline_stage = strategy_items[0].parallel_strategys.stage
+        if pipeline_stage in merged_stage:
+            continue
+        for layout_item in layout_items:
+            layout_item.param_name = "-".join([str(pipeline_stage), layout_item.param_name])
+        dst_parallel_strategy_map.parallel_strategy_item.extend(strategy_items)
+        dst_parallel_strategy_map.parallel_layout_item.extend(layout_items)
+        merged_stage.append(pipeline_stage)
+    dst_parallel_strategy_map.current_stage = 1
+    with open(dst_strategy_file, "wb") as f:
+        f.write(dst_parallel_strategy_map.SerializeToString())
 
 
 def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=None):
@@ -64,7 +106,29 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
     """
     if not isinstance(rank_id, int):
         raise TypeError("The rank_id should be a int.")
-    return _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_file, dst_strategy_file)
+    if src_strategy_file is None:
+        return [0]
+    src_strategy_list, dst_strategy_list = _extract_src_dst_layout_map(rank_id, src_strategy_file, dst_strategy_file)
+    src_stage_device_num = np.prod(src_strategy_list.get(list(src_strategy_list.keys())[0])[0]) if src_strategy_list \
+                                                                                                   is not None else 1
+    dst_stage_device_num = np.prod(dst_strategy_list.get(list(dst_strategy_list.keys())[0])[0]) if dst_strategy_list \
+                                                                                                   is not None else 1
+
+    if not src_strategy_list:
+        raise ValueError("The src_strategy_file is empty.")
+    local_rank_id = rank_id % dst_stage_device_num if dst_stage_device_num > 1 else rank_id
+    needed_rank_list_in_local_stage = _rank_list_for_transform_parallel_checkpoint(local_rank_id,
+                                                                                   src_strategy_list, dst_strategy_list)
+    result_set = set()
+    handled_pipeline_stage = []
+    for _, layout in src_strategy_list.items():
+        for src_pipeline_stage_id in layout[6]:
+            if src_pipeline_stage_id in handled_pipeline_stage:
+                continue
+            src_rank_id_start = src_pipeline_stage_id * src_stage_device_num
+            result_set.update([src_rank_id_start + rank for rank in needed_rank_list_in_local_stage])
+            handled_pipeline_stage.append(src_pipeline_stage_id)
+    return list(result_set)
 
 
 def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
@@ -124,13 +188,27 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
             raise ValueError("Checkpoint file {} in rank {} not exits: ".format(local_file, rank))
     param_total_dict = defaultdict(dict)
     param_attr_dict = defaultdict(dict)
+    src_strategy_list, dst_strategy_list = _extract_src_dst_layout_map(rank_id, src_strategy_file, dst_strategy_file)
+    # src rank => local rank inside pipeline stage
+    src_stage_device_num = np.prod(src_strategy_list.get(list(src_strategy_list.keys())[0])[0]) if src_strategy_list \
+                                                                                                   is not None else 1
+    dst_stage_device_num = np.prod(dst_strategy_list.get(list(dst_strategy_list.keys())[0])[0]) if dst_strategy_list \
+                                                                                                   is not None else 1
+    origin_dst_strategy_list = _extract_layout_map(dst_strategy_file)
+    origin_src_strategy_list = _extract_layout_map(src_strategy_file)
     for rank, file_name in checkpoint_files_map.items():
         ckpt_dict = ms.load_checkpoint(file_name)
         for param_name, param in ckpt_dict.items():
-            param_total_dict[param_name][rank] = param.data.asnumpy()
-            param_attr_dict[param_name][rank] = (param.requires_grad, param.layerwise_parallel)
-    transform_param_list = _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, src_strategy_file,
-                                                          dst_strategy_file)
+            # cut the parameter not in the pipeline stage.
+            if _parameter_not_in_local_stage(param_name, origin_src_strategy_list, src_strategy_list) \
+                    and _parameter_not_in_local_stage(param_name, origin_dst_strategy_list, dst_strategy_list):
+                continue
+            src_rank = rank % src_stage_device_num# if src_stage_device_num > 1 else rank
+            param_total_dict[param_name][src_rank] = param.data.asnumpy()
+            param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
+    local_rank_id = rank_id % dst_stage_device_num
+    transform_param_list = _transform_parallel_checkpoint(local_rank_id, param_total_dict,
+                                                          param_attr_dict, src_strategy_list, dst_strategy_list)
     ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
 
 
@@ -194,7 +272,12 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
             all_checkpoint_files_map[rank_id] = checkpoint_file
 
     needed_rank_list_map = defaultdict(list)
-    dst_device_num = _get_device_num_from_strategy(dst_strategy_file)
+    dst_stage_device_num = _get_device_num_from_strategy(dst_strategy_file)
+    src_stage_device_num = _get_device_num_from_strategy(src_strategy_file)
+    dst_stage_num = _extract_pipeline_stage_num(dst_strategy_file)
+    dst_device_num = dst_stage_device_num * dst_stage_num
+    origin_src_strategy_list = _extract_layout_map(src_strategy_file)
+    origin_dst_strategy_list = _extract_layout_map(dst_strategy_file)
     for rank in range(dst_device_num):
         needed_rank_list = rank_list_for_transform(rank, src_strategy_file, dst_strategy_file)
         for needed_rank in needed_rank_list:
@@ -210,12 +293,22 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         for needed_rank in needed_rank_list:
             ckpt_dict = ms.load_checkpoint(all_checkpoint_files_map.get(int(needed_rank)))
             for param_name, param in ckpt_dict.items():
-                param_total_dict[param_name][int(needed_rank)] = param.data.asnumpy()
-                param_attr_dict[param_name][int(needed_rank)] = (param.requires_grad, param.layerwise_parallel)
+                src_rank = int(needed_rank) % src_stage_device_num# if src_stage_device_num > 1 else int(needed_rank)
+                param_total_dict[param_name][src_rank] = param.data.asnumpy()
+                param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
         for transform_rank in transform_rank_list:
             param_total_dict_copy = copy.deepcopy(param_total_dict)
-            transform_param_list = _transform_parallel_checkpoint(transform_rank, param_total_dict_copy,
-                                                                  param_attr_dict, src_strategy_file, dst_strategy_file)
+            src_strategy_list, dst_strategy_list = _extract_src_dst_layout_map(transform_rank, src_strategy_file,
+                                                                               dst_strategy_file)
+            # cut the parameter not in the pipeline stage.
+            for param in list(param_total_dict_copy.keys()):
+                if _parameter_not_in_local_stage(param, origin_src_strategy_list, src_strategy_list) \
+                        and _parameter_not_in_local_stage(param, origin_dst_strategy_list, dst_strategy_list):
+                    param_total_dict_copy.pop(param)
+
+            local_rank_id = transform_rank % dst_stage_device_num
+            transform_param_list = _transform_parallel_checkpoint(local_rank_id, param_total_dict_copy,
+                                                                  param_attr_dict, src_strategy_list, dst_strategy_list)
             save_checkpoint_file = "{}{}.ckpt".format(ckpt_prefix, transform_rank)
             save_checkpoint_file_dir = os.path.join(dst_checkpoints_dir, "rank_{}".format(transform_rank))
             if not os.path.exists(save_checkpoint_file_dir):
