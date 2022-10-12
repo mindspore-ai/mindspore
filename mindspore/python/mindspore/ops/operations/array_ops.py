@@ -5356,7 +5356,7 @@ class BatchToSpace(PrimitiveWithInfer):
             All values must be not less than 0. crops[i] specifies the crop values for the spatial dimension i, which
             corresponds to the input dimension i+2. It is required that
 
-            :math:`input\_shape[i+2]*block\_size >= crops[i][0]+crops[i][1]`
+            :math:`input\_shape[i+2]*block\_size > crops[i][0]+crops[i][1]`
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 must be divisible by
