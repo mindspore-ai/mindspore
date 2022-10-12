@@ -15,6 +15,8 @@
 
 import numpy as np
 import pytest
+import torch
+import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore import ops
@@ -133,3 +135,23 @@ def test_complex_broadcast():
     res_ms = complex1 / complex2
     res_to = np.divide(complex_1, complex_2)
     assert complex_compare(res_ms, res_to)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_complex_reducesum():
+    """
+    Feature: complex reduce Operation.
+    Description: Test complex reduce Operation.
+    Expectation: the result match given one.
+    """
+    x0_real = np.random.rand(2, 3, 4).astype(np.float32)
+    x0_imag = np.random.rand(2, 3, 4).astype(np.float32)
+    x0 = Complex()(Tensor(x0_real), Tensor(x0_imag))
+    axis0 = 2
+    keep_dims0 = True
+    res_ms = P.ReduceSum(keep_dims0)(x0, axis0)
+    x0_torch = torch.complex(torch.tensor(x0_real), torch.tensor(x0_imag))
+    res_torch = torch.sum(x0_torch, axis0, keep_dims0)
+    np.allclose(res_ms.asnumpy(), res_torch.numpy(), rtol=5e-03, atol=1.e-8)
