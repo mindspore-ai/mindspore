@@ -73,8 +73,8 @@ void SSLWrapper::InitSSL() {
   MS_LOG(INFO) << "The server cert path:" << server_cert;
 
   // 2. Parse the server password.
-  std::string server_password = PSContext::instance()->server_password();
-  if (server_password.empty()) {
+  char *server_password = PSContext::instance()->server_password();
+  if (strlen(server_password) == 0) {
     MS_LOG(EXCEPTION) << "The client password's value is empty.";
   }
 
@@ -86,17 +86,28 @@ void SSLWrapper::InitSSL() {
     MS_LOG(EXCEPTION) << "Read server cert file failed.";
   }
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
+  BIO_free_all(bio);
   if (p12 == nullptr) {
     MS_LOG(EXCEPTION) << "Create PKCS12 cert failed, please check whether the certificate is correct.";
   }
-  BIO_free_all(bio);
-  if (!PKCS12_parse(p12, server_password.c_str(), &pkey, &cert, &ca_stack)) {
-    MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
+  if (PKCS12_parse(p12, server_password, &pkey, &cert, &ca_stack) == 0) {
+    if (ERR_GET_REASON(ERR_peek_last_error()) == PKCS12_R_MAC_VERIFY_FAILURE) {
+      MS_LOG(EXCEPTION) << "The server password is invalid!";
+    }
+    MS_LOG(EXCEPTION) << "PKCS12_parse failed, the reason is " << ERR_reason_error_string(ERR_peek_last_error());
   }
+  PSContext::instance()->ClearServerPassword();
+
   PKCS12_free(p12);
+  MS_EXCEPTION_IF_NULL(cert);
+  MS_EXCEPTION_IF_NULL(pkey);
+  if (ca_stack != nullptr) {
+    MS_LOG(EXCEPTION) << "The cert is invalid: ca_stack should be empty.";
+  }
+
   std::string ca_path = CommUtil::ParseConfig(*config_, kCaCertPath);
   if (!CommUtil::IsFileExists(ca_path)) {
-    MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
+    MS_LOG(EXCEPTION) << "The key:" << kCaCertPath << "'s value is not exist.";
   }
   BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
   if (ca_bio == nullptr) {
@@ -124,6 +135,8 @@ void SSLWrapper::InitSSL() {
   StartCheckCertTime(*config_, cert, ca_path);
 
   EVP_PKEY_free(pkey);
+  X509_free(caCert);
+  X509_free(cert);
   BIO_vfree(ca_bio);
   if (crl != nullptr) {
     X509_CRL_free(crl);
