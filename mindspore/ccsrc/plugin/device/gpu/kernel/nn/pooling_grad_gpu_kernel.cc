@@ -30,7 +30,6 @@ constexpr auto kMaxPool3DGrad = "MaxPool3DGrad";
 constexpr auto kAvgPoolGrad = "AvgPoolGrad";
 constexpr auto kAvgPool3DGrad = "AvgPool3DGrad";
 constexpr size_t kInputNum = 3;
-constexpr size_t kAvgPool3DGradInputNum = 1;
 constexpr size_t kAvgPool3DGradDynamicInputNum = 2;
 
 bool PoolingGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -72,9 +71,9 @@ inline void CheckInputNum(const std::string &kernel_name, const size_t input_num
                         << input_num;
     }
   } else {
-    if (input_num != kAvgPool3DGradInputNum && input_num != kAvgPool3DGradDynamicInputNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be " << kAvgPool3DGradInputNum
-                        << " or " << kAvgPool3DGradDynamicInputNum << ", but got " << input_num;
+    if (input_num != kAvgPool3DGradDynamicInputNum) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be " << kAvgPool3DGradDynamicInputNum
+                        << ", but got " << input_num;
     }
   }
 }
@@ -513,13 +512,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod:
          .AddOutputAttr(kNumberTypeFloat16),
        &PoolingGradGpuKernelMod::LaunchKernel<half>}}},
     {kAvgPool3DGrad,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &PoolingGradGpuKernelMod::LaunchKernel<double>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &PoolingGradGpuKernelMod::LaunchKernel<float>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &PoolingGradGpuKernelMod::LaunchKernel<half>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     {{KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &PoolingGradGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &PoolingGradGpuKernelMod::LaunchKernel<float>},
