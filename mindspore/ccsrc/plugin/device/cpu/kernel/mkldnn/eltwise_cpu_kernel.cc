@@ -129,7 +129,7 @@ struct DescParam {
 
 dnnl::eltwise_forward::desc EltWiseCpuKernelMod::GetForwardEltwiseDesc(const dnnl::memory::desc src_desc) {
   static const std::unordered_map<std::string, DescParam> eltwise_op_desc_map{
-    {prim::kPrimRelu6->name(), DescParam{dnnl::algorithm::eltwise_clip, 0.0f, 6.0f}},
+    {prim::kPrimReLU6->name(), DescParam{dnnl::algorithm::eltwise_clip, 0.0f, 6.0f}},
     {prim::kPrimExp->name(), DescParam{dnnl::algorithm::eltwise_exp}},
     {prim::kPrimLog->name(), DescParam{dnnl::algorithm::eltwise_log}},
     {prim::kPrimSigmoid->name(), DescParam{dnnl::algorithm::eltwise_logistic}},

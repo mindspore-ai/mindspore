@@ -60,6 +60,6 @@ AbstractBasePtr SeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto shape = SeLUInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SeLU, prim::kPrimSelu, SeLUInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(SeLU, prim::kPrimSeLU, SeLUInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

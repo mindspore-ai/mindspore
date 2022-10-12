@@ -672,7 +672,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimErf->name(), Erf<T>},
                           {prim::kPrimErfc->name(), Erfc<T>},
                           {prim::kPrimSoftsign->name(), Softsign<T>},
-                          {prim::kPrimRelu->name(), Relu<T>},
+                          {prim::kPrimReLU->name(), Relu<T>},
                           {prim::kPrimExp->name(), Exp<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);

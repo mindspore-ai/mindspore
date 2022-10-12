@@ -38,7 +38,7 @@ constexpr auto kSecondBranchStartIndexPattern1 = kFirstBranchPattern1;
 constexpr auto kSecondBranchEndIndexPattern1 = 2 + kFirstBranchPattern1;
 const std::vector<kStructureTuple> ResidualStructureBasePattern{
   {kFirstBranchPattern1,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu},
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU},
    {kFirstBranchStartIndexPattern1, kFirstBranchEndIndexPattern1}},
   {kSecondBranchPattern1,
    {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D},
@@ -54,9 +54,9 @@ constexpr auto kSecondBranchStartIndexPattern2 = kFirstBranchPattern2;
 constexpr auto kSecondBranchEndIndexPattern2 = 1 + kSecondBranchPattern2;
 const std::vector<kStructureTuple> ResidualStructureShortCutPattern{
   {kFirstBranchPattern2,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu},
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU},
    {kFirstBranchStartIndexPattern2, kFirstBranchEndIndexPattern2}},
-  {kSecondBranchPattern2, {prim::kPrimRelu}, {kSecondBranchStartIndexPattern2, kSecondBranchEndIndexPattern2}}};
+  {kSecondBranchPattern2, {prim::kPrimReLU}, {kSecondBranchStartIndexPattern2, kSecondBranchEndIndexPattern2}}};
 // Pattern 3
 // Add -> BatchNorm -> Conv2D -> Relu ... BatchNorm -> Conv2D -> End
 //       BatchNorm -> Conv2D -> ->   ...   ...   ...   -> ->
@@ -68,8 +68,8 @@ constexpr auto kSecondBranchStartIndexPattern3 = kFirstBranchPattern3;
 constexpr auto kSecondBranchEndIndexPattern3 = 2 + kFirstBranchPattern3;
 const std::vector<kStructureTuple> ResidualStructureFirstStepPattern{
   {kFirstBranchPattern3,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem,
-    prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm,
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem,
+    prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm,
     prim::kPrimConv2D},
    {kFirstBranchStartIndexPattern3, kFirstBranchEndIndexPattern3}},
   {kSecondBranchPattern3,
@@ -84,7 +84,7 @@ constexpr auto kSecondBranchStartIndexPattern4 = kFirstBranchPattern4;
 constexpr auto kSecondBranchEndIndexPattern4 = 3 + kFirstBranchPattern4;
 const std::vector<kStructureTuple> BasicStructBasePattern{
   {kFirstBranchPattern4,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu},
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU},
    {kFirstBranchStartIndexPattern4, kFirstBranchEndIndexPattern4}},
   {kSecondBranchPattern4,
    {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D},
@@ -98,7 +98,7 @@ constexpr auto kSecondBranchStartIndexPattern5 = kFirstBranchPattern5;
 constexpr auto kSecondBranchEndIndexPattern5 = 3 + kFirstBranchPattern5;
 const std::vector<kStructureTuple> BasicStructFirstStepPattern{
   {kFirstBranchPattern5,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem,
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem,
     prim::kPrimBatchNorm, prim::kPrimConv2D},
    {kFirstBranchStartIndexPattern5, kFirstBranchEndIndexPattern5}},
   {kSecondBranchPattern5, {prim::kPrimMaxPool}, {kSecondBranchStartIndexPattern5, kSecondBranchEndIndexPattern5}}};
@@ -111,9 +111,9 @@ constexpr auto kSecondBranchStartIndexPattern6 = kFirstBranchPattern6;
 constexpr auto kSecondBranchEndIndexPattern6 = 3 + kFirstBranchPattern6;
 const std::vector<kStructureTuple> BasicStructShortCutPattern{
   {kFirstBranchPattern6,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu},
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU},
    {kFirstBranchStartIndexPattern6, kFirstBranchEndIndexPattern6}},
-  {kSecondBranchPattern6, {prim::kPrimRelu}, {kSecondBranchStartIndexPattern6, kSecondBranchEndIndexPattern6}}};
+  {kSecondBranchPattern6, {prim::kPrimReLU}, {kSecondBranchStartIndexPattern6, kSecondBranchEndIndexPattern6}}};
 // Pattern 7
 constexpr auto kFirstBranchPattern7 = 1;
 constexpr auto kSecondBranchPattern7 = 13;
@@ -126,8 +126,8 @@ const std::vector<kStructureTuple> InvertedResidualShortCutPattern{
    {prim::kPrimTupleGetItem, prim::kPrimBatchNorm},
    {kFirstBranchStartIndexPattern7, kFirstBranchEndIndexPattern7}},
   {kSecondBranchPattern7,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu6, prim::kPrimTupleGetItem,
-    prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm,
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU6, prim::kPrimTupleGetItem,
+    prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm,
     prim::kPrimConv2D, prim::kPrimTupleGetItem, prim::kPrimBatchNorm},
    {kSecondBranchStartIndexPattern7, kSecondBranchEndIndexPattern7}}};
 // Pattern 8
@@ -148,8 +148,8 @@ constexpr auto kSecondBranchEndIndexPattern9 = 10;
 const std::vector<kStructureTuple> InvertedResidualShortCutPattern2{
   {kFirstBranchPattern9, {prim::kPrimAdd}, {kFirstBranchStartIndexPattern9, kFirstBranchEndIndexPattern9}},
   {kSecondBranchPattern9,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu6, prim::kPrimTupleGetItem,
-    prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm,
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU6, prim::kPrimTupleGetItem,
+    prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm,
     prim::kPrimConv2D, prim::kPrimAdd},
    {kSecondBranchStartIndexPattern9, kSecondBranchEndIndexPattern9}}};
 // Pattern 10
@@ -158,7 +158,7 @@ constexpr auto kFirstBranchStartIndexPattern10 = 0;
 constexpr auto kFirstBranchEndIndexPattern10 = 4;
 const std::vector<kStructureTuple> InvertedResidualPattern2{
   {kFirstBranchPattern10,
-   {prim::kPrimReduceMean, prim::kPrimRelu6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D},
+   {prim::kPrimReduceMean, prim::kPrimReLU6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D},
    {kFirstBranchStartIndexPattern10, kFirstBranchEndIndexPattern10}}};
 // Pattern 11
 constexpr auto kFirstBranchPattern11 = 17;
@@ -166,9 +166,9 @@ constexpr auto kFirstBranchStartIndexPattern11 = 3;
 constexpr auto kFirstBranchEndIndexPattern11 = 6;
 const std::vector<kStructureTuple> InvertedResidualPattern3{
   {kFirstBranchPattern11,
-   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu6, prim::kPrimTupleGetItem,
+   {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU6, prim::kPrimTupleGetItem,
     prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
-    prim::kPrimRelu6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimRelu6,
+    prim::kPrimReLU6, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D, prim::kPrimReLU6,
     prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D},
    {kFirstBranchStartIndexPattern11, kFirstBranchEndIndexPattern11}}};
 // Pattern 12
@@ -181,8 +181,8 @@ constexpr auto kSecondBranchEndIndexPattern12 = kFirstBranchPattern12 + 8;
 const std::vector<kStructureTuple> DenseBlockShortCutPattern{
   {kFirstBranchPattern12, {prim::kPrimConcat}, {kFirstBranchStartIndexPattern12, kFirstBranchEndIndexPattern12}},
   {kSecondBranchPattern12,
-   {prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
-    prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConcat},
+   {prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
+    prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConcat},
    {kSecondBranchStartIndexPattern12, kSecondBranchEndIndexPattern12}}};
 // Pattern 13
 constexpr auto kFirstBranchPattern13 = 5;
@@ -190,7 +190,7 @@ constexpr auto kFirstBranchStartIndexPattern13 = 0;
 constexpr auto kFirstBranchEndIndexPattern13 = 4;
 const std::vector<kStructureTuple> DenseBlockPattern{
   {kFirstBranchPattern13,
-   {prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConcat},
+   {prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConcat},
    {kFirstBranchStartIndexPattern13, kFirstBranchEndIndexPattern13}}};
 // Pattern 14
 constexpr auto kFirstBranchPattern14 = 9;
@@ -201,8 +201,8 @@ constexpr auto kSecondBranchStartIndexPattern14 = SIZE_MAX;
 constexpr auto kSecondBranchEndIndexPattern14 = SIZE_MAX;
 const std::vector<kStructureTuple> DenseBlockShortCutPattern2{
   {kFirstBranchPattern14,
-   {prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
-    prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConcat},
+   {prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
+    prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConcat},
    {kFirstBranchStartIndexPattern14, kFirstBranchEndIndexPattern14}},
   {kSecondBranchPattern14, {prim::kPrimConcat}, {kSecondBranchStartIndexPattern14, kSecondBranchEndIndexPattern14}}};
 // Pattern 15
@@ -214,8 +214,8 @@ constexpr auto kSecondBranchStartIndexPattern15 = SIZE_MAX;
 constexpr auto kSecondBranchEndIndexPattern15 = SIZE_MAX;
 const std::vector<kStructureTuple> DenseBlockPoolPattern{
   {kFirstBranchPattern15,
-   {prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
-    prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimMaxPool},
+   {prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
+    prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimMaxPool},
    {kFirstBranchStartIndexPattern15, kFirstBranchEndIndexPattern15}},
   {kSecondBranchPattern15, {prim::kPrimConcat}, {kSecondBranchStartIndexPattern15, kSecondBranchEndIndexPattern15}}};
 // Pattern 16
@@ -228,8 +228,8 @@ constexpr auto kSecondBranchEndIndexPattern16 = kFirstBranchPattern16 + 4;
 const std::vector<kStructureTuple> DenseBlockPoolPatter2{
   {kFirstBranchPattern16, {prim::kPrimConcat}, {kFirstBranchStartIndexPattern16, kFirstBranchEndIndexPattern16}},
   {kSecondBranchPattern16,
-   {prim::kPrimConv2D, prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
-    prim::kPrimRelu, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimMaxPool},
+   {prim::kPrimConv2D, prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D,
+    prim::kPrimReLU, prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimMaxPool},
    {kSecondBranchStartIndexPattern16, kSecondBranchEndIndexPattern16}}};
 static const std::vector<std::vector<kStructureTuple>> kNeedMatchPattern = {ResidualStructureBasePattern,
                                                                             ResidualStructureShortCutPattern,

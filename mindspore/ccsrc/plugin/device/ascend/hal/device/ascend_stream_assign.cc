@@ -126,7 +126,7 @@ CNodePtr GetHcomAndOverflowMarker(const NotNull<KernelGraphPtr> &graph_ptr, vect
 bool HasRefNodes(const vector<CNodePtr> &moved_backward_cnodes) {
   for (auto &cnode : moved_backward_cnodes) {
     std::string op_name = common::AnfAlgo::GetCNodeName(cnode);
-    auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kTBE);
+    auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kImplyTBE);
     if (op_info != nullptr && op_info->is_ref()) {
       MS_LOG(INFO) << "Find RefNode: " << op_name << ", full name: " << cnode->fullname_with_scope();
       return true;

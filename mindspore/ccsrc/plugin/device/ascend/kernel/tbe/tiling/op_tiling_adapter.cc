@@ -127,7 +127,7 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::
   auto input_size = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_size; i++) {
     // ms info
-    auto real_index = AnfAlgo::GetInputIndexInGraph(node, i);
+    auto real_index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
     auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(node, real_index);
     auto input_node = input_node_with_idx.first;
     auto input_index = input_node_with_idx.second;
@@ -347,7 +347,7 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
     auto depend_name = input_names_attr[index];
     auto const_tensor = iter->second;
     ::ge::NodePtr ge_constant_op = NewConstantOp(node, depend_name, const_tensor, ge_graph, index);
-    auto original_index = AnfAlgo::GetInputIndexInKernel(node, index);
+    auto original_index = AnfAlgo::GetInputKernelIdxByGraphIdx(node, index);
     constant_ops.emplace_back(std::tuple<std::size_t, ::ge::NodePtr>(original_index, ge_constant_op));
     op_infer_depends.emplace_back(depend_name);
   }

@@ -51,6 +51,6 @@ AbstractBasePtr ReLUV3Infer(const abstract::AnalysisEnginePtr &, const Primitive
   auto shape = ReLUV3InferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ReLUV3, prim::kPrimReluV3, ReLUV3Infer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(ReLUV3, prim::kPrimReLUV3, ReLUV3Infer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

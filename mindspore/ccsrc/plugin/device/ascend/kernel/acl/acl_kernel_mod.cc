@@ -38,7 +38,7 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
 
   // Update input size list
   for (size_t i = 0; i < input_size_list_.size(); ++i) {
-    auto index = AnfAlgo::GetInputIndexInGraph(node, i);
+    auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
     if (index >= input_size_list_.size()) {
       MS_LOG(EXCEPTION) << "Error real index:" << index;
     }

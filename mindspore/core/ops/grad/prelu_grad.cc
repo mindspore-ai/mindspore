@@ -73,6 +73,6 @@ class PReLUGradInfer : public abstract::OpInferBase {
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(PReLUGrad, prim::kPrimPReluGrad, PReLUGradInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(PReLUGrad, prim::kPrimPReLUGrad, PReLUGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

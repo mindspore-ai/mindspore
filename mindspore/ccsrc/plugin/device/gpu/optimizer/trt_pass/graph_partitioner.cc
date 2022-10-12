@@ -37,7 +37,7 @@ namespace opt {
 namespace {
 bool WeightCheck(const AnfNodePtr &node) {
   static std::map<std::string, std::set<size_t>> weight_list = {
-    {kConv2DOpName, {1}}, {kBatchNorm, {1, 2, 3, 4}}, {kConv2DBackpropInputOpName, {1}}};
+    {kConv2DOpName, {1}}, {kBatchNormOpName, {1, 2, 3, 4}}, {kConv2DBackpropInputOpName, {1}}};
 
   MS_EXCEPTION_IF_NULL(node);
   const std::string &op_name = common::AnfAlgo::GetCNodePrimitive(node)->name();

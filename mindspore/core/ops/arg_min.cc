@@ -108,6 +108,6 @@ abstract::AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const
 
 using Argmin = ArgMin;
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Argmin, prim::kPrimArgMin, ArgMinInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(Argmin, prim::kPrimArgmin, ArgMinInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -132,7 +132,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSetSize = prim::kPrimSetSize->name();
   // Common host depends.
   static PrimShapeDependMap host_depends{{prim::kPrimArgMax->name(), ShapeSet{1}},
-                                         {prim::kPrimArgMin->name(), ShapeSet{1}},
+                                         {prim::kPrimArgmin->name(), ShapeSet{1}},
                                          {kExtractGlimpse, ShapeSet{1}},
                                          {kMirrorPad, ShapeSet{1}},
                                          {kSegmentMax, ShapeSet{1}},
@@ -362,7 +362,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimMul, R{ops::MulInfer, nullptr, true}},
     {prim::kPrimMod, R{ops::ModInfer, nullptr, true}},
     {prim::kPrimAdd, R{ops::AddInfer, nullptr, false}},
-    {prim::kPrimArgMin, R{ops::ArgMinInfer, nullptr, true}},
+    {prim::kPrimArgmin, R{ops::ArgMinInfer, nullptr, true}},
     {prim::kPrimSqrtGrad, R{InferImplSqrtGrad, nullptr, true}},
     {prim::kPrimSub, R{ops::SubInfer, nullptr, false}},
     {prim::kPrimNeg, R{ops::NegInfer, nullptr, false}},

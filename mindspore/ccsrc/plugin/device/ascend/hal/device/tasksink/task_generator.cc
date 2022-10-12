@@ -175,7 +175,7 @@ AddressPtrList TaskGenerator::GetTaskInput(const CNodePtr &node) {
     if (common::AnfAlgo::IsNoneInput(node, i)) {
       continue;
     }
-    auto input_index_in_graph = AnfAlgo::GetInputIndexInGraph(node, i);
+    auto input_index_in_graph = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(node, input_index_in_graph);
     AddressPtr input = std::make_shared<Address>();
     MS_EXCEPTION_IF_NULL(input);

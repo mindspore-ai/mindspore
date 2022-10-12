@@ -361,7 +361,7 @@ bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vec
   }
 
   for (size_t i = 0; i < input_num; ++i) {
-    auto real_index = AnfAlgo::GetInputIndexInGraph(kernel, i);
+    auto real_index = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, i);
     if (real_index >= input_num) {
       MS_LOG(ERROR) << "Total input num is " << input_num << " but get real_index " << real_index;
       return false;

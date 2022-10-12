@@ -1080,7 +1080,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
       size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
       for (size_t i = 0; i < input_num; ++i) {
-        auto real_input_index = AnfAlgo::GetInputIndexInGraph(node, i);
+        auto real_input_index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
         auto device_address = AnfAlgo::GetPrevNodeOutputAddr(node, real_input_index);
         MS_LOG(INFO) << "Input idx " << i << " size " << device_address->size_ << " addr " << device_address->ptr_;
         int32_t value = 0;

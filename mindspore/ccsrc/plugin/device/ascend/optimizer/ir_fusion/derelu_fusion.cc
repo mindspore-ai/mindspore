@@ -43,7 +43,7 @@ CNodePtr DereluFusion::CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &r
   MS_EXCEPTION_IF_NULL(relu);
   CheckCNodeInputSize(relu, kReluInputTensorNum);
   constexpr auto kMaskShapeSize = 4;
-  auto prim = std::make_shared<Primitive>(kReluV2OpName);
+  auto prim = std::make_shared<Primitive>(kReLUV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(kIndex1)};
   auto new_node = opt::NewCNode(inputs, graph, {relu});
   MS_EXCEPTION_IF_NULL(new_node);
@@ -99,7 +99,7 @@ CNodePtr DereluFusion::CreateReluGradV2(const FuncGraphPtr &graph, const CNodePt
 const BaseRef DereluFusion::DefinePattern() const {
   VarPtr i0 = std::make_shared<Var>();
   VarPtr i1 = std::make_shared<Var>();
-  VectorRef relu({prim::kPrimRelu, i1});
+  VectorRef relu({prim::kPrimReLU, i1});
   VectorRef relu_grad({prim::kPrimReluGrad, i0, relu});
   return relu_grad;
 }

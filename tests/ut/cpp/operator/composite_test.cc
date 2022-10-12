@@ -495,7 +495,7 @@ TEST_F(TestComposite, test_shard) {
   // Make origin func_graph which includes a relu node.
   FuncGraphPtr origin_func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimRelu));
+  inputs.push_back(NewValueNode(prim::kPrimReLU));
   inputs.push_back(origin_func_graph->add_parameter());
   CNodePtr relu = origin_func_graph->NewCNode(inputs);
   inputs.clear();

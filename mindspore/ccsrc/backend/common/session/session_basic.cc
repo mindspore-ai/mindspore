@@ -1217,7 +1217,7 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t
   }
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode);
-  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kTBE, is_dynamic_shape);
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyTBE, is_dynamic_shape);
   if (op_info_ptr == nullptr) {
     return;
   }

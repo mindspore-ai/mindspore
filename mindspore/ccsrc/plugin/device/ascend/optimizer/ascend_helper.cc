@@ -456,7 +456,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
   builder.SetOutputsDeviceType({output_type});
   builder.SetFusionType(kernel::FusionType::OPAQUE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kTBE) != nullptr) {
+  if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kImplyTBE) != nullptr) {
     builder.SetKernelType(KernelType::TBE_KERNEL);
   } else {
     builder.SetKernelType(KernelType::AKG_KERNEL);

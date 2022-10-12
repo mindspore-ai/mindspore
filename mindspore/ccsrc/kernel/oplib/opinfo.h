@@ -26,7 +26,7 @@
 #include "kernel/kernel.h"
 
 namespace mindspore::kernel {
-enum OpImplyType { kAKG = 0, kTBE = 1, kAICPU = 2, kCPU = 3, kGPU = 4, kBISHENG };
+enum OpImplyType { kImplyAKG = 0, kImplyTBE = 1, kImplyAICPU = 2, kImplyCPU = 3, kImplyGPU = 4, kImplyBISHENG };
 enum OpIOType { kInput = 0, kOutput };
 constexpr auto kIgnored = "ignored";
 
@@ -194,7 +194,7 @@ class OpInfo {
 
  private:
   std::string op_name_;
-  OpImplyType imply_type_ = kTBE;
+  OpImplyType imply_type_ = kImplyTBE;
   std::string impl_path_;
   std::string fusion_type_;
   bool async_flag_ = false;

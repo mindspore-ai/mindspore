@@ -121,7 +121,7 @@ const AnfNodePtr SeedAdapter::Process(const FuncGraphPtr &func_graph, const AnfN
     return nullptr;
   }
   // 1. convert attr seed to value node
-  auto op_info = kernel::OpLib::FindOp(cnode_type, kernel::OpImplyType::kAICPU);
+  auto op_info = kernel::OpLib::FindOp(cnode_type, kernel::OpImplyType::kImplyAICPU);
   if (!op_info) {
     MS_LOG(EXCEPTION) << "Find op info failed, node type: " << cnode_type << ", node debug: " << cnode->DebugString();
   }

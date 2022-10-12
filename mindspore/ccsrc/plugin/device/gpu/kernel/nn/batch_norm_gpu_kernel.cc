@@ -79,15 +79,15 @@ bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "Cast BatchNorm failed!";
     return false;
   }
-  if (kernel_name_ == kBatchNorm) {
+  if (kernel_name_ == kBatchNormOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
   } else if (kernel_name_ == kBatchNormWithActivation) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
   } else if (kernel_name_ == kBatchNormWithAddAndActivation) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
   } else {
-    MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNorm << ", " << kBatchNormWithActivation << ", "
-                      << kBatchNormWithAddAndActivation << ", but got " << kernel_name_;
+    MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormOpName << ", " << kBatchNormWithActivation
+                      << ", " << kBatchNormWithAddAndActivation << ", but got " << kernel_name_;
   }
 
   auto iter = kernel_attr_map_.find(kernel_name_);
@@ -293,7 +293,7 @@ void BatchNormGpuKernelMod::SetTensorDescriptor(const Format &format, const Shap
 }
 
 std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGpuKernelMod::BatchNormFunc>>>
-  BatchNormGpuKernelMod::kernel_attr_map_ = {{kBatchNorm,
+  BatchNormGpuKernelMod::kernel_attr_map_ = {{kBatchNormOpName,
                                               {{KernelAttr()
                                                   .AddInputAttr(kNumberTypeFloat32)
                                                   .AddInputAttr(kNumberTypeFloat32)
@@ -388,7 +388,7 @@ std::vector<KernelAttr> BatchNormGpuKernelMod::GetOpSupport() {
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNorm,
-                                 []() { return std::make_shared<BatchNormGpuKernelMod>(kBatchNorm); });
+                                 []() { return std::make_shared<BatchNormGpuKernelMod>(kBatchNormOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormWithActivation,
                                  []() { return std::make_shared<BatchNormGpuKernelMod>(kBatchNormWithActivation); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormWithAddAndActivation, []() {

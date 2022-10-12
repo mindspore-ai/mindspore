@@ -66,7 +66,7 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterOps() {
     {kGPUDevice, OpLevel_0, prim::kPrimACos},
     {kGPUDevice, OpLevel_0, prim::kPrimAcosh},
     {kGPUDevice, OpLevel_2, prim::kPrimArgMax},
-    {kGPUDevice, OpLevel_2, prim::kPrimArgMin},
+    {kGPUDevice, OpLevel_2, prim::kPrimArgmin},
     {kGPUDevice, OpLevel_0, prim::kPrimAsin},
     {kGPUDevice, OpLevel_0, prim::kPrimAsinh},
     {kGPUDevice, OpLevel_0, prim::kPrimAssign},

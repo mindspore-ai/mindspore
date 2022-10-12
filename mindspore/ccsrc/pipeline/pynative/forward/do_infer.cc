@@ -343,7 +343,7 @@ void InferOperation::SaveSpecifiedOutputToCache(const std::string &op_name, cons
     return;
   }
   // BatchNormal forward only use first output
-  if (op_name == kBatchNorm) {
+  if (op_name == kBatchNormOpName) {
     node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value_list[0])] = abs_list[0];
   }
 }

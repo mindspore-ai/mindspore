@@ -51,6 +51,6 @@ class ReLU6Infer : public abstract::OpInferBase {
     return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   }
 };
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLU6, prim::kPrimRelu6, ReLU6Infer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLU6, prim::kPrimReLU6, ReLU6Infer, false);
 }  // namespace ops
 }  // namespace mindspore

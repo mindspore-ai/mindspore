@@ -32,7 +32,7 @@ namespace opt {
 const BaseRef BatchNormReluFusion::DefinePattern() const {
   VectorRef batch_norm = VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_, umonad_});
   VectorRef tuple_get = VectorRef({prim::kPrimTupleGetItem, batch_norm, index_});
-  VectorRef relu = VectorRef({prim::kPrimRelu, tuple_get});
+  VectorRef relu = VectorRef({prim::kPrimReLU, tuple_get});
   return relu;
 }
 

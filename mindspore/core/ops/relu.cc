@@ -48,6 +48,6 @@ class ReLUInfer : public abstract::OpInferBase {
     return x_type;
   }
 };
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLU, prim::kPrimRelu, ReLUInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLU, prim::kPrimReLU, ReLUInfer, false);
 }  // namespace ops
 }  // namespace mindspore
