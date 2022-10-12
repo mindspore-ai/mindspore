@@ -94,7 +94,8 @@ static inline bool isTraversable(const AnfNodePtr &node) {
   auto value_node = dyn_cast_ptr<ValueNode>(node);
   MS_EXCEPTION_IF_NULL(value_node);
   const auto &value = value_node->value();
-  return (value != nullptr) && (value->isa<FuncGraph>() || value->isa<RefKey>());
+  return (value != nullptr) && (value->isa<FuncGraph>() || value->isa<RefKey>() || value->isa<MindIRClassType>() ||
+                                value->isa<MindIRMetaFuncGraph>() || value->isa<parse::ClassType>());
 }
 
 static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &node,

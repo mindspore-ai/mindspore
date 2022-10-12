@@ -151,5 +151,27 @@ class MS_CORE_API Ellipsis final : public Named {
   abstract::AbstractBasePtr ToAbstract() override;
 };
 GVAR_DEF(NamedPtr, kEllipsis, std::make_shared<Ellipsis>());
+
+/// \brief MindIRClassType defines the class type loaded from MindIR.
+class MS_CORE_API MindIRClassType final : public Named {
+ public:
+  /// \brief The default constructor for MindIRClassType.
+  explicit MindIRClassType(const std::string &class_type) : Named(class_type) {}
+  /// \brief The destructor of MindIRClassType.
+  ~MindIRClassType() override = default;
+  MS_DECLARE_PARENT(MindIRClassType, Named);
+};
+using MindIRClassTypePtr = std::shared_ptr<MindIRClassType>;
+
+/// \brief MindIRMetaFuncGraph defines the meta func_graph loaded from MindIR.
+class MS_CORE_API MindIRMetaFuncGraph final : public Named {
+ public:
+  /// \brief The default constructor for MindIRMetaFuncGraph.
+  explicit MindIRMetaFuncGraph(const std::string &name) : Named(name) {}
+  /// \brief The destructor of MindIRMetaFuncGraph.
+  ~MindIRMetaFuncGraph() override = default;
+  MS_DECLARE_PARENT(MindIRMetaFuncGraph, Named);
+};
+using MindIRMetaFuncGraphPtr = std::shared_ptr<MindIRMetaFuncGraph>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_NAMED_H_

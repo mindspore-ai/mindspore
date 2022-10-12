@@ -31,7 +31,7 @@
 #include "utils/ms_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/costmodel_context.h"
-#include "frontend/optimizer/ad/dfunctor.h"
+#include "frontend/optimizer/ad/bprop_utils.h"
 #include "runtime/collective/gpu_collective_init.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
@@ -543,7 +543,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_ckpt_path", &RecoveryContext::SetCkptPath, "Set the recovery path used to save checkpoint.");
 
 #ifndef _WIN32
-  (void)m.def("_export_bprop_mindir", &mindspore::ad::KPrim::ExportBpropMindir,
+  (void)m.def("_export_bprop_mindir", &mindspore::ad::ExportBpropToMindir,
               "Export the backpropagation function to mindir file.");
 #endif
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");

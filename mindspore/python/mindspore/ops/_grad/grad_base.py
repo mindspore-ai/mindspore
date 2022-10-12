@@ -15,6 +15,7 @@
 
 """grad base functions"""
 
+import os
 from .._register_for_op import Registry
 from ..primitive import Primitive
 from ...common import Tensor
@@ -66,12 +67,15 @@ bprop_getters = BpropRegistry()
 bprops = BpropRegistry()
 taylor_fprop_getters = TaylorFpropRegistry()
 taylor_fprops = TaylorFpropRegistry()
+all_bprop_to_mindir = os.getenv("MS_DEV_ALL_BPROP_TO_MINDIR")
 
 
 def get_bprop_fn(prim):
     """get bprop function by primitive obj or prim name for c++"""
     out = bprop_getters.get(prim, None)
     if out:
+        if all_bprop_to_mindir == "1":
+            return out
         return out(prim)
     return bprops.get(prim, None)
 

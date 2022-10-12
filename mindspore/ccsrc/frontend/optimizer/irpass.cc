@@ -21,7 +21,6 @@
 #include "frontend/optimizer/irpass/convert.h"
 #include "frontend/optimizer/irpass/environ_eliminate.h"
 #include "frontend/optimizer/irpass/meta_fg_var_prepare.h"
-#include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/inline.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/load_eliminate.h"
@@ -51,6 +50,11 @@
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
+#include "frontend/optimizer/irpass/bprop_get_multitype_ops.h"
+#include "frontend/optimizer/irpass/bprop_get_class_type.h"
+#include "frontend/optimizer/irpass/bprop_get_meta_fg.h"
+#include "frontend/optimizer/irpass/bprop_get_primal_attr.h"
+#include "frontend/optimizer/irpass/bprop_remove_class_type.h"
 
 namespace mindspore {
 namespace opt {
@@ -266,6 +270,27 @@ ResolveIRPassLib::ResolveIRPassLib() {
 
 MetaUnpackPrepareLib::MetaUnpackPrepareLib() {
   meta_unpack_prepare_ = MakeSubstitution(std::make_shared<MetaFgVarPrepare>(), "meta_unpack_prepare", IsCNode);
+}
+
+BpropMindIRPassLib::BpropMindIRPassLib() {
+  get_multitype_ops_ = MakeSubstitution(
+    std::make_shared<BpropGetMultitypeOps>(), "bprop_get_multitype_ops",
+    {std::make_shared<Primitive>("S-Prim-negative"), std::make_shared<Primitive>("S-Prim-zeros_like_leaf"),
+     std::make_shared<Primitive>("S-Prim-getitem"), std::make_shared<Primitive>("S-Prim-mul"),
+     std::make_shared<Primitive>("S-Prim-logical_not"), std::make_shared<Primitive>("S-Prim-in"),
+     std::make_shared<Primitive>("S-Prim-less"), std::make_shared<Primitive>("S-Prim-add")});
+
+  get_class_type_ =
+    MakeSubstitution(std::make_shared<BpropGetClassType>(), "bprop_get_class_type", IsValueNode<MindIRClassType>);
+
+  get_meta_fg_ =
+    MakeSubstitution(std::make_shared<BpropGetMetaFg>(), "bprop_get_class_type", IsValueNode<MindIRMetaFuncGraph>);
+
+  get_primal_attr_ =
+    MakeSubstitution(std::make_shared<BpropGetPrimalAttr>(), "bprop_get_primal_attr", {prim::kPrimGetAttr});
+
+  remote_class_type_ = MakeSubstitution(std::make_shared<BpropRemoveClassType>(), "bprop_remove_primal_attr",
+                                        IsValueNode<parse::ClassType>);
 }
 }  // namespace irpass
 }  // namespace opt
