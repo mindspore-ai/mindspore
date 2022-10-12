@@ -356,9 +356,6 @@ STATUS ModelProcess::UnLoad() {
 }
 
 STATUS ModelProcess::SetBatchSize(const std::vector<mindspore::MSTensor> &inputs) {
-  for (size_t i = 0; i < inputs.size(); i++) {
-    input_infos_[i].buffer_size = inputs[i].DataSize();
-  }
   auto batch_size_tensor = inputs[inputs.size() - 1];
   size_t data_type_size = lite::DataTypeSize(static_cast<enum TypeId>(batch_size_tensor.DataType()));
   size_t num = 0;
@@ -389,9 +386,6 @@ STATUS ModelProcess::SetBatchSize(const std::vector<mindspore::MSTensor> &inputs
 }
 
 STATUS ModelProcess::SetImageSize(const std::vector<mindspore::MSTensor> &inputs) {
-  for (size_t i = 0; i < inputs.size(); i++) {
-    input_infos_[i].buffer_size = inputs[i].DataSize();
-  }
   auto image_size_tensor = inputs[inputs.size() - 1];
   size_t data_type_size = lite::DataTypeSize(static_cast<enum TypeId>(image_size_tensor.DataType()));
   size_t num = 0;
@@ -477,6 +471,14 @@ bool ModelProcess::IsDynamicBatchSize() { return !GetDynamicBatch().empty(); }
 
 bool ModelProcess::IsDynamicImageSize() { return !GetDynamicImage().empty(); }
 
+void ModelProcess::UpdateBufferSize(const std::vector<mindspore::MSTensor> &inputs) {
+  if (IsDynamicShape()) {
+    for (size_t i = 0; i < inputs.size(); i++) {
+      input_infos_[i].buffer_size = inputs[i].DataSize();
+    }
+  }
+}
+
 STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &inputs) {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
@@ -485,6 +487,7 @@ STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &i
     MS_LOG(ERROR) << "Check input tensor failed.";
     return lite::RET_ERROR;
   }
+  UpdateBufferSize(inputs);
   // copy inputs
   for (size_t i = 0; i < input_infos_.size(); ++i) {
     auto &info = input_infos_[i];
