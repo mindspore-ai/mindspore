@@ -192,7 +192,6 @@ class DfGraphConvertor {
   void UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
-  bool IsNoOpTypeNode(const AnfNodePtr &node);
   void SetGraphInputs(std::vector<Operator> *inputs);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
@@ -216,13 +215,13 @@ class DfGraphConvertor {
   void GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &graphs);
 
   bool IsDataInput(const AnfNodePtr &node, const AnfNodePtr &input, size_t input_index) const;
-  void SetOpDynamicInput(const OpAdapterPtr &adpt, const CNodePtr &node, const AnfNodePtr &input, uint64_t input_index);
   void SetMakeTupleInput(const OpAdapterPtr &adpt, const CNodePtr &make_tuple_node);
   void SetMergeInput(const OpAdapterPtr &adpt, const CNodePtr &merge_node);
   bool IsMergeInput(const CNodePtr &node) const;
-  std::vector<OutHandler> GetAllInputHandle(const CNodePtr &node);
+  std::vector<OutHandler> GetMakeTupleAllInputHandle(const CNodePtr &node);
   void SetNodeControlInput(const AnfNodePtr &node, const AnfNodePtr &input);
   void SetGraphOutputs();
+  std::vector<OutHandler> GetInputHandles(const AnfNodePtr &node, const AnfNodePtr &input);
 
   // Identity Optimization
   void IdentityOptimization();

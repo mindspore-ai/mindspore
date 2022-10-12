@@ -142,3 +142,36 @@ def test_convert_tuple_get_item():
     output = net(Tensor(x, ms.float32))
     expect = np.sort(x, axis=1)
     assert np.allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+def test_convert_make_tuple_make_tuple():
+    """
+    Feature: convert ge graph
+    Description: test MakeTuple's input is MakeTuple
+    Expectation: success
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.add = P.Add()
+
+        def construct(self, x_, y_):
+            result1 = []
+            result2 = []
+            x1 = self.add(x_, y_)
+            x2 = self.add(x1, y_)
+            result1.append(x1)
+            result1.append(x2)
+            result2.append(x1)
+            result2.append(result1)
+            return result2
+
+    x = np.ones([1]).astype(np.int32)
+    y = np.ones([1]).astype(np.int32)
+    add = Net()
+    output = add(Tensor(x), Tensor(y))
+
+    assert output[0].asnumpy() == 2
+    assert output[1][0].asnumpy() == 2
+    assert output[1][1].asnumpy() == 3
