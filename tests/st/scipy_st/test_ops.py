@@ -20,13 +20,23 @@ import numpy as np
 import scipy as scp
 from scipy.linalg import solve_triangular, eig, eigvals
 
-from mindspore import Tensor, context
+from mindspore import Tensor, context, nn
+from mindspore.common import dtype as mstype
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.scipy.ops import Eigh, Eig, SolveTriangular
 from mindspore.scipy.utils import _nd_transpose
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
 np.random.seed(0)
+
+
+class SolveTriangularNet(nn.Cell):
+    def __init__(self, lower: bool = False, unit_diagonal: bool = False, trans: str = 'N'):
+        super(SolveTriangularNet, self).__init__()
+        self.solve = SolveTriangular(lower, unit_diagonal, trans)
+
+    def construct(self, a, b):
+        return self.solve(a, b)
 
 
 @pytest.mark.level0
@@ -317,7 +327,14 @@ def test_solve_triangular_matrix(shape: int, dtype, lower: bool, unit_diagonal: 
     a = (np.random.random((m, m)) + np.eye(m)).astype(dtype)
     b = np.random.random((m, n)).astype(dtype)
     expect = solve_triangular(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
-    output = SolveTriangular(lower, unit_diagonal, trans)(Tensor(a), Tensor(b)).asnumpy()
+
+    type_convert = {np.float32: mstype.float32, np.float64: mstype.float64}
+
+    dynamic_net = SolveTriangularNet(lower, unit_diagonal, trans)
+    place_holder = Tensor(shape=[None, None], dtype=type_convert.get(dtype))
+    dynamic_net.set_inputs(place_holder, place_holder)
+
+    output = dynamic_net(Tensor(a), Tensor(b)).asnumpy()
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
