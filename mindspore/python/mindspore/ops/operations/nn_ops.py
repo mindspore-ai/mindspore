@@ -2735,6 +2735,8 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         self.add_prim_attr('sens', 1.0)
 
     def infer_shape(self, logits_shape, labels_shape):
+        validator.check_non_negative_int_sequence(logits_shape, 'dims')
+        validator.check_non_negative_int_sequence(labels_shape, 'dims')
         validator.check("logits_shape[0]", logits_shape[0], "labels_shape[0]", labels_shape[0], Rel.EQ, self.name)
         loss_shape = []
         if self.is_grad:
