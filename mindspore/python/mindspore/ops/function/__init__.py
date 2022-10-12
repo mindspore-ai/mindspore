@@ -326,8 +326,6 @@ from .nn_func import (
     glu,
     multi_margin_loss,
     multi_label_margin_loss,
-    boundingbox_decode,
-    boundingbox_encode
 )
 from .linalg_func import (
     svd,
