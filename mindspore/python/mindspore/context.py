@@ -759,7 +759,7 @@ def set_context(**kwargs):
             The format is "xxGB". Default: "1GB". Minimum size is "1G". The actual used memory block size is the minimum
             of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
-            If the execution time exceeds this value, system will terminate the task. Default: 28.
+            If the execution time exceeds this value, system will terminate the task. Default: 600.
         save_graphs (bool): Whether to save graphs. Default: False.
             When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
             intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
