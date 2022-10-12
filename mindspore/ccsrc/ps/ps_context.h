@@ -34,6 +34,7 @@ constexpr char kEnvRoleOfServer[] = "MS_SERVER";
 constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
 constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
+constexpr size_t kMaxPasswordLen = 1024;
 
 class BACKEND_EXPORT PSContext {
  public:
@@ -99,11 +100,13 @@ class BACKEND_EXPORT PSContext {
   bool enable_ssl() const;
   void set_enable_ssl(bool enabled);
 
-  std::string client_password() const;
-  void set_client_password(const std::string &password);
+  char *client_password();
+  void set_client_password(const char *password);
+  void ClearClientPassword();
 
-  std::string server_password() const;
-  void set_server_password(const std::string &password);
+  char *server_password();
+  void set_server_password(const char *password);
+  void ClearServerPassword();
 
   std::string http_url_prefix() const;
 
@@ -131,8 +134,8 @@ class BACKEND_EXPORT PSContext {
         config_file_path_(""),
         node_id_(""),
         enable_ssl_(false),
-        client_password_(""),
-        server_password_(""),
+        client_password_(),
+        server_password_(),
         http_url_prefix_(""),
         instance_name_("") {}
 
@@ -167,9 +170,9 @@ class BACKEND_EXPORT PSContext {
   // Whether to enable ssl for network communication.
   bool enable_ssl_;
   // Password used to decode p12 file.
-  std::string client_password_;
+  char client_password_[kMaxPasswordLen];
   // Password used to decode p12 file.
-  std::string server_password_;
+  char server_password_[kMaxPasswordLen];
   // http url prefix for http communication
   std::string http_url_prefix_;
   // The name of instance
