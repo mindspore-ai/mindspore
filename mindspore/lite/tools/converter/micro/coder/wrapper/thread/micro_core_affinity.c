@@ -234,7 +234,7 @@ int BindThreadsToCore(const int *bind_id, ThreadPool *g_pool) {
     if (i == 0) {
       ret = SetAffinity(pthread_self(), &mask);
     } else {
-      ret = SetAffinity(g_pool->thread_id[i], &mask);
+      ret = SetAffinity(g_pool->thread_id[i - 1], &mask);
     }
     if (ret != RET_TP_OK) {
       LOG_ERROR("error binding task %zu to core %d\n", i, bind_id[i]);
