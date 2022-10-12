@@ -57,18 +57,18 @@ class PadV3GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool GetPaddings(const std::vector<AddressPtr> &inputs);
 
   template <typename T>
-  void PadV3GradCompute(T *input, T *output, int64_t p);
+  void PadV3GradCompute(T *input, T *output, int64_t p) const;
 
   template <typename T>
-  void PadV3GradCompute1D(T *input, T *output, int64_t p);
+  void PadV3GradCompute1D(T *input, T *output, int64_t p) const;
 
   template <typename T>
-  void PadV3GradCompute2D(T *input, T *output, int64_t p, int64_t i);
+  void PadV3GradCompute2D(T *input, T *output, int64_t p, int64_t i) const;
 
   template <typename T>
-  void PadV3GradCompute3D(T *input, T *output, int64_t p, int64_t z);
+  void PadV3GradCompute3D(T *input, T *output, int64_t p, int64_t z) const;
 
-  int64_t IndexCalculate(int64_t pad_value, int64_t now, int64_t output_value, int64_t o_start, int64_t i_start);
+  int64_t IndexCalculate(int64_t pad_value, int64_t now, int64_t output_value, int64_t o_start, int64_t i_start) const;
 
   using SelectFunc =
     std::function<bool(PadV3GradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,

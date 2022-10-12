@@ -22,8 +22,8 @@ namespace mindspore {
 namespace kernel {
 namespace {
 // preset size of paddings
-constexpr int MAX_PADDINGS = 5;
-constexpr int PADDING_SIZE = 2;
+constexpr int64_t MAX_PADDINGS = 5;
+constexpr int64_t PADDING_SIZE = 2;
 constexpr size_t kTwo = 2;
 constexpr size_t kInputNum = 2;
 }  // namespace
@@ -104,10 +104,10 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 
   const int64_t padd_dim = num_paddings_;
   const int64_t mode = mode_;
-  const int64_t element_size = sizeof(T1);
+  const int64_t element_size = int64_t(sizeof(T1));
 
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
-  for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
+  for (int64_t i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;
   }
   extract_paddings(paddings_arg, padd_dim, paddings);
@@ -179,7 +179,7 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     }
     output_pos.clear();
     output_pos.resize(tmp_pos.size());
-    std::copy(tmp_pos.begin(), tmp_pos.end(), output_pos.begin());
+    (void)std::copy(tmp_pos.begin(), tmp_pos.end(), output_pos.begin());
     tmp_pos.clear();
   }
   return true;

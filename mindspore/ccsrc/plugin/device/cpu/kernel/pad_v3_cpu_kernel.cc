@@ -66,7 +66,7 @@ void PadV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename S>
 bool PadV3CpuKernelMod::GetPaddings(const std::vector<AddressPtr> &inputs) {
-  auto paddings_arg = reinterpret_cast<S *>(inputs[1]->addr);
+  auto paddings_arg = static_cast<S *>(inputs[1]->addr);
   paddings_ = std::vector<int64_t>(input_dim_ * kNum2, 0);
   for (int64_t i = 0; i < paddings_num_; ++i) {
     paddings_[i] = int64_t(*(paddings_arg + i));
@@ -179,7 +179,7 @@ void PadV3CpuKernelMod::ConstantModeCompute(T *input_ptr, T *output_ptr, T const
 }
 
 template <typename T>
-void PadV3CpuKernelMod::OtherModeCompute(T *input_ptr, T *output_ptr, int64_t p) {
+void PadV3CpuKernelMod::OtherModeCompute(T *input_ptr, T *output_ptr, int64_t p) const {
   if (paddings_num_ == kPadding1D) {
     OtherModeCompute1D<T>(input_ptr, output_ptr, p);
   } else if (paddings_num_ == kPadding2D) {
@@ -190,7 +190,7 @@ void PadV3CpuKernelMod::OtherModeCompute(T *input_ptr, T *output_ptr, int64_t p)
 }
 
 template <typename T>
-void PadV3CpuKernelMod::OtherModeCompute1D(T *input_ptr, T *output_ptr, int64_t p) {
+void PadV3CpuKernelMod::OtherModeCompute1D(T *input_ptr, T *output_ptr, int64_t p) const {
   int64_t nplane = 0;
   int64_t input_w = input_shape_[kNum2];
   int64_t output_w = output_shape_.end()[-1];
@@ -206,7 +206,7 @@ void PadV3CpuKernelMod::OtherModeCompute1D(T *input_ptr, T *output_ptr, int64_t 
 }
 
 template <typename T>
-void PadV3CpuKernelMod::OtherModeCompute2D(T *input_ptr, T *output_ptr, int64_t p) {
+void PadV3CpuKernelMod::OtherModeCompute2D(T *input_ptr, T *output_ptr, int64_t p) const {
   int64_t pad_l = paddings_[0];
   int64_t pad_t = paddings_[kNum2];
   int64_t nplane = 0;
@@ -230,7 +230,7 @@ void PadV3CpuKernelMod::OtherModeCompute2D(T *input_ptr, T *output_ptr, int64_t 
 }
 
 template <typename T>
-void PadV3CpuKernelMod::OtherModeCompute3D(T *input_ptr, T *output_ptr, int64_t p) {
+void PadV3CpuKernelMod::OtherModeCompute3D(T *input_ptr, T *output_ptr, int64_t p) const {
   int64_t pad_l = paddings_[0];
   int64_t pad_t = paddings_[kNum2];
   int64_t pad_f = paddings_[kNum4];
@@ -264,7 +264,7 @@ void PadV3CpuKernelMod::OtherModeCompute3D(T *input_ptr, T *output_ptr, int64_t 
 }
 
 int64_t PadV3CpuKernelMod::IndexCalculate(int64_t pad_value, int64_t now, int64_t input_value, int64_t o_start,
-                                          int64_t i_start) {
+                                          int64_t i_start) const {
   int64_t ip = 0;
   if (now < pad_value) {
     if (mode_ == "reflect") {
@@ -297,10 +297,10 @@ bool PadV3CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   if (!GetPaddings<S>(inputs)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', get paddings failed";
   }
-  auto input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_ptr = static_cast<T *>(inputs[0]->addr);
+  auto output_ptr = static_cast<T *>(outputs[0]->addr);
   if (mode_ == "constant") {
-    T constant_values = *(reinterpret_cast<T *>(inputs[2]->addr));
+    T constant_values = *(static_cast<T *>(inputs[2]->addr));
     for (int64_t i = 0; i < input_dim_ / kNum2; ++i) {
       int64_t u = paddings_[i * kNum2];
       int64_t v = paddings_[i * kNum2 + 1];

@@ -35,13 +35,12 @@ class PadV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PadV3CpuKernelMod() = default;
   ~PadV3CpuKernelMod() override = default;
-
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
-  };
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -58,18 +57,18 @@ class PadV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void ConstantModeCompute(T *input_ptr, T *output_ptr, T constant_values);
 
   template <typename T>
-  void OtherModeCompute(T *input_ptr, T *output_ptr, int64_t p);
+  void OtherModeCompute(T *input_ptr, T *output_ptr, int64_t p) const;
 
   template <typename T>
-  void OtherModeCompute1D(T *input_ptr, T *output_ptr, int64_t p);
+  void OtherModeCompute1D(T *input_ptr, T *output_ptr, int64_t p) const;
 
   template <typename T>
-  void OtherModeCompute2D(T *input_ptr, T *output_ptr, int64_t p);
+  void OtherModeCompute2D(T *input_ptr, T *output_ptr, int64_t p) const;
 
   template <typename T>
-  void OtherModeCompute3D(T *input_ptr, T *output_ptr, int64_t p);
+  void OtherModeCompute3D(T *input_ptr, T *output_ptr, int64_t p) const;
 
-  int64_t IndexCalculate(int64_t pad_value, int64_t now, int64_t input_value, int64_t o_start, int64_t i_start);
+  int64_t IndexCalculate(int64_t pad_value, int64_t now, int64_t input_value, int64_t o_start, int64_t i_start) const;
 
   using SelectFunc =
     std::function<bool(PadV3CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
