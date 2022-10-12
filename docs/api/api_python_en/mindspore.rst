@@ -153,6 +153,21 @@ Seed
     mindspore.set_seed
     mindspore.get_seed
 
+Automatic Differentiation
+---------------------------------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.grad
+    mindspore.value_and_grad
+    mindspore.jacfwd
+    mindspore.jacrev
+    mindspore.jvp
+    mindspore.vjp
+
 Context
 --------
 

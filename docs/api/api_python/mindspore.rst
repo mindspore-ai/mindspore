@@ -44,6 +44,19 @@ mindspore
     mindspore.set_seed
     mindspore.get_seed
 
+自动微分
+----------------
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.grad
+    mindspore.value_and_grad
+    mindspore.jacfwd
+    mindspore.jacrev
+    mindspore.jvp
+    mindspore.vjp
+
 运行环境
 ---------
 

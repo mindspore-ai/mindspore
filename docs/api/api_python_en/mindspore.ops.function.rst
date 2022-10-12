@@ -437,13 +437,7 @@ Differential Functions
     :template: classtemplate.rst
 
     mindspore.ops.derivative
-    mindspore.ops.grad
-    mindspore.ops.value_and_grad
-    mindspore.ops.jacfwd
-    mindspore.ops.jacrev
     mindspore.ops.jet
-    mindspore.ops.jvp
-    mindspore.ops.vjp
     mindspore.ops.vmap
 
 Debugging Functions
