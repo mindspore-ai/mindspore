@@ -3579,3 +3579,46 @@ def logical_xor(input, other):
     Computes the "logical XOR" of two tensors element-wise.
     """
     return F.logical_xor(input, other)
+
+
+def lstsq(input, A):
+    r"""
+    Computes the solutions of the least squares and minimum norm problems of full-rank
+    matrix `input` of size :math:`(m \times n)` and matrix `A` of size :math:`(m \times k)`.
+    """
+    return F.lstsq(input, A)
+
+
+def mvlgamma(input, p):
+    r"""
+    Computes the multivariate log-gamma function with dimension p element-wise.
+    """
+    return F.mvlgamma(input, p)
+
+
+def maximum(input, other):
+    r"""
+    Computes the maximum of input tensors element-wise.
+    """
+    return F.maximum(input, other)
+
+
+def mul(input, other):
+    r"""
+    Multiplies two tensors element-wise.
+    """
+    return F.mul(input, other)
+
+
+def neg(input):
+    r"""
+    Returns a tensor with negative values of the input tensor element-wise.
+    """
+    return F.neg(input)
+
+
+def ne(input, other):
+    r"""
+    Computes the non-equivalence of two tensors element-wise.
+    """
+    return F.ne(input, other)

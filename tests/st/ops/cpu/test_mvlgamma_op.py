@@ -13,77 +13,17 @@
 # limitations under the License.
 # ============================================================================
 
-import torch
-import numpy as np
 import pytest
-import mindspore.context as context
-import mindspore.nn as nn
-import mindspore.ops.operations.array_ops as P
+import numpy as np
+
 from mindspore import Tensor
-from mindspore.common.api import jit
+import mindspore.context as context
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 
-class MvlgammaNet(nn.Cell):
-    def __init__(self, nptype, p):
-        super(MvlgammaNet, self).__init__()
-        self.mvlgamma = P.Mvlgamma(p=p)
-        self.a_np = np.array([[3, 4, 5], [4, 2, 6]]).astype(nptype)
-        self.a = Tensor(self.a_np)
-
-
-    @jit
-    def construct(self):
-        return self.mvlgamma(self.a)
-
-
-def mvlgamma_torch(a, d):
-    return torch.mvlgamma(torch.tensor(a), d).numpy()
-
-
-def mvlgamma(nptype, p):
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    mvlgamma_ = MvlgammaNet(nptype, p)
-    mvlgamma_output = mvlgamma_().asnumpy()
-    mvlgamma_expect = mvlgamma_torch(mvlgamma_.a_np, p).astype(nptype)
-    assert np.allclose(mvlgamma_output, mvlgamma_expect)
-
-
-def mvlgamma_pynative(nptype, p):
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
-    mvlgamma_ = MvlgammaNet(nptype, p)
-    mvlgamma_output = mvlgamma_().asnumpy()
-    mvlgamma_expect = mvlgamma_torch(mvlgamma_.a_np, p).astype(nptype)
-    assert np.allclose(mvlgamma_output, mvlgamma_expect)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_mvlgamma_graph_float32():
-    """
-    Feature: ALL To ALL
-    Description: test cases for Mvlgamma
-    Expectation: the result match to numpy
-    """
-    mvlgamma(np.float32, 3)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_mvlgamma_pynative_float64():
-    """
-    Feature: ALL To ALL
-    Description: test cases for Mvlgamma
-    Expectation: the result match to numpy
-    """
-    mvlgamma_pynative(np.float64, 3)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_functional_api_modes(mode):
@@ -92,15 +32,15 @@ def test_mvlgamma_functional_api_modes(mode):
     Description: Test mvlgamma functional api for Graph and PyNative modes.
     Expectation: The result match to the expect value.
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode, device_target="CPU")
     x = Tensor([[3, 4, 5], [4, 2, 6]], mstype.float32)
     output = F.mvlgamma(x, p=3)
     expected = np.array([[2.694925, 5.402975, 9.140645], [5.402975, 1.596312, 13.64045]], np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_tensor_api_modes(mode):
@@ -109,7 +49,7 @@ def test_mvlgamma_tensor_api_modes(mode):
     Description: Test mvlgamma tensor api for Graph and PyNative modes.
     Expectation: The result match to the expect value.
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode, device_target="CPU")
     x = Tensor([[3, 4, 5], [4, 2, 6]], mstype.float32)
     output = x.mvlgamma(p=3)
     expected = np.array([[2.694925, 5.402975, 9.140645], [5.402975, 1.596312, 13.64045]], np.float32)

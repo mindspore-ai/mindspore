@@ -21,6 +21,7 @@ from mindspore import Tensor
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -44,6 +45,7 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.ops(x)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -58,3 +60,20 @@ def test_net():
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))
     print(output[0].asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_neg_tensor_api_modes(mode):
+    """
+    Feature: Test neg tensor api.
+    Description: Test neg tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor([1, 2, -1, 2, 0, -3.5], mstype.float32)
+    output = x.neg()
+    expected = np.array([-1, -2, 1, -2, 0, 3.5], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)

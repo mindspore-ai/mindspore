@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.common import dtype as mstype
+
 
 class NetMul(nn.Cell):
     def __init__(self):
@@ -128,11 +130,13 @@ def mul(nptype):
     assert np.all(diff4 < error4)
     assert output4.shape == expect4.shape
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_float64():
     mul(np.float64)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -140,11 +144,13 @@ def test_mul_float64():
 def test_mul_float32():
     mul(np.float32)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_float16():
     mul(np.float16)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -152,15 +158,17 @@ def test_mul_float16():
 def test_mul_int64():
     mul(np.int64)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_int32():
     mul(np.int32)
 
-class NetMul_dynamic(nn.Cell):
+
+class NetMulDynamic(nn.Cell):
     def __init__(self):
-        super(NetMul_dynamic, self).__init__()
+        super(NetMulDynamic, self).__init__()
         self.mul = P.Mul()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
 
@@ -184,7 +192,7 @@ def mul_dynamic(nptype):
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-    mul_net = NetMul_dynamic()
+    mul_net = NetMulDynamic()
 
     output1 = mul_net(x1, y1)
     output2 = mul_net(x2, y2)
@@ -199,11 +207,13 @@ def mul_dynamic(nptype):
     assert np.all(diff2 < error2)
     assert output2.shape == expect2.shape
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_dynamic_float64():
     mul_dynamic(np.float64)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -211,11 +221,13 @@ def test_mul_dynamic_float64():
 def test_mul_dynamic_float32():
     mul_dynamic(np.float32)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_dynamic_float16():
     mul_dynamic(np.float16)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -223,8 +235,27 @@ def test_mul_dynamic_float16():
 def test_mul_dynamic_int64():
     mul_dynamic(np.int64)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_dynamic_int32():
     mul_dynamic(np.int32)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_mul_tensor_api_modes(mode):
+    """
+    Feature: Test mul tensor api.
+    Description: Test mul tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([1.0, 2.0, 3.0], mstype.float32)
+    y = Tensor([4.0, 5.0, 6.0], mstype.float32)
+    output = x.mul(y)
+    expected = np.array([4., 10., 18.], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)

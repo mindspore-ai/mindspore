@@ -20,8 +20,6 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
-from mindspore.ops.operations import array_ops as A
-from mindspore._checkparam import Validator as validator
 
 from ..operations.array_ops import (
     UniqueConsecutive,
@@ -38,6 +36,9 @@ from ..operations.array_ops import (
     IndexFill,
     AffineGrid,
     Im2Col,
+    Expand,
+    Lstsq,
+    Mvlgamma,
 )
 from ..operations.nn_ops import AdaptiveMaxPool2D
 from ..operations.array_ops import TensorScatterElements
@@ -4543,7 +4544,7 @@ def expand(input_x, size):
          [2. 2. 2. 2.]
          [3. 3. 3. 3.]]
     """
-    expand_op = _get_cache_prim(A.Expand)()
+    expand_op = _get_cache_prim(Expand)()
     return expand_op(input_x, size)
 
 
@@ -4761,6 +4762,103 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     return res.astype(dtype)
 
 
+def lstsq(input, A):
+    r"""
+    Computes the solutions of the least squares and minimum norm problems of full-rank
+    matrix `x` of size :math:`(m \times n)` and matrix `a` of size :math:`(m \times k)`.
+
+    If :math:`m \geq n`, `lstsq` solves the least-squares problem:
+
+    .. math::
+
+       \begin{array}{ll}
+       \min_y & \|xy-a\|_2.
+       \end{array}
+
+    If :math:`m < n`, `lstsq` solves the least-norm problem:
+
+    .. math::
+
+       \begin{array}{llll}
+       \min_y & \|y\|_2 & \text{subject to} & xy = a.
+       \end{array}
+
+    Args:
+        input (Tensor): The m by n matrix equivalent to `x` in above.
+            The input tensor whose data type is float16, float32 or float64.
+        A (Tensor): The m by k matrix equivalent to `a` in above.
+            The input tensor whose data type is float16, float32 or float64.
+
+    Returns:
+        Tensor, the least squares or minimum norm problems solution, which has shape :math:`(n \times k)`.
+        The data type is the same with `input`.
+
+    Raises:
+        TypeError: If `input` or `A` is not a Tensor.
+        TypeError: If dtype of `input` or `A` is not one of: float16, float32, float64.
+        TypeError: If the dtypes of `input` and `A` are not the same.
+        ValueError: If the dimension of `input` is not equal to 2.
+        ValueError: If the dimension of `A` is not equal to 2 or 1.
+        ValueError: If the length of input_dims[0] is not equal to the length of A_dims[0].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[2,1,5],[3,5,1],[1,1,1]]),mindspore.float32)
+        >>> a = Tensor(np.array([[10,5],[15,8],[7,4]]),mindspore.float32)
+        >>> output = ops.lstsq(x, a)
+        >>> print(output)
+        [[17.000002  11.000002 ]
+         [-6.5000005 -4.500001 ]
+         [-3.500002  -2.5000017]]
+    """
+    lstsq_op = _get_cache_prim(Lstsq)()
+    return lstsq_op(input, A)
+
+
+def mvlgamma(input, p):
+    r"""
+    Computes the multivariate log-gamma function with dimension p element-wise.
+
+    The following tex shows the mathematical calculation process of Mvlgamma:
+
+    .. math::
+
+        \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
+
+    where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
+
+    Args:
+        input (Tensor): The tensor to compute the multivariate log-gamma function,
+          which must be one of the following types: float32, float64.
+          The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
+          And the value of any element in `input` must be greater than (p - 1) / 2.
+        p (int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
+
+    Returns:
+        Tensor, has the same shape and type as `input`.
+
+    Raises:
+        TypeError: If dtype of `input` is neither float32 nor float64.
+        TypeError: If `p` is not an int.
+        ValueError: If `p` is not greater than or equal to 1.
+        ValueError: If all elements of `input` are not greater than (p-1)/2.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)
+        >>> y = ops.mvlgamma(x, p=3)
+        >>> print(y)
+        [[2.694925 5.402975 9.140645]
+         [5.402975 1.596312 13.64045]]
+    """
+    mvlgamma_op = _get_cache_prim(Mvlgamma)(p)
+    return mvlgamma_op(input)
+
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -4854,5 +4952,7 @@ __all__ = [
     'fold',
     'unfold',
     'diagonal',
+    'lstsq',
+    'mvlgamma',
 ]
 __all__.sort()
