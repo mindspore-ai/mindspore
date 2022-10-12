@@ -114,8 +114,10 @@ class Primitive(Primitive_):
         flag self.__setattr_flag__ is True.
         """
         cloned = copy.deepcopy(self)
-        init_params = inspect.getfullargspec(cloned.__init__.decorated_func).args[1:]
-        init_args = {}
+        init_params = list()
+        if hasattr(cloned.__init__, 'decorated_func'):
+            init_params = inspect.getfullargspec(cloned.__init__.decorated_func).args[1:]
+        init_args = self.init_attrs
         for name in init_params:
             value = self.attrs[name]
             init_args[name] = value
