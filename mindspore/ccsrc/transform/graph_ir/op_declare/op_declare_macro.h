@@ -47,10 +47,6 @@ namespace mindspore::transform {
   template <>                      \
   const mindspore::HashMap<int, SubGraphDesc> OpAdapter<T>::subgraph_map_;
 
-#define DECLARE_OP_USE_ENUM(T) \
-  template <>                  \
-  const mindspore::HashMap<std::string, int> OpAdapter<T>::enum_map_{};
-
 #define DECLARE_OP_USE_INPUT_ATTR(T) \
   template <>                        \
   const mindspore::HashMap<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_;
