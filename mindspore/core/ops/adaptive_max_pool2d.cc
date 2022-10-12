@@ -47,7 +47,7 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
     MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the num of input args should be 1, but got "
                              << input_args.size();
   }
-
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   if (shape_map.empty()) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>());
@@ -96,10 +96,12 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
 }
 
 TypePtr AdaptiveMaxPool2DInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   if (input_args.size() != 1) {
     MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the num of input args should be 1, but got "
                              << input_args.size();
   }
+  MS_EXCEPTION_IF_NULL(input_args[0]);
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto input_type =
