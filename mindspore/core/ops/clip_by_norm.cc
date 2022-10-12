@@ -54,15 +54,20 @@ abstract::ShapePtr ClipByNormInferShape(const PrimitivePtr &primitive,
   auto clip_norm_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args_abs[1]->GetShapeTrack());
   auto x_shape = x_shape_map.at(kShape);
   auto clip_norm_shape = clip_norm_shape_map.at(kShape);
-  // Check whether dynamic shape exists.
-  bool is_x_dyn = std::any_of(x_shape.begin(), x_shape.end(),
-                              [](const int64_t &value) { return value == abstract::Shape::kShapeDimAny; });
-  bool is_clip_norm_dyn = std::any_of(clip_norm_shape.begin(), clip_norm_shape.end(),
-                                      [](const int64_t &value) { return value == abstract::Shape::kShapeDimAny; });
-  if (is_x_dyn || is_clip_norm_dyn) {
-    MS_EXCEPTION(ValueError) << "For `" << kNameClipByNorm
-                             << "` op, dynamic shape is not supported now, but got `-1` in input args shape.";
+  // Support Dynamic Rank
+  if (IsDynamicRank(x_shape) || IsDynamicRank(clip_norm_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
+
+  // Support Dynamic Shape
+  if (IsDynamic(x_shape) || IsDynamic(clip_norm_shape)) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < x_shape.size(); ++i) {
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(shape_out);
+  }
+
   // Check whether clip_norm shape is valid
   if (clip_norm_shape != x_shape) {
     const auto broadcast_shape = CalBroadCastShape(x_shape, clip_norm_shape, kNameClipByNorm, "input_x", "clip_norm");
@@ -74,6 +79,7 @@ abstract::ShapePtr ClipByNormInferShape(const PrimitivePtr &primitive,
                                << x_shape << ", `clip_norm` shape: " << clip_norm_shape;
     }
   }
+
   // Check whether the attribute `axis` is valid.
   CheckAxisValid(primitive, x_shape);
   return std::make_shared<abstract::Shape>(x_shape);
