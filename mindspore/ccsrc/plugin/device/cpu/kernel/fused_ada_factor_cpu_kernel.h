@@ -28,15 +28,18 @@ namespace kernel {
 constexpr auto kFusedAdaFactor = "FusedAdaFactor";
 constexpr auto kFusedAdaFactorWithGlobalNorm = "FusedAdaFactorWithGlobalNorm";
 constexpr auto kUnknown = "Unknown";
-class FusedAdaFactorCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class FusedAdaFactorCpuKernelMod : public NativeCpuKernelMod {
  public:
   FusedAdaFactorCpuKernelMod() = default;
   explicit FusedAdaFactorCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~FusedAdaFactorCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
