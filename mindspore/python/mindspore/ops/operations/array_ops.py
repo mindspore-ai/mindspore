@@ -6875,7 +6875,7 @@ class ExtractVolumePatches(Primitive):
         ValueError: If x_d * x_h * x_w is greater than 2048.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> kernel_size = (1, 1, 2, 2, 2)
