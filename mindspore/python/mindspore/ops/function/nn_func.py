@@ -3083,11 +3083,11 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
             - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int]), optional): The pad value to be filled. Default: 0. If `pad` is an integer,
+        padding (Union[int, tuple[int]], optional): The pad value to be filled. Default: 0. If `pad` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
             If `pad` is a tuple of six integers, the padding of head, tail, top, bottom,
             left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly.
-        stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
+        stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
         dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers

@@ -18,10 +18,10 @@ mindspore.ops.multi_margin_loss
     参数：
         - **inputs** (Tensor) - 输入，shape为 :math:`(N, C)`。数据类型只支持float32、float16或float64。
         - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。
-        - **p** (int) - 可选，对偶距离的范数度。必须为1或2。默认值：1。
-        - **margin** (int) - 可选，改变对偶距离的参数。默认值：1。
-        - **weight** (Tensor) - 可选，每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认值：None。
-        - **reduction** (str) - 对输出应用特定的缩减方法：可选"none"、"mean"、"sum"。默认值：'mean'。
+        - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值：1。
+        - **margin** (int, 可选) - 改变对偶距离的参数。默认值：1。
+        - **weight** (Tensor, 可选) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认值：None。
+        - **reduction** (str, 可选) - 对输出应用特定的缩减方法：可选"none"、"mean"、"sum"。默认值：'mean'。
 
           - 'none'：不应用缩减方法。
           - 'mean'：输出的值总和除以输出的元素个数。
