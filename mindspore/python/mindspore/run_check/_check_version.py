@@ -469,12 +469,20 @@ def _add_cuda_path():
             if cuda_home is None:
                 logger.error("mindspore-gpu on windows need CUDA_PATH, but not set it now")
             else:
-                os.add_dll_directory(os.path.join(os.environ['CUDA_PATH'], 'bin'))
+                cuda_bin_path = os.path.join(os.environ['CUDA_PATH'], 'bin')
+                if sys.version_info >= (3, 8):
+                    os.add_dll_directory(cuda_bin_path)
+                else:
+                    os.environ['PATH'] += os.pathsep + cuda_bin_path
             cudann_home = os.environ.get('CUDNN_HOME')
             if cudann_home is None:
                 logger.error("mindspore-gpu on windows need CUDNN_HOME, but not set it now")
             else:
-                os.add_dll_directory(os.path.join(os.environ['CUDNN_HOME'], 'bin'))
+                cuda_home_bin_path = os.path.join(os.environ['CUDNN_HOME'], 'bin')
+                if sys.version_info >= (3, 8):
+                    os.add_dll_directory(cuda_home_bin_path)
+                else:
+                    os.environ['PATH'] += os.pathsep + cuda_home_bin_path
 
 
 check_version_and_env_config()
