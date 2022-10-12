@@ -21,11 +21,11 @@ namespace kernel {
 bool ROIAlignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
   // Check input and output numbers
-  constexpr size_t input_num = 2;
-  constexpr size_t output_num = 1;
+  constexpr size_t kInputNum = 2;
+  constexpr size_t kOutputNum = 1;
   kernel_name_ = base_operator->name();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
@@ -48,14 +48,14 @@ int ROIAlignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   // Get the input shapes
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
-  constexpr size_t X_DIMS = 4;
-  constexpr size_t ROIS_DIMS = 2;
-  if (x_shape.size() > X_DIMS) {
+  constexpr size_t kFeatureDims = 4;
+  constexpr size_t kRoisDims = 2;
+  if (x_shape.size() > kFeatureDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of features cannot be greater than  4, but got "
                   << x_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (rois_shape.size() != ROIS_DIMS) {
+  if (rois_shape.size() != kRoisDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of rois must be equal to 2, but got "
                   << rois_shape.size() << ".";
     return KRET_RESIZE_FAILED;

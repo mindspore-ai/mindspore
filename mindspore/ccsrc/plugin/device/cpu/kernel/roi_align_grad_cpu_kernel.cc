@@ -28,23 +28,23 @@ namespace {
 template <typename T>
 void bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low, int *x_high, int *y_high,
                           T *w1, T *w2, T *w3, T *w4) {
-  constexpr float eps = 0.00007;
-  const T ZERO = T(0.0);
-  const T ONE = T(1.0);
-  const T NEG_ONE = static_cast<T>(-1.0);
-  if (y < NEG_ONE || y > static_cast<T>(height) || x < NEG_ONE || x > static_cast<T>(width)) {
-    *w1 = *w2 = *w3 = *w4 = ZERO;
+  constexpr float kEps = 0.00007;
+  const T kZero = T(0.0);
+  const T kOne = T(1.0);
+  const T kMinusOne = static_cast<T>(-1.0);
+  if (y < kMinusOne || y > static_cast<T>(height) || x < kMinusOne || x > static_cast<T>(width)) {
+    *w1 = *w2 = *w3 = *w4 = kZero;
     *x_low = *x_high = *y_low = *y_high = -1;
     return;
   }
 
   // low bounder is at least zero
-  y = y <= ZERO ? ZERO : y;
-  x = x <= ZERO ? ZERO : x;
+  y = y <= kZero ? kZero : y;
+  x = x <= kZero ? kZero : x;
 
   // top left point
-  *y_low = (y <= static_cast<T>(eps) ? 0 : static_cast<int>(floor(y)));
-  *x_low = (x <= static_cast<T>(eps) ? 0 : static_cast<int>(floor(x)));
+  *y_low = (y <= static_cast<T>(kEps) ? 0 : static_cast<int>(floor(y)));
+  *x_low = (x <= static_cast<T>(kEps) ? 0 : static_cast<int>(floor(x)));
 
   // bottom right point
   if (*y_low >= height - 1) {
@@ -64,7 +64,7 @@ void bilinear_interpolate(const int height, const int width, T y, T x, int *x_lo
   // distance to nearest points
   T lx, ly, hx, hy;
   ly = y - static_cast<T>(*y_low), lx = x - static_cast<T>(*x_low);
-  hy = ONE - ly, hx = ONE - lx;
+  hy = kOne - ly, hx = kOne - lx;
 
   // weight is evaluated by the distance to point away.
   //   the closer to point home, the more weight, the farther to point away.
@@ -77,12 +77,12 @@ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_s
              int roi_end_mode, const int channels, const int height, const int width, const int pooled_height,
              const int pooled_width, int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
              int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
-  constexpr float eps = 0.00007;
-  constexpr int START_W = 0;
-  constexpr int START_H = 1;
-  constexpr int END_W = 2;
-  constexpr int END_H = 3;
-  constexpr size_t ROIS_COLS = 5;
+  constexpr float kEps = 0.00007;
+  constexpr int kStartW = 0;
+  constexpr int kStartH = 1;
+  constexpr int kEndW = 2;
+  constexpr int kEndH = 3;
+  constexpr size_t kRoisCols = 5;
   // (n, c, ph, pw) is the base param of pooled map
   *pw = thread_idx % pooled_width;
   *ph = (thread_idx / pooled_width) % pooled_height;
@@ -94,16 +94,16 @@ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_s
   //   2. indicator + 4 points (1 + 4)
   const T *roi_box = roi_boxes + (*n) * roi_cols;
   int roi_batch_ind = 0;
-  if (roi_cols == ROIS_COLS) {
-    roi_batch_ind = FloatToInt(rintf(static_cast<float>(roi_box[0]) + eps));
+  if (roi_cols == kRoisCols) {
+    roi_batch_ind = FloatToInt(rintf(static_cast<float>(roi_box[0]) + kEps));
     roi_box++;
   }
 
   // Scale and shift ROI
-  *roi_start_w = roi_box[START_W] * spatial_scale;
-  *roi_start_h = roi_box[START_H] * spatial_scale;
-  T roi_end_w = (roi_box[END_W] + static_cast<T>(roi_end_mode)) * spatial_scale;
-  T roi_end_h = (roi_box[END_H] + static_cast<T>(roi_end_mode)) * spatial_scale;
+  *roi_start_w = roi_box[kStartW] * spatial_scale;
+  *roi_start_h = roi_box[kStartH] * spatial_scale;
+  T roi_end_w = (roi_box[kEndW] + static_cast<T>(roi_end_mode)) * spatial_scale;
+  T roi_end_h = (roi_box[kEndH] + static_cast<T>(roi_end_mode)) * spatial_scale;
 
   // New ROI height/width
   T roi_width = roi_end_w - (*roi_start_w);
@@ -173,19 +173,19 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   //  Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
-  constexpr size_t DX_DY_DIMS = 4;
-  constexpr size_t ROIS_DIMS = 2;
-  if (dy_shape.size() != DX_DY_DIMS) {
+  constexpr size_t kDiffDims = 4;
+  constexpr size_t kRoisDims = 2;
+  if (dy_shape.size() != kDiffDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'dy' must be 4, but got " << dy_shape.size()
                   << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (rois_shape.size() != ROIS_DIMS) {
+  if (rois_shape.size() != kRoisDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'rois' must be 2, but got " << rois_shape.size()
                   << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (xdiff_shape_.size() > DX_DY_DIMS) {
+  if (xdiff_shape_.size() > kDiffDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of xdiff_shape cannot be greater than 4, but got "
                   << xdiff_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
@@ -242,21 +242,21 @@ bool ROIAlignGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 
   int size_init = batch_ * channels_ * height_ * width_;
   auto task1 = [this, &dx](size_t start, size_t end) {
-    const T ZERO = T(0.0);
+    const T kZero = T(0.0);
     for (size_t thread_idx = start; thread_idx < end; thread_idx++) {
-      dx[thread_idx] = ZERO;
+      dx[thread_idx] = kZero;
     }
   };
   ParallelLaunchAutoSearch(task1, IntToSize(size_init), this, &parallel_search_info_);
 
   int elem_num = roi_rows_ * channels_ * pooled_height_ * pooled_width_;
   auto task2 = [this, &dy, &rois, &dx](size_t start, size_t end) {
-    const T OFFSET = T(0.001);
+    const T kOffset = T(0.001);
     for (size_t thread_idx = start; thread_idx < end; thread_idx++) {
       int n = SizeToInt(thread_idx) / pooled_width_ / pooled_height_ / channels_;
       const T *roi_box = rois + n * roi_cols_;
       const T spatial_scale = static_cast<T>(spatial_scale_);
-      if (roi_box[1] < OFFSET && roi_box[3] < OFFSET && roi_box[1] > -OFFSET && roi_box[3] > -OFFSET) {
+      if (roi_box[1] < kOffset && roi_box[3] < kOffset && roi_box[1] > -kOffset && roi_box[3] > -kOffset) {
         continue;
       }
       int offset = -1;
