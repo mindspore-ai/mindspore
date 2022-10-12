@@ -1063,22 +1063,17 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
 // only used for InsertMirrorOps
 CNodePtr SkipTrivialNodesMoveUp(CNodePtr node) {
   MS_EXCEPTION_IF_NULL(node);
-  while (!IsSomePrimitive(node, LOAD)) {
-    if (IsInTrivialNodeList(node) || IsInAllGatherNodeList(node)) {
-      node = node->input(1)->cast<CNodePtr>();
-    }
-  }
-  auto prev_node = node->input(1)->cast<CNodePtr>();
-  if (prev_node != nullptr) {
-    if (IsSomePrimitive(prev_node, DEPEND)) {
-      auto prev_prev_node = prev_node->input(1)->cast<CNodePtr>();
-      if (IsSomePrimitive(node, LOAD)) {
-        node = prev_prev_node;
-        MS_LOG(INFO) << "Moving to the Load node before Depend node.";
+  while (True) {
+    if (IsPrimitiveCNode(node, prim::kPrimLoad) || IsInTrivialNodeList(node) || IsInAllGatherNodeList(node)) {
+      if (node->input(1)->isa<Parameter>()) {
+        return node;
       }
+      node = node->input(1)->cast<CNodePtr>();
+    } else {
+      MS_LOG(EXCEPTION) << "The node " << node->fullname_with_scope()
+                        << " is a abnormal node in inserting mirror node.";
     }
   }
-  return node;
 }
 
 std::string MirrorOpName() {
