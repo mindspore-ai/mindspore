@@ -51,8 +51,8 @@ namespace mindspore::graphkernel {
  *   %2 = op2
  *   %3 = subgraph2(%1, %0)
  *   %4 = subgraph2(%2, %0)
- *   %5 = UpdateState(U, %3, %4)
- *   %6 = Load(%0, %5)
+ *   %5 = MakeTuple(%3, %4)
+ *   %6 = Depend(%0, %5)
  *   %7 = op3(%6)
  *   return %7
  *    }

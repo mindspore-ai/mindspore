@@ -17,6 +17,8 @@
 
 #include <vector>
 #include <string>
+#include <memory>
+#include <algorithm>
 #include <unordered_set>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -54,14 +56,6 @@ InplaceAssignerInfo SubGraphSignleOutput(const AnfNodePtr &anf_node) {
     new_op_info.op_node = output->cast<CNodePtr>();
   }
   return new_op_info;
-}
-
-CNodePtr InsertLoad(const FuncGraphPtr &main_graph, const CNodePtr &broadcast_to_node, const CNodePtr &rely) {
-  AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), broadcast_to_node, rely};
-  auto load_node = main_graph->NewCNode(load_inputs);
-  load_node->set_abstract(broadcast_to_node->abstract());
-  main_graph->AddNode(load_node);
-  return load_node;
 }
 }  // namespace
 
@@ -107,15 +101,24 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
     ProcessOriginCNode(addn->input(i), {{op_info, broadcast_to_node}});
   }
 
-  // Insert UpdateState
-  AnfNodePtrList updatestate_inputs(addn->inputs().begin() + 1, addn->inputs().end());
-  auto updatestate_node = InsertUpdateState(main_graph, updatestate_inputs);
+  // Insert MakeTuple
+  AnfNodePtrList maketuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  (void)maketuple_inputs.insert(maketuple_inputs.end(), addn->inputs().begin() + 1, addn->inputs().end());
+  AbstractBasePtrList out_abs_list;
+  (void)std::transform(addn->inputs().begin() + 1, addn->inputs().end(), std::back_inserter(out_abs_list),
+                       [](const AnfNodePtr &node) { return node->abstract(); });
+  auto maketuple_node = main_graph->NewCNode(maketuple_inputs);
+  maketuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(out_abs_list));
+  main_graph->AddNode(maketuple_node);
 
-  // Insert Load
-  auto load_node = InsertLoad(main_graph, broadcast_to_node, updatestate_node);
+  // Insert Depend
+  AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), broadcast_to_node, maketuple_node};
+  auto depend_node = main_graph->NewCNode(depend_inputs);
+  depend_node->set_abstract(broadcast_to_node->abstract());
+  main_graph->AddNode(depend_node);
 
   // Remove AddN
-  (void)mng->Replace(addn, load_node);
+  (void)mng->Replace(addn, depend_node);
 }
 
 bool FloatStatusAddNFusion::Run(const FuncGraphPtr &func_graph) {

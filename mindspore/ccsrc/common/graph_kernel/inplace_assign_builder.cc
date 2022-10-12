@@ -120,18 +120,6 @@ void InplaceAssignBuilder::CreateAssignNodeAndCorrectReturn(
   }
 }
 
-CNodePtr InplaceAssignBuilder::InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtrList &nodes) const {
-  // Insert update_state_node, need mount a monad node.
-  auto u = NewValueNode(kUMonad);
-  u->set_abstract(kUMonad->ToAbstract());
-  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u};
-  (void)update_state_inputs.insert(update_state_inputs.end(), nodes.cbegin(), nodes.cend());
-  auto update_state_cnode = main_graph->NewCNode(update_state_inputs);
-  update_state_cnode->set_abstract(kUMonad->ToAbstract());
-  main_graph->AddNode(update_state_cnode);
-  return update_state_cnode;
-}
-
 CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInfo &op_info,
                                                         const FuncGraphPtr &main_graph, TypeId dst_type) {
   std::set<TypeId> data_support = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
@@ -240,9 +228,8 @@ std::vector<InplaceAssignUserInfo> InplaceAssignBuilder::FindOriginCNodeUsers(
   if (info_and_inplace_assignee_addr[0].first.real_output_num <= 1) {
     // Find users directly.
     auto users = mng->node_users()[composite_node];
-    auto update_state_node = InsertUpdateState(main_graph, {composite_node});
     for (const auto &[user, index] : users) {
-      user_node_infos.push_back({info_and_inplace_assignee_addr[0].second, update_state_node, user, IntToSize(index)});
+      user_node_infos.push_back({info_and_inplace_assignee_addr[0].second, composite_node, user, IntToSize(index)});
     }
   } else {
     std::vector<std::pair<AnfNodePtr, AnfNodePtr>> getitem_user_nodes;
@@ -264,9 +251,8 @@ std::vector<InplaceAssignUserInfo> InplaceAssignBuilder::FindOriginCNodeUsers(
       const auto &getitem_node = getitem_user_nodes[i].first;
       const auto &broadcast_to_node = getitem_user_nodes[i].second;
       auto real_users = mng->node_users()[getitem_node];
-      auto update_state_node = InsertUpdateState(main_graph, {getitem_node});
       for (const auto &[user, index] : real_users) {
-        user_node_infos.push_back({broadcast_to_node, update_state_node, user, IntToSize(index)});
+        user_node_infos.push_back({broadcast_to_node, getitem_node, user, IntToSize(index)});
       }
     }
   }
@@ -281,15 +267,15 @@ void InplaceAssignBuilder::ProcessOriginCNodeUser(
   // 1. Find users.
   auto user_nodes = FindOriginCNodeUsers(main_graph, composite_node, info_and_inplace_assignee_addr, mng);
   for (const auto &iter : user_nodes) {
-    // 2. Make sure modified composite node running first, So firstly, create load_node, then add edge to connect
-    // update_state_node, broadcast_node and load_node to keep order.
-    AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), iter.inplace_assignee_addr, iter.update_state_node};
-    auto load_node = main_graph->NewCNode(load_inputs);
-    load_node->set_abstract(iter.inplace_assignee_addr->abstract());
-    main_graph->AddNode(load_node);
+    // 2. Make sure modified composite node running first, So firstly, create depend_node, then add edge to connect
+    // work_node, broadcast_node and depend_node to keep order.
+    AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), iter.inplace_assignee_addr, iter.work_node};
+    auto depend_node = main_graph->NewCNode(depend_inputs);
+    depend_node->set_abstract(iter.inplace_assignee_addr->abstract());
+    main_graph->AddNode(depend_node);
     auto user_cnode = iter.user_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(user_cnode);
-    user_cnode->set_input(iter.user_input_idx, load_node);
+    user_cnode->set_input(iter.user_input_idx, depend_node);
   }
 }
 }  // namespace mindspore::graphkernel

@@ -36,7 +36,7 @@ struct InplaceAssignerInfo {
 
 struct InplaceAssignUserInfo {
   AnfNodePtr inplace_assignee_addr{nullptr};
-  AnfNodePtr update_state_node{nullptr};
+  AnfNodePtr work_node{nullptr};
   AnfNodePtr user_node{nullptr};
   size_t user_input_idx{0};
 };
@@ -51,7 +51,6 @@ class InplaceAssignBuilder : public opt::Pass {
                                       const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &inplace_infos);
   virtual CNodePtr CreateCleanCompositeNode(const InplaceAssignerInfo &op_info, const FuncGraphPtr &main_graph,
                                             TypeId dst_type);
-  CNodePtr InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtrList &nodes) const;
   void CreateAssignNodeAndCorrectReturn(
     const FuncGraphPtr &sub_graph,
     const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &parameters_infos) const;

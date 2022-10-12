@@ -55,21 +55,12 @@ std::vector<std::vector<int64_t>> GetHybridInplaceIndex(const CNodePtr &cnode) {
 }
 
 CNodePtr InplaceAssign(const FuncGraphPtr &func_graph, const AnfNodePtr &src, const CNodePtr &dst) {
-  // Insert UpdateState, Load, need mount a UMonad node.
-  auto u = NewValueNode(kUMonad);
-  u->set_abstract(kUMonad->ToAbstract());
+  // Insert Depend
+  AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), src, dst};
+  auto depend_cnode = func_graph->NewCNode(depend_inputs);
+  depend_cnode->set_abstract(src->abstract());
 
-  // Insert UpdateState
-  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, dst};
-  auto update_state_cnode = func_graph->NewCNode(update_state_inputs);
-  update_state_cnode->set_abstract(kUMonad->ToAbstract());
-
-  // Insert Load
-  AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), src, update_state_cnode};
-  auto load_cnode = func_graph->NewCNode(load_inputs);
-  load_cnode->set_abstract(dst->abstract());
-
-  return load_cnode;
+  return depend_cnode;
 }
 
 CNodePtr InplaceAssignAfterCustom(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {

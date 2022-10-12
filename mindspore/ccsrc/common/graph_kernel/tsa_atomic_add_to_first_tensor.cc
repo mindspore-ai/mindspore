@@ -224,7 +224,7 @@ void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, con
   // Insert extra input(broadcast node output) to composite node, and make origin TensorScatterAdd inplace-assign to it.
   ProcessOriginalCNode(origin_composite_node, info_and_outer_nodes_with_index);
 
-  // Insert UpdateState + Load before origin TensorScatterAdd's user to keep execution order.
+  // Insert Depend before origin TensorScatterAdd's user to keep execution order.
   ProcessOriginCNodeUser(main_graph, origin_composite_node, info_and_outer_nodes, mng);
   std::stringstream ss;
   ss << "Target node: " << origin_composite_node->fullname_with_scope() << ", outer nodes: ";
