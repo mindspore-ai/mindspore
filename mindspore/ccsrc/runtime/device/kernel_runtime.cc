@@ -694,13 +694,13 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
     *device_address =
       CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
   }
-  if (*device_address != nullptr && (*device_address)->GetPtr() == nullptr &&
-      (!graph.has_flag(kFlagEnableZeroCopyInGraph))) {
+  if (*device_address != nullptr && (*device_address)->GetPtr() == nullptr) {
     auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
     (*device_address)->set_host_shape(trans::GetRuntimePaddingShape(item, index));
     MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
                  << " node:" << item->fullname_with_scope() << " debug:" << item->DebugString() << " index: " << index;
-    if (mem_manager_->MallocMem(kStaticMem, tensor_size, *device_address, graph.graph_id()) == nullptr) {
+    if (!graph.has_flag(kFlagEnableZeroCopyInGraph) &&
+        mem_manager_->MallocMem(kStaticMem, tensor_size, *device_address, graph.graph_id()) == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
     }
   }

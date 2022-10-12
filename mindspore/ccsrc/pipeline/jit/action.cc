@@ -1109,7 +1109,11 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func;
   if (exist_func) {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
-    set_ctx(false, false, false);
+    if (common::GetEnv("ENABLE_SUBGRAPH_SINK") == "1") {
+      set_ctx(true, false, false);
+    } else {
+      set_ctx(false, false, false);
+    }
     return;
   }
   bool exist_while =
@@ -1117,14 +1121,18 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
   if (exist_while || ExistSwitchRef(func_graph, all_nodes)) {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
-    set_ctx(false, false, false);
+    if (common::GetEnv("ENABLE_SUBGRAPH_SINK") == "1") {
+      set_ctx(true, false, false);
+    } else {
+      set_ctx(false, false, false);
+    }
     return;
   }
 
   // Multiple device targets scenario.
   if (func_graph->exist_multi_target()) {
     // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-    if (exist_control_flow) {
+    if (exist_control_flow && common::GetEnv("ENABLE_SUBGRAPH_SINK") != "1") {
       MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
       set_ctx(false, false, false);
       return;
