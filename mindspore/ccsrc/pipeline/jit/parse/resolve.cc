@@ -279,7 +279,10 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     origin_node->interpret();
   if (!interpret_without_internal && convert_result->isa<InterpretedObject>()) {
     auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
-    MS_EXCEPTION(TypeError) << "Do not support to convert " << py::str(type_str) << " into graph node.";
+    MS_EXCEPTION(TypeError) << "Do not support to convert " << py::str(type_str) << " object into graph node."
+                            << ".\nFor more details, please refer to "
+                            << "https://mindspore.cn/docs/zh-CN/master/search.html?q=Do+not+support+to+convert+object"
+                            << "+into+graph+node&check_keywords=yes&area=default\n";
   }
   MS_EXCEPTION_IF_NULL(convert_result);
   if (convert_result->isa<FuncGraph>() && has_recompute_scope) {

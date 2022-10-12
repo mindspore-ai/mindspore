@@ -1700,7 +1700,9 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
       auto obj = ValueToPyData(data_value);
       auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
       MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << py::str(type_str) << " object "
-                              << py::str(obj);
+                              << py::str(obj) << ".\nFor more details, please refer to "
+                              << "https://mindspore.cn/docs/zh-CN/master/faq/network_compilation.html?highlight=do"
+                              << "%20support%20get%20attribute%20from";
     }
   }
 
