@@ -17,7 +17,6 @@
 #define MINDSPORE_NNACL_FP32_CDIST_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
