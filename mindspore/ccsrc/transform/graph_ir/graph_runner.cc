@@ -40,7 +40,7 @@ namespace py = pybind11;
 namespace mindspore {
 namespace transform {
 std::shared_ptr<::ge::Session> GraphRunner::NewSession(const SessionOptions &sess_options) {
-#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
   std::shared_ptr<::ge::Session> ret;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -63,14 +63,14 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
   if (ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::ONE_DEVICE) {
     MS_LOG(INFO) << "ME run in ONE_DEVICE strategy mode";
   }
-#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 #endif
   if (options.sess_ptr != nullptr) {
     sess_ = options.sess_ptr;
   } else {
-#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
     if (ms_context->backend_policy() == "ge") {
       sess_ = NewSession(options.options);
       if (sess_ == nullptr) {
@@ -85,11 +85,11 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     MS_LOG(INFO) << "The GraphManager is empty!!";
     return;
   }
-#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
   if (ms_context->backend_policy() != "ge") {
     return;
   }
-#ifndef ENABLE_LITE_ACL
+#ifndef ENABLE_HELPER
   // register the callback function
   if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "Register callback failed!";
@@ -145,7 +145,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
-#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
