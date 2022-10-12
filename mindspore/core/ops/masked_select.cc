@@ -25,6 +25,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "ops/primitive_c.h"
+#include "utils/ms_context.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -41,6 +42,15 @@ abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,
 
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    auto mask_shape = y_shape_map[kShape];
+    (void)CheckAndConvertUtils::CheckValue<int64_t>("rank of mask ", SizeToLong(mask_shape.size()), kGreaterEqual, 1,
+                                                    primitive->name());
+  }
+
   auto x_shape = x_shape_map[kMaxShape].empty() ? x_shape_map[kShape] : x_shape_map[kMaxShape];
   auto y_shape = y_shape_map[kMaxShape].empty() ? y_shape_map[kShape] : y_shape_map[kMaxShape];
 
