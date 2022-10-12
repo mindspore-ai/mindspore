@@ -33,6 +33,10 @@ abstract::ShapePtr CholeskyInferShape(const PrimitivePtr &primitive, const std::
   auto x_shape = input_x->shape();
   MS_EXCEPTION_IF_NULL(x_shape);
   auto const &x_shape_list = x_shape->shape();
+  // support dynamic rank
+  if (IsDynamicRank(x_shape_list)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
   const size_t x_dim = x_shape_list.size();
   constexpr size_t kDefaultRank = 2;
   constexpr size_t kRowIndex = 2;
@@ -41,6 +45,10 @@ abstract::ShapePtr CholeskyInferShape(const PrimitivePtr &primitive, const std::
     MS_EXCEPTION(ValueError) << "For Cholesky, the dimension of input x must be greater than or "
                              << "equal to 2"
                              << ", but got a " << x_dim << "-D Tensor.";
+  }
+  // support dynamic shape
+  if (IsDynamic(x_shape_list)) {
+    return input_x->BuildShape()->cast<abstract::ShapePtr>();
   }
   if (x_shape_list[x_dim - kColIndex] != x_shape_list[x_dim - kRowIndex]) {
     MS_EXCEPTION(ValueError) << "For Cholesky, input x must be batch squares"
@@ -57,6 +65,12 @@ TypePtr CholeskyInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, op_name);
 }
 }  // namespace
+
+void Cholesky::set_upper(const bool upper) { (void)this->AddAttr("upper", api::MakeValue(upper)); }
+
+bool Cholesky::get_upper() const { return GetValue<bool>(GetAttr("upper")); }
+
+void Cholesky::Init(const bool upper) { set_upper(upper); }
 
 MIND_API_OPERATOR_IMPL(Cholesky, BaseOperator);
 AbstractBasePtr CholeskyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

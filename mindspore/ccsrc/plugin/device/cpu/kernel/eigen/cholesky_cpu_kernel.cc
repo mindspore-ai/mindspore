@@ -53,36 +53,45 @@ void CholeskyCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape, size
   outer_batch_ /= ((*row) * (*col));
 }
 
-void CholeskyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex));
-  InitMatrixInfo(input_shape, &input_row_, &input_col_);
-  auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex));
-  InitMatrixInfo(output_shape, &output_row_, &output_col_);
-  if (common::AnfAlgo::HasNodeAttr("upper", kernel_node)) {
-    flag_ = false;
-    upper_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "upper");
-  }
-  // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
-  if (common::AnfAlgo::HasNodeAttr(CLEAN, kernel_node)) {
-    clean_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CLEAN);
-  }
-  if (common::AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
-    lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool CholeskyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  dtype_ = inputs[kIndex0]->GetDtype();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Cholesky does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  if (base_operator->HasAttr("upper")) {
+    flag_ = false;
+    upper_ = GetValue<bool>(base_operator->GetAttr("upper"));
+  }
+  // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
+  if (base_operator->HasAttr(CLEAN)) {
+    clean_ = GetValue<bool>(base_operator->GetAttr(CLEAN));
+  }
+  if (base_operator->HasAttr(LOWER)) {
+    lower_ = GetValue<bool>(base_operator->GetAttr(LOWER));
+  }
+  return true;
+}
+
+int CholeskyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto input_shape = LongVecToSizeVec(inputs[kInputIndex]->GetShapeVector());
+  InitMatrixInfo(input_shape, &input_row_, &input_col_);
+  auto output_shape = LongVecToSizeVec(inputs[kOutputIndex]->GetShapeVector());
+  InitMatrixInfo(output_shape, &output_row_, &output_col_);
+  return KRET_OK;
 }
 
 template <typename T>
