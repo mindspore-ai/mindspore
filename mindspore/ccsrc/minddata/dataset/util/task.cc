@@ -52,7 +52,8 @@ void Task::operator()() {
     // get the thread id.
     TaskGroup *vg = MyTaskGroup();
     std::string uuid = ss.str();
-    rc_ = vg->GetIntrpService()->Register(&uuid, this);
+    auto intrp_service = vg->GetIntrpService();
+    rc_ = intrp_service->Register(&uuid, this);
     if (rc_.IsOk()) {
       // Now we can run the given task.
       rc_ = fnc_obj_();
@@ -66,6 +67,12 @@ void Task::operator()() {
       }
       ShutdownGroup();
     }
+    // The given function has finished running. We must change the running status immediately.
+    // Because std::async may create a new thread with the same thread ID as this thread since it has finished.
+    // Then there will be two tasks with the same thread ID in our task group, which may cause a mismatch
+    // in TaskManager::FindMe(). We can identify the exact task based on the running status there.
+    running_ = false;
+    MS_LOG(DEBUG) << "Task: " << my_name_ << " Thread ID " << ss.str() << " Finished.";
   } catch (const std::bad_alloc &e) {
     rc_ = STATUS_ERROR(StatusCode::kMDOutOfMemory, e.what());
     MS_LOG(ERROR) << rc_;
@@ -160,7 +167,8 @@ Status Task::Join(WaitFlag blocking) {
           // to interrupt everything one more time.
           std::stringstream ss;
           ss << get_id();
-          MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str() << " is not responding. Interrupt again";
+          MS_LOG(WARNING) << "Task: " << my_name_ << " Thread ID " << ss.str()
+                          << " is not responding. Interrupt it again.";
           interrupt_svc->InterruptAll();
           wait_times++;
 #ifdef WITH_BACKEND
@@ -178,8 +186,8 @@ Status Task::Join(WaitFlag blocking) {
               // just wait 30 seconds
               // case1: cpu usage 100%, DataQueueOp thread may destroy without thread_future
               if (wait_times > kWaitInterruptTaskTime) {
-                MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str()
-                                << " is not responding. Maybe it's destroyed, task stop.";
+                MS_LOG(WARNING) << "Task: " << my_name_ << " Thread ID " << ss.str()
+                                << " is not responding. Maybe it has been destroyed. Stop the task.";
                 break;
               }
             }
@@ -191,7 +199,7 @@ Status Task::Join(WaitFlag blocking) {
       }
       std::stringstream ss;
       ss << get_id();
-      MS_LOG(DEBUG) << MyName() << " Thread ID " << ss.str() << " Stopped.";
+      MS_LOG(DEBUG) << "Task: " << my_name_ << " Thread ID " << ss.str() << " Stopped.";
       running_ = false;
       RETURN_IF_NOT_OK(wp_.Deregister());
       RETURN_IF_NOT_OK(interrupt_svc->Deregister(ss.str()));

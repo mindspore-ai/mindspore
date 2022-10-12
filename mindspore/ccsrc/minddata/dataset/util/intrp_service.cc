@@ -27,7 +27,7 @@ IntrpService::IntrpService() try : high_water_mark_(0) { (void)ServiceStart(); }
 }
 
 IntrpService::~IntrpService() noexcept {
-  MS_LOG(INFO) << "Number of registered resources is " << high_water_mark_ << ".";
+  MS_LOG(DEBUG) << "Number of registered resources is " << high_water_mark_ << ".";
   if (!all_intrp_resources_.empty()) {
     try {
       InterruptAll();
@@ -49,7 +49,7 @@ Status IntrpService::Register(std::string *name, IntrpResource *res) {
       std::ostringstream ss;
       std::string uuid = std::string("");
       ss << this_thread::get_id();
-      MS_LOG(INFO) << "Register resource with name " << *name << ". Thread ID " << ss.str() << ".";
+      MS_LOG(DEBUG) << "Register resource with name " << *name << ". Thread ID " << ss.str() << ".";
       auto it = all_intrp_resources_.emplace(*name, res);
       while (it.second == false) {
         uuid = Services::GetUniqueID();
