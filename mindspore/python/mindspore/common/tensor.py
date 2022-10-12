@@ -37,6 +37,8 @@ from mindspore._checkparam import Validator as validator
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_, np.complex64, np.complex128)
+tensor_dynamic_list = ["set_default_dtype", "_set_default_dtype", "shape", "_shape", "dtype", "_dtype",
+                       "dim", "ndim", "virtual_flag", "init_finished"]
 
 
 def _check_input_data_type(input_data):
@@ -184,6 +186,16 @@ class Tensor(Tensor_):
         # index_of_parent_ will set to the index
         self.parent_tensor_ = None
         self.index_of_parent_ = None
+
+        self.slice_num_of_persistent_data_ = None
+        self.slice_shape_of_persistent_data_ = None
+
+    def __getattribute__(self, item):
+        if item not in tensor_dynamic_list:
+            if -1 in self._shape:
+                raise AttributeError(f"For tensor of dynamic shape, methods and attributes that require value "
+                                     f"are not supported, but got {item}")
+        return object.__getattribute__(self, item)
 
     @staticmethod
     def _set_default_dtype(input_data, dtype):
