@@ -245,6 +245,16 @@ void TensorScatterArithmetic(const enum TensorScatterArithmeticFunctionType &fun
   }
 }
 
+template <typename T, typename S>
+void CallTensorScatterUpdate(T *input, S *indices, T *update, T *output, const size_t &block_size,
+                             const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
+                             const size_t &indices_dim_1, S *indices_stride, S *work_shape, uint32_t device_id,
+                             cudaStream_t stream) {
+  TensorScatterUpdateKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
+    input, indices, update, output, block_size, input_size, output_size, indices_dim_0, indices_dim_1, indices_stride,
+    work_shape);
+}
+
 template CUDA_LIB_EXPORT void TensorScatterArithmetic<half, int>(
   const enum TensorScatterArithmeticFunctionType &func_type, half *input, int *indices, half *update, half *output,
   const size_t &block_size, const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
@@ -379,3 +389,23 @@ template CUDA_LIB_EXPORT void TensorScatterArithmetic<bool, int64_t>(
   const enum TensorScatterArithmeticFunctionType &func_type, bool *input, int64_t *indices, bool *update, bool *output,
   const size_t &block_size, const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
   const size_t &indices_dim_1, int64_t *indices_stride, int64_t *work_shape, uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CallTensorScatterUpdate<Complex<float>, int64_t>(
+  Complex<float> *input, int64_t *indices, Complex<float> *update, Complex<float> *output, const size_t &block_size,
+  const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  int64_t *indices_stride, int64_t *work_shape, uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CallTensorScatterUpdate<Complex<float>, int>(
+  Complex<float> *input, int *indices, Complex<float> *update, Complex<float> *output, const size_t &block_size,
+  const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  int *indices_stride, int *work_shape, uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CallTensorScatterUpdate<Complex<double>, int64_t>(
+  Complex<double> *input, int64_t *indices, Complex<double> *update, Complex<double> *output, const size_t &block_size,
+  const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  int64_t *indices_stride, int64_t *work_shape, uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CallTensorScatterUpdate<Complex<double>, int>(
+  Complex<double> *input, int *indices, Complex<double> *update, Complex<double> *output, const size_t &block_size,
+  const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  int *indices_stride, int *work_shape, uint32_t device_id, cudaStream_t stream);

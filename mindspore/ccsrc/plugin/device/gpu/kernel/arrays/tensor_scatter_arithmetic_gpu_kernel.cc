@@ -18,12 +18,15 @@
 #include <functional>
 #include "mindspore/core/ops/base_operator.h"
 #include "mindspore/core/abstract/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
 #define TENSOR_SCATTER_ARITHMETIC_GPU_REGISTER(IN_DT0, IN_DT1, IN_DT2, OUT_DT0, T, S)                 \
   KernelAttr().AddInputAttr(IN_DT0).AddInputAttr(IN_DT1).AddInputAttr(IN_DT2).AddOutputAttr(OUT_DT0), \
     &TensorScatterArithmeticGpuKernelMod::LaunchKernel<T, S>
+
+constexpr auto kTensorScatterUpdate = "TensorScatterUpdate";
 
 void TensorScatterArithmeticGpuKernelMod::FreeResource() {
   if (indices_stride_ != nullptr) {
@@ -90,6 +93,12 @@ bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_opera
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto type_id = kernel_attr.GetInputAttr(kIndex0).first;
+  if ((type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128) && (kernel_name_ != kTensorScatterUpdate)) {
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the data type of input args not supports Complex.";
+    return false;
+  }
   return true;
 }
 
@@ -150,6 +159,8 @@ int TensorScatterArithmeticGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   }
   return KRET_OK;
 }
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S>
 bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
@@ -183,9 +194,20 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemcpy output failed");
 
-  TensorScatterArithmetic(op_func_type_, input, indices, update, output, block_size_, update_size_, output_size_,
-                          indices_dim_0_, indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
-                          reinterpret_cast<S *>(work_shape_), device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  if constexpr ((std::is_same_v<T, Complex<float>>) || (std::is_same_v<T, Complex<double>>)) {
+    if (kernel_name_ == kTensorScatterUpdate) {
+      CallTensorScatterUpdate(input, indices, update, output, block_size_, update_size_, output_size_, indices_dim_0_,
+                              indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
+                              reinterpret_cast<S *>(work_shape_), device_id_,
+                              reinterpret_cast<cudaStream_t>(stream_ptr_));
+      return true;
+    }
+  } else {
+    TensorScatterArithmetic(op_func_type_, input, indices, update, output, block_size_, update_size_, output_size_,
+                            indices_dim_0_, indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
+                            reinterpret_cast<S *>(work_shape_), device_id_,
+                            reinterpret_cast<cudaStream_t>(stream_ptr_));
+  }
   return true;
 }
 
@@ -240,6 +262,14 @@ const TensorScatterArithmeticGpuKernelMod::SupportList &TensorScatterArithmeticG
                                             int)},
     {TENSOR_SCATTER_ARITHMETIC_GPU_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, bool,
                                             int64_t)},
+    {TENSOR_SCATTER_ARITHMETIC_GPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeComplex64,
+                                            kNumberTypeComplex64, Complex<float>, int)},
+    {TENSOR_SCATTER_ARITHMETIC_GPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeComplex128,
+                                            kNumberTypeComplex128, Complex<double>, int)},
+    {TENSOR_SCATTER_ARITHMETIC_GPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64,
+                                            kNumberTypeComplex64, Complex<float>, int64_t)},
+    {TENSOR_SCATTER_ARITHMETIC_GPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128,
+                                            kNumberTypeComplex128, Complex<double>, int64_t)},
   };
   return func_list;
 }
