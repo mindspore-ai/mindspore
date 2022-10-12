@@ -21,18 +21,23 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class UpsampleTrilinear3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class UpsampleTrilinear3DCpuKernelMod : public NativeCpuKernelMod {
  public:
   UpsampleTrilinear3DCpuKernelMod() = default;
   ~UpsampleTrilinear3DCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -45,6 +50,7 @@ class UpsampleTrilinear3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId in_type_{kTypeUnknown};
+  std::string kernel_name_;
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
   std::vector<float> attr_scales_;

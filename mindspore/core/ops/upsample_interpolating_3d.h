@@ -14,28 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_UPSAMPLE_NEAREST_3D_H_
-#define MINDSPORE_CORE_OPS_UPSAMPLE_NEAREST_3D_H_
-#include <map>
-#include <vector>
-#include <string>
-#include <memory>
+#ifndef MINDSPORE_CORE_OPS_UPSAMPLE_INTERPOLATING_3D_H_
+#define MINDSPORE_CORE_OPS_UPSAMPLE_INTERPOLATING_3D_H_
 
+#include <vector>
 #include "ops/base_operator.h"
-#include "mindapi/base/types.h"
+#include "ops/upsample_nearest_3d.h"
+#include "ops/upsample_trilinear_3d.h"
+#include "ops/upsample_interpolating_3d.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameUpsampleNearest3D = "UpsampleNearest3D";
-class MIND_API UpsampleNearest3D : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(UpsampleNearest3D);
-  UpsampleNearest3D() : BaseOperator(kNameUpsampleNearest3D) { InitIOName({"x"}, {"y"}); }
-  std::vector<int64_t> get_output_size_attr() const;
-  std::vector<float> get_scales_attr() const;
-};
-using PrimUpsampleNearest3D = std::shared_ptr<UpsampleNearest3D>;
+abstract::AbstractBasePtr UpsampleInterpolating3DInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_UPSAMPLE_NEAREST_3D_H_
+#endif  // MINDSPORE_CORE_OPS_UPSAMPLE_INTERPOLATING_3D_H_

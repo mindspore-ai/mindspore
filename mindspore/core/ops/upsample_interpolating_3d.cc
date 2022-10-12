@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "ops/upsample_nearest_3d.h"
 #include <algorithm>
 #include <memory>
 #include <set>
@@ -22,14 +21,15 @@
 #include <vector>
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "ops/upsample_interpolating_3d.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primitive,
+                                                     const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   int64_t long_kdim2 = SizeToLong(kDim2);
   int64_t long_kdim3 = SizeToLong(kDim3);
@@ -47,8 +47,13 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
   auto scales = GetValue<std::vector<float>>(scales_ptr);
 
   ShapeVector y_shape;
-  (void)y_shape.emplace_back(x_shape[kInputIndex0]);
-  (void)y_shape.emplace_back(x_shape[kInputIndex1]);
+  if (IsDynamicRank(x_shape)) {
+    (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
+    (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
+  } else {
+    (void)y_shape.emplace_back(x_shape[kInputIndex0]);
+    (void)y_shape.emplace_back(x_shape[kInputIndex1]);
+  }
 
   if (!output_size.empty() && scales.empty()) {
     (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
@@ -59,8 +64,16 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual, long_kdim3,
                                              prim_name);
-    for (int64_t idx = 0; idx < long_kdim3; ++idx) {
-      (void)y_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + long_kdim2] * scales[idx])));
+    if (IsDynamicRank(x_shape)) {
+      for (int64_t idx = 0; idx < long_kdim3; ++idx) {
+        (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
+      }
+    } else {
+      for (int64_t idx = 0; idx < long_kdim3; ++idx) {
+        (void)y_shape.emplace_back(x_shape[idx + long_kdim2] != abstract::Shape::kShapeDimAny
+                                     ? static_cast<int64_t>(floor(x_shape[idx + long_kdim2] * scales[idx]))
+                                     : abstract::Shape::kShapeDimAny);
+      }
     }
   } else if (output_size.empty() && scales.empty()) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
@@ -79,23 +92,21 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(y_shape);
 }
 
-TypePtr UpsampleNearest3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> common_float_types = {kFloat16, kFloat32, kFloat64};
+TypePtr UpsampleInterpolatingInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), common_float_types,
                                                     primitive->name());
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(UpsampleNearest3D, BaseOperator);
-AbstractBasePtr UpsampleNearest3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) {
+abstract::AbstractBasePtr UpsampleInterpolating3DInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto type = UpsampleNearest3DInferType(primitive, input_args);
-  auto shape = UpsampleNearest3DInferShape(primitive, input_args);
+  auto type = UpsampleInterpolatingInferType(primitive, input_args);
+  auto shape = UpsampleInterpolating3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 
@@ -109,6 +120,25 @@ std::vector<float> UpsampleNearest3D::get_scales_attr() const {
   return GetValue<std::vector<float>>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(UpsampleNearest3D, prim::kPrimUpsampleNearest3D, UpsampleNearest3DInfer, nullptr, true);
+std::vector<int64_t> UpsampleTrilinear3D::get_output_size_attr() const {
+  auto value_ptr = this->GetAttr(kOutputSize);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+std::vector<float> UpsampleTrilinear3D::get_scales_attr() const {
+  auto value_ptr = this->GetAttr(kScales);
+  return GetValue<std::vector<float>>(value_ptr);
+}
+bool UpsampleTrilinear3D::get_align_corners() const {
+  auto value_ptr = this->GetAttr("align_corners");
+  return GetValue<bool>(value_ptr);
+}
+
+MIND_API_OPERATOR_IMPL(UpsampleNearest3D, BaseOperator);
+MIND_API_OPERATOR_IMPL(UpsampleTrilinear3D, BaseOperator);
+
+REGISTER_PRIMITIVE_EVAL_IMPL(UpsampleTrilinear3D, prim::kPrimUpsampleTrilinear3D, UpsampleInterpolating3DInfer, nullptr,
+                             true);
+REGISTER_PRIMITIVE_EVAL_IMPL(UpsampleNearest3D, prim::kPrimUpsampleNearest3D, UpsampleInterpolating3DInfer, nullptr,
+                             true);
 }  // namespace ops
 }  // namespace mindspore

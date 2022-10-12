@@ -40,12 +40,37 @@ def matrix_diag(diagonal, shape):
 
 
 class SvdNet(nn.Cell):
+
     def __init__(self, full_matrices=False, compute_uv=True):
         super(SvdNet, self).__init__()
-        self.svd = linalg_ops.Svd(full_matrices=full_matrices, compute_uv=compute_uv)
+        self.svd = linalg_ops.Svd(full_matrices=full_matrices,
+                                  compute_uv=compute_uv)
 
     def construct(self, a):
         return self.svd(a)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_svd_dynamic_shape():
+    """
+    Feature: test svd op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = SvdNet(True, True)
+    a_dyn = Tensor(shape=[None, None], dtype=mindspore.float32)
+    net.set_inputs(a_dyn)
+    a = Tensor([[1, 2], [-4, -5], [2, 1]], dtype=mindspore.float32)
+    s, u, v = net(a)
+    expect_s_shape = (2,)
+    expect_u_shape = (3, 3)
+    expect_v_shape = (2, 2)
+    assert s.asnumpy().shape == expect_s_shape
+    assert u.asnumpy().shape == expect_u_shape
+    assert v.asnumpy().shape == expect_v_shape
 
 
 @pytest.mark.level0
@@ -128,7 +153,9 @@ def test_svd_net5():
     tensor_a = Tensor(a, dtype=mindspore.float32)
     s, u, v = ops.svd(tensor_a, True, True)
 
-    output = batch_matmul(u, batch_matmul(matrix_diag(s, (5, 5, 3, 2)), transpose(v, (0, 1, 3, 2))))
+    output = batch_matmul(
+        u,
+        batch_matmul(matrix_diag(s, (5, 5, 3, 2)), transpose(v, (0, 1, 3, 2))))
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
@@ -162,7 +189,8 @@ def test_svd_vmap1():
     net = SvdNet(True, True)
     svd_vmap = ops.vmap(net, (0,), 0)
     s, u, v = svd_vmap(tensor_a)
-    output = batch_matmul(u, batch_matmul(matrix_diag(s, (5, 3, 3)), transpose(v, (0, 2, 1))))
+    output = batch_matmul(
+        u, batch_matmul(matrix_diag(s, (5, 3, 3)), transpose(v, (0, 2, 1))))
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 

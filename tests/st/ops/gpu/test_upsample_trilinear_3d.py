@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops.operations.nn_ops import UpsampleTrilinear3D
@@ -30,6 +31,26 @@ class UpsampleTrilinear3DNet(nn.Cell):
     def construct(self, x):
         out = self.upsample(x)
         return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_upsample_trilinear_3d_dynamic_shape():
+    """
+    Feature: Test UpsampleTrilinear3D op in gpu.
+    Description: Test the ops in dynamic shape.
+    Expectation: Expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    output_size = [2, 4, 4]
+    net = UpsampleTrilinear3DNet(output_size=output_size)
+    x_dyn = Tensor(shape=[None, 1, 1, 2, 2], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+    x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
+    output = net(x)
+    expect_shape = (1, 1, 2, 4, 4)
+    assert expect_shape == output.asnumpy().shape
 
 
 @pytest.mark.level1

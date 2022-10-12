@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ops/upsample_nearest_3d.h"
 #include "plugin/device/cpu/kernel/upsample_nearest_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
@@ -52,20 +53,33 @@ inline bool data_index_step(T *x, const T *X, Args &&... args) {
 }
 }  // namespace
 
-void UpsampleNearest3DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  in_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
-  if (x_shape_.size() != kShape5dDims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' should be " << kShape5dDims << ", but got "
-                      << x_shape_.size();
-  }
-  attr_scales_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, kAttrScales);
+bool UpsampleNearest3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  in_type_ = inputs.at(kIndex0)->GetDtype();
+  auto kernel_ptr = std::make_shared<ops::UpsampleNearest3D>(base_operator->GetPrim());
+  attr_scales_ = kernel_ptr->get_scales_attr();
   if (attr_scales_.empty()) {
     attr_scales_ = {0, 0, 0};
   }
+  return true;
+}
+
+int UpsampleNearest3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  x_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  if (x_shape_.size() != kDim5) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'x' should be " << kDim5 << ", but got "
+                             << x_shape_.size();
+  }
+  return KRET_OK;
 }
 
 bool UpsampleNearest3DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -99,6 +113,7 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   int64_t input_depth = x_shape_[kIndex2];
   int64_t input_height = x_shape_[kIndex3];
   int64_t input_width = x_shape_[kIndex4];
+
   int64_t output_depth = y_shape_[kIndex2];
   int64_t output_height = y_shape_[kIndex3];
   int64_t output_width = y_shape_[kIndex4];
@@ -141,6 +156,7 @@ std::vector<KernelAttr> UpsampleNearest3DCpuKernelMod::GetOpSupport() {
 
   return support_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpsampleNearest3D, UpsampleNearest3DCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

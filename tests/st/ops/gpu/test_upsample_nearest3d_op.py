@@ -17,12 +17,14 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops.operations.nn_ops import UpsampleNearest3D
 
 
 class UpsampleNearest3DNet(nn.Cell):
+
     def __init__(self, output_size=None, scales=None):
         super(UpsampleNearest3DNet, self).__init__()
         self.upsample = UpsampleNearest3D(output_size, scales)
@@ -30,6 +32,28 @@ class UpsampleNearest3DNet(nn.Cell):
     def construct(self, x):
         out = self.upsample(x)
         return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_upsample_nearest_3d_dynamic_shape():
+    """
+    Feature: Test UpsampleNearest3D op in gpu.
+    Description: Test the ops in dynamic shape.
+    Expectation: Expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    output_size = [3, 4, 5]
+    net = UpsampleNearest3DNet(output_size=output_size)
+    x_dyn = Tensor(shape=[None, 1, 2, 2, 4], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+    x = Tensor(
+        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                  16]).reshape([1, 1, 2, 2, 4]), ms.float32)
+    output = net(x)
+    expect_shape = (1, 1, 3, 4, 5)
+    assert expect_shape == output.asnumpy().shape
 
 
 @pytest.mark.level1
@@ -43,10 +67,9 @@ def test_upsample_nearest_3d_output_size_float(data_type):
     Expectation: The result match expected output.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    input_tensor = Tensor(np.array([[[[[0.1, 0.2, 0.3],
-                                       [0.4, 0.5, 0.6]],
-                                      [[0.7, 0.8, 0.9],
-                                       [1.0, 1.1, 1.2]]]]]).astype(data_type))
+    input_tensor = Tensor(
+        np.array([[[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],
+                    [[0.7, 0.8, 0.9], [1.0, 1.1, 1.2]]]]]).astype(data_type))
     expected = np.array([[[[[0.1000, 0.1000, 0.2000, 0.2000, 0.3000],
                             [0.1000, 0.1000, 0.2000, 0.2000, 0.3000],
                             [0.4000, 0.4000, 0.5000, 0.5000, 0.6000],
@@ -58,7 +81,8 @@ def test_upsample_nearest_3d_output_size_float(data_type):
                            [[0.7000, 0.7000, 0.8000, 0.8000, 0.9000],
                             [0.7000, 0.7000, 0.8000, 0.8000, 0.9000],
                             [1.0000, 1.0000, 1.1000, 1.1000, 1.2000],
-                            [1.0000, 1.0000, 1.1000, 1.1000, 1.2000]]]]]).astype(data_type)
+                            [1.0000, 1.0000, 1.1000, 1.1000,
+                             1.2000]]]]]).astype(data_type)
     net = UpsampleNearest3DNet(output_size=[3, 4, 5])
     out = net(input_tensor)
     diff = abs(out.asnumpy() - expected)
@@ -77,22 +101,23 @@ def test_upsample_nearest_3d_scales_float(data_type):
     Expectation: The result match expected output.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    input_tensor = Tensor(np.array([[[[[0.1, 0.2, 0.3],
-                                       [0.4, 0.5, 0.6]],
-                                      [[0.7, 0.8, 0.9],
-                                       [1.0, 1.1, 1.2]]]]]).astype(data_type))
-    expected = np.array([[[[[0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
-                            [0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
-                            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000],
-                            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000]],
-                           [[0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
-                            [0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
-                            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000],
-                            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000]],
-                           [[0.7000, 0.7000, 0.7000, 0.8000, 0.8000, 0.9000, 0.9000],
-                            [0.7000, 0.7000, 0.7000, 0.8000, 0.8000, 0.9000, 0.9000],
-                            [1.0000, 1.0000, 1.0000, 1.1000, 1.1000, 1.2000, 1.2000],
-                            [1.0000, 1.0000, 1.0000, 1.1000, 1.1000, 1.2000, 1.2000]]]]]).astype(data_type)
+    input_tensor = Tensor(
+        np.array([[[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],
+                    [[0.7, 0.8, 0.9], [1.0, 1.1, 1.2]]]]]).astype(data_type))
+    expected = np.array(
+        [[[[[0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
+            [0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
+            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000],
+            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000]],
+           [[0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
+            [0.1000, 0.1000, 0.1000, 0.2000, 0.2000, 0.3000, 0.3000],
+            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000],
+            [0.4000, 0.4000, 0.4000, 0.5000, 0.5000, 0.6000, 0.6000]],
+           [[0.7000, 0.7000, 0.7000, 0.8000, 0.8000, 0.9000, 0.9000],
+            [0.7000, 0.7000, 0.7000, 0.8000, 0.8000, 0.9000, 0.9000],
+            [1.0000, 1.0000, 1.0000, 1.1000, 1.1000, 1.2000, 1.2000],
+            [1.0000, 1.0000, 1.0000, 1.1000, 1.1000, 1.2000,
+             1.2000]]]]]).astype(data_type)
     net = UpsampleNearest3DNet(scales=[1.5, 2.0, 2.5])
     out = net(input_tensor)
     diff = abs(out.asnumpy() - expected)
@@ -138,7 +163,8 @@ def test_upsample_nearest_3d_error():
 
     with pytest.raises(ValueError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
-        net = UpsampleNearest3DNet(output_size=[3, 4, 5], scales=[1.0, 2.0, 3.0])
+        net = UpsampleNearest3DNet(output_size=[3, 4, 5],
+                                   scales=[1.0, 2.0, 3.0])
         net(input_tensor)
 
     with pytest.raises(ValueError):
@@ -158,16 +184,14 @@ def test_vmap_upsample_nearest3d():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     # 3 batches
-    input_tensor = Tensor(np.arange(0, 4.8, 0.1).reshape([3, 1, 1, 2, 2, 4]).astype(np.float32))
+    input_tensor = Tensor(
+        np.arange(0, 4.8, 0.1).reshape([3, 1, 1, 2, 2, 4]).astype(np.float32))
     net = UpsampleNearest3DNet(output_size=[3, 2, 2])
-    expect = np.array([[[[[[0.0, 0.2], [0.4, 0.6]],
-                          [[0.0, 0.2], [0.4, 0.6]],
+    expect = np.array([[[[[[0.0, 0.2], [0.4, 0.6]], [[0.0, 0.2], [0.4, 0.6]],
                           [[0.8, 1.0], [1.2, 1.4]]]]],
-                       [[[[[1.6, 1.8], [2.0, 2.2]],
-                          [[1.6, 1.8], [2.0, 2.2]],
+                       [[[[[1.6, 1.8], [2.0, 2.2]], [[1.6, 1.8], [2.0, 2.2]],
                           [[2.4, 2.6], [2.8, 3.0]]]]],
-                       [[[[[3.2, 3.4], [3.6, 3.8]],
-                          [[3.2, 3.4], [3.6, 3.8]],
+                       [[[[[3.2, 3.4], [3.6, 3.8]], [[3.2, 3.4], [3.6, 3.8]],
                           [[4.0, 4.2], [4.4, 4.6]]]]]])
     out_vmap = F.vmap(net, in_axes=(0))(input_tensor)
     error = np.ones(shape=expect.shape) * 1.0e-6
