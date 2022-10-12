@@ -824,6 +824,7 @@ def set_fast_recovery(fast_recovery):
 def get_fast_recovery():
     """
     Get the fast_recovery flag of the dataset pipeline
+
     Returns:
         bool, whether the dataset recovers fast in failover reset
 
