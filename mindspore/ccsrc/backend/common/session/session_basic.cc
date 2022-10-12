@@ -1255,8 +1255,16 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
         is_value_node =
           std::find(const_input_attr_index.begin(), const_input_attr_index.end(), i) != const_input_attr_index.end();
       }
-      input_tensor_info->input_tensors_mask.emplace_back(is_value_node ? kValueNodeTensorMask
-                                                                       : kParameterDataTensorMask);
+
+      bool is_forward_output = false;
+      if (value_ptr->isa<tensor::Tensor>()) {
+        auto forward_tensor = value_ptr->cast<tensor::TensorPtr>();
+        if (forward_tensor->is_forward_output()) {
+          is_forward_output = true;
+        }
+      }
+      input_tensor_info->input_tensors_mask.emplace_back(
+        (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
