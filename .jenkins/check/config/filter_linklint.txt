@@ -49,10 +49,10 @@ https://github.com/siju-samuel/darknet/blob/master/
 https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu
 https://developer.download.nvidia.cn/compute/machine-learning/repos/ubuntu
 https://dl.google.com/dl/android/maven2/
-https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/MindInsight/any/mindinsight-1.8.0-py3-none-any.whl
-https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/MindSpore/cpu/x86_64/mindspore-1.8.0-cp37-cp37m-linux_x86_64.whl
-https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/Serving/x86_64/mindspore_serving-1.8.0-cp37-cp37m-linux_x86_64.whl
-https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/MindSpore/gpu/x86_64/cuda-10.1/mindspore_gpu-1.8.0-cp37-cp37m-linux_x86_64.whl
-https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/MindSpore/gpu/x86_64/cuda-11.1/mindspore_gpu-1.8.0-cp37-cp37m-linux_x86_64.whl
+https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.9.0/MindInsight/any/mindinsight-1.9.0-py3-none-any.whl
+https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.9.0/MindSpore/cpu/x86_64/mindspore-1.9.0-cp37-cp37m-linux_x86_64.whl
+https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.9.0/Serving/x86_64/mindspore_serving-1.9.0-cp37-cp37m-linux_x86_64.whl
+https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.9.0/MindSpore/gpu/x86_64/cuda-10.1/mindspore_gpu-1.9.0-cp37-cp37m-linux_x86_64.whl
+https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.9.0/MindSpore/gpu/x86_64/cuda-11.1/mindspore_gpu-1.9.0-cp37-cp37m-linux_x86_64.whl
 https://mindspore.cn*/r1.9/*
 https://www.mindspore.cn*/r1.9/*
