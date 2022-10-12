@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore import dtype
 from scipy import special
 
@@ -33,7 +34,7 @@ class Erfinv(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_erfinv_graph_mode():
     """
@@ -58,7 +59,7 @@ def test_erfinv_graph_mode():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_erfinv_pynative_mode():
     """
@@ -80,4 +81,49 @@ def test_erfinv_pynative_mode():
     assert (np.abs(x_out_ms.asnumpy() - x_out_sc) < 1e-3).all()
     assert (np.abs(y_out_ms.asnumpy() - y_out_sc) < 1e-4).all()
     assert (np.abs(z_out_ms.asnumpy() - z_out_sc) < 1e-5).all()
+
+
+def test_erfinv_functional_api():
+    """
+    Feature: test erfinv functional API.
+    Description: test erfinv for erfinv functional API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([0, 0.5, -0.9]), dtype.float32)
+    output = F.erfinv(x)
+    expected = np.array([0, 0.47693628, -1.1630871], np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+def test_erfinv_tensor_api():
+    """
+    Feature: test erfinv tensor API.
+    Description: test case for erfinv tensor API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([0, 0.5, -0.9]), dtype.float32)
+    output = x.erfinv()
+    expected = np.array([0, 0.47693628, -1.1630871], np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_erfinv_functional_tensor_modes():
+    """
+    Feature: test erfinv functional and tensor APIs in PyNative and Graph modes.
+    Description: test case for erfinv functional API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_erfinv_functional_api()
+    test_erfinv_tensor_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_erfinv_functional_api()
+    test_erfinv_tensor_api()
+
+
+if __name__ == '__main__':
+    test_erfinv_functional_tensor_modes()
     

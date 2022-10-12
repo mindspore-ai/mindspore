@@ -47,6 +47,10 @@ mindspore.Tensor
     :nosignatures:
 
     mindspore.Tensor.bmm
+    mindspore.Tensor.conj
+    mindspore.Tensor.cross
+    mindspore.Tensor.erfinv
+    mindspore.Tensor.less_equal
 
 逐元素运算
 ^^^^^^^^^^^^^

@@ -52,6 +52,10 @@ Mathematical Methods
     :nosignatures:
 
     mindspore.Tensor.bmm
+    mindspore.Tensor.conj
+    mindspore.Tensor.cross
+    mindspore.Tensor.erfinv
+    mindspore.Tensor.less_equal
 
 Element-wise Methods
 ^^^^^^^^^^^^^^^^^^^^

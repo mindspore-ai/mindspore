@@ -273,7 +273,11 @@ from .math_func import (
     bmm,
     trapz,
     cholesky,
-    cholesky_inverse
+    cholesky_inverse,
+    conj,
+    cross,
+    erfinv,
+    less_equal,
 )
 from .nn_func import (
     adaptive_avg_pool1d,

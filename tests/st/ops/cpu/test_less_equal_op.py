@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.common import dtype as mstype
 
 
 class Net(nn.Cell):
@@ -211,3 +213,49 @@ def test_net_int16():
     expect = x1_np <= y1_np
     assert np.all(out == expect)
     assert out.shape == expect.shape
+
+
+def test_less_equal_functional_api():
+    """
+    Feature: test less_equal functional API.
+    Description: test less_equal functional API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([1, 2, 3]), mstype.int32)
+    other = Tensor(np.array([1, 1, 4]), mstype.int32)
+    output = F.less_equal(x, other)
+    expected = np.array([True, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+def test_less_equal_tensor_api():
+    """
+    Feature: test less_equal tensor API.
+    Description: test case for less_equal tensor API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([1, 2, 3]), mstype.int32)
+    other = Tensor(np.array([1, 1, 4]), mstype.int32)
+    output = x.less_equal(other)
+    expected = np.array([True, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_less_equal_functional_tensor_modes():
+    """
+    Feature: test less_equal functional and tensor APIs in PyNative and Graph modes.
+    Description: test case for erfiless_equalnv functional API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_less_equal_functional_api()
+    test_less_equal_tensor_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_less_equal_functional_api()
+    test_less_equal_tensor_api()
+
+if __name__ == '__main__':
+    test_less_equal_functional_tensor_modes()
