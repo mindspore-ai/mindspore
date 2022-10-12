@@ -106,7 +106,7 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
     }
   }
   for (size_t i = 0; i < num_elements; i++) {
-    y_addr[i] = (T1)0;
+    y_addr[i] = static_cast<T1>(0);
   }
   int oldindex = -1;
   int countnum = 0;
@@ -116,24 +116,24 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
     } else {
       if (countnum != 0) {
         for (size_t j = 0; j < n; j++) {
-          y_addr[j + oldindex * n] /= (T1)countnum;
+          y_addr[j + IntToSize(oldindex) * n] /= static_cast<T1>(countnum);
         }
       }
       countnum = 1;
       oldindex = segment_ids_addr[i];
     }
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] += x_addr[j + indices_addr[i] * n];
+      y_addr[j + IntToSize(oldindex) * n] += x_addr[j + static_cast<size_t>(indices_addr[i]) * n];
     }
   }
   if (countnum != 0) {
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] /= (T1)countnum;
+      y_addr[j + IntToSize(oldindex) * n] /= static_cast<T1>(countnum);
     }
   }
 }
 
-void SparseSegmentMeanWithNumSegmentsCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
+void SparseSegmentMeanWithNumSegmentsCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kSparseSegmentMeanWithNumSegmentsInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);

@@ -50,7 +50,7 @@ class SparseReshapeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   SparseReshapeFunc kernel_func_;
   std::vector<int64_t> indices_shape_;
   bool SameConvert(int64_t input_size, int64_t output_size, int64_t input_rank, int64_t output_rank, int64_t *in0,
-                   int64_t *in1, int64_t *out0, int64_t *out1);
+                   const int64_t *in1, int64_t *out0, const int64_t *out1);
 };
 }  // namespace kernel
 }  // namespace mindspore

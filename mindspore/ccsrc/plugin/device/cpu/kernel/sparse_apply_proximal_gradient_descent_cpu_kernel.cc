@@ -95,7 +95,7 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, var must be at least 1D.";
   } else {
-    var_first_dim_size_ = var_shape[0];
+    var_first_dim_size_ = LongToSize(var_shape[0]);
   }
   if (var_shape.size() != grad_shape.size()) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, rank(grad) should be same as rank(var), but "
@@ -107,13 +107,13 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
       MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, the shape of var and grad must equal in dimension "
                         << i << ".";
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, indices must be 1D, but got " << indices_shape.size()
                       << "D.";
   }
-  indices_size_ = indices_shape[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, grad.shape[0] must be equal to indices.shape[0], but "
                          "got grad.shape[0]: "
@@ -163,10 +163,10 @@ bool SparseApplyProximalGradientDescentCpuKernelMod::LaunchKernel(const std::vec
       auto prox_v = var[j];
       prox_v -= grad[k] * learning_rate;
       if (l1_scalar > static_cast<T>(0.0)) {
-        var[j] = (T)Sign(static_cast<double>(prox_v)) *
-                 (T)std::fmax(std::fabs(static_cast<double>(prox_v)) -
-                                static_cast<double>(learning_rate) * static_cast<double>(l1_scalar),
-                              static_cast<double>(0.0)) /
+        var[j] = static_cast<T>(Sign(static_cast<double>(prox_v))) *
+                 static_cast<T>(std::fmax(std::fabs(static_cast<double>(prox_v)) -
+                                            static_cast<double>(learning_rate) * static_cast<double>(l1_scalar),
+                                          static_cast<double>(0.0))) /
                  (static_cast<T>(1.0) + l2_scalar * learning_rate);
       } else {
         var[j] = prox_v / (static_cast<T>(1.0) + l2_scalar * learning_rate);
