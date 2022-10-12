@@ -30,15 +30,27 @@ namespace mindspore {
 namespace kernel {
 namespace tbe {
 namespace {
-void ChangeDynamicAbsToActualAbs(const CNodePtr &cnode) {
+bool ChangeDynamicAbsToActualAbs(const CNodePtr &cnode, const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(op_info);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // Only support for PyNative
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    return;
+    return true;
   }
-  MS_LOG(INFO) << "CNode is dynamic shape, but have no dynamic shape op, use static op instead";
+
+  auto node_input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  auto node_output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  if (node_input_num != op_info->inputs_ptr().size() || node_output_num != op_info->outputs_ptr().size()) {
+    MS_LOG(DEBUG) << "node_input_num[" << node_input_num << "] is different with op_info->inputs_ptr size["
+                  << op_info->inputs_ptr().size() << "] or node_output_num[" << node_output_num
+                  << "] is different with op_info->outputs_ptr size[" << op_info->outputs_ptr().size()
+                  << "], node:" << cnode->DebugString();
+    return false;
+  }
+
+  MS_LOG(INFO) << "CNode is dynamic shape, but have no dynamic shape op, use static op instead" << cnode->DebugString();
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), cnode);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), cnode);
 
@@ -63,6 +75,7 @@ void ChangeDynamicAbsToActualAbs(const CNodePtr &cnode) {
   // Infer real abstract
   auto eval_result = mindspore::opt::CppInferShapeAndType(primitive, args_spec_list);
   cnode->set_abstract(eval_result);
+  return true;
 }
 }  // namespace
 
@@ -98,7 +111,10 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
   auto op_info = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kTBE, is_dynamic_shape);
   // If have no dynamic shape op, get static shape op
   if (op_info != nullptr && !op_info->dynamic_shape() && is_dynamic_shape) {
-    ChangeDynamicAbsToActualAbs(cnode);
+    if (!ChangeDynamicAbsToActualAbs(cnode, op_info)) {
+      // The number of inputs and outputs is incorrect, and the op is not found.
+      return nullptr;
+    }
   }
   return op_info;
 }

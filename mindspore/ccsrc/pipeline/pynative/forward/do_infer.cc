@@ -74,6 +74,34 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
   }
 }
 
+void FillUnknownShapeForDynamicInputOp(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &infer_res) {
+  auto dynamic_op_iter = kDynamicInputOpMap.find(op_run_info->base_op_run_info.op_name);
+  if (dynamic_op_iter == kDynamicInputOpMap.end()) {
+    return;
+  }
+
+  MS_LOG(DEBUG) << "Find op in kDynamicInputOpMap, op name:" << op_run_info->base_op_run_info.op_name
+                << " origin infer result " << infer_res->ToString();
+  if (infer_res->isa<abstract::AbstractTensor>()) {
+    auto updata_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    infer_res->set_shape(updata_shape);
+  } else if (infer_res->isa<abstract::AbstractTuple>()) {
+    auto abstract_tuple = infer_res->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abstract_tuple);
+    AbstractBasePtrList abstract_list;
+
+    for (size_t idx = 0; idx < abstract_tuple->size(); ++idx) {
+      auto cur_element = abstract_tuple->elements()[idx];
+      MS_EXCEPTION_IF_NULL(cur_element);
+      auto updata_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+      cur_element->set_shape(updata_shape);
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Output of " << op_run_info->base_op_run_info.op_name
+                      << " is neither a Tensor nor a Tuple of Tensor, but " << infer_res->ToString();
+  }
+}
+
 void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
@@ -86,6 +114,15 @@ void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) {
   const auto &infer_res = eval_ret->abstract();
   MS_EXCEPTION_IF_NULL(infer_res);
   prim->EndRecordAddAttr();
+
+  const auto &grad_executor = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
+  if (!grad_executor->TopCellIsNull()) {
+    const auto &top_cell = grad_executor->top_cell();
+    if (top_cell->dynamic_shape()) {
+      FillUnknownShapeForDynamicInputOp(op_run_info, infer_res);
+    }
+  }
+
   op_run_info->base_op_run_info.abstract = infer_res;
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " infer result: " << infer_res->ToString();
 }

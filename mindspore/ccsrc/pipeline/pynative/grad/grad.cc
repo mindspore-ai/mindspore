@@ -203,11 +203,13 @@ void GradExecutor::HandleInputArgsForTopCell(const py::args &args, bool is_bprop
   }
   // Convert input args to parameters for top cell graph in construct.
   std::vector<ValuePtr> input_param_values;
+  bool is_dynamic_inputs = false;
   const auto &only_tensors = PyNativeAlgo::PyParser::FilterTensorArgs(args);
   for (size_t i = 0; i < only_tensors.size(); ++i) {
     auto new_param = curr_g()->add_parameter();
     auto param_i = only_tensors[i];
     const auto &param_i_value = PyNativeAlgo::DataConvert::PyObjToValue(param_i);
+    is_dynamic_inputs |= PyNativeAlgo::Common::ValueHasDynamicShape(param_i_value);
     (void)input_param_values.emplace_back(param_i_value);
     const auto &param_i_id = PyNativeAlgo::PyParser::GetIdByPyObj(param_i);
     auto param_i_abs = param_i_value->ToAbstract();
@@ -221,6 +223,9 @@ void GradExecutor::HandleInputArgsForTopCell(const py::args &args, bool is_bprop
     top_cell()->SetParamNodeMapInGraphInfoMap(top_cell_->df_builder(), param_i_id, new_param);
   }
   top_cell()->set_k_pynative_cell_ptr(ad::GradPynativeCellBegin(curr_g()->parameters(), input_param_values));
+  if (is_dynamic_inputs) {
+    top_cell()->set_dynamic_shape(true);
+  }
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py::object &cell, const py::args &args) {

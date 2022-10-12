@@ -35,7 +35,6 @@ from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
-from mindspore.common.api import _pynative_executor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
@@ -841,7 +840,9 @@ class Shape(Primitive):
         """Initialize Shape"""
 
     def __call__(self, x):
-        return _pynative_executor.get_shape(x)
+        if isinstance(x, (Tensor, COOTensor, CSRTensor, Tensor_)):
+            return x.shape
+        raise TypeError(f"For primitive[{self.name}], the input argument must be Tensor, but got {type(x)}.")
 
 
 class TensorShape(Primitive):
@@ -1357,6 +1358,11 @@ class Rank(PrimitiveWithInfer):
                'dtype': None,
                'value': len(x['shape'])}
         return out
+
+    def __call__(self, x):
+        if not isinstance(x, (Tensor, Tensor_)):
+            raise TypeError("the input x must be Tensor!")
+        return len(x.shape)
 
 
 class Size(PrimitiveWithInfer):
