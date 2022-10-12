@@ -14,6 +14,7 @@
 # ============================================================================
 """array operations, the function docs are adapted from Numpy API."""
 from __future__ import absolute_import
+from __future__ import division
 
 import math
 import operator

@@ -14,6 +14,7 @@
 # ============================================================================
 """math operations, the function docs are adapted from Numpy API."""
 from __future__ import absolute_import
+from __future__ import division
 
 import operator
 import functools
@@ -2413,7 +2414,7 @@ def _shape_reduced_keepdims(shape, axes):
     ndim_out = F.tuple_len(shape)
     shape_out = [1]*ndim_out
     for i in range(ndim_out):
-        if not i in axes:
+        if i not in axes:
             shape_out[i] = shape[i]
     return tuple(shape_out)
 
@@ -2426,7 +2427,7 @@ def _shape_reduced(shape, axes):
     shape_out = [0]*ndim_out
     idx_out = 0
     for i in range(ndim_orig):
-        if not i in axes:
+        if i not in axes:
             shape_out[idx_out] = shape[i]
             idx_out += 1
     return tuple(shape_out)
