@@ -28,7 +28,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations._grad_ops import IgammaGradA
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
+from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac, BatchMatMul
 from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
 from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
@@ -1028,6 +1028,11 @@ raise_set = [
         'desc_inputs': [Tensor(np.array([-4.0, 5.0, 6.0]), ms.float32),
                         Tensor(np.array([3.0, 2.0]), ms.float32)],
         'skip': ['backward']}),
+    ('BatchMatMul', {
+        'block': BatchMatMul(),
+        'desc_inputs': [Tensor(np.ones([2, 4, 2, 2]).astype(np.float32)),
+                        Tensor(np.ones([2, 4, 2, 2]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.ones([2, 4, 2, 2]).astype(np.float32))]}),
 ]
 
 
