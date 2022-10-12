@@ -120,3 +120,66 @@ def test_adaptive_max_pool_1d():
     net = AdaptiveMaxPool1dNet(2)
     input_ = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
     _cell_graph_executor.compile(net, input_)
+
+
+class MaxUnpool2dNet(nn.Cell):
+    def __init__(self, kernel_size, stride=0, padding=0, output_size=()):
+        super(MaxUnpool2dNet, self).__init__()
+        self.max_unpool2d = nn.MaxUnpool2d(kernel_size, stride, padding, output_size)
+
+    def construct(self, x, indices):
+        return self.max_unpool2d(x, indices)
+
+
+class MaxUnpool1dNet(nn.Cell):
+    def __init__(self, kernel_size, stride=0, padding=0, output_size=()):
+        super(MaxUnpool1dNet, self).__init__()
+        self.max_unpool1d = nn.MaxUnpool1d(kernel_size, stride, padding, output_size)
+
+    def construct(self, x, indices):
+        return self.max_unpool1d(x, indices)
+
+
+class MaxUnpool3dNet(nn.Cell):
+    def __init__(self, kernel_size, stride=0, padding=0, output_size=()):
+        super(MaxUnpool3dNet, self).__init__()
+        self.max_unpool3d = nn.MaxUnpool3d(kernel_size, stride, padding, output_size)
+
+    def construct(self, x, indices):
+        return self.max_unpool3d(x, indices)
+
+
+def test_max_unpool2d_normal():
+    """
+    Feature: max_unpool2d
+    Description: Verify the result of MaxUnpool2d
+    Expectation: success
+    """
+    x = Tensor(np.array([[[6., 8.], [14., 16.]]]).astype(np.float32))
+    incices = Tensor(np.array([[[5, 7], [13, 15]]]).astype(np.int64))
+    net = MaxUnpool2dNet(kernel_size=2, stride=2, padding=0)
+    _cell_graph_executor.compile(net, x, incices)
+
+
+def test_max_unpool1d_normal():
+    """
+    Feature: max_unpool1d
+    Description: Verify the result of MaxUnpool1d
+    Expectation: success
+    """
+    x = Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
+    incices = Tensor(np.array([[1, 3, 5, 7]]).astype(np.int64))
+    net = MaxUnpool1dNet(kernel_size=2, stride=2, padding=0)
+    _cell_graph_executor.compile(net, x, incices)
+
+
+def test_max_unpool3d_normal():
+    """
+    Feature: max_unpool3d
+    Description: Verify the result of MaxUnpool3d
+    Expectation: success
+    """
+    x = Tensor(np.array([[[[[7.]]]], [[[[15.]]]]]).astype(np.float32))
+    incices = Tensor(np.array([[[[[7]]]], [[[[7]]]]]).astype(np.int64))
+    net = MaxUnpool3dNet(kernel_size=2, stride=1, padding=0)
+    _cell_graph_executor.compile(net, x, incices)

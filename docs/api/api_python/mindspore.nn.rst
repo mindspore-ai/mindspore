@@ -199,6 +199,9 @@ Dropout层
     mindspore.nn.MaxPool1d
     mindspore.nn.MaxPool2d
     mindspore.nn.MaxPool3d
+    mindspore.nn.MaxUnpool1d
+    mindspore.nn.MaxUnpool2d
+    mindspore.nn.MaxUnpool3d
 
 填充层
 --------------
