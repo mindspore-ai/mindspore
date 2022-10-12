@@ -157,6 +157,7 @@ constexpr auto kCheckNumerics = "CheckNumerics";
 constexpr auto kStack = "Stack";
 constexpr auto kLogNormalReverse = "LogNormalReverse";
 constexpr auto kUnstack = "Unstack";
+constexpr auto kUnstackWithNum = "UnstackWithNum";
 constexpr auto kTupleGetItem = "TupleGetItem";
 constexpr auto kListGetItem = "list_getitem";
 constexpr auto kSliceGetItem = "SliceGetItem";
