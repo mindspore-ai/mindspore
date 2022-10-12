@@ -19,7 +19,7 @@ mindspore.ops.ApplyRMSProp
     :math:`m_{t+1}` 为 `moment` ， :math:`m_{t}` 为上一步的 :math:`m_{t+1}` 。
     :math:`\rho` 为 `decay` 。 :math:`\beta` 为动量项 `momentum` 。
     :math:`\epsilon` 是避免零为除数的平滑项 `epsilon` 。
-    :math:`\eta` 为 `learning_rate` ， :math:`\nabla Q_{i}(w)` 代表 `grad` 。
+    :math:`\eta` 为 `learning_rate` 。 :math:`\nabla Q_{i}(w)` 代表 `grad` 。
 
     .. warning::
         在该算法的稠密实现版本中，"mean_square"和"momemt"即使"grad"为零将仍被更新。但在该稀疏实现版本中，在"grad"为零的迭代"mean_squre"和"moment"将不被更新。

@@ -1516,7 +1516,8 @@ def build_searched_strategy(strategy_filename):
     """
     Build strategy of every parameter in network. Used in the case of distributed inference.
     For details of it, please check:
-    `<https://www.mindspore.cn/tutorials/experts/en/master/parallel/save_load.html>`_.
+    `Saving and Loading Models in Hybrid Parallel Mode
+    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/save_load.html>`_.
 
     Args:
         strategy_filename (str): Name of strategy file.

@@ -111,9 +111,11 @@ class Caltech101Dataset(GeneratorDataset):
     A source dataset that reads and parses Caltech101 dataset.
 
     The columns of the generated dataset depend on the value of `target_type`.
-    When `target_type` is 'category', the columns are :py:obj:`[image, category]`.
-    When `target_type` is 'annotation', the columns are :py:obj:`[image, annotation]`.
-    When `target_type` is 'all', the columns are :py:obj:`[image, category, annotation]`.
+
+    - When `target_type` is 'category', the columns are :py:obj:`[image, category]`.
+    - When `target_type` is 'annotation', the columns are :py:obj:`[image, annotation]`.
+    - When `target_type` is 'all', the columns are :py:obj:`[image, category, annotation]`.
+
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`category` is of the uint32 type.
     The tensor of column :py:obj:`annotation` is a 2-dimensional ndarray that stores the contour of the image
@@ -3789,8 +3791,9 @@ class SBDataset(GeneratorDataset):
     A source dataset that reads and parses Semantic Boundaries Dataset.
 
     The generated dataset has two columns: :py:obj:`[image, task]`.
-    The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is 'Boundaries' otherwise
+
+    - The tensor of column :py:obj:`image` is of the uint8 type.
+    - The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is 'Boundaries' otherwise
     contains 1 image of the uint8 type.
 
     Args:

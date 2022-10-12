@@ -5,7 +5,7 @@ mindspore.ops.split
 
     根据指定的轴和分割数量对输入Tensor进行分割。
 
-    `input_x` Tensor将被分割为相同shape的子Tensor，且要求 `input_x.shape(axis)` 可被 `output_num` 整除。
+    `input_x` Tensor将被分割为相同shape的子Tensor。要求 `input_x.shape(axis)` 可被 `output_num` 整除。
 
     参数：
         - **input_x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。

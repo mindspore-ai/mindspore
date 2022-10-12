@@ -3,7 +3,7 @@
 
 .. py:function:: mindspore.ops.sequence_mask(lengths, maxlen=None)
 
-    返回一个表示每个单元的前N个位置的掩码Tensor。内部元素数据类型为bool。
+    返回一个表示每个单元的前N个位置的掩码Tensor，内部元素数据类型为bool。
 
     如果 `lengths` 的shape为 :math:`(d_1, d_2, ..., d_n)` ，则生成的Tensor掩码拥有数据类型，其shape为 :math:`(d_1, d_2, ..., d_n, maxlen)` ，且mask :math:`[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])` 。
 

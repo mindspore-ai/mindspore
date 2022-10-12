@@ -1004,7 +1004,7 @@ class Unique(Primitive):
     The shape of Tensor `y` and Tensor `idx` is different in most cases, because Tensor `y` will be duplicated,
     and the shape of Tensor `idx` is consistent with the input.
 
-    To get the same shape between `idx` and `y`, please ref to 'UniqueWithPad' operator.
+    To get the same shape between `idx` and `y`, please refer to :class:`mindspore.ops.UniqueWithPad`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -5982,6 +5982,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
             raise ValueError(f"For '{self.name}', the dimension of 'input_params' must <= 2, "
                              f"but got {len(params_shp)}.")
 
+
 class GatherD(Primitive):
     """
     Gathers elements along an axis specified by dim.
@@ -6545,7 +6546,7 @@ class TensorScatterAdd(Primitive):
     Creates a new tensor by adding the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are given for the same
     index, the updated result will be the sum of all values. This operation is almost
-    equivalent to using ScatterNdAdd, except that the updates are applied on output `Tensor`
+    equivalent to using :class:`mindspore.ops.ScatterNdAdd`, except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
 
     Refer to :func:`mindspore.ops.tensor_scatter_add` for more detail.
