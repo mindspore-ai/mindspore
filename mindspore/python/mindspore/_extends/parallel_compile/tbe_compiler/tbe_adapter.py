@@ -25,7 +25,7 @@ from tbe.common.rl_bank.bank_manager import set_current_op_name
 from tbe.common.repository_manager.interface import cann_kb_finalize, cann_kb_init
 from te.platform.cce_conf import te_set_version
 from te.platform.cce_policy import set_L1_info
-from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_single_op_compile_task, import_py_module, \
+from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_single_op_compile_task, \
     dispatch_fusion_op_compile_task, dispatch_autotune_task, sync_op_tune_params
 from te_fusion.compile_task_manager import sync_syspath
 from te_fusion.fusion_manager import call_op_func, clear_fusion_params, check_op_impl_mode, \
@@ -495,27 +495,6 @@ def before_build_process(job: TbeJob):
     offline_tune = job.sys_offline_tune
     if offline_tune:
         dump_fusion_json(json.dumps(job.content), job.sys_tune_dump_path)
-
-
-def sync_fusion_env(fusion_need_sync, module_list):
-    """
-    Sync fusion env
-    :param fusion_need_sync:
-    :param module_list:
-    :return:
-    """
-    if fusion_need_sync == 0:
-        return True
-
-    module_using = []
-    for key, value in module_list.items():
-        if value > 0:
-            module_using.append(str(key))
-        module_list[key] = 0
-
-    module_str = ",".join(module_using)
-    import_py_module(module_str)
-    return True
 
 
 def parallel_compile_fusion_op(job: TbeJob):
