@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,10 @@ class MIND_API CholeskyInverse : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CholeskyInverse);
   CholeskyInverse() : BaseOperator(kNameCholeskyInverse) { InitIOName({"x"}, {"y"}); }
-  void Init(const bool upper = false);
+  /// \brief Init.
+  void Init(const bool upper = true);
   /// \brief Set upper.
   void set_upper(const bool upper);
-
-  /// \brief Get upper.
-  ///
-  /// \return upper.
   bool get_upper() const;
 };
 abstract::AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

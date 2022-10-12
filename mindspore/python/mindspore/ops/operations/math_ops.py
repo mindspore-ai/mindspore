@@ -6174,7 +6174,7 @@ class CholeskyInverse(Primitive):
         ValueError: If the dimension of `x` is not equal to 2.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
