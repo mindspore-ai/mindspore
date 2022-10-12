@@ -330,6 +330,32 @@ HOST_DEVICE inline Complex<T> atanh(const Complex<T> &z) {
 }
 
 template <typename T>
+HOST_DEVICE inline Complex<T> conj(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::conj(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::conj(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> sqrt(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::sqrt(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::sqrt(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
 HOST_DEVICE inline Complex<T> tanh(const Complex<T> &z) {
   Complex<T> result;
 #if defined(__CUDACC__)
