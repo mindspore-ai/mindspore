@@ -30,8 +30,8 @@ class StandardLaplaceCpuKernelMod : public NativeCpuKernelMod {
   StandardLaplaceCpuKernelMod() = default;
   ~StandardLaplaceCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
+            const std::vector<KernelTensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;

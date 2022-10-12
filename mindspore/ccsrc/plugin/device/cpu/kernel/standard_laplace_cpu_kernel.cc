@@ -38,12 +38,12 @@ void StandardLaplace(float *output, std::uniform_real_distribution<float> distri
 void LaunchStandardLaplace(StandardLaplaceCpuKernelMod *content, unsigned int seed,
                            const std::vector<AddressPtr> &outputs) {
   MS_ERROR_IF_NULL_WO_RET_VAL(content);
-  MS_ERROR_IF_NULL_WO_RET_VAL(outputs[0]);
-  MS_ERROR_IF_NULL_WO_RET_VAL(outputs[0]->addr);
+  MS_ERROR_IF_NULL_WO_RET_VAL(outputs[kIndex0]);
+  MS_ERROR_IF_NULL_WO_RET_VAL(outputs[kIndex0]->addr);
 
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
   // multithreading
-  size_t lens = outputs[0]->size / sizeof(float);
+  size_t lens = outputs[kIndex0]->size / sizeof(float);
   auto thread_pool = GetActorMgrInnerThreadPool();
   size_t max_thread_num = thread_pool->GetKernelThreadNum();
   size_t thread_num = lens < static_cast<size_t>(kRandomBlockSize) * max_thread_num
@@ -63,11 +63,11 @@ void LaunchStandardLaplace(StandardLaplaceCpuKernelMod *content, unsigned int se
   ParallelLaunch(task, lens, kRandomBlockSize, content);
 }
 
-bool StandardLaplaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
+bool StandardLaplaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
+                                       const std::vector<KernelTensorPtr> &) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
   kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
   seed_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed")));
   seed2_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed2")));
@@ -77,6 +77,8 @@ bool StandardLaplaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
 bool StandardLaplaceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kStandardLaplaceInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardLaplaceOutputsNum, kernel_name_);
   unsigned int RNG_seed = 0;
   std::random_device rd;
   if (seed2_ != 0) {
@@ -86,8 +88,6 @@ bool StandardLaplaceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
   } else {
     RNG_seed = rd();
   }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kStandardLaplaceInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardLaplaceOutputsNum, kernel_name_);
   LaunchStandardLaplace(this, RNG_seed, outputs);
   return true;
 }
