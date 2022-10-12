@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "base/base.h"
@@ -50,7 +51,8 @@ bool FindReshape(const CNodePtr &cnode, mindspore::HashSet<std::string> *op_cach
 bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index,
                                  size_t curr_depth);
 
-bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
+void FindReshapeNextNodeStraCosts(const CNodePtr &cnode,
+                                  std::vector<std::pair<OperatorInfoPtr, int64_t>> *next_ops_index,
                                   bool *is_next_reshape, size_t curr_depth);
 
 void SetUserAttrs(const mindspore::HashMap<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim);
