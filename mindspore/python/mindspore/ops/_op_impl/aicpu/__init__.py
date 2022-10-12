@@ -164,3 +164,4 @@ from .reservoir_replay_buffer import _rrb_destroy_op_cpu
 from .parallel_concat import _parallel_concat_aicpu
 from .concat_offset import _concat_offset_aicpu
 from .range import _range_aicpu
+from .list_diff import _list_diff_aicpu
