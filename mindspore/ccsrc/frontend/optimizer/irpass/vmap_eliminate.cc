@@ -87,27 +87,35 @@ CNodePtr BuildBindInAxisSeqInput(const AnfNodePtr &input, const ValuePtr &in_axi
   return fg->NewCNode(ret_inputs);
 }
 
-AnfNodePtr UpdateParam(const FuncGraphPtr &vmap_fg, const AnfNodePtr &u_monad_node, bool is_feedback,
-                       const ParamMappingVector &param_mapping_table) {
+AnfNodePtr UpdateParam(const FuncGraphPtr &vmap_fg, const AnfNodePtr &u_monad_node,
+                       ParamMappingVector *param_mapping_table) {
   MS_EXCEPTION_IF_NULL(u_monad_node);
+  auto update_state_prim = NewValueNode(prim::kPrimUpdateState);
+  auto load_prim = NewValueNode(prim::kPrimLoad);
   std::vector<AnfNodePtr> attach_tuple{NewValueNode(prim::kPrimMakeTuple)};
-  for (auto &param_pair : param_mapping_table) {
+  for (auto param_pair : *param_mapping_table) {
     auto ref = param_pair.first;
     auto each_cell_params = param_pair.second;
-    std::vector<AnfNodePtr> vmap_assign;
-    if (is_feedback) {
-      (void)vmap_assign.emplace_back(NewValueNode(prim::kPrimVmapUnstackAssign));
-    } else {
-      (void)vmap_assign.emplace_back(NewValueNode(prim::kPrimVmapStackAssign));
+    std::vector<AnfNodePtr> param_tuple{NewValueNode(prim::kPrimMakeTuple)};
+    for (auto param : each_cell_params) {
+      auto load_cnode = vmap_fg->NewCNode({load_prim, param, u_monad_node});
+      MS_EXCEPTION_IF_NULL(load_cnode);
+      auto param_abs = dyn_cast<abstract::AbstractRefTensor>(param->abstract());
+      MS_EXCEPTION_IF_NULL(param_abs);
+      load_cnode->set_abstract(param_abs->CloneAsTensor());
+      param_tuple.push_back(load_cnode);
     }
-    (void)vmap_assign.emplace_back(ref);
-    (void)vmap_assign.insert(vmap_assign.end(), each_cell_params.begin(), each_cell_params.end());
-    vmap_assign.push_back(u_monad_node);
-    auto vmap_assign_cnode = vmap_fg->NewCNode(vmap_assign);
-    attach_tuple.push_back(vmap_assign_cnode);
+    auto param_tuple_cnode = vmap_fg->NewCNode(param_tuple);
+    auto update_state_after_load = vmap_fg->NewCNode({update_state_prim, u_monad_node, param_tuple_cnode});
+    const py::function stack_fn = python_adapter::GetPyFn(kVmapFunctionModelName, "vmap_stack");
+    auto stack_fg = parse::ParsePythonCode(stack_fn);
+    MS_EXCEPTION_IF_NULL(stack_fg);
+    auto stack_cnode = vmap_fg->NewCNode({NewValueNode(stack_fg), param_tuple_cnode});
+    auto assign_prim = NewValueNode(prim::kPrimAssign);
+    auto assign_cnode = vmap_fg->NewCNode({assign_prim, ref, stack_cnode, update_state_after_load});
+    attach_tuple.push_back(assign_cnode);
   }
   auto attach_cnode = vmap_fg->NewCNode(attach_tuple);
-  auto update_state_prim = NewValueNode(prim::kPrimUpdateState);
   auto update_state_node = vmap_fg->NewCNode({update_state_prim, u_monad_node, attach_cnode});
   return update_state_node;
 }
@@ -139,7 +147,7 @@ void BindUMonad(const AnfNodePtr &u_monad_node, const FuncGraphPtr &vmap_fg, std
   if (param_mapping_table == nullptr || param_mapping_table->empty()) {
     (void)outputs->emplace_back(u_monad_node);
   } else {
-    auto update_state_node = UpdateParam(vmap_fg, u_monad_node, false, *param_mapping_table);
+    auto update_state_node = UpdateParam(vmap_fg, u_monad_node, param_mapping_table);
     (void)outputs->emplace_back(update_state_node);
   }
 }
@@ -339,11 +347,50 @@ CNodePtr AttachToOutput(const FuncGraphPtr &func_graph, const CNodePtr &output, 
 
 AnfNodePtr FeedBackParam(const FuncGraphPtr &vmap_post_fg, const AnfNodePtr &u_monad_node,
                          const AnfNodePtr &io_monad_node, const CNodePtr &output,
-                         const ParamMappingVector &param_mapping_table) {
-  auto update_state_after_assign = UpdateParam(vmap_post_fg, u_monad_node, true, param_mapping_table);
-  MS_EXCEPTION_IF_NULL(update_state_after_assign);
-  update_state_after_assign->set_abstract(u_monad_node->abstract());
-  auto attach_output = AttachToOutput(vmap_post_fg, output, update_state_after_assign);
+                         ParamMappingVector *param_mapping_table) {
+  auto update_state_prim = NewValueNode(prim::kPrimUpdateState);
+  std::vector<AnfNodePtr> out_attach_tuple{NewValueNode(prim::kPrimMakeTuple)};
+
+  for (auto param_pair : *param_mapping_table) {
+    auto ref = param_pair.first;
+    auto load_prim = NewValueNode(prim::kPrimLoad);
+    auto load_cnode = vmap_post_fg->NewCNode({load_prim, ref, u_monad_node});
+    MS_EXCEPTION_IF_NULL(load_cnode);
+    auto ref_abs = dyn_cast<abstract::AbstractRefTensor>(ref->abstract());
+    MS_EXCEPTION_IF_NULL(ref_abs);
+    load_cnode->set_abstract(ref_abs->CloneAsTensor());
+
+    auto update_state_after_load = vmap_post_fg->NewCNode({update_state_prim, u_monad_node, load_cnode});
+    MS_EXCEPTION_IF_NULL(update_state_after_load);
+    update_state_after_load->set_abstract(u_monad_node->abstract());
+
+    PrimitivePtr kprim_unstack = std::make_shared<Primitive>(prim::kUnstack);
+    kprim_unstack->set_attr(kAttrAxis, MakeValue(SizeToLong(0)));
+    auto unstack_prim = NewValueNode(kprim_unstack);
+    auto unstack_cnode = vmap_post_fg->NewCNode({unstack_prim, load_cnode});
+
+    auto each_cell_params = param_pair.second;
+
+    std::vector<AnfNodePtr> attach_tuple{NewValueNode(prim::kPrimMakeTuple)};
+
+    int64_t cell_index = 0;
+    for (auto param : each_cell_params) {
+      auto tuple_getitem_prim = NewValueNode(prim::kPrimTupleGetItem);
+      auto tuple_getitem_cnode = vmap_post_fg->NewCNode({tuple_getitem_prim, unstack_cnode, NewValueNode(cell_index)});
+      cell_index++;
+
+      auto assign_prim = NewValueNode(prim::kPrimAssign);
+      auto assign_cnode = vmap_post_fg->NewCNode({assign_prim, param, tuple_getitem_cnode, update_state_after_load});
+      attach_tuple.push_back(assign_cnode);
+    }
+    auto attach_cnode = vmap_post_fg->NewCNode(attach_tuple);
+    auto update_state_after_assign = vmap_post_fg->NewCNode({update_state_prim, update_state_after_load, attach_cnode});
+    MS_EXCEPTION_IF_NULL(update_state_after_assign);
+    update_state_after_assign->set_abstract(update_state_after_load->abstract());
+    out_attach_tuple.push_back(update_state_after_assign);
+  }
+  auto out_attach_cnode = vmap_post_fg->NewCNode(out_attach_tuple);
+  auto attach_output = AttachToOutput(vmap_post_fg, output, out_attach_cnode);
   if (io_monad_node) {
     attach_output = AttachToOutput(vmap_post_fg, attach_output, io_monad_node);
   }
@@ -409,7 +456,7 @@ AnfNodePtr PostProcessVmap(const AnfNodePtr &expanded_vmap_node, const std::vect
   }
 
   // Feed parameters back to each cell in the model ensembling parallel training case.
-  return FeedBackParam(vmap_post_fg, u_monad_node, io_monad_node, match_out_axis_app, *param_mapping_table);
+  return FeedBackParam(vmap_post_fg, u_monad_node, io_monad_node, match_out_axis_app, param_mapping_table);
 }
 
 AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resource, int axis_size) {
@@ -562,8 +609,8 @@ void BindParamAxis(const AnfNodePtr &node, const FuncGraphPtr &vmap_fg, const Fu
     return;
   }
   std::string param_name = dyn_cast<Parameter>(node)->name();
-  std::regex match_prefix("^.*?\\d+\\.(.+)$");
-  param_name = std::regex_replace(param_name, match_prefix, "vmap.$1");
+  std::regex e("^.*?\\d+\\.(.+)$");
+  param_name = std::regex_replace(param_name, e, "vmap.$1");
   auto iter = stacked_params->find(param_name);
   if (iter != stacked_params->end()) {
     ParameterPtr stacked_param_node = iter->second;
@@ -724,7 +771,6 @@ void GenerateStackedParams(const FuncGraphPtr vmap_fg, size_t cell_size,
   std::string param_name = "";
   for (size_t i = 0; i < param_table[0].size(); ++i) {
     std::vector<AnfNodePtr> param;
-    std::string orig_param_name = "";
     for (size_t j = 0; j < param_table.size(); ++j) {
       auto param_node = dyn_cast<Parameter>(param_table[j][i]);
       (void)param.emplace_back(param_node);
@@ -733,12 +779,10 @@ void GenerateStackedParams(const FuncGraphPtr vmap_fg, size_t cell_size,
       MS_EXCEPTION_IF_NULL(default_param);
       auto param_tensor = dyn_cast<tensor::Tensor>(default_param);
       MS_EXCEPTION_IF_NULL(param_tensor);
-      std::regex match_prefix("^.*?" + std::to_string(j) + "\\.(.+)$");
       if (j == 0) {
         tensor_shape = param_tensor->shape();
         tensor_type = param_tensor->data_type();
-        orig_param_name = param_node->name();
-        param_name = std::regex_replace(orig_param_name, match_prefix, "vmap.$1");
+        param_name = param_node->name();
       } else {
         if (tensor_type != param_tensor->data_type()) {
           MS_LOG(EXCEPTION) << "The corresponding parameter's type in each cell should be consistent, but get "
@@ -751,12 +795,11 @@ void GenerateStackedParams(const FuncGraphPtr vmap_fg, size_t cell_size,
                             << GetShapeString(tensor_shape) << " and " << GetShapeString(param_tensor->shape())
                             << " for the parameter " << param_name << ".";
         }
-        if (param_name != std::regex_replace(param_node->name(), match_prefix, "vmap.$1")) {
-          MS_LOG(EXCEPTION) << "The corresponding parameter's postfix name in each cell should be consistent, but get "
-                            << orig_param_name << " and " << param_node->name() << ".";
-        }
       }
     }
+
+    std::regex e("^.*?0\\.(.+)$");
+    param_name = std::regex_replace(param_name, e, "vmap.$1");
     ParameterPtr param_node = nullptr;
 
     ShapeVector stacked_shape(tensor_shape);

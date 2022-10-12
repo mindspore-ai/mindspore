@@ -257,7 +257,7 @@ def vmap(fn, in_axes=0, out_axes=0):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> from mindspore import vmap
+        >>> from mindspore.ops.functional import vmap
         >>> def test_vmap(x, y, z):                                              # ([a],[a],[a]) -> [a]
         ...     return x + y + z
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32))    # [b, a]
