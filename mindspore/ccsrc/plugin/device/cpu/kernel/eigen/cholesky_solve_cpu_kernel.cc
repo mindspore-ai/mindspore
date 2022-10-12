@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/eigen/cholesky_solve_cpu_kernel.h"
 #include <Eigen/Dense>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/cholesky_solve.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,14 +32,25 @@ constexpr size_t kColIndex = 1;
 constexpr size_t kCholeskySolveInputNum = 2;
 constexpr size_t kCholeskySolveOutputNum = 1;
 
-void CholeskySolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
-  if (IsDynamic(shape)) {
-    return;
+bool CholeskySolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCholeskySolveInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCholeskySolveOutputNum, kernel_name_);
+  auto cholesky_solve_ptr = std::dynamic_pointer_cast<ops::CholeskySolve>(base_operator);
+  MS_ERROR_IF_NULL(cholesky_solve_ptr);
+  upper = cholesky_solve_ptr->get_upper();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int CholeskySolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
+  auto shape = inputs[kIndex0]->GetShapeVector();
+  dtype_ = inputs[kIndex0]->GetDtype();
   std::vector<size_t> x1_shape = Convert2SizeT(shape);
   size_t rank = x1_shape.size();
   if (rank == kDefalutRank) {
@@ -49,29 +61,12 @@ void CholeskySolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     dim = x1_shape[rank - kRowIndex];
     rhs_dim = x1_shape[rank - kColIndex];
   }
-  if (common::AnfAlgo::HasNodeAttr("upper", kernel_node)) {
-    upper = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "upper");
-  }
-}
-
-bool CholeskySolveCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCholeskySolveInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCholeskySolveOutputNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported for CholeskySolve.";
-  }
-  return true;
+  return KRET_OK;
 }
 
 template <typename T>
-void CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                             const std::vector<AddressPtr> &outputs) {
   T *rhsptr = reinterpret_cast<T *>(inputs[kInputIndex0]->addr);
   T *lhsptr = reinterpret_cast<T *>(inputs[kInputIndex1]->addr);
   T *outptr = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
@@ -95,13 +90,18 @@ void CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
       outptr[k * dim * rhs_dim + i] = RHS.data()[i];
     }
   }
+  return true;
 }
 
-std::vector<KernelAttr> CholeskySolveCpuKernelMod::GetOpSupport() {
-  static const std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, CholeskySolveCpuKernelMod::KernelRunFunc>>
+  &CholeskySolveCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, CholeskySolveCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CholeskySolveCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CholeskySolveCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CholeskySolve, CholeskySolveCpuKernelMod);

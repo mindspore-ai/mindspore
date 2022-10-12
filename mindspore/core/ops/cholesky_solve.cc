@@ -39,6 +39,7 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
   auto x1_shape = x1_shape_map[kShape];
   auto x2_shape = x2_shape_map[kShape];
   ShapeVector out_shape = {};
+  // support dynamic rank
   if (IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape)) {
     out_shape.push_back(abstract::Shape::kShapeRankAny);
     return std::make_shared<abstract::Shape>(out_shape);
@@ -56,6 +57,15 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
                              << ", while got x1 rank " << x1_shape.size() << ", x2 rank " << x2_shape.size() << ".";
   }
   size_t rank = x1_shape.size();
+  // support dynamic shape
+  if (IsDynamic(x1_shape) || IsDynamic(x2_shape)) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < rank; ++i) {
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(shape_out);
+  }
+
   if (rank == kDefalutRank) {
     if (x1_shape[rank - kRowIndex] != x2_shape[rank - kRowIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x1 and x2 should share the same row number"
@@ -98,6 +108,12 @@ TypePtr CholeskySolveInferType(const PrimitivePtr &primitive, const std::vector<
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
+
+void CholeskySolve::set_upper(const bool upper) { (void)this->AddAttr("upper", api::MakeValue(upper)); }
+
+bool CholeskySolve::get_upper() const { return GetValue<bool>(GetAttr("upper")); }
+
+void CholeskySolve::Init(const bool upper) { set_upper(upper); }
 
 MIND_API_OPERATOR_IMPL(CholeskySolve, BaseOperator);
 AbstractBasePtr CholeskySolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

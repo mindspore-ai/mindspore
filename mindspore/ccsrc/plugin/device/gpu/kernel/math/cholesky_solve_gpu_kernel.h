@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <map>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/triangle_matrix_copy_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -37,50 +38,50 @@ constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 
 template <typename T>
-class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
  public:
   using pointer = T *;
-  CholeskySolveGpuKernelMod() : is_null_input_(false) {}
-  ~CholeskySolveGpuKernelMod() = default;
+  CholeskySolveGpuKernelMod() = default;
+  ~CholeskySolveGpuKernelMod() override = default;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    if (common::AnfAlgo::HasNodeAttr(kLower, kernel_node)) {
-      lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    constexpr size_t input_num = 1;
+    constexpr size_t output_num = 1;
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+    kernel_name_ = base_operator->GetPrim()->name();
+    if (base_operator->HasAttr("upper")) {
+      upper_ = GetValue<bool>(base_operator->GetAttr("upper"));
     }
     // Gpu input is col major default, so need to change row major.
     // In order to speedup it, just change lower to upper, because of cholesky input a is triangle matrix
     // when input b_col is not equal to one, maybe need a normal transpose op inplace.
-    if (lower_) {
-      uplo_ = CUBLAS_FILL_MODE_UPPER;
-    } else {
+    if (upper_) {
       uplo_ = CUBLAS_FILL_MODE_LOWER;
+    } else {
+      uplo_ = CUBLAS_FILL_MODE_UPPER;
     }
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
 
-    auto a_shape_singed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim0);
-    auto b_shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim1);
-    if (AnfAlgo::IsShapesDynamic({a_shape_singed, b_shape_signed})) {
-      return true;
-    }
-    auto in_a_shape = Convert2SizeTClipNeg(a_shape_singed);
-    auto in_b_shape = Convert2SizeTClipNeg(b_shape_signed);
-    is_null_input_ =
-      CHECK_SHAPE_NULL(in_a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(in_b_shape, kernel_name_, "input_b");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    (void)InitDim(in_a_shape, in_b_shape);
     return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+      return ret;
+    }
+    ResetResource();
+    auto in_a_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
+    auto in_b_shape = LongVecToSizeVec(inputs[kIndex1]->GetShapeVector());
+    (void)InitDim(in_a_shape, in_b_shape);
+    return KRET_OK;
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "cholesky solve cusolverDnSetStream failed");
     auto input_a_addr = GetDeviceAddress<T>(inputs, kDim0);
@@ -93,25 +94,25 @@ class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       h_a_array_[i] = input_a_addr + i * lda_ * m_;
       h_b_array_[i] = input_b_addr + i * ldb_ * nrhs_;
     }
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(d_a_array_addr, h_a_array_.data(), sizeof(pointer) * outer_batch_,
-                                              cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "cuda memcopy Fail");
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(d_b_array_addr, h_b_array_.data(), sizeof(pointer) * outer_batch_,
-                                              cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "cuda memcopy Fail");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(d_a_array_addr, h_a_array_.data(), sizeof(pointer) * outer_batch_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cuda memcopy Fail");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(d_b_array_addr, h_b_array_.data(), sizeof(pointer) * outer_batch_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cuda memcopy Fail");
     //  Only support rhs = 1
     if constexpr (std::is_same_v<T, float>) {
-      CHECK_CUSOLVER_RET_WITH_EXCEPT(kernel_node_,
-                                     cusolverDnSpotrsBatched(handle_, uplo_, m_, nrhs_, d_a_array_addr, lda_,
-                                                             d_b_array_addr, ldb_, d_info_array_addr, outer_batch_),
-                                     "cusolver cholesky solve batched Fail");
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnSpotrsBatched(handle_, uplo_, m_, nrhs_, d_a_array_addr, lda_, d_b_array_addr, ldb_,
+                                d_info_array_addr, outer_batch_),
+        "cusolver cholesky solve batched Fail");
     } else if constexpr (std::is_same_v<T, double>) {
-      CHECK_CUSOLVER_RET_WITH_EXCEPT(kernel_node_,
-                                     cusolverDnDpotrsBatched(handle_, uplo_, m_, nrhs_, d_a_array_addr, lda_,
-                                                             d_b_array_addr, ldb_, d_info_array_addr, outer_batch_),
-                                     "cusolver cholesky solve batched Fail");
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnDpotrsBatched(handle_, uplo_, m_, nrhs_, d_a_array_addr, lda_, d_b_array_addr, ldb_,
+                                d_info_array_addr, outer_batch_),
+        "cusolver cholesky solve batched Fail");
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
@@ -121,8 +122,7 @@ class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  void ResetResource() noexcept override {
-    is_null_input_ = false;
+  void ResetResource() {
     input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
@@ -131,7 +131,7 @@ class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {
+  void InitSizeLists() {
     size_t input_size = outer_batch_ * m_ * lda_ * unit_size_;
     input_size_list_.emplace_back(input_size);
     input_size = outer_batch_ * nrhs_ * ldb_ * unit_size_;
@@ -192,10 +192,9 @@ class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
   std::vector<pointer> h_a_array_;
   std::vector<pointer> h_b_array_;
-  bool lower_{false};
-  bool is_null_input_;
+  bool upper_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_

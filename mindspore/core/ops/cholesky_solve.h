@@ -33,6 +33,15 @@ class MIND_API CholeskySolve : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CholeskySolve);
   CholeskySolve() : BaseOperator(kNameCholeskySolve) { InitIOName({"x1", "x2"}, {"y"}); }
+
+  void Init(const bool upper = false);
+  /// \brief Set upper.
+  void set_upper(const bool upper);
+
+  /// \brief Get upper.
+  ///
+  /// \return upper.
+  bool get_upper() const;
 };
 abstract::AbstractBasePtr CholeskySolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args);
