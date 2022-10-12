@@ -5,7 +5,7 @@ mindspore.ops.ScatterMax
 
     根据指定更新值和输入索引通过最大值运算更新输入数据的值。
 
-    对于 `indices.shape` 的每个 `i, ..., j` ：
+    对于 `indices.shape` 的每个 :math:`i, ..., j` ：
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j], :]
