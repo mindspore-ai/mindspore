@@ -74,6 +74,12 @@ int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
                              << indices_shape.size();
   }
+  if (input_shape_.size() < slice_size_) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', the dimension of 'input_x' must not be less than the last dim of 'indices', "
+                             << "but got the dimension of 'input_x' is " << indices_shape.size()
+                             << ", and the last dim of 'indices' is " << slice_size_;
+  }
 
   for (size_t i = 0; i < update_rank; ++i) {
     if (i <= indices_rank - min_indices_rank) {
