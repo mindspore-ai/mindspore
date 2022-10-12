@@ -57,6 +57,11 @@ int TopKCPUKernel::Run() {
   CHECK_NULL_RETURN(output_index);
 
   if (in_tensors_.size() == C2NUM) {
+    if (in_tensors_.at(SECOND_INPUT)->data_type() != kNumberTypeInt32) {
+      MS_LOG(ERROR) << in_tensors_.at(SECOND_INPUT)->tensor_name() << " data type "
+                    << in_tensors_.at(SECOND_INPUT)->data_type() << " is not support.";
+      return RET_ERROR;
+    }
     auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->data());
     CHECK_NULL_RETURN(input_k);
     topk_param_->k_ = input_k[0];

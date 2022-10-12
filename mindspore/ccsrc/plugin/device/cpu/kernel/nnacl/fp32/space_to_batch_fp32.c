@@ -36,13 +36,13 @@ int DoSpaceToBatch(const void *input, void *output, SpaceToBatchParameter *param
   NNACL_CHECK_ZERO_RETURN_ERR(input_batch);
   NNACL_CHECK_ZERO_RETURN_ERR(block_shape_width);
   int copy_size = param->input_shape_[3] * param->data_type_len;
-  for (int out_b = task_id; out_b < output_batch; out_b += param->op_parameter_.thread_num_) {
+  for (int64_t out_b = task_id; out_b < output_batch; out_b += param->op_parameter_.thread_num_) {
     int in_b = out_b % input_batch;
     int shift_w = (out_b / input_batch) % block_shape_width;
     int shift_h = (out_b / input_batch) / block_shape_width;
     for (int out_h = 0; out_h < output_height; out_h++) {
       for (int out_w = 0; out_w < output_width; out_w++) {
-        int output_offset =
+        int64_t output_offset =
           out_b * param->out_stride_[0] + out_h * param->out_stride_[1] + out_w * param->out_stride_[2];
         if (out_h * block_shape_height + shift_h < padding_top ||
             out_h * block_shape_height + shift_h >= padding_top + input_height ||
