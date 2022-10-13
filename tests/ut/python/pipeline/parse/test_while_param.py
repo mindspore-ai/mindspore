@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ def test_while_loop_phi():
     net = WhileSubGraphParam()
     net(x, y, z)
 
+
 class WhileSubGraphParam2(Cell):
     def __init__(self):
         super().__init__()
@@ -73,15 +74,15 @@ class WhileSubGraphParam3(Cell):
     def __init__(self, initial_input_x):
         super().__init__()
         self.initial_input_x = initial_input_x
-        self.X = ms.Parameter(initial_input_x, name="parameter_x")
-        self.Y = ms.Parameter(self.initial_input_x, name="parameter_y")
+        self.x = ms.Parameter(initial_input_x, name="parameter_x")
+        self.y = ms.Parameter(self.initial_input_x, name="parameter_y")
 
     def construct(self):
         a = 0
         while a < 3:
-            self.X = self.X + self.Y
+            self.x = self.x + self.y
             a += 1
-        return self.X
+        return self.x
 
 
 def test_while_loop_phi_3():
@@ -90,6 +91,7 @@ def test_while_loop_phi_3():
 
     net = WhileSubGraphParam3(x)
     net()
+
 
 class ControlMixedWhileIf(nn.Cell):
     def __init__(self):
@@ -101,24 +103,28 @@ class ControlMixedWhileIf(nn.Cell):
     def construct(self, x, y, z, c2, c4):
         out = self.assign(self.var, c4)
         while x < c2:
-            y = self.assign(self.var, c4)
+            self.assign(self.var, c4)
+            y = self.var
             while y < c2 and x < c2:
                 if 2 * y < c2:
                     y = y + 2
                 else:
                     y = y + 1
             out = out + y
-            z = self.assign(self.var, c4)
+            self.assign(self.var, c4)
+            z = self.var
             while z < c2:
                 z = z + 1
             out = out + z
             x = x + 1
         out = out + x
         while x < 2 * c2:
-            y = self.assign(self.var, c4)
+            self.assign(self.var, c4)
+            y = self.var
             x = x + 1
             while y < c2:
-                z = self.assign(self.var, c4)
+                self.assign(self.var, c4)
+                z = self.var
                 while z < c2:
                     z = z + 1
                 if x < c2:
@@ -129,6 +135,7 @@ class ControlMixedWhileIf(nn.Cell):
             out = out + y
         out = out + x
         return out
+
 
 def test_mixed_while_if():
     context.set_context(mode=context.PYNATIVE_MODE)

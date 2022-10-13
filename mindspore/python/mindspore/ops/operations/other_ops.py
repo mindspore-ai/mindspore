@@ -36,8 +36,8 @@ class Assign(Primitive):
         >>> value = Tensor([2.0], mindspore.float32)
         >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
         >>> assign = ops.Assign()
-        >>> output = assign(variable, value)
-        >>> print(output)
+        >>> assign(variable, value)
+        >>> print(variable)
         [2.]
     """
     __mindspore_signature__ = (

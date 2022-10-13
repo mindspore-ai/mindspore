@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ _save_weight = C.MultitypeFuncGraph("_save_weight")
 
 @_save_weight.register("Tensor", "Tensor")
 def _save_weight_process(new_parameter, old_parameter):
-    return P.Assign()(new_parameter, old_parameter)
+    P.Assign()(new_parameter, old_parameter)
+    return new_parameter
 
 
 _grad_scale = C.MultitypeFuncGraph("grad_scale")

@@ -98,9 +98,9 @@ class LambGPUOrigin(nn.Cell):
 
         next_param = param_fp32 - self.op_reshape(update_with_lr, self.op_shape(param_fp32))
 
-        next_param = F.depend(next_param, F.assign(self.param, self.op_cast(next_param, F.dtype(self.param))))
-        next_param = F.depend(next_param, F.assign(self.m, self.op_cast(next_m, F.dtype(self.m))))
-        next_param = F.depend(next_param, F.assign(self.v, self.op_cast(next_v, F.dtype(self.v))))
+        F.assign(self.param, self.op_cast(next_param, F.dtype(self.param)))
+        F.assign(self.m, self.op_cast(next_m, F.dtype(self.m)))
+        F.assign(self.v, self.op_cast(next_v, F.dtype(self.v)))
 
         return self.op_cast(next_param, F.dtype(self.param))
 

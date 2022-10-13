@@ -1678,8 +1678,10 @@ class TransformerEncoderLayer(Cell):
 
         if self.use_past:
             # reset states, init_reset True for reuse and False for reset
-            key_reset = self.assign(self.key_past, self.mul(self.key_past, F.cast(init_reset, self.dtype)))
-            value_reset = self.assign(self.value_past, self.mul(self.value_past, F.cast(init_reset, self.dtype)))
+            self.assign(self.key_past, self.mul(self.key_past, F.cast(init_reset, self.dtype)))
+            key_reset = self.key_past
+            self.assign(self.value_past, self.mul(self.value_past, F.cast(init_reset, self.dtype)))
+            value_reset = self.value_past
             # add dependency for desired execution order
             input_x = F.depend(input_x, key_reset)
             input_x = F.depend(input_x, value_reset)
@@ -1707,8 +1709,10 @@ class TransformerEncoderLayer(Cell):
             # current key and value
             key_present, value_present = layer_present
             # update key and value calculated this step
-            key_update = self.assign(self.key_past, key_present)
-            value_update = self.assign(self.value_past, value_present)
+            self.assign(self.key_past, key_present)
+            key_update = self.key_past
+            self.assign(self.value_past, value_present)
+            value_update = self.value_past
             # add dependency for desired execution order
             key_update = F.depend(key_update, key_reset)
             value_update = F.depend(value_update, value_reset)
@@ -2115,8 +2119,10 @@ class TransformerDecoderLayer(Cell):
         value_reset = None
         if self.use_past:
             # reset states, init_reset True for reuse and False for reset
-            key_reset = self.assign(self.key_past, self.mul(self.key_past, F.cast(init_reset, self.dtype)))
-            value_reset = self.assign(self.value_past, self.mul(self.value_past, F.cast(init_reset, self.dtype)))
+            self.assign(self.key_past, self.mul(self.key_past, F.cast(init_reset, self.dtype)))
+            key_reset = self.key_past
+            self.assign(self.value_past, self.mul(self.value_past, F.cast(init_reset, self.dtype)))
+            value_reset = self.value_past
             # add dependency for desired execution order
             input_x = F.depend(input_x, key_reset)
             input_x = F.depend(input_x, value_reset)
@@ -2159,8 +2165,10 @@ class TransformerDecoderLayer(Cell):
             # current key and value
             key_present, value_present = layer_present
             # update key and value calculated this step
-            key_update = self.assign(self.key_past, key_present)
-            value_update = self.assign(self.value_past, value_present)
+            self.assign(self.key_past, key_present)
+            key_update = self.key_past
+            self.assign(self.value_past, value_present)
+            value_update = self.value_past
             # add dependency for desired execution order
             key_update = F.depend(key_update, key_reset)
             value_update = F.depend(value_update, value_reset)

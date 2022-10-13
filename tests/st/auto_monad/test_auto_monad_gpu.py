@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,11 +82,11 @@ def _count_unequal_element(data_expected, data_me, rtol, atol):
     assert data_expected.shape == data_me.shape
     total_count = len(data_expected.flatten())
     error = np.abs(data_expected - data_me)
-    greater = np.greater(error, atol + np.abs(data_me)*rtol)
+    greater = np.greater(error, atol + np.abs(data_me) * rtol)
     loss_count = np.count_nonzero(greater)
-    assert (loss_count/total_count) < rtol, \
-        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".\
-        format(data_expected[greater], data_me[greater], error[greater])
+    assert (loss_count / total_count) < rtol, \
+        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
+            format(data_expected[greater], data_me[greater], error[greater])
 
 
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
@@ -129,6 +129,7 @@ class SideEffectCastAll(Cell):
         out_a = self.cast(self.parameter_a, self.dtype)
         out_b = self.cast(self.parameter_b, self.dtype)
         return out_a, out_b
+
 
 @security_off_wrap
 def test_side_effect_castall():
@@ -335,6 +336,7 @@ class InplaceNet(Cell):
         output = self.add(tmp_c1, tmp_c2)
         return output
 
+
 @security_off_wrap
 def test_ir_fusion_inplace_bn_conv_conv():
     clear_files()
@@ -393,7 +395,7 @@ class Add(Cell):
 class MixControlNet(Cell):
     def __init__(self, in_channel, x):
         super().__init__()
-        #self._save_graphs(save_graph_flag=True, save_graph_path=".")
+        # self._save_graphs(save_graph_flag=True, save_graph_path=".")
         self.biasadd = P.BiasAdd()
         self.equal = P.Equal()
         self.addn = P.AddN()
@@ -460,6 +462,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
         assert len(castnum) == cast_num
     return out_me
 
+
 @security_off_wrap
 def test_auto_mixed_precision_controlflow_auto():
     context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True)
@@ -473,6 +476,7 @@ def test_auto_mixed_precision_controlflow_auto():
         cast_num = 73
     use_build_train_network_controlflow_check_cast_num(net, "auto", input_x,
                                                        label, cast_num)
+
 
 @security_off_wrap
 def test_updatestate_between_assigns():
@@ -498,6 +502,7 @@ def test_updatestate_between_assigns():
         content = read_file()
         updatestate_num = re.findall('UpdateState', content)
         assert len(updatestate_num) == 1
+
 
 @security_off_wrap
 def test_updatestate_between_maketuple_assign():
@@ -525,6 +530,7 @@ def test_updatestate_between_maketuple_assign():
         content = read_file()
         updatestate_num = re.findall('UpdateState', content)
         assert len(updatestate_num) == 1
+
 
 @security_off_wrap
 def test_updatestate_between_assign_maketuple():
@@ -563,6 +569,7 @@ def test_cycle_parameter_binding():
     Description: Auto-monad should work properly when cycle parameter binding existed.
     Expectation: Normal output, no core dump.
     """
+
     class MyActor(Cell):
         def construct(self, inputs):
             return inputs

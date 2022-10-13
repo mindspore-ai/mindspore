@@ -26,7 +26,8 @@ _clear_op = C.MultitypeFuncGraph("clear_op")
 def _cumulative_gard(grad_sum, grad):
     """Apply gard sum to cumulative gradient."""
     add = P.AssignAdd()
-    return add(grad_sum, grad)
+    add(grad_sum, grad)
+    return grad_sum
 
 
 @_clear_op.register("Tensor", "Tensor")

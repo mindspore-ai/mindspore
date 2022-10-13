@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ class ControlSimpleIfWithAssign(nn.Cell):
         if x > y:
             out = self.addn([input_data, input_data, input_data])
         else:
-            out = self.assign(self.input_data, input_data)
+            self.assign(self.input_data, input_data)
+            out = self.input_data
         return out
 
 

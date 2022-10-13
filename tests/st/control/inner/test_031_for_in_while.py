@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -74,6 +76,7 @@ def test_for_in_while_01():
     expect_backward_res = (Tensor([64], mstype.int32),)
     assert graph_forward_res == expect_forward_res
     assert graph_backward_res == expect_backward_res
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training

@@ -39,17 +39,18 @@ def test_monad_vmap():
             self.value = Tensor([3, 4], mstype.int32)
 
         def construct(self, x):
-            return self.assign(x, self.value)
+            x = self.assign(x, self.value)
+            return x
 
     vampfunc = F.vmap(AssignNet())
-
 
     @ms_function
     def test_monad(a):
         c = Tensor([[1, 2], [3, 4], [5, 6]], mstype.int32)
         out = vampfunc(a)
         c = a + c
-        out2 = P.AssignAdd()(a, c)
+        P.AssignAdd()(a, c)
+        out2 = a
         return out, out2
 
     a = Parameter(Tensor([[1, 2], [3, 4], [5, 6]], mstype.int32), name='param_a')

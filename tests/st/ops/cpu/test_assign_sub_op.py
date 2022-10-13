@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ class AssignSub(nn.Cell):
         self.sub = P.AssignSub()
 
     def construct(self, y):
-        res = self.sub(self.var, y)
-        return res
+        self.sub(self.var, y)
+        return self.var
 
 
 @pytest.mark.level0
@@ -117,13 +117,17 @@ def test_assign_sub_func():
     y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
-    output1 = F.assign_sub(x1, y1)
+    F.assign_sub(x1, y1)
+    output1 = x1
     assert (output1.asnumpy() == expect1).all()
-    output2 = F.assign_sub(output1, y1)
+    F.assign_sub(output1, y1)
+    output2 = output1
     assert (output2.asnumpy() == expect2).all()
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-    output1 = F.assign_sub(x2, y2)
+    F.assign_sub(x2, y2)
+    output1 = x2
     assert (output1.asnumpy() == expect1).all()
-    output2 = F.assign_sub(output1, y2)
+    F.assign_sub(output1, y2)
+    output2 = output1
     assert (output2.asnumpy() == expect2).all()

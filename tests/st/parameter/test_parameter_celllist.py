@@ -56,13 +56,14 @@ class EmaUpdate(nn.Cell):
 
     def ema(self, tau, policy_param, target_param):
         new_param = (1 - tau) * target_param + tau * policy_param
-        out = P.Assign()(target_param, new_param)
-        return out
+        P.Assign()(target_param, new_param)
+        return target_param
 
     def construct(self):
         if self.step % self.period == 0:
             self.hyper_map(F.partial(self.ema, self.tau), self.policy_param, self.target_param)
-        return self.assignadd(self.step, 1)
+        self.assignadd(self.step, 1)
+        return self.step
 
 
 @pytest.mark.level1

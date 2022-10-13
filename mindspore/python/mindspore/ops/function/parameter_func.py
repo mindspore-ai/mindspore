@@ -18,7 +18,6 @@
 from mindspore.ops import operations as P
 from .._primitive_cache import _get_cache_prim
 
-
 assign_ = P.Assign()
 
 
@@ -50,8 +49,8 @@ def assign(variable, value):
     Examples:
         >>> value = Tensor([2.0], mindspore.float32)
         >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
-        >>> output = ops.assign(variable, value)
-        >>> print(output)
+        >>> ops.assign(variable, value)
+        >>> print(variable)
         [2.]
     """
     return assign_(variable, value)
@@ -97,7 +96,7 @@ def assign_sub(variable, value):
     Examples:
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
-        >>> output = ops.assign_sub(variable, value)
+        >>> ops.assign_sub(variable, value)
         >>> print(variable.asnumpy())
         [-99]
     """
@@ -105,6 +104,8 @@ def assign_sub(variable, value):
 
 
 assign_add_ = P.AssignAdd()
+
+
 def assign_add(variable, value):
     """
     Updates a `Parameter` by adding a value to it.
@@ -142,7 +143,7 @@ def assign_add(variable, value):
     Examples:
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
-        >>> output = ops.assign_add(variable, value)
+        >>> ops.assign_add(variable, value)
         >>> print(variable.asnumpy())
         [101]
     """
@@ -190,7 +191,7 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
         >>> x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="name_x")
         >>> indices = Tensor(np.array([0, 2]), mindspore.int32)
         >>> y = Tensor(np.array([[0.5, 1.0], [1.0, 1.5], [2.0, 2.5]]), mindspore.float32)
-        >>> output = ops.index_add(x, indices, y, 1)
+        >>> ops.index_add(x, indices, y, 1)
         >>> print(output)
         [[ 1.5  2.   4. ]
          [ 5.   5.   7.5]

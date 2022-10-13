@@ -30,6 +30,9 @@ from mindspore.ops.operations._grad_ops import IgammaGradA
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
 from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
+
+from mindspore.common.parameter import Parameter
+from mindspore.common.initializer import initializer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -368,7 +371,8 @@ class AssignAdd(nn.Cell):
 
     def construct(self, input_):
         self.inputdata = input_
-        return self.op(self.inputdata, input_)
+        self.op(self.inputdata, input_)
+        return self.inputdata
 
 
 class FloorNet(nn.Cell):

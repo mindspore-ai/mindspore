@@ -34,7 +34,8 @@ class Net(nn.Cell):
         self.sub = P.AssignSub()
 
     def construct(self, value):
-        return self.sub(self.b, value)
+        self.sub(self.b, value)
+        return self.b
 
 
 def test_net():

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -255,10 +255,10 @@ def test_tuple_assignadd_tuple():
 
 def test_string_assignadd_string():
     result1 = "string111"
-    result2 = "string111"
+    input2 = "string111"
     input_x = "string222"
     result1 += input_x
-    result2 = AssignAdd(result2, input_x)()
+    result2 = AssignAdd(input2, input_x)
     expect = "string111string222"
     assert result1 == expect
     assert result2 == expect
@@ -279,9 +279,9 @@ class AssignSub(nn.Cell):
 def test_number_assignsub_number():
     input_x = 2
     result1 = 5
-    result2 = 5
+    input2 = 5
     result1 -= input_x
-    result2 = AssignSub(result2, input_x)()
+    result2 = AssignSub(input2, input_x)
     expect = 3
     assert np.all(result1 == expect)
     assert np.all(result2 == expect)
@@ -292,7 +292,7 @@ def test_tensor_assignsub_tensor():
     result1 = Tensor(np.array([[4, -2], [2, 17]]))
     result2 = Tensor(np.array([[4, -2], [2, 17]]))
     result1 -= input_x
-    result2 = AssignSub(result2, input_x)()
+    result2 = AssignSub(result2, input_x)
     expect = Tensor(np.array([[2, -4], [-1, 14]]))
     assert np.all(result1.asnumpy() == expect)
     assert np.all(result2.asnumpy() == expect)
@@ -301,9 +301,9 @@ def test_tensor_assignsub_tensor():
 def test_tensor_assignsub_number():
     input_x = 3
     result1 = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
-    result2 = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
+    input2 = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
     result1 -= input_x
-    result2 = AssignSub(result2, input_x)()
+    result2 = AssignSub(input2, input_x)
     expect = Tensor(np.array([[1, -5], [-1, 14]]))
     assert np.all(result1.asnumpy() == expect)
     assert np.all(result2.asnumpy() == expect)
@@ -311,10 +311,10 @@ def test_tensor_assignsub_number():
 
 def test_number_assignsub_tensor():
     result1 = 3
-    result2 = 3
+    input2 = 3
     input_x = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
     result1 -= input_x
-    result2 = AssignSub(result2, input_x)()
+    result2 = AssignSub(input2, input_x)
     expect = Tensor(np.array([[-1, 5], [1, -14]]))
     assert np.all(result1.asnumpy() == expect)
     assert np.all(result2.asnumpy() == expect)

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -266,7 +266,8 @@ class ControlOneIfOneParaOneAddn(Cell):
         else:
             out = self.addn([input_data, input_data, input_data])
         if x > y:
-            out = self.assign(self.inputdata, input_data)
+            self.assign(self.inputdata, input_data)
+            out = self.inputdata
         return out
 
 
@@ -368,7 +369,8 @@ class SideEffectReturnParameterNet(Cell):
         self.relu = P.ReLU()
 
     def construct(self, inputs):
-        p1 = self.assign(self.para, inputs)
+        self.assign(self.para, inputs)
+        p1 = self.para
         out = self.addn((inputs, inputs, inputs))
         out = self.relu(out)
         return p1
@@ -401,7 +403,8 @@ class SideEffectAssignAddnReluReturnParNet(Cell):
         self.relu = P.ReLU()
 
     def construct(self, inputs):
-        p1 = self.assign(self.parameter1, inputs)
+        self.assign(self.parameter1, inputs)
+        p1 = self.parameter1
         out = self.addN((inputs, inputs, inputs))
         out = self.relu(out)
         return p1
@@ -426,10 +429,8 @@ def test_side_effect_grad_read_dependency_assign_addn_relu_return_parameter():
     try:
         context.set_context(mode=context.PYNATIVE_MODE)
         out2 = net.grad_mindspore_impl(inputs, grad_ys)
-        allclose_nparray(out1[0][0].asnumpy(), out2[0]
-                         [0].asnumpy(), 0.001, 0.001)
-        allclose_nparray(out1[1][0].asnumpy(), out2[1]
-                         [0].asnumpy(), 0.001, 0.001)
+        allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
+        allclose_nparray(out1[1][0].asnumpy(), out2[1][0].asnumpy(), 0.001, 0.001)
     finally:
         context.set_context(mode=context.GRAPH_MODE)
 
@@ -461,6 +462,7 @@ class SideEffectPrintInHighOrdeAddnNet(Cell):
         grad_net.set_train()
         grad_out = grad_net(params, grad_ys)
         return grad_out
+
 
 @security_off_wrap
 @pytest.mark.level1
@@ -495,7 +497,8 @@ class SideEffectControlFlowAssignDependTwoIfNet(Cell):
         self.assign(self.parameter1, x)
         if self.parameter1 > y:
             x = self.mul(x, x)
-            p2 = self.assign(self.parameter1, x)
+            self.assign(self.parameter1, x)
+            p2 = self.parameter1
             if self.parameter1 > y:
                 x = self.addn((x, self.parameter1))
                 p3 = self.assign(self.parameter1, x)
@@ -661,10 +664,12 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
         self.depend = P.Depend()
 
     def construct(self, x, y, z):
-        p1 = self.assign(self.parameter1, x)
+        self.assign(self.parameter1, x)
+        p1 = self.parameter1
         while self.parameter1 < y:
             x = self.addn((x, x))
-            p2 = self.assignadd(self.parameter1, z)
+            self.assignadd(self.parameter1, z)
+            p2 = self.parameter1
             self.depend(p2, p1)
         return x
 

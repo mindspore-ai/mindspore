@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,17 +29,21 @@ class Net(nn.Cell):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.AssignSub = P.AssignSub()
+        self.assign_sub = P.AssignSub()
         self.inputdata = Parameter(initializer('normal', [1]), name="global_step")
         print("inputdata: ", self.inputdata)
 
     def construct(self, x):
-        out = self.AssignSub(self.inputdata, x)
-        return out
+        self.assign_sub(self.inputdata, x)
+        return self.inputdata
 
 
 def test_net():
-    """test AssignSub"""
+    """
+    Feature: test AssignSub.
+    Description: test AssignSub.
+    Expectation: No exception.
+    """
     net = Net()
     x = Tensor(np.ones([1]).astype(np.int32) * 100)
 

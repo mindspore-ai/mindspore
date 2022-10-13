@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ class AssignAdd(nn.Cell):
         self.add(self.var, y)
         return self.var
 
+
 def get_output(x2, y2, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     add = AssignAdd(x2)
@@ -40,6 +41,7 @@ def get_output(x2, y2, enable_graph_kernel=False):
     result_gk_on_2 = add_2(y2)
     output = [result_gk_on_1, result_gk_on_2]
     return output
+
 
 def assign_add():
     x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
@@ -53,12 +55,14 @@ def assign_add():
     assert np.allclose(o1.asnumpy(), e1.asnumpy())
     assert np.allclose(o2.asnumpy(), e2.asnumpy())
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign_add_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     assign_add()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
