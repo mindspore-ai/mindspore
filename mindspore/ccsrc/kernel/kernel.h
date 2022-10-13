@@ -436,6 +436,48 @@ inline bool TryGetIntValue(const std::vector<KernelTensorPtr> &inputs, const siz
 
 BACKEND_EXPORT bool TryGetIntValue(const CNodePtr &kernel_node, const size_t input_index,
                                    std::vector<int64_t> *attr_value, bool data_from_host = true);
+template <typename T>
+inline bool CheckNullInput(const std::vector<T> &input_shape) {
+  // If input_shape.size() == 0, it means a scalar input; If input_shape.size() != 0 and input_shape contains 0,
+  // it means a null input. Just return a null output.
+  if (input_shape.size() != 0) {
+    if (std::any_of(input_shape.begin(), input_shape.end(), [](T i) { return i == 0; })) {
+      return true;
+    }
+  }
+  return false;
+}
+#define CHECK_NULL_INPUT(input_shape) mindspore::kernel::CheckNullInput(input_shape)
+
+template <typename T>
+inline std::string ConvertVectorToString(const std::vector<T> &value) {
+  std::stringstream ss;
+  ss << "(";
+  for (auto it = value.begin(); it != value.end(); it++) {
+    if (it == value.begin()) {
+      ss << *it;
+    } else {
+      ss << ", " << *it;
+    }
+  }
+  ss << ")";
+  return ss.str();
+}
+
+#define CONVERT_VECTOR_TO_STRING(value) mindspore::kernel::ConvertVectorToString(value)
+
+template <typename T>
+inline bool CheckShapeNull(const std::vector<T> &shape, std::string kernel_name, std::string param_name) {
+  if (CHECK_NULL_INPUT(shape)) {
+    MS_LOG(WARNING) << "For '" << kernel_name << "', the shape of " << param_name << " cannot contain zero, but got "
+                    << CONVERT_VECTOR_TO_STRING(shape);
+    return true;
+  }
+  return false;
+}
+
+#define CHECK_SHAPE_NULL(shape, kernel_name, param_name) \
+  mindspore::kernel::CheckShapeNull(shape, kernel_name, param_name)
 }  // namespace kernel
 }  // namespace mindspore
 

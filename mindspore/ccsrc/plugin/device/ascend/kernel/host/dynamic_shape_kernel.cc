@@ -35,6 +35,9 @@ void TensorShapeKernelMod::Execute(void *stream_ptr) const {
   }
 
   auto prev_output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  if (prev_output_shape.empty()) {
+    return;
+  }
   std::vector<int64_t> output_shape = {SizeToLong(prev_output_shape.size())};
 
   auto output_type = TypeId::kNumberTypeInt64;

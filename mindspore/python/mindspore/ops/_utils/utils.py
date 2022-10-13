@@ -103,7 +103,7 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
     for i in range(1, len(x_shp)):
         v = x_shp[i]
         for j in range(rank_base):
-            if j != axis and v[j] != x_shp[0][j]:
+            if j != axis and v[j] != x_shp[0][j] and v[j] >= 0 and x_shp[0][j] >= 0:
                 raise ValueError(f"The shape of the two input elements of the Concat operator do not match:"
                                  f"shape[0] = {x_shp[0]} and shape[{i}] = {x_shp[i]}.")
         offset.append(all_shp)
