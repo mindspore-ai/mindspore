@@ -546,9 +546,15 @@ void PsEmbeddingCacheInserter::BuildEmbeddingStores() {
 
     auto param_info = param->param_info();
     MS_EXCEPTION_IF_NULL(param_info);
+    const std::vector<int64_t> &origin_shape = param_info->parameter_shape();
+    size_t origin_capacity = LongToSize(origin_shape.front());
+    size_t origin_emb_dim = LongToSize(origin_shape.back());
+    MS_LOG(INFO) << "Get a parameter for embedding store: " << param->name() << ", origin emb_dim: " << origin_emb_dim
+                 << ", origin capacity: " << origin_capacity;
+
     if (!param_info->use_persistent_storage()) {
       MS_LOG(INFO) << "No need to use embedding store for this parameter(key): " << key;
-      return;
+      continue;
     }
 
     const std::vector<int64_t> &slice_shape = param_info->parameter_persistent_slice_shape();
@@ -559,13 +565,17 @@ void PsEmbeddingCacheInserter::BuildEmbeddingStores() {
     }
     size_t capacity = LongToSize(slice_shape.front());
     size_t emb_dim = LongToSize(slice_shape.back());
+    std::string name = std::to_string(key);
 
-    auto emb_store = std::make_shared<distributed::EmbeddingStore<size_t, float_t>>(capacity, emb_dim);
+    auto emb_store = std::make_shared<distributed::EmbeddingStore<int32_t, float>>(name, capacity, emb_dim);
     MS_EXCEPTION_IF_NULL(emb_store);
     if (!emb_store->Initialize()) {
       MS_LOG(EXCEPTION) << "Failed to Initialize for parameter(key): " << key;
     }
-    embedding_store_manager.Add(std::to_string(key), emb_store);
+    embedding_store_manager.Add(name, emb_store);
+
+    MS_LOG(INFO) << "Add a new embedding store: " << name << ", emb_dim: " << emb_dim << ", capacity: " << capacity
+                 << ", origin emb_dim:" << origin_emb_dim << ", origin capacity: " << origin_capacity;
   }
 }
 

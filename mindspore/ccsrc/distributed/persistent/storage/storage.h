@@ -56,7 +56,7 @@ class StorageBase {
   virtual void Write(const std::vector<InputData> &input, const DirtyInfo &dirty_info) {}
 
   // Write data of ids to block files.
-  virtual void Write(const void *input, const std::vector<int> &ids) {}
+  virtual void Write(const void *input, size_t ids_num, const int32_t *ids) {}
 
   // Read data from the storage medium or memory buffer and merge them into contiguous memory.
   virtual void Read(const OutputData &output) {}
@@ -65,7 +65,7 @@ class StorageBase {
   virtual void Read(const std::vector<OutputData> &outputs) {}
 
   // Read ids from block files.
-  virtual void Read(const std::vector<int> &ids, void *output, std::vector<int> *missing) {}
+  virtual void Read(size_t ids_num, const int32_t *ids, void *output, size_t *miss_num, size_t *miss_indices) {}
 };
 }  // namespace storage
 }  // namespace distributed

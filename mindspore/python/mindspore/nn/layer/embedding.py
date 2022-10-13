@@ -362,7 +362,7 @@ class EmbeddingLookup(Cell):
         if  _enable_distributed_mindrt():
             self.rank_id = get_rank()
             if self.is_ps_server:
-                self._slice_pserver_embeddings(param_init)
+                self._slice_pserver_embeddings("zeros")
                 self._set_cache_enable_and_key_for_pserver(param_key)
 
     def _slice_pserver_embeddings(self, param_init):

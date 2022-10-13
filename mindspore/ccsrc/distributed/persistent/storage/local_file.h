@@ -79,7 +79,7 @@ class LocalFile : public StorageBase {
   // Write the entire blob data composed of multiple tensors to the block files on disk:
   void Write(const std::vector<InputData> &inputs, const DirtyInfo &dirty_info) override;
   // Write data of ids to block files.
-  void Write(const void *input, const std::vector<int> &ids) override;
+  void Write(const void *input, size_t ids_num, const int32_t *ids) override;
 
   // The following two methods are override version function for Read:
   // 1.Tamper proof check.
@@ -89,7 +89,7 @@ class LocalFile : public StorageBase {
   // Read data from all block files in file_path_(dir) for multiple tensors.
   void Read(const std::vector<OutputData> &outputs) override;
   // Read ids from block files.
-  void Read(const std::vector<int> &ids, void *output, std::vector<int> *missing) override;
+  void Read(size_t ids_num, const int32_t *ids, void *output, size_t *miss_num, size_t *miss_indices) override;
 
  private:
   // Create blocks and block metas and write input data to block files.
@@ -105,9 +105,9 @@ class LocalFile : public StorageBase {
   // Load file list info of block files and block meta files in the 'file_path_' to block list and block meta list.
   bool LoadBlocksInfo();
 
-  void ReadPages(size_t num_ids, const std::vector<int> &ids, void *pages_ptr, size_t *offsets);
+  void ReadPages(size_t ids_num, const int32_t *ids, void *pages_ptr, size_t *offsets);
 
-  void WritePages(size_t num_ids, const std::vector<int> &ids);
+  void WritePages(size_t ids_num, const int32_t *ids);
 
   std::string BlockFilePath(size_t block_id) const;
 
@@ -134,7 +134,7 @@ class LocalFile : public StorageBase {
   bool finish_create_block_files_{false};
 
   // Size of a read/write page in block.
-  size_t page_size_;
+  size_t page_size_{DEFAULT_PAGE_SIZE};
 
   size_t num_features_per_page_;
   size_t num_pages_per_block_file_;
@@ -152,7 +152,7 @@ class LocalFile : public StorageBase {
   std::vector<size_t> offsets_buf_;
 
   // Map to record id in which page.
-  mindspore::HashMap<int, size_t> id_to_page_loc_;
+  mindspore::HashMap<int32_t, size_t> id_to_page_loc_;
 
   // File System Ops handle.
   std::shared_ptr<system::FileSystem> fs_;

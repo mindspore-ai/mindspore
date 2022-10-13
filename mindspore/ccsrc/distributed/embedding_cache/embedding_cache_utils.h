@@ -45,8 +45,8 @@ static constexpr size_t kNumberBase = 10;
 
 static constexpr size_t kOneGBBitNum = 30;
 
-// The default cache size of one embedding parameter on role of server: 100GB.
-static constexpr size_t kDefaultEmbeddingRemoteCacheMemorySize = size_t(100) << 30;
+// The default cache size of one embedding parameter on role of server: 1TB.
+static constexpr size_t kDefaultEmbeddingRemoteCacheMemorySize = size_t(1) << 40;
 
 // The default cache size of one embedding parameter on role of worker: 10GB.
 static constexpr size_t kDefaultEmbeddingLocalCacheMemorySize = size_t(10) << 30;
@@ -276,10 +276,10 @@ class BACKEND_EXPORT EmbeddingStoreManager {
  public:
   static EmbeddingStoreManager &GetInstance();
 
-  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<size_t, float_t>> emb_store) {
+  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<int32_t, float>> emb_store) {
     embedding_stores_[name] = emb_store;
   }
-  std::shared_ptr<EmbeddingStore<size_t, float_t>> Get(const std::string &name) { return embedding_stores_[name]; }
+  std::shared_ptr<EmbeddingStore<int32_t, float>> Get(const std::string &name) { return embedding_stores_[name]; }
 
   bool IsExists(const std::string &name) const { return embedding_stores_.find(name) != embedding_stores_.end(); }
 
@@ -288,7 +288,7 @@ class BACKEND_EXPORT EmbeddingStoreManager {
   ~EmbeddingStoreManager() = default;
   DISABLE_COPY_AND_ASSIGN(EmbeddingStoreManager);
 
-  mindspore::HashMap<std::string, std::shared_ptr<EmbeddingStore<size_t, float_t>>> embedding_stores_;
+  mindspore::HashMap<std::string, std::shared_ptr<EmbeddingStore<int32_t, float>>> embedding_stores_;
 };
 
 size_t GetEmbeddingRemoteCacheSize();

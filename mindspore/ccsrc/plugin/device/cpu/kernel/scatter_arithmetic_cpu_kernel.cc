@@ -65,6 +65,10 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   use_embedding_cache_ = GetValue<bool>(base_operator->GetAttr(kAttrUseEmbeddingStore));
   parameter_key_ = GetValue<int64_t>(base_operator->GetAttr(kAttrParameterKey));
+  if (use_embedding_cache_) {
+    MS_LOG(INFO) << "For embedding cache kernel: " << kernel_name_ << ", param key: " << parameter_key_
+                 << ", vocab size: " << first_dim_size_ << ", emb dim:" << inner_size_;
+  }
   return KRET_OK;
 }
 

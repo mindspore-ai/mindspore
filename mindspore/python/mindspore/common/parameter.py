@@ -231,7 +231,7 @@ class Parameter(Tensor_):
             # And save out range data to persistent storage to support TB-Level size parameter.
             slice_num_of_persistent_data = split_to_slice_if_need(default_input.dtype, default_input.shape)
             if slice_num_of_persistent_data > 1:
-                data_shape = default_input.shape
+                data_shape = list(default_input.shape)
                 slice_first_dim = math.ceil(data_shape[0] / slice_num_of_persistent_data)
                 data_shape[0] = slice_first_dim
                 self.param_info.parameter_persistent_slice_shape = data_shape
@@ -279,7 +279,7 @@ class Parameter(Tensor_):
 
     @staticmethod
     def _not_init_data():
-        is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
+        is_worker_or_server = (_is_role_worker() or _is_role_pserver())
         if is_worker_or_server or _is_role_sched() or _is_in_parallel_mode():
             return True
         return False
@@ -298,7 +298,7 @@ class Parameter(Tensor_):
                 # make a copy of Tensor to init the parameter.
                 return (Tensor, data.asnumpy())
 
-            is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
+            is_worker_or_server = (_is_role_worker() or _is_role_pserver())
             not_init_data = is_worker_or_server or _is_role_sched() or _is_in_parallel_mode()
             if not_init_data:
                 # do not init data while in auto parallel.
