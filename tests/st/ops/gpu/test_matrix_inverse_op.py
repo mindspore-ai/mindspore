@@ -24,7 +24,9 @@ from mindspore.ops import operations as P
 
 np.random.seed(1)
 
+
 class NetMatrixInverse(nn.Cell):
+
     def __init__(self):
         super(NetMatrixInverse, self).__init__()
         self.matrix_inverse = P.MatrixInverse()

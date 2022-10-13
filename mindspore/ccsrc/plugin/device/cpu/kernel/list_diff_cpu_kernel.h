@@ -19,27 +19,46 @@
 
 #include <memory>
 #include <vector>
+#include <map>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/list_diff.h"
 
 namespace mindspore {
 namespace kernel {
-class ListDiffCPUKernelMod : public DeprecatedNativeCpuKernelMod {
+class ListDiffCPUKernelMod : public NativeCpuKernelMod {
  public:
   ListDiffCPUKernelMod() = default;
   ~ListDiffCPUKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+ protected:
+  void SyncData() override;
+
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void ResetResource() noexcept;
   template <typename T, typename Tidx>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  std::string kernel_name_{};
+  std::vector<KernelTensorPtr> outputs_ = {};
+  size_t data_size_;
+  size_t index_size_;
   int64_t x_size_;
   int64_t y_size_;
   int64_t out_size_;

@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/matrix_set_diag_v3_cpu_kernel.h"
+#include "mindspore/core/ops/matrix_set_diag_v3.h"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -34,26 +35,25 @@ constexpr size_t kIndexK = 2;
 constexpr int64_t ZERO = 0;
 }  // namespace
 
-void MatrixSetDiagV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-  if (common::AnfAlgo::HasNodeAttr("align", kernel_node)) {
-    align_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "align");
-    if (!(align_ == "" || align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT" || align_ == "LEFT_LEFT" ||
-          align_ == "LEFT_RIGHT")) {
-      MS_LOG(EXCEPTION) << "Attr 'align' of 'MatrixSetDiagV3' is not in: 'LEFT_RIGHT', "
-                           "'RIGHT_LEFT', 'LEFT_LEFT', 'RIGHT_RIGHT'.";
-    }
-    if (align_ == "") align_ = "RIGHT_LEFT";
-  } else {
-    align_ = "RIGHT_LEFT";
+bool MatrixSetDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixSetDiagV3>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(EXCEPTION) << "cast MatrixSetDiagV3 ops failed";
   }
+  kernel_name_ = kernel_ptr->name();
+  align_ = kernel_ptr->get_align();
 
-  auto diagonal_data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto output_data_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "MatrixSetDiagV3 does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+
+  auto diagonal_data_type = inputs.at(kIndex1)->GetDtype();
+  input_dtype_ = inputs.at(kIndex0)->GetDtype();
+  auto output_data_type = outputs.at(kIndex0)->GetDtype();
 
   if (diagonal_data_type != input_dtype_) {
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, the data type of x need be same diagonal.";
@@ -62,22 +62,25 @@ void MatrixSetDiagV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (input_dtype_ != output_data_type) {
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, the data type of x need be same with output.";
   }
+  return true;
+}
 
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  diagonal_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  k_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexK);
+int MatrixSetDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  x_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  diagonal_shape_ = inputs[1]->GetDeviceShapeAdaptively();
+  k_shape_ = inputs[kIndexK]->GetDeviceShapeAdaptively();
   size_t k_dim_size = k_shape_.size();
   const size_t k_dim_size_max = 1;
   if (k_dim_size > k_dim_size_max) {
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k_dim_size can not be greater than 1, received " << k_dim_size << ".";
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "MatrixSetDiagV3 does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>

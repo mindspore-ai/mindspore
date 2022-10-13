@@ -16,12 +16,14 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor, context, ops
 from mindspore import dtype as mstype
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 
 
 class MatrixSetDiagV3Net(nn.Cell):
+
     def __init__(self, align='RIGHT_LEFT'):
         super(MatrixSetDiagV3Net, self).__init__()
         self.matrix_set_diag_v3 = MatrixSetDiagV3(align=align)
@@ -40,6 +42,29 @@ def get_dy_shape(real_shape):
     return part_shape_list
 
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu
+def test_matrix_set_diag_v3_dynamic_shape_v2():
+    """
+    Feature: MatrixSetDiagV3 dynamic shape operator.
+    Description: Compatible with expect.
+    Expectation: The result matches numpy.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = MatrixSetDiagV3Net()
+    x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    diagonal = Tensor(np.array([[0, 9, 1], [6, 5, 8], [1, 2, 3], [4, 5, 0]]),
+                      dtype=ms.float32)
+    k = Tensor(np.array([-1, 2]), ms.int32)
+    net.set_inputs(x_dyn, diagonal, k)
+    x = Tensor(np.array([[7, 7, 7, 7], [7, 7, 7, 7], [7, 7, 7, 7]]),
+               dtype=ms.float32)
+    out = net(x, diagonal, k)
+    expect_shape = (3, 4)
+    assert out.asnumpy().shape == expect_shape
+
+
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
@@ -50,21 +75,13 @@ def test_matrix_set_diag_v3_function():
     Expectation: The result matches numpy.
     """
     context.set_context(device_target="GPU")
-    input_x = Tensor(np.array([[[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]],
-                               [[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]]]), mstype.float32)
-    diagonal = Tensor(np.array([[1, 2, 3],
-                                [4, 5, 6]]), mstype.float32)
+    input_x = Tensor(
+        np.array([[[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]],
+                  [[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]]]), mstype.float32)
+    diagonal = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mstype.float32)
     result = ops.matrix_set_diag(input_x, diagonal).asnumpy()
-    expect = np.array([[[1, 5, 5, 5],
-                        [5, 2, 5, 5],
-                        [5, 5, 3, 5]],
-                       [[4, 5, 5, 5],
-                        [5, 5, 5, 5],
-                        [5, 5, 6, 5]]], np.float32)
+    expect = np.array([[[1, 5, 5, 5], [5, 2, 5, 5], [5, 5, 3, 5]],
+                       [[4, 5, 5, 5], [5, 5, 5, 5], [5, 5, 6, 5]]], np.float32)
     np.testing.assert_allclose(result, expect)
 
 
@@ -78,20 +95,12 @@ def test_matrix_set_diag_v3_ops():
     Expectation: The result matches numpy.
     """
     context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
-    input_x = Tensor(np.array([[[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]],
-                               [[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]]]), mstype.float32)
-    diagonal = Tensor(np.array([[1, 2, 3],
-                                [4, 5, 6]]), mstype.float32)
-    expect = np.array([[[5, 1, 5, 5],
-                        [5, 5, 2, 5],
-                        [5, 5, 5, 3]],
-                       [[5, 4, 5, 5],
-                        [5, 5, 5, 5],
-                        [5, 5, 5, 6]]], np.float32)
+    input_x = Tensor(
+        np.array([[[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]],
+                  [[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]]]), mstype.float32)
+    diagonal = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mstype.float32)
+    expect = np.array([[[5, 1, 5, 5], [5, 5, 2, 5], [5, 5, 5, 3]],
+                       [[5, 4, 5, 5], [5, 5, 5, 5], [5, 5, 5, 6]]], np.float32)
     k = Tensor(1, mstype.int32)
     result = MatrixSetDiagV3Net()(input_x, diagonal, k).asnumpy()
     np.testing.assert_allclose(result, expect)
@@ -110,29 +119,18 @@ def test_matrix_set_diag_v3_ops_band():
     Expectation: The result matches numpy.
     """
     context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
-    input_x = Tensor(np.array([[[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]],
-                               [[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]]]), mstype.float32)
+    input_x = Tensor(
+        np.array([[[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]],
+                  [[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]]]), mstype.float32)
 
     k = Tensor((-1, 2), mstype.int32)
-    diagonal = Tensor(np.array([[[0, 9, 1],
-                                 [6, 5, 8],
-                                 [1, 2, 3],
-                                 [4, 5, 0]],
-                                [[0, 1, 2],
-                                 [5, 6, 4],
-                                 [6, 1, 2],
-                                 [3, 4, 0]]]), mstype.float32)
+    diagonal = Tensor(
+        np.array([[[0, 9, 1], [6, 5, 8], [1, 2, 3], [4, 5, 0]],
+                  [[0, 1, 2], [5, 6, 4], [6, 1, 2], [3, 4, 0]]]),
+        mstype.float32)
     result = MatrixSetDiagV3Net()(input_x, diagonal, k).asnumpy()
-    expect = np.array([[[1, 6, 9, 5],
-                        [4, 2, 5, 1],
-                        [5, 5, 3, 8]],
-                       [[6, 5, 1, 5],
-                        [3, 1, 6, 2],
-                        [5, 4, 2, 4]]], np.float32)
+    expect = np.array([[[1, 6, 9, 5], [4, 2, 5, 1], [5, 5, 3, 8]],
+                       [[6, 5, 1, 5], [3, 1, 6, 2], [5, 4, 2, 4]]], np.float32)
     np.testing.assert_allclose(result, expect)
 
 
@@ -147,29 +145,18 @@ def test_matrix_set_diag_v3_ops_align():
     """
     context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
     align = "LEFT_RIGHT"
-    input_x = Tensor(np.array([[[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]],
-                               [[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]]]), mstype.float32)
+    input_x = Tensor(
+        np.array([[[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]],
+                  [[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]]]), mstype.float32)
 
     k = Tensor((-1, 2), mstype.int32)
-    diagonal = Tensor(np.array([[[9, 1, 0],
-                                 [6, 5, 8],
-                                 [1, 2, 3],
-                                 [0, 4, 5]],
-                                [[1, 2, 0],
-                                 [5, 6, 4],
-                                 [6, 1, 2],
-                                 [0, 3, 4]]]), mstype.float32)
+    diagonal = Tensor(
+        np.array([[[9, 1, 0], [6, 5, 8], [1, 2, 3], [0, 4, 5]],
+                  [[1, 2, 0], [5, 6, 4], [6, 1, 2], [0, 3, 4]]]),
+        mstype.float32)
     result = MatrixSetDiagV3Net(align=align)(input_x, diagonal, k).asnumpy()
-    expect = np.array([[[1, 6, 9, 5],
-                        [4, 2, 5, 1],
-                        [5, 5, 3, 8]],
-                       [[6, 5, 1, 5],
-                        [3, 1, 6, 2],
-                        [5, 4, 2, 4]]], np.float32)
+    expect = np.array([[[1, 6, 9, 5], [4, 2, 5, 1], [5, 5, 3, 8]],
+                       [[6, 5, 1, 5], [3, 1, 6, 2], [5, 4, 2, 4]]], np.float32)
     np.testing.assert_allclose(result, expect)
 
 
@@ -184,39 +171,26 @@ def test_matrix_set_diag_v3_vmap():
     """
     context.set_context(device_target="GPU")
     # vmap input x shape is [2,2,3,4]
-    input_x = Tensor(np.array([[[[5, 5, 5, 5],
-                                 [5, 5, 5, 5],
-                                 [5, 5, 5, 5]],
-                                [[5, 5, 5, 5],
-                                 [5, 5, 5, 5],
-                                 [5, 5, 5, 5]]],
-                               [[[7, 7, 7, 7],
-                                 [7, 7, 7, 7],
-                                 [7, 7, 7, 7]],
-                                [[7, 7, 7, 7],
-                                 [7, 7, 7, 7],
-                                 [7, 7, 7, 7]]]]), mstype.float32)
+    input_x = Tensor(
+        np.array([[[[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]],
+                   [[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]]],
+                  [[[7, 7, 7, 7], [7, 7, 7, 7], [7, 7, 7, 7]],
+                   [[7, 7, 7, 7], [7, 7, 7, 7], [7, 7, 7, 7]]]]),
+        mstype.float32)
     # vmap diagonal shape is [2,2,3]
-    diagonal = Tensor(np.array([[[1, 2, 3],
-                                 [4, 5, 6]],
-                                [[1, 2, 3],
-                                 [4, 5, 6]]]), mstype.float32)
+    diagonal = Tensor(
+        np.array([[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 5, 6]]]),
+        mstype.float32)
     # vmap output shape is  [2,2,3,4]
-    expect = np.array([[[[5, 1, 5, 5],
-                         [5, 5, 2, 5],
-                         [5, 5, 5, 3]],
-                        [[5, 4, 5, 5],
-                         [5, 5, 5, 5],
-                         [5, 5, 5, 6]]],
-                       [[[7, 1, 7, 7],
-                         [7, 7, 2, 7],
-                         [7, 7, 7, 3]],
-                        [[7, 4, 7, 7],
-                         [7, 7, 5, 7],
-                         [7, 7, 7, 6]]]], np.float32)
+    expect = np.array([[[[5, 1, 5, 5], [5, 5, 2, 5], [5, 5, 5, 3]],
+                        [[5, 4, 5, 5], [5, 5, 5, 5], [5, 5, 5, 6]]],
+                       [[[7, 1, 7, 7], [7, 7, 2, 7], [7, 7, 7, 3]],
+                        [[7, 4, 7, 7], [7, 7, 5, 7], [7, 7, 7, 6]]]],
+                      np.float32)
     k = Tensor(1, mstype.int32)
     matrix_set_diag_net = MatrixSetDiagV3Net()
-    result = ops.vmap(matrix_set_diag_net, (0, 0, None))(input_x, diagonal, k).asnumpy()
+    result = ops.vmap(matrix_set_diag_net, (0, 0, None))(input_x, diagonal,
+                                                         k).asnumpy()
     np.testing.assert_allclose(result, expect)
 
 
@@ -230,24 +204,17 @@ def test_matrix_set_diag_v3_dynamic_shape():
     Expectation: The result matches numpy.
     """
     context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
-    input_x = Tensor(np.array([[[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]],
-                               [[5, 5, 5, 5],
-                                [5, 5, 5, 5],
-                                [5, 5, 5, 5]]]), mstype.float32)
-    diagonal = Tensor(np.array([[1, 2, 3],
-                                [4, 5, 6]]), mstype.float32)
-    expect = np.array([[[5, 1, 5, 5],
-                        [5, 5, 2, 5],
-                        [5, 5, 5, 3]],
-                       [[5, 4, 5, 5],
-                        [5, 5, 5, 5],
-                        [5, 5, 5, 6]]], np.float32)
+    input_x = Tensor(
+        np.array([[[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]],
+                  [[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]]]), mstype.float32)
+    diagonal = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mstype.float32)
+    expect = np.array([[[5, 1, 5, 5], [5, 5, 2, 5], [5, 5, 5, 3]],
+                       [[5, 4, 5, 5], [5, 5, 5, 5], [5, 5, 5, 6]]], np.float32)
     k = Tensor(1, mstype.int32)
     matrix_set_diag_net = MatrixSetDiagV3Net()
     dy_input_x = Tensor(shape=get_dy_shape(input_x.shape), dtype=input_x.dtype)
-    dy_diagonal = Tensor(shape=get_dy_shape(diagonal.shape), dtype=diagonal.dtype)
+    dy_diagonal = Tensor(shape=get_dy_shape(diagonal.shape),
+                         dtype=diagonal.dtype)
     matrix_set_diag_net.set_inputs(dy_input_x, dy_diagonal, k)
     result = matrix_set_diag_net(input_x, diagonal, k).asnumpy()
     np.testing.assert_allclose(result, expect)
