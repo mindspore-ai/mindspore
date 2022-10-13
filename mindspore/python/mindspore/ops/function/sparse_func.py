@@ -293,9 +293,22 @@ def csr_to_dense(csr_tensor):
         raise_type_error("For functional operator csr_to_dense, input argument must be a CSRTensor.")
     if len(csr_tensor.shape) != 2:
         raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
+
     shape = csr_tensor.shape
-    return csr_sparse_matrix_to_dense(Tensor(shape, dtype=mstype.int32), batch_csr_pointers_empty,
-                                      csr_tensor.indptr, csr_tensor.indices, csr_tensor.values)
+    dense_shape = Tensor(shape, dtype=mstype.int32)
+    batch_pointers = Tensor([0, -1], dtype=mstype.int32)
+    row_pointers = csr_tensor.indptr
+    col_indices = csr_tensor.indices
+    values = csr_tensor.values
+
+    valid_indices_dtype = [mstype.int32, mstype.int64]
+    if row_pointers.dtype in valid_indices_dtype and col_indices.dtype in valid_indices_dtype:
+        if row_pointers.dtype == mstype.int64 or col_indices.dtype == mstype.int64:
+            return csr_sparse_matrix_to_dense(dense_shape.astype(mstype.int64), batch_pointers.astype(mstype.int64),
+                                              row_pointers.astype(mstype.int64), col_indices.astype(mstype.int64),
+                                              values)
+
+    return csr_sparse_matrix_to_dense(dense_shape, batch_pointers, row_pointers, col_indices, values)
 
 
 # deprecated, will be removed once `csr_to_coo` supports all backends.
