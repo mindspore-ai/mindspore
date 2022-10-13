@@ -1754,8 +1754,10 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
   } else {
     auto pred_adpt = FindAdapter(input, training_);
     MS_EXCEPTION_IF_NULL(pred_adpt);
+    // When node's output is dynamic or node has multiple output, it need to get all handles.
     // TupleGetItem's input is dynamic output(eg:MakeTuple), but it only need to get one handle.
-    if (pred_adpt->IsDyOutputOp(0) && !IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    if ((pred_adpt->IsDyOutputOp(0) || pred_adpt->IsMultipleOutputOp()) &&
+        !IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
       MS_EXCEPTION_IF_NULL(Convert(input));
       handles = pred_adpt->getOutputs(Convert(input));
     } else {
@@ -1768,24 +1770,35 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
   return handles;
 }
 
-std::vector<OutHandler> DfGraphConvertor::GetMakeTupleAllInputHandle(const CNodePtr &node) {
+void DfGraphConvertor::SetDynamicInputHandleByMultiInput(const OpAdapterPtr &adpt, const CNodePtr &node,
+                                                         const CNodePtr &from_node_input) {
+  MS_EXCEPTION_IF_NULL(adpt);
   MS_EXCEPTION_IF_NULL(node);
-  auto inputs = node->inputs();
+  MS_EXCEPTION_IF_NULL(from_node_input);
+  auto inputs = from_node_input->inputs();
   std::vector<OutHandler> handles;
   for (size_t i = 1; i < inputs.size(); i++) {
     auto input = inputs[i];
-    TransformConstOp(node, input);
-    auto input_handles = GetInputHandles(node, input);
+    if (!IsDataInput(from_node_input, input, i)) {
+      SetNodeControlInput(node, input);
+      continue;
+    }
+    TransformConstOp(from_node_input, input);
+    auto input_handles = GetInputHandles(from_node_input, input);
     handles.insert(handles.end(), input_handles.begin(), input_handles.end());
     if (input_handles.empty()) {
-      MS_LOG(INFO) << "input handles is empty, node: " << node->fullname_with_scope()
+      MS_LOG(INFO) << "input handles is empty, node: " << from_node_input->fullname_with_scope()
                    << ", input node: " << input->fullname_with_scope();
       continue;
     }
     AddGraphConstInput(input_handles[0].op);
     DrawOpInput(node, input, i);
   }
-  return handles;
+
+  auto ret = adpt->setInput(Convert(node), 1, std::make_shared<std::vector<OutHandler>>(handles));
+  if (ret != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Set node input handle failed, node:" << node->fullname_with_scope();
+  }
 }
 
 bool DfGraphConvertor::IsMergeInput(const CNodePtr &node) const {
@@ -1814,13 +1827,7 @@ void DfGraphConvertor::SetMakeTupleInput(const OpAdapterPtr &adpt, const CNodePt
     MS_LOG(INFO) << "Skip make_tuple_node " << make_tuple_node->fullname_with_scope() << ", not set input handle.";
     return;
   }
-
-  auto handles = GetMakeTupleAllInputHandle(make_tuple_node);
-  auto ret = adpt->setInput(Convert(make_tuple_node), 1, std::make_shared<std::vector<OutHandler>>(handles));
-  if (ret != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Set make_tuple_node input handle failed, make_tuple_node:"
-                      << make_tuple_node->fullname_with_scope();
-  }
+  SetDynamicInputHandleByMultiInput(adpt, make_tuple_node, make_tuple_node);
 }
 
 void DfGraphConvertor::SetMergeInput(const OpAdapterPtr &adpt, const CNodePtr &merge_node) {
@@ -1837,11 +1844,7 @@ void DfGraphConvertor::SetMergeInput(const OpAdapterPtr &adpt, const CNodePtr &m
     MS_LOG(EXCEPTION) << "Merge input is not MakeTuple, but is " << make_tuple->fullname_with_scope()
                       << ", node: " << merge_node->fullname_with_scope();
   }
-  auto handles = GetMakeTupleAllInputHandle(make_tuple->cast<CNodePtr>());
-  auto ret = adpt->setInput(Convert(merge_node), 1, std::make_shared<std::vector<OutHandler>>(handles));
-  if (ret != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Set node input handle failed, node:" << merge_node->fullname_with_scope();
-  }
+  SetDynamicInputHandleByMultiInput(adpt, merge_node, make_tuple->cast<CNodePtr>());
 }
 
 void DfGraphConvertor::SetNodeControlInput(const AnfNodePtr &node, const AnfNodePtr &input) {
@@ -2605,7 +2608,7 @@ void DfGraphConvertor::SetNodeAbstract(const CNodePtr &node) const {
     node->set_abstract(input->abstract());
     return;
   }
-  MS_LOG(ERROR) << "Node has not abstract:" << node->fullname_with_scope() << ", DebugString: " << node->ToString();
+  MS_LOG(WARNING) << "Node has not abstract:" << node->fullname_with_scope() << ", DebugString: " << node->ToString();
 }
 
 OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {

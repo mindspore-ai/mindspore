@@ -248,6 +248,7 @@ class OpAdapter : public BaseOpAdapter {
   }
   bool IsDynInputOp(uint64_t index) override { return dyn_input_map_.find(index) != dyn_input_map_.end(); }
   bool IsDyOutputOp(uint64_t index) override { return dyn_output_map_.find(index) != dyn_output_map_.end(); }
+  bool IsMultipleOutputOp() override { return output_map_.size() > 1; }
 
   Status SetOpSubgraphFunc(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) {
     return impl_->SetOpSubgraphFunc(op, subgraphs);
@@ -502,6 +503,9 @@ class OpAdapter : public BaseOpAdapter {
     MS_EXCEPTION_IF_NULL(tuple_type);
     auto elements = tuple_type->elements();
     for (const auto &element : elements) {
+      if (element->isa<MonadType>()) {
+        continue;
+      }
       output_size = output_size + GetOutputSize(element);
     }
     return output_size;
