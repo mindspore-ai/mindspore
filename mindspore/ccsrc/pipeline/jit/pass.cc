@@ -53,14 +53,12 @@
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/meta_fg_eliminate.h"
-#include "frontend/optimizer/irpass/ge/ge_specialized_prepare.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/shard_eliminate.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
-#include "frontend/optimizer/irpass/ge/batchnorm_transform.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -86,20 +84,6 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource)
   resource->set_args_abs(args_abs);
 }
 }  // namespace
-
-bool BatchNormTransformPass(const ResourcePtr &resource) {
-  // Transform only work in train process;
-  auto env_ge = common::GetEnv("MS_GE_TRAIN");
-  if (env_ge != "1") {
-    MS_LOG(INFO) << "no need transfer batch norm in inference process";
-    return true;
-  }
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  opt::irpass::BatchNormTransform(func_graph, resource->manager());
-  return true;
-}
 
 bool SimplifyDataStructuresPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
@@ -335,13 +319,6 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
   });
 }
 
-opt::OptPassConfig GetGeTensorArrayPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  return opt::OptPassConfig({
-    irpass.ge_tensor_array_add_flow_,
-    irpass.ge_tensor_array_cast_index_,
-  });
-}
-
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = GetOptPassA1(irpass);
   opt::OptPassConfig a_2 = opt::OptPassConfig(
@@ -524,44 +501,6 @@ OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &) {
   return OptPassGroupMap({{"renormalize", opt::OptPassConfig::Renormalize()}});
 }
 
-OptPassGroupMap GetGeSpecializedPhases() {
-  opt::OptPassConfig ge_ta_size_group = opt::OptPassConfig(opt::irpass::GeTensorArrayPrepare());
-  opt::irpass::OptimizeIRPassLib irpass;
-  opt::OptPassConfig ge_tensor_array_passes = GetGeTensorArrayPass(irpass);
-  OptPassGroupMap map({
-    {"ge_ta_size_group", ge_ta_size_group},
-    {"ge_ta_passes", ge_tensor_array_passes},
-  });
-  return map;
-}
-
-OptPassGroupMap GetAvgPoolGradForGEPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig avg_pool_grad = opt::OptPassConfig({irpass.avg_pool_grad_for_ge_});
-  OptPassGroupMap map({{"avg_pool_grad_for_ge", avg_pool_grad}});
-  return map;
-}
-
-OptPassGroupMap GetDropoutForGEPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig dropout = opt::OptPassConfig({
-    irpass.dropout_for_ge_,
-    irpass.dropout_grad_for_ge_,
-  });
-  OptPassGroupMap map({{"dropout_for_ge", dropout}});
-  return map;
-}
-
-OptPassGroupMap GetLambForGEPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig lamb = opt::OptPassConfig({irpass.lamb_for_ge_});
-  OptPassGroupMap map({{"lamb_for_ge", lamb}});
-  return map;
-}
-
-OptPassGroupMap GetClipByNormForGEPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig clip_by_norm = opt::OptPassConfig({irpass.clip_by_norm_for_ge_});
-  OptPassGroupMap map({{"clip_by_norm_for_ge", clip_by_norm}});
-  return map;
-}
-
 OptPassGroupMap GetOptPynativeGradEpiloguePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
   auto a3 = opt_a[opt_a.size() - 1];
@@ -591,12 +530,6 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   return map;
 }
 
-OptPassGroupMap GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig sparse_split = opt::OptPassConfig({irpass.sparse_softmax_cross_entropy_with_logits_});
-  OptPassGroupMap map({{"sparse_split", sparse_split}});
-  return map;
-}
-
 static mindspore::HashMap<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
 void InitOpt(const ResourcePtr &resource) {
@@ -615,14 +548,6 @@ void InitOpt(const ResourcePtr &resource) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", resource, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", resource, GetAfterRecomputePass(irpass));
-    g_pass_opts["sparse_split"] =
-      Optimizer::MakeOptimizer("sparse_spilt", resource, GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(irpass));
-    g_pass_opts["avg_pool_grad_for_ge"] =
-      Optimizer::MakeOptimizer("avg_pool_grad_for_ge", resource, GetAvgPoolGradForGEPass(irpass));
-    g_pass_opts["dropout_for_ge"] = Optimizer::MakeOptimizer("dropout_for_ge", resource, GetDropoutForGEPass(irpass));
-    g_pass_opts["lamb_for_ge"] = Optimizer::MakeOptimizer("lamb_for_ge", resource, GetLambForGEPass(irpass));
-    g_pass_opts["clip_by_norm_for_ge"] =
-      Optimizer::MakeOptimizer("clip_by_norm_for_ge", resource, GetClipByNormForGEPass(irpass));
   }
 }
 }  // namespace
@@ -661,11 +586,6 @@ bool OptPassTransformGraphGroup(const ResourcePtr &resource) { return OptPassGro
 bool ControlGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_control"); }
 bool PrepareGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_prepare"); }
 bool OptAfterRecomputeGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_after_recompute"); }
-bool SparseSplitPass(const ResourcePtr &resource) { return OptPassGroup(resource, "sparse_split"); }
-bool AvgPoolGradForGEPass(const ResourcePtr &resource) { return OptPassGroup(resource, "avg_pool_grad_for_ge"); }
-bool DropoutGradForGEPass(const ResourcePtr &resource) { return OptPassGroup(resource, "dropout_for_ge"); }
-bool LambForGEPass(const ResourcePtr &resource) { return OptPassGroup(resource, "lamb_for_ge"); }
-bool ClipByNormForGEPass(const ResourcePtr &resource) { return OptPassGroup(resource, "clip_by_norm_for_ge"); }
 
 bool OptPassRNGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "renormal"); }
 
@@ -767,18 +687,6 @@ bool CconvPass(const ResourcePtr &resource) {
 }
 
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
-
-bool GeSpecializedPass(const ResourcePtr &resource) {
-  // valid null ptr
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  // get phases
-  auto ge_specialized_map = GetGeSpecializedPhases();
-  auto ge_specialized_opt = opt::Optimizer::MakeOptimizer("ge_specialized", resource, ge_specialized_map, true);
-  (void)ge_specialized_opt->step(func_graph, false);
-  return true;
-}
 
 bool ValidatePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
@@ -925,17 +833,11 @@ std::vector<PassItem> kVmPasses = {
 };
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
-                                   {"batchnorm_transform", BatchNormTransformPass},
                                    {"opt_a", OptPassAGroup},
                                    {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},
                                    {"opt_control", ControlGroup},
                                    {"opt_prepare", PrepareGroup},
-                                   {"sparse_split", SparseSplitPass},
-                                   {"avg_pool_grad_for_ge", AvgPoolGradForGEPass},
-                                   {"dropout_for_ge", DropoutGradForGEPass},
-                                   {"lamb_for_ge", LambForGEPass},
-                                   {"clip_by_norm_for_ge", ClipByNormForGEPass},
                                    {"cconv", CconvPass}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},

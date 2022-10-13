@@ -1397,8 +1397,6 @@ bool PipelineSplitAction(const ResourcePtr &resource) { return PipelineSplitPass
 
 bool ValidateAction(const ResourcePtr &resource) { return ValidatePass(resource); }
 
-bool GeSpecializedAction(const ResourcePtr &resource) { return GeSpecializedPass(resource); }
-
 bool SetMindIRGraphAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   resource->set_is_load(true);
@@ -1562,7 +1560,6 @@ std::vector<ActionItem> GePipeline() {
   (void)actions.emplace_back(std::make_pair("py_opt", OptActionGePyStub));
   (void)actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
-  (void)actions.emplace_back(std::make_pair("ge_specialized_prepare", GeSpecializedAction));
   (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
 #ifdef WITH_BACKEND

@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/irpass/ge/batchnorm_transform.h"
-
+#include "plugin/device/ascend/optimizer/ge/batchnorm_transform.h"
+#include <algorithm>
 #include <vector>
 #include <memory>
-
-#include "pybind_api/pybind_patch.h"
-#include "pybind_api/ir/tensor_py.h"
-#include "pipeline/pynative/base.h"
-#include "pipeline/jit/static_analysis/prim.h"
-#include "include/common/utils/python_adapter.h"
+#include <map>
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "ir/func_graph.h"
-#include "frontend/operator/ops.h"
-
+#include "include/common/utils/convert_utils.h"
 using std::vector;
 
 namespace mindspore {
 namespace opt {
-namespace irpass {
 namespace {
 // 1 primitive input, 5 data input, 1 monad input
 constexpr int64_t kBNDefaultInputNum = 7;
@@ -41,11 +34,9 @@ constexpr int64_t kOutputIndexOne = 1;
 // y, batch_mean, batch_variance
 constexpr size_t kBNOutputNum = 3;
 constexpr size_t kTupleSize = 2;
-constexpr size_t kSubInputTensorNum = 2;
-constexpr size_t kMulInputTensorNum = 2;
-constexpr char kMathOpsFunctionModelName[] = "mindspore.ops.function.math_func";
+constexpr size_t kSubInputNum = 2;
+constexpr size_t kMulInputNum = 2;
 constexpr char kMomentum[] = "momentum";
-}  // namespace
 
 void CreateMultiOutputOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
                                 std::vector<AnfNodePtr> *outputs) {
@@ -54,38 +45,41 @@ void CreateMultiOutputOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr
   MS_EXCEPTION_IF_NULL(outputs);
   auto type_ptr = node->Type();
   auto shape_ptr = node->Shape();
+  std::map<int64_t, AnfNodePtr> out;
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto bn = node;
+  if (manager->node_users().find(bn) == manager->node_users().end()) {
+    return;
+  }
+
+  for (const auto &node_index : manager->node_users()[bn]) {
+    const AnfNodePtr &output = node_index.first;
+    MS_EXCEPTION_IF_NULL(output);
+    if (!IsPrimitiveCNode(output, prim::kPrimTupleGetItem)) {
+      continue;
+    }
+    auto index = GetGetitemIndex(output);
+    out[index] = output;
+  }
+
   for (size_t i = 0; i < output_num; i++) {
     int64_t temp = SizeToLong(i);
-    auto idx = NewValueNode(temp);
-    MS_EXCEPTION_IF_NULL(idx);
-    auto imm = std::make_shared<Int64Imm>(temp);
-    auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
-    idx->set_abstract(abstract_scalar);
-    auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
-    tuple_getitem->set_abstract(idx->abstract());
-    MS_EXCEPTION_IF_NULL(tuple_getitem);
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(type_ptr, i)},
-                                                {common::AnfAlgo::GetOutputInferShape(node, shape_ptr, i)},
-                                                tuple_getitem.get());
-    (*outputs).push_back(tuple_getitem);
+    auto fb_iter = out.find(temp);
+    if (fb_iter == out.end()) {
+      auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, i);
+      (*outputs).push_back(tuple_getitem);
+    } else {
+      (*outputs).push_back(fb_iter->second);
+    }
   }
 }
 
 AnfNodePtr CreateSubNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &inputs) {
-  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kSubInputTensorNum, "Check Sub input size fail!");
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kSubInputNum, "Check Sub input size fail!");
   auto mean = inputs[0];
   auto tuple_getitems = inputs[1];
-  py::object sub_prim = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_sub");
-  const auto &sub_adapter = py::cast<PrimitivePyAdapterPtr>(sub_prim);
-  MS_EXCEPTION_IF_NULL(sub_adapter);
-  auto prim_sub = sub_adapter->attached_primitive();
-  if (prim_sub == nullptr) {
-    prim_sub = std::make_shared<PrimitivePy>(sub_prim, sub_adapter);
-    sub_adapter->set_attached_primitive(prim_sub);
-  }
-  auto sub_prim_node = NewValueNode(prim_sub);
-  MS_EXCEPTION_IF_NULL(sub_prim_node);
-  auto sub_node = fg->NewCNode({sub_prim_node, mean, tuple_getitems});
+  auto sub_node = fg->NewCNode({NewValueNode(std::make_shared<Primitive>(kSubOpName)), mean, tuple_getitems});
   MS_EXCEPTION_IF_NULL(sub_node);
   sub_node->set_abstract(mean->abstract());
   return sub_node;
@@ -104,20 +98,10 @@ AnfNodePtr CreateDataNode(const CNodePtr &node) {
 }
 
 AnfNodePtr CreateMulNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &inputs) {
-  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kMulInputTensorNum, "Check Sub input size fail!");
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kMulInputNum, "Check Sub input size fail!");
   auto data_node = inputs[0];
   auto sub_node = inputs[1];
-  py::object mul_prim = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_mul");
-  const auto &mul_adapter = py::cast<PrimitivePyAdapterPtr>(mul_prim);
-  MS_EXCEPTION_IF_NULL(mul_adapter);
-  auto prim_mul = mul_adapter->attached_primitive();
-  if (prim_mul == nullptr) {
-    prim_mul = std::make_shared<PrimitivePy>(mul_prim, mul_adapter);
-    mul_adapter->set_attached_primitive(prim_mul);
-  }
-  auto mul_prim_node = NewValueNode(prim_mul);
-  MS_EXCEPTION_IF_NULL(mul_prim_node);
-  auto mul_node = fg->NewCNode({mul_prim_node, data_node, sub_node});
+  auto mul_node = fg->NewCNode({NewValueNode(std::make_shared<Primitive>(kMulOpName)), data_node, sub_node});
   MS_EXCEPTION_IF_NULL(mul_node);
   mul_node->set_abstract(sub_node->abstract());
   return mul_node;
@@ -171,6 +155,7 @@ AnfNodePtr TransformBatchNorm(const AnfNodePtr &anf_node) {
   vector<AnfNodePtr> tuple_getitems;
   CreateMultiOutputOfAnfNode(fg, node, kBNOutputNum, &tuple_getitems);
   MS_EXCEPTION_IF_CHECK_FAIL(tuple_getitems.size() == kBNOutputNum, "BatchNorm output size check fail!");
+  sort(tuple_getitems.begin(), tuple_getitems.end(), CompareTupleGetitem);
   // process load for moving_mean
   auto mean_load_prim = NewValueNode(prim::kPrimLoad);
   auto mean_load_node = fg->NewCNode({mean_load_prim, moving_mean, u_monad});
@@ -250,40 +235,51 @@ AnfNodePtr TransformBatchNorm(const AnfNodePtr &anf_node) {
   SetScopeForNewNodes(new_nodes, anf_node);
   return anf_node;
 }
-
-bool NeedBNTransform(const AnfNodePtr &node) {
-  // pass only work in training process and be executed once
-  // if executed before the 4th and 5th input of BatchNorm is None
-  if (IsPrimitiveCNode(node, prim::kPrimBatchNorm)) {
-    auto c_node = node->cast<CNodePtr>();
-    auto bn_inputs = c_node->inputs();
-    auto input_4 = bn_inputs[kIndex4];
-    auto input_5 = bn_inputs[kIndex5];
-    if (!IsValueNode<None>(input_4) && !IsValueNode<None>(input_5)) {
-      return true;
+}  // namespace
+bool BatchNormTransform::NeedBNTransform(const BaseRef &ref) {
+  if (utils::isa<AnfNodePtr>(ref)) {
+    AnfNodePtr node = utils::cast<AnfNodePtr>(ref);
+    MS_EXCEPTION_IF_NULL(node);
+    // pass only work in training process and be executed once
+    // if executed before the 4th and 5th input of BatchNorm is None
+    if (IsPrimitiveCNode(node, prim::kPrimBatchNorm)) {
+      auto c_node = node->cast<CNodePtr>();
+      auto bn_inputs = c_node->inputs();
+      if (c_node->inputs().size() != kBNDefaultInputNum) {
+        return false;
+      }
+      auto input_4 = bn_inputs[kIndex4];
+      auto input_5 = bn_inputs[kIndex5];
+      if (!IsValueNode<None>(input_4) && !IsValueNode<None>(input_5)) {
+        return true;
+      }
     }
   }
   return false;
 }
 
-void BatchNormTransform(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) {
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->AddFuncGraph(fg);
-  AnfNodeSet all_node = manager->all_nodes();
-  for (const auto &node : all_node) {
-    MS_EXCEPTION_IF_NULL(node);
-    AnfNodePtr new_node = nullptr;
-    if (NeedBNTransform(node)) {
-      MS_LOG(INFO) << "Start to transform BatchNorm";
-      new_node = TransformBatchNorm(node);
-      // This transformation has to be successful
-      if (new_node == nullptr) {
-        MS_LOG(EXCEPTION) << "BatchNorm transformation failed!";
-      }
-      MS_LOG(INFO) << "BatchNorm transform success.";
-    }
-  }
+const BaseRef BatchNormTransform::DefinePattern() const {
+  MS_LOG(INFO) << "BatchNormTransform::DefinePattern";
+  VarPtr x = std::make_shared<SeqVar>();
+  return VectorRef({prim::kPrimBatchNorm, x});
 }
-}  // namespace irpass
+
+const AnfNodePtr BatchNormTransform::Process(const FuncGraphPtr &fg, const AnfNodePtr &node, const EquivPtr &) const {
+  MS_LOG(INFO) << "Start to Process BatchNorm";
+  MS_EXCEPTION_IF_NULL(node);
+  AnfNodePtr new_node = nullptr;
+
+  if (NeedBNTransform(node)) {
+    MS_LOG(INFO) << "Start to transform BatchNorm";
+    new_node = TransformBatchNorm(node);
+    // This transformation has to be successful
+    if (new_node == nullptr) {
+      MS_LOG(EXCEPTION) << "BatchNorm transformation failed!";
+    }
+    MS_LOG(INFO) << "BatchNorm transform success.";
+    return new_node;
+  }
+  return node;
+}
 }  // namespace opt
 }  // namespace mindspore

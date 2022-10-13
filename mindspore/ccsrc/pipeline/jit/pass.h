@@ -44,7 +44,6 @@ bool CconvPass(const ResourcePtr &resource);
 bool PipelineSplitPass(const ResourcePtr &resource);
 bool PynativeShardPass(const ResourcePtr &resource);
 bool ValidatePass(const ResourcePtr &resource);
-bool GeSpecializedPass(const ResourcePtr &resource);
 bool ConvertPrepareAdapt(const ResourcePtr &resource);
 bool AddCacheEmbeddingPass(const ResourcePtr &resource);
 bool MetaUnpackPreparePass(const ResourcePtr &resource);

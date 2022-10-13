@@ -14,45 +14,41 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/irpass/ge/avg_pool_grad_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <memory>
-
-#include "pybind_api/pybind_patch.h"
-#include "pybind_api/ir/tensor_py.h"
-#include "pipeline/pynative/base.h"
-#include "pipeline/jit/static_analysis/prim.h"
-#include "include/common/utils/python_adapter.h"
-#include "mindspore/core/mindapi/ir/common.h"
-#include "frontend/operator/ops.h"
-#include "frontend/optimizer/irpass.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
-namespace irpass {
 namespace {
-constexpr char kPoolDataFormatAttrName[] = "data_format";
+constexpr char kPoolDataFormatAttrName[] = "format";
 constexpr char kPoolKernelSizeAttrName[] = "kernel_size";
 constexpr char kPoolStridesAttrName[] = "strides";
 constexpr char kPoolPadModeAttrName[] = "pad_mode";
-constexpr char kOpsGradFunctionName[] = "mindspore.ops.operations._grad_ops";
 constexpr size_t kAvgPoolGradInputXIndex = 1;
 constexpr size_t kAvgPoolGradInputOriginOutIndex = 2;
 constexpr size_t kAvgPoolGradInputGradIndex = 3;
 }  // namespace
-AnfNodePtr AvgPoolGradForGE::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {
-  Reset();
-  AnfVisitor::Match(prim::kPrimAvgPoolGrad, {IsNode, IsNode, IsNode})(node);
 
-  if (!is_match_ && node->func_graph() == nullptr) {
-    return nullptr;
-  }
+const BaseRef AvgPoolGradForGE::DefinePattern() const {
+  VarPtr x1 = std::make_shared<Var>();
+  VarPtr x2 = std::make_shared<Var>();
+  VarPtr x3 = std::make_shared<Var>();
+  return VectorRef({prim::kPrimAvgPoolGrad, x1, x2, x3});
+}
 
+const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto avg_pool_grad_node = node->cast<CNodePtr>();
-  auto origin_prim = GetValueNode<PrimitivePtr>(avg_pool_grad_node->input(0));
+  MS_EXCEPTION_IF_NULL(avg_pool_grad_node);
+  auto origin_prim = common::AnfAlgo::GetCNodePrimitive(avg_pool_grad_node);
+  MS_EXCEPTION_IF_NULL(origin_prim);
   auto format_value = origin_prim->GetAttr(kPoolDataFormatAttrName);
   std::string format;
   if (format_value == nullptr) {
@@ -60,7 +56,6 @@ AnfNodePtr AvgPoolGradForGE::operator()(const OptimizerPtr &opt, const AnfNodePt
   } else {
     format = GetValue<std::string>(format_value);
   }
-
   auto pad_mode_value = origin_prim->GetAttr(kPoolPadModeAttrName);
   auto pad_mode_type = pad_mode_value->type()->type_id();
   std::string pad_mode;
@@ -80,28 +75,14 @@ AnfNodePtr AvgPoolGradForGE::operator()(const OptimizerPtr &opt, const AnfNodePt
   auto origin_shape_value = MakeValue(value_node_data);
   auto origin_shape_node = NewValueNode(origin_shape_value);
   origin_shape_node->set_abstract(origin_shape_value->ToAbstract());
-
-  auto avg_pool_grad_ge_obj = python_adapter::GetPyFn(kOpsGradFunctionName, "AvgPoolGradGe")();
-
-  const auto &adapter = py::cast<PrimitivePyAdapterPtr>(avg_pool_grad_ge_obj);
-  MS_EXCEPTION_IF_NULL(adapter);
-  auto attached_prim = adapter->attached_primitive();
-  if (attached_prim == nullptr) {
-    attached_prim = std::make_shared<PrimitivePy>(avg_pool_grad_ge_obj, adapter);
-    adapter->set_attached_primitive(attached_prim);
-  }
-  auto new_prim = attached_prim->cast<PrimitivePtr>();
-
-  new_prim->set_attr(kPoolKernelSizeAttrName, origin_prim->GetAttr(kPoolKernelSizeAttrName));
-  new_prim->set_attr(kPoolStridesAttrName, origin_prim->GetAttr(kPoolStridesAttrName));
-  new_prim->set_attr(kPoolDataFormatAttrName, MakeValue(format));
-  new_prim->set_attr(kPoolPadModeAttrName, MakeValue(pad_mode));
-
-  auto new_avg_pool_node =
-    node->func_graph()->NewCNode(new_prim, {origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
+  auto new_avg_pool_node = graph->NewCNode(
+    {NewValueNode(prim::kPrimAvgPoolGradGe), origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
+  common::AnfAlgo::CopyNodeAttr(kPoolKernelSizeAttrName, avg_pool_grad_node, new_avg_pool_node);
+  common::AnfAlgo::CopyNodeAttr(kPoolStridesAttrName, avg_pool_grad_node, new_avg_pool_node);
+  common::AnfAlgo::SetNodeAttr(kPoolDataFormatAttrName, MakeValue(format), new_avg_pool_node);
+  common::AnfAlgo::SetNodeAttr(kPoolPadModeAttrName, MakeValue(pad_mode), new_avg_pool_node);
   new_avg_pool_node->set_abstract(node->abstract());
   return new_avg_pool_node;
 }
-}  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

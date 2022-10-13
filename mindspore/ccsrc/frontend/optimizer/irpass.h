@@ -160,23 +160,6 @@ class OptimizeIRPassLib {
 
   // Workaround
   SubstitutionPtr stop_gradient_special_op_;
-
-  // ge TensorArray process
-  SubstitutionPtr ge_tensor_array_add_flow_;
-  SubstitutionPtr ge_tensor_array_cast_index_;
-
-  // sparse_softmax_cross_entropy_with_logits split for GE
-  SubstitutionPtr sparse_softmax_cross_entropy_with_logits_;
-  // ge AvgPoolGrad process
-  SubstitutionPtr avg_pool_grad_for_ge_;
-
-  // ge Dropout DropoutGrad process
-  SubstitutionPtr dropout_for_ge_;
-  SubstitutionPtr dropout_grad_for_ge_;
-  // ge Lamb process
-  SubstitutionPtr lamb_for_ge_;
-  // ge ClipByNorm process
-  SubstitutionPtr clip_by_norm_for_ge_;
 };
 
 // the collection of irpass for resolve action

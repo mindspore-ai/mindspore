@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/irpass/ge/dropout_for_ge.h"
-
+#include "plugin/device/ascend/optimizer/ge/dropout_for_ge.h"
+#include <vector>
+#include <memory>
 #include <functional>
-#include "pybind_api/ir/tensor_py.h"
-#include "pipeline/pynative/base.h"
-#include "pipeline/jit/static_analysis/prim.h"
-#include "include/common/utils/python_adapter.h"
-#include "mindspore/core/mindapi/ir/common.h"
-#include "frontend/operator/ops.h"
-#include "frontend/optimizer/irpass.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 namespace mindspore {
 namespace opt {
-namespace irpass {
 namespace {
 constexpr int64_t kAlignSize = 128;
 constexpr char kKeepProbAttrName[] = "keep_prob";
 constexpr char kSeed0AttrName[] = "Seed0";
 constexpr char kSeed1AttrName[] = "Seed1";
-constexpr char kOpsArrayFunctionName[] = "mindspore.ops.operations.array_ops";
-constexpr char kOpsNNFunctionName[] = "mindspore.ops.operations.nn_ops";
 constexpr char kDstAttrName[] = "DstT";
 constexpr char kSrcAttrName[] = "SrcT";
 constexpr char kDstTypeAttrName[] = "dst_type";
@@ -50,25 +43,14 @@ std::vector<int64_t> CalGenMaskOutputShape(const std::vector<int64_t> &shape) {
   MS_LOG(INFO) << "Output_size: " << ret;
   return {ret};
 }
-
-PrimitivePtr GetPrimitiveFromPyAdapter(const py::object &prim_obj) {
-  const auto &adapter = py::cast<PrimitivePyAdapterPtr>(prim_obj);
-  MS_EXCEPTION_IF_NULL(adapter);
-  auto attached_prim = adapter->attached_primitive();
-  if (attached_prim == nullptr) {
-    attached_prim = std::make_shared<PrimitivePy>(prim_obj, adapter);
-    adapter->set_attached_primitive(attached_prim);
-  }
-  return attached_prim->cast<PrimitivePtr>();
+const BaseRef DropoutForGE::DefinePattern() const {
+  VarPtr x1 = std::make_shared<Var>();
+  return VectorRef({prim::kPrimDropout, x1});
 }
 
-AnfNodePtr DropoutForGE::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {
-  Reset();
-  AnfVisitor::Match(prim::kPrimDropout, {IsNode})(node);
-
-  if (!is_match_ && node->func_graph() == nullptr) {
-    return nullptr;
-  }
+const AnfNodePtr DropoutForGE::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto dropout_node = node->cast<CNodePtr>();
   auto origin_prim = GetValueNode<PrimitivePtr>(dropout_node->input(0));
   auto keep_prob = origin_prim->GetAttr(kKeepProbAttrName);
@@ -90,62 +72,55 @@ AnfNodePtr DropoutForGE::operator()(const OptimizerPtr &opt, const AnfNodePtr &n
   AnfNodePtr gen_mask_input_prob = keep_prob_node;
   auto dtype_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(dropout_node, 0);
   if (dtype_id == TypeId::kNumberTypeFloat16) {
-    auto cast_obj = python_adapter::GetPyFn(kOpsArrayFunctionName, "Cast")();
-    auto cast_prim = GetPrimitiveFromPyAdapter(cast_obj);
-
     auto dtype_value = MakeValue(TypeIdToType(dtype_id));
     auto stype_value = MakeValue(TypeIdToType(TypeId::kNumberTypeFloat32));
     auto cast_input_type = NewValueNode(dtype_value);
     cast_input_type->set_abstract(dtype_value->ToAbstract());
-    cast_prim->set_attr(kSrcAttrName, stype_value);
-    cast_prim->set_attr(kDstAttrName, dtype_value);
-    cast_prim->set_attr(kDstTypeAttrName, dtype_value);
-    auto cast_node = node->func_graph()->NewCNode(cast_prim, {keep_prob_node, cast_input_type});
+
+    auto cast_node = node->func_graph()->NewCNode(
+      {NewValueNode(std::make_shared<Primitive>(kCastOpName)), keep_prob_node, cast_input_type});
+    common::AnfAlgo::SetNodeAttr(kSrcAttrName, stype_value, cast_node);
+    common::AnfAlgo::SetNodeAttr(kDstAttrName, dtype_value, cast_node);
+    common::AnfAlgo::SetNodeAttr(kDstTypeAttrName, dtype_value, cast_node);
     auto cast_abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(dtype_id));
     cast_node->set_abstract(cast_abstract);
     gen_mask_input_prob = cast_node;
   }
 
-  auto dropout_gen_mask_obj = python_adapter::GetPyFn(kOpsNNFunctionName, "DropoutGenMask")();
-  auto gen_mask_prim = GetPrimitiveFromPyAdapter(dropout_gen_mask_obj);
-  gen_mask_prim->set_attr(kSeed0AttrName, seed_0);
-  gen_mask_prim->set_attr(kSeed1AttrName, seed_1);
-
   auto mask_shape = CalGenMaskOutputShape(shape_vector);
-  auto dropout_gen_mask_node = node->func_graph()->NewCNode(gen_mask_prim, {gen_mask_input_shape, gen_mask_input_prob});
+  auto dropout_gen_mask_node = node->func_graph()->NewCNode(
+    {NewValueNode(std::make_shared<Primitive>(kDropoutGenMaskOpName)), gen_mask_input_shape, gen_mask_input_prob});
+  common::AnfAlgo::SetNodeAttr(kSeed0AttrName, seed_0, dropout_gen_mask_node);
+  common::AnfAlgo::SetNodeAttr(kSeed1AttrName, seed_1, dropout_gen_mask_node);
   auto gen_mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, mask_shape);
   dropout_gen_mask_node->set_abstract(gen_mask_abstract);
 
-  auto dropout_obj = python_adapter::GetPyFn(kOpsNNFunctionName, "DropoutDoMask")();
-  auto do_mask_prim = GetPrimitiveFromPyAdapter(dropout_obj);
-
-  auto dropout_do_mask_node = node->func_graph()->NewCNode(
-    do_mask_prim, {dropout_node->input(kInputIndexOne), dropout_gen_mask_node, gen_mask_input_prob});
+  auto dropout_do_mask_node =
+    node->func_graph()->NewCNode({NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)),
+                                  dropout_node->input(kInputIndexOne), dropout_gen_mask_node, gen_mask_input_prob});
   auto do_mask_abstract = dropout_node->input(kInputIndexOne)->abstract();
   dropout_do_mask_node->set_abstract(do_mask_abstract);
 
   std::vector<abstract::AbstractBasePtr> make_tuple_input;
   make_tuple_input.push_back(do_mask_abstract);
   make_tuple_input.push_back(gen_mask_abstract);
-
-  auto new_make_tuple_node =
-    node->func_graph()->NewCNode(prim::kPrimMakeTuple, {dropout_do_mask_node, dropout_gen_mask_node});
+  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), dropout_do_mask_node,
+                                               dropout_gen_mask_node};
+  auto new_make_tuple_node = NewCNode(make_tuple_inputs, graph);
   auto tuple_abstract = std::make_shared<abstract::AbstractTuple>(make_tuple_input);
   new_make_tuple_node->set_abstract(tuple_abstract);
   return new_make_tuple_node;
 }
-
-AnfNodePtr DropoutGradForGE::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {
-  Reset();
-  MS_EXCEPTION_IF_NULL(node->func_graph());
-  AnfVisitor::Match(prim::kPrimDropoutGrad, {IsNode, IsNode})(node);
+const BaseRef DropoutGradForGE::DefinePattern() const {
+  VarPtr x1 = std::make_shared<SeqVar>();
+  return VectorRef({prim::kPrimDropoutGrad, x1});
+}
+const AnfNodePtr DropoutGradForGE::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto dropout_grad_node = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(dropout_grad_node);
   auto origin_prim = GetValueNode<PrimitivePtr>(dropout_grad_node->input(0));
   auto keep_prob = origin_prim->GetAttr(kKeepProbAttrName);
-
-  auto dropout_do_mask_obj = python_adapter::GetPyFn(kOpsNNFunctionName, "DropoutDoMask")();
-  auto do_mask_prim = GetPrimitiveFromPyAdapter(dropout_do_mask_obj);
 
   auto keep_prob_node = NewValueNode(keep_prob);
   keep_prob_node->set_abstract(keep_prob->ToAbstract());
@@ -153,28 +128,25 @@ AnfNodePtr DropoutGradForGE::operator()(const OptimizerPtr &opt, const AnfNodePt
   AnfNodePtr do_mask_input_prob = keep_prob_node;
   auto dtype_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(dropout_grad_node, 0);
   if (dtype_id == TypeId::kNumberTypeFloat16) {
-    auto cast_obj = python_adapter::GetPyFn(kOpsArrayFunctionName, "Cast")();
-    auto cast_prim = GetPrimitiveFromPyAdapter(cast_obj);
-
     auto dtype_value = MakeValue(TypeIdToType(dtype_id));
     auto stype_value = MakeValue(TypeIdToType(TypeId::kNumberTypeFloat32));
     auto cast_input_type = NewValueNode(dtype_value);
     cast_input_type->set_abstract(dtype_value->ToAbstract());
-    cast_prim->set_attr(kSrcAttrName, stype_value);
-    cast_prim->set_attr(kDstAttrName, dtype_value);
-    cast_prim->set_attr(kDstTypeAttrName, dtype_value);
-    auto cast_node = node->func_graph()->NewCNode(cast_prim, {keep_prob_node, cast_input_type});
+    auto cast_node = node->func_graph()->NewCNode(
+      {NewValueNode(std::make_shared<Primitive>(kCastOpName)), keep_prob_node, cast_input_type});
+    common::AnfAlgo::SetNodeAttr(kSrcAttrName, stype_value, cast_node);
+    common::AnfAlgo::SetNodeAttr(kDstAttrName, dtype_value, cast_node);
+    common::AnfAlgo::SetNodeAttr(kDstTypeAttrName, dtype_value, cast_node);
     auto cast_abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(dtype_id));
     cast_node->set_abstract(cast_abstract);
     do_mask_input_prob = cast_node;
   }
   auto dropout_do_mask_node = node->func_graph()->NewCNode(
-    do_mask_prim,
-    {dropout_grad_node->input(kInputIndexOne), dropout_grad_node->input(kInputIndexTwo), do_mask_input_prob});
+    {NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)), dropout_grad_node->input(kInputIndexOne),
+     dropout_grad_node->input(kInputIndexTwo), do_mask_input_prob});
   auto do_mask_abstract = node->abstract();
   dropout_do_mask_node->set_abstract(do_mask_abstract);
   return dropout_do_mask_node;
 }
-}  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

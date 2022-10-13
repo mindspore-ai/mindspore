@@ -22,10 +22,17 @@
 #include "include/common/utils/config_manager.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/debug/anf_ir_dump.h"
-
+#include "plugin/device/ascend/optimizer/ge/clip_by_norm_fission.h"
+#include "plugin/device/ascend/optimizer/ge/lamb_fission.h"
 #include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
 #include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_x_dtype.h"
 #include "plugin/device/ascend/optimizer/ge/convert_attr_to_input.h"
+#include "plugin/device/ascend/optimizer/ge/batchnorm_transform.h"
+#include "plugin/device/ascend/optimizer/ge/dropout_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
+#include "plugin/device/ascend/optimizer/ge/ge_tensor_array.h"
+#include "plugin/device/ascend/optimizer/ge/sparse_softmax_cross_entropy_with_logits_split.h"
 
 namespace mindspore {
 namespace opt {
@@ -44,10 +51,28 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("ge_optimization_pm");
-  pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   pm->AddPass(std::make_shared<opt::ConvertAttrToInput>());
   pm->AddPass(std::make_shared<opt::ConvertResizeNearestNeighborXDtype>());
+  pm->AddPass(std::make_shared<opt::BatchNormTransform>());
+  auto env_train = common::GetEnv("MS_GE_TRAIN");
+  if (env_train == "1") {
+    pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
+    pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());
+  } else {
+    pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitInfer>());
+  }
+  pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
+  pm->AddPass(std::make_shared<opt::DropoutForGE>());
+  pm->AddPass(std::make_shared<opt::DropoutGradForGE>());
+  pm->AddPass(std::make_shared<opt::LambFissionGe>());
+  pm->AddPass(std::make_shared<opt::ClipByNormFissionGe>());
+  pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond1>());
+  pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond2>());
+  pm->AddPass(std::make_shared<opt::GeTensorArrayCastIndex>());
+  pm->AddPass(std::make_shared<opt::GeTensorArrayPrepare>());
+  pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   optimizer->AddPassManager(pm);
+
   (void)optimizer->Optimize(func_graph);
 
 #ifdef ENABLE_DUMP_IR

@@ -218,7 +218,7 @@ BACKEND_EXPORT bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, c
 BACKEND_EXPORT AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
 
 // Get tuple getitem's index
-int64_t GetGetitemIndex(const AnfNodePtr &getitem);
+BACKEND_EXPORT int64_t GetGetitemIndex(const AnfNodePtr &getitem);
 
 // Compare tuple getitem's index, return bool[n1's index < n2's index]
 BACKEND_EXPORT bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
