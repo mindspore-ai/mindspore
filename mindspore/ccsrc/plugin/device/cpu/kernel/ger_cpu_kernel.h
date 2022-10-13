@@ -77,6 +77,13 @@ class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerC
                      const std::vector<kernel::AddressPtr> &outputs);
   bool LaunchNoBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                        const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T>
+  bool LaunchMacBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                        const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T>
+  bool LaunchMacNoBatches(const std::vector<kernel::AddressPtr> &inputs,
+                          const std::vector<kernel::AddressPtr> &workspace,
+                          const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
   TypeId input_type_1_{kTypeUnknown};
