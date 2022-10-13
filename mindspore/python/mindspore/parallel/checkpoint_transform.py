@@ -39,8 +39,16 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
 
     Args:
         src_strategy_dirs (str): The directory of strategy files including all pipeline stage which is saved by
-                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'
         dst_strategy_file (str): The file merged strategy to save.
+
+    Raises:
+        NotADirectoryError: src_strategy_dirs is not a directory.
+
+    Examples:
+        >>> # src_strategy_dir/stra0.ckpt, src_strategy_dir/stra1.ckpt ... src_strategy_dir/stra127.ckpt
+        >>> merge_pipeline_strategys("./src_strategy_dir", "./dst_strategy.ckpt")
+
     """
     dst_strategy_dir, _ = os.path.split(dst_strategy_file)
     if not os.path.exists(dst_strategy_dir):
@@ -74,17 +82,14 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
     List of original distributed checkpoint rank index for obtaining the target checkpoint of a rank_id
     during the distributed checkpoint conversion.
 
-    Note:
-        Cannot transform pipeline parallel dimensions currently.
-
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
         src_strategy_file (str): Name of source sharding strategy file which saved by
-                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'src_strategy_file' is None, it means that the source sharding strategy is
                                  without any sharing for each parameter. Default:None.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
-                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'dst_strategy_file' is None, it means that the destination sharding strategy
                                  is without any sharing for each parameter. Default:None.
 
@@ -137,20 +142,17 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy by rank
     for a network.
 
-    Note:
-        Cannot transform pipeline parallel dimensions currently.
-
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
         checkpoint_files_map (dict): The checkpoint files map whose key is the rank id and the value is
                                      the checkpoint file name.
         save_checkpoint_file_name (str): The file name to save the converted checkpoint.
         src_strategy_file (str): Name of source sharding strategy file which saved by
-                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'src_strategy_file' is None, it means that the source sharding strategy is
                                  without any sharing for each parameter. Default:None.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
-                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'dst_strategy_file' is None, it means that the destination sharding strategy
                                  is without any sharing for each parameter. Default:None.
 
@@ -203,7 +205,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
             if _parameter_not_in_local_stage(param_name, origin_src_strategy_list, src_strategy_list) \
                     and _parameter_not_in_local_stage(param_name, origin_dst_strategy_list, dst_strategy_list):
                 continue
-            src_rank = rank % src_stage_device_num# if src_stage_device_num > 1 else rank
+            src_rank = rank % src_stage_device_num
             param_total_dict[param_name][src_rank] = param.data.asnumpy()
             param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
     local_rank_id = rank_id % dst_stage_device_num
@@ -221,18 +223,17 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         The src_checkpoints_dir directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
         rank number should be set to a subdirectory and the checkpoint file is stored in this subdirectory. If multiple
         files exist in a rank directory, the last file in the lexicgraphic order would be selected.
-        Cannot transform pipeline parallel dimensions currently.
 
     Args:
         src_checkpoints_dir (str): The source checkpoints directory.
         dst_checkpoints_dir (str): The destination checkpoints directory to save the converted checkpoints.
         ckpt_prefix (str): The destination checkpoint name prefix.
         src_strategy_file (str): Name of source sharding strategy file which saved by
-                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'src_strategy_file' is None, it means that the source sharding strategy is
                                  without any sharing for each parameter. Default:None.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
-                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'dst_strategy_file' is None, it means that the destination sharding strategy
                                  is without any sharing for each parameter. Default:None.
 
@@ -293,7 +294,7 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         for needed_rank in needed_rank_list:
             ckpt_dict = ms.load_checkpoint(all_checkpoint_files_map.get(int(needed_rank)))
             for param_name, param in ckpt_dict.items():
-                src_rank = int(needed_rank) % src_stage_device_num# if src_stage_device_num > 1 else int(needed_rank)
+                src_rank = int(needed_rank) % src_stage_device_num
                 param_total_dict[param_name][src_rank] = param.data.asnumpy()
                 param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
         for transform_rank in transform_rank_list:
