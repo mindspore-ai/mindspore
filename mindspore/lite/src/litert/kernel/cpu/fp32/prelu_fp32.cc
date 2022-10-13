@@ -44,6 +44,12 @@ int PReluCPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[kInputIndex]);
   CHECK_NULL_RETURN(in_tensors_[kSlopeIndex]);
   CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
+  auto slope_shapes = in_tensors_[C1NUM]->ElementsNum();
+  auto input_channel = in_tensors_[C0NUM]->Channel();
+  if ((slope_shapes != C1NUM) && (slope_shapes != input_channel)) {
+    MS_LOG(ERROR) << "slope_shapes: " << slope_shapes << " is not equal to 1 or input_channel: " << input_channel;
+    return lite::RET_ERROR;
+  }
   if (in_tensors_[1]->ElementsNum() == 1) {
     param_->channelShared = true;
   } else {

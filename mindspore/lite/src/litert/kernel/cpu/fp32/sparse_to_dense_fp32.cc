@@ -33,11 +33,19 @@ using mindspore::schema::PrimitiveType_SparseToDense;
 namespace mindspore::kernel {
 int SparseToDenseCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == C4NUM, RET_ERROR);
-  CHECK_NULL_RETURN(in_tensors_[FIRST_INPUT]);
-  CHECK_NULL_RETURN(in_tensors_[SECOND_INPUT]);
-  CHECK_NULL_RETURN(in_tensors_[THIRD_INPUT]);
-  CHECK_NULL_RETURN(in_tensors_[FOURTH_INPUT]);
+  CHECK_NULL_RETURN(in_tensors_[FIRST_INPUT]);   // arg: sparse_indices
+  CHECK_NULL_RETURN(in_tensors_[SECOND_INPUT]);  // arg: output_shape
+  CHECK_NULL_RETURN(in_tensors_[THIRD_INPUT]);   // arg: sparse_values
+  CHECK_NULL_RETURN(in_tensors_[FOURTH_INPUT]);  // arg: default_value
   MS_CHECK_TRUE_RET(out_tensors_.size() == C1NUM, RET_ERROR);
+
+  auto indices_type = in_tensors_[FIRST_INPUT]->data_type();
+  MS_CHECK_TRUE_RET((indices_type == kNumberTypeInt32) || (indices_type == kNumberTypeInt64), RET_ERROR);
+  MS_CHECK_TRUE_RET(in_tensors_[SECOND_INPUT]->data_type() == in_tensors_[FIRST_INPUT]->data_type(), RET_ERROR);
+  MS_CHECK_TRUE_RET(in_tensors_[SECOND_INPUT]->shape().size() == C1NUM, RET_ERROR);
+  MS_CHECK_TRUE_RET(in_tensors_[THIRD_INPUT]->shape().size() == C1NUM, RET_ERROR);
+  MS_CHECK_TRUE_RET(in_tensors_[FOURTH_INPUT]->data_type() == in_tensors_[THIRD_INPUT]->data_type(), RET_ERROR);
+
   CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
   sparse_values_ = in_tensors_[THIRD_INPUT]->data();
   CHECK_NULL_RETURN(sparse_values_);
