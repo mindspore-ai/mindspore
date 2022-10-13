@@ -5651,7 +5651,7 @@ class RowTensor(RowTensor_):
         [[1. 2.]]
         >>> print(x.indices)
         [0]
-        >>> print(x.shape)
+        >>> print(x.dense_shape)
         (3, 2)
     """
 
