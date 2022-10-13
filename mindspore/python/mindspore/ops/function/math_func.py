@@ -4300,6 +4300,65 @@ def sparse_segment_mean(x, indices, segment_ids):
     return sparse_segment_mean_(x, indices, segment_ids)
 
 
+def vstack(inputs):
+    r"""
+    Stacks tensors in sequence vertically.
+
+    This is equivalent to concatenation along the first axis.
+    1-D tensors should firstly be reshaped to :math:`(1, N)`, and then be concatenated along the first axis.
+
+    Args:
+        inputs (Union(List[tensor], Tuple[tensor])): A sequence of 1-D or 2-D tensors.
+            The tensors must have the same shape along all but the first axis.
+            1-D tensors must have the same shape.
+
+    Returns:
+        Tensor, formed by stacking the given tensors, will be at least 3-D.
+        The output shape is similar to the output of `numpy.vstack()` function.
+
+    Raises:
+        TypeError: If `inputs` is not list.
+        ValueError: If `inputs` is empty.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x1 = np.array([1, 2, 3])
+        >>> x2 = np.array([4, 5, 6])
+        >>> out = ops.vstack([x1, x2])
+        >>> print(out)
+        Tensor(shape=[2, 3], dtype=Int32, value=
+        [[1, 2, 3],
+         [4, 5, 6]])
+    """
+    if not isinstance(inputs, (tuple, list)):
+        msg = f"List or tuple of tensors are required, but got {type(inputs)}"
+        raise TypeError(msg)
+    if not inputs:
+        msg = "Inputs can not be empty"
+        raise TypeError(msg)
+    trans_tup = ()
+    for tensor in inputs:
+        if not isinstance(tensor, Tensor):
+            msg = f"Tensor is required, but got {type(tensor)}"
+            raise TypeError(msg)
+        if tensor.ndim <= 1:
+            shape = P.Shape()(tensor)
+            if isinstance(shape, int):
+                shape = (shape,)
+            ndim_diff = 2 - len(shape)
+            if ndim_diff > 0:
+                shape = [1] * ndim_diff + [i for i in shape]
+            tensor = P.Reshape()(tensor, tuple(shape))
+        trans_tup += (tensor,)
+    if not trans_tup:
+        raise ValueError("Need at least one tensor to concatenate.")
+    out = P.Concat(0)(trans_tup)
+    return out
+
+
 def copysign(x, other):
     r"""
     Changes the sign of `x` to that of `other`, element-wise.
@@ -6496,6 +6555,7 @@ __all__ = [
     'all',
     'any',
     'sparse_segment_mean',
+    'vstack',
     'copysign',
     'log2',
     'xlogy',
