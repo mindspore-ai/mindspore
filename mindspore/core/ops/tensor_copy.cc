@@ -39,7 +39,7 @@ TypePtr TensorMoveInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto prim_name = primitive->name();
   std::map<std::string, TypePtr> type_dict;
   (void)type_dict.emplace("input", input_args[kInputIndex0]->BuildType());
-  std::set<TypePtr> check_list(common_valid_types);
+  std::set<TypePtr> check_list(all_types);
   (void)check_list.insert(kBool);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, check_list, prim_name);
 }
