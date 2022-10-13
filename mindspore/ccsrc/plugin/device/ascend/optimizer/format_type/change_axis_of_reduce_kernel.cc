@@ -26,19 +26,18 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::opt {
 namespace {
 using ConvertFunction = std::function<void(const CNodePtr &)>;
-
-void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode);
+const size_t kAxis_N = 0;
+const size_t kAxis_C = 1;
+const size_t kAxis_C1 = 1;
+const size_t kAxis_C0 = 4;
 const size_t kAxis_H = 2;
 const size_t kAxis_W = 3;
 const size_t kAxis_6HD_H = 1;
 const size_t kAxis_6HD_W = 2;
 const int64_t kAxisDim = 4;
-const std::map<std::string, ConvertFunction> kReduceConvertMap = {{kOpFormat_FRAC_Z, ConvertReduceAttrFraczAnd6HD},
-                                                                  {kOpFormat_C1HWNCoC0, ConvertReduceAttrFraczAnd6HD}};
 void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce_axis) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (reduce_axis.empty()) {
@@ -93,6 +92,64 @@ void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
   }
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(convert_axis), cnode);
 }
+
+void ConvertReduceAttrNC1HWC0(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto axis = kernel::GetReduceAttrAxis(cnode);
+  std::vector<int64_t> convert_axis;
+  SafeCheckFunction(cnode, axis);
+  for (auto elem : axis) {
+    switch (elem) {
+      case kAxis_N:
+        (void)convert_axis.emplace_back(kAxis_N);
+        break;
+      case kAxis_C:
+        (void)convert_axis.emplace_back(kAxis_C1);
+        (void)convert_axis.emplace_back(kAxis_C0);
+        break;
+      case kAxis_H:
+        (void)convert_axis.emplace_back(kAxis_H);
+        break;
+      case kAxis_W:
+        (void)convert_axis.emplace_back(kAxis_W);
+        break;
+      default:
+        MS_LOG(INFO) << "reduce axis is axis : [" << elem << "]"
+                     << " but the format is not supported this reduce axis";
+    }
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(convert_axis), cnode);
+}
+
+void ConvertReduceAttrFracNZ(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto axis = kernel::GetReduceAttrAxis(cnode);
+  std::vector<int64_t> convert_axis;
+  auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto dims_num = static_cast<int64_t>(origin_shape.size());
+  SafeCheckFunction(cnode, axis);
+  int64_t kLastIndex = 1;
+  int64_t kLastIndexButOne = 2;
+  for (const auto &axis_value : axis) {
+    if (axis_value == dims_num - kLastIndex) {
+      // reduce last axis
+      (void)convert_axis.emplace_back(axis_value - kLastIndex);
+      (void)convert_axis.emplace_back(axis_value + kLastIndexButOne);
+    } else if (axis_value == dims_num - kLastIndexButOne) {
+      // reduce last axis but one
+      (void)convert_axis.emplace_back(axis_value + kLastIndex);
+      (void)convert_axis.emplace_back(axis_value + kLastIndexButOne);
+    } else {
+      (void)convert_axis.emplace_back(axis_value);
+    }
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(convert_axis), cnode);
+}
+
+const std::map<std::string, ConvertFunction> kReduceConvertMap = {{kOpFormat_FRAC_Z, ConvertReduceAttrFraczAnd6HD},
+                                                                  {kOpFormat_C1HWNCoC0, ConvertReduceAttrFraczAnd6HD},
+                                                                  {kOpFormat_NC1HWC0, ConvertReduceAttrNC1HWC0},
+                                                                  {kOpFormat_FRAC_NZ, ConvertReduceAttrFracNZ}};
 }  // namespace
 
 const BaseRef ChangeAxisOfReduceKernel::DefinePattern() const {
@@ -140,5 +197,4 @@ const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const A
   }
   return nullptr;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::opt

@@ -385,6 +385,6 @@ def test_train_feed(num_classes=65536):
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(3, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
     loss_value = np.array(parallel_callback.loss_list)
-    expect_out = [11.259036, 11.015917, 10.599615]
+    expect_out = [11.259036, 11.015858, 10.602034]
     print(loss_value)
     assert np.allclose(loss_value, expect_out, 0.0001, 0.0001)
