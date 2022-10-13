@@ -144,6 +144,8 @@ int DetermineCertainVarInputHasInferred(const CNodePtr &cnode, size_t index, boo
 
 bool CheckAndGetCnodeIndex(const CNodePtr &cnode, size_t *index, const PrimitivePtr &primitive_type);
 
+bool IsReduceModeMeetOutEqualIn(const PrimitivePtr &prim);
+
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {

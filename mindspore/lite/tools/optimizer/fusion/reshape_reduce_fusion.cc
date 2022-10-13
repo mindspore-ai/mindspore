@@ -96,14 +96,10 @@ bool ReshapeReduceFusion::CheckReduce(const CNodePtr &reduce) {
   MS_ASSERT(reduce != nullptr);
   auto reduce_prim = GetCNodePrimitive(reduce);
   MS_CHECK_TRUE_RET(reduce_prim != nullptr, false);
-  auto attr = reduce_prim->GetAttr(ops::kMode);
-  MS_CHECK_TRUE_RET(attr != nullptr, false);
-  auto mode = GetValue<int64_t>(attr);
-  std::set<int64_t> dis_meet_mode = {Reduce_Sum_Square, Reduce_ASum, Reduce_All, Reduce_L2};
-  if (dis_meet_mode.find(mode) != dis_meet_mode.end()) {
+  if (!IsReduceModeMeetOutEqualIn(reduce_prim)) {
     return false;
   }
-  attr = reduce_prim->GetAttr(ops::kReduceToEnd);
+  auto attr = reduce_prim->GetAttr(ops::kReduceToEnd);
   auto reduce_to_end = attr != nullptr && GetValue<bool>(attr);
   if (reduce_to_end) {
     return false;
