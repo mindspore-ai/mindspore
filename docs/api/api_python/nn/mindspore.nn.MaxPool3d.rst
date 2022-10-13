@@ -7,7 +7,7 @@ mindspore.nn.MaxPool3d
 
     在一个输入Tensor上应用3D max pooling，可被视为组成一个3D平面。
 
-    通常，输入的形状为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` ，MaxPool3d输出 :math:`(D_{in}, H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `stride` 为 :math:`s = (s_0, s_1, s_2)`，公式如下。
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` ，MaxPool3d输出 :math:`(D_{in}, H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `strides` 为 :math:`s = (s_0, s_1, s_2)`，公式如下。
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
@@ -28,6 +28,7 @@ mindspore.nn.MaxPool3d
     输出：
         如果 `return_indices` 为False，则是shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
         如果 `return_indices` 为True，则是一个包含了两个Tensor的Tuple，表示maxpool的计算结果以及生成max值的位置。
+
         - **output** (Tensor) - 最大池化结果，shape为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`的Tensor。数据类型与 `x` 一致。
         - **argmax** (Tensor) - 最大值对应的索引。数据类型为int64。
 
