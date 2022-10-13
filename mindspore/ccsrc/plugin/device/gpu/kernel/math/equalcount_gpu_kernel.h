@@ -18,70 +18,45 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_EQUALCOUNT_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/equalcount_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class EqualCountGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class EqualCountGpuKernelMod : public NativeGpuKernelMod {
  public:
-  EqualCountGpuKernelMod() : input_size_(0), output_size_(0), workspace_size_(0), is_null_input_(false) {}
+  EqualCountGpuKernelMod() : input_shape_size_(0), is_null_input_(false) {}
   ~EqualCountGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    VARIABLE_NOT_USED(workspace);
-    T *input1 = GetDeviceAddress<T>(inputs, 0);
-    T *input2 = GetDeviceAddress<T>(inputs, 1);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    int size = SizeToInt(input_size_ / sizeof(T));
-    CalEqualCount(size, input1, input2, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-    }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    output_size_ = sizeof(T);
-    input_size_ = sizeof(T);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ *= SizeOf(input_shape);
-    InitSizeLists();
-    return true;
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-    return;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using EqualCountLaunchFunc =
+    std::function<bool(EqualCountGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  size_t input_size_;
-  size_t output_size_;
-  size_t workspace_size_;
+  size_t input_shape_size_;
   bool is_null_input_;
+  EqualCountLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, EqualCountLaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

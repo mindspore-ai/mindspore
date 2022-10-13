@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -39,12 +40,44 @@ class NetEqualCount(nn.Cell):
         return self.equalcount(self.x, self.y)
 
 
+class NetEqualCount2(nn.Cell):
+    def __init__(self):
+        super(NetEqualCount2, self).__init__()
+        self.equalcount = P.EqualCount()
+
+    def construct(self, x, y):
+        return self.equalcount(x, y)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_equalcount():
-    EqualCount = NetEqualCount()
-    output = EqualCount()
+    net = NetEqualCount()
+    output = net()
+    print("================================")
+    expect = np.array([2]).astype(np.int32)
+    print(output)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_equalcount_dynamic():
+    """
+    Feature: EqualCount ops
+    Description: dynamic shape in cpu
+    Expectation: success
+    """
+    net = NetEqualCount2()
+    xx = Tensor(shape=[None], dtype=mindspore.int32)
+    yy = Tensor(shape=[None], dtype=mindspore.int32)
+    net.set_inputs(xx, yy)
+
+    x = Tensor(np.array([1, 20, 5]).astype(np.int32))
+    y = Tensor(np.array([2, 20, 5]).astype(np.int32))
+    output = net(x, y)
     print("================================")
     expect = np.array([2]).astype(np.int32)
     print(output)

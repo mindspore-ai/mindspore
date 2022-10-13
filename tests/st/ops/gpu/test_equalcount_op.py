@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -46,5 +47,33 @@ def test_equalcount():
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     equal_count = NetEqualCount()
+    output = equal_count(x, y)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_equalcount_dynamic():
+    """
+    Feature: EqualCount ops
+    Description: dynamic shape in pynative and graph mode in GPU
+    Expectation: success
+    """
+    x = Tensor(np.array([1, 20, 5]).astype(np.int32))
+    y = Tensor(np.array([2, 20, 5]).astype(np.int32))
+    xx = Tensor(shape=[None], dtype=mindspore.int32)
+    yy = Tensor(shape=[None], dtype=mindspore.int32)
+    expect = np.array([2]).astype(np.int32)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    equal_count = NetEqualCount()
+    equal_count.set_inputs(xx, yy)
+    output = equal_count(x, y)
+    assert (output.asnumpy() == expect).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    equal_count = NetEqualCount()
+    equal_count.set_inputs(xx, yy)
     output = equal_count(x, y)
     assert (output.asnumpy() == expect).all()
