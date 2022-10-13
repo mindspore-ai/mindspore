@@ -174,7 +174,7 @@ class Normal(Distribution):
         self.erf = P.Erf()
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
-        self.const = P.ScalarToArray()
+        self.const = P.ScalarToTensor()
         self.shape = P.Shape()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
@@ -231,7 +231,7 @@ class Normal(Distribution):
             H(X) = \log(\sqrt(numpy.e * 2. * numpy.pi * \sq(\sigma)))
         """
         mean, sd = self._check_param_type(mean, sd)
-        return self.log(self.sqrt(self.const(np.e * 2. * np.pi))) + self.log(sd)
+        return self.log(self.sqrt(self.const(np.e * 2. * np.pi, mstype.float32))) + self.log(sd)
 
     def _cross_entropy(self, dist, mean_b, sd_b, mean=None, sd=None):
         r"""
@@ -265,7 +265,7 @@ class Normal(Distribution):
         unnormalized_log_prob = -1. * \
             (self.sq(value - mean)) / (2. * self.sq(sd))
         neg_normalization = -1. * \
-            self.log(self.const(2. * np.pi)) / 2. - self.log(sd)
+            self.log(self.const(2. * np.pi, mstype.float32)) / 2. - self.log(sd)
         return unnormalized_log_prob + neg_normalization
 
     def _cdf(self, value, mean=None, sd=None):
@@ -283,7 +283,7 @@ class Normal(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         mean, sd = self._check_param_type(mean, sd)
-        sqrt2 = self.sqrt(self.const(2.0))
+        sqrt2 = self.sqrt(self.const(2.0, mstype.float32))
         adjusted = (value - mean) / (sd * sqrt2)
         return 0.5 * (1.0 + self.erf(adjusted))
 

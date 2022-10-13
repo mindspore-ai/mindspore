@@ -115,6 +115,7 @@ def repeat_elements(x, rep, axis=0):
 
     return x_rep
 
+
 tensor_operator_registry.register('repeat_elements', repeat_elements)
 
 
@@ -189,7 +190,7 @@ def sequence_mask(lengths, maxlen=None):
     expand_op = P.ExpandDims()
     cast_op = P.Cast()
     shape_op = P.Shape()
-    to_tensor_op = P.ScalarToArray()
+    to_tensor_op = P.ScalarToTensor()
 
     const_utils.check_type_valid(F.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
     _check_sequence_mask_input_len(shape_op(lengths), "sequence_mask")
@@ -201,10 +202,10 @@ def sequence_mask(lengths, maxlen=None):
         maxlen = cast_op(value, mstype.int32)
     else:
         maxlen = _check_positive_int(maxlen, "maxlen", "sequence_mask")
-        maxlen = to_tensor_op(maxlen)
+        maxlen = to_tensor_op(maxlen, mstype.int32)
 
-    range_vector = range_op(to_tensor_op(0), maxlen
-                            , to_tensor_op(1))
+    range_vector = range_op(to_tensor_op(0, mstype.int32), maxlen
+                            , to_tensor_op(1, mstype.int32))
     mask = expand_op(lengths, -1)
     result = range_vector < mask
     return result

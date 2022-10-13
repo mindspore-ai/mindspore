@@ -21,6 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision as CV
 import mindspore.nn as nn
 from mindspore import context
+from mindspore.common import dtype as mstype
 import mindspore.ops as ops
 from mindspore.nn.probability.dpn import VAE
 from mindspore.nn.probability.infer import ELBO, SVI
@@ -94,11 +95,12 @@ class VaeGan(nn.Cell):
         self.vae = VAE(self.E, self.G, 400, 20)
         self.shape = ops.Shape()
         self.normal = ops.normal
-        self.to_tensor = ops.ScalarToArray()
+        self.to_tensor = ops.ScalarToTensor()
 
     def construct(self, x):
         recon_x, x, mu, std = self.vae(x)
-        z_p = self.normal(self.shape(mu), self.to_tensor(0.0), self.to_tensor(1.0), seed=0)
+        z_p = self.normal(self.shape(mu), self.to_tensor(0.0, mstype.float32), self.to_tensor(1.0, mstype.float32),
+                          seed=0)
         z_p = self.dense(z_p)
         x_p = self.G(z_p)
         ld_real = self.D(x)
@@ -156,6 +158,11 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 
 
 def test_vae_gan():
+    """
+    Feature: Test vae gan
+    Description: Test case for vae gan
+    Expectation: success
+    """
     vae_gan = VaeGan()
     net_loss = VaeGanLoss()
     optimizer = nn.Adam(params=vae_gan.trainable_params(), learning_rate=0.001)

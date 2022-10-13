@@ -51,7 +51,7 @@ def test_sum_as_loss():
         def construct(self, x, y):
             out = self.fc_nobias(x, y)
             out = self.reduce_sum(out, (0, 1))
-            out = self.mul(out, F.scalar_to_array(2.0))
+            out = self.mul(out, F.scalar_to_tensor(2.0))
             return out
 
     context.set_auto_parallel_context(device_num=16, global_rank=0)

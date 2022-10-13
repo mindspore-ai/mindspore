@@ -183,7 +183,7 @@ class SemiAutoOneHotNet(Cell):
         mul_const2_o = self.mul_const2(self.b_const, mul_const_o)
         exp2_o = self.exp2(mul_const2_o)
         mul_const3_o = self.mul_const3(exp2_o, self.c_const)
-        mul_const4_o = self.mul_const4(F.scalar_to_array(1), local_label)
+        mul_const4_o = self.mul_const4(F.scalar_to_tensor(1, mstype.int32), local_label)
         mul6_o = self.mul6(self.mul(mul_const3_o, one_hot_float),
                            self.mul2(fc_o, self.cast2(mul_const4_o, mstype.float32)))
         mul_const5_o = self.mul_const5(mul6_o, self.d_const)
@@ -196,10 +196,10 @@ class SemiAutoOneHotNet(Cell):
         mul5_o = self.mul5(exp3_o, reshape_o)
         log_o = self.log(self.mul9(mul5_o, self.e_const))
         mul3_o = self.mul3(log_o, one_hot_float)
-        mul7_o = self.mul7(mul3_o, self.cast3(F.scalar_to_array(-1), mstype.float32))
+        mul7_o = self.mul7(mul3_o, self.cast3(F.scalar_to_tensor(-1), mstype.float32))
         sum2_o = self.reduce_sum_2(mul7_o, -1)
         loss = self.mul8(self.reduce_sum_3(sum2_o, -1),
-                         self.cast4(F.scalar_to_array(F.shape(mul_const5_o)[0]), mstype.float32))
+                         self.cast4(F.scalar_to_tensor(F.shape(mul_const5_o)[0]), mstype.float32))
         return loss
 
 

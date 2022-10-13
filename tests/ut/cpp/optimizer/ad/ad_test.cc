@@ -162,11 +162,6 @@ TEST_F(TestAD, test_prim_identity) {
   AssertExpect("test_prim_identity", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_to_array) {
-  FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarToArray), resourcePtr);
-  AssertExpect("test_prim_scalar_to_array", dg);
-}
-
 TEST_F(TestAD, test_prim_array_to_scalar) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimArrayToScalar), resourcePtr);
   AssertExpect("test_prim_array_to_scalar", dg);

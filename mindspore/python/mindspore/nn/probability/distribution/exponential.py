@@ -159,7 +159,7 @@ class Exponential(Distribution):
         self.log = log_generic
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
-        self.const = P.ScalarToArray()
+        self.const = P.ScalarToTensor()
         self.dtypeop = P.DType()
         self.fill = P.Fill()
         self.less = P.Less()
@@ -340,8 +340,8 @@ class Exponential(Distribution):
             sample_shape = (1,)
         else:
             sample_shape = origin_shape
-        minval = self.const(self.minval)
-        maxval = self.const(1.0)
+        minval = self.const(self.minval, mstype.float32)
+        maxval = self.const(1.0, mstype.float32)
         sample_uniform = self.uniform(sample_shape, minval, maxval, self.seed)
         sample = self.log(sample_uniform) / rate
         value = self.cast(-sample, self.dtype)

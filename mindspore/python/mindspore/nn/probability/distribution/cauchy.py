@@ -167,7 +167,7 @@ class Cauchy(Distribution):
         # ops needed for the class
         self.atan = P.Atan()
         self.cast = P.Cast()
-        self.const = P.ScalarToArray()
+        self.const = P.ScalarToTensor()
         self.dtypeop = P.DType()
         self.exp = exp_generic
         self.fill = P.Fill()
@@ -308,7 +308,7 @@ class Cauchy(Distribution):
         value = self.cast(value, self.dtype)
         loc, scale = self._check_param_type(loc, scale)
         z = (value - loc) / scale
-        return self.log1p(2. * self.atan(z) / np.pi) - self.log(self.const(2.))
+        return self.log1p(2. * self.atan(z) / np.pi) - self.log(self.const(2., mstype.float32))
 
     def _quantile(self, p, loc=None, scale=None):
         loc, scale = self._check_param_type(loc, scale)
@@ -338,7 +338,7 @@ class Cauchy(Distribution):
         sum_square = self.sq(scale_a + scale_b)
         square_diff = self.sq(loc_a - loc_b)
         return self.log(sum_square + square_diff) - \
-            self.log(self.const(4.0)) - self.log(scale_a) - self.log(scale_b)
+            self.log(self.const(4.0, mstype.float32)) - self.log(scale_a) - self.log(scale_b)
 
     def _cross_entropy(self, dist, loc_b, scale_b, loc_a=None, scale_a=None):
         r"""
@@ -374,8 +374,8 @@ class Cauchy(Distribution):
             sample_shape = (1,)
         else:
             sample_shape = origin_shape
-        l_zero = self.const(0.0)
-        h_one = self.const(1.0)
+        l_zero = self.const(0.0, mstype.float32)
+        h_one = self.const(1.0, mstype.float32)
         sample_uniform = self.uniform(sample_shape, l_zero, h_one, self.seed)
         sample = self._quantile(sample_uniform, loc, scale)
         value = self.cast(sample, self.dtype)

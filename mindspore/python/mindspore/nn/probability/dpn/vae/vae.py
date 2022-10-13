@@ -15,6 +15,7 @@
 """Variational auto-encoder (VAE)"""
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator
 from ....cell import Cell
 from ....layer.basic import Dense
@@ -63,7 +64,7 @@ class VAE(Cell):
         self.exp = P.Exp()
         self.reshape = P.Reshape()
         self.shape = P.Shape()
-        self.to_tensor = P.ScalarToArray()
+        self.to_tensor = P.ScalarToTensor()
         self.dense1 = Dense(self.hidden_size, self.latent_size)
         self.dense2 = Dense(self.hidden_size, self.latent_size)
         self.dense3 = Dense(self.latent_size, self.hidden_size)
@@ -100,7 +101,8 @@ class VAE(Cell):
         generate_nums = Validator.check_positive_int(generate_nums)
         if not isinstance(shape, tuple) or len(shape) != 4 or (shape[0] != -1 and shape[0] != generate_nums):
             raise ValueError('The shape must be (generate_nums, C, H, W) or (-1, C, H, W).')
-        sample_z = self.normal((generate_nums, self.latent_size), self.to_tensor(0.0), self.to_tensor(1.0), seed=0)
+        sample_z = self.normal((generate_nums, self.latent_size), self.to_tensor(0.0, mstype.float32),
+                               self.to_tensor(1.0, mstype.float32), seed=0)
         sample = self._decode(sample_z)
         sample = self.reshape(sample, shape)
         return sample

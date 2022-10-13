@@ -149,7 +149,6 @@ class Logistic(Distribution):
 
         # ops needed for the class
         self.cast = P.Cast()
-        self.const = P.ScalarToArray()
         self.consttensor = P.ScalarToTensor()
         self.dtypeop = P.DType()
         self.exp = exp_generic
@@ -369,8 +368,8 @@ class Logistic(Distribution):
             sample_shape = (1,)
         else:
             sample_shape = origin_shape
-        l_zero = self.const(self.tiny)
-        h_one = self.const(1.0)
+        l_zero = self.consttensor(self.tiny, mstype.float32)
+        h_one = self.consttensor(1.0, mstype.float32)
         sample_uniform = self.uniform(sample_shape, l_zero, h_one, self.seed)
         sample = self.log(sample_uniform) - self.log1p(self.neg(sample_uniform))
         sample = sample * scale + loc

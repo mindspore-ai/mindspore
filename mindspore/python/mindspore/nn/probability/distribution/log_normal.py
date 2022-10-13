@@ -99,7 +99,6 @@ class LogNormal(msd.TransformedDistribution):
         self.exp = exp_generic
         self.expm1 = P.Expm1()
         self.log = log_generic
-        self.const = P.ScalarToArray()
         self.erf = P.Erf()
         self.fill = P.Fill()
         self.greater = P.Greater()

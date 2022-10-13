@@ -99,7 +99,7 @@ class Gumbel(TransformedDistribution):
 
         # ops needed for the class
         self.cast = P.Cast()
-        self.const = P.ScalarToArray()
+        self.const = P.ScalarToTensor()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
         self.fill = P.Fill()
@@ -175,7 +175,7 @@ class Gumbel(TransformedDistribution):
         """
         scale = self.scale * \
             self.fill(self.parameter_type, self.broadcast_shape, 1.0)
-        return scale * np.pi / self.sqrt(self.const(6.))
+        return scale * np.pi / self.sqrt(self.const(6., mstype.float32))
 
     def _entropy(self):
         r"""

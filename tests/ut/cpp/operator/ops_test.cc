@@ -244,11 +244,6 @@ TEST_F(TestOps, ListReduceTest) {
 }
 
 // Arrays
-TEST_F(TestOps, ScalarToArrayTest) {
-  auto prim = std::make_shared<Primitive>("scalar_to_array");
-  ASSERT_EQ(prim->name(), kPrimScalarToArray->name());
-}
-
 TEST_F(TestOps, ArrayToScalarTest) {
   auto prim = std::make_shared<Primitive>("array_to_scalar");
   ASSERT_EQ(prim->name(), kPrimArrayToScalar->name());
