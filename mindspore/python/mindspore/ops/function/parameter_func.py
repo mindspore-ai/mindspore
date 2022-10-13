@@ -79,8 +79,8 @@ def assign_sub(variable, value):
     Args:
         variable (Parameter): The `Parameter`.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank be should be less than 8.
-        value (Union[numbers.Number, Tensor]): The value to be subtracted from the `variable`.
-            It must have the same shape as `variable` if it is a Tensor.
+        value (Tensor): The value to be subtracted from the `variable`.
+            It must have the same shape as `variable`.
             it is recommended to use the same data type when using this operator.
 
     Returns:
@@ -124,8 +124,8 @@ def assign_add(variable, value):
     Args:
         variable (Parameter): The `Parameter`.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        value (Union[numbers.Number, Tensor]): The value to be added to the `variable`.
-            It must have the same shape as `variable` if it is a Tensor.
+        value (Tensor): The value to be added to the `variable`.
+            It must have the same shape as `variable`.
             it is recommended to use the same data type when using this operator.
 
     Returns:
