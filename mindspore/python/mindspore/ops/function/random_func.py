@@ -124,8 +124,7 @@ def standard_laplace(shape, seed=0, seed2=0):
         (4, 4)
     """
     standard_laplace_op = _get_cache_prim(P.StandardLaplace)(seed=seed, seed2=seed2)
-    output = standard_laplace_op(shape)
-    return output
+    return standard_laplace_op(shape)
 
 
 def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
