@@ -42,11 +42,18 @@ class MsFunction {
   void GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                            const ValuePtr &added_out_v, const FuncGraphPtr &ms_func_graph,
                            const FuncGraphPtr &grad_graph) const;
+  void AsyncGradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
+                                const ValuePtr &added_out_v, const FuncGraphPtr &ms_func_graph,
+                                const FuncGraphPtr &grad_graph) const;
+  void AsyncKPynativeWithFProp(const GradExecutor *grad_executor, const ad::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                               const ad::GradParamPtr &grad_param) const;
   // Update device address of value node in grad graph by forward tensors.
   void RunReplace(const CNodePtr &added_make_tuple, const std::vector<tensor::TensorPtr> &total_output_tensors,
                   const FuncGraphPtr &grad_graph) const;
   void ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const ValuePtr &added_out,
                                     const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
+  void UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const string &op_info,
+                                      const ValuePtr &new_forward_value) const;
   // Make CNode for ms_function forward graph.
   void GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNodePtrList *input_nodes,
                         const GradExecutor *grad_executor) const;

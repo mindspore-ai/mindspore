@@ -59,6 +59,7 @@ struct FrontendOpRunInfo {
   bool grad_flag = false;
   bool output_get_by_infer_value = false;
   int mix_type{0};
+  size_t op_index = 0;
   size_t input_size = 0;
   size_t custom_bprop_cell_count = 0;
   PrimitivePyPtr op_prim{nullptr};
@@ -88,6 +89,8 @@ struct InputArgsInfo {
   size_t input_size;
   std::string obj_id;
   bool has_sens{false};
+  bool is_run_cell{false};
+  bool use_dynamic_shape_process = false;
   PrimitivePyPtr custom_bprp_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string cell_id;

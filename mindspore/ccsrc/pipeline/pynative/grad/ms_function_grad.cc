@@ -19,6 +19,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/func_graph_cloner.h"
+#include "runtime/pynative/async/async_queue.h"
+#include "pipeline/pynative/grad/bprop_task.h"
 
 namespace mindspore {
 namespace pynative {
@@ -151,6 +153,35 @@ void MsFunction::ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, co
   RunReplace(added_make_tuple, total_output_tensors, grad_graph);
 }
 
+void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const string &op_info,
+                                                const ValuePtr &new_forward_value) const {
+  if (grad_executor->use_dynamic_shape_process()) {
+    MS_LOG(DEBUG) << "Get dynamic shape process";
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(new_forward_value);
+  MS_LOG(DEBUG) << "Ms func graph has already ran before. The graph phase is: " << graph_phase_;
+  MS_LOG(DEBUG) << "The output values of added forward nodes are: " << new_forward_value->ToString();
+  std::vector<tensor::TensorPtr> new_tensors;
+  TensorValueToTensor(new_forward_value, &new_tensors);
+  if (new_tensors.empty()) {
+    MS_LOG(DEBUG) << "The size of added forward tensors is zero, no need to update.";
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(grad_executor);
+  const auto &top_cell = grad_executor->top_cell();
+  const auto &old_tensors = top_cell->op_info_with_ms_func_forward_tensors().at(op_info);
+  if (old_tensors.size() != new_tensors.size()) {
+    MS_LOG(EXCEPTION) << "The size of old tensors is: " << old_tensors.size()
+                      << ", but the size of new tensors is: " << new_tensors.size()
+                      << ", the current op info is: " << op_info;
+  }
+  for (size_t i = 0; i < new_tensors.size(); ++i) {
+    grad_executor->UpdatePreTensorInfo(new_tensors[i], {old_tensors[i]});
+    old_tensors[i]->set_sync_status(kNeedSyncDeviceToHost);
+  }
+}
+
 void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNodePtrList *input_nodes,
                                   const GradExecutor *grad_executor) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -213,6 +244,7 @@ void MsFunction::GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const G
 
 void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                         const FuncGraphPtr &ms_func_graph, CNodePtr *ms_function_cnode) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
   // Get input node info of ms_function
   std::vector<AnfNodePtr> input_nodes{NewValueNode(ms_func_graph)};
   MS_EXCEPTION_IF_NULL(grad_executor);
@@ -222,6 +254,7 @@ void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
   // Make a CNode which includes ms_function fprop graph and inputs node
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
   *ms_function_cnode = grad_executor->top_cell()->fg()->NewCNode(input_nodes);
+
   MS_LOG(DEBUG) << "Make ms function forward CNode: " << (*ms_function_cnode)->DebugString();
 }
 
@@ -242,6 +275,10 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   auto grad_param = std::make_shared<ad::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
                                                     grad_graph, !top_cell->is_high_order_top_cell());
+  {
+    py::gil_scoped_release gil_release;
+    grad_executor->async_executor()->Wait();
+  }
   if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
                       << ms_function_cnode->DebugString();
@@ -250,21 +287,54 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
   return ms_function_cnode;
 }
 
+void MsFunction::AsyncKPynativeWithFProp(const GradExecutor *grad_executor,
+                                         const ad::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                                         const ad::GradParamPtr &grad_param) const {
+  MS_EXCEPTION_IF_NULL(grad_executor);
+  const auto fn = [this, grad_param, auto_grad_cell_ptr]() {
+    MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
+    if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
+      MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode";
+    }
+  };
+  auto task = std::make_shared<BpropTask>(fn);
+  grad_executor->async_executor()->Push(task);
+}
+
+void MsFunction::AsyncGradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
+                                          const ValuePtr &added_out_v, const FuncGraphPtr &ms_func_graph,
+                                          const FuncGraphPtr &grad_graph) const {
+  const auto fn = [this, op_run_info, grad_executor, added_out_v, ms_func_graph, grad_graph]() {
+    this->GradMsFunctionInner(op_run_info, grad_executor, added_out_v, ms_func_graph, grad_graph);
+  };
+  auto task = std::make_shared<BpropTask>(fn);
+  grad_executor->async_executor()->Push(task);
+}
+
 void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                      const ValuePtr &added_out_v, const FuncGraphPtr &ms_func_graph,
                                      const FuncGraphPtr &grad_graph) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
-  if (!grad_executor->grad_flag()) {
-    MS_LOG(EXCEPTION) << "The flag of need construct graph is False.";
+  // Step 1: Update actual output tensors used in grad graph.
+  MS_EXCEPTION_IF_NULL(op_run_info->out_value);
+  MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
+  // The output of ms_function may be used in subsequent PyNative process
+  grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info);
+
+  // Step 2: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
+  if (grad_executor->top_cell()->op_info_with_ms_func_forward_tensors().find(op_run_info->op_info) !=
+      grad_executor->top_cell()->op_info_with_ms_func_forward_tensors().end()) {
+    UpdateMsFunctionForwardTensors(grad_executor, op_run_info->op_info, added_out_v);
   }
-  // Update actual output tensors used in grad graph.
+
   ReplaceNewTensorsInGradGraph(grad_executor->top_cell(), added_out_v, ms_func_graph, grad_graph);
 
   // Clone new ms_function func graph and grad graph.
   auto new_ms_func_graph = BasicClone(ms_func_graph);
   auto new_grad_graph = BasicClone(grad_graph, true);
+
   auto new_make_tuple = new_ms_func_graph->output()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(new_make_tuple);
   new_ms_func_graph->set_output(new_make_tuple->input(1));
@@ -273,6 +343,11 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   const auto &ms_function_cnode =
     MakeAdjointForMsFunction(op_run_info, grad_executor, new_ms_func_graph, new_grad_graph);
   ms_function_cnode->set_abstract(new_ms_func_graph->output()->abstract()->Broaden());
+
+  auto grad_exec_ptr = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
+  MS_EXCEPTION_IF_NULL(grad_exec_ptr);
+  grad_exec_ptr->CheckGraphDynamic(ms_function_cnode, op_run_info->op_index, true,
+                                   op_run_info->base_op_run_info.op_name);
 }
 
 void MsFunction::SetMsFuncGraphParameters(const FuncGraphPtr &ms_func_graph) {
@@ -316,6 +391,9 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
   const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, &added_out_v);
   FuncGraphPtr grad_graph = executor->GetGradGraph(graph_phase_);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_forward_graph.ir", ms_func_graph);
+  if (!grad_executor->grad_flag()) {
+    MS_LOG(EXCEPTION) << "The flag of need construct graph is False.";
+  }
   GradMsFunctionInner(op_run_info, grad_executor.get(), added_out_v, ms_func_graph, grad_graph);
   SetMsFuncGraphParameters(ms_func_graph);
   graph_phase_.clear();
