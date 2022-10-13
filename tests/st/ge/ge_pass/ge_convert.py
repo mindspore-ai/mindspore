@@ -175,3 +175,26 @@ def test_convert_make_tuple_make_tuple():
     assert output[0].asnumpy() == 2
     assert output[1][0].asnumpy() == 2
     assert output[1][1].asnumpy() == 3
+
+
+def test_convert_tuple_get_item_dynamic_output():
+    """
+    Feature: convert ge graph
+    Description: test TupleGetItem's input is dynamic output
+    Expectation: success
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.split = P.Split(0, 2)
+
+        def construct(self, x):
+            result = self.split(x)
+            return result[0]
+
+    x = np.ones([2, 4]).astype(np.int32)
+    split = Net()
+    output = split(Tensor(x))
+    expect = np.ones([1, 4]).astype(np.int32)
+    assert np.allclose(output.asnumpy(), expect)
