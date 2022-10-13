@@ -119,6 +119,7 @@ class AscendKernelRuntime : public KernelRuntime {
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
+  bool hccl_initialized_{false};
   unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
 #ifndef ENABLE_SECURITY

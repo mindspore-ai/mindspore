@@ -348,6 +348,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   (void)ResetDevice(device_id);
   current_graph_ = nullptr;
   initialized_ = false;
+  hccl_initialized_ = false;
   MS_LOG(INFO) << "Ascend finalize end";
 }
 
@@ -374,6 +375,13 @@ bool AscendKernelRuntime::Init() {
 #endif
   if (initialized_) {
     SetCurrentContext();
+    if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !hccl_initialized_) {
+      if (!HcclInit()) {
+        MS_LOG(ERROR) << "HcclInit init failed";
+        return false;
+      }
+      hccl_initialized_ = true;
+    }
     return true;
   }
   const auto error_manager_ret = ErrorManager::GetInstance().Init();
@@ -1213,11 +1221,12 @@ bool AscendKernelRuntime::InitDevice() {
     MS_LOG(ERROR) << "Get MsContext instance failed";
     return false;
   }
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL) && !hccl_initialized_) {
     if (!HcclInit()) {
       MS_LOG(ERROR) << "HcclInit init failed";
       return false;
     }
+    hccl_initialized_ = true;
   }
 
   // Context will be created by rtSetDevice
