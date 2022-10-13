@@ -36,16 +36,15 @@ class WhileByCellListInWhile(nn.Cell):
         self.cell_list.append(OneCell(5))
         self.cell_list.append(OneCell(6))
 
-    def construct(self, n, x):
+    def construct(self, n, x, y):
         out = n
         while x < 3:
             out += 4
             x += 1
-        x = 0
-        while x < 3:
-            add = self.cell_list[x](n)
+        while y < 3:
+            add = self.cell_list[y](n)
             out = out + add
-            x += 1
+            y += 1
         return out
 
 
@@ -53,14 +52,15 @@ def while_by_cell_list_in_while():
     net = WhileByCellListInWhile()
     n = Tensor(10, mstype.int32)
     x = Tensor(0, mstype.int32)
-    out = net(n, x)
+    y = Tensor(0, mstype.int32)
+    out = net(n, x, y)
     return out
 
 
 def test_while_by_cell_list_in_while_ge():
     """
-    Feature: Control flow(while and case) implement in ge
-    Description: run the whole graph sink in ascend in ge backend
+    Feature: Control flow(while and case) implement
+    Description: run the while by case in while with ge backend
     Expectation: success
     """
     out = while_by_cell_list_in_while()

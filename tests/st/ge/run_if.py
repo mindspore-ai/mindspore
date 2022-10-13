@@ -15,47 +15,39 @@
 import mindspore.context as context
 from mindspore import Tensor, nn
 from mindspore.common import dtype as mstype
+from mindspore import Parameter
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-class SingleCell(nn.Cell):
-    def __init__(self, i):
-        super().__init__()
-        self.i = i
-
-    def construct(self, x):
-        return self.i * x
-
-
-class CellListInWhile(nn.Cell):
+class IfNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.cell_list = nn.CellList()
-        self.cell_list.append(SingleCell(4))
-        self.cell_list.append(SingleCell(5))
-        self.cell_list.append(SingleCell(6))
+        self.param_a = Parameter(Tensor(10, mstype.float32), name="a")
+        self.zero = Parameter(Tensor(0, mstype.float32), name="zero")
 
-    def construct(self, t, x):
-        out = t
-        while x < 3:
-            add = self.cell_list[x](t)
-            out = out + add
-            x += 1
-        return out
+    def construct(self, x):
+        out = self.zero
+        out1 = self.zero
+        if x > 0:
+            out = out + self.param_a
+            out1 = out1 * self.param_a
+        out1 += out
+        out1 *= out
+        return out, out1
 
 
-def test_cell_list_in_while_ge():
+def test_if_ge():
     """
-    Feature: Control flow(while and case) implement
-    Description: test case in while with ge backend.
+    Feature: Control flow(if) implement
+    Description: test if with ge backend.
     Expectation: success.
     """
-    net = CellListInWhile()
-    t = Tensor(20, mstype.int32)
-    x = Tensor(0, mstype.int32)
-    out = net(t, x)
-    assert out == Tensor(320, mstype.int32)
+    net = IfNet()
+    x = Tensor(3, mstype.int32)
+    out0, out1 = net(x)
+    assert out0 == Tensor(10, mstype.float32)
+    assert out1 == Tensor(100, mstype.float32)
 
 if __name__ == "__main__":
-    test_cell_list_in_while_ge()
+    test_if_ge()

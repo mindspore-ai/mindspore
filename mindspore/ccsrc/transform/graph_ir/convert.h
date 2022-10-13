@@ -170,7 +170,8 @@ class DfGraphConvertor {
   Status TryConvertValueNodeToMultiConst(const ValueNodePtr node);
   OperatorPtr ConvertValueNode(ValueNodePtr node);
   void SaveParamFormat(CNodePtr node);
-  void GetCaseNodeInput(const CNodePtr node, const CNodePtr input_node);
+  void GetIfNodeInput(const AnfNodePtr &node);
+  void GetBranchNodeInput(const CNodePtr node, const CNodePtr input_node);
   void ConvertTopK(const CNodePtr node);
   void ConvertResizeBilinear(const FuncGraphPtr anf_graph) const;
   void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const;
@@ -185,7 +186,7 @@ class DfGraphConvertor {
   void SetNodeInput(AnfNodePtr node);
   void UpdateOpDesc(AnfNodePtr node);
   void SetSubgraph(const AnfNodePtr &node);
-  void ProcessSubgraph(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs);
+  void ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr &branch_node, ParamIndexMap &branch_to_parent_node_map);
   void BuildSaveCheckpointGraph();
   void DrawCNode(const CNodePtr node, const OpAdapterPtr adpt);
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
@@ -208,6 +209,9 @@ class DfGraphConvertor {
   void GetCallNodeInputs(const CNodePtr &node);
   std::vector<Operator> GetWhileBodyOutputs();
   bool IsSubGraph() const { return graph_type_ == GraphType::kCond || graph_type_ == GraphType::kBody; }
+  bool IsCondGraph() const { return graph_type_ == GraphType::kCond; }
+  bool IsBodyGraph() const { return graph_type_ == GraphType::kBody; }
+  bool IsBranchGraph() const { return graph_type_ == GraphType::kBranch; }
   bool IsAfterGraph() const { return graph_type_ == GraphType::kAfter; }
   bool IsNormalGraph() const { return graph_type_ == GraphType::kNormal; }
   void SetParamIndexMap(const std::vector<AnfNodePtr> &graphs);
@@ -242,7 +246,7 @@ class DfGraphConvertor {
   mindspore::HashMap<AnfNode *, OutHandler> out_handle_cache_;
   /* record "value tuple"<->"out_handler vector" mapping */
   mindspore::HashMap<AnfNode *, std::shared_ptr<std::vector<OutHandler>>> tuple_out_handle_cache_;
-  mindspore::HashMap<AnfNode *, std::shared_ptr<std::vector<AnfNodePtr>>> case_input_handle_cache_;
+  mindspore::HashMap<AnfNode *, std::shared_ptr<std::vector<AnfNodePtr>>> branch_input_handle_cache_;
   mindspore::HashMap<std::string, AnfNodePtr> params_;
   mindspore::HashMap<std::string, OperatorPtr> vars_;
   std::vector<std::pair<::ge::Operator, std::string>> graph_outputs_;

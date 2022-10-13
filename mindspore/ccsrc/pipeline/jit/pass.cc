@@ -524,17 +524,6 @@ OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &) {
   return OptPassGroupMap({{"renormalize", opt::OptPassConfig::Renormalize()}});
 }
 
-OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &) {
-  opt::OptPassConfig control_group = opt::OptPassConfig(opt::irpass::ConvertSwitchReplacement());
-  OptPassGroupMap map({
-    // After CleanAfterOptA, it may need renormalize to eliminate unused elements in Tuple.
-    {"renormalize", opt::OptPassConfig::Renormalize()},
-    {"control_group", control_group},
-    {"renormalize", opt::OptPassConfig::Renormalize()},
-  });
-  return map;
-}
-
 OptPassGroupMap GetGeSpecializedPhases() {
   opt::OptPassConfig ge_ta_size_group = opt::OptPassConfig(opt::irpass::GeTensorArrayPrepare());
   opt::irpass::OptimizeIRPassLib irpass;
@@ -621,8 +610,6 @@ void InitOpt(const ResourcePtr &resource) {
     g_pass_opts["opt_trans_graph"] =
       Optimizer::MakeOptimizer("opt_trans_graph", resource, GetOptPassesTransformGraph(irpass), true, true);
     g_pass_opts["renormal"] = Optimizer::MakeOptimizer("renormal", resource, GetOptPassesC(irpass));
-    g_pass_opts["opt_control"] =
-      Optimizer::MakeOptimizer("opt_control", resource, GetControlPhases(irpass), true, false);
     g_pass_opts["opt_grad_epilogue"] =
       Optimizer::MakeOptimizer("opt_grad_epilogue", resource, GetOptPynativeGradEpiloguePhases(irpass), true, false);
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", resource, GetPreparePhases(irpass));

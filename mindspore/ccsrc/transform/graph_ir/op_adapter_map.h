@@ -186,6 +186,7 @@ constexpr const char kNameCosineEmbeddingLoss[] = "CosineEmbeddingLoss";
 constexpr const char kNameXdivy[] = "Xdivy";
 constexpr const char kNameMod[] = "Mod";
 constexpr const char kNameRint[] = "Rint";
+constexpr const char kNameIf[] = "If";
 constexpr const char kNameScatterAdd[] = "ScatterAdd";
 constexpr const char kNameScatterSub[] = "ScatterSub";
 constexpr const char kNameScatterMul[] = "ScatterMul";

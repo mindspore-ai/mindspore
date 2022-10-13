@@ -38,8 +38,9 @@ OpAdapterPtr FindAdapter(AnfNodePtr node, bool train = false);
 
 bool IsPartialSuccNode(const AnfNodePtr node);
 bool IsWhileNode(const AnfNodePtr &node);
+bool IsIfNode(const AnfNodePtr &node);
+bool IsCaseNode(const AnfNodePtr &node);
 std::string GetCNodeTargetFuncName(const CNodePtr cnode);
-bool IsCaseNode(const CNodePtr node);
 bool IsPartialCNode(const AnfNodePtr node);
 
 void ClearGeSessionAndRunner();
