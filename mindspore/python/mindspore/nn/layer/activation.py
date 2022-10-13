@@ -30,6 +30,7 @@ from mindspore.nn.cell import Cell
 
 __all__ = ['Softmin',
            'Softmax',
+           'Softmax2d',
            'LogSoftmax',
            'ReLU',
            'ReLU6',
@@ -161,6 +162,53 @@ class Softmin(Cell):
 
     def construct(self, x):
         x = -1 * x
+        return self.softmax(x)
+
+
+class Softmax2d(Cell):
+    r"""
+    Applies SoftMax over features to each spatial location.
+
+    When given a Tensor of Channels x Height x Width, it will
+    apply `Softmax` to each location :math:`(Channels, h_i, w_j)`.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, which has the same type and shape as `x` with values in the range[0,1].
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `data_format` is neither 'NCHW' nor 'CHW'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[[[0.1, 0.2]], [[0.3, 0.4]], [[0.6, 0.5]]]]), mindspore.float32)
+        >>> softmax2d = nn.Softmax2d()
+        >>> output = softmax2d(x)
+        >>> print(output)
+        [[[[0.258, 0.28]], [[0.316, 0.342]], [[0.426, 0.378]]]
+    """
+
+    def __init__(self):
+        """Initialize Softmax2d."""
+        super(Softmax2d, self).__init__()
+        self.softmax = P.Softmax(axis=-3)
+        self.shape = P.Shape()
+
+    @staticmethod
+    @constexpr
+    def _check_input_dim(shape, cls_name):
+        dim = len(shape)
+        if dim not in (3, 4):
+            raise ValueError(f"For '{cls_name}', the in_shape must have 3 or 4 dims, but got {dim}.")
+
+    def construct(self, x):
+        x_shape = self.shape(x)
+        self._check_input_dim(x_shape, self.cls_name)
         return self.softmax(x)
 
 
@@ -1475,6 +1523,7 @@ class GLU(Cell):
 _activation = {
     'softmin': Softmin,
     'softmax': Softmax,
+    'softmax2d': Softmax2d,
     'logsoftmax': LogSoftmax,
     'relu': ReLU,
     'relu6': ReLU6,
