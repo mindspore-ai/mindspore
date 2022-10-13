@@ -121,6 +121,32 @@ def test_resize_bilinear_cpu_fp64():
     case_input_dyn(context.PYNATIVE_MODE, "CPU", "float64")
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_resize_bilinear_gpu_fp16():
+    """
+    Feature: Test resize_bilinear on GPU (fp16).
+    Description:  The shape of input is dynamic.
+    Expectation: Assert that results are consistent with expect.
+    """
+    case_input_dyn(context.GRAPH_MODE, "GPU", "float16")
+    case_input_dyn(context.PYNATIVE_MODE, "GPU", "float16")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinear_cpu_fp16():
+    """
+    Feature: Test resize_bilinear on CPU (fp16).
+    Description:  The shape of input is dynamic.
+    Expectation: Assert that results are consistent with expect.
+    """
+    case_input_dyn(context.GRAPH_MODE, "CPU", "float16")
+    case_input_dyn(context.PYNATIVE_MODE, "CPU", "float16")
+
+
 class NetResizeBilinearSizeDyn(nn.Cell):
     def construct(self, x, y, indices_x, indices_y, axis_x, axis_y):
         unique_x_index, _ = ops.unique(indices_x)

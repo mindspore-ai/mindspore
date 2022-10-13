@@ -591,3 +591,81 @@ def test_resize_bilinar_func_scale_cpu():
     output = resize_nn(input_tensor, (1.0, 1.0, 4.0, 2.0), None)
     expect = resize_nn(input_tensor, None, (8, 8))
     assert np.allclose(output.asnumpy(), expect.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinar_func_cpu_fp16():
+    """
+    Feature: Test bilinear on cpu with fp16.
+    Description: bilinear executes by calling ResizeBilinearV2
+    Expectation: Assert that results are consistent with expect.
+    """
+    input_tensor = Tensor(
+        np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(np.float16))
+    resize_nn = NetResizeBilinearFunc()
+    output = resize_nn(input_tensor, None, (3, 7))
+    expect = np.array([[[[0.1, 0.15714286, 0.21428573, 0.27142859, 0.32857144,
+                          0.3857143, 0.4],
+                         [0.36666667, 0.42380953, 0.48095244, 0.53809524, 0.5952381,
+                          0.65238094, 0.6666667],
+                         [0.5, 0.55714285, 0.61428577, 0.67142856, 0.7285714,
+                          0.78571427, 0.8]]]]).astype(np.float16)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinar_func_scale_cpu_fp16():
+    """
+    Feature: Test bilinear with scale on cpu with fp16.
+    Description: bilinear executes by calling ResizeBilinearV2
+    Expectation: Assert that results are consistent with expect.
+    """
+    input_tensor = Tensor(
+        np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(np.float16))
+    resize_nn = NetResizeBilinearFunc()
+    output = resize_nn(input_tensor, (1.0, 1.0, 4.0, 2.0), None)
+    expect = resize_nn(input_tensor, None, (8, 8))
+    assert np.allclose(output.asnumpy(), expect.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinar_func_cpu_fp64():
+    """
+    Feature: Test bilinear on cpu with fp64.
+    Description: bilinear executes by calling ResizeBilinearV2
+    Expectation: Assert that results are consistent with expect.
+    """
+    input_tensor = Tensor(
+        np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(np.float64))
+    resize_nn = NetResizeBilinearFunc()
+    output = resize_nn(input_tensor, None, (3, 7))
+    expect = np.array([[[[0.1, 0.15714286, 0.21428573, 0.27142859, 0.32857144,
+                          0.3857143, 0.4],
+                         [0.36666667, 0.42380953, 0.48095244, 0.53809524, 0.5952381,
+                          0.65238094, 0.6666667],
+                         [0.5, 0.55714285, 0.61428577, 0.67142856, 0.7285714,
+                          0.78571427, 0.8]]]]).astype(np.float64)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinar_func_scale_cpu_fp64():
+    """
+    Feature: Test bilinear with scale on cpu with fp64.
+    Description: bilinear executes by calling ResizeBilinearV2
+    Expectation: Assert that results are consistent with expect.
+    """
+    input_tensor = Tensor(
+        np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(np.float64))
+    resize_nn = NetResizeBilinearFunc()
+    output = resize_nn(input_tensor, (1.0, 1.0, 4.0, 2.0), None)
+    expect = resize_nn(input_tensor, None, (8, 8))
+    assert np.allclose(output.asnumpy(), expect.asnumpy())
