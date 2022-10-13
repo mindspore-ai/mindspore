@@ -153,7 +153,7 @@ def assign_add(variable, value):
 def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
     """
     Adds tensor `y` to specified axis and indices of Parameter `x`. The axis should be in [0,  len(x.dim) - 1],
-    and indices should be in [0, the size of `x` - 1] at the axis dimension.
+    and indices should be in [0, x.shape[axis] - 1] at the axis dimension.
 
     Args:
         x (Parameter): The input Parameter to add to.

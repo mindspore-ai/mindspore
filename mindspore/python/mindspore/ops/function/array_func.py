@@ -1230,8 +1230,8 @@ def slice(input_x, begin, size):
     r"""
     Slices a tensor in the specified shape.
 
-    Slice the tensor `input_x` in shape of `size` and starting at the location specified by `begin`,
-    The slice `begin` represents the offset in each dimension of `input_x`,
+    Slice the tensor `input_x` in shape of `size` and starting at the location specified by `begin`.
+    The slice `begin` represents the offset in each dimension of `input_x`.
     The slice `size` represents the size of the output tensor.
 
     Note:
@@ -1785,7 +1785,8 @@ def scatter_div(input_x, indices, updates):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    the relatively highest priority data type. A RuntimeError will be reported
+    when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.

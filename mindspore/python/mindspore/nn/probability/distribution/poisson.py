@@ -28,7 +28,11 @@ class Poisson(Distribution):
     r"""
     Poisson Distribution.
     A Poisson Distribution is a discrete distribution with the range as the non-negative integers,
-    and the probability mass function as :math:`P(X = k) = \lambda^k \exp(-\lambda) / k!, k = 1, 2, ...`,
+    and the probability mass function as
+
+    .. math::
+        P(X = k) = \lambda^k \exp(-\lambda) / k!, k = 1, 2, ...
+
     where :math:`\lambda` is the rate of the distribution.
 
     Args:
