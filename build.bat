@@ -62,16 +62,18 @@ IF "%1%" == "lite" (
         echo "======Start gen VS2019 Project for MS gpu ======"
         cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_GPU=ON -DGPU_BACKEND_CUDA=ON -DMS_REQUIRE_CUDA_VERSION=11.1 -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
             -G "Visual Studio 16 2019" -A x64 ../..
+    ) ELSE IF "%1%" == "ms_vs_cpu" (
+        echo "======Start gen VS2019 Project for MS cpu ======"
+        cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
+            -G "Visual Studio 16 2019" -A x64 ../..
+    ) ELSE IF "%1%" == "ms_vs_cpu_debug" (
+        echo "======Start gen VS2019 Project for MS cpu debug======"
+        cmake -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MODE=ON -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
+            -G "Visual Studio 16 2019" -A x64 ../..
     ) ELSE (
-        IF "%1%" == "ms_vs_cpu" (
-            echo "======Start gen VS2019 Project for MS cpu ======"
-            cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-                -G "Visual Studio 16 2019" -A x64 ../..
-        ) ELSE (
-            echo "======Start gen MinGW64 Project for MS cpu ======"
-            cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
+        echo "======Start gen MinGW64 Project for MS cpu ======"
+        cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
                 -G "CodeBlocks - MinGW Makefiles" ../..
-        )
     )
 )
 IF NOT %errorlevel% == 0 (
@@ -82,12 +84,12 @@ IF NOT %errorlevel% == 0 (
 
 IF "%1%" == "ms_vs_gpu" (
     cmake --build . --config Release --target package
+) ELSE IF "%1%" == "ms_vs_cpu" (
+    cmake --build . --config Release --target package
+) ELSE IF "%1%" == "ms_vs_cpu_debug" (
+    cmake --build . --config Debug --target package
 ) ELSE (
-    IF "%1%" == "ms_vs_cpu" (
-        cmake --build . --config Release --target package
-    ) ELSE (
-        cmake --build . --target package -- -j%threads%
-    )
+    cmake --build . --target package -- -j%threads%
 )
 
 IF NOT %errorlevel% == 0 (
