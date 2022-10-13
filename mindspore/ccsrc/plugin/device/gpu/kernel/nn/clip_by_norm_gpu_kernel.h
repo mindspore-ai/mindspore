@@ -51,7 +51,6 @@ class ClipByNormGpuKernelMod : public NativeGpuKernelMod {
  private:
   void ResetResource();
   void InitIOShape(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  bool ExistNullShape();
   void InitAxisAndEpsilon(const ops::ClipByNormPtr &prim);
   void InitSizeLists();
   // Do broadcast infer

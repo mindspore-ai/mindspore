@@ -46,7 +46,6 @@ size_t GetDeviceSize(const std::vector<AddressPtr> &addr_list, size_t index) {
 
 bool ClipByNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
-  ResetResource();
   // Get C++ primitive and kernel_name
   MS_EXCEPTION_IF_NULL(base_operator);
   auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(base_operator);
@@ -59,19 +58,24 @@ bool ClipByNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     return false;
   }
   data_type_ = std::make_pair(kernel_attr.GetInputAttr(0).first, kernel_attr.GetInputAttr(1).first);
+  return true;
+}
+
+int ClipByNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(base_operator);
+  ResetResource();
   // Init basic variables
   InitIOShape(inputs, outputs);
   InitAxisAndEpsilon(prim);
   // Init the `l2_norm` reduce shape according to `axis`
   l2_norm_output_shape_ = x_shape_;
   (void)std::for_each(axis_.begin(), axis_.end(), [this](const size_t &idx) { l2_norm_output_shape_[idx] = 1; });
-  return true;
-}
 
-int ClipByNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                                   const std::vector<KernelTensorPtr> &,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
   InitSizeLists();
   return KRET_OK;
 }
@@ -111,6 +115,8 @@ void ClipByNormCpuKernelMod::ResetResource() {
   clip_norm_shape_.clear();
   l2_norm_output_shape_.clear();
   output_shape_.clear();
+  input_size_list_.clear();
+  output_size_list_.clear();
 }
 
 void ClipByNormCpuKernelMod::InitIOShape(const std::vector<KernelTensorPtr> &inputs,

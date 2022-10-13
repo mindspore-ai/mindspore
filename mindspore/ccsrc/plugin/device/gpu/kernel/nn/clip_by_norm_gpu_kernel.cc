@@ -66,7 +66,6 @@ template <typename T, typename S>
 bool ClipByNormGpuKernelMod<T, S>::Init(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs) {
-  ResetResource();
   // Get `ClipByNorm` c++ primitive
   MS_EXCEPTION_IF_NULL(base_operator);
   auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(base_operator);
@@ -78,10 +77,21 @@ bool ClipByNormGpuKernelMod<T, S>::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For `" << kernel_name_ << "`, its input or output attributes are not supported.";
     return false;
   }
-  InitIOShape(inputs, outputs);
-  if (ExistNullShape()) {
-    return true;
+  return true;
+}
+
+template <typename T, typename S>
+int ClipByNormGpuKernelMod<T, S>::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
+  MS_EXCEPTION_IF_NULL(base_operator);
+  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(base_operator);
+  ResetResource();
+  InitIOShape(inputs, outputs);
   InitResource();
   CheckTensorSize({x_shape_, clip_norm_shape_, output_shape_});
   InitAxisAndEpsilon(prim);
@@ -89,14 +99,6 @@ bool ClipByNormGpuKernelMod<T, S>::Init(const BaseOperatorPtr &base_operator,
   // Determine data shape, type and format for `inputA_descriptor` and `outputC_descriptor`
   DetermineDeviceDataInfoForCudnn(inputs[0]);
   ChoseCudnnReduceTensorOp();
-  return true;
-}
-
-template <typename T, typename S>
-int ClipByNormGpuKernelMod<T, S>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                                         const std::vector<KernelTensorPtr> &,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
   InitSizeLists();
   return KRET_OK;
 }
@@ -106,9 +108,6 @@ bool ClipByNormGpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &workspace,
                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  if (is_null_shape_) {
-    return true;
-  }
   CheckAddrNum(inputs, workspace, outputs);
   DoLaunch(inputs, workspace, outputs, stream_ptr);
   return true;
@@ -221,14 +220,6 @@ void ClipByNormGpuKernelMod<T, S>::InitIOShape(const std::vector<KernelTensorPtr
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", output shape is not supported dynamic shape.";
   }
   MS_EXCEPTION_IF_CHECK_FAIL(output_shape_ == x_shape_, "Output shape should be same with input x shape.");
-}
-
-template <typename T, typename S>
-bool ClipByNormGpuKernelMod<T, S>::ExistNullShape() {
-  is_null_shape_ = CHECK_SHAPE_NULL(x_shape_, kernel_name_, "input_x") ||
-                   CHECK_SHAPE_NULL(clip_norm_shape_, kernel_name_, "input_clip_norm") ||
-                   CHECK_SHAPE_NULL(output_shape_, kernel_name_, "output");
-  return is_null_shape_;
 }
 
 template <typename T, typename S>
@@ -384,7 +375,6 @@ void ClipByNormGpuKernelMod<T, S>::ResetResource() {
   inputA_descriptor_ = nullptr;
   outputC_descriptor_ = nullptr;
   // Reset member variables
-  is_null_shape_ = false;
   all_match_ = true;
   clip_norm_need_broadcast_ = false;
   epsilon_ = 0.000001f;
@@ -403,6 +393,8 @@ void ClipByNormGpuKernelMod<T, S>::ResetResource() {
   l2_norm_ouths_shape_.clear();
   clip_norm_rhs_shape_.clear();
   output_shape_.clear();
+  input_size_list_.clear();
+  output_size_list_.clear();
 }
 }  // namespace kernel
 }  // namespace mindspore
