@@ -7,7 +7,7 @@ mindspore.ops.smooth_l1_loss
 
     平滑L1损失是一种类似于MSELoss的损失函数，但对异常值相对不敏感。参阅论文 `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ 。
 
-    给定长度为 :math:`N` 的两个输入 `x` 和 `y` ，平滑L1损失的计算如下：
+    给定长度为 :math:`N` 的两个输入 :math:`x,\  y` ，平滑L1损失的计算如下：
 
     .. math::
         L_{i} =
@@ -25,7 +25,7 @@ mindspore.ops.smooth_l1_loss
             \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    其中， :math:`\beta` 代表阈值 `beta` 。 :math:`N` 为batch size。
+    其中， :math:`\text{beta}` 控制损失函数从二次元变为线性的point。默认值是1.0。 :math:`N` 为batch size。
 
     .. note::
         在Ascend上，目前不支持 `logits` 的数据类型是float64。
