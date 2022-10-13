@@ -92,7 +92,7 @@ def assign_sub(variable, value):
                       when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
