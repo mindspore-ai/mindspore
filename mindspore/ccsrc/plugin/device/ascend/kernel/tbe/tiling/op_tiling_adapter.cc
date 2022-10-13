@@ -120,6 +120,21 @@ std::string OpTilingCalculateAdapter::GetInputName(const CNodePtr &node, size_t 
   return input_names_[index];
 }
 
+ShapeVector OpTilingCalculateAdapter::UpdateShape(const ShapeVector &shape, const std::string &format,
+                                                  const CNodePtr &node, const bool is_input) {
+  if (op_name_ != kTransDataOpName) {
+    return shape;
+  }
+  // 'input_format' is a default_format, check attr 'dst_format'
+  // 'output_format' is a default_format, check attr 'src_format'
+  auto check_format = is_input ? common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrDstFormat)
+                               : common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrSrcFormat);
+  if ((format == kOpFormat_DEFAULT) && (shape.size() < kDim4) && !IsOneOfNoPaddingFormat(check_format)) {
+    return trans::PaddingShape(shape, check_format);
+  }
+  return shape;
+}
+
 void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(op_desc);
@@ -136,18 +151,21 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::
     auto ms_format = AnfAlgo::GetInputFormat(node, real_index);
     auto ms_dtype = AnfAlgo::GetInputDeviceDataType(node, real_index);
 
+    auto ms_tmp_shape = UpdateShape(ms_shape, ms_format, node, true);
+    auto ms_ori_tmp_shape = UpdateShape(ms_ori_shape, ms_format, node, true);
     // ge info
     ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
-    ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
-    ::ge::Format ge_origin_format = ascend::GeTypesConvert::GetGeFormat(kOpFormat_DEFAULT, ms_ori_shape.size());
+    ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_tmp_shape.size());
+    auto base_format = IsOneOf3DFormat(ms_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+    ::ge::Format ge_origin_format = ascend::GeTypesConvert::GetGeFormat(base_format, ms_ori_tmp_shape.size());
 
     auto input_name = GetInputName(node, real_index);
     ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
     ge_tensor_desc.SetOriginFormat(ge_origin_format);
     ge_tensor_desc.SetDataType(ge_dtype);
-    ge_tensor_desc.SetShape(::ge::GeShape(ms_shape));
-    ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_shape));
+    ge_tensor_desc.SetShape(::ge::GeShape(ms_tmp_shape));
+    ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_tmp_shape));
     ge_tensor_desc.SetName(input_name);
     (void)(*op_desc)->AddInputDesc(input_name, ge_tensor_desc);
   }
@@ -164,17 +182,20 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
     auto ms_format = AnfAlgo::GetOutputFormat(node, i);
     auto ms_dtype = AnfAlgo::GetOutputDeviceDataType(node, i);
 
+    auto ms_tmp_shape = UpdateShape(ms_shape, ms_format, node, false);
+    auto ms_ori_tmp_shape = UpdateShape(ms_ori_shape, ms_format, node, false);
     ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
-    ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
-    ::ge::Format ge_origin_format = ascend::GeTypesConvert::GetGeFormat(kOpFormat_DEFAULT, ms_ori_shape.size());
+    ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_tmp_shape.size());
+    auto base_format = IsOneOf3DFormat(ms_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+    ::ge::Format ge_origin_format = ascend::GeTypesConvert::GetGeFormat(base_format, ms_ori_tmp_shape.size());
 
     auto output_name = GetOutputName(node, i);
     ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
     ge_tensor_desc.SetOriginFormat(ge_origin_format);
     ge_tensor_desc.SetDataType(ge_dtype);
-    ge_tensor_desc.SetShape(::ge::GeShape(ms_shape));
-    ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_shape));
+    ge_tensor_desc.SetShape(::ge::GeShape(ms_tmp_shape));
+    ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_tmp_shape));
     ge_tensor_desc.SetName(output_name);
     (void)(*op_desc)->AddOutputDesc(output_name, ge_tensor_desc);
   }
