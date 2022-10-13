@@ -29,7 +29,6 @@ from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.common.hook_handle import HookHandle
 from mindspore.context import ParallelMode
-from mindspore.ops.composite import Shard
 from mindspore import context
 from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from mindspore._checkparam import Validator
@@ -40,6 +39,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.parallel.shard import Shard
 from mindspore.parallel._tensor import _load_tensor_by_layout
 
 

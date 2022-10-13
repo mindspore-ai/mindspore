@@ -21,12 +21,10 @@ from functools import partial
 
 from types import FunctionType, MethodType
 import mindspore as ms
-import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.parallel._utils import _sens_divided_by_device_num_if_recomputation
-from mindspore import log as logger
-from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
+from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, ListCount_, DictClear_, DictHasKey_, DictUpdate_, \
@@ -867,98 +865,6 @@ class Map(Map_):
             func = args[0]
             args_list = args[1:]
         return tuple(map(func, *args_list))
-
-
-class Shard(Shard_):
-    """Shard operation"""
-
-    def __init__(self):
-        """Initialize Shard."""
-        Shard_.__init__(self, 'Shard')
-        self.shard_fn = None
-        self.fn = None
-        self.in_strategy = None
-        self.out_strategy = None
-        self.parameter_plan = None
-        self.device = None
-        self.level = None
-
-    def __call__(self, fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
-        if context.get_context("mode") != context.PYNATIVE_MODE or \
-                context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
-            raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
-        if context.get_context("device_target") not in ["Ascend", "GPU"]:
-            raise AssertionError(f"'Shard' now only supports 'Ascend' and 'GPU'")
-        if context.get_auto_parallel_context("search_mode") != "sharding_propagation":
-            raise AssertionError(f"'search_mode' must be 'sharding_propagation' for 'Shard'")
-        if not isinstance(in_strategy, tuple):
-            raise TypeError(f"For 'Shard', the 'in_strategy' should be a tuple, but got {type(in_strategy).__name__}")
-        if not isinstance(out_strategy, (type(None), tuple)):
-            raise TypeError(f"For 'Shard', the 'out_strategy' should be None or tuple, "
-                            f"but got {type(out_strategy).__name__}")
-        if not isinstance(parameter_plan, (dict, type(None))):
-            raise TypeError(f"For 'Shard', the 'parameter_plan' should be a dict or None, "
-                            f"but got {type(parameter_plan).__name__}")
-        if isinstance(parameter_plan, dict):
-            for k in parameter_plan.keys():
-                v = parameter_plan[k]
-                if not isinstance(k, str) or not isinstance(v, tuple):
-                    raise TypeError(f"For 'Shard', the type of each key and value in 'parameter_plan' must be str and "
-                                    f"tuple, but got {type(k).__name__} and {type(parameter_plan[v]).__name__}")
-        parameter_plan = self._parameter_plan_dict2tuple(parameter_plan)
-
-        if not isinstance(device, str):
-            raise TypeError(f"For 'Shard', the 'device' should be a string, "
-                            f"but got {type(device).__name__}")
-        if not isinstance(level, int):
-            raise TypeError(f"For 'Shard', the 'level' should be an integer, "
-                            f"but got {type(level).__name__}")
-
-        if ms.get_algo_parameters("fully_use_devices") is True:
-            logger.warning("After calling 'shard', the environment variable 'fully_use_devices' "
-                           "will be overwritten as False")
-            ms.set_algo_parameters(fully_use_devices=False)
-
-        if self._is_attrs_has_been_set(fn, in_strategy, out_strategy, parameter_plan, device, level):
-            return self.shard_fn
-        shard_ = Shard()
-
-        if isinstance(fn, nn.Cell):
-            for param in fn.trainable_params():
-                param.is_in_shard = True
-
-        def shard_fn(*args):
-            args = (fn,) + args
-
-            @ms_function(hash_args=fn)
-            def after_shard(*args):
-                return shard_(fn, in_strategy, out_strategy, parameter_plan, device, level)(*args)
-
-            return after_shard(*args)
-
-        self.shard_fn = shard_fn
-        self.fn = fn
-        self.in_strategy = in_strategy
-        self.out_strategy = out_strategy
-        self.parameter_plan = parameter_plan
-        self.device = device
-        self.level = level
-        return self.shard_fn
-
-    @staticmethod
-    def _parameter_plan_dict2tuple(parameter_plan):
-        if not isinstance(parameter_plan, dict):
-            return parameter_plan
-
-        parameter_plan_tuple = ()
-        for k in parameter_plan:
-            parameter_plan_tuple += ((k, parameter_plan[k]),)
-        return parameter_plan_tuple
-
-    def _is_attrs_has_been_set(self, fn, in_strategy, out_strategy, parameter_plan, device, level):
-        return self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
-               self.out_strategy == out_strategy and self.parameter_plan == parameter_plan and \
-               self.device == device and self.level == level
 
 
 class _ListAppend(ListAppend_):

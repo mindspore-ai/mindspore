@@ -21,7 +21,7 @@ Pre-defined combination of operators.
 
 
 from mindspore.ops.composite.base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
-    core, env_get, tail, zip_operation, Shard, _Vmap, _TaylorOperation
+    core, env_get, tail, zip_operation, _Vmap, _TaylorOperation
 from mindspore.ops.composite.clip_ops import clip_by_value, clip_by_global_norm
 from mindspore.ops.composite.multitype_ops.add_impl import hyper_add
 from mindspore.ops.composite.multitype_ops.ones_like_impl import ones_like
@@ -62,6 +62,5 @@ __all__ = [
     'sequence_mask',
     'matmul',
     '_Grad',
-    'Shard',
     '_Vmap',
     '_VmapGeneralPreprocess']

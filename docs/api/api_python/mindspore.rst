@@ -76,6 +76,14 @@ mindspore
     mindspore.get_algo_parameters
     mindspore.reset_algo_parameters
 
+并行
+-------------------
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.shard
+
 数据处理工具
 -------------------
 

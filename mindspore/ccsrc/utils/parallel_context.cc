@@ -46,6 +46,7 @@ void ParallelContext::Reset() {
   init_param_shape_ = true;
   gradients_mean_ = false;
   full_batch_ = false;
+  full_batch_is_set_ = false;
   gradient_fp32_sync_ = true;
   loss_repeated_mean_ = true;
   device_num_ = 1;
@@ -121,7 +122,10 @@ void ParallelContext::set_global_rank(int64_t global_rank) {
 
 void ParallelContext::set_gradients_mean(bool gradients_mean) { gradients_mean_ = gradients_mean; }
 
-void ParallelContext::set_full_batch(bool full_batch) { full_batch_ = full_batch; }
+void ParallelContext::set_full_batch(bool full_batch) {
+  full_batch_ = full_batch;
+  full_batch_is_set_ = true;
+}
 
 void ParallelContext::set_dataset_strategy(const std::vector<std::vector<int64_t>> &dataset_strategy) {
   dataset_strategy_ = dataset_strategy;

@@ -19,8 +19,6 @@
 
 import numpy as np
 
-import mindspore as ms
-from mindspore import log as logger
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import Tensor
 from mindspore.common._decorator import deprecated
@@ -39,7 +37,7 @@ from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
-from mindspore.ops.composite import _Vmap, Shard
+from mindspore.ops.composite import _Vmap
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -76,15 +74,6 @@ partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
 identity = P.identity()
-shard_fn = Shard()
-
-
-def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
-    """Apply distributed process for fn"""
-    if not isinstance(fn, (ms.nn.Cell)):
-        logger.warning("'fn' is not a mindspore.nn.Cell, and its definition cannot involve Parameter; "
-                       "otherwise, the result may be incorrect.")
-    return shard_fn(fn, in_strategy, out_strategy, parameter_plan, device, level)
 
 
 @deprecated("1.8", "range", False)

@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.functional as F
-from mindspore import Tensor
+from mindspore import Tensor, shard
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.communication.management import init
 from mindspore.nn.loss.loss import LossBase
@@ -195,14 +195,14 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[3],
                                        out_channel=out_channels[3],
                                        stride=strides[3])
-        self.layer4_shard = F.shard(self.layer4, in_strategy=((8, 1, 1, 1),), out_strategy=(None,),
-                                    parameter_plan={'self.layer4.0.conv2.weight': (8, 1, 1, 1)})
+        self.layer4_shard = shard(self.layer4, in_strategy=((8, 1, 1, 1),), out_strategy=(None,),
+                                  parameter_plan={'self.layer4.0.conv2.weight': (8, 1, 1, 1)})
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.end_point = nn.Dense(2048, num_classes, has_bias=True,
                                   weight_init=weight_variable(),
                                   bias_init=weight_variable()).add_flags_recursive(fp16=True)
-        self.head = F.shard(self.end_point, in_strategy=((1, 8),), out_strategy=(None,))
+        self.head = shard(self.end_point, in_strategy=((1, 8),), out_strategy=(None,))
         self.squeeze = P.Squeeze()
         self.cast = P.Cast()
 
@@ -387,7 +387,8 @@ def test_train_feed_ascend():
     context.set_context(device_id=int(os.getenv('DEVICE_ID')))
     init()
     context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
-                                      search_mode="sharding_propagation", device_num=8)
+                                      search_mode="sharding_propagation", device_num=8,
+                                      dataset_strategy="data_parallel")
     np.random.seed(42)
     train_feed(num_classes=65536, expect_out=[11.259036, 11.015917, 10.599615])
 
@@ -402,6 +403,7 @@ def test_train_feed_gpu():
     context.set_context(device_id=int(os.getenv('DEVICE_ID')))
     init()
     context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
-                                      search_mode="sharding_propagation", device_num=8)
+                                      search_mode="sharding_propagation", device_num=8,
+                                      dataset_strategy="data_parallel")
     np.random.seed(42)
     train_feed(num_classes=65536, expect_out=[54.420227, 54.950275, 54.788376])

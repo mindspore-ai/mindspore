@@ -907,12 +907,14 @@ class _AutoParallelContext:
             raise TypeError('optimizer_weight_shard_aggregated_save is invalid type')
         self._context_handle.set_optimizer_weight_shard_aggregated_save(optimizer_weight_shard_aggregated_save)
 
-
     def get_optimizer_weight_shard_aggregated_save(self):
         """Get optimizer_weight_shard_size."""
         self.check_context_handle()
         return self._context_handle.get_optimizer_weight_shard_aggregated_save()
 
+    def get_full_batch_is_set(self):
+        self.check_context_handle()
+        return self._context_handle.get_full_batch_is_set()
 
     def reset(self):
         """Reset all settings."""
@@ -1003,7 +1005,8 @@ _get_auto_parallel_context_func_map = {
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save,
     "sharding_propagation": auto_parallel_context().get_sharding_propagation,
     "enable_alltoall": auto_parallel_context().get_enable_alltoall,
-    "comm_fusion": auto_parallel_context().get_comm_fusion}
+    "comm_fusion": auto_parallel_context().get_comm_fusion,
+    "full_batch_is_set": auto_parallel_context().get_full_batch_is_set}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,

@@ -29,7 +29,7 @@ from mindspore.context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_contex
 from mindspore.version import __version__
 from mindspore.profiler import Profiler, EnvProfiler
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters, \
-    rank_list_for_transform, transform_checkpoint_by_rank, transform_checkpoints, merge_pipeline_strategys
+    rank_list_for_transform, transform_checkpoint_by_rank, transform_checkpoints, merge_pipeline_strategys, shard
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeHelper
 
 
