@@ -177,7 +177,7 @@ def test_vmap_monad():
         def construct(self, assign_add_val, scatter_indices, scatter_updates):
             output = vmap(self.net, (0, 1, 0, 0, None), 1)(assign_add_val, self.assign_add_var,
                                                            self.scatter_ref, scatter_indices, scatter_updates)
-            return output, self.assign_add_var
+            return output, self.assign_add_var.value()
 
     assign_add_val = Tensor([[[1, 1, 1], [2, 2, 2]], [[1, 1, 1], [2, 2, 2]], [[1, 1, 1], [2, 2, 2]]], mstype.float32)
     scatter_indices = Tensor([[[0, 1], [1, 1]], [[0, 1], [0, 1]], [[1, 1], [1, 0]]], mstype.int32)

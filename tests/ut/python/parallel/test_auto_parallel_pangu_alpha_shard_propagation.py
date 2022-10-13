@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -465,7 +465,7 @@ class VocabEmbedding(Cell):
 
     def construct(self, input_ids):
         output = self.gather(self.embedding_table, input_ids, 0)
-        return output, self.embedding_table
+        return output, self.embedding_table.value()
 
 
 class EmbeddingLayer(nn.Cell):

@@ -250,7 +250,7 @@ class TrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
 
             accu_succ = self.hyper_map(reset_accu_grads, self.accu_grads)
 
-        ret = (mean_loss, overflow, scaling_sens, overflow)
+        ret = (mean_loss, overflow, scaling_sens.value(), overflow)
         return F.depend(ret, accu_succ)
 
     def start_overflow_check(self, pre_cond, compute_input):

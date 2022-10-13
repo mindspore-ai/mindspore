@@ -134,7 +134,7 @@ class EmbeddingLookup(nn.Cell):
         else:
             output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
         output = self.reshape(output_for_reshape, self.shape)
-        return output, self.embedding_table
+        return output, self.embedding_table.value()
 
 
 class EmbeddingPostprocessor(nn.Cell):
