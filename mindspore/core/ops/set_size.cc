@@ -59,9 +59,9 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     MS_EXCEPTION_IF_NULL(set_shape_value);
     if (!set_shape_value->isa<None>() && !set_shape_value->isa<AnyValue>()) {
       auto set_shape_value_tensor = set_shape_value->cast<tensor::TensorPtr>();
-      auto value = reinterpret_cast<int64_t *>(set_shape_value_tensor->data_c());
+      auto value = static_cast<int64_t *>(set_shape_value_tensor->data_c());
       MS_EXCEPTION_IF_NULL(value);
-      for (size_t i = 0; i < LongToSize(shape_size_dim); ++i) {
+      for (size_t i = 0; i < (unsigned int)shape_size_dim; ++i) {
         set_shape_value_vec[i] = value[i];
       }
       gen_value_succ = true;
@@ -82,8 +82,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
   } else {
     ShapeVector output_shape;
     auto set_values_index = 2;
-    auto dense_size =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[IntToSize(set_values_index)]->BuildShape())[kShape];
+    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
     if (dense_size.size() == 1 && dense_size[0] < set_values_index) {
       output_shape.push_back(1);
     } else {

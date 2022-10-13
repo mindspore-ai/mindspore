@@ -38,8 +38,8 @@ void ReverseV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (common::AnfAlgo::HasNodeAttr("axis", kernel_node)) {
     axis_shape_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "axis");
   }
-  input_dims_ = input_shape_.size();
-  axis_dims_ = axis_shape_.size();
+  input_dims_ = SizeToLong(input_shape_.size());
+  axis_dims_ = SizeToLong(axis_shape_.size());
   if (input_dims_ >= kInputDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should less than " << kInputDim
                       << ", but got " << input_dims_;
@@ -64,7 +64,7 @@ bool ReverseV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
   int64_t shape_element = 1;
   for (int64_t i = 0; i < input_dims_; ++i) {
-    shape_element *= input_shape_[i];
+    shape_element *= SizeToLong(input_shape_[i]);
   }
   if (axis_dims_ == 0) {
     for (int64_t i = 0; i < shape_element; i++) {
@@ -77,26 +77,27 @@ bool ReverseV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     reverse_shape.push_back(false);
   }
   for (int64_t i = 0; i < axis_dims_; ++i) {
-    int64_t realdim = axis_shape_[i] < 0 ? input_dims_ + axis_shape_[i] : axis_shape_[i];
+    int64_t realdim =
+      SizeToLong(axis_shape_[i]) < 0 ? input_dims_ + SizeToLong(axis_shape_[i]) : SizeToLong(axis_shape_[i]);
     reverse_shape[realdim] = true;
   }
   int64_t front = 1;
   bool redo = false;
   for (int64_t j = 0; j < input_dims_; j++) {
-    front = front * input_shape_[j];
-    if ((j != input_dims_ - 1) && (reverse_shape[j])) {
+    front = front * SizeToLong(input_shape_[j]);
+    if ((j != input_dims_ - 1) && (SizeToLong(reverse_shape[j]))) {
       if (redo) {
-        memcpy(input_data, output_data, shape_element * sizeof(T));
+        (void)memcpy(input_data, output_data, shape_element * sizeof(T));
       }
       int64_t row_size = shape_element / front;
-      int64_t input_forward = (input_shape_[j] - 1) * row_size;
+      int64_t input_forward = (SizeToLong(input_shape_[j]) - 1) * row_size;
       int64_t save = input_forward;
       int64_t output_forward = 0;
-      int64_t behind = shape_element / (front / input_shape_[j]);
-      for (int64_t k = 0; k < front / input_shape_[j]; k++) {
-        int64_t remain = input_shape_[j];
+      int64_t behind = shape_element / (front / SizeToLong(input_shape_[j]));
+      for (int64_t k = 0; k < front / SizeToLong(input_shape_[j]); k++) {
+        int64_t remain = SizeToLong(input_shape_[j]);
         while (remain > 0) {
-          memcpy(output_data + output_forward, input_data + input_forward, row_size * sizeof(T));
+          (void)memcpy(output_data + output_forward, input_data + input_forward, row_size * sizeof(T));
           input_forward = input_forward - row_size;
           output_forward = output_forward + row_size;
           remain--;
@@ -107,14 +108,14 @@ bool ReverseV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
         }
       }
       redo = true;
-    } else if ((j == input_dims_ - 1) && (reverse_shape[j])) {
+    } else if ((j == input_dims_ - 1) && (SizeToLong(reverse_shape[j]))) {
       if (redo) {
-        memcpy(input_data, output_data, shape_element * sizeof(T));
+        (void)memcpy(input_data, output_data, shape_element * sizeof(T));
       }
       int64_t output_forward = 0;
-      for (int64_t k = 0; k < shape_element / input_shape_[j]; k++) {
-        for (int64_t i = 0; i < input_shape_[j]; i++) {
-          *(output_data + output_forward) = *(input_data - 1 - i + (k + 1) * input_shape_[j]);
+      for (int64_t k = 0; k < shape_element / SizeToLong(input_shape_[j]); k++) {
+        for (int64_t i = 0; i < SizeToLong(input_shape_[j]); i++) {
+          *(output_data + output_forward) = *(input_data - 1 - i + (k + 1) * SizeToLong(input_shape_[j]));
           output_forward++;
         }
       }

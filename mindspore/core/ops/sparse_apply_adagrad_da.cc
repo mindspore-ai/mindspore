@@ -60,7 +60,7 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   if (var_shape.size() != grad_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', rank(grad) should be same as rank(var), but got rank(grad): " << grad_shape.size()
-                             << ", rank(var): " << var_shape.size() << ".";
+                             << ", rank(var): " << SizeToLong(var_shape.size()) << ".";
   }
 
   for (size_t i = 1; i < var_shape.size(); ++i) {
