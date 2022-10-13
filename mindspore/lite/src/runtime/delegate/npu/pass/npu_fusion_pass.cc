@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/delegate/npu/pass/npu_fusion_pass.h"
+#include <set>
 #include <vector>
 #include "src/runtime/delegate/npu/pass/npu_pass_utils.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
@@ -74,7 +75,11 @@ void NPUFusionPass::RemoveAndFreeOp(NPUOp *cur_op) {
 
 int NPUFusionPass::UpdatePreOps(NPUOp *cur_op) {
   auto cur_in_ops = cur_op->in_ops();
+  std::set<NPUOp *> has_visited;
   for (auto in_op : cur_op->in_ops()) {
+    if (has_visited.find(in_op) != has_visited.end()) {
+      continue;
+    }
     // graph in op
     if (in_op->in_ops().empty()) {
       cur_in_ops.erase(find(cur_in_ops.begin(), cur_in_ops.end(), in_op));
@@ -84,7 +89,6 @@ int NPUFusionPass::UpdatePreOps(NPUOp *cur_op) {
       for (size_t i = 0; i < pre_out_ops.size(); i++) {
         if (pre_out_ops[i] == in_op) {
           pre_out_ops[i] = cur_op;
-          break;
         }
       }
       pre_op->set_out_ops(pre_out_ops);
@@ -92,11 +96,11 @@ int NPUFusionPass::UpdatePreOps(NPUOp *cur_op) {
       for (size_t i = 0; i < cur_in_ops.size(); i++) {
         if (cur_in_ops[i] == in_op) {
           cur_in_ops[i] = pre_op;
-          break;
         }
       }
     }
     RemoveAndFreeOp(in_op);
+    (void)has_visited.insert(in_op);
   }
   cur_op->set_in_ops(cur_in_ops);
   return RET_OK;
@@ -104,7 +108,11 @@ int NPUFusionPass::UpdatePreOps(NPUOp *cur_op) {
 
 int NPUFusionPass::UpdatePostOps(NPUOp *cur_op) {
   auto cur_out_ops = cur_op->out_ops();
+  std::set<NPUOp *> has_visited;
   for (auto out_op : cur_op->out_ops()) {
+    if (has_visited.find(out_op) != has_visited.end()) {
+      continue;
+    }
     // graph out op
     if (out_op->out_ops().empty()) {
       cur_out_ops.erase(find(cur_out_ops.begin(), cur_out_ops.end(), out_op));
@@ -114,7 +122,6 @@ int NPUFusionPass::UpdatePostOps(NPUOp *cur_op) {
       for (size_t i = 0; i < post_in_ops.size(); i++) {
         if (post_in_ops[i] == out_op) {
           post_in_ops[i] = cur_op;
-          break;
         }
       }
       post_op->set_in_ops(post_in_ops);
@@ -122,11 +129,11 @@ int NPUFusionPass::UpdatePostOps(NPUOp *cur_op) {
       for (size_t i = 0; i < cur_out_ops.size(); i++) {
         if (cur_out_ops[i] == out_op) {
           cur_out_ops[i] = post_op;
-          break;
         }
       }
     }
     RemoveAndFreeOp(out_op);
+    (void)has_visited.insert(out_op);
   }
   cur_op->set_out_ops(cur_out_ops);
   return RET_OK;

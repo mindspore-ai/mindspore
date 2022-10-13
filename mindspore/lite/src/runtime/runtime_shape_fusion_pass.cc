@@ -254,23 +254,9 @@ int ShapeFusionPass::GenerateFusedShapeFusionMatrix(LiteGraph::Node *shape_fusio
   MS_CHECK_TRUE_RET(shape_fusion_matrices_.find(fused_inputs.at(0)) != shape_fusion_matrices_.end(), RET_ERROR);
 
   *shape_fusion_matrix = shape_fusion_matrices_[fused_inputs.at(0)];
-  auto input_index = post_node->input_indices_.at(0);
-  if (std::find(fused_inputs.begin(), fused_inputs.end(), input_index) != fused_inputs.end()) {
-    input_indices->push_back(input_index);
-  } else {
-    std::vector<size_t> shape = {shape_fusion_matrix->shape_matrix.size(),
-                                 shape_fusion_matrix->shape_matrix.front().size()};
-    auto const_tensor = src_tensors_->at(input_index);
-    MS_CHECK_TRUE_RET(const_tensor != nullptr && const_tensor->data() != nullptr, RET_ERROR);
-    if (GetFusionMatrixFromConstantTensor(const_tensor, shape, post_node->node_type_, shape_fusion_matrix) != RET_OK) {
-      MS_LOG(ERROR) << "GetMatrixFromConstantTensor failed.";
-      return RET_ERROR;
-    }
-  }
-
-  for (size_t i = 1; i < post_node->input_indices_.size(); i++) {
+  for (size_t i = 0; i < post_node->input_indices_.size(); i++) {
     ShapeFusionMatrix const_matrix;
-    input_index = post_node->input_indices_.at(i);
+    auto input_index = post_node->input_indices_.at(i);
     if (std::find(shape_fusion->output_indices_.begin(), shape_fusion->output_indices_.end(), input_index) !=
         shape_fusion->output_indices_.end()) {
       MS_CHECK_TRUE_RET(shape_fusion_matrices_.find(input_index) != shape_fusion_matrices_.end(), RET_ERROR);
@@ -285,6 +271,10 @@ int ShapeFusionPass::GenerateFusedShapeFusionMatrix(LiteGraph::Node *shape_fusio
         MS_LOG(ERROR) << "GetMatrixFromConstantTensor failed.";
         return RET_ERROR;
       }
+    }
+    if (i == 0) {
+      *shape_fusion_matrix = const_matrix;
+      continue;
     }
     if (post_node->node_type_ == schema::PrimitiveType_Concat) {
       shape_fusion_matrix->Append(const_matrix);
