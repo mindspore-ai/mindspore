@@ -40,6 +40,8 @@ bool ArgMinWithValue::keep_dims() const {
 namespace {
 abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_shape_ptr = input_args[0]->BuildShape();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
   auto x_shape = x_shape_map[kShape];
@@ -86,6 +88,8 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr ArgMinWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   const std::set<TypePtr> valid_types = {kInt16, kInt32, kUInt16, kUInt32, kFloat16, kFloat32, kFloat64};
   TypePtr input_x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_x_type, valid_types, prim->name());
