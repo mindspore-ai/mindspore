@@ -39,6 +39,7 @@ constexpr auto kNameCustomAscend = "CustomAscend";
 
 SingleOpInferSession::~SingleOpInferSession() {
   kernel::Factory<kernel::KernelMod>::Instance().UnRegister(kNameCustomAscend);
+  kernel::AscendKernelPlugin::GetInstance().UpdateRegisterStatus(false);
 }
 
 Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context) {
