@@ -90,6 +90,7 @@ class ModelProcess {
   void DestroyInputsDataMem();
   void DestroyInputsBuffer();
   void DestroyOutputsBuffer();
+  void UpdateBufferSize(const std::vector<KernelTensorPtr> &inputs);
 
   AclModelOptionsPtr options_;
   uint32_t model_id_;
