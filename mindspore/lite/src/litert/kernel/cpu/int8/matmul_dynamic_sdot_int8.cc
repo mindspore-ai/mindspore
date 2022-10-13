@@ -167,16 +167,16 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicRunArm64Sdot() {
   CHECK_NULL_RETURN(c_ptr);
 
   for (int i = 0; i < param_->batch; i++) {
-    batch_input_ptr_ = a_ptr + i * param_->row_ * param_->deep_;
+    batch_input_ptr_ = a_ptr + a_offset_[i] * param_->row_ * param_->deep_;
     auto ret = ParallelLaunch(this->ms_context_, Arm64SdotPreRun, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Arm64SdotPreRun error: [" << ret << "]";
       return ret;
     }
 
-    batch_weight_ptr_ = b_ptr + i * param_->col_ * param_->deep_;
-    batch_sums_ = weight_sums_ + i * param_->col_align_;
-    batch_b_ptr_ = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
+    batch_weight_ptr_ = b_ptr + b_offset_[i] * param_->col_ * param_->deep_;
+    batch_sums_ = weight_sums_ + b_offset_[i] * param_->col_align_;
+    batch_b_ptr_ = pack_b_ptr_ + b_offset_[i] * param_->col_align_ * param_->deep_align_;
     batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
 
     ret = ParallelLaunch(this->ms_context_, Arm64SdotRun, this, thread_count_);
