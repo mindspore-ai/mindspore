@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FORWARD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FORWARD_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_FORWARD_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_FORWARD_H_
 
 #include <memory>
 #include <string>
@@ -24,7 +24,6 @@
 #include <stack>
 #include "pipeline/pynative/forward/do_cast.h"
 #include "pipeline/pynative/forward/do_infer.h"
-#include "pipeline/pynative/dynamic_shape.h"
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
 
@@ -39,24 +38,18 @@ using MindrtBackendMap = std::map<std::string, std::shared_ptr<compile::MindRTBa
 class ForwardExecutor {
  public:
   ForwardExecutor()
-      : cast_operation_(std::make_shared<CastOperation>()),
-        infer_operation_(std::make_shared<InferOperation>()),
-        dynamic_shape_(std::make_shared<DynamicShape>()) {}
+      : cast_operation_(std::make_shared<CastOperation>()), infer_operation_(std::make_shared<InferOperation>()) {}
   ~ForwardExecutor() = default;
 
-  std::function<void(py::object *, const FrontendOpRunInfoPtr &)> RunOpS = [this](auto &&PH1, auto &&PH2) {
-    RunOpInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
-  };
-
   void Init();
-  void RunOpInner(py::object *ret, const FrontendOpRunInfoPtr &op_run_info);
-  ValuePtr RunOpForward(const FrontendOpRunInfoPtr &op_run_info);
+  std::function<void(const FrontendOpRunInfoPtr &)> RunOpS = [this](auto &&PH1) {
+    RunOpForward(std::forward<decltype(PH1)>(PH1));
+  };
+  void RunOpForward(const FrontendOpRunInfoPtr &op_run_info);
   FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args) const;
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   void ClearNodeAbsMap() const;
-  void EraseFromNodeAbsMap(const std::string &id) const;
-  void SetNodeAbsMapByValue(const std::string &op_name, const ValuePtr &value,
-                            const abstract::AbstractBasePtr &abs) const;
+  void SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const;
   void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const;
   const NodeAbsCache &NodeAbsMap() const;
   void ClearRes();
@@ -67,16 +60,11 @@ class ForwardExecutor {
   void PopForwardCell() { forward_cell_stack_.pop(); }
   void ExecuteLazyTask();
   void Sync();
-  void PrintPyObjInfo(const py::object &cell, const std::string &str) const;
-  void ProcessBeforeNewGraph(const py::object &cell, const py::args &args);
-  void ProcessBeforeEndGraph(const py::object &cell);
-  void ProcessAfterEndGraph(const py::object &cell) const;
+  void PrintPyObjInfo(const py::object &obj, const std::string &str, bool is_cell) const;
+  void ProcessBeforeNewGraph(const py::object &obj, const py::args &args);
+  void ProcessBeforeEndGraph(const py::object &obj, bool is_cell);
+  void ProcessAfterEndGraph(const py::object &obj, bool is_cell) const;
   bool CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info);
-  void set_is_ms_function_compiling(bool is_compiling) { is_ms_function_compiling_ = is_compiling; }
-  inline DynamicShapePtr dynamic_shape() const {
-    MS_EXCEPTION_IF_NULL(dynamic_shape_);
-    return dynamic_shape_;
-  }
   inline InferOperationPtr infer_operation() const {
     MS_EXCEPTION_IF_NULL(infer_operation_);
     return infer_operation_;
@@ -93,29 +81,27 @@ class ForwardExecutor {
   ValuePtr RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) const;
   ValuePtr RunOpInMs(const FrontendOpRunInfoPtr &op_run_info);
   ValuePtr RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info);
-  ValuePtr GetOutput(const FrontendOpRunInfoPtr &op_run_info);
+  void GetOutput(const FrontendOpRunInfoPtr &op_run_info);
   // Mix precision and Implicit transform
   void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const;
   // Infer output abstract
-  ValuePtr InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
+  void InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
   // Check sync condition in heterogeneous
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
 
  private:
   bool init_{false};
   bool lazy_build_{false};
-  uint32_t device_id_;
+  uint32_t device_id_{0};
   std::string last_target_{"Unknown"};
   std::string device_target_;
   std::stack<CellPtr> forward_cell_stack_;
   GradExecutorWeakPtr grad_executor_;
   CastOperationPtr cast_operation_;
   InferOperationPtr infer_operation_;
-  DynamicShapePtr dynamic_shape_;
   MindrtBackendMap mindrt_backends_;
-  bool is_ms_function_compiling_{false};
 };
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FORWARD_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_FORWARD_H_

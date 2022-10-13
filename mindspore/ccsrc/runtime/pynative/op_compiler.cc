@@ -134,38 +134,6 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
   }
 }
 
-void OpCompiler::SetActualShapeForTensor(const string &op_name, const tensor::TensorPtr &tensor,
-                                         const AnfNodePtr &node) const {
-  MS_EXCEPTION_IF_NULL(tensor);
-  MS_LOG(DEBUG) << "Set op " << op_name << " input tensor " << tensor->id() << " real abstract ";
-  const auto &actual_abs = std::make_shared<abstract::AbstractTensor>(tensor->Dtype(), tensor->shape());
-  node->set_abstract(actual_abs);
-  // Just used for roll back. For not have dynamic op, but have dynamic cnode info
-  node->set_user_data(kActualAbstract, actual_abs);
-}
-
-void OpCompiler::SetGraphInputNodeToActualAbstract(const session::BackendOpRunInfoPtr &op_run_info,
-                                                   const KernelGraphPtr &graph) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (!op_run_info->base_op_run_info.has_dynamic_output && !op_run_info->base_op_run_info.has_dynamic_input) {
-    return;
-  }
-  const auto &tensor_mask = op_run_info->base_op_run_info.input_mask;
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
-  auto &graph_inputs = graph->inputs();
-  size_t graph_input_size = graph_inputs.size();
-  // For graph inputs, which exclude value nodes
-  for (size_t i = 0, j = 0; i < op_run_info->base_op_run_info.input_tensor.size() && j < graph_input_size; ++i) {
-    if (tensor_mask[i] == kValueNodeTensorMask) {
-      continue;
-    }
-    if (input_tensors[i]->base_shape_ptr() != nullptr) {
-      SetActualShapeForTensor(op_run_info->base_op_run_info.op_name, input_tensors[i], graph_inputs[j]);
-    }
-    ++j;
-  }
-}
-
 void OpCompiler::ClearOpCache(const GraphInfo &graph_info) { (void)op_compiler_infos_.erase(graph_info); }
 
 void OpCompiler::ClearAllCache() { op_compiler_infos_.clear(); }

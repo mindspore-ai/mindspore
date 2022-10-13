@@ -35,7 +35,6 @@ namespace pynative {
 namespace py = pybind11;
 
 struct BaseOpRunInfo {
-  bool has_dynamic_input = false;
   bool has_dynamic_output = false;
   bool is_mixed_precision_cast = false;
   bool lazy_build = false;
@@ -57,18 +56,45 @@ struct BaseOpRunInfo {
 struct FrontendOpRunInfo {
   BaseOpRunInfo base_op_run_info;
   bool run_in_vm = false;
+  bool grad_flag = false;
   bool output_get_by_infer_value = false;
   int mix_type{0};
+  size_t input_size = 0;
   PrimitivePyPtr op_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string op_info;
-  // Tensor input and with its value
-  std::vector<std::pair<size_t, ValuePtr>> index_with_value;
+  std::string out_value_id;
   std::vector<AbstractBasePtr> input_abs;
   std::vector<ValuePtr> input_value;
-  py::list op_inputs;
+  std::vector<std::string> input_value_id;
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
+
+struct InputArgsInfo {
+  InputArgsInfo() = default;
+  ~InputArgsInfo() = default;
+  InputArgsInfo(bool is_grad_topest_cell, bool is_high_order_top_cell, bool has_custom_bprop, size_t input_size,
+                std::string obj_id)
+      : is_grad_topest_cell(is_grad_topest_cell),
+        is_high_order_top_cell(is_high_order_top_cell),
+        has_custom_bprop(has_custom_bprop),
+        input_size(input_size),
+        obj_id(std::move(obj_id)) {}
+
+  bool is_grad_topest_cell;
+  bool is_high_order_top_cell;
+  bool has_custom_bprop;
+  size_t input_size;
+  std::string obj_id;
+
+  PrimitivePyPtr custom_bprp_prim{nullptr};
+  ValuePtr out_value{nullptr};
+  std::string cell_id;
+  std::string input_args_id;
+  std::vector<std::string> input_arg_id_vec;
+  std::vector<ValuePtr> input_arg_value_vec;
+};
+using InputArgsInfoPtr = std::shared_ptr<InputArgsInfo>;
 }  // namespace pynative
 }  // namespace mindspore
 

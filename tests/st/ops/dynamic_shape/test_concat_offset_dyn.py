@@ -30,7 +30,8 @@ class ConcatOffsetNet(nn.Cell):
         return self.op((x0, x1))
 
 
-def run_case():
+def run_case(run_mode):
+    context.set_context(mode=run_mode)
     x0 = Tensor(np.random.uniform(10, 20, (4, 2, 16)).astype(np.float32))
     x1 = Tensor(np.random.uniform(10, 20, (4, 6, 16)).astype(np.float32))
     expect = np.array([[0, 0, 0], [0, 2, 0]]).astype(np.int64)
@@ -39,7 +40,12 @@ def run_case():
     net = ConcatOffsetNet(1)
     net.set_inputs(x0_dyn, x1_dyn)
     output = net(x0, x1)
-    assert np.allclose(expect, output.asnumpy())
+    if run_mode == context.GRAPH_MODE:
+        assert np.allclose(expect, output.asnumpy())
+    else:
+        # In PyNative, set_inputs will be ignore. Static shape for ConcatOffset
+        # infer output is not a tensor, get constant value output.
+        assert np.allclose(expect, output)
 
 
 @pytest.mark.level0
@@ -52,7 +58,6 @@ def test_concat_offset():
     Description: test ConcatOffset on Ascend.
     Expectation: output compares success with expect.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_case()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    run_case()
+    context.set_context(device_target="Ascend")
+    run_case(context.GRAPH_MODE)
+    run_case(context.PYNATIVE_MODE)

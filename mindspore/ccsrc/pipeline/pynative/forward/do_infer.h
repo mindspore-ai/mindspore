@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_DO_INFER_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_DO_INFER_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_INFER_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_INFER_H_
 
 #include <vector>
 #include <string>
@@ -30,17 +30,16 @@ class InferOperation {
  public:
   InferOperation() = default;
   ~InferOperation() = default;
-  ValuePtr DoInfer(const FrontendOpRunInfoPtr &op_run_info);
+  void DoInfer(const FrontendOpRunInfoPtr &op_run_info);
   // Manage node abs cache.
-  void ClearNodeAbsCache() { node_abs_cache_.clear(); }
-  void EraseElemFromNodeAbsCache(const std::string &id) { (void)node_abs_cache_.erase(id); }
-  void SetNodeAbsCacheByValue(const std::string &op_name, const ValuePtr &value, const abstract::AbstractBasePtr &abs);
+  inline void ClearNodeAbsCache() { node_abs_cache_.clear(); }
+  void SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_info);
   void SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs);
-  const NodeAbsCache &node_abs_cache() const { return node_abs_cache_; }
+  inline const NodeAbsCache &node_abs_cache() const { return node_abs_cache_; }
   // Manage primitive output abstract cache.
-  void ClearPrimAbsList() { prim_abs_list_.clear(); }
+  inline void ClearPrimAbsList() { prim_abs_list_.clear(); }
   // Manage constant flag primitive cache.
-  void ClearConstFlagPrimCache() { no_const_flag_prims_.clear(); }
+  inline void ClearConstFlagPrimCache() { no_const_flag_prims_.clear(); }
   py::object CallConstantFolding(const py::args &args) const;
 
  private:
@@ -50,11 +49,11 @@ class InferOperation {
                                    size_t input_index, bool marked_const);
   AbstractBasePtr GetInputTupleValueAbstract(const FrontendOpRunInfoPtr &op_run_info,
                                              const ValueSequencePtr &tuple_value, size_t input_index,
-                                             const std::string &input_id, bool marked_const);
+                                             bool marked_const);
   AbstractBasePtr GetAbstractByValue(const ValuePtr &value, size_t input_index, const std::string &input_id,
                                      bool marked_const);
   // Infer output abstract.
-  ValuePtr InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info);
+  void InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info);
   bool GetOutputAbstractByCache(const FrontendOpRunInfoPtr &op_run_info) const;
   void SaveOutputAbstractToCache(const FrontendOpRunInfoPtr &op_run_info);
   void SaveSpecifiedOutputToCache(const std::string &op_name, const ValuePtrList &value_list,
@@ -74,4 +73,4 @@ using InferOperationPtr = std::shared_ptr<InferOperation>;
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_DO_INFER_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_INFER_H_

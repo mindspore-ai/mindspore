@@ -292,9 +292,7 @@ class _MindsporeFunctionExecutor:
         args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
-        phase = ''
-        with _MsFunctionCompileContext():
-            phase = self.compile(args_list, self.fn.__name__)
+        phase = self.compile(args_list, self.fn.__name__)
         if context.get_context("precompile_only"):
             return None
         new_inputs = self._generate_run_args(args_list)
@@ -417,7 +415,6 @@ class _MindsporeFunctionExecutor:
                     self.input_signature.append(args_list[-1])
                 Validator.check_dynamic_shape(self.input_signature, args_list)
                 compile_args = tuple(self.input_signature)
-                _pynative_executor.set_dynamic_input(self.obj, *compile_args)
         return compile_args
 
     def _generate_run_args(self, args_list):
@@ -861,23 +858,6 @@ def jit_class(cls):
     return cls
 
 
-class _MsFunctionCompileContext:
-    """
-    ms_function compile status manager
-    """
-
-    def __init__(self):
-        pass
-
-    def __enter__(self):
-        _pynative_executor.set_ms_function_compile_status(True)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        _pynative_executor.set_ms_function_compile_status(False)
-        return False
-
-
 def _function_forbid_reuse(func):
     if not inspect.isfunction(func):
         raise TypeError(f'Decorator _function_forbid_reuse can only be used for function type, but got {func}.')
@@ -954,20 +934,14 @@ class _PyNativeExecutor:
         self._optimizer = None
         self._top_cell = None
 
-    def __call__(self, sens_param, obj, *args, **kwargs):
+    def __call__(self):
         """
         PyNative executor run grad graph.
-
-        Args:
-            obj (Function/Cell): The function or cell instance.
-            args (tuple): Function or cell input arguments.
-            kwargs (dict): keyword arguments.
 
         Return:
             The return object after running grad graph.
         """
-        args = args + tuple(kwargs.values())
-        return self._executor(sens_param, obj, args)
+        return self._executor()
 
     @staticmethod
     def parameter_broadcast(obj, phase):
@@ -1025,7 +999,7 @@ class _PyNativeExecutor:
         """
         self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
-    def check_run(self, grad, obj, grad_hash_id, *args, **kwargs):
+    def check_run(self, grad, obj, *args, **kwargs):
         """
         Whether the forward graph need to construct.
 
@@ -1039,7 +1013,7 @@ class _PyNativeExecutor:
         Return:
             bool, specifies whether the forward graph need to construct.
         """
-        return self._executor.check_run(grad, obj, grad_hash_id, *args, *(kwargs.values()))
+        return self._executor.check_run(grad, obj, *args, *(kwargs.values()))
 
     def grad(self, obj, grad, weights, grad_position, *args, **kwargs):
         """
@@ -1059,18 +1033,6 @@ class _PyNativeExecutor:
         """
         self._executor.grad_net(grad, obj, weights, grad_position, *args, *(kwargs.values()))
 
-    def del_cell(self, obj):
-        """
-        Clean resource for cell.
-
-        Args:
-            obj (Function/Cell): The function or cell instance.
-
-        Return:
-            None.
-        """
-        self._executor.clear_cell(obj)
-
     def clear_res(self):
         """
         Clean resource for _PyNativeExecutor.
@@ -1079,20 +1041,6 @@ class _PyNativeExecutor:
             None.
         """
         return self._executor.clear_res()
-
-    def clear_grad(self, obj, *args, **kwargs):
-        """
-        Clean resource after building grad graph.
-
-        Args:
-            obj (Function/Cell): The function or cell instance.
-            args (tuple): Function or cell input arguments.
-            kwargs (dict): keyword arguments.
-
-        Return:
-            None.
-        """
-        self._executor.clear_grad(obj, *args, *(kwargs.values()))
 
     def sync(self):
         """
@@ -1160,30 +1108,6 @@ class _PyNativeExecutor:
             None.
         """
         self._executor.set_grad_flag(flag)
-
-    def set_ms_function_compile_status(self, status):
-        """
-        Set ms_function is compiling
-
-        Args:
-            status(bool): ms_function compile status
-        Return:
-            None.
-        """
-        self._executor.set_ms_function_compile_status(status)
-
-    def set_dynamic_input(self, obj, *args):
-        """
-        Set dynamic shape tensor of input arguments.
-
-        Args:
-            obj (Function/Cell): The function or cell instance.
-            args (tuple): Function or cell dynamic input arguments.
-
-        Return:
-            None.
-        """
-        self._executor.set_dynamic_input(obj, *args)
 
     def is_first_cell(self):
         """

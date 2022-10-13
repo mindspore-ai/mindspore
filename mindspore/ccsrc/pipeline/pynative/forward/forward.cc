@@ -19,8 +19,6 @@
 #include <algorithm>
 #include <vector>
 #include "pipeline/pynative/pynative_utils.h"
-#include "pipeline/pynative/grad/grad.h"
-#include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "backend/graph_compiler/transform.h"
 #include "utils/ms_context.h"
@@ -28,7 +26,6 @@
 namespace mindspore {
 namespace pynative {
 namespace {
-// primitive unable to infer value for constant input in PyNative mode
 const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "HookBackward", "CellBackwardHook"};
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
@@ -174,31 +171,20 @@ void ForwardExecutor::Init() {
   init_ = true;
 }
 
-void ForwardExecutor::RunOpInner(py::object *ret, const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(ret);
+void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   Init();
-  *ret = ValueToPyData(RunOpForward(op_run_info));
-}
-
-ValuePtr ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
-  // 1. Set cast for inputs
+  // 1.Set cast for inputs
   SetCastForInputs(op_run_info);
   // 2. Infer output abstract
-  ValuePtr infer_value = InferOutputAbstract(op_run_info);
+  InferOutputAbstract(op_run_info);
   // 3. Run op with selected backend
-  ValuePtr out_value;
-  if (op_run_info->output_get_by_infer_value) {
-    out_value = infer_value;
-  } else {
-    out_value = GetOutput(op_run_info);
+  if (!op_run_info->output_get_by_infer_value) {
+    GetOutput(op_run_info);
   }
   // 4. Do op grad and record op info
-  if (!is_ms_function_compiling_) {
-    grad()->ProcessOpGradInfo(op_run_info, out_value);
-  }
-  return out_value;
+  grad()->ProcessOpGradInfo(op_run_info);
 }
 
 FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) const {
@@ -206,7 +192,9 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
     MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
   }
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
-  op_run_info->base_op_run_info.op_name = py::cast<std::string>(args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)]);
+  // Used for async run
+  op_run_info->grad_flag = grad()->grad_flag();
+  op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)]);
@@ -224,13 +212,8 @@ void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) 
 
 void ForwardExecutor::ClearNodeAbsMap() const { infer_operation()->ClearNodeAbsCache(); }
 
-void ForwardExecutor::EraseFromNodeAbsMap(const std::string &id) const {
-  infer_operation()->EraseElemFromNodeAbsCache(id);
-}
-
-void ForwardExecutor::SetNodeAbsMapByValue(const std::string &op_name, const ValuePtr &value,
-                                           const abstract::AbstractBasePtr &abs) const {
-  infer_operation()->SetNodeAbsCacheByValue(op_name, value, abs);
+void ForwardExecutor::SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const {
+  infer_operation()->SetNodeAbsCacheByValue(op_run_info);
 }
 
 void ForwardExecutor::SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const {
@@ -239,28 +222,25 @@ void ForwardExecutor::SetNodeAbsMapById(const std::string &id, const abstract::A
 
 const NodeAbsCache &ForwardExecutor::NodeAbsMap() const { return infer_operation()->node_abs_cache(); }
 
-ValuePtr ForwardExecutor::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const {
-  return infer_operation()->DoInfer(op_run_info);
+void ForwardExecutor::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const {
+  infer_operation()->DoInfer(op_run_info);
 }
 
-ValuePtr ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
+void ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
   // Run op with selected backend, nop is no need run backend
-  auto out_real_value = RunOpWithBackendPolicy(op_run_info);
-  if (out_real_value->isa<ValueSequence>()) {
-    const auto &result_v_list = out_real_value->cast<ValueSequencePtr>();
+  op_run_info->out_value = RunOpWithBackendPolicy(op_run_info);
+  if (op_run_info->out_value->isa<ValueSequence>()) {
+    const auto &result_v_list = op_run_info->out_value->cast<ValueSequencePtr>();
     if (result_v_list->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
         !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-      out_real_value = result_v_list->value().front();
+      op_run_info->out_value = result_v_list->value().front();
     }
   }
   // Not use GetNext abs
   if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
-    if (op_run_info->base_op_run_info.has_dynamic_output) {
-      dynamic_shape()->UpdateValueBaseShape(out_real_value, op_run_info->base_op_run_info.abstract);
-    }
-    SetNodeAbsMapByValue(op_run_info->base_op_run_info.op_name, out_real_value, op_run_info->base_op_run_info.abstract);
+    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
+    SetNodeAbsMapByValue(op_run_info);
   }
-  return out_real_value;
 }
 
 compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const std::string &device_target) {
@@ -299,14 +279,10 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   op_run_info->run_in_vm = true;
-  const auto &op_inputs = op_run_info->input_value;
-  if (op_run_info->base_op_run_info.op_name == prim::kPrimInsertGradientOf->name() ||
-      op_run_info->base_op_run_info.op_name == prim::kPrimStopGradient->name() ||
-      op_run_info->base_op_run_info.op_name == prim::kPrimHookBackward->name() ||
-      op_run_info->base_op_run_info.op_name == prim::kPrimCellBackwardHook->name()) {
-    std::vector<ValuePtr> result(op_inputs.size());
-    for (size_t i = 0; i < op_inputs.size(); i++) {
-      auto tensor = op_inputs[i]->cast<TensorPtr>();
+  if (kVmOperators.find(op_run_info->base_op_run_info.op_name) != kVmOperators.end()) {
+    std::vector<ValuePtr> result(op_run_info->input_size);
+    for (size_t i = 0; i < op_run_info->input_size; i++) {
+      auto tensor = op_run_info->input_value[i]->cast<TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       if (op_run_info->base_op_run_info.op_name == prim::kPrimHookBackward->name() ||
           op_run_info->base_op_run_info.op_name == prim::kPrimCellBackwardHook->name()) {
@@ -326,11 +302,11 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   }
 
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
-  op_run_info->op_inputs = py::list(op_inputs.size());
-  for (size_t i = 0; i < op_inputs.size(); ++i) {
-    op_run_info->op_inputs[i] = ValueToPyData(op_inputs[i]);
+  py::list vm_op_inputs = py::list(op_run_info->input_size);
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    vm_op_inputs[i] = PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->input_value[i]);
   }
-  auto result = op_run_info->op_prim->RunPyComputeFunction(op_run_info->op_inputs);
+  auto result = op_run_info->op_prim->RunPyComputeFunction(vm_op_inputs);
   if (py::isinstance<py::none>(result)) {
     MS_LOG(EXCEPTION) << "VM op " << op_run_info->base_op_run_info.op_name << " run failed!";
   }
@@ -369,30 +345,28 @@ void ForwardExecutor::ExecuteLazyTask() {
   }
 }
 
-void ForwardExecutor::PrintPyObjInfo(const py::object &cell, const std::string &str) const {
-  if (py::isinstance<Cell>(cell)) {
-    MS_LOG(DEBUG) << str << " run " << cell.cast<CellPtr>()->ToString();
+void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &str, bool is_cell) const {
+  if (is_cell) {
+    MS_LOG(DEBUG) << str << " run " << obj.cast<CellPtr>()->ToString();
     return;
   }
-  if (py::isinstance<py::function>(cell)) {
-    MS_LOG(DEBUG) << str << " run python function " << py::getattr(cell, "__name__").cast<std::string>();
-  }
+  MS_LOG(DEBUG) << str << " run python function " << py::getattr(obj, "__name__").cast<std::string>();
 }
 
-void ForwardExecutor::ProcessBeforeNewGraph(const py::object &cell, const py::args &args) {
-  if (py::isinstance<Cell>(cell)) {
-    PushForwardCell(cell);
+void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::args &args) {
+  bool is_cell = py::isinstance<Cell>(obj);
+  if (is_cell) {
+    PushForwardCell(obj);
   }
-  PrintPyObjInfo(cell, kBegin);
-  dynamic_shape()->SetFeedDynamicInputAbs(cell, args);
+  PrintPyObjInfo(obj, kBegin, is_cell);
 }
 
-void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
-  if (py::isinstance<Cell>(cell)) {
+void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell) {
+  if (is_cell) {
     PopForwardCell();
   }
   if (!grad()->grad_flag()) {
-    PrintPyObjInfo(cell, kEnd);
+    PrintPyObjInfo(obj, kEnd, is_cell);
   }
 
   // Do some finishing work before end graph
@@ -402,17 +376,16 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
     // Finish lazy task
     ExecuteLazyTask();
     if (!grad()->grad_flag()) {
-      // Clean up some resources for dynamic shape
       ClearNodeAbsMap();
     }
   }
 }
 
-void ForwardExecutor::ProcessAfterEndGraph(const py::object &cell) const {
+void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) const {
   if (IsFirstCell()) {
     ClearNodeAbsMap();
   }
-  PrintPyObjInfo(cell, kEnd);
+  PrintPyObjInfo(obj, kEnd, is_cell);
 }
 
 std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim) {

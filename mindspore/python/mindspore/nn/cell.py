@@ -320,9 +320,6 @@ class Cell(Cell_):
         raise AttributeError("The '{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
-        if context.get_context is not None and context._get_mode() == context.PYNATIVE_MODE:
-            _pynative_executor.del_cell(self)
-
         # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
         # here using pop(id(self), None) to avoid KeyError exception
         cells_compile_cache.pop(id(self), None)
@@ -890,8 +887,6 @@ class Cell(Cell_):
         self._check_construct_args(*inputs)
         if self._dynamic_shape_inputs:
             ds.config.set_dynamic_shape(True)
-        if context._get_mode() == context.PYNATIVE_MODE:
-            _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
 
     def get_inputs(self):
         """
