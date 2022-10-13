@@ -907,6 +907,7 @@ constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
 constexpr auto kFlagPyNativeRunInGraph = "pynative_run_in_graph";
 constexpr auto kFlagNeedRenormalize = "need_renormalize";
 constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
+constexpr auto kFlagUseDynamicShapeProcess = "use_dynamic_shape_process";
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";
 

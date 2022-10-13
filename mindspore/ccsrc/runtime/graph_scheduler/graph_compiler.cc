@@ -602,13 +602,16 @@ TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
 }
 
 void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
+                                                   bool use_dynamic_shape_process,
                                                    session::BackendOpRunInfoPtr *op_run_info, GraphInfo *graph_info,
                                                    const GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(graph_info);
   *op_run_info = session_->GetSingleOpRunInfo(kernel, *graph_info, tensor_info, graph_output_info);
   session_->GetSingleOpGraphInfo(kernel, tensor_info, graph_info, *op_run_info);
+  MS_EXCEPTION_IF_NULL(*op_run_info);
   (*op_run_info)->base_op_run_info.graph_info = *graph_info;
+  (*op_run_info)->base_op_run_info.use_dynamic_shape_process = use_dynamic_shape_process;
 }
 
 void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const {

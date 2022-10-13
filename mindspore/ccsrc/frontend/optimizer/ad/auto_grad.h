@@ -46,11 +46,11 @@ struct GradParam {
       : cnode(cnode), op_args(op_args), out(out), fprop_fg(std::move(fprop_fg)) {}
 
   // Primal CNode create by op forward process
-  const CNodePtr &cnode;
+  const CNodePtr cnode;
   // Input value for cnode
-  const ValuePtrList &op_args;
+  const ValuePtrList op_args;
   // Output of op
-  const ValuePtr &out;
+  const ValuePtr out;
   // Bprop func graph
   const FuncGraphPtr fprop_fg;
   // High order used this, which

@@ -688,6 +688,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
     }
 
+    bool use_dynamic_shape_process = root_graph_->has_flag(kFlagUseDynamicShapeProcess);
     py::gil_scoped_release release;
     for (const auto &kernel : graph->execution_order()) {
       InputTensorInfo input_tensor_info;
@@ -714,9 +715,8 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         GraphInfo graph_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, &op_run_info, &graph_info,
-                                                        &graph_output_info);
-        bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, use_dynamic_shape_process,
+                                                        &op_run_info, &graph_info, &graph_output_info);
         if (use_dynamic_shape_process) {
           RunOpDynamic(op_run_info, &op_outputs);
         } else {
@@ -751,7 +751,8 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
   }
 
   if (contain_cut_graph || root_graph_->has_flag(kFlagIsDynamicStructure) ||
-      (enable_backend_dynamic_detect_ && root_graph_->has_flag(kFlagIsPynativeBpropGraph) && is_dynamic)) {
+      (enable_backend_dynamic_detect_ && root_graph_->has_flag(kFlagIsPynativeBpropGraph) && is_dynamic) ||
+      root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
     RunGraphBySingleOp(graph_compiler_info, args, outputs);
   } else {
     RunGraphByActors(actor_info, graph_compiler_info, args, outputs);

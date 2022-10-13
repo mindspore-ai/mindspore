@@ -149,7 +149,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
 
   // Save the mapping between cell id and actor info.
   mindspore::HashMap<std::string, ActorInfo> graph_actor_infos_;
-  bool enable_backend_dynamic_detect_{true};
+  bool enable_backend_dynamic_detect_{false};
   FuncGraphPtr root_graph_;
   GraphPartitionPtr graph_partition_;
   std::shared_ptr<GraphCompiler> graph_compiler_;
