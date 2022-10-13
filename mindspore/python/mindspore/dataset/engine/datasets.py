@@ -1638,6 +1638,9 @@ class Dataset:
         api_tree = runtime_getter[2]
         output_shapes = runtime_getter[0].GetOutputShapes(estimate)
         del api_tree
+        # Need to terminate the runtime context to avoid the occasional hang problem for
+        # Python (with multiprocessing enabled) in sink mode.
+        self.runtime_context.Terminate()
         del self.runtime_context
 
         if estimate:
@@ -1665,6 +1668,9 @@ class Dataset:
             api_tree = runtime_getter[2]
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             del api_tree
+            # Need to terminate the runtime context to avoid the occasional hang problem for
+            # Python (with multiprocessing enabled) in sink mode.
+            self.runtime_context.Terminate()
             del self.runtime_context
         return self.saved_output_types
 
@@ -2961,6 +2967,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.ppid = os.getpid()
         self.hook = None
         self.warning_ctl = None
+        # cache thread (get_ident()) to worker_id mapping in Python layer
+        self.python_threads_to_workers = {}
 
     def __del__(self):
         try:
@@ -3099,6 +3107,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         os.kill(os.getpid(), signal.SIGTERM)
 
     def launch(self, op_id=-1):
+        self.python_threads_to_workers = {}
         self.op_id = op_id
         logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
         if self.is_mp_enabled():
@@ -3152,7 +3161,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         Returns:
             list of strings
         """
-        if not self.is_mp_enabled:
+        if not self.is_mp_enabled():
             return []
         if not self.pids:
             self.pids = []
@@ -3197,7 +3206,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         """
         Execute
         """
-        worker_id = self.get_thread_to_worker()
+        t_id = threading.get_ident()
+        # get the worker_id from Python layer cache first, get from Cpp layer if not found.
+        worker_id = self.python_threads_to_workers.setdefault(t_id, self.get_thread_to_worker())
         if worker_id >= len(self.workers):
             raise RuntimeError("[Internal] worker_id value is greater than number of available workers!")
 

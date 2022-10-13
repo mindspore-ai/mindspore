@@ -78,6 +78,7 @@ class MyCallback(Callback):
 @pytest.mark.parametrize("fast_recovery", (False, True))
 @pytest.mark.parametrize("num_parallel_workers", (1, 4))
 @pytest.mark.parametrize("python_multiprocessing", (False, True))
+@pytest.mark.forked
 def test_dataset_reset_sink(fast_recovery, num_parallel_workers, python_multiprocessing):
     """
     Feature: Dataset recovery
@@ -96,4 +97,4 @@ def test_dataset_reset_sink(fast_recovery, num_parallel_workers, python_multipro
 
 
 if __name__ == '__main__':
-    test_dataset_reset_sink()
+    test_dataset_reset_sink(fast_recovery=True, num_parallel_workers=4, python_multiprocessing=True)
