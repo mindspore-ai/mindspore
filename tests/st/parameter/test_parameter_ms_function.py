@@ -18,14 +18,13 @@ from mindspore import context, Tensor, ms_function
 from mindspore.common.parameter import Parameter
 from mindspore.common import ParameterTuple
 
-context.set_context(mode=context.GRAPH_MODE)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_ms_function_1():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_ms_function_1(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in ms_function.
@@ -39,6 +38,7 @@ def test_parameter_ms_function_1():
         return param_a + param_b
 
     with pytest.raises(RuntimeError, match="its name 'name_a' already exists."):
+        context.set_context(mode=mode)
         res = test_parameter_ms_function()
         assert res == 3
 
@@ -47,7 +47,8 @@ def test_parameter_ms_function_1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_ms_function_2():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_ms_function_2(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in ms_function.
@@ -60,6 +61,7 @@ def test_parameter_ms_function_2():
     def test_parameter_ms_function():
         return param_a + param_b
 
+    context.set_context(mode=mode)
     res = test_parameter_ms_function()
     assert res == 2
 
@@ -68,7 +70,8 @@ def test_parameter_ms_function_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_ms_function_3():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_ms_function_3(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in ms_function.
@@ -82,6 +85,7 @@ def test_parameter_ms_function_3():
         return param_a + param_b
 
     with pytest.raises(RuntimeError, match="its name 'Parameter' already exists."):
+        context.set_context(mode=mode)
         res = test_parameter_ms_function()
         assert res == 3
 
@@ -90,7 +94,8 @@ def test_parameter_ms_function_3():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_ms_function_4():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_ms_function_4(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in ms_function.
@@ -104,6 +109,7 @@ def test_parameter_ms_function_4():
         def test_parameter_ms_function():
             return param_a[0] + param_a[1]
 
+        context.set_context(mode=mode)
         res = test_parameter_ms_function()
         assert res == 3
 
@@ -112,7 +118,8 @@ def test_parameter_ms_function_4():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_ms_function_5():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_ms_function_5(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in ms_function.
@@ -125,5 +132,6 @@ def test_parameter_ms_function_5():
         def test_parameter_ms_function():
             return param_a[0] + param_a[1]
 
+        context.set_context(mode=mode)
         res = test_parameter_ms_function()
         assert res == 3
