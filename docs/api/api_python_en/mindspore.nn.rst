@@ -193,8 +193,10 @@ Pooling Layer
     mindspore.nn.AdaptiveMaxPool3d
     mindspore.nn.AvgPool1d
     mindspore.nn.AvgPool2d
+    mindspore.nn.AvgPool3d
     mindspore.nn.MaxPool1d
     mindspore.nn.MaxPool2d
+    mindspore.nn.MaxPool3d
 
 Padding Layer
 -------------

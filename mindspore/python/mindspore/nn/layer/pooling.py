@@ -26,8 +26,8 @@ from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D, AdaptiveAvgPool3D
 from mindspore.nn.cell import Cell
 
-__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d',
-           'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d', 'AdaptiveAvgPool2d', 'AdaptiveAvgPool3d']
+__all__ = ['AvgPool3d', 'MaxPool3d', 'AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d',
+           'AdaptiveMaxPool1d', 'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d', 'AdaptiveAvgPool2d', 'AdaptiveAvgPool3d']
 
 
 class _PoolNd(Cell):
@@ -74,6 +74,111 @@ def _shape_check(in_shape, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(in_shape) != 3:
         raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
+
+
+class MaxPool3d(Cell):
+    r"""
+    3D max pooling operation.
+
+    Applies a 3D max pooling over an input Tensor which can be regarded as a composition of 3D planes.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, MaxPool outputs
+    regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size is
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride is :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, d, h, w) =
+        \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents depth, height and width of the kernel, or a tuple
+            of three int numbers that represent depth, height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The moving stride of pooling operation, an int number that represents
+            the moving strides of pooling kernel in the directions of depth, height and the width,
+            or a tuple of three int numbers that represent depth, height and width of movement respectively. Default: 1.
+        pads (Union[int, tuple[int]]): Pooling padding length. An int number that represents the depth,
+            height and width of movement are both strides, or a tuple of three int numbers that represent depth,
+            height and width of movement respectively.
+        dilation (Union[int, tuple[int]]): Control the spacing of elements in the pooling kernel. Default: 1.
+        return_indices (bool): If True, output is a Tuple of 2 Tensors, representing the maxpool result and where
+        the max values are generated. Otherwise, only the maxpool result is returned.
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8,
+          int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
+
+    Outputs:
+        If `return_indices` is False, output is a Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`,
+        with the same data type as `x`.
+
+        If `return_indices` is True, output is a Tuple of 2 Tensors, representing the maxpool result and where
+        the max values are generated.
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
+          It has the same data type as `x`.
+        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If length of shape of `x` is not equal to 5.
+        TypeError: If `kernel_size` , `strides` , `pads` or `dilation` is neither an int nor a tuple.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If `pads` is less than 0.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> pool1 = nn.MaxPool3d(kernel_size=3, strides=1, pads=1)
+        >>> pool2 = nn.MaxPool3d(kernel_size=3, strides=1, pads=1, return_indices=True)
+        >>> x = ms.Tensor(np.random.randint(0, 10, [1, 2, 2, 2, 2]), ms.float32)
+        >>> output1 = pool1(x)
+        >>> print(output1)
+        [[[[[8. 8.]
+            [8. 8.]]
+           [[8. 8.]
+            [8. 8.]]]
+          [[[9. 9.]
+            [9. 9.]]
+           [[9. 9.]
+            [9. 9.]]]]]
+        >>> output2 = pool2(x)
+        >>> print(output2)
+        (Tensor(shape=[1, 2, 2, 2, 2], dtype=Float32, value=
+        [[[[[8.00000000e+000, 8.00000000e+000],
+            [8.00000000e+000, 8.00000000e+000]],
+           [[8.00000000e+000, 8.00000000e+000],
+            [8.00000000e+000, 8.00000000e+000]]],
+          [[[9.00000000e+000, 9.00000000e+000],
+            [9.00000000e+000, 9.00000000e+000]],
+           [[9.00000000e+000, 9.00000000e+000],
+            [9.00000000e+000, 9.00000000e+000]]]]]), Tensor(shape=[1, 2, 2, 2, 2], dtype=Int64, value=
+        [[[[[7, 7],
+            [7, 7]],
+           [[7, 7],
+            [7, 7]]],
+          [[[2, 2],
+            [2, 2]],
+           [[2, 2],
+            [2, 2]]]]]))
+    """
+
+    def __init__(self, kernel_size, strides=None, pads=0, dilation=1, return_indices=False, ceil_mode=False):
+        """Initialize MaxPool3d."""
+        super(MaxPool3d, self).__init__()
+        self.return_indices = return_indices
+        self.max_pool = P.MaxPool3DWithArgmax(kernel_size, strides, pads, dilation, ceil_mode)
+
+    def construct(self, x):
+        output_tensor, argmax = self.max_pool(x)
+        if self.return_indices:
+            return output_tensor, argmax
+        return output_tensor
 
 
 class MaxPool2d(_PoolNd):
@@ -193,7 +298,7 @@ class MaxPool1d(_PoolNd):
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
         ValueError: If `kernel_size` or `strides` is less than 1.
-        ValueError: If length of shape of `x` is not equal to 4.
+        ValueError: If length of shape of `x` is not equal to 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -232,6 +337,99 @@ class MaxPool1d(_PoolNd):
         output = self.max_pool(x)
         output = self.squeeze(output)
         return output
+
+
+class AvgPool3d(Cell):
+    r"""
+    3D average pooling operation.
+
+    Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
+    Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, and AvgPool3D outputs
+    regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
+    is :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+
+    .. warning::
+        "kernel_size" is in the range [1, 255]. "strides" is in the range [1, 63].
+
+    .. math::
+        \text{output}(N_i, C_j, d, h, w) =
+        \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
+            is an int number that represents depth, height and width are both kernel_size, or a tuple
+            of three int numbers that represent depth, height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, is "same", "valid", "pad".
+            Default: "valid".
+
+            - same: Adopts the way of completion. The depth, height and width of the output will be the same as
+              the input. The total number of padding will be calculated in depth, horizontal and vertical
+              directions and evenly distributed to head and tail, top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the tail, bottom and the right side.
+              If this mode is set, `pad` must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
+              must be 0.
+
+            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
+              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+                    pad[3], pad[4] and pad[5] correspondingly.
+        ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
+        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
+        divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
+            otherwise kernel_size will be used. Default: 0.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+          Currently support float16 and float32 data type.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, with the same data type with `x`.
+
+    Raises:
+        TypeError: If `kernel_size`, `strides` or `pad` is neither an int nor a tuple.
+        TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
+        TypeError: If `pad_mode` or `data_format` is not a string.
+        TypeError: If `divisor_override` is not an int.
+        ValueError: If numbers in `kernel_size` or `strides` are not positive.
+        ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 6.
+        ValueError: If element of `pad` is less than 0.
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to 0 or (0, 0, 0, 0, 0, 0).
+        ValueError: If length of shape of `x` is not equal to 5.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> pool = nn.AvgPool3d(kernel_size=3, strides=1)
+        >>> x = ms.Tensor(np.random.randint(0, 10, [1, 2, 4, 4, 5]), ms.float32)
+        >>> output = pool(x)
+        >>> print(output.shape)
+        (1, 2, 2, 2, 3)
+    """
+
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", pad=0, ceil_mode=False,
+                 count_include_pad=True, divisor_override=0):
+        """Initialize AvgPool3d."""
+        super(AvgPool3d, self).__init__()
+        self.avg_pool = P.AvgPool3D(kernel_size, strides, pad_mode, pad, ceil_mode, count_include_pad, divisor_override)
+
+    def construct(self, x):
+        out = self.avg_pool(x)
+        return out
 
 
 class AvgPool2d(_PoolNd):
