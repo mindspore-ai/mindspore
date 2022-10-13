@@ -23,7 +23,7 @@ import mindspore.nn as nn
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.pool = nn.AvgPool3d(kernel_size=3, strides=1)
+        self.pool = nn.AvgPool3d(kernel_size=3, stride=1)
 
     def construct(self, x):
         out = self.pool(x)
