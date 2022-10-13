@@ -120,6 +120,7 @@ class IrExportBuilder {
   bool BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildOutput(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
   bool BuildCNode(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
+  bool BuildValueNode(const ValueNodePtr &node, const std::string &node_name, mind_ir::GraphProto *const graph_proto);
   std::string BuildInputNode(const AnfNodePtr &node, mind_ir::GraphProto *const graph_proto);
 
   bool SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueInfoProto *const value_proto);
@@ -820,29 +821,32 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   return true;
 }
 
-std::string IrExportBuilder::BuildInputNode(const AnfNodePtr &node, mind_ir::GraphProto *const graph_proto) {
-  // Return the NodeName that the node has been processed.
-  auto iter = node_name_map_.find(node);
-  if (iter != node_name_map_.end()) {
-    return iter->second;
+bool IrExportBuilder::BuildValueNode(const ValueNodePtr &node, const string &node_name,
+                                     mind_ir::GraphProto *const graph_proto) {
+  // FuncGraphNode don't need to be exported to the proto in this step
+  // check the node has been exported before
+  if (IsValueNode<FuncGraph>(node) || nodeName_.count(node_name) > 0) {
+    return true;
   }
+  (void)nodeName_.insert(node_name);
+  // When node input is a ValueNode, need to create a Constant Node
+  mind_ir::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_name(node_name);
+  node_proto->add_output(node_name);
+  if (!SetAttributeProto(node, node_proto)) {
+    return false;
+  }
+  return true;
+}
 
+std::string IrExportBuilder::BuildInputNode(const AnfNodePtr &node, mind_ir::GraphProto *const graph_proto) {
   std::string node_name = GetUniqueNodeName(node);
-  // FuncGraph will be added to functions and the input name is the function name.
-  if (IsValueNode<FuncGraph>(node)) {
-    FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
-    todo_.push_back(fg);
-    return fg->ToString();
-  }
   if (node->isa<ValueNode>()) {
-    (void)nodeName_.insert(node_name);
-    // When node input is a ValueNode, need to create a Constant Node
-    mind_ir::NodeProto *node_proto = graph_proto->add_node();
-    node_proto->set_name(node_name);
-    node_proto->add_output(node_name);
-    if (!SetAttributeProto(node, node_proto)) {
+    if (!BuildValueNode(node->cast<ValueNodePtr>(), node_name, graph_proto)) {
+      MS_LOG(ERROR) << "Export ValueNode Failed";
       return "";
     }
+    MS_LOG(DEBUG) << "Export ValueNode " << node->DebugString() << " success";
   }
   return node_name;
 }
@@ -854,19 +858,24 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
   auto iter = node_name_map_.find(node);
   if (iter != node_name_map_.end()) {
     return iter->second;
-  } else {
-    std::string node_name = GetNodeName(node);
-    // Compatible before. CNode = FuncGraphName:CNodeName:index ,Parameter = FuncGraphName:ParameterName
-    if (node->isa<CNode>()) {
-      node_name = node_name + ":" + std::to_string(GetUniqueID());
-    }
-    // Avoid duplicate name.
-    while (nodeName_.count(node_name) > 0) {
-      node_name = node_name + "_" + std::to_string(GetUniqueID());
-    }
-    node_name_map_[node] = node_name;
-    return node_name;
   }
+  // FuncGraph will be added to functions and the input name is the function name.
+  if (IsValueNode<FuncGraph>(node)) {
+    FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
+    todo_.push_back(fg);
+    return fg->ToString();
+  }
+  std::string node_name = GetNodeName(node);
+  // Compatible before. CNode = FuncGraphName:CNodeName:index ,Parameter = FuncGraphName:ParameterName
+  if (node->isa<CNode>()) {
+    node_name = node_name + ":" + std::to_string(GetUniqueID());
+  }
+  // Avoid duplicate name.
+  while (nodeName_.count(node_name) > 0) {
+    node_name = node_name + "_" + std::to_string(GetUniqueID());
+  }
+  node_name_map_[node] = node_name;
+  return node_name;
 }
 
 std::string IrExportBuilder::GetNodeName(const AnfNodePtr &node) const {
