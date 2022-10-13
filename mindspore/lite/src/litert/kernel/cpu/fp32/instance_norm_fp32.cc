@@ -42,6 +42,7 @@ int InstanceNormCPUKernel::ReSize() {
   MS_CHECK_INT_MUL_NOT_OVERFLOW(in_tensor->Height(), in_tensor->Width(), RET_ERROR);
   param_->inner_size_ = in_tensor->Height() * in_tensor->Width();
   param_->channel_ = in_tensor->Channel();
+  CHECK_LESS_RETURN(static_cast<int64_t>(in_tensors_.at(THIRD_INPUT)->Size()), param_->channel_);
   param_->op_parameter_.thread_num_ = MSMIN(UP_DIV(param_->channel_, C8NUM), op_parameter_->thread_num_);
   return RET_OK;
 }

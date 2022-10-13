@@ -160,6 +160,7 @@ int WhereCPUKernel::RunWithTripleInputs() {
   int condition_nums = condition->ElementsNum();
   int x_num = x->ElementsNum();
   int y_num = y->ElementsNum();
+  int out_num = out_tensors_.front()->ElementsNum();
 
   condition_ = reinterpret_cast<bool *>(condition->data());
   CHECK_NULL_RETURN(condition_);
@@ -173,6 +174,8 @@ int WhereCPUKernel::RunWithTripleInputs() {
   where_param_->x_num_ = x_num;
   where_param_->y_num_ = y_num;
   where_param_->max_num_ = num_max;
+
+  CHECK_LESS_RETURN(out_num, num_max);
 
   if (((condition_nums != 1) && (condition_nums != num_max)) || ((x_num != 1) && (x_num != num_max)) ||
       ((y_num != 1) && (y_num != num_max))) {
