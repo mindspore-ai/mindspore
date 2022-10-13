@@ -103,21 +103,26 @@ bool IsWhileNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
+  auto graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  bool in_kg = graph->IsDerived();
   auto cnode = node->cast<CNodePtr>();
   ValueNodePtr graph_node = nullptr;
-  if (IsPartialSuccNode(cnode) && IsPartialCNode(cnode->input(0))) {
-    auto partial_node = cnode->input(0);
-    MS_EXCEPTION_IF_NULL(partial_node);
-    auto c_partial_node = partial_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(c_partial_node);
-    auto graph_node_input = c_partial_node->input(1);
-    MS_EXCEPTION_IF_NULL(graph_node_input);
-    graph_node = graph_node_input->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(graph_node);
-  } else if (cnode->input(0)->isa<ValueNode>()) {
-    graph_node = cnode->input(0)->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(graph_node);
-  } else {
+  if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1)->isa<ValueNode>()) {
+    graph_node = cnode->input(1)->cast<ValueNodePtr>();
+  }
+  if (!in_kg) {
+    if (IsPrimitiveCNode(cnode->input(0), prim::kPrimPartial)) {
+      auto partial_node = cnode->input(0)->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(partial_node);
+      auto graph_node_input = partial_node->input(1);
+      MS_EXCEPTION_IF_NULL(graph_node_input);
+      graph_node = graph_node_input->cast<ValueNodePtr>();
+    } else if (cnode->input(0)->cast<ValueNodePtr>()) {
+      graph_node = cnode->input(0)->cast<ValueNodePtr>();
+    }
+  }
+  if (graph_node == nullptr) {
     return false;
   }
 
@@ -169,15 +174,19 @@ bool IsIfNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
+  auto graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  bool in_kg = graph->IsDerived();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto inp0 = cnode->input(0);
-  MS_EXCEPTION_IF_NULL(inp0);
-  if (!IsPrimitiveCNode(inp0, prim::kPrimSwitch)) {
+  CNodePtr switch_node = nullptr;
+  if (in_kg && IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
+    switch_node = cnode;
+  } else if (!in_kg && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
+    switch_node = cnode->input(0)->cast<CNodePtr>();
+  } else {
     return false;
   }
-  CNodePtr switch_node = inp0->cast<CNodePtr>();
-
   auto true_branch = switch_node->input(kSwitchTrueBranchIndex);
   MS_EXCEPTION_IF_NULL(true_branch);
   auto false_branch = switch_node->input(kSwitchFalseBranchIndex);
@@ -201,22 +210,23 @@ std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
   if (IsIfNode(cnode)) {
     return string(kNameIf);
   }
-  auto name = GetCNodeFuncName(cnode);
-  if (name == "switch_layer") {
-    name = "";
-  }
-  return name;
+  return GetCNodeFuncName(cnode);
 }
 
 bool IsCaseNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-
   if (!node->isa<CNode>()) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (!cnode->inputs().empty() && cnode->input(0)->isa<CNode>() &&
-      GetCNodeFuncName(cnode->input(0)->cast<CNodePtr>()) == "switch_layer") {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  bool in_kg = graph->IsDerived();
+  if (in_kg && IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
+    return true;
+  }
+  if (!in_kg && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitchLayer)) {
     return true;
   }
   return false;

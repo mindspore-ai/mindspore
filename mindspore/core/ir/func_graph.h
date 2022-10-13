@@ -379,6 +379,14 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_python_obj(const ValuePtr &python_obj) { python_obj_ = python_obj; }
   ValuePtr python_obj() const { return python_obj_; }
 
+  const std::vector<AnfNodePtr> &inputs() const;
+  bool IsDerived() const { return is_derived_; }
+
+ protected:
+  std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
+  // Whether the instance is base or derived.
+  bool is_derived_ = false;
+
  private:
   // Only used for func_graph manager to control resource free.
   int attached_mng_cnt() const { return attached_mng_cnt_; }
