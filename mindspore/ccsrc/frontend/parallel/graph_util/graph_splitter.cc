@@ -1180,6 +1180,9 @@ void GraphSplitter::Run() {
     return;
   }
 
+  // For TupleGetItem nodes, their label should be reset for good splitting performance.
+  ReassignTupleGetItemNodeLabel();
+
   if (mode_ == distributed::DistExecutionMode::kGeneralMode) {
     // Only use ref sync mechanism when in general mode.
     ProcessRefNodes();
@@ -1244,23 +1247,6 @@ void GraphSplitter::DyeGraph() {
   });
 }
 
-void GraphSplitter::ProcessRefNodes() {
-  MS_EXCEPTION_IF_NULL(func_graph_);
-  AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
-  // Traverse all nodes and find each nodes with side effect.
-  CNodePtrList cnodes_with_side_effect = GetSideEffectNodeList(all_nodes);
-  for (const auto &cnode : cnodes_with_side_effect) {
-    // Filter out all ref inputs which need to be synchronized between different processes.
-    AnfNodePtrList ref_inputs = GetRefInputs(cnode);
-    // Get the user node(UpdateState) of side effect node.
-    CNodePtr update_state_node = FindNextUpdateStateNode(func_graph_, cnode);
-    MS_EXCEPTION_IF_NULL(update_state_node);
-
-    // The key method to keep the correctness of reference nodes across computing graph nodes.
-    AddDataSyncNode(cnode, update_state_node, ref_inputs);
-  }
-}
-
 void GraphSplitter::CreateExecutionMode() {
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (node_labels_.empty()) {
@@ -1308,6 +1294,57 @@ std::vector<SplitGraphSegment> GraphSplitter::GenerateSplitSegments() {
   (void)results.emplace_back(segment);
   MS_LOG(INFO) << "Segments number with different distributed split labels is " << results.size();
   return results;
+}
+
+void GraphSplitter::ReassignTupleGetItemNodeLabel() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  for (const auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+      node_labels_[node] = RecursiveSetTupeGetItemLabel(node->cast<CNodePtr>());
+    }
+  }
+}
+
+OperatorLabel GraphSplitter::RecursiveSetTupeGetItemLabel(const CNodePtr &tuple_get_item_node) {
+  // Return if this node has already been visited.
+  if (visited_tuple_get_item_nodes_.count(tuple_get_item_node) != 0) {
+    if (NodeHasLabel(tuple_get_item_node)) {
+      return node_labels_[tuple_get_item_node];
+    } else {
+      MS_LOG(EXCEPTION) << "TupeGetItem node " << tuple_get_item_node->fullname_with_scope() << " has no lebel.";
+    }
+  }
+
+  visited_tuple_get_item_nodes_[tuple_get_item_node] = true;
+  auto tuple_input = common::AnfAlgo::GetInputNode(tuple_get_item_node, kIndex0);
+  OperatorLabel tuple_get_item_label;
+  if (IsPrimitiveCNode(tuple_input, prim::kPrimTupleGetItem)) {
+    // If TupleGetItem's input is a TupleGetItem node, recursively trace up and get a proper input's label.
+    tuple_get_item_label = RecursiveSetTupeGetItemLabel(tuple_input->cast<CNodePtr>());
+    node_labels_[tuple_input] = tuple_get_item_label;
+  } else {
+    // Set TupleGetItem's label the same as its input so it's easier to split.
+    tuple_get_item_label = node_labels_[tuple_input];
+  }
+  return tuple_get_item_label;
+}
+
+void GraphSplitter::ProcessRefNodes() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  // Traverse all nodes and find each nodes with side effect.
+  CNodePtrList cnodes_with_side_effect = GetSideEffectNodeList(all_nodes);
+  for (const auto &cnode : cnodes_with_side_effect) {
+    // Filter out all ref inputs which need to be synchronized between different processes.
+    AnfNodePtrList ref_inputs = GetRefInputs(cnode);
+    // Get the user node(UpdateState) of side effect node.
+    CNodePtr update_state_node = FindNextUpdateStateNode(func_graph_, cnode);
+    MS_EXCEPTION_IF_NULL(update_state_node);
+
+    // The key method to keep the correctness of reference nodes across computing graph nodes.
+    AddDataSyncNode(cnode, update_state_node, ref_inputs);
+  }
 }
 
 void GraphSplitter::AddExtraControlEdgeAcrossProcess() { AddControlEdgeForProcessWithoutIndegree(); }
