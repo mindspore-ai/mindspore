@@ -270,16 +270,17 @@ void SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
-  bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+  bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel ||
+                          parallel_mode == parallel::kHybridParallel || parallel_mode == parallel::kDataParallel;
   // If there are auto parallel in graph, the flag should not be set.
   if (is_parallel_mode) {
     return;
   }
 
-  MS_LOG(INFO) << "Set zero copy flag for graph:" << graph->ToString();
   if (common::GetEnv("ENABLE_ZERO_COPY") != "1") {
     return;
   }
+  MS_LOG(INFO) << "Set zero copy flag for graph:" << graph->ToString();
   graph->set_flag(kFlagEnableZeroCopyInGraph, true);
 }
 }  // namespace
