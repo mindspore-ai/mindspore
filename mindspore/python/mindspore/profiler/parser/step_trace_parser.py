@@ -215,13 +215,13 @@ class BaseStepTraceParser:
         result_size = len(self._result)
         # calculate average data for each column in result data
         average_data = [0] * len(self._header)
-        if result_size >= 2:
-            for row_info in self._result[1:]:
+        if result_size >= 1:
+            for row_info in self._result:
                 average_data = [
                     Decimal(i) + Decimal(j) for i, j in zip(row_info, average_data)
                 ]
             average_data = [
-                round((item / (result_size - 1))) for item in average_data
+                round(item / result_size) for item in average_data
             ]
             # change step num info in average_data to None
             step_num_index = self._header.index('step_num')

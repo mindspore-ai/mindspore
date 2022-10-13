@@ -180,7 +180,7 @@ class MsadvisorParser:
         aicore_file = self._aicore_path
         output_file = self._output_path
 
-        with os.fdopen(os.open(output_file, os.O_WRONLY | os.O_CREAT,
+        with os.fdopen(os.open(output_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
                                stat.S_IRUSR | stat.S_IWUSR), "w") as output_file:
             output_file.write("[")
             with os.fdopen(os.open(aicore_file, os.O_RDONLY,
