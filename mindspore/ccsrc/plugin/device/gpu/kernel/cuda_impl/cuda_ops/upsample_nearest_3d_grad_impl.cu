@@ -18,8 +18,19 @@
 #include <algorithm>
 #include <iostream>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
-__inline__ __device__ int compute_source_index(const float scale, int dst_index, int output_size) {
-  const int src_index = min(static_cast<int>(ceilf(dst_index * scale)), output_size);
+
+__inline__ __device__ int compute_source_index(const float scale, int dst_index, int output_size, int input_size) {
+  int src_index = 0;
+  if (output_size == input_size) {
+    src_index = min(static_cast<int>(dst_index * scale), output_size);
+  } else {
+    float gap = ceilf(dst_index * scale) - dst_index * scale;
+    if (fabs(gap - 0.0) < 1e-6 || fabs(gap - 1.0) < 1e-6) {
+      src_index = min(static_cast<int>(dst_index * scale), output_size);
+    } else {
+      src_index = min(static_cast<int>(ceilf(dst_index * scale)), output_size);
+    }
+  }
   return src_index;
 }
 
@@ -36,12 +47,12 @@ __global__ void UpsampleNearest3DGrad(const T *dy, const size_t dim_n, const siz
     const size_t dx_z = pos / out_hw % out_d;
     const size_t dx_y = pos / out_w % out_h;
     const size_t dx_x = pos % out_w;
-    int dy_z = compute_source_index(d_scale, dx_z, in_d);
-    int dy_z_up = compute_source_index(d_scale, dx_z + 1, in_d);
-    int dy_y = compute_source_index(h_scale, dx_y, in_h);
-    int dy_y_up = compute_source_index(h_scale, dx_y + 1, in_h);
-    int dy_x = compute_source_index(w_scale, dx_x, in_w);
-    int dy_x_up = compute_source_index(w_scale, dx_x + 1, in_w);
+    int dy_z = compute_source_index(d_scale, dx_z, in_d, out_d);
+    int dy_z_up = compute_source_index(d_scale, dx_z + 1, in_d, out_d);
+    int dy_y = compute_source_index(h_scale, dx_y, in_h, out_h);
+    int dy_y_up = compute_source_index(h_scale, dx_y + 1, in_h, out_h);
+    int dy_x = compute_source_index(w_scale, dx_x, in_w, out_w);
+    int dy_x_up = compute_source_index(w_scale, dx_x + 1, in_w, out_w);
     float grad = 0;
     for (int z = dy_z; z < dy_z_up; z++) {
       for (int y = dy_y; y < dy_y_up; y++) {
