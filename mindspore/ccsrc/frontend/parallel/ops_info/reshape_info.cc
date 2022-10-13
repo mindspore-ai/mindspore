@@ -437,10 +437,10 @@ std::vector<StrategyPtr> ReshapeInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector_;
 }
 
-Status ReshapeInfo::GenerateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
-                                          const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs,
-                                          int64_t out_index, int64_t in_index, bool is_prev_param,
-                                          bool is_next_reshape) {
+Status ReshapeInfo::GenerateStrategyCosts(
+  const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
+  std::vector<std::pair<std::vector<std::shared_ptr<StrategyWithCost>>, int64_t>> next_costs_index, int64_t out_index,
+  bool is_prev_param, bool is_next_reshape) {
   is_generating_costs_ = true;
   for (auto pre_stra_cost : pre_stra_costs) {
     std::vector<TensorInfo> pre_out_tensor_infos;
@@ -468,7 +468,7 @@ Status ReshapeInfo::GenerateStrategyCosts(const std::vector<std::shared_ptr<Stra
       ResetQueueMember();
       InferTensorInfoByLayout();
       SetCostForReshape(reshape_stra);
-    } else if (next_stra_costs.empty()) {
+    } else if (next_costs_index.empty()) {
       if (Init(nullptr, nullptr) == FAILED) {
         MS_LOG(ERROR) << "Failure:operator reshape init failed";
         return FAILED;
@@ -476,18 +476,22 @@ Status ReshapeInfo::GenerateStrategyCosts(const std::vector<std::shared_ptr<Stra
       SetCostForReshape(reshape_stra);
       continue;
     }
-    for (auto next_stra_cost : next_stra_costs) {
-      std::vector<TensorInfo> next_in_tensor_infos = next_stra_cost->inputs_ptr;
-      if (next_in_tensor_infos.size() <= LongToSize(in_index)) {
-        MS_LOG(ERROR) << "in_index is out of range of the tensor_infos in setting reshape's output_layout";
-        return FAILED;
-      }
-      TensorInfo next_in_tensor_info = next_in_tensor_infos[LongToSize(in_index)];
+    for (auto next_cost_index_pair : next_costs_index) {
+      auto in_index = next_cost_index_pair.second;
+      auto next_stra_costs = next_cost_index_pair.first;
+      for (auto next_stra_cost : next_stra_costs) {
+        std::vector<TensorInfo> next_in_tensor_infos = next_stra_cost->inputs_ptr;
+        if (next_in_tensor_infos.size() <= LongToSize(in_index)) {
+          MS_LOG(ERROR) << "in_index is out of range of the tensor_infos in setting reshape's output_layout";
+          return FAILED;
+        }
+        TensorInfo next_in_tensor_info = next_in_tensor_infos[LongToSize(in_index)];
 
-      SetOutputLayout(next_in_tensor_info.tensor_layout());
-      ResetQueueMember();
-      InferTensorInfoByLayout();
-      SetCostForReshape(reshape_stra);
+        SetOutputLayout(next_in_tensor_info.tensor_layout());
+        ResetQueueMember();
+        InferTensorInfoByLayout();
+        SetCostForReshape(reshape_stra);
+      }
     }
   }
   is_generating_costs_ = false;

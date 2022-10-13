@@ -903,12 +903,11 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       pre_stra_costs = pre_operator_info->strategy_cost();
     }
     // get next node's strategy_cost_
-    int64_t in_index = 0;
-    OperatorInfoPtr next_operator_info;
+    std::vector<std::pair<OperatorInfoPtr, int64_t>> next_ops_index;
     bool is_next_reshape = false;
-    std::vector<std::shared_ptr<StrategyWithCost>> next_stra_costs;
-    bool find_next_node = FindReshapeNextNodeStraCosts(cnode, &next_operator_info, &in_index, &is_next_reshape, 0);
-    if (!find_next_node) {
+    std::vector<std::pair<std::vector<std::shared_ptr<StrategyWithCost>>, int64_t>> next_costs_index;
+    (void)FindReshapeNextNodeStraCosts(cnode, &next_ops_index, &is_next_reshape, 0);
+    if (next_ops_index.empty()) {
       MS_LOG(INFO) << "FindReshapeNextNodeStraCosts for reshape failed";
     }
     // set input_layout and output_layout for reshape.
@@ -916,13 +915,16 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
     reshape_info->set_pre_operator_name(pre_operator_info->name());
     reshape_info->set_pre_operator_index(out_index);
-    if (find_next_node) {
-      next_stra_costs = next_operator_info->strategy_cost();
-      reshape_info->set_next_operator_name(next_operator_info->name());
-      reshape_info->set_next_operator_index(in_index);
+    if (!next_ops_index.empty()) {
+      for (auto &op_index : next_ops_index) {
+        auto op_cost = op_index.first->strategy_cost();
+        next_costs_index.push_back(std::make_pair(op_cost, op_index.second));
+      }
+      reshape_info->set_next_operator_name(next_ops_index[0].first->name());
+      reshape_info->set_next_operator_index(next_ops_index[0].second);
     }
     bool is_prev_param = pre_node->isa<Parameter>();
-    if (reshape_info->GenerateStrategyCosts(pre_stra_costs, next_stra_costs, out_index, in_index, is_prev_param,
+    if (reshape_info->GenerateStrategyCosts(pre_stra_costs, next_costs_index, out_index, is_prev_param,
                                             is_next_reshape) != SUCCESS) {
       MS_LOG(EXCEPTION) << "reshape generate strategy_costs failed!";
     }
