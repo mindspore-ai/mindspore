@@ -10,7 +10,7 @@ mindspore.nn.AvgPool3d
     通常，输入的shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` ，AvgPool3D输出 :math:`(D_{in}, H_{in}, W_{in})` 区域平均值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `strides` 为 :math:`s = (s_0, s_1, s_2)`，公式如下。
 
     .. warning::
-        "kernel_size" 在[1, 255]的范围内取值。"strides" 在[1, 63]的范围内取值.
+        "kernel_size" 在[1, 255]的范围内取值。"strides" 在[1, 63]的范围内取值。
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
