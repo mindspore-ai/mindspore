@@ -43,6 +43,14 @@ def _is_in_auto_parallel_mode():
     return _get_parallel_mode() in [ms.ParallelMode.SEMI_AUTO_PARALLEL, ms.ParallelMode.AUTO_PARALLEL]
 
 
+def _is_in_data_parallel_mode():
+    return _get_parallel_mode() == ms.ParallelMode.DATA_PARALLEL
+
+
+def _is_in_hybrid_parallel_mode():
+    return _get_parallel_mode() == ms.ParallelMode.HYBRID_PARALLEL
+
+
 def _is_pynative_parallel():
     run_mode = context.get_context('mode')
     parallel_mode = context.get_auto_parallel_context('parallel_mode')

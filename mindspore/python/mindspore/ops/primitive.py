@@ -20,7 +20,8 @@ import copy
 from mindspore.common.api import _wrap_func
 from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
-from mindspore.parallel._utils import _is_in_auto_parallel_mode
+from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, _is_in_hybrid_parallel_mode
+from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
 from mindspore.common.parameter import Parameter
 from mindspore.common.api import _pynative_executor
 from mindspore._c_expression import Primitive_, prim_type
@@ -398,12 +399,41 @@ class Primitive(Primitive_):
         """
         Set the label for this primitive.
         This label tells MindSpore compiler on which process this operator should be launched.
-        Each process's identical id consists of inputs 'role' and 'rank_id'.
+        And each process's identical label consists of input 'role' and 'rank_id'.
+        So by setting different operators with different labels,
+        which will be launched on different processes, users can launch a distributed training job.
+
+        Note:
+            - 'role' only supports the value 'MS_WORKER' for now.
+            - This method is effective only after
+              "mindspore.communication.init()" is called for dynamic cluster building.
+            - The rank is unique in processes with the same role.
 
         Args:
             role (string): The role of the process on which this operator will be launched.
-            rank_id (string): The rank id of the process on which this operator will be launched.
+            rank_id (int): The rank id of the process on which this operator will be launched.
         """
+        if _is_role_sched():
+            return
+
+        Validator.check_non_negative_int(rank_id, "rank_id", "Primitive.place")
+        Validator.check_string(role, "MS_WORKER", "role", "Primitive.place")
+
+        # Get the execution context and check whether calling of this 'place' method is valid.
+        # This is because placing operators to arbitrary processes while other distributed training mode
+        # is enabled is very unpredictable and may cause fatal error.
+        # Some of these cases are under development and others should not be supported.
+        if _is_ps_mode():
+            raise RuntimeError(
+                "You are calling Primitive.place mixed with Parameter Server training. "
+                "This case is not supported yet. "
+                "Please call Primitive.place without Parameter Server training.")
+        if _is_in_auto_parallel_mode() or _is_in_data_parallel_mode() or _is_in_hybrid_parallel_mode():
+            raise RuntimeError(
+                "You are calling Primitive.place mixed with other parallel features: "
+                "'auto_parallel', 'data_parallel' and 'hybrid_parallel'. "
+                "This case is still under development and not supported yet. "
+                "Please call Primitive.place without these features.")
         self.add_prim_attr("ms_role", role)
         self.add_prim_attr("rank_id", rank_id)
 
