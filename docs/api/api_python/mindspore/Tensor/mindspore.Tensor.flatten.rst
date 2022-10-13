@@ -14,3 +14,8 @@ mindspore.Tensor.flatten
     异常：
         - **TypeError** - `order` 不是字符串类型。
         - **ValueError** - `order` 是字符串类型，但不是'C'或'F'。
+
+    比如：
+        :func:`mindspore.Tensor.reshape`：在不改变数据的情况，改变Tensor的shape。
+
+        :func:`mindspore.Tensor.ravel`：返回一个连续扁平化的Tensor。
