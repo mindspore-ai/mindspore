@@ -16,4 +16,4 @@ mindspore.Tensor.atanh
 
     异常：
         - **TypeError** - `x` 不是Tensor。
-        - **RuntimeError** - `x` 的数据类型既不是float16，也不是float32。
+        - **TypeError** - `x` 的数据类型既不是float16，也不是float32。

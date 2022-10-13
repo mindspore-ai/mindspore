@@ -1956,7 +1956,7 @@ class Tensor(Tensor_):
             Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.
 
             Tensor, The absolute values of the log determinants. The shape is :math:`x\_shape[:-2]`,
-            the dtype is same as `x`.
+            and the dtype is same as `x`.
 
         Raises:
             TypeError: If self tensor is not a Tensor.
@@ -2699,7 +2699,7 @@ class Tensor(Tensor_):
 
     def squeeze(self, axis=None):
         """
-        Remove the dimension of shape 1 from the Tensor
+        Remove the dimension of shape 1 from the Tensor.
 
         Args:
             axis (Union[None, int, list(int), tuple(int)], optional): Selects a subset of the entries of
@@ -2751,7 +2751,7 @@ class Tensor(Tensor_):
 
     def expand_dims(self, axis):
         """
-        Insert a dimension of shape 1 at the specified axis of Tensor
+        Insert a dimension of shape 1 at the specified axis of Tensor.
 
         Args:
             axis (int): the axis at which to insert the singleton dimension.
@@ -3356,7 +3356,7 @@ class Tensor(Tensor_):
         Creates a new tensor by adding the values from the positions in self tensor indicated by
         `indices`, with values from `updates`. When multiple values are given for the same
         index, the updated result will be the sum of all values. This operation is almost
-        equivalent to using ScatterNdAdd, except that the updates are applied on output `Tensor`
+        equivalent to using :class:`mindspore.ops.ScatterNdAdd`, except that the updates are applied on output `Tensor`
         instead of input `Parameter`.
 
         The last axis of `indices` is the depth of each index vectors. For each index vector,

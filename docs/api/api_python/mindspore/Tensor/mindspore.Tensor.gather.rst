@@ -3,7 +3,7 @@ mindspore.Tensor.gather
 
 .. py:method:: mindspore.Tensor.gather(input_indices, axis)
 
-    返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片，输入Tensor的形状是 :math:`(x_1, x_2, ..., x_R)`。为了方便描述，对于输入Tensor记为 `input_params`。
+    返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。输入Tensor的形状是 :math:`(x_1, x_2, ..., x_R)`。为了方便描述，对于输入Tensor记为 `input_params`。
 
     .. note::
         1. input_indices 的值必须在 `[0, input_params.shape[axis])` 的范围内，结果未定义超出范围。

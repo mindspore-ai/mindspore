@@ -15,7 +15,7 @@ mindspore.ops.gather_elements
 
         output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
 
-    `x` 与 `index` 拥有一样的维度长度，且除 `dim` 维外其他维度一致。如果维度 `dim` 为i， `x` 是shape为 :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})` 的n维Tensor，则 `index` 必须是shape为 :math:`(z_0, z_1, ..., y, ..., z_{n-1})` 的n维Tensor，其中 `y` 大于等于1。输出的shape与 `index` 相同。
+    `x` 与 `index` 拥有一样的维度长度，且除 `dim` 维外其他维度一致。如果维度 `dim` 为i， `x` 是shape为 :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})` 的n维Tensor，则 `index` 必须是shape为 :math:`(z_0, z_1, ..., y, ..., z_{n-1})` 的n维Tensor，其中 `y` 大于等于1，输出的shape与 `index` 相同。
 
     参数：
         - **x** (Tensor) - 输入Tensor。
