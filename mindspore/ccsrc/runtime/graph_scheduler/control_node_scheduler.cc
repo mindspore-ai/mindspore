@@ -584,6 +584,8 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
   LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+
+  SetTimeSummaryForControlActor(graph_compiler_info);
   MS_LOG(DEBUG) << "Control node scheduler link end.";
 }
 
@@ -1680,6 +1682,50 @@ void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompile
     } else {
       MS_LOG(INFO) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
                    << " index:" << formal_parameter.second << " for actor:" << to_actor->GetAID();
+    }
+  }
+}
+
+void ControlNodeScheduler::SetTimeSummaryForControlActor(const GraphCompilerInfo &graph_compiler_info) const {
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  for (const auto &kernel_graph_group_info : parser->kernel_graph_group_infos_) {
+    MS_EXCEPTION_IF_NULL(kernel_graph_group_info);
+    const auto &exit_actor_name = kernel_graph_group_info->group_name_ + kExitActorNameSuffix;
+    const auto &exit_base_actor = FetchActor(exit_actor_name);
+    if (exit_base_actor == nullptr) {
+      continue;
+    }
+    const auto &exit_actor = dynamic_cast<ControlActor *>(exit_base_actor);
+    MS_EXCEPTION_IF_NULL(exit_actor);
+
+    // Set the exit actor of kernel graph to its entrance actor or stack actor.
+    if (kernel_graph_group_info->need_stack_ == false) {
+      if (kernel_graph_group_info->graphs_.empty()) {
+        continue;
+      }
+      const auto &graph = *(kernel_graph_group_info->graphs_.begin());
+      const auto &func_graph = parser->FetchFuncGraphByKernelGraph(graph.get());
+      MS_EXCEPTION_IF_NULL(func_graph);
+      auto entrance_base_actor = FetchActor(func_graph->ToString() + kEntranceActorNameSuffix);
+      if (entrance_base_actor != nullptr) {
+        const auto &entrance_actor = dynamic_cast<ControlActor *>(entrance_base_actor);
+        MS_EXCEPTION_IF_NULL(entrance_actor);
+        entrance_actor->end_actors_.emplace(exit_actor);
+        MS_LOG(DEBUG) << "Add time summart for exit actor:" << exit_actor->GetAID()
+                      << " to actor:" << entrance_actor->GetAID();
+      }
+      continue;
+    }
+
+    auto stack_base_actor = FetchActor(kernel_graph_group_info->group_name_ + kStackActorNameSuffix);
+    if (stack_base_actor != nullptr) {
+      const auto &stack_actor = dynamic_cast<ControlActor *>(stack_base_actor);
+      MS_EXCEPTION_IF_NULL(stack_actor);
+      stack_actor->end_actors_.emplace(exit_actor);
+      MS_LOG(DEBUG) << "Add time summart for exit actor:" << exit_actor->GetAID()
+                    << " to actor:" << stack_actor->GetAID();
     }
   }
 }

@@ -100,6 +100,8 @@ class ControlNodeScheduler {
   void LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,
                                    const ControlNodeParserPtr &parser) const;
 
+  // Add time summary info for counting the execution time between two actors.
+  void SetTimeSummaryForControlActor(const GraphCompilerInfo &graph_compiler_info) const;
   bool IsNoInputActor(const ControlActor *control_actor) const;
 
   // The id of memory manager actor.
