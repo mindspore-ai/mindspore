@@ -90,7 +90,7 @@ def batchnorm_fold2_grad(dout, dout_reduce, dout_x_reduce, gamma, batch_std, bat
     util.check_shape_size(shape, SHAPE_SIZE_LIMIT)
     check_list = ["float16", "float32"]
     inp_dtype = dout.get("dtype").lower()
-    if not inp_dtype in check_list:
+    if inp_dtype not in check_list:
         raise RuntimeError("Dtype of input only support float16, float32")
     data_format = dout.get("format")
     ori_format = dout.get("ori_format")
