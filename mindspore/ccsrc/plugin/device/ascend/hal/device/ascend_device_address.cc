@@ -222,8 +222,8 @@ bool AscendDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) co
 
 bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size, mindspore::TypeId type,
                                            void *host_ptr) const {
-  MS_LOG(INFO) << "SyncDeviceToHost, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-               << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
+  MS_LOG(DEBUG) << "SyncDeviceToHost, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
@@ -338,8 +338,9 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
 
 bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &shape, size_t size,
                                                            mindspore::TypeId type, void *host_ptr) const {
-  MS_LOG(INFO) << "SyncDeviceToHostAndConvertFormat, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-               << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
+  MS_LOG(DEBUG) << "SyncDeviceToHostAndConvertFormat, Device(format:" << format_
+                << ", type_id:" << TypeIdLabel(type_id_) << ", size:" << size_
+                << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   static const std::unordered_map<mindspore::TypeId, std::string> type_id_name_map = {
     {mindspore::kNumberTypeBool, "bool"},       {mindspore::kNumberTypeInt8, "int8"},
     {mindspore::kNumberTypeInt16, "int16"},     {mindspore::kNumberTypeInt32, "int32"},
@@ -396,9 +397,9 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
 
 bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size, mindspore::TypeId type,
                                            const void *host_ptr, const std::string &format) const {
-  MS_LOG(INFO) << "SyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-               << ", size:" << size_ << "), Host(format:" << format << ", type_id:" << TypeIdLabel(type)
-               << ", size:" << size << ")";
+  MS_LOG(DEBUG) << "SyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+                << ", size:" << size_ << "), Host(format:" << format << ", type_id:" << TypeIdLabel(type)
+                << ", size:" << size << ")";
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
@@ -508,9 +509,9 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) 
 
 bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, size_t size, TypeId type,
                                               const void *src_ptr, const std::string &format) const {
-  MS_LOG(INFO) << "AsyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-               << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
-               << ", size:" << size << ")";
+  MS_LOG(DEBUG) << "AsyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+                << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
+                << ", size:" << size << ")";
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
@@ -562,8 +563,9 @@ bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, siz
 bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size,
                                                            mindspore::TypeId type, const void *host_ptr) const {
   bool sync_ok = false;
-  MS_LOG(INFO) << "ConvertFormatAndSyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-               << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
+  MS_LOG(DEBUG) << "ConvertFormatAndSyncHostToDevice, Device(format:" << format_
+                << ", type_id:" << TypeIdLabel(type_id_) << ", size:" << size_
+                << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
     (void)host_shape.emplace_back(1);

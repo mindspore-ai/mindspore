@@ -140,7 +140,7 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
 void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map, void *args) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(depend_tensor_map);
-  MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();
+  MS_LOG(DEBUG) << "InferShape start, node:" << cnode->fullname_with_scope();
   std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
   auto ret = InferShapeForDefiniteOutputNode(cnode);
   if (ret) {

@@ -188,7 +188,6 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
 }  // namespace
 
 void DynamicBroadcastGradientArgsKernelMod::Execute() const {
-  MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -211,7 +210,6 @@ void DynamicBroadcastGradientArgsKernelMod::Execute() const {
   ShapeVector r1_shp{SizeToLong(r1_size)};
   auto output_type = TypeId::kNumberTypeInt64;
   common::AnfAlgo::SetOutputInferTypeAndShape({output_type, output_type}, {r0_shp, r1_shp}, cnode.get());
-  MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel End";
 }
 
 bool DynamicBroadcastGradientArgsKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,

@@ -195,7 +195,6 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
     auto attr_name = attr->name();
     auto value = primitive->GetAttr(attr_name);
     if (value == nullptr) {
-      MS_LOG(INFO) << attr_name << "'s value is empty!";
       continue;
     }
 
@@ -226,7 +225,7 @@ void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ::ge::Op
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
-  MS_LOG(INFO) << "For op " << op_name_ << ", get compile_info: " << op_compile_info_;
+  MS_LOG(DEBUG) << "For op " << op_name_ << ", get compile_info: " << op_compile_info_;
   std::string compile_info_key = std::to_string(std::hash<std::string>()(op_compile_info_));
   (void)::ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_KEY, compile_info_key);
   (void)::ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_JSON, op_compile_info_);
@@ -323,7 +322,7 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto depends_list_me = abstract::GetValueDependArgIndices(node);
   if (depends_list_me.empty() || AnfAlgo::IsDynamicShapeSkipExecute(node)) {
-    MS_LOG(INFO) << "The node " << op_name_ << " has no infer depend.";
+    MS_LOG(DEBUG) << "The node " << op_name_ << " has no infer depend.";
     return {};
   }
   auto has_input_name_attr = common::AnfAlgo::HasNodeAttr("input_names", node);
@@ -358,7 +357,7 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
 void OpTilingCalculateAdapter::AddEdge(const ::ge::NodePtr &ge_node,
                                        const std::vector<std::tuple<std::size_t, ::ge::NodePtr>> &constant_ops) {
   MS_EXCEPTION_IF_NULL(ge_node);
-  MS_LOG(INFO) << "Add edge for op " << op_name_;
+  MS_LOG(DEBUG) << "Add edge for op " << op_name_;
   for (const auto &item : constant_ops) {
     auto index = std::get<0>(item);
     auto constant_op = std::get<1>(item);
@@ -368,7 +367,7 @@ void OpTilingCalculateAdapter::AddEdge(const ::ge::NodePtr &ge_node,
 
 void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Get the every input name of " << op_name_;
+  MS_LOG(DEBUG) << "Get the every input name of " << op_name_;
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name_, node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
@@ -418,7 +417,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
                                                      const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
   op_name_ = common::AnfAlgo::GetCNodeName(node);
-  MS_LOG(INFO) << "Convert anf node :" << op_name_ << " to ge node.";
+  MS_LOG(DEBUG) << "Convert anf node :" << op_name_ << " to ge node.";
   op_compile_info_ = op_compile_info;
   auto op_type = GetRealOpType(op_name_);
   (void)InitOpIoName(node);
