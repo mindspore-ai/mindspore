@@ -49,6 +49,20 @@ ATTR_MAP(Conv2DBackpropInput) = {
 OUTPUT_MAP(Conv2DBackpropInput) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput->name(), ADPT_DESC(Conv2DBackpropInput))
 
+// Conv2DBackpropInputD
+INPUT_MAP(Conv2DBackpropInputD) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(filter)}};
+INPUT_ATTR_MAP(Conv2DBackpropInputD) = {
+  {3, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(Conv2DBackpropInputD) = {
+  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
+};
+OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Conv2DBackpropInputD, kNameConv2DBackpropInputD, ADPT_DESC(Conv2DBackpropInputD))
+
 // Conv2DBackpropInput for tf inference
 REG_ADPT_DESC(Conv2DBackpropInputV2, kNameConv2DBackpropInputV2, ADPT_DESC(Conv2DBackpropInput))
 
@@ -92,6 +106,20 @@ ATTR_MAP(Conv2DBackpropFilter) = {
 };
 OUTPUT_MAP(Conv2DBackpropFilter) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter->name(), ADPT_DESC(Conv2DBackpropFilter))
+
+// Conv2DBackpropFilterD
+INPUT_MAP(Conv2DBackpropFilterD) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(Conv2DBackpropFilterD) = {
+  {3, ATTR_DESC(filter_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(Conv2DBackpropFilterD) = {
+  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
+};
+OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Conv2DBackpropFilterD, kNameConv2DBackpropFilterD, ADPT_DESC(Conv2DBackpropFilterD))
 
 // Conv3DTransposeD
 INPUT_MAP(Conv3DTransposeD) = {
