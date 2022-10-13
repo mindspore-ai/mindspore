@@ -77,19 +77,16 @@ abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_shape_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("input_x size", x_shape_rank, kGreaterThan, 0, op_name);
-  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto segment_ids_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto segment_ids_shape_rank = SizeToLong(segment_ids_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("segment_ids size", segment_ids_shape_rank, kGreaterThan, 0, op_name);
   ShapeVector output_shape;
-  constexpr int dynamic_rank_len = 1;
-  constexpr int dynamic_rank_value = -2;
-  if ((x_shape_rank == dynamic_rank_len && x_shape[0] == dynamic_rank_value) ||
-      (segment_ids_shape_rank == dynamic_rank_len && segment_ids_shape[0] == dynamic_rank_value)) {
-    output_shape = {dynamic_rank_value};  // unknown dimension
-    return std::make_shared<abstract::Shape>(output_shape);
+  if (IsDynamicRank(x_shape) || IsDynamicRank(segment_ids_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   (void)CheckAndConvertUtils::CheckValue<size_t>("x rank", x_shape.size(), kGreaterEqual, "segment_ids_shape rank",
                                                  segment_ids_shape.size(), op_name);
@@ -137,16 +134,19 @@ TypePtr UnsortedSegmentSumInferType(const PrimitivePtr &primitive, const std::ve
   auto prim_name = primitive->name();
   /* check segment_ids */
   auto ids_ptr = input_args[kInputIndex1]->BuildType();
+  MS_EXCEPTION_IF_NULL(ids_ptr);
   std::set<TypePtr> ids_type_set = {kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids type", ids_ptr, ids_type_set, prim_name);
   /* check num_segments */
   auto num_ptr = input_args[kInputIndex2]->BuildType();
+  MS_EXCEPTION_IF_NULL(num_ptr);
   std::map<std::string, TypePtr> args_num_segments;
   (void)args_num_segments.insert(std::make_pair("num_segments", num_ptr));
   const std::set<TypePtr> num_type_set = {kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_num_segments, num_type_set, prim_name);
   /* check input_x */
   auto x_type_ptr = input_args[kInputIndex0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type_ptr);
   return CheckAndConvertUtils::CheckSubClass("input_x", x_type_ptr, {kTensorType}, prim_name);
 }
 }  // namespace
