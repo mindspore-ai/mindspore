@@ -32,6 +32,13 @@ const AnfNodePtr DiagPartFission::Process(const FuncGraphPtr &func_graph, const 
   MS_EXCEPTION_IF_NULL(node);
   auto diag_part_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(diag_part_cnode);
+
+  auto type = common::AnfAlgo::GetOutputInferDataType(node, kIndex0);
+  if (!CheckOpAICoreSupported(type)) {
+    MS_LOG(INFO) << "DiagPart fission failed for aicore, check to aicpu.";
+    return nullptr;
+  }
+
   constexpr size_t kDiagPartInputNum = 1;
   if (diag_part_cnode->size() != kDiagPartInputNum + 1) {
     MS_LOG(INFO) << "The node " << diag_part_cnode->DebugString() << " is not equal to " << kDiagPartInputNum

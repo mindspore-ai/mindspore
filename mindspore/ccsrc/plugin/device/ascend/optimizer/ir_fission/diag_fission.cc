@@ -17,10 +17,12 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <set>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -54,6 +56,9 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
   if (type == kNumberTypeInt32) {
     SetAssistTensorData<int32_t>(tensor->data_c(), 1, dims);
     x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, output_shape);
+  } else if (type == kNumberTypeInt64) {
+    SetAssistTensorData<int64_t>(tensor->data_c(), 1, dims);
+    x_abstract = std::make_shared<abstract::AbstractTensor>(kInt64, output_shape);
   } else if (type == kNumberTypeFloat16) {
     SetAssistTensorData<float16>(tensor->data_c(), float16(static_cast<float>(1)), dims);
     x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, output_shape);
@@ -84,6 +89,12 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   auto diag_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(diag_cnode);
+
+  auto type = common::AnfAlgo::GetOutputInferDataType(node, kIndex0);
+  if (!CheckOpAICoreSupported(type)) {
+    MS_LOG(INFO) << "Diag fission failed for aicore, check to aicpu.";
+    return nullptr;
+  }
   if (common::AnfAlgo::IsDynamicShape(diag_cnode)) {
     MS_LOG(EXCEPTION) << "Diag don't support dynamic shape, node: " << diag_cnode->fullname_with_scope();
   }
@@ -108,6 +119,20 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
     MS_LOG(INFO) << "Add assist tensor for diag op success.";
   }
   return new_cnode;
+}
+
+bool DiagFission::CheckOpAICoreSupported(const TypeId &type) const {
+  if (type == kNumberTypeInt64) {
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    return context_ptr->get_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION);
+  }
+
+  const std::set<TypeId> aicore_supported_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeInt32};
+  if (aicore_supported_types.find(type) == aicore_supported_types.end()) {
+    return false;
+  }
+  return true;
 }
 }  // namespace opt
 }  // namespace mindspore

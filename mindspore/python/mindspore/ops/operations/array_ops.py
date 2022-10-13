@@ -3646,7 +3646,7 @@ class Diag(PrimitiveWithCheck):
     Refer to :func:`mindspore.ops.diag` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
@@ -3673,7 +3673,7 @@ class Diag(PrimitiveWithCheck):
         return Tensor(ret)
 
 
-class DiagPart(PrimitiveWithInfer):
+class DiagPart(PrimitiveWithCheck):
     r"""
 
     Extracts the diagonal part from given tensor.
@@ -3694,7 +3694,7 @@ class DiagPart(PrimitiveWithInfer):
         ValueError: If input_shape[i] is not equal to input_shape[i + len(input_shape)/2].
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples
         >>> input_x = Tensor([[1, 0, 0, 0],
@@ -3711,22 +3711,6 @@ class DiagPart(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize DiagPart"""
-
-    def infer_dtype(self, x_type):
-        validator.check_subclass('input_x', x_type, mstype.tensor, self.name)
-        return x_type
-
-    def infer_shape(self, x_shape):
-        if len(x_shape) % 2 != 0 or \
-                not x_shape:
-            raise ValueError(f"For \'{self.name}\', the dimension of 'input_x' must be non-zero and even, "
-                             f"but got dimension {len(x_shape)}, with shapes {x_shape}.")
-        length = len(x_shape) // 2
-        for i in range(length):
-            validator.check('input_shape[i + len(input_shape)/2]', x_shape[i + length],
-                            'input_shape[i]', x_shape[i], Rel.EQ, self.name)
-        ret_shape = x_shape[0:length]
-        return ret_shape
 
     def infer_value(self, x):
         if x is None:

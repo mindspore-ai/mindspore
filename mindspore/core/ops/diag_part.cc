@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,9 @@ abstract::ShapePtr DiagPartInferShape(const PrimitivePtr &primitive, const std::
 TypePtr DiagPartInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_dtype = input_args[0]->BuildType();
-  return CheckAndConvertUtils::CheckTensorTypeValid("input type", x_dtype, common_valid_types_with_complex,
-                                                    primitive->name());
+  const std::set<TypePtr> valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", x_dtype, valid_types, primitive->name());
+  return x_dtype;
 }
 }  // namespace
 
@@ -62,12 +63,10 @@ MIND_API_OPERATOR_IMPL(DiagPart, BaseOperator);
 AbstractBasePtr DiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  return abstract::MakeAbstract(DiagPartInferShape(primitive, input_args), DiagPartInferType(primitive, input_args));
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
+  auto infer_type = DiagPartInferType(primitive, input_args);
+  auto infer_shape = DiagPartInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(DiagPart, prim::kPrimDiagPart, DiagPartInfer, nullptr, true);

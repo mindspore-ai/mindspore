@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@ abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vect
 TypePtr DiagInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_dtype = input_args[0]->BuildType();
-  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_dtype, common_valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_dtype, common_valid_types_with_complex,
+                                                   primitive->name());
+  return x_dtype;
 }
 }  // namespace
 
@@ -71,12 +73,7 @@ MIND_API_OPERATOR_IMPL(Diag, BaseOperator);
 AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
   auto infer_type = DiagInferType(primitive, input_args);
   auto infer_shape = DiagInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
