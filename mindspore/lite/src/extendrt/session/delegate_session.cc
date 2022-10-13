@@ -24,6 +24,7 @@
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
 #include "extendrt/session/optimizer/tensorrt_optimizer.h"
+#include "extendrt/delegate/ascend_ge/ge_utils.h"
 
 namespace mindspore {
 namespace {
@@ -82,6 +83,9 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
     }
   }
   func_graph_ = graph;
+#ifdef ENABLE_HELPER
+  AdaptGraph(func_graph_);
+#endif
   std::vector<KernelGraphPtr> all_out_graph;
   kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
