@@ -1185,9 +1185,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
             param_data = net_dict[param_name].data.asnumpy().tobytes()
             param_proto.raw_data = param_data
         else:
-            logger.critical("The parameter '%s' in the graph should also be defined in the network.", param_name)
-            raise ValueError("The parameter '{}' in the graph should also be defined in the "
-                             "network.".format(param_name))
+            logger.warning("The parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
+                           .format(param_proto.name))
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
     current_path = os.path.abspath(file_name)
@@ -1217,9 +1216,8 @@ def _save_together(net_dict, model):
         if name in net_dict.keys():
             data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
         else:
-
-            raise ValueError("The parameter '{}' in the graph should also be defined in the network."
-                             .format(param_proto.name))
+            logger.info("The parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
+                        .format(param_proto.name))
         if data_total > TOTAL_SAVE:
             return False
     return True
