@@ -141,6 +141,12 @@ bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (node_output_type == kNumberTypeComplex64 || node_output_type == kNumberTypeComplex128) {
     return false;
   }
+  if (IsPrimitiveCNode(node, prim::kPrimCast)) {
+    auto node_input_type = cb->GetInputType(node, 0);
+    if ((node_input_type == kNumberTypeComplex64) || (node_input_type == kNumberTypeComplex128)) {
+      return false;
+    }
+  }
   // For AICPU operators, only the Reshape can be clustered.
   if (cb->GetTargetFromContext() == kAscendDevice) {
     if (cb->GetProcessor(node) != "aicore" && !IsPrimitiveCNode(node, prim::kPrimReshape)) {

@@ -68,7 +68,7 @@ int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     batch_size_ *= input_shape[i];
   }
   auto dtype = inputs[kIndex0]->GetDtype();
-  dtype_size_ = sizeof(TypeIdToType(dtype));
+  dtype_size_ = GetTypeByte(TypeIdToType(dtype));
   input_size_ = dtype_size_;
   for (auto dim : input_shape) {
     input_size_ *= dim;
@@ -190,7 +190,6 @@ void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPt
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
       cusolverDnSgetrs(handle_cus, CUBLAS_OP_N, len, len, input_addr, len, NULL, output_addr, len, info_output_addr),
       "cusolverDnSgetrs failed");
-    return;
   }
   if constexpr (std::is_same_v<T, double>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnDgetrf_bufferSize(handle_cus, len, len, input_addr, len, &lwork),
@@ -202,7 +201,6 @@ void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPt
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
       cusolverDnDgetrs(handle_cus, CUBLAS_OP_N, len, len, input_addr, len, NULL, output_addr, len, info_output_addr),
       "cusolverDnDgetrs failed");
-    return;
   }
   if constexpr (std::is_same_v<T, cuComplex>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnCgetrf_bufferSize(handle_cus, len, len, input_addr, len, &lwork),
@@ -214,7 +212,6 @@ void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPt
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
       cusolverDnCgetrs(handle_cus, CUBLAS_OP_N, len, len, input_addr, len, NULL, output_addr, len, info_output_addr),
       "cusolverDnCgetrs failed");
-    return;
   }
   if constexpr (std::is_same_v<T, cuDoubleComplex>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnZgetrf_bufferSize(handle_cus, len, len, input_addr, len, &lwork),
@@ -226,9 +223,11 @@ void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPt
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
       cusolverDnZgetrs(handle_cus, CUBLAS_OP_N, len, len, input_addr, len, NULL, output_addr, len, info_output_addr),
       "cusolverDnZgetrs failed");
-    return;
   }
-  MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type entered must be float or double or complex.";
+  if (d_work != nullptr) {
+    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
+  }
+  return;
 }
 
 template <typename T>
