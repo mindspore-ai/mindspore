@@ -749,7 +749,7 @@ elseif(WIN32)
                 ${opencv_LIBPATH}/../bin/libopencv_imgproc*
                 )
         install(FILES ${OPENCV_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(NOT MSVC)
+        if(NOT MSVC AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
             __install_micro_wrapper()
             __install_micro_codegen()
         endif()
@@ -986,8 +986,10 @@ else()
                     DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
-        __install_micro_wrapper()
-        __install_micro_codegen()
+        if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+            __install_micro_wrapper()
+            __install_micro_codegen()
+        endif()
     endif()
     if(MSLITE_ENABLE_TOOLS)
         if(NOT MSLITE_COMPILE_TWICE)
@@ -998,16 +1000,18 @@ else()
             install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
                     ${RUNTIME_COMPONENT_NAME})
         endif()
-        install(TARGETS cropper RUNTIME DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu.cfg
+        if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+            install(TARGETS cropper RUNTIME DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_gpu.cfg
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_gpu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_npu.cfg
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_npu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(SUPPORT_TRAIN)
-            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu_train.cfg
+            if(SUPPORT_TRAIN)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu_train.cfg
                     DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
         endif()
     endif()
     if(MSLITE_ENABLE_KERNEL_EXECUTOR)
