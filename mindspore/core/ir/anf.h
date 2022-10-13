@@ -1133,6 +1133,12 @@ MS_CORE_API EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim);
 // Check if monad state is equivalent for the connected two nodes, not strict but more faster.
 MS_CORE_API bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner);
 
+// Check if the node is DeadNode.
+MS_CORE_API bool IsDeadNode(const AnfNodePtr &node);
+
+// Check if the node is PolyNode.
+MS_CORE_API bool IsPolyNode(const AnfNodePtr &node);
+
 // Used to check whether a ValueNode has some kind of value.
 template <typename T>
 inline bool IsValueNode(const AnfNodePtr &node) {

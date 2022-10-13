@@ -276,10 +276,9 @@ AnfNodePtr EliminateUpdateStateMakeTupleWithUselessNode(const CNodePtr &update_s
   auto &first_input = make_tuple->input(kInputIndex);
   auto &second_input = make_tuple->input(kAttachIndex);
 
-  // Eliminate useless make_tuple with 'Dead Node'.
-  // UpdateState(u, MakeTuple(input, "Dead Node")) -> UpdateState(u, input)
-  auto abs = second_input->abstract();
-  if (abs != nullptr && abs->isa<abstract::AbstractError>()) {
+  // Eliminate useless make_tuple with 'DeadNode' or 'PolyNode'.
+  // UpdateState(u, MakeTuple(input, "DeadNode")) -> UpdateState(u, input)
+  if (IsDeadNode(second_input) || IsPolyNode(second_input)) {
     return NewUpdateStateWithAttach(update_state, first_input);
   }
 

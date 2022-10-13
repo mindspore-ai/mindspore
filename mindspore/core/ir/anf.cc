@@ -412,6 +412,18 @@ bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
                      [&monad, kMonadInput](const CNodePtr &load) { return load->inputs().at(kMonadInput) == monad; });
 }
 
+// Check if the node is DeadNode.
+bool IsDeadNode(const AnfNodePtr &node) {
+  auto value = GetValuePtr<ErrorValue>(node);
+  return (value != nullptr) && (value->IsDead());
+}
+
+// Check if the node is PolyNode.
+bool IsPolyNode(const AnfNodePtr &node) {
+  auto value = GetValuePtr<ErrorValue>(node);
+  return (value != nullptr) && (value->IsPoly());
+}
+
 SeenNum NewSeenGeneration() {
   static SeenNum seen_generation = 0;
   return ++seen_generation;

@@ -2314,7 +2314,7 @@ class PartialEvaluator : public Evaluator {
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
     if (arg0_value->isa<AbstractError>()) {
       MS_EXCEPTION_IF_NULL(arg0_value->GetValueTrack());
-      auto ret = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<StringImmPtr>(), out_conf->node());
+      auto ret = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<ErrorValuePtr>(), out_conf->node());
       MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
                     << " as func is: " << arg0_value->ToString();
       auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());

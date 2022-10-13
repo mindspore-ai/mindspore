@@ -195,19 +195,23 @@ bool StringImm::operator==(const Value &other) const {
   if (other.isa<StringImm>()) {
     auto other_ = static_cast<const StringImm &>(other);
     return *this == other_;
-  } else {
-    return false;
   }
+  return false;
 }
+
 bool StringImm::operator==(const StringImm &other) const { return str_ == other.str_; }
 
-bool AnyValue::operator==(const Value &other) const {
-  if (other.isa<AnyValue>()) {
-    return true;
-  } else {
-    return false;
+bool AnyValue::operator==(const Value &other) const { return other.isa<AnyValue>(); }
+
+bool ErrorValue::operator==(const Value &other) const {
+  if (other.isa<ErrorValue>()) {
+    auto other_ = static_cast<const ErrorValue &>(other);
+    return err_type_ == other_.err_type_;
   }
+  return false;
 }
+
+bool ErrorValue::operator==(const ErrorValue &other) const { return err_type_ == other.err_type_; }
 
 std::size_t ValueSlice::hash() const {
   MS_EXCEPTION_IF_NULL(start_);
