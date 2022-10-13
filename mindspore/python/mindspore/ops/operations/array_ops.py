@@ -5801,7 +5801,6 @@ class EditDistance(Primitive):
     Where the :math:`a` indicates the hypothesis and the :math:`a` indicates the truth. For ease of understanding,
     i and j here in may be considered as lengths of a and b.
 
-
     .. warning::
         - Unorded `truth_indices` or `hypothesis_indices` might lead to expected result, so it is suggested to
           make sure `truth_indices` and `hypothesis_indices` are both in ascending order before

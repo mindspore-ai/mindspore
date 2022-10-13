@@ -1484,9 +1484,13 @@ class Mish(Cell):
 
 
 class GLU(Cell):
-    r"""Applies the gated linear unit function
-    :math:`{GLU}(a, b)= a \otimes \sigma(b)` where :math:`a` is the first half
-    of the input matrices and :math:`b` is the second half.
+    r"""
+    Applies the gated linear unit function.
+
+    .. math::
+        {GLU}(a, b)= a \otimes \sigma(b)
+
+    where :math:`a` is the first half of the input matrices and :math:`b` is the second half.
 
     Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
 
@@ -1494,15 +1498,15 @@ class GLU(Cell):
         axis (int): the dimension on which to split the input. Default: -1
 
     Inputs:
-        - **x** (Tensor) -  :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
+        - **x** (Tensor) - :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
 
     Outputs:
         Tensor, math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`
 
     Supported Platforms:
-    ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
-    Examples::
+    Examples:
         >>> m = nn.GLU()
         >>> input = Tensor(np.randomn.randn(4, 2))
         >>> output = m(input)
