@@ -210,7 +210,7 @@ def vmap(fn, in_axes=0, out_axes=0):
     Args:
         fn (Union[Cell, Function, CellList]): Function to be mapped along the parameter axes, which takes at least one
             argument and returns one or more Tensors or the type of data supported by the MindSpore Tensor. When it is
-            a CellList, the model ensembling scenarioa, it is need to ensure that the structure of each cell is the same
+            a CellList, the model ensembling scenario, please make sure that the structure of each cell is the same
             and the number of cells is consistent with the sizes of the mapped axes (`axis_size`).
         in_axes (Union[int, list, tuple]): Specifies which dimensions (axes) of the inputs should be mapped over.
             If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis index. If `in_axes`
@@ -246,7 +246,7 @@ def vmap(fn, in_axes=0, out_axes=0):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.functional import vmap
+        >>> from mindspore import vmap
         >>> def test_vmap(x, y, z):                                              # ([a],[a],[a]) -> [a]
         ...     return x + y + z
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32))    # [b, a]
