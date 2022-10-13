@@ -5,7 +5,7 @@ mindspore.ops.strided_slice
 
     对输入Tensor根据步长和索引进行切片提取。
 
-    该算子在给定的 `input_x` 中提取大小为 `(end-begin)/stride` 的片段。根据起始索引、结束索引和步长进行提取，直到所有维度的索引都不小于结束索引为止, 返回提取出的切片。
+    该算子在给定的 `input_x` 中提取大小为 `(end-begin)/strides` 的片段。根据起始索引、结束索引和步长进行提取，直到所有维度的索引都不小于结束索引为止, 返回提取出的切片。
 
     .. note::
         - `begin` 、 `end` 和 `strides` 的shape必须相同。
@@ -54,14 +54,14 @@ mindspore.ops.strided_slice
         - **begin_mask** (int，可选) - 表示切片的起始索引掩码。使用二进制flag对输入Tensor不同维度进行标志，第i位设置为1则 `begin[i]` 失效，表示该维度的起始索引从0开始。默认值：0。
         - **end_mask** (int，可选) - 表示切片的结束索引掩码。与 `begin_mask` 类似。使用二进制flag对输入Tensor不同维度进行标志，第i位设置为1则 `end[i]` 失效，表示该维度切分的结束索引取最大值，即切分到尽可能大的维度。默认值：0。
         - **ellipsis_mask** (int，可选) - 不为0的维度不需要进行切片操作。为int型掩码。默认值：0。
-        - **new_axis_mask** (int，可选) - 表示切片的新增维度掩码。若第i位出现1，则 `begin[i]` 、`end[i]` 、`stride[i]` 失效，并在第i位上增加一个大小为1的维度。为int型掩码。默认值：0。
+        - **new_axis_mask** (int，可选) - 表示切片的新增维度掩码。若第i位出现1，则 `begin[i]` 、`end[i]` 、`strides[i]` 失效，并在第i位上增加一个大小为1的维度。为int型掩码。默认值：0。
         - **shrink_axis_mask** (int，可选) - 表示切片的收缩维度掩码。如果第i位设置为1，则意味着第i维度缩小为1。为int型掩码。默认值：0。
 
     返回：
         返回根据起始索引、结束索引和步长进行提取出的切片Tensor。
 
     异常：
-        - **TypeError** - `begin_mask` 、 `end_mask` 、 `ellipsis_mask` 、 `new_ax_mask` 或 `shrink_ax_mask` 不是int。
+        - **TypeError** - `begin_mask` 、 `end_mask` 、 `ellipsis_mask` 、 `new_axis_mask` 或 `shrink_axis_mask` 不是int。
         - **TypeError** - `begin` 、 `end` 或 `strides` 不是数据类型为int的tuple。
         - **ValueError** - `begin_mask` 、 `end_mask` 、 `ellipsis_mask` 、 `new_axis_mask` 或 `shrink_axis_mask` 小于0。
         - **ValueError** - `begin` 、 `end` 和 `strides` 的shape不同。
