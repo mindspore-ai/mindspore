@@ -390,7 +390,7 @@ def test_train_feed_ascend():
                                       search_mode="sharding_propagation", device_num=8,
                                       dataset_strategy="data_parallel")
     np.random.seed(42)
-    train_feed(num_classes=65536, expect_out=[11.259036, 11.015917, 10.599615])
+    train_feed(num_classes=65536, expect_out=[11.259036, 11.015858, 10.601505])
 
 
 def test_train_feed_gpu():

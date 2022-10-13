@@ -241,8 +241,8 @@ void TbeKernelReduceSelector::FilterInvalidFormatDType(SupportFormatDType *suppo
 
 bool TbeKernelReduceSelector::CheckOriginInputShapeDimEqual(size_t support_dim_size) const {
   // Note: identify format not check
-  return std::any_of(input_shape_.begin(), input_shape_.end(),
-                     [&support_dim_size](const auto &shape) { return (shape.size() != support_dim_size); });
+  return std::all_of(input_shape_.begin(), input_shape_.end(),
+                     [&support_dim_size](const auto &shape) { return (shape.size() == support_dim_size); });
 }
 
 bool TbeKernelReduceSelector::CheckOriginInputShapeDimLess(size_t support_min_dim_size) const {
