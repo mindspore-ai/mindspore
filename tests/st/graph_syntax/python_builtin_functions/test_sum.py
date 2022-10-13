@@ -124,3 +124,25 @@ def test_fallback_sum_with_x_list_of_tensor():
     x, y = [1, Tensor([[1, 2], [3, 4]]), Tensor([[1, 2], [3, 4]])], Tensor([[1, 1], [1, 1]])
     out = net(x, y)
     assert np.allclose(out.asnumpy(), np.array([[4, 6], [8, 10]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_fallback_sum_with_tensor_0d(mode):
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode when input x is 0d tensor.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            return sum(Tensor(1))
+
+    with pytest.raises(TypeError, match="Cannot iterate over a scalar tensor."):
+        context.set_context(mode=mode)
+        net = Net()
+        net()

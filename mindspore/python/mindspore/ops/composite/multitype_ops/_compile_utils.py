@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,6 +45,9 @@ def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, 
 
 def _tensor_getitem(self, index):
     """Handle tensor getitem"""
+    tensor_shape = F.shape(self)
+    if not tensor_shape:
+        const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
     if isinstance(index, Tensor):
         return tensor_index_by_tensor(self, index)
     if isinstance(index, list):

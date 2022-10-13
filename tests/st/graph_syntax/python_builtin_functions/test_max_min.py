@@ -159,7 +159,11 @@ def test_builtin_function_max_with_list_tensor():
     assert ret[1] == 30
 
 
-@pytest.mark.skip(reason="Not support tensor list or tuple nested")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_builtin_function_max_min_with_tuple_tuple_tensor():
     """
     Feature: Support the type of the input of built-in function max min is tensor tuple.
@@ -171,12 +175,15 @@ def test_builtin_function_max_min_with_tuple_tuple_tensor():
         tuple_x = ((Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32")),)
         return max(tuple_x), min(tuple_x)
 
-    ret = foo()
-    assert ret[0] == (Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32"))
-    assert ret[1] == (Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32"))
+    with pytest.raises(TypeError, match="cannot support tensor in list or tuple nested now."):
+        foo()
 
 
-@pytest.mark.skip(reason="Not support tensor list or tuple nested")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_builtin_function_max_min_with_list_list_tensor():
     """
     Feature: Support the type of the input of built-in function max min is tensor list.
@@ -188,12 +195,15 @@ def test_builtin_function_max_min_with_list_list_tensor():
         tuple_x = [[Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32")],]
         return max(tuple_x), min(tuple_x)
 
-    ret = foo()
-    assert ret[0] == (Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32"))
-    assert ret[1] == (Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32"))
+    with pytest.raises(TypeError, match="cannot support tensor in list or tuple nested now."):
+        foo()
 
 
-@pytest.mark.skip(reason="Not support tensor list or tuple nested")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_builtin_function_max_min_with_list_list_tensor_2():
     """
     Feature: Support the type of the input of built-in function max min is tensor list.
@@ -206,12 +216,15 @@ def test_builtin_function_max_min_with_list_list_tensor_2():
                    [Tensor(20).astype("float32"), Tensor(40).astype("float32"), Tensor(60).astype("float32")]]
         return max(tuple_x), min(tuple_x)
 
-    ret = foo()
-    assert ret[0] == [Tensor(20).astype("float32"), Tensor(40).astype("float32"), Tensor(60).astype("float32")]
-    assert ret[1] == [Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32")]
+    with pytest.raises(TypeError, match="cannot support tensor in list or tuple nested now."):
+        foo()
 
 
-@pytest.mark.skip(reason="Not support tensor list or tuple nested")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_builtin_function_max_min_with_list_list_tensor_out():
     """
     Feature: Support the type of the input of built-in function max min is tensor list.
@@ -224,10 +237,9 @@ def test_builtin_function_max_min_with_list_list_tensor_out():
                    [x / 2, 3 * x]]
         return max(tuple_x), min(tuple_x)
 
-    input_x = Tensor(20)
-    ret = foo(input_x)
-    assert ret[0] == [10, 60]
-    assert ret[1] == [5, 40]
+    with pytest.raises(TypeError, match="cannot support tensor in list or tuple nested now."):
+        input_x = Tensor(20)
+        foo(input_x)
 
 
 @pytest.mark.level1
@@ -251,3 +263,108 @@ def test_builtin_function_max_with_out_tensor():
     ret = foo(x)
     assert ret[0] == 20
     assert ret[1] == 7
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_max_with_empty_sequence(mode):
+    """
+    Feature: Check the arg of max.
+    Description: Do not support the arg of max is an empty sequence.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return max(())
+
+    with pytest.raises(ValueError, match="arg is an empty sequence."):
+        context.set_context(mode=mode)
+        foo()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_max_with_several_elements_tensor(mode):
+    """
+    Feature: Check the arg of max.
+    Description: Do not support tensor with several elements.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return max(Tensor([1, 2, 3]), Tensor([3, 4, 5]))
+
+    with pytest.raises(ValueError, match="The truth value of an array with several elements is ambiguous."):
+        context.set_context(mode=mode)
+        foo()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_min_with_tensor_0d(mode):
+    """
+    Feature: Check the arg of min.
+    Description: Cannot iterate over a scalar tensor.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return min(Tensor(1))
+
+    with pytest.raises(TypeError, match="Cannot iterate over a scalar tensor."):
+        context.set_context(mode=mode)
+        foo()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_min_with_tensor_1d(mode):
+    """
+    Feature: Check the arg of min.
+    Description: Test min() in graph mode when input is 1d tensor.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return min(Tensor([1]))
+
+    context.set_context(mode=mode)
+    res = foo()
+    assert res == 1
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_builtin_function_min_with_tensor_number(mode):
+    """
+    Feature: Check the arg of min.
+    Description: Cannot contain both tensor and non-tensor type.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return min(Tensor(1), 4)
+
+    with pytest.raises(TypeError, match="cannot contain both tensor and non-tensor type."):
+        context.set_context(mode=mode)
+        foo()
