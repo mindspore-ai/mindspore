@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_ADD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_ADD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SPARSE_ADD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SPARSE_ADD_CPU_KERNEL_H_
 
 #include <vector>
 #include <map>
@@ -50,7 +50,7 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
   template <typename T>
-  int CompareTowIndices(const T &a_indices, const T &b_indices, const int64_t a_row, const int64_t b_row,
+  int CompareTwoIndices(const T &a_indices, const T &b_indices, const int64_t a_row, const int64_t b_row,
                         const size_t dims) const;
 
   float thresh_ = 0;
@@ -63,4 +63,4 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_ADD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SPARSE_ADD_CPU_KERNEL_H_

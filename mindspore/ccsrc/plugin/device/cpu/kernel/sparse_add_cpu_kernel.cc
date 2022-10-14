@@ -45,7 +45,7 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   outputs_ = outputs;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAdd>(base_operator);
-
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
@@ -87,7 +87,7 @@ int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-int SparseAddCpuKernelMod::CompareTowIndices(const T &a_indices, const T &b_indices, const int64_t a_row,
+int SparseAddCpuKernelMod::CompareTwoIndices(const T &a_indices, const T &b_indices, const int64_t a_row,
                                              const int64_t b_row, const size_t dims) const {
   for (int64_t dim = 0; dim < SizeToLong(dims); dim++) {
     auto a_idx = a_indices[a_row * 2 + dim];
@@ -134,7 +134,7 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   std::vector<S> whole_values;
   whole_indices.reserve(LongToSize(a_indices_num + b_indices_num));
   while (i < a_indices_num && j < b_indices_num) {
-    switch (CompareTowIndices(a_indices, b_indices, i, j, kNumOfColumn)) {
+    switch (CompareTwoIndices(a_indices, b_indices, i, j, kNumOfColumn)) {
       case -1:
         (void)whole_indices.emplace_back(true, i);
         whole_values.push_back(a_values[i]);

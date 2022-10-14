@@ -198,13 +198,13 @@ def numpy_apply_adam(var, m, v, grad, beta1=0.9, beta2=0.999, eps=1e-8, lr=0.01)
 
 
 class AdamNetVmap(nn.Cell):
-    def __init__(self, net):
+    def __init__(self, net, seed):
         super(AdamNetVmap, self).__init__()
         shape = (8, 9, 6, 10, 5)
         self.net = net
-        self.var_np = np.random.randn(*shape).astype(np.float32)
-        self.m_np = np.random.randn(*shape).astype(np.float32)
-        self.v_np = np.random.randn(*shape).astype(np.float32)
+        self.var_np = seed.random(shape).astype(np.float32)
+        self.m_np = seed.random(shape).astype(np.float32)
+        self.v_np = seed.random(shape).astype(np.float32)
         self.var = Parameter(Tensor(self.var_np), name="var")
         self.m = Parameter(Tensor(self.m_np), name="m")
         self.v = Parameter(Tensor(self.v_np), name="v")
@@ -226,15 +226,15 @@ def test_apply_adam_witm_adam_op_vmap():
     Expectation: match to np benchmark.
     """
     shape = (8, 9, 6, 10, 5)
-
+    seed = np.random.RandomState(seed=5)
     def cal_amsgrad(var, m, v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
         return P.Adam()(var, m, v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
 
     error = 1e-3
-    grad_np = np.random.randn(*shape).astype(np.float32)
+    grad_np = seed.random(shape).astype(np.float32)
     grad = Tensor(grad_np)
 
-    vmap_adam = AdamNetVmap(cal_amsgrad)
+    vmap_adam = AdamNetVmap(cal_amsgrad, seed)
     _ = vmap_adam(Tensor(0.9, ms.float32), Tensor(0.999, ms.float32), Tensor(0.01, ms.float32), Tensor(
         0.9, ms.float32), Tensor(0.999, ms.float32), Tensor(1e-8, ms.float32), grad)
     ms_var = vmap_adam.var.asnumpy()
