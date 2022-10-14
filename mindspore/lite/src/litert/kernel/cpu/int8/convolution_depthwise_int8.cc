@@ -112,6 +112,8 @@ int ConvolutionDepthwiseInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[1]);
   CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_LESS_RETURN(conv_param_->dilation_h_, C1NUM);
+  CHECK_LESS_RETURN(conv_param_->dilation_w_, C1NUM);
   if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
       in_tensors_[1]->data_type() != mindspore::kNumberTypeInt8 ||
       out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {

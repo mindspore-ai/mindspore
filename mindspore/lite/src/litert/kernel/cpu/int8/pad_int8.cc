@@ -293,6 +293,10 @@ int PadInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(out_data_);
   int error_code;
   MS_CHECK_GT(out_tensors_[0]->ElementsNum(), 0, RET_ERROR);
+  if (out_tensors_[0]->ElementsNum() == in_tensors_[0]->ElementsNum()) {
+    (void)memcpy(out_data_, in_data_, out_tensors_[0]->Size());
+    return RET_OK;
+  }
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0],
            static_cast<size_t>(out_tensors_[0]->ElementsNum()) * sizeof(int8_t));
