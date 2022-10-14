@@ -409,7 +409,7 @@ Status ModelPool::CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_con
   }
   if (context->GetThreadNum() > can_use_core_num_) {
     MS_LOG(WARNING) << "thread num[" << context->GetThreadNum() << "] more than core num[" << can_use_core_num_ << "]";
-    if (context->GetThreadAffinityMode() != BindMode::Power_NoBind || !context->GetThreadAffinityCoreList().empty()) {
+    if (context->GetThreadAffinityMode() != lite::NO_BIND || !context->GetThreadAffinityCoreList().empty()) {
       MS_LOG(ERROR) << "thread num more than core num, can not bind cpu core.";
       return kLiteError;
     }
@@ -480,7 +480,7 @@ std::shared_ptr<Context> ModelPool::GetInitContext(const std::shared_ptr<RunnerC
   }
   if (!bind_core_available_) {
     MS_LOG(WARNING) << "Cannot use all hardware resources, does not support core binding.";
-    context->SetThreadAffinity(mindspore::Power_NoBind);
+    context->SetThreadAffinity(lite::NO_BIND);
     std::vector<int> empty = {};
     context->SetThreadAffinity(empty);
   }
