@@ -23,6 +23,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/transform/graph_ir/utils.h"
 #include "external/ge/ge_api.h"
+#include "runtime/config.h"
 
 namespace mindspore {
 void GeDeviceContext::Initialize() { InitGe(MsContext::GetInstance()); }
@@ -31,7 +32,9 @@ void GeDeviceContext::Destroy() { (void)FinalizeGe(MsContext::GetInstance()); }
 
 void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   MS_EXCEPTION_IF_NULL(inst_context);
-
+  int32_t is_heterogeneous = 0;
+  (void)rtGetIsHeterogenous(&is_heterogeneous);
+  inst_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
   if (inst_context->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return;
   }
