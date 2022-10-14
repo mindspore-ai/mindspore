@@ -17,6 +17,7 @@
 #include "src/litert/lite_model.h"
 #include <sys/stat.h>
 #include <iostream>
+#include <sstream>
 #include <functional>
 #include <vector>
 #include <algorithm>
@@ -620,5 +621,72 @@ int Model::Export(Model *model, const char *filename) {
 #else
   return chmod(filename, S_IRUSR);
 #endif
+}
+
+std::string ModelDebugString(Model *model) {
+  if (model == nullptr) {
+    return "";
+  }
+  std::ostringstream oss;
+  std::string deli = "\n";
+  oss << "{" << deli;
+  oss << "model_type: " << model->model_type_ << deli;
+
+  // debug graph
+  oss << "graph: {" << deli;
+  oss << "name: " << model->graph_.name_ << deli;
+  oss << "version: " << model->graph_.version_;
+
+  // input indices
+  oss << "input_indices: [" << deli;
+  for (auto i : model->graph_.input_indices_) {
+    oss << i << ", " << deli;
+  }
+  oss << "]" << deli;
+
+  // output indices
+  oss << "output_indices: [" << deli;
+  for (auto i : model->graph_.output_indices_) {
+    oss << i << ", " << deli;
+  }
+  oss << "]" << deli;
+
+  // all tensors
+  oss << "all_tensors: [" << deli;
+  for (auto tensor : model->graph_.all_tensors_) {
+    oss << "{" << tensor->name() << "}";
+  }
+  oss << "]" << deli;
+
+  // all nodes
+  oss << "all_nodes: [" << deli;
+  for (auto node : model->graph_.all_nodes_) {
+    oss << "{" << deli;
+    oss << "name: " << node->name_ << deli;
+    oss << "op_type: " << node->op_type_ << deli;
+    oss << "node_type: " << node->node_type_ << deli;
+    oss << "input: [";
+    for (auto i : node->input_indices_) {
+      oss << i << ", ";
+    }
+    oss << "]" << deli;
+    oss << "output: [";
+    for (auto i : node->output_indices_) {
+      oss << i << ", ";
+    }
+    oss << "]" << deli;
+
+    // // primitive
+    // auto *primitive = reinterpret_cast<schema
+
+    oss << "}" << deli;
+  }
+  oss << "]" << deli;
+
+  oss << "}" << deli;
+  oss << "}" << deli;
+
+  // dump
+  return oss.str();
 }
 }  // namespace mindspore::lite
