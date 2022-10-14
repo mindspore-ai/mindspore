@@ -2907,6 +2907,8 @@ class Tensor(Tensor_):
         """
         Returns the maximum value with corresponding index.
 
+        Compute the max value of input Tensor on the specified axis, and return the max value and index.
+
         Note:
             In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
 

@@ -6285,7 +6285,7 @@ def conj(input):
     If input is real, it is returned unchanged.
 
     Args:
-        input (Tensor) - The input tensor to compute to. Must have numeric type.
+        input (Tensor): The input tensor to compute to. Must have numeric type.
 
     Returns:
         Tensor, has the same dtype as the input.

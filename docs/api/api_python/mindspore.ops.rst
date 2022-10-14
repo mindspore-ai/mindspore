@@ -147,7 +147,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.ApplyProximalGradientDescent
     mindspore.ops.ApplyRMSProp
     mindspore.ops.LARSUpdate
-    mindspore.ops.SparseApplyAdagrad
     mindspore.ops.SparseApplyAdagradV2
     mindspore.ops.SparseApplyProximalAdagrad
     mindspore.ops.SGD

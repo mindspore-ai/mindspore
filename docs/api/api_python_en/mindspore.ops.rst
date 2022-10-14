@@ -147,7 +147,6 @@ Optimizer
     mindspore.ops.ApplyProximalGradientDescent
     mindspore.ops.ApplyRMSProp
     mindspore.ops.LARSUpdate
-    mindspore.ops.SparseApplyAdagrad
     mindspore.ops.SparseApplyAdagradV2
     mindspore.ops.SparseApplyProximalAdagrad
     mindspore.ops.SGD
