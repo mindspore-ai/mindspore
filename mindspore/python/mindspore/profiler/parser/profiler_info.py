@@ -101,6 +101,7 @@ class ProfilerInfo:
         """Save the profiler info to file."""
         ProfilerInfo._file_path = os.path.join(output_path, ProfilerInfo._file_name)
         ProfilerInfo._file_path = validate_and_normalize_path(ProfilerInfo._file_path)
-        with os.fdopen(os.open(ProfilerInfo._file_path, os.O_WRONLY | os.O_CREAT, 0o660), 'w') as json_file:
+        with os.fdopen(os.open(ProfilerInfo._file_path,
+                               os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
             json.dump(ProfilerInfo._profiler_info_dict, json_file)
         os.chmod(ProfilerInfo._file_path, stat.S_IREAD | stat.S_IWRITE)

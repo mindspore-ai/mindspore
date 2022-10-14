@@ -645,8 +645,8 @@ class GpuFrameWorkParser:
             "operator_type": op_type_step_time,
             "kernel_type": kernel_type_step_time,
         }
-        output_dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
-        with os.fdopen(os.open(output_dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT, 0o660), 'w') as fp:
+        dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
+        with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fp:
             json.dump(result, fp)
 
     def get_graph_ids(self):
@@ -761,8 +761,8 @@ class DynamicFrameWorkParser:
                     np.around(np.sum(self._op_type_exe_time[op_type], axis=0, dtype='float') /
                               len(self._op_type_exe_time[op_type]), 4)).tolist()
         self._dynamic_shape_info['op_type'] = self._op_info.get("op_type")
-        output_dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
-        with os.fdopen(os.open(output_dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT, 0o660), 'w') as fp:
+        dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
+        with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fp:
             json.dump(self._dynamic_shape_info, fp)
 
     def _analyse_op_execute_time(self):

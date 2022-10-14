@@ -61,6 +61,9 @@ void AscendDeviceContext::Initialize() {
 }
 
 void AscendDeviceContext::Destroy() {
+#ifndef ENABLE_SECURITY
+  AscendProfiler::GetInstance()->MsprofStopProfiler();
+#endif
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
   if (debugger && debugger->debugger_enabled()) {

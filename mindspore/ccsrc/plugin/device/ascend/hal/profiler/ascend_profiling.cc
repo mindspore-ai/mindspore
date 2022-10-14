@@ -44,7 +44,7 @@ PROFILER_REG(kAscendDevice, AscendProfiler);
 std::map<std::string, aclprofAicoreMetrics> kAicMetrics{{"ArithmeticUtilization", ACL_AICORE_ARITHMETIC_UTILIZATION},
                                                         {"PipeUtilization", ACL_AICORE_PIPE_UTILIZATION},
                                                         {"Memory", ACL_AICORE_MEMORY_BANDWIDTH},
-                                                        {"MemoryLO", ACL_AICORE_L0B_AND_WIDTH},
+                                                        {"MemoryL0", ACL_AICORE_L0B_AND_WIDTH},
                                                         {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
                                                         {"MemoryUB", ACL_AICORE_MEMORY_UB},
                                                         {"None", ACL_AICORE_NONE}};
