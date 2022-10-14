@@ -160,7 +160,7 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
         MS_LOG(EXCEPTION) << "Input dims of tensor " << user_input.id() << " is invalid.";
       }
       input->set_shape(shape);
-      input->set_data(user_input.data_c());
+      input->set_data(user_input.data_c(), false);
 #else
       MS_LOG(ERROR) << unsupport_string_tensor_log;
       return kLiteError;
@@ -178,7 +178,7 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
           input->set_shape(truncate_shape);
 #endif
         }
-        input->set_data(user_input.data_c());
+        input->set_data(user_input.data_c(), false);
       }
     }
   }
@@ -204,7 +204,6 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
     };
   }
   auto ret = lite_session_->RunGraph(before_call_back, after_call_back);
-  ResetTensorData(old_data, input_tensors);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
     return false;
