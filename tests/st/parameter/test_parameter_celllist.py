@@ -23,8 +23,6 @@ from mindspore import Tensor, context
 from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.common.initializer import initializer
 
-context.set_context(mode=context.GRAPH_MODE)
-
 
 class FullyConnectedNet(nn.Cell):
     def __init__(self, input_size, hidden_size, output_size):
@@ -70,18 +68,30 @@ class EmaUpdate(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_target_update():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_target_update(mode):
     """
     Feature: manage parameters with CellList.
     Description: Check the name of parameter in CellList.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     policy_net = FullyConnectedNet(4, 100, 2)
     target_net = FullyConnectedNet(4, 100, 2)
     tau = 0.2
     tau_tensor = Tensor(np.array([tau], dtype=np.float32))
     ema_update = EmaUpdate(policy_net, target_net, tau_tensor, period=1)
-    ema_update()
+    res = ema_update()
+    assert res == 1
+    assert ema_update.step.name == "step"
+    assert ema_update.policy_param[0].name == "0.linear1.weight"
+    assert ema_update.policy_param[1].name == "0.linear1.bias"
+    assert ema_update.policy_param[2].name == "0.linear2.weight"
+    assert ema_update.policy_param[3].name == "0.linear2.bias"
+    assert ema_update.target_param[0].name == "1.linear1.weight"
+    assert ema_update.target_param[1].name == "1.linear1.bias"
+    assert ema_update.target_param[2].name == "1.linear2.weight"
+    assert ema_update.target_param[3].name == "1.linear2.bias"
 
 
 class DenseNet(nn.Cell):
@@ -99,16 +109,21 @@ class DenseNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_two_dense_net():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_two_dense_net(mode):
     """
     Feature: Check the name of parameter .
     Description: Check the name of parameter in two network.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.random.randn(4, 16).astype(np.float32))
     net = DenseNet()
-    res = net(x)
-    print("res:", res)
+    net(x)
+    assert net.fc1._params['weight'].name == "fc1.weight"
+    assert net.fc1._params['bias'].name == "fc1.bias"
+    assert net.fc2._params['weight'].name == "fc2.weight"
+    assert net.fc2._params['bias'].name == "fc2.bias"
 
 
 class InnerNet(nn.Cell):
@@ -124,18 +139,20 @@ class InnerNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_two_net():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_two_net(mode):
     """
     Feature: Check the name of parameter .
     Description: Check the name of parameter in two network.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     net1 = InnerNet()
     net2 = InnerNet()
     res1 = net1(Tensor([1], ms.float32))
     res2 = net2(Tensor([1], ms.float32))
-    print("res1:", res1)
-    print("res2:", res2)
+    assert res1 == res2 == 2
+    assert net1.param.name == net1.param.name == "name_a"
 
 
 class OutNet1(nn.Cell):
@@ -152,13 +169,15 @@ class OutNet1(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_inner_out_net_1():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_inner_out_net_1(mode):
     """
     Feature: Check the name of parameter .
     Description: Check the name of parameter in two network.
     Expectation: No exception.
     """
     with pytest.raises(RuntimeError, match="its name 'name_a' already exists."):
+        context.set_context(mode=mode)
         net1 = InnerNet()
         net2 = InnerNet()
         out_net = OutNet1(net1, net2)
@@ -183,14 +202,18 @@ class OutNet2(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_inner_out_net_2():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_inner_out_net_2(mode):
     """
     Feature: Check the name of parameter .
     Description: Check the name of parameter in two network.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     net1 = InnerNet()
     net2 = InnerNet()
     out_net = OutNet2(net1, net2)
     res = out_net(Tensor([1], ms.float32))
-    print("res:", res)
+    assert res == 3
+    assert out_net.param1[0].name == "0.param"
+    assert out_net.param2[0].name == "1.param"

@@ -165,6 +165,7 @@
 "mindspore/tests/st/numpy_native/test_array_ops.py"                                                     "useless-super-delegation"
 "mindspore/tests/ut/python/mindir/test_mindir_export.py"                                                "no-else-return"
 "mindspore/tests/"                                                                                      "c-extension-no-member"
+"mindspore/tests/st/parameter/test_parameter_celllist.py"                                               "protected-access"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"

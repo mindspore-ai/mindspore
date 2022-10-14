@@ -21,14 +21,13 @@ from mindspore.common.parameter import Parameter
 from mindspore.common import ParameterTuple
 from mindspore import Tensor, context
 
-context.set_context(mode=context.GRAPH_MODE)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_1_1():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_1_1(mode):
     """
     Feature: Check the names of parameters and the names of inputs of construct.
     Description: If the name of the input of construct is same as the parameters, add suffix to the name of the input.
@@ -44,16 +43,20 @@ def test_parameter_1_1():
         def construct(self, name_a):
             return self.param_a + self.param_b - name_a
 
+    context.set_context(mode=mode)
     net = ParamNet()
     res = net(Tensor([3], ms.float32))
     assert res == 0
+    assert net.param_a.name == "name_a"
+    assert net.param_b.name == "name_b"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_1_2():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_1_2(mode):
     """
     Feature: Check the names of parameters and the names of inputs of construct.
     Description: If the name of the input of construct is same as the parameters, add suffix to the name of the input.
@@ -69,16 +72,21 @@ def test_parameter_1_2():
         def construct(self, name_b):
             return self.param_a + self.param_b[0] - name_b
 
+    context.set_context(mode=mode)
     net = ParamNet()
     res = net(Tensor([3], ms.float32))
     assert res == 0
+    assert net.param_a.name == "name_a"
+    assert net.param_b[0].name == "name_b"
+    assert net.param_b[1].name == "name_a"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_2_1():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_2_1(mode):
     """
     Feature: Check the names of parameters.
     Description: If parameters in init have same name, an exception will be thrown.
@@ -95,6 +103,7 @@ def test_parameter_2_1():
             return self.param_a + self.param_b
 
     with pytest.raises(ValueError, match="its name 'name_a' already exists."):
+        context.set_context(mode=mode)
         net = ParamNet()
         res = net()
         assert res == 3
@@ -104,7 +113,8 @@ def test_parameter_2_1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_2_2():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_2_2(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -123,6 +133,7 @@ def test_parameter_2_2():
             return self.param_a + self.res1[0] + self.res2
 
     with pytest.raises(ValueError, match="its name 'name_a' already exists."):
+        context.set_context(mode=mode)
         net = ParamNet()
         res = net()
         assert res == 10
@@ -132,7 +143,8 @@ def test_parameter_2_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_3():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_3(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -148,16 +160,20 @@ def test_parameter_3():
         def construct(self):
             return self.param_a + self.param_b
 
+    context.set_context(mode=mode)
     net = ParamNet()
     res = net()
     assert res == 3
+    assert net.param_a.name == "param_a"
+    assert net.param_b.name == "param_b"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_4():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_4(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -174,6 +190,7 @@ def test_parameter_4():
             return self.res1[0] + self.res1[1]
 
     with pytest.raises(ValueError, match="its name 'name_a' already exists."):
+        context.set_context(mode=mode)
         net = ParamNet()
         res = net()
         assert res == 6
@@ -183,7 +200,8 @@ def test_parameter_4():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_5_1():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_5_1(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -199,6 +217,7 @@ def test_parameter_5_1():
             return self.res1[0] + self.res1[1]
 
     with pytest.raises(ValueError, match="its name 'Parameter' already exists."):
+        context.set_context(mode=mode)
         net = ParamNet()
         res = net()
         assert res == 6
@@ -208,7 +227,8 @@ def test_parameter_5_1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_5_2():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_5_2(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -226,16 +246,21 @@ def test_parameter_5_2():
         def construct(self):
             return self.param_a + self.res1[0] + self.res2
 
+    context.set_context(mode=mode)
     net = ParamNet()
     res = net()
     assert res == 10
+    assert net.param_a.name == "name_b"
+    assert net.res1[0].name == "Parameter$1"
+    assert net.res1[1].name == "name_a"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_list_tuple_no_name():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_list_tuple_no_name(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -251,16 +276,22 @@ def test_parameter_list_tuple_no_name():
         def construct(self):
             return self.param_tuple[0] + self.param_tuple[1] + self.param_list[0] + self.param_list[1]
 
+    context.set_context(mode=mode)
     net = ParamNet()
     res = net()
     assert res == 26
+    assert net.param_tuple[0].name == "Parameter$1"
+    assert net.param_tuple[1].name == "Parameter$2"
+    assert net.param_list[0].name == "Parameter$3"
+    assert net.param_list[1].name == "Parameter$4"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_in_tuple():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_in_tuple(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -277,16 +308,22 @@ def test_parameter_in_tuple():
         def construct(self):
             return self.param_a + self.param_b + self.param_tuple[0] + self.param_tuple[1]
 
+    context.set_context(mode=mode)
     net = ParamNet()
     res = net()
     assert res == 6
+    assert net.param_a.name == "name_a"
+    assert net.param_b.name == "name_b"
+    assert net.param_tuple[0].name == "name_a"
+    assert net.param_tuple[1].name == "name_b"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_parameter_tuple_1():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_parameter_tuple_1(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -304,6 +341,7 @@ def test_parameter_parameter_tuple_1():
             return self.param_a + self.param_tuple[0] + self.param_tuple[1]
 
     with pytest.raises(ValueError, match="its name 'name_a' already exists."):
+        context.set_context(mode=mode)
         net = ParamNet()
         res = net()
         assert res == 11
@@ -313,7 +351,8 @@ def test_parameter_parameter_tuple_1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_parameter_parameter_tuple_2():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_parameter_tuple_2(mode):
     """
     Feature: Check the names of parameters.
     Description: Check the name of parameter in init.
@@ -329,16 +368,22 @@ def test_parameter_parameter_tuple_2():
         def construct(self):
             return self.param_a + self.param_tuple[0] + self.param_tuple[1] + self.param_tuple[2]
 
+    context.set_context(mode=mode)
     net = ParamNet()
     res = net()
     assert res == 4
+    assert net.param_a.name == "name_a"
+    assert net.param_tuple[0].name == "name_a"
+    assert net.param_tuple[1].name == "name_a"
+    assert net.param_tuple[2].name == "name_a"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_parameter():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter(mode):
     """
     Feature: Check the names of parameters.
     Description: If parameter in list or tuple is not given a name, will give it a unique name.
@@ -363,6 +408,7 @@ def test_parameter():
             res2 = self.param_list[0] + self.param_list[1]
             return res1, res2
 
+    context.set_context(mode=mode)
     net = ParamNet()
     x = Tensor([10], ms.float32)
     output1, output2 = net(x)
@@ -370,13 +416,22 @@ def test_parameter():
     output2_expect = Tensor(11, ms.float32)
     assert output1 == output1_expect
     assert output2 == output2_expect
+    assert net.param_a.name == "name_a"
+    assert net.param_b.name == "name_b"
+    assert net.param_c.name == "param_c"
+    assert net.param_d.name == "param_d"
+    assert net.param_tuple[0].name == "Parameter$1"
+    assert net.param_tuple[1].name == "Parameter$2"
+    assert net.param_list[0].name == "Parameter$3"
+    assert net.param_list[1].name == "Parameter$4"
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_parameter_same_name_between_tuple_or_list():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_parameter_same_name_between_tuple_or_list(mode):
     """
     Feature: Check the names of parameters between tuple or list.
     Description: If the same name exists between tuple and list, an exception will be thrown.
@@ -396,6 +451,7 @@ def test_parameter_same_name_between_tuple_or_list():
             return res
 
     with pytest.raises(ValueError, match="its name 'name_a' already exists."):
+        context.set_context(mode=mode)
         net = ParamNet()
         x = Tensor([10], ms.float32)
         output = net(x)
@@ -409,7 +465,8 @@ def test_parameter_same_name_between_tuple_or_list():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_parameter_argument_and_fv():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_argument_and_fv(mode):
     """
     Feature: Parameter argmument in top func graph.
     Description: Use Parameter as input argmument.
@@ -423,6 +480,7 @@ def test_parameter_argument_and_fv():
             ms.ops.Assign()(y, Tensor([0]))
             return True
 
+    context.set_context(mode=mode)
     x = Parameter(Tensor([1]))
     net = Demo()
     net(x)
@@ -437,7 +495,8 @@ def test_parameter_argument_and_fv():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_parameter_argument_grad():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_parameter_argument_grad(mode):
     """
     Feature: Parameter argmument in top func graph.
     Description: Use Parameter as input argmument, and pass it to varargs.
@@ -455,6 +514,7 @@ def test_parameter_argument_grad():
             ms.ops.Assign()(y, param)
             return param
 
+    context.set_context(mode=mode)
     param = Parameter(Tensor(np.array([[0, 0], [0, 0]]), ms.float32), name='param')
     x = Parameter(Tensor(np.array([[4.0, -8.0], [-2.0, -5.0]]), ms.float32), name='x')
     y = Parameter(Tensor(np.array([[1, 0], [1, 1]]), ms.float32), name='y')
