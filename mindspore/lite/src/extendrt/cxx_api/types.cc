@@ -218,42 +218,34 @@ MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum Dat
 }
 
 MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &str) {
-  size_t mem_size = 0;
-  mem_size += sizeof(int32_t);  // for num
-  for (const auto &s : str) {
-    mem_size += sizeof(int32_t);  // for offset
-    mem_size += s.size();         // for data
+  size_t tensor_num = str.size();
+  std::vector<int32_t> offset(tensor_num + 1);
+  const size_t extra_offset_num = 2;
+  offset[0] = static_cast<int32_t>(sizeof(int32_t) * (tensor_num + extra_offset_num));
+  for (size_t i = 0; i < tensor_num; i++) {
+    offset[i + 1] = offset[i] + str[i].size();
   }
-
-  auto tensor = CreateTensor(name, DataType::kObjectTypeString, {static_cast<int64_t>(mem_size)}, nullptr, mem_size);
+  std::vector<int64_t> shape = {offset[tensor_num]};
+  auto tensor = CreateTensor(name, DataType::kObjectTypeString, shape, nullptr, offset[tensor_num]);
   if (tensor == nullptr) {
-    MS_LOG(ERROR) << "Create tensor failed.";
+    MS_LOG(ERROR) << "create tensor failed.";
     return nullptr;
   }
-
-  int32_t *data = reinterpret_cast<int32_t *>(tensor->MutableData());
-  if (data == nullptr) {
-    MS_LOG(ERROR) << "Create tensor failed.";
+  void *data = tensor->MutableData();
+  int32_t *string_info = reinterpret_cast<int32_t *>(data);
+  if (string_info == nullptr) {
+    MS_LOG(ERROR) << "tensor data is nullptr.";
     DestroyTensorPtr(tensor);
     return nullptr;
   }
-  uint8_t *cur_data = reinterpret_cast<uint8_t *>(data + 1 + str.size());
-  *reinterpret_cast<int32_t *>(data) = str.size();
-  for (size_t i = 0; i < str.size(); ++i) {
-    int32_t offset = (cur_data - reinterpret_cast<uint8_t *>(data));
-    data[i + 1] = offset;
-    if (str[i].empty()) {
-      continue;
-    }
-    auto ret = memcpy_s(reinterpret_cast<void *>(cur_data), str[i].size(), str[i].data(), str[i].size());
-    if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
-      DestroyTensorPtr(tensor);
-      return nullptr;
-    }
-    cur_data += str[i].size();
+  char *string_data = reinterpret_cast<char *>(data);
+  string_info[0] = static_cast<int32_t>(tensor_num);
+  for (size_t i = 0; i <= tensor_num; i++) {
+    string_info[i + 1] = offset[i];
   }
-
+  for (size_t i = 0; i < tensor_num; i++) {
+    memcpy_s(string_data + offset[i], str[i].size(), str[i].data(), str[i].size());
+  }
   return tensor;
 }
 
