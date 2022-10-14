@@ -92,3 +92,12 @@ def test_convert_make_tuple_make_tuple():
     Expectation: success
     """
     utils.run_testcase('ge_convert', 'test_convert_make_tuple_make_tuple')
+
+
+def test_convert_tuple_get_item_dynamic_output():
+    """
+    Feature: convert ge graph
+    Description: test TupleGetItem's input is dynamic output
+    Expectation: success
+    """
+    utils.run_testcase('ge_convert', 'test_convert_tuple_get_item_dynamic_output')

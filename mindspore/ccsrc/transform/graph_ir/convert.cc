@@ -1754,7 +1754,8 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
   } else {
     auto pred_adpt = FindAdapter(input, training_);
     MS_EXCEPTION_IF_NULL(pred_adpt);
-    if (pred_adpt->IsDyOutputOp(0)) {
+    // TupleGetItem's input is dynamic output(eg:MakeTuple), but it only need to get one handle.
+    if (pred_adpt->IsDyOutputOp(0) && !IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
       MS_EXCEPTION_IF_NULL(Convert(input));
       handles = pred_adpt->getOutputs(Convert(input));
     } else {
