@@ -177,7 +177,7 @@ int CalculateScaleAndBiasFromBN(const CNodePtr &bn_node, int kernel_num, float *
   if (eps < kEps) {
     eps = kEps;
   }
-  if (CheckPrimitiveType(bn_node, prim::kPrimBatchNorm)) {
+  if (CheckPrimitiveType(bn_node, prim::kPrimBatchNorm) || bn_node->size() == kCaffeBNInputSize) {
     MS_CHECK_TRUE_RET(bn_node->size() == kCaffeBNInputSize, lite::RET_ERROR);
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
     MS_CHECK_TRUE_RET(bn_mean_node != nullptr, lite::RET_ERROR);

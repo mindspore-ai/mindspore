@@ -156,6 +156,7 @@ constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kNameStandardNormal = "StandardNormal";
 constexpr auto kNameDynamicShape = "DynamicShape";
+constexpr size_t kFusedBatchNormInputSize = 6;
 
 std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameElu, mindspore::ELU},
                                                                    {ops::kNameGeLU, mindspore::GELU},
@@ -566,6 +567,9 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
 
 int MoveAttrBatchNorm(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
+  if (cnode->size() != kFusedBatchNormInputSize) {
+    return lite::RET_OK;
+  }
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
