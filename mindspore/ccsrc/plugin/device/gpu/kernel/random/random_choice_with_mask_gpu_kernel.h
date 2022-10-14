@@ -80,6 +80,9 @@ class RandomChoiceWithMaskGpuKernelMod : public NativeGpuKernelMod {
   int ceil_power2_{0};
   std::mt19937 generator_;
   std::vector<int> input_shape_5D_;
+
+  size_t batch_rank_{0};
+  size_t batch_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -514,4 +514,5 @@ _ops_vmap_clone_prim_dict = {
     "SparseApplyAdagradV2": P.SparseApplyAdagradV2,
     "SparseApplyFtrl": P.SparseApplyFtrl,
     "RandomShuffle": RandomShuffle,
+    "RandomChoiceWithMask": P.RandomChoiceWithMask
 }

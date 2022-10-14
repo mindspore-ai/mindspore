@@ -41,6 +41,7 @@ bool RandomChoiceWithMaskGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   seed2_ = random_choice_with_mask_ptr->get_seed2();
   count_ = random_choice_with_mask_ptr->get_count();
   generator_.seed(time_interval);
+  batch_rank_ = base_operator->get_batch_rank();
   return true;
 }
 
@@ -51,12 +52,17 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[kIndex0]->GetShapeVector();
-  input_shape_size_ = input_shape.size();
+  auto input_shape_with_batch = inputs[kIndex0]->GetShapeVector();
+  input_shape_size_ = input_shape_with_batch.size() - batch_rank_;
   input_shape_5D_.clear();
   // convert size_t to int
-  for (auto i = 0; i < input_shape_size_; i++) {
-    input_shape_5D_.push_back(input_shape[i]);
+  for (size_t i = 0; i < batch_rank_; i++) {
+    batch_size_ *= input_shape_with_batch[i];
+  }
+  ShapeVector input_shape_without_batch;
+  for (auto i = batch_rank_; i < input_shape_size_ + batch_rank_; i++) {
+    input_shape_5D_.push_back(input_shape_with_batch[i]);
+    input_shape_without_batch.push_back(input_shape_with_batch[i]);
   }
   // convert shape to 5D
   while (input_shape_5D_.size() != MAX_DIMENSION) {
@@ -64,7 +70,7 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   }
 
   // init memory
-  input_size_ *= SizeOf(input_shape);
+  input_size_ *= SizeOf(input_shape_without_batch);
   // upper ceiling for input for ceil_power2
   if (count_ > kSmallK || input_shape_size_ > 1) {
     ceil_power2_ = RcwmRoundUpPower2(input_size_);
@@ -88,21 +94,27 @@ bool RandomChoiceWithMaskGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   } else {
     seedc = generator_();
   }
-  if (count_ > kSmallK || input_shape_size_ > 1) {
-    S *index_buff = GetDeviceAddress<S>(workspaces, 0);
-    S *mask_buff = GetDeviceAddress<S>(workspaces, 1);
-    S *rank_buff = GetDeviceAddress<S>(workspaces, 2);
-    S *Tnum_buff = GetDeviceAddress<S>(workspaces, 3);
-    S *tmp_buff = GetDeviceAddress<S>(workspaces, 4);
-    void *States = GetDeviceAddress<void *>(workspaces, 5);
-    curandState *devStates = reinterpret_cast<curandState *>(States);
-    CalRandomChoiceWithMask(input_size_, input_shape_size_, input_shape_5D_[kIndex0], input_shape_5D_[kIndex1],
-                            input_shape_5D_[kIndex2], input_shape_5D_[kIndex3], input_shape_5D_[kIndex4], seedc, count_,
-                            input, output_index, output_mask, index_buff, mask_buff, rank_buff, Tnum_buff, tmp_buff,
-                            devStates, reinterpret_cast<cudaStream_t>(stream_ptr));
-  } else {
-    CalRandomChoiceWithMaskSmall<float, S, T>(input_size_, seedc, count_, input, output_index, output_mask,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr));
+  for (size_t i = 0; i < batch_size_; i++) {
+    input += i * input_size_;
+    output_index += i * count_ * input_shape_size_;
+    output_mask += i * count_;
+
+    if (count_ > kSmallK || input_shape_size_ > 1) {
+      S *index_buff = GetDeviceAddress<S>(workspaces, 0);
+      S *mask_buff = GetDeviceAddress<S>(workspaces, 1);
+      S *rank_buff = GetDeviceAddress<S>(workspaces, 2);
+      S *Tnum_buff = GetDeviceAddress<S>(workspaces, 3);
+      S *tmp_buff = GetDeviceAddress<S>(workspaces, 4);
+      void *States = GetDeviceAddress<void *>(workspaces, 5);
+      curandState *devStates = reinterpret_cast<curandState *>(States);
+      CalRandomChoiceWithMask(input_size_, input_shape_size_, input_shape_5D_[kIndex0], input_shape_5D_[kIndex1],
+                              input_shape_5D_[kIndex2], input_shape_5D_[kIndex3], input_shape_5D_[kIndex4], seedc,
+                              count_, input, output_index, output_mask, index_buff, mask_buff, rank_buff, Tnum_buff,
+                              tmp_buff, devStates, reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      CalRandomChoiceWithMaskSmall<float, S, T>(input_size_, seedc, count_, input, output_index, output_mask,
+                                                reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
   }
   return true;
 }
