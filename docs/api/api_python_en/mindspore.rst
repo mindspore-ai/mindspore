@@ -226,6 +226,7 @@ Serialization
     mindspore.load_checkpoint
     mindspore.load_distributed_checkpoint
     mindspore.load_param_into_net
+    mindspore.merge_pipeline_strategys
     mindspore.merge_sliced_parameter
     mindspore.parse_print
     mindspore.rank_list_for_transform
