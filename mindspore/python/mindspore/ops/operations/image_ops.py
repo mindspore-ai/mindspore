@@ -397,7 +397,7 @@ class NonMaxSuppressionV3(Primitive):
         ValueError: If each of the size of shape of `max_output_size`, `iou_threshold`, `score_threshold` is not 0.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> boxes = Tensor(np.array([[1, 2, 3, 4], [1, 3, 3, 4], [1, 3, 4, 4],
@@ -415,6 +415,8 @@ class NonMaxSuppressionV3(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NonMaxSuppressionV3"""
+        self.init_prim_io_names(inputs=['boxes', 'scores', 'max_output_size', 'iou_threshold', 'score_threshold'],
+                                outputs=['selected indices'])
 
 
 class NonMaxSuppressionWithOverlaps(Primitive):

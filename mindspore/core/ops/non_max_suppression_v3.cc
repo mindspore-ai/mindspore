@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 
 #include <set>
+#include <iostream>
+#include <limits>
 
 #include "ops/non_max_suppression_v3.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/dshape.h"
 #include "mindapi/src/helper.h"
+#include "mindapi/ir/value.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,38 +37,49 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   auto boxes_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape]);
   auto scores_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape]);
-  auto scores_shape_rank = SizeToLong(scores_shape->shape().size());
   auto max_output_size_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape]);
-  auto max_output_size_shape_rank = SizeToLong(max_output_size_shape->shape().size());
   auto iou_threshold_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShapeTrack())[kShape]);
-  auto iou_threshold_shape_rank = SizeToLong(iou_threshold_shape->shape().size());
   auto score_threshold_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape]);
-  auto score_threshold_shape_rank = SizeToLong(score_threshold_shape->shape().size());
-  // boxes second dimension must euqal 4
-  (void)CheckAndConvertUtils::CheckInteger("boxes second dimension", boxes_shape->shape()[1], kEqual, 4, prim_name);
+  auto in_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto in_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
+  auto in_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
+  auto in_shape4 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShapeTrack())[kShape];
+  auto in_shape5 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
+  if (IsDynamicRank(in_shape1) || IsDynamicRank(in_shape2) || IsDynamicRank(in_shape3) || IsDynamicRank(in_shape4) ||
+      IsDynamicRank(in_shape5)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   // boxes must be rank 2
-  (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(boxes_shape->shape().size()), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("boxes rank", boxes_shape->shape().size(), kEqual, 2, prim_name);
+  int x_shape = boxes_shape->shape()[1];
+  if (x_shape > 0) {
+    // boxes second dimension must euqal 4
+    (void)CheckAndConvertUtils::CheckInteger("boxes second dimension", boxes_shape->shape()[1], kEqual, 4, prim_name);
+  }
   // score must be rank 1
-  (void)CheckAndConvertUtils::CheckInteger("scores rank", scores_shape_rank, kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scores rank", scores_shape->shape().size(), kEqual, 1, prim_name);
   // score length must be equal with boxes first dimension
   (void)CheckAndConvertUtils::CheckInteger("scores length", scores_shape->shape()[0], kEqual, boxes_shape->shape()[0],
                                            prim_name);
   // max_output_size,iou_threshold,score_threshold must be scalar
-  (void)CheckAndConvertUtils::CheckInteger("max_output_size rank", max_output_size_shape_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("iou_threshold rank", iou_threshold_shape_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("score_threshold rank", score_threshold_shape_rank, kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("max_output_size size", max_output_size_shape->shape().size(), kEqual, 0,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("iou_threshold size", iou_threshold_shape->shape().size(), kEqual, 0,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("score_threshold size", score_threshold_shape->shape().size(), kEqual, 0,
+                                           prim_name);
   auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   // calculate output shape
-  ShapeVector selected_indices_shape = {abstract::Shape::kShapeDimAny};
+  ShapeVector selected_indices_shape = {-1};
   ShapeVector selected_indices_min_shape = {0};
   ShapeVector selected_indices_max_shape;
   if (scores_shape_map[kShape].size() > 0 && scores_shape_map[kShape][0] == -1) {
@@ -94,19 +108,19 @@ TypePtr NonMaxSuppressionV3InferType(const PrimitivePtr &prim, const std::vector
   // boxes and scores must have same type
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
-  (void)args.insert(std::make_pair("boxes_type", boxes_type));
-  (void)args.insert(std::make_pair("scores_type", scores_type));
+  (void)args.insert({"boxes_type", boxes_type});
+  (void)args.insert({"scores_type", scores_type});
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // iou_threshold,score_threshold must be scalar
   std::map<std::string, TypePtr> args2;
-  (void)args2.insert(std::make_pair("iou_threshold_type", iou_threshold_type));
-  (void)args2.insert(std::make_pair("score_threshold_type", score_threshold_type));
+  (void)args2.insert({"iou_threshold_type", iou_threshold_type});
+  (void)args2.insert({"score_threshold_type", score_threshold_type});
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args2, valid_types, prim_name);
   // max_output_size must be scalar
-  const std::set<TypePtr> valid_types2 = {kInt32, kInt64};
+  const std::set<TypePtr> valid_types1 = {kInt32, kInt64};
   std::map<std::string, TypePtr> args3;
-  (void)args3.insert(std::make_pair("max_output_size_type", max_output_size_type));
-  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args3, valid_types2, prim_name);
+  (void)args3.insert({"max_output_size_type", max_output_size_type});
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args3, valid_types1, prim_name);
   return max_output_size_type;
 }
 }  // namespace
