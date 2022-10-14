@@ -505,6 +505,8 @@ class Adam(Optimizer):
     :math:`\epsilon` represents `eps`.
 
     Note:
+        On Ascend, when `use_amsgrad` is set to True, it might have slightly larger accuracy error.
+
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
         strategy wants to be executed on the host, set the target to the CPU.
         The sparse feature is under continuous development.

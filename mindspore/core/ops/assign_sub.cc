@@ -32,6 +32,9 @@ abstract::ShapePtr AssignSubInferShape(const PrimitivePtr &primitive, const std:
   auto variable_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(variable_shape_ptr)[kShape];
   auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_shape_ptr)[kShape];
   auto shape_element = variable_shape_ptr->cast<abstract::ShapePtr>();
+  if (variable_shape_ptr->IsDynamic() || value_shape_ptr->IsDynamic()) {
+    return shape_element;
+  }
   if (variable_shape.size() != value_shape.size()) {
     if (variable_shape.size() == 1 && variable_shape[0] == 1 && value_shape.empty()) {
       return shape_element;
