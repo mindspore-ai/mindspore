@@ -26,31 +26,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr auto kReal = "Real";
-constexpr auto kImag = "Imag";
-constexpr auto kConj = "Conj";
-constexpr auto kCeil = "Ceil";
-
-template <typename T, typename S>
-class UnaryOpCpuKernelFunc : public DeprecatedCpuKernelFunc {
- public:
-  UnaryOpCpuKernelFunc() = default;
-  ~UnaryOpCpuKernelFunc() override = default;
-  using UnaryOpFunc = std::function<void(const T *, S *, size_t, size_t)>;
-  void InitFunc(const CNodePtr &kernel_node) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
-
- private:
-  void GetUnaryOpFunc();
-  UnaryOpFunc unary_op_func_{nullptr};
-  std::string kernel_name_;
-};
-
 void Ceil(const float *input, float *output, size_t start, size_t end) {
   auto input_s = input + start;
   auto output_s = output + start;
-  ElementCeil(input_s, output_s, (end - start));
+  ElementCeil(input_s, output_s, static_cast<int>(end - start));
 }
 
 template <typename T, typename S>
@@ -85,51 +64,61 @@ void Conj(const T *input, S *output, size_t start, size_t end) {
 }
 
 template <typename T, typename S>
-void UnaryOpCpuKernelFunc<T, S>::GetUnaryOpFunc() {
-  const std::map<std::string, UnaryOpFunc> kCommonSupportedMap = {{prim::kPrimReal->name(), &Real<T, S>},
-                                                                  {prim::kPrimImag->name(), &Imag<T, S>},
-                                                                  {prim::kPrimConj->name(), &Conj<T, S>}};
-  if constexpr (std::is_same<T, float>::value) {
-    if (kernel_name_ == prim::kPrimCeil->name()) {
-      unary_op_func_ = &Ceil;
-      return;
+class UnaryOpCpuKernelFunc : public CpuKernelFunc {
+ public:
+  UnaryOpCpuKernelFunc() = default;
+  ~UnaryOpCpuKernelFunc() override = default;
+  using UnaryOpFunc = std::function<void(const T *, S *, size_t, size_t)>;
+
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    GetUnaryOpFunc();
+  }
+
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override {
+    auto output = outputs.front();
+    const auto input_addr = GetDeviceAddress<T>(inputs, 0);
+    auto output_addr = GetDeviceAddress<S>(outputs, 0);
+    if (unary_op_func_ == nullptr) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it has no cpu backend implements.";
+    }
+    ParallelLaunchAutoSearch(
+      std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
+      output->size / sizeof(S), this, &parallel_search_info_);
+    return true;
+  }
+
+ private:
+  void GetUnaryOpFunc() {
+    const std::map<std::string, UnaryOpFunc> kCommonSupportedMap = {{prim::kPrimReal->name(), &Real<T, S>},
+                                                                    {prim::kPrimImag->name(), &Imag<T, S>},
+                                                                    {prim::kPrimConj->name(), &Conj<T, S>}};
+    if constexpr (std::is_same<T, float>::value) {
+      if (kernel_name_ == prim::kPrimCeil->name()) {
+        unary_op_func_ = &Ceil;
+        return;
+      }
+    }
+    auto iter = kCommonSupportedMap.find(kernel_name_);
+    if (iter != kCommonSupportedMap.end()) {
+      unary_op_func_ = iter->second;
     }
   }
-  auto iter = kCommonSupportedMap.find(kernel_name_);
-  if (iter != kCommonSupportedMap.end()) {
-    unary_op_func_ = iter->second;
-  }
-}
+  UnaryOpFunc unary_op_func_{nullptr};
+  std::string kernel_name_;
+};
 
 template <typename T, typename S>
-void UnaryOpCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  GetUnaryOpFunc();
-}
-
-template <typename T, typename S>
-bool UnaryOpCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
-  auto input = inputs.front();
-  auto output = outputs.front();
-  const auto input_addr = reinterpret_cast<T *>(input->addr);
-  auto output_addr = reinterpret_cast<S *>(output->addr);
-  if (unary_op_func_ == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it has no cpu backend implements.";
-  }
-  ParallelLaunchAutoSearch(
-    std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
-    output->size / sizeof(S), this, &parallel_search_info_);
-  return true;
-}
-
-template <typename T, typename S>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeUnaryFunc() {
+std::shared_ptr<CpuKernelFunc> SpecializeUnaryFunc() {
   return std::make_shared<UnaryOpCpuKernelFunc<T, S>>();
 }
-using UnaryOpCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+
+using UnaryOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+
 std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>> kernel_attr_list = {
-  {kReal,
+  {prim::kPrimReal->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<complex128, double>},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
@@ -152,10 +141,10 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<double, double>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}},
-  {kCeil,
+  {prim::kPrimCeil->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeUnaryFunc<float, float>}}},
-  {kImag,
+  {prim::kPrimImag->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<complex128, double>},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
@@ -180,7 +169,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
      SpecializeUnaryFunc<uint8_t, uint8_t>}}},
-  {kConj,
+  {prim::kPrimConj->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      SpecializeUnaryFunc<complex128, complex128>},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
@@ -205,41 +194,46 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}}};
 }  // namespace
 
-void UnaryOpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
+bool UnaryOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << kernel_type_ << " does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << kernel_attr << " does not support this kernel data type: " << kernel_attr;
   }
+  func_obj_ = kernel_attr_list[kernel_name_][index].second();
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
 
-  func_obj_ = kernel_attr_list[kernel_type_][index].second();
-  func_obj_->InitFunc(kernel_node);
+int UnaryOpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  return KernelMod::Resize(base_operator, inputs, outputs);
 }
 
 std::vector<KernelAttr> UnaryOpCpuKernelMod::GetOpSupport() {
-  auto iter = kernel_attr_list.find(kernel_type_);
+  auto iter = kernel_attr_list.find(kernel_name_);
   if (iter == kernel_attr_list.end()) {
-    MS_LOG(EXCEPTION) << "UnaryOp cpu does not support " << kernel_type_;
+    MS_LOG(EXCEPTION) << "UnaryOp cpu does not support " << kernel_name_;
   }
-
   std::vector<KernelAttr> support_list;
   (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, UnaryOpCpuFuncCreator> &pair) { return pair.first; });
   return support_list;
 }
-
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Real,
-                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kReal); });
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(prim::kPrimReal->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Imag,
-                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kImag); });
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(prim::kPrimImag->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conj,
-                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kConj); });
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(prim::kPrimConj->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Ceil,
-                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kCeil); });
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(prim::kPrimCeil->name()); });
 }  // namespace kernel
 }  // namespace mindspore

@@ -29,6 +29,24 @@ __global__ void SqrtGradKernel(const T *input, const T *dout, T *output, const s
   return;
 }
 
+template <>
+__global__ void SqrtGradKernel(const Complex<float> *input, const Complex<float> *dout, Complex<float> *output,
+                               const size_t count) {
+  Complex<float> two = Complex<float>(2.0);
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = dout[i] / (conj(input[i]) * two);
+  }
+}
+
+template <>
+__global__ void SqrtGradKernel(const Complex<double> *input, const Complex<double> *dout, Complex<double> *output,
+                               const size_t count) {
+  Complex<double> two = Complex<double>(2.0);
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = dout[i] / (conj(input[i]) * two);
+  }
+}
+
 template <typename T>
 __global__ void RsqrtGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -228,6 +246,14 @@ template CUDA_LIB_EXPORT void TanhGrad<Complex<double>>(const Complex<double> *i
                                                         cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void TanhGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                       Complex<float> *output, const size_t count,
+                                                       cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void SqrtGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                        Complex<double> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void SqrtGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
                                                        Complex<float> *output, const size_t count,
                                                        cudaStream_t cuda_stream);
 

@@ -29,23 +29,26 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 namespace mindspore {
 namespace kernel {
-class UnaryOpCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class UnaryOpCpuKernelMod : public NativeCpuKernelMod {
  public:
   UnaryOpCpuKernelMod() = default;
-  explicit UnaryOpCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  explicit UnaryOpCpuKernelMod(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   ~UnaryOpCpuKernelMod() override = default;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
-  std::string kernel_type_{"Unknown"};
+  std::shared_ptr<CpuKernelFunc> func_obj_;
 };
 }  // namespace kernel
 }  // namespace mindspore

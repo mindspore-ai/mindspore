@@ -213,6 +213,21 @@ __global__ void SqrtKernel(const half *input, half *output, const size_t count) 
   }
   return;
 }
+
+template <>
+__global__ void SqrtKernel(const Complex<float> *input, Complex<float> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = sqrt(input[i]);
+  }
+}
+
+template <>
+__global__ void SqrtKernel(const Complex<double> *input, Complex<double> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = sqrt(input[i]);
+  }
+}
+
 template <typename T>
 __global__ void RsqrtKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -1687,6 +1702,8 @@ template CUDA_LIB_EXPORT void Imag<float>(const Complex<float> *input, float *ou
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<float>(const Complex<float> *input, Complex<float> *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sqrt<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
@@ -1717,6 +1734,8 @@ template CUDA_LIB_EXPORT void Imag<double>(const Complex<double> *input, double 
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<double>(const Complex<double> *input, Complex<double> *output, const size_t count,
                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sqrt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
