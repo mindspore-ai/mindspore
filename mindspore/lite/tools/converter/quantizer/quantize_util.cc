@@ -51,6 +51,7 @@ constexpr int kLstmBiasShapeSize = 2;
 constexpr int kLstmBiasIndex = 3;
 constexpr size_t kGatherAxisIndex = 3;
 constexpr size_t kAnfPrimitiveIndex = 0;
+constexpr int kDefaultThreadNumFour = 4;
 }  // namespace
 
 QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode) {
@@ -304,13 +305,20 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
     return kLiteNullptr;
   }
   auto context = std::make_shared<mindspore::Context>();
-  context->SetThreadAffinity(kCpuBindMode);
   if (context == nullptr) {
     MS_LOG(ERROR) << "New context failed while running.";
     delete meta_graph;
     return kLiteNullptr;
   }
+  context->SetThreadAffinity(kCpuBindMode);
+  context->SetThreadNum(kDefaultThreadNumFour);
+
   std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
+  if (device_info == nullptr) {
+    MS_LOG(ERROR) << "New device_info failed while running.";
+    delete meta_graph;
+    return kLiteNullptr;
+  }
   auto &device_list = context->MutableDeviceInfo();
   device_list.push_back(device_info);
   auto ret = model->Build(content, *size, kMindIR, context);

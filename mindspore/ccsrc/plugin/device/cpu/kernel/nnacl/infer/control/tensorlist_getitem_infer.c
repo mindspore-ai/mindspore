@@ -25,6 +25,9 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     return check_ret;
   }
 
+  if (inputs[0]->data_type_ != kObjectTypeTensorType) {
+    return NNACL_ERR;
+  }
   TensorListC *input0 = (TensorListC *)(inputs[0]);
   const TensorC *get_index = inputs[1];
   if (get_index->data_ == NULL) {
