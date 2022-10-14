@@ -3192,7 +3192,7 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
         margin (int, optional): A parameter to change pairwise distance. Default: 1.
         weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
             support float16, float32 or float64. Default: None.
-        reduction** (str, optional): Apply specific reduction method to the output: 'none', 'mean',
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
             'sum'. Default: 'mean'.
 
             - 'none': no reduction will be applied.

@@ -1,7 +1,7 @@
 mindspore.shard
 ===============
 
-.. py::function:: mindspore.shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
+.. py:function:: mindspore.shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
 
     指定输入/输出Tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_strategy/out_strategy需要为元组类型，
     其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： :func:`mindspore.ops.Primitive.shard` 的描述。也可以设置为None，会默认以数据并行执行。
@@ -12,7 +12,7 @@ mindspore.shard
         experts/zh-CN/master/parallel/pynative_shard_function_parallel.html>`_。
 
     参数：
-        - **fn (Union[Cell, Function]) - 待通过分布式并行执行的函数，它的参数和返回值类型应该均为Tensor。
+        - **fn** (Union[Cell, Function]) - 待通过分布式并行执行的函数，它的参数和返回值类型应该均为Tensor。
           如果fn是Cell类型且含有参数，则fn必须是一个实例化的对象，否则无法访问到其内部参数。
         - **in_strategy** (tuple) - 指定各输入的切分策略，输入元组的每个元素可以为元组或None，元组即具体指定输入每一维的切分策略，None则会默认以数据并行执行。
         - **out_strategy** (Union[tuple, None]) - 指定各输出的切分策略，用法同 `in_strategy`，目前未使能。默认值：None。

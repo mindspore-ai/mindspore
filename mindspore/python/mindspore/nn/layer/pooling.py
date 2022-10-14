@@ -97,13 +97,14 @@ class MaxPool3d(Cell):
             of three int numbers that represent depth, height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The moving stride of pooling operation, an int number that represents
             the moving strides of pooling kernel in the directions of depth, height and the width,
-            or a tuple of three int numbers that represent depth, height and width of movement respectively. Default: 1.
+            or a tuple of three int numbers that represent depth, height and width of movement respectively.
+            Default: 1.
         pads (Union[int, tuple[int]]): Pooling padding length. An int number that represents the depth,
             height and width of movement are both strides, or a tuple of three int numbers that represent depth,
             height and width of movement respectively.
         dilation (Union[int, tuple[int]]): Control the spacing of elements in the pooling kernel. Default: 1.
         return_indices (bool): If True, output is a Tuple of 2 Tensors, representing the maxpool result and where
-        the max values are generated. Otherwise, only the maxpool result is returned.
+            the max values are generated. Otherwise, only the maxpool result is returned.
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Inputs:
@@ -116,6 +117,7 @@ class MaxPool3d(Cell):
 
         If `return_indices` is True, output is a Tuple of 2 Tensors, representing the maxpool result and where
         the max values are generated.
+
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
