@@ -164,12 +164,15 @@ int LiteModel::NodeVerify() const {
       MS_LOG(ERROR) << "node output tensor node type is ValueNode, node name: " << node->name_;
       return RET_ERROR;
     }
+    if (node->output_indices_.size() !=
+        std::unordered_set<uint32_t>(node->output_indices_.begin(), node->output_indices_.end()).size()) {
+      MS_LOG(ERROR) << "node output indices contain duplicate.";
+      return RET_ERROR;
+    }
+
     if (IsPartialNode(node->primitive_, schema_version_)) {
       auto partial_fusion = reinterpret_cast<const schema::Primitive *>(node->primitive_)->value_as_PartialFusion();
-      if (partial_fusion == nullptr) {
-        MS_LOG(ERROR) << "partial_fusion is nullptr ";
-        return RET_ERROR;
-      }
+      MS_CHECK_FALSE(partial_fusion == nullptr, RET_ERROR);
       int64_t subgraph_index = partial_fusion->sub_graph_index();
       if (subgraph_index < 0) {
         MS_LOG(ERROR) << "invalid subgraph index：" << subgraph_index;
