@@ -360,6 +360,12 @@ bool LiteOpActor::NeedResize() {
 }
 
 int LiteOpActor::InitInputData() {
+  for (size_t i = 0; i < inputs_data_.size(); ++i) {
+    if (inputs_data_[i] == nullptr) {
+      MS_LOG(ERROR) << "inputs_data_ nullptr, index: " << i;
+      return RET_ERROR;
+    }
+  }
   bool need_resize = NeedResize();
   auto ret = SetInputShape();
   MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Set input shape failed.");
