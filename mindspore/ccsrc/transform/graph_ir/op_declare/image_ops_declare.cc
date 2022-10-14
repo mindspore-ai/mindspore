@@ -48,7 +48,8 @@ REG_ADPT_DESC(ResizeBilinearV2Grad, kNameResizeBilinearGrad, ADPT_DESC(ResizeBil
 
 // ResizeBilinearV2
 INPUT_MAP(ResizeBilinearV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
-ATTR_MAP(ResizeBilinearV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_MAP(ResizeBilinearV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                              {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2New, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))

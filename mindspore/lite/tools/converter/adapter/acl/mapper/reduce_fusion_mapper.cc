@@ -96,6 +96,9 @@ STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode) {
   std::transform(data.begin(), data.end(), std::back_inserter(axes),
                  [](int32_t n) -> int64_t { return static_cast<int64_t>(n); });
   ValueNodePtr value_node = NewValueNode<std::vector<int64_t>>(axes);
+  std::vector<int64_t> shape_vec_shape = {};
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
+  value_node->set_abstract(abstract);
   CHECK_NULL_RETURN(value_node);
   cnode->set_input(kNameReduceInputNum - 1, value_node);
   return lite::RET_OK;

@@ -99,7 +99,7 @@ Status AdaptGraph(const FuncGraphPtr &func_graph) {
   }
   if (lite::acl::DelRedundantParameter(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Delete redundant parameter failed.";
-    return kSuccess;
+    return kCoreFailed;
   }
   return kSuccess;
 }
