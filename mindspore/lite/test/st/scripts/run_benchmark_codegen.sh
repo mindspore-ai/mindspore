@@ -21,6 +21,23 @@ function Run_x86_codegen() {
       fi
       model_info=`echo ${line} | awk -F ' ' '{print $1}'`
       model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+      input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+      input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+      input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+      input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
+      spec_shapes=""
+      if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+          if [[ ${input_num} == "" ]]; then
+            input_num=1
+          fi
+          IFS="," read -r -a name_array <<< ${input_names}
+          IFS=":" read -r -a shape_array <<< ${input_shapes}
+          for i in $(seq 0 $((${input_num}-1)))
+          do
+            spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+          done
+      fi
+
       model_type=${model_name##*.}
       case $model_type in
         pb)
@@ -50,7 +67,6 @@ function Run_x86_codegen() {
       output_file=$1"/"${model_name}
       quant_type=""
       config_file=$6
-      spec_shapes=""
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
@@ -86,9 +102,17 @@ function Run_x86_codegen() {
       cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${output_file} >> $4
       make || return 1
       # 2. run benchmark
+      if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+        input_files=${models_path}/input_output/input/${model_name}.ms.bin
+      else
+        for i in $(seq 1 $input_num)
+        do
+          input_files=${input_files}${models_path}'/input_output/input/'${model_name}'.ms.bin_'$i','
+        done
+      fi
       echo "net file: ${output_file}/src/net.bin" >> $4
-      echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0" >> $4
-      ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0 >> $4
+      echo "./benchmark ${input_files} ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0" >> $4
+      ./benchmark ${input_files} ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0 >> $4
       if [ $? = 0 ]; then
           run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
       else
@@ -382,6 +406,23 @@ function Run_arm_codegen() {
       fi
       model_info=`echo ${line} | awk -F ' ' '{print $1}'`
       model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+      input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+      input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+      input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+      input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
+      spec_shapes=""
+      if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+          if [[ ${input_num} == "" ]]; then
+            input_num=1
+          fi
+          IFS="," read -r -a name_array <<< ${input_names}
+          IFS=":" read -r -a shape_array <<< ${input_shapes}
+          for i in $(seq 0 $((${input_num}-1)))
+          do
+            spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+          done
+      fi
+
       model_type=${model_name##*.}
       case $model_type in
         pb)
@@ -411,7 +452,6 @@ function Run_arm_codegen() {
       output_file=$1"/"${model_name}
       quant_type=""
       config_file=$8
-      spec_shapes=""
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
