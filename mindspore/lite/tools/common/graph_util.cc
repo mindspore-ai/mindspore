@@ -632,9 +632,7 @@ STATUS UpdateFuncGraphInputAndOutputNames(const FuncGraphPtr &func_graph) {
   for (size_t i = 0; i < updated_output_names.size(); ++i) {
     auto abstract = GetAbstractFromCNode(outputs[i]);
     if (abstract == nullptr) {
-      MS_LOG(ERROR) << "Get abstract failed from node: " << outputs[i].first->fullname_with_scope()
-                    << " output idx: " << outputs[i].second;
-      return lite::RET_ERROR;
+      abstract = outputs[i].first->abstract();
     }
     abstract->set_name(updated_output_names[i]);
   }

@@ -652,6 +652,13 @@ int ConverterImpl::SaveOutputNames(const FuncGraphPtr &graph) {
         output_name = abstract->name();
       }
       update_output_names.emplace_back(output_name);
+    } else {
+      auto abstract = it.first->abstract();
+      if (abstract == nullptr) {
+        MS_LOG(ERROR) << "SaveOutputNames node abstract is nullptr";
+        return RET_NULL_PTR;
+      }
+      update_output_names.emplace_back(abstract->name());
     }
   }
 
