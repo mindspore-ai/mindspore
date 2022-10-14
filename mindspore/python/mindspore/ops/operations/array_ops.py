@@ -2967,12 +2967,12 @@ class Coalesce(Primitive):
         ValueError: If any of the values of elements of `x_indices` exceed the limit set by `x_shape`.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
-        >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=ms.int64)
-        >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
-        >>> x_shape = Tensor([3, 3], dtype=ms.int64)
+        >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=mstype.int64)
+        >>> x_values = Tensor([1, 5, 4], dtype=mstype.float32)
+        >>> x_shape = Tensor([3, 3], dtype=mstype.int64)
         >>> coalesce = ops.Coalesce()
         >>> y_indices, y_values, y_shape = coalesce(x_indices, x_values, x_shape)
         >>> print(y_indices)
