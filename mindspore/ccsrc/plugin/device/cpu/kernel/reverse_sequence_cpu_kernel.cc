@@ -21,7 +21,11 @@ namespace kernel {
 namespace {
 constexpr size_t input_num_ = 2;
 constexpr size_t output_num_ = 1;
+constexpr int kIndex0 = 0;
+constexpr int kIndex1 = 1;
 constexpr int kResizeFuncIndex = 2;
+constexpr auto kSeqDim = "seq_dim";
+constexpr auto kBatchDim = "batch_dim";
 }  // namespace
 
 void ReverseSequenceCpuKernelMod::ComputeStrides(const std::vector<int64_t> &shape, int *strides,
@@ -52,8 +56,8 @@ int ReverseSequenceCpuKernelMod::CalcCountAfterAxis(const std::vector<int64_t> &
 template <typename T>
 void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensorPtr> &inputs,
                                                const std::vector<KernelTensorPtr> &outputs) {
-  input0_shape_ = inputs[0]->GetShapeVector();
-  output_shape_ = outputs[0]->GetShapeVector();
+  input0_shape_ = inputs[kIndex0]->GetShapeVector();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
   ndim_ = static_cast<int64_t>(input0_shape_.size());
   int64_t less_axis;
   int64_t greater_axis;
@@ -81,9 +85,9 @@ void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensorPtr
 template <typename T, typename S>
 void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &outputs) {
-  auto input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto input1 = reinterpret_cast<S *>(inputs[1]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input0 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto input1 = reinterpret_cast<S *>(inputs[kIndex1]->addr);
+  auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   auto ret = memcpy_s(output, IntToSize(total_data_size_), input0, IntToSize(total_data_size_));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
@@ -124,8 +128,8 @@ bool ReverseSequenceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
   kernel_name_ = base_operator->name();
-  seq_dim_ = GetValue<int64_t>(prim->GetAttr("seq_dim"));
-  batch_dim_ = GetValue<int64_t>(prim->GetAttr("batch_dim"));
+  seq_dim_ = GetValue<int64_t>(prim->GetAttr(kSeqDim));
+  batch_dim_ = GetValue<int64_t>(prim->GetAttr(kBatchDim));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -133,7 +137,7 @@ bool ReverseSequenceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
-  kernel_func_ = std::get<1>(func_list_[index]);
+  kernel_func_ = std::get<kIndex1>(func_list_[index]);
   resize_func_ = std::get<kResizeFuncIndex>(func_list_[index]);
   return true;
 }
@@ -159,8 +163,7 @@ bool ReverseSequenceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-std::vector<
-  std::tuple<KernelAttr, ReverseSequenceCpuKernelMod::ReverseSequenceFunc, ReverseSequenceCpuKernelMod::ResizeFunc>>
+std::vector<std::tuple<KernelAttr, ReverseSequenceCpuKernelMod::KernelFunc, ReverseSequenceCpuKernelMod::ResizeFunc>>
   ReverseSequenceCpuKernelMod::func_list_ = {
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
      &ReverseSequenceCpuKernelMod::LaunchKernel<int8_t, int32_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<int8_t>},
@@ -235,7 +238,7 @@ std::vector<KernelAttr> ReverseSequenceCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(
     func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-    [](const std::tuple<KernelAttr, ReverseSequenceFunc, ResizeFunc> &tuple_item) { return std::get<0>(tuple_item); });
+    [](const std::tuple<KernelAttr, KernelFunc, ResizeFunc> &tuple_item) { return std::get<kIndex0>(tuple_item); });
   return support_list;
 }
 
