@@ -5,7 +5,7 @@ mindspore.Tensor.split
 
     根据指定的轴和分割数量对Tensor进行分割。
 
-    Tensor将被分割为相同shape的子Tensor，且要求 `self.shape(axis)` 可被 `output_num` 整除。
+    Tensor将被分割为相同shape的子Tensor。要求 `self.shape(axis)` 可被 `output_num` 整除。
 
     参数：
         - **axis** (int) - 指定分割轴。默认值：0。

@@ -20,8 +20,8 @@ mindspore.ops.kl_div
         \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    其中 :math:`x` 代表 `logits` ；
-    :math:`target` 代表 `labels` ；
+    其中 :math:`x` 代表 `logits` 。
+    :math:`target` 代表 `labels` 。
     :math:`\ell(x, target)` 为 `output` 。
 
     .. note::
@@ -31,7 +31,7 @@ mindspore.ops.kl_div
     参数：
         - **logits** (Tensor) - 数据类型支持float16、float32或float64。
         - **labels** (Tensor) - 标签Tensor，与 `logits` 的shape和数据类型相同。
-        - **reduction** (str) - 指定输出结果的计算方式，可选值为"mean"、"batchmean"、"none"或"sum"。默认值: "mean"。
+        - **reduction** (str) - 指定输出结果的计算方式，可选值为"mean"、"batchmean"、"none"或"sum"。默认值："mean"。
 
     返回：
         Tensor或标量。如果 `reduction` 为 'none' ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。

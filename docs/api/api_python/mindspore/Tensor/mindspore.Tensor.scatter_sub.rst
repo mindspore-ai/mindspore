@@ -8,7 +8,7 @@ mindspore.Tensor.scatter_sub
     `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。`updates` 的shape应该等于 `input_x[indices]` 的shape，其中 `input_x` 指当前Tensor。有关更多详细信息，请参见使用用例。
 
     .. note::
-        GPU平台上，如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误；CPU平台上直接抛出索引错误；Ascend平台不支持越界检查，若越界可能会造成未知错误。
+        GPU平台上，如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。CPU平台上直接抛出索引错误。Ascend平台不支持越界检查，若越界可能会造成未知错误。
 
     参数：
         - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。

@@ -3,7 +3,7 @@ mindspore.ops.hardshrink
 
 .. py:function:: mindspore.ops.hardshrink(x, lambd=0.5)
 
-    Hard Shrink激活函数，按输入元素计算输出。公式定义如下：
+    Hard Shrink激活函数。按输入元素计算输出。公式定义如下：
 
     .. math::
         \text{HardShrink}(x) =

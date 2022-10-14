@@ -3233,11 +3233,14 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):
     Given x and diagonal, this operation returns a tensor with the same shape and values as x, except for the specified
     diagonals of the innermost matrices. These will be overwritten by the values in diagonal. Some diagonals are shorter
     than max_diag_len and need to be padded.
-    The diagonal.shape[-2] must be equal to num_diags calculated by k[1] - k[0] + 1. The diagonal.shape[-1] must be
-    equal to the longest diagonal value max_diag_len calculated by min(x.shape[-2] + min(k[1], 0), x.shape[-1] +
-    min(-k[0], 0)). Let x have r + 1 dimensions [I, J, ..., L, M, N]. The diagonal tensor has rank r with shape [I, J,
-    ..., L, max_diag_len] when k is an integer or k[0] == k[1]. Otherwise, it has rank r + 1 with shape [I, J, ..., L,
-    num_diags, max_diag_len].
+    The diagonal :math:`shape[-2]` must be equal to num_diags calculated by :math:`k[1] - k[0] + 1`.
+    The diagonal :math:`shape[-1]` must be
+    equal to the longest diagonal value max_diag_len calculated
+    by :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))`.
+    Let x have r + 1 dimensions :math:`[I, J, ..., L, M, N]`.
+    The diagonal tensor has rank r with shape :math:`[I, J, ..., L, max\_diag\_len]`
+    when k is an integer or :math:`k[0] == k[1]`. Otherwise, it has rank r + 1
+    with shape :math:`[I, J, ... L, num\_diags, max\_diag\_len]`.
 
     Args:
         x (Tensor): Rank r + 1, where r >= 1.
@@ -4225,7 +4228,7 @@ def max(x, axis=0, keep_dims=False):
         - If there are multiple maximum values, the index of the first maximum value is used.
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
-    Also see: class: `mindspore.ops.ArgMaxWithValue`.
+    Also see: :class:`mindspore.ops.ArgMaxWithValue`.
 
     Args:
         x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as

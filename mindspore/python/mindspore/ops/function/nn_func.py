@@ -856,6 +856,10 @@ def kl_div(logits, labels, reduction='mean'):
     :math:`target` represents `labels`.
     :math:`\ell(x, target)` represents `output`.
 
+    Note:
+        - Currently it does not support float64 input on `Ascend`.
+        - It behaves the same as the mathematical definition only when `reduction` is set to `batchmean`.
+
     Args:
         logits (Tensor): The input Tensor. The data type must be float16, float32 or float64.
         labels (Tensor): The label Tensor which has the same shape and data type as `logits`.
@@ -873,10 +877,6 @@ def kl_div(logits, labels, reduction='mean'):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-
-    Note:
-        Currently it does not support float64 input on `Ascend`.
-        It behaves the same as the mathematical definition only when `reduction` is set to `batchmean`.
 
     Examples:
         >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)

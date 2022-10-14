@@ -9,7 +9,7 @@ mindspore.Tensor.transpose
     - 对于二维Tensor，是标准的矩阵转置。
     - 对于n维Tensor，如果提供了维度，则它们的顺序代表维度的置换方式。
 
-    如果未提供轴，且Tensor.shape等于(i[0], i[1],...i[n-2], i[n-1])，则Tensor.transpose().shape等于(i[n-1], i[n-2], ... i[1], i[0])。
+    如果未提供轴，且Tensor.shape等于 `(i[0], i[1],...i[n-2], i[n-1])`，则Tensor.transpose().shape等于 `(i[n-1], i[n-2], ... i[1], i[0])`。
 
     参数：
         - **axes** (Union[None, tuple(int), list(int), int], 可选) - 如果 `axes` 为None或未设置，则该方法将反转维度。如果 `axes` 为tuple(int)或list(int)，则Tensor.transpose()把Tensor转置为新的维度。如果 `axes` 为整数，则此表单仅作为元组/列表表单的备选。

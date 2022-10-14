@@ -245,7 +245,7 @@ def tensor_dot(x1, x2, axes):
 
     Selected dims in both inputs must also match.
 
-    axes = 0 leads to outer product
+    axes = 0 leads to outer product.
     axes = 1 leads to normal matrix multiplication when inputs both 2D.
     axes = 1 is the same as axes = ((1,),(0,)) where both `a` and `b` are 2D.
     axes = 2 is the same as axes = ((1,2),(0,1)) where both `a` and `b` are 3D.

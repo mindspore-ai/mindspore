@@ -3,7 +3,7 @@ mindspore.dataset.show
 
 .. py:function:: mindspore.dataset.show(dataset, indentation=2)
 
-    将数据处理管道图写入MindSpore的INFO级别日志文件。
+    将数据处理管道图写入logger.info文件。
 
     参数：
         - **dataset** (Dataset) - 数据处理管道对象。

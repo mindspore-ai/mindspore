@@ -15,7 +15,7 @@ mindspore.Tensor.gather_elements
 
         output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
 
-    `index` 与当前Tensor拥有一样的维度长度，且除 `dim` 维外其他维度一致。如果维度 `dim` 为i，当前Tensor是shape为 :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})` 的n维Tensor，则 `index` 必须是shape为 :math:`(z_0, z_1, ..., y, ..., z_{n-1})` 的n维Tensor，其中 `y` 大于等于1。输出的shape与 `index` 相同。
+    `index` 与当前Tensor拥有一样的维度长度，且除 `dim` 维外其他维度一致。如果维度 `dim` 为i，当前Tensor是shape为 :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})` 的n维Tensor，则 `index` 必须是shape为 :math:`(z_0, z_1, ..., y, ..., z_{n-1})` 的n维Tensor，其中 `y` 大于等于1，输出的shape与 `index` 相同。
 
     参数：
         - **dim** (int) - 获取元素的轴。数据类型为int32或int64。取值范围为[-self.ndim, self.ndim)。
