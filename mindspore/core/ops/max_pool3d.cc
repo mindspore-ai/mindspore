@@ -208,6 +208,10 @@ TypePtr MaxPool3DInferType(const PrimitivePtr &primitive, const std::vector<Abst
 
 AbstractBasePtr MaxPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be tensor.";
+  }
   return abstract::MakeAbstract(MaxPool3DInferShape(primitive, input_args), MaxPool3DInferType(primitive, input_args));
 }
 
