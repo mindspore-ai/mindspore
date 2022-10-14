@@ -27,12 +27,13 @@ constexpr uint32_t MAX_IO_ADDR_NUMPARAM_LEN = 1024;
 }  // namespace
 
 static const std::map<const ::aicpuops::DataType, size_t> kKernelBaseDataTypeSize = {
-  {aicpuops::MS_BOOL, sizeof(bool)},       {aicpuops::MS_INT8, sizeof(int8_t)},
-  {aicpuops::MS_UINT8, sizeof(uint8_t)},   {aicpuops::MS_INT16, sizeof(int16_t)},
-  {aicpuops::MS_UINT16, sizeof(uint16_t)}, {aicpuops::MS_INT32, sizeof(int32_t)},
-  {aicpuops::MS_UINT32, sizeof(uint32_t)}, {aicpuops::MS_INT64, sizeof(int64_t)},
-  {aicpuops::MS_UINT64, sizeof(uint64_t)}, {aicpuops::MS_FLOAT16, sizeof(float) / 2},
-  {aicpuops::MS_FLOAT32, sizeof(float)},   {aicpuops::MS_FLOAT64, sizeof(double)}};
+  {aicpuops::MS_BOOL, sizeof(bool)},           {aicpuops::MS_INT8, sizeof(int8_t)},
+  {aicpuops::MS_UINT8, sizeof(uint8_t)},       {aicpuops::MS_INT16, sizeof(int16_t)},
+  {aicpuops::MS_UINT16, sizeof(uint16_t)},     {aicpuops::MS_INT32, sizeof(int32_t)},
+  {aicpuops::MS_UINT32, sizeof(uint32_t)},     {aicpuops::MS_INT64, sizeof(int64_t)},
+  {aicpuops::MS_UINT64, sizeof(uint64_t)},     {aicpuops::MS_FLOAT16, sizeof(float) / 2},
+  {aicpuops::MS_FLOAT32, sizeof(float)},       {aicpuops::MS_FLOAT64, sizeof(double)},
+  {aicpuops::MS_COMPLEX64, sizeof(float) * 2}, {aicpuops::MS_COMPLEX128, sizeof(double) * 2}};
 
 KernelBase::KernelBase(const std::string &kernel_name)
     : kernel_name_(kernel_name),
