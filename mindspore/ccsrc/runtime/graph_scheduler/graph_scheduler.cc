@@ -1587,15 +1587,30 @@ void GetRealDependInputByUpdateState(const AnfNodePtr &update_state, std::vector
     if (input->isa<CNode>()) {
       const auto &input_cnode = input->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(input_cnode);
-      if (std::find(input_cnode->inputs().begin(), input_cnode->inputs().end(), u_input) !=
-          input_cnode->inputs().end()) {
-        MS_LOG(DEBUG) << "U input node:" << u_input->DebugString() << " of update state:" << update_state->DebugString()
-                      << " is input of update state input node:" << input->DebugString();
-        is_u_input_valid = false;
+      for (size_t j = 0; j < input_cnode->inputs().size(); ++j) {
+        auto cnode_input = input_cnode->inputs()[j];
+        MS_EXCEPTION_IF_NULL(cnode_input);
+        // If the input node is depend, the state input of depend should be checked.
+        if (common::AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimDepend)) {
+          const auto &depend_cnode = cnode_input->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(depend_cnode);
+          if (depend_cnode->inputs().size() >= kDependInputSize) {
+            cnode_input = depend_cnode->inputs()[kDependAttachNodeIndex];
+          }
+        }
+        if (u_input == cnode_input) {
+          MS_LOG(DEBUG) << "U input node:" << u_input->DebugString()
+                        << " of update state:" << update_state->DebugString()
+                        << " is input of update state input node:" << input->DebugString();
+          is_u_input_valid = false;
+          break;
+        }
       }
     }
   }
   if (is_u_input_valid) {
+    MS_LOG(DEBUG) << "The first input:" << u_input->fullname_with_scope()
+                  << " of updatestate node:" << update_state->fullname_with_scope() << " link control arrow.";
     (void)real_depend_inputs->emplace_back(u_input);
   }
 }
