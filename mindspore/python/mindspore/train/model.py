@@ -714,6 +714,12 @@ class Model:
 
             dataset_helper.continue_send()
 
+            # When it's distributed training and using MindRT,
+            # the node id should be reset to start from 0.
+            # This is to avoid the timeout when finding the actor route tables in 'train' and 'eval' case(or 'fit').
+            if _enable_distributed_mindrt():
+                _reset_op_id_with_offset()
+
             self._eval_during_train(valid_infos, cb_params, list_callback)
 
             # In disaster recovery scenarios, need not to execute callbacks if this epoch executes failed.
@@ -922,6 +928,12 @@ class Model:
                 if should_stop:
                     break
 
+            # When it's distributed training and using MindRT,
+            # the node id should be reset to start from 0.
+            # This is to avoid the timeout when finding the actor route tables in 'train' and 'eval' case(or 'fit').
+            if _enable_distributed_mindrt():
+                _reset_op_id_with_offset()
+
             self._eval_during_train(valid_infos, cb_params, list_callback)
 
             train_dataset.reset()
@@ -1049,8 +1061,9 @@ class Model:
                     sink_size=sink_size,
                     initial_epoch=initial_epoch)
 
-        # When it's Parameter Server training and using MindRT,
+        # When it's distributed training and using MindRT,
         # the node id should be reset to start from 0.
+        # This is to avoid the timeout when finding the actor route tables in 'train' and 'eval' case(or 'fit').
         if _enable_distributed_mindrt():
             _reset_op_id_with_offset()
 
@@ -1436,8 +1449,9 @@ class Model:
             else:
                 eval_result = self._eval_process(valid_dataset, list_callback, cb_params)
 
-        # When it's Parameter Server training and using MindRT,
+        # When it's distributed training and using MindRT,
         # the node id should be reset to start from 0.
+        # This is to avoid the timeout when finding the actor route tables in 'train' and 'eval' case(or 'fit').
         if _enable_distributed_mindrt():
             _reset_op_id_with_offset()
 
@@ -1472,8 +1486,9 @@ class Model:
 
         check_output_data(result)
 
-        # When it's Parameter Server training and using MindRT,
+        # When it's distributed training and using MindRT,
         # the node id should be reset to start from 0.
+        # This is to avoid the timeout when finding the actor route tables in 'train' and 'eval' case(or 'fit').
         if _enable_distributed_mindrt():
             _reset_op_id_with_offset()
 

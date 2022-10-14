@@ -282,9 +282,12 @@ bool ComputeGraphNode::Heartbeat() {
           if (abnormal_callback_ != nullptr) {
             (*abnormal_callback_)();
           }
+          delete response;
           MS_LOG(EXCEPTION) << "The state of the cluster is error, total nodes num: " << nodes_num
                             << ", abnormal nodes num: " << abnormal_nodes_num;
+          return false;
         }
+        delete response;
       }
 
       (void)sleep(interval);

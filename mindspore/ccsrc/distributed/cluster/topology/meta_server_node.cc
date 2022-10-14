@@ -139,18 +139,22 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
     const auto &handler = system_msg_handlers_.find(message_name);
     if (handler == system_msg_handlers_.end()) {
       MS_LOG(ERROR) << "Unknown system message name: " << message->Name();
+      delete message;
       return rpc::NULL_MSG;
     }
-    return system_msg_handlers_[message_name](message);
-
-    // Handle user defined messages.
+    auto ret_msg = system_msg_handlers_[message_name](message);
+    delete message;
+    return ret_msg;
   } else {
+    // Handle user defined messages.
     const auto &handler = message_handlers_.find(name);
     if (handler == message_handlers_.end()) {
       MS_LOG(ERROR) << "Unknown message name: " << name;
+      delete message;
       return rpc::NULL_MSG;
     }
     const auto &result = (*message_handlers_[name])(message->Body());
+    delete message;
     if (result.length() > 0) {
       auto rt_msg = CreateMessage(meta_server_addr_.GetUrl(), name, result);
       MS_EXCEPTION_IF_NULL(rt_msg);

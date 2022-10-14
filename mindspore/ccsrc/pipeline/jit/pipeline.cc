@@ -71,6 +71,7 @@
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "distributed/init.h"
 #include "distributed/cluster/cluster_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #include "ps/scheduler.h"
@@ -1898,14 +1899,20 @@ py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_
 bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFile(file_path); }
 
 void FinalizeCluster() {
-  MS_LOG(INFO) << "Start finalize the cluster instance.";
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    MS_LOG(INFO) << "Start finalize the EmbeddingCacheScheduler.";
     runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
-    (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
+    MS_LOG(INFO) << "End finalize the EmbeddingCacheScheduler.";
+
+    if (!distributed::cluster_exit_with_exception()) {
+      MS_LOG(INFO) << "Start finalize the cluster instance.";
+      // Finalize MindSpore cluster only when this process exits without any exception.
+      (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
+      MS_LOG(INFO) << "End finalize the cluster instance.";
+    }
   }
 #endif
-  MS_LOG(INFO) << "End finalize the cluster instance.";
 }
 }  // namespace pipeline
 }  // namespace mindspore
