@@ -457,6 +457,86 @@ class MAELoss(LossBase):
         return self.get_loss(x)
 
 
+class MarginRankingLoss(LossBase):
+    r"""
+    MarginRankingLoss creates a criterion that measures the loss.
+
+    Given two tensors :math:`x1`, :math:`x2` and a Tensor label :math:`y` with values 1 or -1,
+    the operation is as follows:
+
+    .. math::
+        \text{loss}(x1, x2, y) = \max(0, -y * (x1 - x2) + \text{margin})
+
+    Args:
+        margin (float): Specify the adjustment factor of the operation. Default 0.0.
+        reduction (str): Specifies which reduction to be applied to the output. It must be one of
+          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
+
+    Inputs:
+        - **input1** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions.
+        - **input2** (Tensor) - Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
+        - **target** (Tensor) - Contains value 1 or -1. Suppose the shape of `input1` is
+          :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `labels` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
+
+    Outputs:
+        Tensor or Scalar. if `reduction` is "none", its shape is the same as `labels`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `margin` is not a float.
+        TypeError: If `input1`, `input2` or `target` is not a Tensor.
+        TypeError: If the types of `input1` and `input2` are inconsistent.
+        TypeError: If the types of `input1` and `target` are inconsistent.
+        ValueError: If the shape of `input1` and `input2` are inconsistent.
+        ValueError: If the shape of `input1` and `target` are inconsistent.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops as P
+        >>> from mindspore.ops import Tensor
+        >>> import numpy as np
+        >>> loss1 = nn.MarginRankingLoss(reduction='none')
+        >>> loss2 = nn.MarginRankingLoss(reduction='mean')
+        >>> loss3 = nn.MarginRankingLoss(reduction='sum')
+        >>> sign = P.Sign()
+        >>> input1 = Tensor(np.array([0.3864, -2.4093, -1.4076]), ms.float32)
+        >>> input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
+        >>> target = sign(Tensor(np.array([-2, -2, 3]), ms.float32))
+        >>> output1 = loss1(input1, input2, target)
+        >>> print(output1)
+        [0.98759997 0.         2.7003999 ]
+        >>> output2 = loss2(input1, input2, target)
+        >>> print(output2)
+        1.2293333
+        >>> output3 = loss3(input1, input2, target)
+        >>> print(output3)
+        3.6879997
+    """
+
+    def __init__(self, margin=0.0, reduction='mean'):
+        """Initialize MarginRankingLoss."""
+        super(MarginRankingLoss, self).__init__(reduction)
+        self.margin = validator.check_value_type("margin", margin, [float], self.cls_name)
+        self.reduction = reduction
+        self.margin = margin
+        self.maximum = P.Maximum()
+
+    def construct(self, input1, input2, target):
+        _check_is_tensor('input1', input1, self.cls_name)
+        _check_is_tensor('input2', input2, self.cls_name)
+        _check_is_tensor('target', target, self.cls_name)
+        F.same_type_shape(input1, input2)
+        F.same_type_shape(target, input1)
+        x = self.maximum(0, -target * (input1 - input2) + self.margin)
+        return self.get_loss(x)
+
+
 class SmoothL1Loss(LossBase):
     r"""
     SmoothL1 loss function, if the absolute error element-wise between the predicted value and the target value
@@ -2150,6 +2230,7 @@ class KLDivLoss(LossBase):
         >>> print(output)
         -0.23333333
     """
+
     def __init__(self, reduction='mean'):
         super().__init__()
         self.reduction = reduction

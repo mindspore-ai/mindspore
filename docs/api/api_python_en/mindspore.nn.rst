@@ -231,6 +231,7 @@ Loss Function
     mindspore.nn.HuberLoss
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
+    mindspore.nn.MarginRankingLoss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.NLLLoss
