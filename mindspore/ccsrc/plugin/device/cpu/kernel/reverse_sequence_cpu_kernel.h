@@ -31,7 +31,6 @@ namespace mindspore {
 namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
-constexpr auto kUnknown = "Unknown";
 
 class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
  public:
@@ -56,8 +55,8 @@ class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
   // shape correlative
   std::vector<int64_t> input0_shape_;
   std::vector<int64_t> output_shape_;
-  int input_stride_[5];
-  int output_stride_[5];
+  int input_stride_[16];
+  int output_stride_[16];
 
   // other parameter
   int ndim_{0};
@@ -76,13 +75,13 @@ class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
   template <typename T, typename S>
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
-  using ReverseSequenceFunc = std::function<void(ReverseSequenceCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &)>;
-  ReverseSequenceFunc kernel_func_;
+  using KernelFunc = std::function<void(ReverseSequenceCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &)>;
+  KernelFunc kernel_func_;
   using ResizeFunc = std::function<void(ReverseSequenceCpuKernelMod *, const std::vector<kernel::KernelTensorPtr> &,
                                         const std::vector<kernel::KernelTensorPtr> &)>;
   ResizeFunc resize_func_;
-  static std::vector<std::tuple<KernelAttr, ReverseSequenceFunc, ResizeFunc>> func_list_;
+  static std::vector<std::tuple<KernelAttr, KernelFunc, ResizeFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
