@@ -828,7 +828,8 @@ int LiteSession::CreateNNAPIDelegate() {
   bool only_acc_device = !context_->IsDeviceTypeEnabled(DT_CPU) && !context_->IsDeviceTypeEnabled(DT_GPU) &&
                          context_->IsDeviceTypeEnabled(DT_NPU);
   bool disable_cpu = !context_->IsDeviceTypeEnabled(DT_CPU);
-  std::vector<std::string> specified_devices(context_->GetProviders().begin(), context_->GetProviders().end());
+  auto providers = context_->GetProviders();
+  std::vector<std::string> specified_devices(providers.begin(), providers.end());
   delegate_ = std::make_shared<NNAPIDelegate>(enable_fp16, only_acc_device, disable_cpu, specified_devices);
   if (delegate_ == nullptr) {
     MS_LOG(ERROR) << "New delegate_ failed";

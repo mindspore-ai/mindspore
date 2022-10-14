@@ -59,7 +59,7 @@ int SetAttrsForPool(const torch::jit::Node *torch_node, PrimitiveCPtr prim_c) {
   if (pads.empty()) {
     pads = {0, 0, 0, 0};
   }
-  prim_c->AddAttr(ops::kPads, MakeValue(pads));
+  prim_c->AddAttr(ops::kPad, MakeValue(pads));
 
   mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   if (torch_node->inputs().size() > SIXTH_INPUT) {
