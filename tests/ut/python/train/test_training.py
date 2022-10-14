@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Model, context
 from mindspore import Tensor
 from mindspore.train.callback import Callback
+from mindspore.train.callback import BackupAndRestore
 from mindspore.nn.optim import Momentum
 from ..ut_filter import non_graph_engine
 from ....dataset_mock import MindData
@@ -204,6 +205,27 @@ def test_model_train_initial_epoch():
     initial_epoch = InitialEpoch()
     model.train(2, dataset, callbacks=initial_epoch, dataset_sink_mode=True, initial_epoch=1)
     model.train(2, dataset, callbacks=initial_epoch, dataset_sink_mode=False, initial_epoch=1)
+
+
+def test_model_callback_restore():
+    """
+    Feature: Model train
+    Description: Train network with restore callback.
+    Expectation: Exec success.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    dataset_types = (np.float32, np.float32)
+    dataset_shapes = ((16, 16), (16, 16))
+    dataset = MindDataSet(dataset_types, dataset_shapes)
+    net = NetNoLoss(16, 16)
+    loss = nn.MSELoss()
+    optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={"acc"}, amp_level="O0")
+    backup_cb = BackupAndRestore("backup", save_freq="epoch", delete_checkpoint=True)
+    # backup
+    model.train(3, dataset, callbacks=backup_cb, dataset_sink_mode=False)
+    # restore
+    model.train(1, dataset, callbacks=BackupAndRestore("backup"), dataset_sink_mode=False)
 
 
 @non_graph_engine
