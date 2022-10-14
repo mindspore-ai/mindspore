@@ -3131,15 +3131,16 @@ def glu(x, axis=-1):
     r"""
     Computes GLU (Gated Linear Unit activation function) of input tensors .
 
+    .. math::
+        {GLU}(a, b)= a \otimes \sigma(b)
 
-    .. math:`{GLU}(a, b)= a \otimes \sigma(b)` where :math:`a` is the first half
-    of the input matrices and :math:`b` is the second half.
+    where :math:`a` is the first half of the input matrices and :math:`b` is the second half.
 
     Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
-    See 'Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>'_
+    See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
 
     Args:
-        x(Tensor): :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
+        x (Tensor): :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
         axis (int): the dimension on which to split the input. Default: -1
 
     Returns:

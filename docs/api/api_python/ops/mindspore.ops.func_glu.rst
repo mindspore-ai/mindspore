@@ -1,7 +1,7 @@
 mindspore.ops.glu
 =================
 
-.. py:function:: mindspore.ops.glu(input_x, axis=-1)
+.. py:function:: mindspore.ops.glu(x, axis=-1)
 
     门线性单元函数（Gated Linear Unit function）。
 
