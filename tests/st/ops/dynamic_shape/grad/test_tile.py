@@ -46,57 +46,21 @@ def dynamic_rank():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dynamic_tile_cpu():
-    """
-    Feature: Tile Grad DynamicShape.
-    Description: Test case of dynamic shape for Tile grad operator on CPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
-def test_dynamic_tile_gpu():
-    """
-    Feature: Tile Grad DynamicShape.
-    Description: Test case of dynamic shape for Tile grad operator on GPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    dynamic_shape()
-    dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    dynamic_shape()
-    dynamic_rank()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_dynamic_tile_ascend():
+@pytest.mark.env_onecard
+def test_dynamic_tile():
     """
     Feature: Tile Grad DynamicShape.
-    Description: Test case of dynamic shape for Tile grad operator on Ascend.
+    Description: Test case of dynamic shape for Tile grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     dynamic_shape()
     dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     dynamic_shape()
     dynamic_rank()

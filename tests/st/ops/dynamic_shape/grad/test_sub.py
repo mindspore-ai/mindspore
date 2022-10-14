@@ -39,6 +39,7 @@ def sub_test(is_dyn_rank):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_sub_dyn_shape():
     """
     Feature: Sub Grad DynamicShape.
@@ -53,6 +54,7 @@ def test_sub_dyn_shape():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_sub_dyn_rank():
     """
     Feature: Sub Grad DynamicShape.

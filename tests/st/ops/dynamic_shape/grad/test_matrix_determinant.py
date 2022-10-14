@@ -44,37 +44,19 @@ def dynamic_rank():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dynamic_matrix_determinant_cpu():
-    """
-    Feature: MatrixDeterminant Grad DynamicShape.
-    Description: Test case of dynamic shape for  MatrixDeterminant grad operator on CPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-
-
-@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dynamic_matrix_determinant_gpu():
+def test_dynamic_matrix_determinant():
     """
     Feature: MatrixDeterminant Grad DynamicShape.
-    Description: Test case of dynamic shape for  MatrixDeterminant grad operator on GPU.
+    Description: Test case of dynamic shape for  MatrixDeterminant grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     dynamic_shape()
     dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     dynamic_shape()
     dynamic_rank()

@@ -33,7 +33,7 @@ class MaskedFillNet(nn.Cell):
 
 def run_dynamic_shape():
     test_dynamic = TestDynamicGrad(MaskedFillNet())
-    input_0 = Tensor(np.array([1., 2., 3., 4.]), ms.float32)
+    input_0 = Tensor(np.array([1.0, 2.0, 3.0, 4.0]), ms.float32)
     mask = Tensor(np.array([True, True, False, True]), ms.bool_)
     value = Tensor(0.5, ms.float32)
     test_dynamic.test_dynamic_grad_net([input_0, mask, value])
@@ -41,7 +41,7 @@ def run_dynamic_shape():
 
 def run_dynamic_rank():
     test_dynamic = TestDynamicGrad(MaskedFillNet())
-    input_0 = Tensor(np.array([1., 2., 3., 4.]), ms.float32)
+    input_0 = Tensor(np.array([1.0, 2.0, 3.0, 4.0]), ms.float32)
     mask = Tensor(np.array([True, True, False, True]), ms.bool_)
     value = Tensor(0.5, ms.float32)
     test_dynamic.test_dynamic_grad_net([input_0, mask, value], True)
@@ -50,36 +50,19 @@ def run_dynamic_rank():
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 def test_dynamic_maskedfill_gpu():
     """
     Feature: MaskedFill Grad DynamicShape.
-    Description: Test case of dynamic shape for  MaskedFill grad operator on GPU.
+    Description: Test case of dynamic shape for  MaskedFill grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     run_dynamic_shape()
     run_dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    run_dynamic_shape()
-    run_dynamic_rank()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-def test_dynamic_maskedfill_ascend():
-    """
-    Feature: MaskedFill Grad DynamicShape.
-    Description: Test case of dynamic shape for  MaskedFill grad operator on Ascend.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_dynamic_shape()
-    run_dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     run_dynamic_shape()
     run_dynamic_rank()

@@ -32,7 +32,7 @@ class Net(nn.Cell):
 
 
 def grad_dyn_case(is_dynamic_rank):
-    test_dynamic = TestDynamicGrad(Net(blank=0, reduction='none'))
+    test_dynamic = TestDynamicGrad(Net(blank=0, reduction="none"))
     input_sequences = 40
     input_sequences_min = 35
     classes = 20

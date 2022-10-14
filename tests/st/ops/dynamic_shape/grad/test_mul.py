@@ -32,14 +32,17 @@ class TestMul(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_mul_dynamic_shape():
     """
     Feature: Mul Grad DynamicShape.
-    Description: Test case of dynamic shape for Mul grad operator on GPU.
+    Description: Test case of dynamic shape for Mul grad operator.
     Expectation: success.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
 
     test_dynamic = TestDynamicGrad(TestMul())
     input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -50,14 +53,17 @@ def test_mul_dynamic_shape():
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_mul_dynamic_rank():
     """
     Feature: Mul Grad DynamicShape.
-    Description: Test case of dynamic rank for Mul grad operator on GPU.
+    Description: Test case of dynamic rank for Mul grad operator.
     Expectation: success.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
 
     test_dynamic = TestDynamicGrad(TestMul())
     input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)

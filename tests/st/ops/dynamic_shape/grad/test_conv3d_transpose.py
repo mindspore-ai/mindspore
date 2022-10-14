@@ -26,13 +26,9 @@ class NetConv3dTranspose(nn.Cell):
         in_channel = 2
         out_channel = 2
         kernel_size = 2
-        self.conv_trans = Conv3DTranspose(in_channel, out_channel,
-                                          kernel_size,
-                                          pad_mode="pad",
-                                          pad=1,
-                                          stride=1,
-                                          dilation=1,
-                                          group=1)
+        self.conv_trans = Conv3DTranspose(
+            in_channel, out_channel, kernel_size, pad_mode="pad", pad=1, stride=1, dilation=1, group=1
+        )
 
     def construct(self, x, w):
         return self.conv_trans(x, w)
@@ -48,7 +44,7 @@ def grad_dyn_case(is_dynamic_rank):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape_1():
+def test_gpu_grad_dynamic_shape():
     """
     Feature: test Conv3DTranspose grad dynamic shape on GPU.
     Description: input is dynamic shape.
@@ -56,30 +52,6 @@ def test_gpu_grad_dynamic_shape_1():
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     grad_dyn_case(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank_1():
-    """
-    Feature: test Conv3DTranspose grad dynamic rank on GPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    grad_dyn_case(True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape_2():
-    """
-    Feature: test Conv3DTranspose grad dynamic shape on GPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     grad_dyn_case(False)
 
@@ -87,12 +59,14 @@ def test_gpu_grad_dynamic_shape_2():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank_2():
+def test_gpu_grad_dynamic_rank():
     """
-    Feature: test Conv3DTranspose grad dynamic shape on GPU.
-    Description: input is dynamic shape.
+    Feature: test Conv3DTranspose grad dynamic rank on GPU.
+    Description: input is dynamic rank.
     Expectation: the result match with static shape
     """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    grad_dyn_case(True)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     grad_dyn_case(True)
 

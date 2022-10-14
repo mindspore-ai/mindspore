@@ -19,8 +19,6 @@ import mindspore.ops.operations.sparse_ops as S
 from mindspore import nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-
 
 class NetSparseSegmentMeanWithNumSegments(nn.Cell):
     def __init__(self):
@@ -40,6 +38,7 @@ def test_sparse_segment_mean_with_num_segments_dynamic_shape():
     Description: Test case of dynamic shape for SparseSegmentMeanWithNumSegments grad operator on CPU.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     test_dynamic = TestDynamicGrad(NetSparseSegmentMeanWithNumSegments(), skip_convert_out_ids=[0])
     x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]], dtype=mindspore.float32)
     indices = Tensor([0, 2, 1], dtype=mindspore.int32)
@@ -58,6 +57,7 @@ def test_sparse_segment_mean_with_num_segments_dynamic_rank():
     Description: Test case of dynamic rank for SparseSegmentMeanWithNumSegments grad operator on CPU.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]], dtype=mindspore.float32)
     indices = Tensor([0, 2, 1], dtype=mindspore.int32)
     segment_ids = Tensor([0, 0, 2], dtype=mindspore.int32)
