@@ -26,7 +26,7 @@ mindspore.train.ModelCheckpoint
         在训练结束后，会保存最后一个step的checkpoint。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: latest_ckpt_file_name
         :property:
@@ -38,4 +38,4 @@ mindspore.train.ModelCheckpoint
         在step结束时保存checkpoint。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。

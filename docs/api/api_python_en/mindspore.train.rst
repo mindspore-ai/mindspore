@@ -19,6 +19,7 @@ Callback
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.train.BackupAndRestore
     mindspore.train.Callback
     mindspore.train.CheckpointConfig
     mindspore.train.EarlyStopping

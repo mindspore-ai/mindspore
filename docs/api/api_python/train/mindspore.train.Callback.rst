@@ -18,123 +18,123 @@ mindspore.train.Callback
         在网络执行之前被调用一次。与 `on_train_begin` 和 `on_eval_begin` 方法具有兼容性。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: end(run_context)
 
         网络执行后被调用一次。与 `on_train_end` 和 `on_eval_end` 方法具有兼容性。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: epoch_begin(run_context)
 
         在每个epoch开始之前被调用。与 `on_train_epoch_begin` 和 `on_eval_epoch_begin` 方法具有兼容性。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: epoch_end(run_context)
 
         在每个epoch结束后被调用。与 `on_train_epoch_end` 和 `on_eval_epoch_end` 方法具有兼容性。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_begin(run_context)
 
         在网络执行推理之前调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_end(run_context)
 
         网络执行推理之后调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_epoch_begin(run_context)
 
         在推理的epoch开始之前被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_epoch_end(run_context)
 
         在推理的epoch结束后被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_step_begin(run_context)
 
         在推理的每个step开始之前被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_eval_step_end(run_context)
 
         在推理的每个step完成后被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_begin(run_context)
 
         在网络执行训练之前调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_end(run_context)
 
         网络训练执行结束时调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_epoch_begin(run_context)
 
         在训练的每个epoch开始之前被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_epoch_end(run_context)
 
         在训练的每个epoch结束后被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_step_begin(run_context)
 
         在训练的每个step开始之前被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: on_train_step_end(run_context)
 
         在训练的每个step完成后被调用。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: step_begin(run_context)
 
         在每个step开始之前被调用。与 `on_train_step_begin` 和 `on_eval_step_begin` 方法具有兼容性。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: step_end(run_context)
 
         在每个step完成后被调用。与 `on_train_step_end` 和 `on_eval_step_end` 方法具有兼容性。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。

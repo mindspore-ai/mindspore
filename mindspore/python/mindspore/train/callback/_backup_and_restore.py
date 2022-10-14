@@ -73,7 +73,7 @@ class BackupAndRestore(Callback):
         Load the backup checkpoint file at the beginning of epoch.
 
         Args:
-            run_context (RunContext): Context of the process running.  For more details,
+            run_context (RunContext): Context of the process running. For more details,
                     please refer to :class:`mindspore.train.RunContext`.
         """
         if os.path.exists(self.backup_file):
@@ -84,10 +84,10 @@ class BackupAndRestore(Callback):
 
     def on_train_epoch_end(self, run_context):
         """
-        Print process cost time at the end of epoch.
+        Backup checkpoint file at the end of train epoch.
 
         Args:
-           run_context (RunContext): Context of the process running.  For more details,
+           run_context (RunContext): Context of the process running. For more details,
                    please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
@@ -98,6 +98,13 @@ class BackupAndRestore(Callback):
             save_checkpoint(train_net, self.backup_file)
 
     def on_train_end(self, run_context):
+        """
+        Deleted checkpoint file at the end of train.
+
+        Args:
+            run_context (RunContext): Context of the process running. For more details,
+                    please refer to :class:`mindspore.train.RunContext`.
+        """
         run_context.original_args()
         cb_params = run_context.original_args()
         cur_epoch_num = cb_params.cur_epoch_num

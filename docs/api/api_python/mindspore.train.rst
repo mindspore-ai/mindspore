@@ -15,6 +15,7 @@ mindspore.train
 .. mscnautosummary::
     :toctree: train
 
+    mindspore.train.BackupAndRestore
     mindspore.train.Callback
     mindspore.train.CheckpointConfig
     mindspore.train.EarlyStopping
