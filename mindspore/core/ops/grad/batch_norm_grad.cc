@@ -63,7 +63,21 @@ void BatchNormGrad::set_format(const Format &format) {
 
 Format BatchNormGrad::get_format() const {
   auto value_ptr = GetAttr(kFormat);
-  return Format(GetValue<int64_t>(value_ptr));
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (!value_ptr->isa<mindspore::api::StringImm>()) {
+    return Format(GetValue<int64_t>(value_ptr));
+  }
+  static const std::map<std::string, int64_t> valid_dataformat = {
+    {"NHWC", Format::NHWC},
+    {"NCHW", Format::NCHW},
+  };
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = valid_dataformat.find(attr_value_str);
+  if (iter == valid_dataformat.end()) {
+    MS_LOG(EXCEPTION) << "for BatchNormGrad, Invalid format " << attr_value_str << ", use NHWC or NCHW";
+  }
+  return Format(iter->second);
 }
 
 std::string BatchNormGrad::get_inplace_algo() const {

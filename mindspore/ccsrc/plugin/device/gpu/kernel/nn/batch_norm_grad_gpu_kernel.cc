@@ -50,6 +50,7 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   InitResource();
   epsilon_ = kernel_ptr->get_epsilon();
   is_train_ = kernel_ptr->get_is_training();
+  format_ = kernel_ptr->get_format();
   beta_data_diff_ = kernel_ptr->get_inplace_algo() == "cover" ? 0 : 1;
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
@@ -102,13 +103,12 @@ int BatchNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
   }
 
+  beta_data_diff_ = 0;
+  CheckTensorSize({shape});
   auto format = inputs[kIndex0]->GetFormat();
   if (format_ == Format::NHWC) {
     format = Format::NHWC;
   }
-  beta_data_diff_ = 0;
-  format_ = inputs[kIndex0]->GetFormat();
-  CheckTensorSize({shape});
   SetTensorDescriptor(format, shape);
   InitSizeLists();
   return KRET_OK;
