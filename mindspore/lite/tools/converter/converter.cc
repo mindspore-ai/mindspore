@@ -627,13 +627,31 @@ int ConverterImpl::SaveOutputNames(const FuncGraphPtr &graph) {
   }
   std::vector<std::string> update_output_names;
   for (auto &it : outputs) {
+    std::string output_idx;
     if (utils::isa<mindspore::CNodePtr>(it.first)) {
       auto cnode = it.first->cast<CNodePtr>();
       MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr");
+      auto idx = it.second;
       AbstractBasePtr abstract = cnode->abstract();
-      MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
-      auto name = abstract->name();
-      update_output_names.emplace_back(name);
+      if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
+        auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
+        MS_CHECK_TRUE_MSG(abstract_tuple != nullptr, RET_ERROR, "abstract_tuple is nullptr");
+        auto abstract_list = abstract_tuple->elements();
+        if (abstract_list.size() <= static_cast<size_t>(idx)) {
+          MS_LOG(ERROR) << "AbstractTuple's size[" << abstract_list.size() << "] is smaller than expect size[" << idx
+                        << "]";
+          return RET_ERROR;
+        }
+        abstract = abstract_list[idx];
+        output_idx = std::to_string(idx);
+      }
+      std::string output_name;
+      if (abstract->name().empty()) {
+        output_name = cnode->fullname_with_scope() + output_idx;
+      } else {
+        output_name = abstract->name();
+      }
+      update_output_names.emplace_back(output_name);
     }
   }
 

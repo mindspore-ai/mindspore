@@ -122,11 +122,13 @@ int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
       return RET_ERROR;
     }
     // adjust for conv1d
-    auto conv1d_adjust = std::make_shared<Conv1DInOutAdjust>();
-    MS_CHECK_TRUE_MSG(conv1d_adjust != nullptr, RET_NULL_PTR, "conv1d_adjust is nullptr.");
-    if (!conv1d_adjust->Run(sub_graph)) {
-      MS_LOG(ERROR) << "adjust conv1d failed.";
-      return RET_ERROR;
+    if (!is_optimized) {
+      auto conv1d_adjust = std::make_shared<Conv1DInOutAdjust>();
+      MS_CHECK_TRUE_MSG(conv1d_adjust != nullptr, RET_NULL_PTR, "conv1d_adjust is nullptr.");
+      if (!conv1d_adjust->Run(sub_graph)) {
+        MS_LOG(ERROR) << "adjust conv1d failed.";
+        return RET_ERROR;
+      }
     }
   }
   return RET_OK;
