@@ -18,7 +18,7 @@ from .._checkparam import Validator as validator
 from ..common import dtype as mstype
 
 
-class SolveTriangular(PrimitiveWithInfer):
+class SolveTriangular(Primitive):
     """
     Solve the equation `a x = b` for `x`, assuming a is a triangular matrix.
 
@@ -86,49 +86,6 @@ class SolveTriangular(PrimitiveWithInfer):
             "trans", trans, [str], self.name)
 
         self.init_prim_io_names(inputs=['a', 'b'], outputs=['output'])
-
-    def __infer__(self, a, b):
-        a_shape = a['shape']
-        b_shape = b['shape']
-        # shape match
-        b_vector = len(b_shape) == len(a_shape) - 1
-        if len(a_shape) < 2:
-            raise ValueError(f"For '{self.name}', the dimension of `a` should be at least 2,"
-                             f" but got {len(a_shape)} dimensions.")
-        b_len = 1 if b_vector else 2
-        if len(b_shape) < b_len:
-            raise ValueError(f"For '{self.name}', the dimension of `b` should be at least {b_len},"
-                             f" but got {len(b_shape)} dimensions.")
-        if len(a_shape) != len(b_shape) and len(a_shape) - 1 != len(b_shape):
-            raise ValueError(f"For '{self.name}', the dimension of `b` should be 'a.dim' or 'a.dim' - 1, "
-                             f"which is {len(a_shape)} or {len(a_shape) - 1}, but got {len(b_shape)} dimensions.")
-        if a_shape[-1] != a_shape[-2]:
-            raise ValueError(f"For '{self.name}', the last two dimensions of `a` should be the same,"
-                             f" but got shape of {a_shape}."
-                             f" Please make sure that the shape of `a` be like [..., N, N]")
-        if a_shape[-2] != b_shape[-b_len]:
-            raise ValueError(f"For '{self.name}', the last two dimensions of `a` and `b` should be matched,"
-                             f" but got shape of {a_shape} and {b_shape}."
-                             f" Please make sure that the shape of `a` and `b` be like"
-                             f" [..., N, N] X [..., N, M] or [..., N, N] X [..., N].")
-        if a_shape[:-2] != b_shape[:-b_len]:
-            raise ValueError(f"For '{self.name}', the batch dimensions of `a` and `b` should all be the same,"
-                             f" but got shape of {a_shape} and {b_shape}."
-                             f" Please make sure that the shape of `a` and `b` be like"
-                             f" [a, b, c, ..., N, N] X [a, b, c, ..., N, M] or"
-                             f" [a, b, c, ..., N, N] X [a, b, c, ..., N].")
-
-        validator.check_scalar_or_tensor_types_same({"a_dtype": a['dtype'], "b_dtype": b['dtype']},
-                                                    [mstype.float32, mstype.float64], self.name)
-        return {
-            'shape': tuple(b_shape),
-            'dtype': a['dtype'],
-            'value': None
-        }
-
-    def infer_dtype(self, a_dtype, b_dtype):
-        del b_dtype
-        return a_dtype
 
 
 class Eigh(PrimitiveWithInfer):
