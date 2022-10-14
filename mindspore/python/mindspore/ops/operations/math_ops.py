@@ -1555,6 +1555,8 @@ class BatchMatMul(Primitive):
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
+        self.add_prim_attr('adj_x1', self.transpose_a)
+        self.add_prim_attr('adj_x2', self.transpose_b)
 
 
 class Betainc(Primitive):
@@ -7008,7 +7010,7 @@ class FFTWithSize(Primitive):
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
           >>> # case FFT: signal_ndim: 1, inverse: False, real: False.

@@ -55,6 +55,7 @@ from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.math_ops import NanToNum
+from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
@@ -1522,6 +1523,238 @@ def get_bprop_cholesky(self):
         out = cholesky_transpose(out) if upper else out
         dout = cholesky_transpose(dout) if upper else dout
         dx = choleskygrad(out, dout)
+        return (dx,)
+
+    return bprop
+
+
+@constexpr
+def _fft_rank_offset(norm_shape, rank):
+    """generate offset for fft with rank"""
+    return np.product(norm_shape[-rank:])
+
+
+@constexpr
+def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
+    """generate reverse term for fft_with_size"""
+    if inverse is False:
+        if norm == "forward":
+            norm_ = 1 / _fft_rank_offset(norm_shape, rank)
+        if norm == "backward":
+            norm_ = 1 * _fft_rank_offset(norm_shape, rank)
+        if norm == "ortho":
+            norm_ = 1
+    if inverse is True:
+        if norm == "forward":
+            norm_ = 1 * _fft_rank_offset(norm_shape, rank)
+        if norm == "backward":
+            norm_ = 1 / _fft_rank_offset(norm_shape, rank)
+        if norm == "ortho":
+            norm_ = 1
+    return norm_
+
+
+@constexpr
+def _rfft_norm(norm_shape, norm, rank):
+    """generate norm for rfft"""
+    norm_ = 1.0
+    if norm == "forward":
+        norm_ = 1 / _fft_rank_offset(norm_shape, rank)
+    if norm == "backward":
+        norm_ = 1
+    if norm == "ortho":
+        norm_ = 1 / np.sqrt(_fft_rank_offset(norm_shape, rank))
+    return norm_
+
+
+@constexpr
+def _get_last_dim_slice_shape(tensor_shape, index):
+    """generate shape for slice last tensor"""
+    from_shape = [0 for x in tensor_shape]
+    if index < 0:
+        from_shape[-1] = tensor_shape[-1] + index
+    else:
+        from_shape[-1] = index
+    to_shape = list(tensor_shape)
+    to_shape[-1] = 1
+    return tuple(from_shape), tuple(to_shape)
+
+
+@constexpr
+def _rfft_reshape(shape_a, shape_b):
+    """generate rfft shape for reshape"""
+    return tuple([int(x) for x in np.concatenate((np.ones(len(shape_a) - 2), shape_b), 0)])
+
+
+@constexpr
+def _rfft_tile_reshape(shape_a):
+    """generate rfft shape for tile"""
+    return tuple(int(x) for x in np.concatenate((shape_a[:-2], [1, 1]), 0))
+
+
+@constexpr
+def _rfft_last_term_shape(shape_a, shape_b):
+    """generate rfft shape for last term"""
+    return tuple(int(x) for x in np.concatenate((np.ones(len(shape_a)-1), shape_b), 0))
+
+
+@constexpr
+def _batch_matmul_shape_increase(shape_before):
+    """increase tensor shape for batch_matmul"""
+    return (1, *shape_before)
+
+
+@constexpr
+def _batch_matmul_shape_decrease(matrix_shape):
+    """decrease tensor shape after batch_matmul"""
+    shape_tmp = list(matrix_shape)
+    shape_tmp[-1] = 1
+    return tuple(shape_tmp)
+
+
+@bprop_getters.register(FFTWithSize)
+def get_bprop_fft_with_size(self):
+    """Grad definition for `FFTWithSize` operation."""
+    signal_ndim = self.signal_ndim
+    inverse = self.inverse
+    real = self.real
+    norm = self.norm
+    onesided = self.onesided
+    fft_fn = FFTWithSize(signal_ndim=signal_ndim,
+                         inverse=False,
+                         real=False,
+                         norm=norm)
+    ifft_fn = FFTWithSize(signal_ndim=signal_ndim,
+                          inverse=True,
+                          real=False,
+                          norm=norm)
+    rfft_fn = FFTWithSize(signal_ndim=signal_ndim,
+                          inverse=False,
+                          real=True,
+                          norm=norm,
+                          onesided=onesided)
+    irfft_fn = FFTWithSize(signal_ndim=signal_ndim,
+                           inverse=True,
+                           real=True,
+                           norm=norm,
+                           onesided=onesided)
+
+    complex_op = P.Complex()
+    shape_op = P.Shape()
+    to_tensor_op = P.ScalarToTensor()
+    type_op = P.DType()
+    concat_op = P.Concat()
+    ones_op = P.Ones()
+    zeros_op = P.Zeros()
+    real_op = P.Real()
+    imag_op = P.Imag()
+    slice_op = P.Slice()
+    tile_op = P.Tile()
+    expand_dims = P.ExpandDims()
+    transpose_op = P.Transpose()
+    exp_op = P.Exp()
+    reshape_op = P.Reshape()
+    conj_op = P.Conj()
+    batch_matmul_op = P.BatchMatMul()
+
+    def bprop(x, out, dout):
+        dx = 0
+        input_type = type_op(x)
+        output_type = type_op(out)
+        input_shape = shape_op(x)
+        offset_shape = shape_op(x)
+        dout_shape = shape_op(dout)
+        offset_size = to_tensor_op(_fft_with_size_back_norm(offset_shape, norm, inverse, signal_ndim), output_type)
+        if real is False:
+            if inverse is False:
+                dx = ifft_fn(dout) * offset_size
+            else:
+                dx = fft_fn(dout) * offset_size
+        else:
+            irfft_ = FFTWithSize(signal_ndim=1, inverse=True, real=True, norm="backward", onesided=onesided,
+                                 signal_sizes=offset_shape[-1:])
+            irfft2d_ = FFTWithSize(signal_ndim=2, inverse=True, real=True, norm="backward", onesided=onesided,
+                                   signal_sizes=offset_shape[-2:])
+            irfft3d_ = FFTWithSize(signal_ndim=3, inverse=True, real=True, norm="backward", onesided=onesided,
+                                   signal_sizes=offset_shape[-3:])
+            if inverse is False:
+                if onesided is True:
+                    terms = 0
+                    is_even = to_tensor_op(1 - (input_shape[-1] % 2), input_type)
+                    dout_first_from, dout_first_to = _get_last_dim_slice_shape(dout_shape, 0)
+                    dout_first = slice_op(dout, dout_first_from, dout_first_to)
+                    rfft_offset_size = to_tensor_op(_fft_rank_offset(input_shape, signal_ndim), input_type)
+                    rfft_norm_offset = to_tensor_op(_rfft_norm(input_shape, norm, signal_ndim), input_type)
+                    dout_last_from, dout_last_to = _get_last_dim_slice_shape(dout_shape, -1)
+                    dout_last = slice_op(dout, dout_last_from, dout_last_to)
+                    if signal_ndim == 1:
+                        dx = irfft_(dout)
+                        vec_mask = complex_op(1 - 2 * (mnp.arange(0, input_shape[-1], 1, input_type) % 2),
+                                              zeros_op(input_shape[-1], input_type))
+                        terms = real_op(dout_first) + is_even * real_op(dout_last * vec_mask)
+                    elif signal_ndim == 2:
+                        dx = irfft2d_(dout)
+                        arange_inner = mnp.arange(0, input_shape[-2], 1, input_type)
+                        matrix_a = tile_op(expand_dims(arange_inner, 0), (input_shape[-2], 1))
+                        matrix_b = transpose_op(matrix_a, (1, 0))
+                        matrix_mul = matrix_a * matrix_b
+                        imag_offset = complex_op(to_tensor_op(0, input_type), to_tensor_op(-2, input_type))
+                        pi_tensor = to_tensor_op(mnp.pi, output_type)
+                        matrix_mul_complex = complex_op(matrix_mul, zeros_op(shape_op(matrix_mul), input_type))
+                        matrix_base_mask = exp_op(imag_offset * pi_tensor * matrix_mul_complex /
+                                                  to_tensor_op(input_shape[-2], output_type))
+                        expanded_matrix_mask = reshape_op(matrix_base_mask, _rfft_reshape(shape_op(dout_first),
+                                                                                          shape_op(matrix_base_mask)))
+                        tile_matrix_mask = complex_op(tile_op(real_op(expanded_matrix_mask), _rfft_tile_reshape(
+                            shape_op(dout_first))), tile_op(imag_op(expanded_matrix_mask),
+                                                            _rfft_tile_reshape(shape_op(dout_first))))
+                        tile_matrix_mask_shape = shape_op(tile_matrix_mask)
+                        dout_first_term = reshape_op(batch_matmul_op(reshape_op(tile_matrix_mask,
+                                                                                _batch_matmul_shape_increase(
+                                                                                    tile_matrix_mask_shape)),
+                                                                     reshape_op(conj_op(
+                                                                         dout_first), _batch_matmul_shape_increase(
+                                                                             shape_op(dout_first)))),
+                                                     _batch_matmul_shape_decrease(tile_matrix_mask_shape))
+                        dout_last_term = reshape_op(batch_matmul_op(reshape_op(tile_matrix_mask,
+                                                                               _batch_matmul_shape_increase(
+                                                                                   tile_matrix_mask_shape)),
+                                                                    reshape_op(conj_op(dout_last),
+                                                                               _batch_matmul_shape_increase(
+                                                                                   shape_op(dout_last)))),
+                                                    _batch_matmul_shape_decrease(
+                                                        tile_matrix_mask_shape))
+                        vec_mask = complex_op(1 - 2 * (mnp.arange(0, input_shape[-1], 1, input_type) % 2), zeros_op(
+                            input_shape[-1], input_type))
+                        dout_last_term = complex_op(tile_op(real_op(dout_last_term), _rfft_last_term_shape(dout_shape,
+                                                                                                           [input_shape[
+                                                                                                               -1],])),
+                                                    tile_op(imag_op(dout_last_term), _rfft_last_term_shape(
+                                                        dout_shape, [input_shape[-1],])))
+                        dout_last_term = dout_last_term * vec_mask
+                        terms = real_op(dout_first_term) + is_even * real_op(dout_last_term)
+                    elif signal_ndim == 3:
+                        dx = irfft3d_(dout) * real_op(offset_size)
+                    dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
+                else:
+                    dx = irfft_fn(dout) * real_op(offset_size)
+            else:
+                dx = rfft_fn(dout)
+                if onesided is True:
+                    if signal_ndim != 3:
+                        is_odd = dout_shape[-1] % 2
+                        last_shape = offset_shape[-1]
+                        mask = concat_op((ones_op(1, output_type), 2.0 * ones_op(
+                            (last_shape - 2 + is_odd,), output_type), ones_op((1 - is_odd,), output_type)))
+                        dx = dx * complex_op(mask, zeros_op(shape_op(mask), output_type))
+                        irfft_offset_size = to_tensor_op(
+                            _fft_with_size_back_norm(shape_op(dout), norm, inverse, signal_ndim),
+                            output_type)
+                        dx = dx * complex_op(irfft_offset_size, zeros_op(1, output_type))
+                    else:
+                        dx = dx * complex_op(offset_size, zeros_op(1, output_type))
+                else:
+                    dx = dx * complex_op(offset_size, zeros_op(1, output_type))
         return (dx,)
 
     return bprop
