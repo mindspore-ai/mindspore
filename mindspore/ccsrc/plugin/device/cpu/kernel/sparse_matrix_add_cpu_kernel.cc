@@ -51,6 +51,7 @@ bool SparseMatrixAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                                        const std::vector<KernelTensorPtr> &outputs) {
   outputs_ = outputs;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixAdd>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
