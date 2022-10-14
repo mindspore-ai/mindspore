@@ -32,6 +32,8 @@ AscendKernelPlugin &AscendKernelPlugin::GetInstance() {
 
 AscendKernelPlugin::AscendKernelPlugin() : handle_(nullptr), create_kernel_map_(nullptr), is_registered_(false) {}
 
+void AscendKernelPlugin::UpdateRegisterStatus(bool status) { is_registered_ = status; }
+
 void AscendKernelPlugin::Register() {
 #if !defined(_WIN32)
   if (is_registered_) {
@@ -72,7 +74,9 @@ void AscendKernelPlugin::Register() {
   }
   // register
   for (auto &kernel : *create_kernel_map_) {
-    static KernelRegistrar<kernel::KernelMod> ascend_kernel_reg(kernel.first, kernel.second);
+    if (!kernel::Factory<kernel::KernelMod>::Instance().IsRegistered(kernel.first)) {
+      KernelRegistrar<kernel::KernelMod> ascend_kernel_reg(kernel.first, kernel.second);
+    }
   }
   is_registered_ = true;
   MS_LOG(INFO) << "Register ascend kernel plugin success.";
