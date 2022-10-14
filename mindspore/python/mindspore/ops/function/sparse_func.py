@@ -624,6 +624,12 @@ def csr_add(a, b, alpha, beta):
     """
     Returns alpha * csr_a + beta * csr_b where both csr_a and csr_b are CSRTensor, alpha and beta are both Tensor.
 
+    Note:
+        The user need to ensure that the input sparse matrix is legal.
+        Otherwise, the behavior of the operator is undefined.
+        For example, when there are multiple elements in the same position, the
+        operator may return an error of fail execute.
+
     Args:
         a (CSRTensor): Sparse CSR Tensor.
         b (CSRTensor): Sparse CSR Tensor.
