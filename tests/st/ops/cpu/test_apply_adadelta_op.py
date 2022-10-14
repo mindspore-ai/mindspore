@@ -110,12 +110,12 @@ def test_apply_adadelta_vmap():
                            [0.4, 0.5]], dtype=np.float32)
 
     lr_tensor = Tensor(np.array([0.001, 0.001]).astype(np.float32))
-    rho_tesnor = 0.95
+    rho_tensor = 0.95
     epsilon_tensor = 1e-6
     grad_tensor = Tensor(grident_np)
 
     vmap_agrad = AdadeltaNetVmap(cal_adagrad, var_np, accum_np, accum_update_np)
-    output = vmap_agrad(lr_tensor, rho_tesnor, epsilon_tensor, grad_tensor)
+    output = vmap_agrad(lr_tensor, rho_tensor, epsilon_tensor, grad_tensor)
     output_var = output[0].asnumpy()
     output_accum = output[1].asnumpy()
     output_accum_update = output[2].asnumpy()
