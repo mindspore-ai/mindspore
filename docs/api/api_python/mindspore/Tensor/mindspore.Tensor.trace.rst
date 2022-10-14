@@ -16,3 +16,7 @@ mindspore.Tensor.trace
 
     异常：
         - **ValueError** - 输入Tensor的维度少于2。
+
+    参考：
+        :func:`mindspore.Tensor.diagonal`：返回特定对角线方向上的内容。
+    

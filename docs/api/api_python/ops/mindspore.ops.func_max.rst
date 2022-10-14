@@ -14,6 +14,8 @@ mindspore.ops.max
         - 如果有多个最大值，则取第一个最大值的索引。
         - "axis"的取值范围为[-dims, dims - 1]。"dims"为"x"的维度长度。
 
+    参考：:class: `mindspore.ops.ArgMaxWithValue`。
+
     参数：
         - **x** (Tensor) - 输入任意维度的Tensor。将输入Tensor的shape设为 :math:`(x_1, x_2, ..., x_N)` 。数据类型为mindspore.float16或float32。
         - **axis** (int) - 指定计算维度。默认值：0。
