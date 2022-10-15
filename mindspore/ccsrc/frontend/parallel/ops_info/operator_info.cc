@@ -89,6 +89,17 @@ struct OutStrategyValueRegister {
     });
   }
 } out_regist;
+
+int64_t MaxCommonDivisor(int64_t n1, int64_t n2) {
+  while (n1 != n2) {
+    if (n1 > n2) {
+      n1 -= n2;
+    } else {
+      n2 -= n1;
+    }
+  }
+  return n1;
+}
 }  // namespace
 
 std::string StrategyToString(const Strategies &strategy) {
@@ -1062,6 +1073,41 @@ void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op, con
   }
   update_pre_edges.push_back(new_edge);
   succ_edges_ = update_pre_edges;
+}
+
+std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
+  std::shared_ptr<Strategies> batch_strategy = GenerateBatchStrategies();
+  if (batch_strategy->size() != inputs_shape_.size()) {
+    MS_LOG(WARNING) << "The inputs size:" << inputs_shape_.size()
+                    << " is not equal to the generated batch parallel strategies size:" << batch_strategy->size();
+    return batch_strategy;
+  }
+  int64_t shard_size = g_device_manager->stage_device_num();
+  std::vector<std::pair<size_t, size_t>> changed_pos;
+  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
+    auto stra = batch_strategy->at(i);
+    auto input_shape = inputs_shape_.at(i);
+    if (stra.size() != input_shape.size()) {
+      MS_LOG(WARNING) << "The " << i << " input size:" << input_shape.size() << " is not equal to the " << i
+                      << " generated batch parallel strategy size:" << stra.size();
+      return batch_strategy;
+    }
+    for (size_t j = 0; j < input_shape.size(); ++j) {
+      if (stra[j] == 1) {
+        continue;
+      }
+      if (stra[j] != g_device_manager->stage_device_num()) {
+        MS_LOG(WARNING) << "The batch parallel value is not equal to device num, skip adjust it.";
+        return batch_strategy;
+      }
+      shard_size = MaxCommonDivisor(input_shape[j], shard_size);
+      changed_pos.push_back({i, j});
+    }
+  }
+  for (auto &pair : changed_pos) {
+    batch_strategy->at(pair.first).at(pair.second) = shard_size;
+  }
+  return batch_strategy;
 }
 
 std::shared_ptr<Strategies> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
