@@ -72,7 +72,21 @@ float BatchNorm::get_epsilon() const {
 
 Format BatchNorm::get_format() const {
   auto value_ptr = GetAttr(kFormat);
-  return Format(GetValue<int64_t>(value_ptr));
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (!value_ptr->isa<mindspore::api::StringImm>()) {
+    return Format(GetValue<int64_t>(value_ptr));
+  }
+  static const std::map<std::string, int64_t> valid_dataformat = {
+    {"NHWC", Format::NHWC},
+    {"NCHW", Format::NCHW},
+  };
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = valid_dataformat.find(attr_value_str);
+  if (iter == valid_dataformat.end()) {
+    MS_LOG(EXCEPTION) << "for BatchNorm, Invalid format " << attr_value_str << ", use NHWC or NCHW";
+  }
+  return Format(iter->second);
 }
 
 namespace {
@@ -164,6 +178,7 @@ class BatchNormInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim->name());
 
     std::map<std::string, TypePtr> types;
+    auto scale_type = input_args[kInputIndex1]->BuildType();
     (void)types.emplace("scale", input_args[kInputIndex1]->BuildType());
     (void)types.emplace("bias", input_args[kInputIndex2]->BuildType());
     if (MeanAndVarianceValid(input_args)) {
@@ -171,7 +186,7 @@ class BatchNormInfer : public abstract::OpInferBase {
       (void)types.emplace("variance", input_args[kInputIndex4]->BuildType());
     }
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-    return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, kFloat32, kFloat32, kFloat32, kFloat32});
+    return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, scale_type, scale_type, scale_type, scale_type});
   }
 };
 
