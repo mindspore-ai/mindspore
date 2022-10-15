@@ -70,7 +70,7 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   MS_EXCEPTION_IF_NULL(relu);
   CheckCNodeInputSize(relu, kReluInputTensorNum);
 
-  auto prim = std::make_shared<Primitive>(kReluV2OpName);
+  auto prim = std::make_shared<Primitive>(kReLUV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(1)};
   auto new_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -124,7 +124,7 @@ CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, 
 }  // namespace
 
 const BaseRef ReluV2Pass::DefinePattern() const {
-  VectorRef relu_grad({prim::kPrimReluGrad, dy_, VectorRef({prim::kPrimRelu, x_})});
+  VectorRef relu_grad({prim::kPrimReluGrad, dy_, VectorRef({prim::kPrimReLU, x_})});
   return relu_grad;
 }
 

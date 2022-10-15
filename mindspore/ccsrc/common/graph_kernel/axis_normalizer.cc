@@ -27,7 +27,7 @@ int64_t AxisNormalizer::NormAxis(int64_t x, size_t rank) const { return x >= 0 ?
 
 bool AxisNormalizer::IsReduce(const AnfNodePtr &node) const {
   std::vector<PrimitivePtr> node_with_axis = {prim::kPrimReduceSum, prim::kPrimReduceMax, prim::kPrimReduceMin,
-                                              prim::kPrimArgMax, prim::kPrimArgMin};
+                                              prim::kPrimArgMax, prim::kPrimArgmin};
   return std::any_of(node_with_axis.begin(), node_with_axis.end(),
                      [&node](const PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
 }

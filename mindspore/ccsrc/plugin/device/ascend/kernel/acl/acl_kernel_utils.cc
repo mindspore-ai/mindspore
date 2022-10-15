@@ -223,7 +223,7 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   std::vector<GeTensorDescPtr> res;
   for (size_t i = 0; i < input_num; ++i) {
-    auto index = AnfAlgo::GetInputIndexInGraph(anf_node, i);
+    auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(anf_node, i);
     if (index >= input_num) {
       MS_LOG(EXCEPTION) << "Error real index:" << index;
     }

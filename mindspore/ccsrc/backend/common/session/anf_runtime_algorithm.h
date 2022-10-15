@@ -153,9 +153,9 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // charge if the node's input is from a feature map output
   static bool IsFeatureMapInput(const AnfNodePtr &node, size_t input_index);
   // get input index in graph for some tbe ops which input order is different between graph and tbe kernel
-  static size_t GetInputIndexInGraph(const AnfNodePtr &anf_node, const size_t input_index_in_kernel);
+  static size_t GetInputGraphIdxByKernelIdx(const AnfNodePtr &anf_node, const size_t input_index_in_kernel);
   // get input index in kernel for some tbe ops which input order is different between graph and tbe kernel
-  static size_t GetInputIndexInKernel(const AnfNodePtr &anf_node, const size_t input_index_in_graph);
+  static size_t GetInputKernelIdxByGraphIdx(const AnfNodePtr &anf_node, const size_t input_index_in_graph);
   static std::vector<KernelGraphPtr> GetCallSwitchKernelGraph(const CNodePtr &cnode);
   static bool IsIndependentNode(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);

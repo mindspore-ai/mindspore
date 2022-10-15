@@ -21,7 +21,7 @@ namespace mindspore::transform {
 INPUT_MAP(Relu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Relu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Relu, prim::kPrimRelu->name(), ADPT_DESC(Relu))
+REG_ADPT_DESC(Relu, prim::kPrimReLU->name(), ADPT_DESC(Relu))
 
 // ReluV2
 INPUT_MAP(ReluV2) = {{1, INPUT_DESC(x)}};

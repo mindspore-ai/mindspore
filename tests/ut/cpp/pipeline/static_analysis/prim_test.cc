@@ -425,7 +425,7 @@ TEST_F(TestPrim, test_environ_add) {
 }
 
 TEST_F(TestPrim, test_relu) {
-  PrimitivePtr relu = prim::kPrimRelu;
+  PrimitivePtr relu = prim::kPrimReLU;
   relu->AddAttr("T", MakeValue(static_cast<int64_t>(kNumberTypeFloat64)));
   FuncGraphPtr func_graph = MakeFuncGraph(relu, 1);
 

@@ -89,6 +89,6 @@ AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto shape = PReLUInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(PReLU, prim::kPrimPRelu, PReLUInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(PReLU, prim::kPrimPReLU, PReLUInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

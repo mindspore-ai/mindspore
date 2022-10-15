@@ -62,7 +62,7 @@ static const std::set<std::string> kAclKernelSet = {kConv2DOpName,
                                                     kMatMulOpName,
                                                     kBatchMatMulOpName,
                                                     kCastOpName,
-                                                    kReluOpName};
+                                                    kReLUOpName};
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
@@ -517,12 +517,12 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
                       << " for Custom operator [" << op_name << "]";
   }
   static const std::map<KernelType, kernel::OpImplyType> kKernelImplyTypeMap{
-    {KernelType::TBE_KERNEL, kernel::OpImplyType::kTBE},
-    {KernelType::AKG_KERNEL, kernel::OpImplyType::kAKG},
-    {KernelType::AICPU_KERNEL, kernel::OpImplyType::kAICPU},
-    {KernelType::BISHENG_KERNEL, kernel::OpImplyType::kBISHENG}};
+    {KernelType::TBE_KERNEL, kernel::OpImplyType::kImplyTBE},
+    {KernelType::AKG_KERNEL, kernel::OpImplyType::kImplyAKG},
+    {KernelType::AICPU_KERNEL, kernel::OpImplyType::kImplyAICPU},
+    {KernelType::BISHENG_KERNEL, kernel::OpImplyType::kImplyBISHENG}};
   auto it = kKernelImplyTypeMap.find(*kernel_type);
-  kernel::OpImplyType imply_type = kernel::OpImplyType::kAKG;
+  kernel::OpImplyType imply_type = kernel::OpImplyType::kImplyAKG;
   if (it != kKernelImplyTypeMap.end()) {
     imply_type = it->second;
   }

@@ -33,7 +33,7 @@ void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
-  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kAICPU);
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kImplyAICPU);
   if (op_info_ptr == nullptr) {
     MS_LOG(DEBUG) << "Aicpu does not have op [" << op_name << "]";
     return;

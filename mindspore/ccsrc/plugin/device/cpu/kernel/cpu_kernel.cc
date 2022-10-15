@@ -53,7 +53,7 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
   static std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
                                                "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
   std::vector<KernelAttr> support_kernel_attrs;
-  auto op_info = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kCPU);
+  auto op_info = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kImplyCPU);
   if (op_info == nullptr) {
     MS_LOG(WARNING) << "Not find op[" << kernel_name << "] in cpu. For more details, "
                     << "please refer to the list of supported cpu operations at https://www.mindspore.cn.";

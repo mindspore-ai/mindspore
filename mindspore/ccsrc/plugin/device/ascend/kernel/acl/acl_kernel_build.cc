@@ -32,7 +32,7 @@ bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &inpu
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_size_list);
   for (size_t i = 0; i < input_num; i++) {
-    auto index = AnfAlgo::GetInputIndexInGraph(anf_node, i);
+    auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(anf_node, i);
     auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, index);
     if (AnfAlgo::GetInputDeviceDataType(anf_node, index) == kObjectTypeString) {
       if (!anf_node->isa<CNode>()) {

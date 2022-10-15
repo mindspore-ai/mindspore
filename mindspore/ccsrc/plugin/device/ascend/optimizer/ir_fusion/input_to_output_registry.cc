@@ -64,7 +64,7 @@ InputToOutputRegistry::InputToOutputRegistry() {
   Register(kApplyRMSPropOpName, {1, 2}, ApplyRMSPropPreCheck);
   Register(kFusedMulApplyMomentumOpName, {1}, FusedMulApplyMomentumPreCheck);
   Register(kApplyAdagradOpName, {1});
-  Register(kApplyAdagradDAName, {1, 2});
+  Register(kApplyAdagradDAOpName, {1, 2});
   Register(kApplyAdadeltaOpName, {1, 2});
   Register(kApplyPowerSignOpName, {1});
   Register(kApplyProximalAdagradOpName, {1});

@@ -843,8 +843,8 @@ bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input
   return IsFeatureMapOutput(input_node);
 }
 
-size_t AnfRuntimeAlgorithm::GetInputIndexInGraph(const mindspore::AnfNodePtr &anf_node,
-                                                 const size_t input_index_in_kernel) {
+size_t AnfRuntimeAlgorithm::GetInputGraphIdxByKernelIdx(const mindspore::AnfNodePtr &anf_node,
+                                                        const size_t input_index_in_kernel) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t ret = input_index_in_kernel;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
@@ -857,7 +857,7 @@ size_t AnfRuntimeAlgorithm::GetInputIndexInGraph(const mindspore::AnfNodePtr &an
         MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
         return ret;
       }
-      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE, true);
+      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE, true);
       if (op_info != nullptr) {
         auto real_input_index = op_info->real_input_index();
         if (!real_input_index.first.empty()) {
@@ -873,7 +873,7 @@ size_t AnfRuntimeAlgorithm::GetInputIndexInGraph(const mindspore::AnfNodePtr &an
       MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
       return ret;
     }
-    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE);
+    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE);
     if (op_info != nullptr) {
       auto real_input_index = op_info->real_input_index();
       if (!real_input_index.first.empty()) {
@@ -885,8 +885,8 @@ size_t AnfRuntimeAlgorithm::GetInputIndexInGraph(const mindspore::AnfNodePtr &an
   return ret;
 }
 
-size_t AnfRuntimeAlgorithm::GetInputIndexInKernel(const mindspore::AnfNodePtr &anf_node,
-                                                  const size_t input_index_in_graph) {
+size_t AnfRuntimeAlgorithm::GetInputKernelIdxByGraphIdx(const mindspore::AnfNodePtr &anf_node,
+                                                        const size_t input_index_in_graph) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t ret = input_index_in_graph;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
@@ -899,7 +899,7 @@ size_t AnfRuntimeAlgorithm::GetInputIndexInKernel(const mindspore::AnfNodePtr &a
         MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
         return ret;
       }
-      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE, true);
+      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE, true);
       if (op_info != nullptr) {
         auto real_input_index = op_info->real_input_index();
         if (!real_input_index.second.empty()) {
@@ -914,7 +914,7 @@ size_t AnfRuntimeAlgorithm::GetInputIndexInKernel(const mindspore::AnfNodePtr &a
       ret = index_converter.second[input_index_in_graph];
       MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
     }
-    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE);
+    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE);
     if (op_info != nullptr) {
       auto real_input_index = op_info->real_input_index();
       if (!real_input_index.second.empty()) {
@@ -1210,7 +1210,7 @@ void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) 
     // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
     if (common::AnfAlgo::HasNodeAttr(kAttrNopOp, kernel)) {
       for (size_t idx = 0; idx < common::AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
-        auto real_input = GetInputIndexInGraph(kernel, idx);
+        auto real_input = GetInputGraphIdxByKernelIdx(kernel, idx);
         auto device_address = GetPrevNodeMutableOutputAddr(kernel, real_input);
         SetOutputAddr(device_address, idx, kernel.get());
       }
@@ -1242,7 +1242,7 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
     if (common::AnfAlgo::IsNoneInput(node, i)) {
       continue;
     }
-    auto real_input = GetInputIndexInGraph(node, i);
+    auto real_input = GetInputGraphIdxByKernelIdx(node, i);
     auto device_address = GetPrevNodeOutputAddr(node, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
     kernel::AddressPtr input = std::make_shared<kernel::Address>();

@@ -33,7 +33,7 @@ const BaseRef BatchNormAddReluFusion::DefinePattern() const {
   VectorRef batch_norm = VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_, umonad_});
   VectorRef tuple_get_item = VectorRef({prim::kPrimTupleGetItem, batch_norm, index_});
   VectorRef tensor_add = VectorRef({prim::kPrimAdd, tuple_get_item, z_});
-  VectorRef relu = VectorRef({prim::kPrimRelu, tensor_add});
+  VectorRef relu = VectorRef({prim::kPrimReLU, tensor_add});
   return relu;
 }
 

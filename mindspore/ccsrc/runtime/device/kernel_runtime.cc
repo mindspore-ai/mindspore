@@ -336,7 +336,7 @@ void KernelRuntime::ResetNodeAddress(const session::KernelGraph &kernel_graph) {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_num; ++j) {
-      auto input_index = AnfAlgo::GetInputIndexInGraph(kernel, j);
+      auto input_index = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, j);
       KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, input_index, true);
       auto index = kernel_with_index.second;
       auto &input_node = kernel_with_index.first;
@@ -1272,7 +1272,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     if (common::AnfAlgo::IsNoneInput(kernel, i)) {
       continue;
     }
-    auto real_input = AnfAlgo::GetInputIndexInGraph(kernel, i);
+    auto real_input = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, i);
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
@@ -1501,7 +1501,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   const auto update_parameter = common::AnfAlgo::IsUpdateParameterKernel(cnode);
   for (size_t j = 0; j < input_num; ++j) {
-    auto real_input = AnfAlgo::GetInputIndexInGraph(kernel, j);
+    auto real_input = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, j);
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, real_input, true);
     auto index = kernel_with_index.second;
     auto &input_node = kernel_with_index.first;
@@ -1768,7 +1768,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
       if (common::AnfAlgo::HasNodeAttr(kAttrNopOp, kernel)) {
         for (size_t idx = 0; idx < common::AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
-          auto real_input = AnfAlgo::GetInputIndexInGraph(kernel, idx);
+          auto real_input = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, idx);
           auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, real_input);
           AnfAlgo::SetOutputAddr(device_address, idx, kernel.get());
         }

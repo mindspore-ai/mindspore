@@ -153,7 +153,7 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
     return nullptr;
   }
   kernel::OpImplyType imply_type =
-    func_type == kCustomTypeAICPU ? kernel::OpImplyType::kAICPU : kernel::OpImplyType::kAKG;
+    func_type == kCustomTypeAICPU ? kernel::OpImplyType::kImplyAICPU : kernel::OpImplyType::kImplyAKG;
   AddMissingAttrs(cnode, imply_type, missing_attrs);
 
   return node;

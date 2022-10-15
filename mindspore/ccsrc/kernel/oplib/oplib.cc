@@ -71,19 +71,19 @@ constexpr auto kShape = "shape";
 constexpr auto kProcessor = "processor";
 
 static const std::map<std::string, OpImplyType> OpImplyTypeMap = {
-  {kTbe, kTBE}, {kAkg, kAKG}, {kAiCPU, kAICPU}, {kCpu, kCPU}, {kGpu, kGPU}};
+  {kTbe, kImplyTBE}, {kAkg, kImplyAKG}, {kAiCPU, kImplyAICPU}, {kCpu, kImplyCPU}, {kGpu, kImplyGPU}};
 
 static std::string ImplTypeToStr(OpImplyType impl_type) {
   switch (impl_type) {
-    case kTBE:
+    case kImplyTBE:
       return kTbe;
-    case kAKG:
+    case kImplyAKG:
       return kAkg;
-    case kAICPU:
+    case kImplyAICPU:
       return kAiCPU;
-    case kCPU:
+    case kImplyCPU:
       return kCpu;
-    case kGPU:
+    case kImplyGPU:
       return kGpu;
     default:
       return "unknown";
@@ -262,9 +262,9 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
   op_info->set_impl_path(impl_path);
   op_info->set_imply_type(imply_type);
   op_info->set_fusion_type(obj.at(kFusionType));
-  if (imply_type == kTBE) {
+  if (imply_type == kImplyTBE) {
     DecodeTBESpecificInfo(obj, op_info);
-  } else if (imply_type == kAKG) {
+  } else if (imply_type == kImplyAKG) {
     DecodeAKGSpecificInfo(obj, op_info);
   }
   auto attrs = obj.at(kAttr);
@@ -332,11 +332,11 @@ bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType &imply_type,
     std::shared_ptr<OpAttr> op_attr = std::make_shared<OpAttr>();
     MS_EXCEPTION_IF_NULL(op_attr);
     op_attr->set_name(obj.at(kName));
-    if (imply_type != kAICPU) {
+    if (imply_type != kImplyAICPU) {
       op_attr->set_param_type(obj.at(kParamType));
     }
     op_attr->set_type(obj.at(kType));
-    if (imply_type == kTBE) {
+    if (imply_type == kImplyTBE) {
       op_attr->set_value(obj.at(kValue));
     }
     if (obj.find(kDefaultValue) != obj.end()) {
@@ -396,7 +396,7 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType &impl
     if (obj.find(kParamType) != obj.end()) {
       op_io->set_param_type(obj.at(kParamType));
     }
-    if (imply_type == kTBE) {
+    if (imply_type == kImplyTBE) {
       if (obj.find(kNeedCompile) != obj.end()) {
         op_io->set_need_compile(obj.at(kNeedCompile));
       }
@@ -431,7 +431,7 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   MS_EXCEPTION_IF_NULL(context);
   bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-  if (is_gpu && (imply_type == kTBE || imply_type == kAICPU)) {
+  if (is_gpu && (imply_type == kImplyTBE || imply_type == kImplyAICPU)) {
     MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
                  << ", current op num: " << GetOpInfoMap().size();
     return nullptr;
@@ -444,7 +444,7 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
     if (op_info->imply_type() != imply_type) {
       continue;
     }
-    if (imply_type == kAKG && op_info->processor() != target_processor) {
+    if (imply_type == kImplyAKG && op_info->processor() != target_processor) {
       continue;
     }
     // The dynamic shape operator is preferred

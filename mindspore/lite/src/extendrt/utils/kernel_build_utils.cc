@@ -244,7 +244,7 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
 #else
     builder->SetKernelType(KernelType::AKG_KERNEL);
 #endif
-    kernel_attr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
+    kernel_attr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyAKG);
     if (kernel_attr == nullptr) {
       MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
                       << "Infer operator information from inputs. For more details, "
@@ -334,7 +334,7 @@ kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::
 }  // namespace
 
 bool IsDynamicParamKernel(const std::string &op_name) {
-  const auto &op_info = kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
+  const auto &op_info = kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU);
   if (op_info == nullptr) {
     return false;
   }
@@ -414,7 +414,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
       return {};
     }
     // If Custom op has not set reg info, then infer info from inputs
-    if (mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
+    if (mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU) == nullptr) {
       MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
                       << "Infer operator information from inputs. For more details, "
                       << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";

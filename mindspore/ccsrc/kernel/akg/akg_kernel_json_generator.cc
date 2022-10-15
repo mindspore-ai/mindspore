@@ -156,7 +156,7 @@ class OpInfoExtractor {
     MS_EXCEPTION_IF_NULL(cnode_);
     auto op_info = std::make_shared<OpInfo>();
     op_info->set_op_name(AnfUtils::GetCNodeName(cnode_));
-    op_info->set_imply_type(OpImplyType::kAKG);
+    op_info->set_imply_type(OpImplyType::kImplyAKG);
     ExtractInputs(op_info);
     ExtractOutputs(op_info);
     ExtractAttrs(op_info);
@@ -609,7 +609,7 @@ OpInfoPtr AkgKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) cons
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
     MS_LOG(EXCEPTION) << "OpLib is not supported.";
 #else
-    return kernel::OpLib::FindOp(AnfUtils::GetCNodeName(anf_node), OpImplyType::kAKG);
+    return kernel::OpLib::FindOp(AnfUtils::GetCNodeName(anf_node), OpImplyType::kImplyAKG);
 #endif
   }
 }

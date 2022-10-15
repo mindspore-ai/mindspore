@@ -776,7 +776,7 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
       if ((op_name == kDynamicRNNOpName || op_name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
         continue;
       }
-      auto index = AnfAlgo::GetInputIndexInKernel(kernel, i);
+      auto index = AnfAlgo::GetInputKernelIdxByGraphIdx(kernel, i);
       size_t input_size = 0;
       if (index >= input_size_list.size()) {
         MS_LOG(INFO) << "Node: " << kernel->fullname_with_scope() << " input idx: " << index

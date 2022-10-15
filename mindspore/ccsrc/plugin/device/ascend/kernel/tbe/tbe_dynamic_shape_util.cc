@@ -108,7 +108,7 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
 std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto is_dynamic_shape = GetDynamicShapeAttr(cnode);
-  auto op_info = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kTBE, is_dynamic_shape);
+  auto op_info = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kImplyTBE, is_dynamic_shape);
   // If have no dynamic shape op, get static shape op
   if (op_info != nullptr && !op_info->dynamic_shape() && is_dynamic_shape) {
     if (!ChangeDynamicAbsToActualAbs(cnode, op_info)) {

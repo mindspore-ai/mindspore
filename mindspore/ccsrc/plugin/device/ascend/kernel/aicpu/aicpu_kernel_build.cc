@@ -177,7 +177,7 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
     return;
   }
 
-  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kAICPU);
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kImplyAICPU);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto attrs_ptr = op_info_ptr->attrs_ptr();
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);

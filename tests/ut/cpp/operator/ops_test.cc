@@ -411,7 +411,7 @@ TEST_F(TestOps, Conv2dBackpropFilterTest) {
 
 TEST_F(TestOps, ReluTest) {
   auto prim = std::make_shared<Primitive>("ReLU");
-  ASSERT_EQ(prim->name(), kPrimRelu->name());
+  ASSERT_EQ(prim->name(), kPrimReLU->name());
 }
 
 TEST_F(TestOps, PoolingTest) {

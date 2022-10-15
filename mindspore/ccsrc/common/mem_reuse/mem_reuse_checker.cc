@@ -398,7 +398,7 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
                           << " is larger than input number: " << common::AnfAlgo::GetInputTensorNum(node)
                           << trace::DumpSourceLines(node);
       }
-      auto real_input_index = AnfAlgo::GetInputIndexInGraph(node, i);
+      auto real_input_index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
       auto input = node->input(real_input_index + 1);
       MS_EXCEPTION_IF_NULL(input);
       auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);

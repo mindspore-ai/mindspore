@@ -42,7 +42,7 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
     // Elemwise-->DepthwiseConvolution
     auto relu = cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(relu);
-    if (cnode->isa<CNode>() && (IsPrimitiveCNode(relu, prim::kPrimRelu) || IsPrimitiveCNode(relu, prim::kPrimReluV2))) {
+    if (cnode->isa<CNode>() && (IsPrimitiveCNode(relu, prim::kPrimReLU) || IsPrimitiveCNode(relu, prim::kPrimReLUV2))) {
       mindspore::HashSet<AnfNodePtr> record{cnode, relu};
       candidate_fusion->push_back(record);
       SetRecordFusionId(record);

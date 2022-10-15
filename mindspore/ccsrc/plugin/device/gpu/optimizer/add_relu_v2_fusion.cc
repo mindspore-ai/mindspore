@@ -54,7 +54,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
 }  // namespace
 
 const BaseRef AddReluV2Fusion::DefinePattern() const {
-  VectorRef relu = VectorRef({prim::kPrimReluV2, VectorRef({prim::kPrimAdd, x1_, x2_})});
+  VectorRef relu = VectorRef({prim::kPrimReLUV2, VectorRef({prim::kPrimAdd, x1_, x2_})});
   return relu;
 }
 

@@ -42,7 +42,7 @@ using mindspore::kernel::KernelBuildInfo;
 namespace {
 kernel::OpImplyType GetImplyType(KernelType kernel_type) {
   kernel::OpImplyType imply_type =
-    kernel_type == KernelType::GPU_KERNEL ? kernel::OpImplyType::kGPU : kernel::OpImplyType::kAKG;
+    kernel_type == KernelType::GPU_KERNEL ? kernel::OpImplyType::kImplyGPU : kernel::OpImplyType::kImplyAKG;
   return imply_type;
 }
 
@@ -157,7 +157,7 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
 
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
 
-  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyAKG);
   if (op_info_ptr == nullptr) {
     MS_LOG(DEBUG) << "Not find op[" << op_name << "] in akg";
     return false;

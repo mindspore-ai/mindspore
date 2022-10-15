@@ -431,13 +431,13 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
   auto fusion_type = GetFusionTypeByName(fusion_name);
   builder->SetFusionType(fusion_type);
 
-  if (imply_type == kAKG) {
+  if (imply_type == kImplyAKG) {
     builder->SetKernelType(AKG_KERNEL);
-  } else if (imply_type == kGPU) {
+  } else if (imply_type == kImplyGPU) {
     builder->SetKernelType(GPU_KERNEL);
-  } else if (imply_type == kCPU) {
+  } else if (imply_type == kImplyCPU) {
     builder->SetKernelType(CPU_KERNEL);
-  } else if (imply_type == kAICPU) {
+  } else if (imply_type == kImplyAICPU) {
     builder->SetKernelType(AICPU_KERNEL);
   } else {
     builder->SetKernelType(TBE_KERNEL);

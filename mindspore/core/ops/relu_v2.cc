@@ -120,6 +120,6 @@ class ReLUV2Infer : public abstract::OpInferBase {
   const int64_t kRound16 = 16;
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLUV2, prim::kPrimReluV2, ReLUV2Infer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLUV2, prim::kPrimReLUV2, ReLUV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore
