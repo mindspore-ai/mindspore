@@ -430,7 +430,7 @@ def test_pynative_forward_hook_exception():
         net.conv.register_forward_hook(forward_hook_fn_with_ms_func)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
