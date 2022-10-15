@@ -130,6 +130,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kCropAndResizeGradImage = prim::kPrimCropAndResizeGradImage->name();
   static const auto &kTraceGrad = prim::kPrimTraceGrad->name();
   static const auto &kSetSize = prim::kPrimSetSize->name();
+  static const auto &kDynamicStitch = prim::kPrimDynamicStitch->name();
   // Common host depends.
   static PrimShapeDependMap host_depends{{prim::kPrimArgMax->name(), ShapeSet{1}},
                                          {prim::kPrimArgMin->name(), ShapeSet{1}},
@@ -201,7 +202,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kCropAndResizeGradImage, ShapeSet{3}},
                                          {prim::kPrimCumSum->name(), ShapeSet{1}},
                                          {kAdaptiveMaxPool3DGrad, ShapeSet{1}},
-                                         {kSetSize, ShapeSet{2}}};
+                                         {kSetSize, ShapeSet{2}},
+                                         {kDynamicStitch, ShapeSet{0}}};
   return host_depends;
 }
 
@@ -285,7 +287,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimCacheSwapTable, R{InferImplCacheSwapTable, nullptr, true}},
     {prim::kPrimUpdateCache, R{InferImplUpdateCache, nullptr, true}},
     {prim::kPrimComputeAccidentalHits, R{InferImplComputeAccidentalHits, nullptr, true}},
-    {prim::kPrimDynamicStitch, R{InferImplDynamicStitch, nullptr, true}},
     {prim::kPrimPadAndShift, R{InferImplPadAndShift, nullptr, true}},
     {prim::kPrimMapUniform, R{InferImplMapUniform, nullptr, true}},
     {prim::kPrimSplit, R{InferImplSplit, nullptr, true}},
