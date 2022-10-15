@@ -212,7 +212,7 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
   if (kernel_ptr->HasAttr(kAttrAxis)) {
     axis_ = kernel_ptr->get_axis();
   }
-  (void)GetDynamicAttrIntValue(inputs, kAxisIndex_, inputsOnHost, kernel_name_, &axis_, false);
+  (void)TryGetIntValue(inputs, kAxisIndex_, kernel_name_, &axis_, false);
   if (inputs.size() > kAxisIndex_ &&
       AnfAlgo::IsDynamicShapeSkipExecute(kernel_name_, inputs[kAxisIndex_]->GetShapeVector())) {
     need_skip_execute_ = true;

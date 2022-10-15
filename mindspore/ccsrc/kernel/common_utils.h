@@ -404,7 +404,12 @@ BACKEND_EXPORT void UpdateNodeShape(const CNodePtr &cnode);
 // Synchronize the output and input reference map between two kernel attrs.
 void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr);
 BACKEND_EXPORT std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode);
-void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args);
+BACKEND_EXPORT void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args);
+BACKEND_EXPORT void SetInputsByDependMap(const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                         std::vector<KernelTensorPtr> *inputs,
+                                         const enum KernelModType &kernel_mod_type);
+BACKEND_EXPORT void SetInputsByConstInputs(const CNodePtr &node,
+                                           std::map<uint32_t, tensor::TensorPtr> *inputs_tensor_map);
 inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cnode) {
   auto args = GetArgsFromCNode(cnode);
   if (args) {

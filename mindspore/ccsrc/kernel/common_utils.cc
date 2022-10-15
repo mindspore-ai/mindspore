@@ -17,6 +17,7 @@
 #include "kernel/common_utils.h"
 #include <unordered_map>
 #include <map>
+#include <set>
 #include <bitset>
 #include <iostream>
 #include <utility>
@@ -1387,6 +1388,61 @@ std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto args = cnode->user_data<KernelArgs>();
   return args;
+}
+
+tensor::TensorPtr GetDependValueByConstTensor(const AnfNodePtr &input_node, const std::string &cnode_name, size_t i) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto value_node = input_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(ValueError) << "the cnode " << cnode_name << "'s input[" << i << "], must be tensor, but got "
+                             << value->ToString();
+  }
+  auto tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor;
+}
+
+void SetInputsByConstInputs(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *inputs_tensor_map) {
+  std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(node);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
+  auto cnode_name = node->fullname_with_scope();
+  for (size_t i = 0; i < input_size; i++) {
+    if (depend_list.find(i) != depend_list.end()) {
+      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
+      auto real_input = input_node_with_index.first;
+      if (!real_input->isa<ValueNode>()) {
+        continue;
+      }
+      auto out_tensor = GetDependValueByConstTensor(real_input, cnode_name, i);
+      auto ret2 = inputs_tensor_map->try_emplace(i, out_tensor);
+      if (!ret2.second) {
+        MS_LOG(EXCEPTION) << "Insert map failed.";
+      }
+    }
+  }
+}
+
+void SetInputsByDependMap(const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                          std::vector<KernelTensorPtr> *inputs, const enum KernelModType &kernel_mod_type) {
+  MS_EXCEPTION_IF_NULL(inputs);
+  for (const auto &[i, tensor] : depend_tensor_map) {
+    if (i >= inputs->size()) {
+      MS_LOG(EXCEPTION) << "Type to store the data to KernelTensor, expect less than" << inputs->size() << " but got "
+                        << i;
+    }
+    MS_EXCEPTION_IF_NULL(inputs->at(i));
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto address = std::make_shared<kernel::Address>(tensor->data_c(), tensor->Size());
+    if (kernel_mod_type == KernelModType::NativeCpuKernelMod) {
+      // Store the data address in device one for cpu.
+      inputs->at(i)->SetData(address);
+      continue;
+    }
+    inputs->at(i)->SetHostData(address);
+  }
 }
 
 void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args) {

@@ -392,11 +392,14 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) const {
       auto kernel_attrs = cpu_kernel_mod->GetOpSupport();
       SetCpuRefMapToKernelInfo(kernel_node, kernel_attrs);
       auto args = kernel::AbstractArgsFromCNode(kernel_node);
+      auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
+      kernel::SetInputsByConstInputs(kernel_node, &inputs_tensor_map);
+      kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, kernel::KernelModType::NativeCpuKernelMod);
       auto ret = cpu_kernel_mod->Init(args.op, args.inputs, args.outputs);
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(kernel_node);
       }
-      if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
+      if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) ==
           static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
       }

@@ -448,56 +448,6 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   inline bool ShapeEqual(const ShapeVector &s1, const ShapeVector &s2) {
     return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end());
   }
-
-  inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index,
-                                                const std::string &kernel_name) {
-    std::vector<int64_t> tensor_value;
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    size_t data_size = input_tensor->DataSize();
-    auto tensor_type = input_tensor->Dtype();
-    if (tensor_type->type_id() == kNumberTypeInt32) {
-      auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      tensor_value.assign(tensor_data, tensor_data + data_size);
-    } else if (tensor_type->type_id() == kNumberTypeInt64) {
-      auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      tensor_value.assign(tensor_data, tensor_data + data_size);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name << "', the " << input_index
-                              << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
-                              << input_tensor->ToString();
-    }
-    return tensor_value;
-  }
-
-  inline bool GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index,
-                                     std::vector<int64_t> *attr_value,
-                                     const std::map<uint32_t, tensor::TensorPtr> &depends) {
-    // The value of dynamic attr can only be obtained after the InferShape() is executed
-    if (depends.empty()) {
-      MS_LOG(DEBUG) << "For '" << kernel_name_ << "', the depend_tensor_map is currently empty";
-      return false;
-    }
-    auto depend_iter = depends.find(input_index);
-    if (depend_iter == depends.end()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to find the " << input_index
-                        << "th input in the depend_tensor_map";
-    }
-    auto input_tensor = depend_iter->second;
-    const auto &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
-    if (!ShapeEqual(input_shape, input_tensor->shape())) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the " << input_index
-                        << "th input is different between the InferShape and the TensorShape";
-    }
-    const auto &data_format = AnfAlgo::GetInputFormat(kernel_node, input_index);
-    if (data_format != kOpFormat_DEFAULT && data_format != kOpFormat_NCHW) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "',  the format of the " << input_index
-                        << "th input currently should be the default format and does not support " << data_format;
-    }
-    *attr_value = GetTensorIntValue(input_tensor, input_index, kernel_name_);
-    return true;
-  }
 };
 
 std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs);

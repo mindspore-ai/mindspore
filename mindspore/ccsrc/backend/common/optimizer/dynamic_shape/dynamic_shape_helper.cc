@@ -29,7 +29,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
-#include "kernel/kernel.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -307,22 +306,7 @@ void InferOp(const CNodePtr &cnode, void *args) {
       kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod) {
     auto update = kernel::AbstractArgsFromCNode(cnode);
     update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
-    for (const auto &[i, tensor] : update.depend_tensor_map) {
-      if (i >= update.inputs.size()) {
-        MS_LOG(EXCEPTION) << "Type to store the data to KernelTensor, expect less than" << update.inputs.size()
-                          << " but got " << i;
-      }
-      MS_EXCEPTION_IF_NULL(update.inputs[i]);
-      MS_EXCEPTION_IF_NULL(tensor);
-      auto address = std::make_shared<kernel::Address>(tensor->data_c(), tensor->Size());
-      if (kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod) {
-        // Store the data address in device one for cpu.
-        update.inputs[i]->SetData(address);
-        continue;
-      }
-      update.inputs[i]->SetHostData(address);
-    }
-
+    kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, kernel_mod_type);
     kernel::SetArgsToCNode(cnode, update);
   } else {
     kernel::SetArgsToCNode(cnode, kernel_args);
