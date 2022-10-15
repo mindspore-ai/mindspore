@@ -260,8 +260,11 @@ int QuantizedAddCPUKernel::DoExecute(int task_id) {
 
 int QuantizedAddCPUKernel::Run() {
   input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->data());
+  MSLITE_CHECK_PTR(input0_data_);
   input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->data());
+  MSLITE_CHECK_PTR(input1_data_);
   output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->data());
+  MSLITE_CHECK_PTR(output_data_);
   MS_CHECK_FALSE_MSG(input0_data_ == nullptr || input1_data_ == nullptr, RET_ERROR, "Input data nullptr.");
   auto ret = ParallelLaunch(this->ms_context_, AddInt8Run, this, thread_count_);
 

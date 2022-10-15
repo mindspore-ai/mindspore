@@ -36,6 +36,7 @@ OpParameter *PopulateUnstackParameter(const void *prim) {
   memset(param, 0, sizeof(UnstackParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
+  CHECK_LESS_RETURN_RET(INT32_MAX, value->axis(), nullptr, param);
   param->axis_ = value->axis();
   return reinterpret_cast<OpParameter *>(param);
 }
