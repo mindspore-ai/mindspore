@@ -34,6 +34,7 @@ class GPUMemoryManager : public MemoryManager {
   std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) override;
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                       std::vector<size_t> size_list) override;
+  size_t GetAvailableMemSize() override;
 
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) override;

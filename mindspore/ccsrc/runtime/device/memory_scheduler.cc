@@ -57,7 +57,7 @@ void MemScheduler::Record(const void *key, const MemEventType &event_type, size_
   if (key == nullptr) {
     return;
   }
-  auto event = std::make_shared<MemEvent>(event_type, current_step_);
+  auto event = std::make_shared<MemEvent<const void *>>(event_type, current_step_);
   event->mem_size = mem_size;
   event->key = key;
   (void)mem_events_[key].emplace_back(event);
@@ -94,7 +94,7 @@ void *MemScheduler::GetOrMalloc(const void *key, size_t mem_size, MemPriority pr
   return auto_mem_offload_->Get(key);
 }
 
-void *MemScheduler::Malloc(const std::shared_ptr<MemEvent> &event, void *stream) {
+void *MemScheduler::Malloc(const MemEventPtr<const void *> &event, void *stream) {
   MS_EXCEPTION_IF_NULL(event);
   MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   MS_EXCEPTION_IF_NULL(auto_mem_offload_);
@@ -124,7 +124,7 @@ void *MemScheduler::Malloc(const std::shared_ptr<MemEvent> &event, void *stream)
   return auto_mem_offload_->Get(event->key);
 }
 
-bool MemScheduler::PreComputeMock(const MemEventPtr &event) {
+bool MemScheduler::PreComputeMock(const MemEventPtr<const void *> &event) {
   MS_EXCEPTION_IF_NULL(event);
   MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   void *device_ptr = nullptr;
@@ -136,7 +136,7 @@ bool MemScheduler::PreComputeMock(const MemEventPtr &event) {
   return device_ptr != nullptr;
 }
 
-bool MemScheduler::PreComputeInit(const std::shared_ptr<MemEvent> &event, void *stream) {
+bool MemScheduler::PreComputeInit(const MemEventPtr<const void *> &event, void *stream) {
   MS_EXCEPTION_IF_NULL(event);
   MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   auto device_ptr = auto_mem_offload_->Get(event->key);
@@ -154,11 +154,11 @@ bool MemScheduler::PreComputeInit(const std::shared_ptr<MemEvent> &event, void *
   return true;
 }
 
-bool MemScheduler::PreComputeMalloc(const std::shared_ptr<MemEvent> &event, void *stream) {
+bool MemScheduler::PreComputeMalloc(const MemEventPtr<const void *> &event, void *stream) {
   return Malloc(event, stream) != nullptr;
 }
 
-bool MemScheduler::PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void *stream) {
+bool MemScheduler::PreComputeSwapIn(const MemEventPtr<const void *> &event, void *stream) {
   MS_EXCEPTION_IF_NULL(event);
   MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   if (Malloc(event, stream) == nullptr) {
@@ -167,7 +167,7 @@ bool MemScheduler::PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void
   return auto_mem_offload_->SwapIn(event->key, stream) != nullptr;
 }
 
-bool MemScheduler::PreComputeGet(const std::shared_ptr<MemEvent> &event, void *stream) {
+bool MemScheduler::PreComputeGet(const MemEventPtr<const void *> &event, void *stream) {
   MS_EXCEPTION_IF_NULL(event);
   MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   return auto_mem_offload_->Get(event->key, stream, GetNoReuseKeys()) != nullptr;
@@ -232,8 +232,8 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
   MS_EXCEPTION_IF_NULL(mem_handler_);
   MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   if (strategy_ == nullptr) {
-    strategy_ = std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_, total_step_,
-                                                     continuous_mem_info_helper_);
+    strategy_ = std::make_shared<MemOffloadStrategy<const void *>>(mem_priority_, mem_events_, manual_offload_keys_,
+                                                                   total_step_, continuous_mem_info_helper_);
     if (manual_offload_keys_.empty()) {
       compute_time_.resize(total_step_);
     } else {
@@ -248,7 +248,6 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
 }
 
 bool MemScheduler::Optimize() {
-  AdjustFirstEventIndex();
   float mem_used_factor = kMaxMemReuseFactor;
   while (mem_used_factor >= kMinMemReuseFactor) {
     bool ret = true;
@@ -289,24 +288,6 @@ bool MemScheduler::Mock() {
     }
   }
   return true;
-}
-
-void MemScheduler::AdjustFirstEventIndex() {
-  for (const auto &item : mem_events_) {
-    const auto &mem_events = item.second;
-    if (mem_events.empty()) {
-      continue;
-    }
-    auto &first_event = mem_events[0];
-    MS_EXCEPTION_IF_NULL(first_event);
-    const auto &priority_iter = mem_priority_.find(item.first);
-    const bool is_high_priority = (priority_iter != mem_priority_.end() && priority_iter->second == kMemPriorityHigh);
-    if (first_event->type == kInit && !is_high_priority && mem_events.size() > 1) {
-      const auto &second_event = mem_events[1];
-      MS_EXCEPTION_IF_NULL(second_event);
-      first_event->index = second_event->index;
-    }
-  }
 }
 
 void MemScheduler::Update() {

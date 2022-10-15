@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "runtime/device/device_address.h"
+#include "runtime/device/loadable_device_address.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "ir/dtype.h"
 #include "kernel/kernel.h"
@@ -33,17 +34,17 @@ class Debugger;
 namespace device {
 class LaunchKernel;
 namespace ascend {
-class AscendDeviceAddress : public DeviceAddress {
+class AscendDeviceAddress : public LoadableDeviceAddress {
  public:
-  explicit AscendDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
+  explicit AscendDeviceAddress(void *ptr, size_t size) : LoadableDeviceAddress(ptr, size) {}
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
-      : DeviceAddress(ptr, size, device_name, device_id) {}
+      : LoadableDeviceAddress(ptr, size, device_name, device_id) {}
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                                const std::string &device_name, uint32_t device_id)
-      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                                const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
-      : DeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {}
   ~AscendDeviceAddress() override;
   bool SyncDeviceToHost(size_t size, void *const host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;

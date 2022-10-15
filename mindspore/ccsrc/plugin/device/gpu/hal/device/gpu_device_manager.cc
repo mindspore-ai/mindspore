@@ -189,6 +189,10 @@ bool GPUDeviceManager::CopyHostMemToDevice(const DeviceMemPtr &dst, const void *
   return CudaDriver::CopyHostMemToDevice(dst, src, size);
 }
 
+bool GPUDeviceManager::CopyHostMemToHost(const HostMemPtr &dst, const void *src, size_t size) const {
+  return CudaDriver::CopyHostMemToHost(dst, src, size);
+}
+
 bool GPUDeviceManager::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
                                                 CudaDeviceStream stream) const {
   return CudaDriver::CopyDeviceMemToHostAsync(dst, src, size, stream);

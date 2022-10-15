@@ -160,9 +160,9 @@ class BACKEND_EXPORT KernelRuntime {
                                          const KernelLaunchInfo &kernel_launch_address, void *stream);
 
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
+  virtual void *GetKernelStream(const AnfNodePtr &kernel) const { return nullptr; }
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler,
                              const session::KernelGraph &graph) const;
-  virtual void *GetKernelStream(const AnfNodePtr &kernel) const { return nullptr; }
 
  private:
   static TbeLaunchKernelModCallBack tbe_call_;

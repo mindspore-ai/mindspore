@@ -48,11 +48,6 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   }
 
   MS_EXCEPTION_IF_NULL(host_ptr);
-  if (ptr_ == nullptr) {
-    MS_LOG(ERROR) << "The device address is null!";
-    return false;
-  }
-
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   auto ret = GPUDeviceManager::GetInstance().SyncStream(stream);
@@ -67,7 +62,14 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
     MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
   }
-  return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, ptr_, size);
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+  if (mem_offloaded()) {
+    MS_EXCEPTION_IF_NULL(offload_ptr_);
+    return GPUDeviceManager::GetInstance().CopyHostMemToHost(host_ptr, offload_ptr_, size);
+  } else {
+    MS_EXCEPTION_IF_NULL(ptr_);
+    return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, ptr_, size);
+  }
 }
 
 bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
@@ -81,11 +83,6 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
     return true;
   }
   MS_EXCEPTION_IF_NULL(host_ptr);
-  if (ptr_ == nullptr) {
-    MS_LOG(ERROR) << "The device address is null!";
-    return false;
-  }
-
   if (size != size_) {
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
     MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
@@ -102,13 +99,20 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
     }
   }
 
-  auto &stream = GPUDeviceManager::GetInstance().default_stream();
-  MS_EXCEPTION_IF_NULL(stream);
-  if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
-    MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
-    return false;
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+  if (mem_offloaded()) {
+    MS_EXCEPTION_IF_NULL(offload_ptr_);
+    return GPUDeviceManager::GetInstance().CopyHostMemToHost(offload_ptr_, host_ptr, size);
+  } else {
+    MS_EXCEPTION_IF_NULL(ptr_);
+    auto &stream = GPUDeviceManager::GetInstance().default_stream();
+    MS_EXCEPTION_IF_NULL(stream);
+    if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
+      MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
+      return false;
+    }
+    return GPUDeviceManager::GetInstance().SyncStream(stream);
   }
-  return GPUDeviceManager::GetInstance().SyncStream(stream);
 }
 
 bool GPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr) const {
@@ -158,7 +162,12 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
 
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
-  if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(ptr_, src_ptr, size_, stream)) {
+  if (mem_offloaded()) {
+    if (!GPUDeviceManager::GetInstance().CopyDeviceMemToHostAsync(offload_ptr_, src_ptr, size_, stream)) {
+      MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
+      return false;
+    }
+  } else if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(ptr_, src_ptr, size_, stream)) {
     MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
     return false;
   }
@@ -190,10 +199,14 @@ bool GPUDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeI
 }
 
 void GPUDeviceAddress::ClearDeviceMemory() {
-  if (ptr_ == nullptr) {
-    return;
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+  if (offload_ptr_ != nullptr) {
+    auto device_context = GetDeviceContext();
+    MS_EXCEPTION_IF_NULL(device_context);
+    device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
+    offload_ptr_ = nullptr;
   }
-  if (from_mem_pool_) {
+  if (ptr_ != nullptr && from_mem_pool_) {
     GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;
   }
