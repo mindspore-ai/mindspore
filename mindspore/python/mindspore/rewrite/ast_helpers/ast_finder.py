@@ -127,3 +127,36 @@ class StrChecker(ast.NodeVisitor):
         self._hit = False
         self.generic_visit(self._context)
         return self._hit
+
+
+class FindConstValueInInit(ast.NodeVisitor):
+    """
+    Check if specific String exists in specific scope.
+
+    Args:
+        node (ast.AST): An instance of ast node as check scope.
+    """
+    def __init__(self, node: ast.AST):
+        self._context = node
+        self._pattern = ""
+        self._hit = False
+
+    def visit_Constant(self, node: ast.Constant):
+        if node.value == self._pattern:
+            self._hit = True
+        return node
+
+    def check(self, pattern: str) -> bool:
+        """
+        Check if `pattern` exists in `_context`.
+
+        Args:
+            pattern (str): A string indicates target pattern.
+
+        Returns:
+            A bool indicates if `pattern` exists in `_context`.
+        """
+        self._pattern = pattern
+        self._hit = False
+        self.generic_visit(self._context)
+        return self._hit

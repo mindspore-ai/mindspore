@@ -27,7 +27,7 @@ from mindspore.nn import Cell
 from mindspore import log as logger
 from .node import Node, TreeNode, PASS_THROUGH_METHOD
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder
+from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, FindConstValueInInit
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
@@ -1032,6 +1032,13 @@ class SymbolTree(Observer, Observable):
                     to_delete_to_delete_keys.append(key)
             for key in to_delete_to_delete_keys:
                 to_delete_field.pop(key)
+        str_checker = FindConstValueInInit(self._init_func_ast)
+        to_delete_to_delete_keys = []
+        for key, _ in to_delete_field.items():
+            if str_checker.check(key):
+                to_delete_to_delete_keys.append(key)
+        for key in to_delete_to_delete_keys:
+            to_delete_field.pop(key)
 
     def _remove_unused_field(self):
         """remove unused field in __init__ function"""
