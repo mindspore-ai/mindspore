@@ -163,7 +163,6 @@ sparse_segment_mean_ = SparseSegmentMean()
 xlogy_ = P.Xlogy()
 square_ = P.Square()
 sqrt_ = P.Sqrt()
-cumsum_ = P.CumSum()
 
 
 #####################################
@@ -4254,62 +4253,6 @@ def cummax(x, axis):
     return _cummax(x)
 
 
-def cumsum(x, axis, dtype=None):
-    """
-    Computes the cumulative sum of input Tensor along axis.
-
-    .. math::
-
-        y_i = x_1 + x_2 + x_3 + ... + x_i
-
-    Note:
-        On Ascend, the dtype of `x` only support :int8, uint8, int32, float16 or float32 in case of static shape.
-        For the case of dynamic shape, the dtype of `x` only support int32, float16 or float32.
-
-    Args:
-        x (Tensor): The input Tensor to accumulate.
-        axis (int): Axis along which the cumulative sum is computed.
-        dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,
-            the input Tensor will be cast to `dtype` before the computation. This is useful for preventing overflows.
-            If not specified, stay the same as original Tensor. Default: None.
-
-    Returns:
-        Tensor, the shape of the output Tensor is consistent with the input Tensor's.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        ValueError: If the axis is out of range.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
-        >>> # case 1: along the axis 0
-        >>> y = ops.cumsum(x, 0)
-        >>> print(y)
-        [[ 3.  4.  6. 10.]
-         [ 4. 10. 13. 19.]
-         [ 8. 13. 21. 26.]
-         [ 9. 16. 28. 35.]]
-        >>> # case 2: along the axis 1
-        >>> y = ops.cumsum(x, 1)
-        >>> print(y)
-        [[ 3.  7. 13. 23.]
-         [ 1.  7. 14. 23.]
-         [ 4.  7. 15. 22.]
-         [ 1.  4. 11. 20.]]
-    """
-    if dtype is not None and x.dtype != dtype:
-        x = x.astype(dtype, copy=False)
-    validator.check_axis_in_range(axis, x.ndim)
-    return cumsum_(x, axis)
-
-
 def sparse_segment_mean(x, indices, segment_ids):
     r"""
     Computes a Tensor such that :math:`output_i = \frac{\sum_j x_{indices[j]}}{N}` where mean is over :math:`j` such
@@ -6087,7 +6030,7 @@ def dotrapezoid(y, dx, dim):
     y_left = select_(y, dim, 0)
     y_right = select_(y, dim, -1)
     y_sum = y.sum(dim)
-    return (y_sum - (y_left + y_right) * 0.5) * dx
+    return (y_sum - (y_left  + y_right) * 0.5) * dx
 
 
 def dotrapezoid_tensor(y, dx, dim):
@@ -6114,7 +6057,7 @@ def add_padding_to_shape(curr_shape, target_n_dim):
 def zeros_like_except(y, dim):
     _check_dim_in_range(dim, y.ndim)
     dim = dim + y.ndim if dim < 0 else dim
-    sizes = y.shape[:dim] + y.shape[dim + 1:]
+    sizes = y.shape[:dim] + y.shape[dim+1:]
     zeros = P.Zeros()(sizes, y.dtype)
     return zeros
 
@@ -6605,7 +6548,6 @@ __all__ = [
     'baddbmm',
     'cummin',
     'cummax',
-    'cumsum',
     'amin',
     'amax',
     'mean',

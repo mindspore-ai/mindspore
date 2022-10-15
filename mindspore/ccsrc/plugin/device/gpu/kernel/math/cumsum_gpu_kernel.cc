@@ -150,10 +150,6 @@ std::vector<std::pair<KernelAttr, CumSumGpuKernelMod::CumSumLaunchFunc>> CumSumG
    &CumSumGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &CumSumGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &CumSumGpuKernelMod::LaunchKernel<utils::Complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &CumSumGpuKernelMod::LaunchKernel<utils::Complex<double>>},
   // Dynamic shape related.
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
    &CumSumGpuKernelMod::LaunchKernel<int8_t>},
@@ -177,10 +173,6 @@ std::vector<std::pair<KernelAttr, CumSumGpuKernelMod::CumSumLaunchFunc>> CumSumG
    &CumSumGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
    &CumSumGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
-   &CumSumGpuKernelMod::LaunchKernel<utils::Complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
-   &CumSumGpuKernelMod::LaunchKernel<utils::Complex<double>>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
    &CumSumGpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
@@ -203,10 +195,6 @@ std::vector<std::pair<KernelAttr, CumSumGpuKernelMod::CumSumLaunchFunc>> CumSumG
    &CumSumGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
    &CumSumGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
-   &CumSumGpuKernelMod::LaunchKernel<utils::Complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
-   &CumSumGpuKernelMod::LaunchKernel<utils::Complex<double>>},
 };
 
 std::vector<KernelAttr> CumSumGpuKernelMod::GetOpSupport() {

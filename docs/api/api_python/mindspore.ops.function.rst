@@ -206,7 +206,6 @@ Reduction函数
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
-    mindspore.ops.cumsum
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.mean
