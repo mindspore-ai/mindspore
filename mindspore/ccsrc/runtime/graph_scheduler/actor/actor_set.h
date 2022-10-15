@@ -43,6 +43,7 @@
 #include "runtime/graph_scheduler/actor/control_flow/entrance_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/exit_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/stack_actor.h"
+#include "runtime/graph_scheduler/actor/memory/memory_swap_actor.h"
 
 #ifdef ENABLE_RPC_ACTOR
 #include "runtime/graph_scheduler/actor/rpc/send_actor.h"
@@ -108,6 +109,7 @@ struct ActorSet {
   std::vector<MemoryAwareActorPtr> memory_actors_;
   std::vector<CopyActorPtr> copy_actors_;
   std::vector<FusionActorPtr> fusion_actors_;
+  std::vector<std::vector<MemSwapActorPtr>> swap_actors_;
   LoopCountActorPtr loop_count_actor_{nullptr};
   OutputActorPtr output_actor_{nullptr};
   ControlActorSetPtr control_actors_{nullptr};

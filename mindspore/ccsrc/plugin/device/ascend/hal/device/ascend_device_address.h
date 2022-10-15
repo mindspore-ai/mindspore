@@ -87,6 +87,8 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
                                                       const std::string &dst_format) const;
   mutable std::shared_ptr<LaunchKernel> launch_transdata_{nullptr};
   void BindDevice() const;
+  void CopyHostToDevice(const void *src, uint64_t size) const;
+  void CopyDeviceToHost(void *dst, uint64_t size) const;
 };
 using AscendDeviceAddressPtr = std::shared_ptr<AscendDeviceAddress>;
 }  // namespace ascend
