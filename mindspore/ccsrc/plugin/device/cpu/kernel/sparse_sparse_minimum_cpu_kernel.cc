@@ -23,15 +23,7 @@ namespace kernel {
 namespace {
 constexpr int64_t kSparseSparseMinimumInputsNum = 6;
 constexpr int64_t kSparseSparseMinimumOutputsNum = 2;
-constexpr char kKernelName[] = "SparseSparseMinimum";
 }  // namespace
-
-void SparseSparseMinimumCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
-  int64_t input_num = static_cast<int64_t>(common::AnfAlgo::GetInputTensorNum(kernel_node));
-  CHECK_KERNEL_INPUTS_NUM(input_num, kSparseSparseMinimumInputsNum, kKernelName);
-  int64_t output_num = static_cast<int64_t>(common::AnfAlgo::GetOutputTensorNum(kernel_node));
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseSparseMinimumOutputsNum, kKernelName);
-}
 
 bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &,
@@ -57,38 +49,46 @@ bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::AddressPt
   } else {
     MS_LOG(EXCEPTION) << "For SparseSparseMinimum, data type is " << TypeIdLabel(dtype_) << " which is not supported.";
   }
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For SparseSparseMinimum, node_wpt_ is expired. Error no: " << node_;
-  }
-  int64_t output_nm = static_cast<int64_t>(common::AnfAlgo::GetOutputTensorNum(node_));
-  std::vector<TypeId> dtypes(output_nm);
-  for (size_t i = 0; i < static_cast<size_t>(output_nm); i++) {
-    dtypes[i] = static_cast<TypeId>(AnfAlgo::GetOutputDeviceDataType(node_, i));
-  }
-  std::vector<int64_t> dims;
-  (void)dims.emplace_back(y_nnz_);
-  (void)dims.emplace_back(num_dims_);
-  std::vector<int64_t> dim;
-  (void)dim.emplace_back(y_nnz_);
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {dims, dim}, node_.get());
-
   return true;
 }
 
-void SparseSparseMinimumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
-  constexpr size_t kzero = 0;
-  constexpr size_t kone = 1;
-  constexpr size_t kthree = 3;
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kone);
-  auto x1_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kzero);
-  auto x2_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kthree);
-  x1_nnz_ = x1_indices_shape[0];
-  x2_nnz_ = x2_indices_shape[0];
-  num_dims_ = x1_indices_shape[1];
+bool SparseSparseMinimumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs) {
+  is_need_retrieve_output_shape_ = true;
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSparseMinimumInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSparseMinimumOutputsNum, kernel_name_);
+  dtype_ = inputs.at(kIndex1)->GetDtype();
+  itype_ = inputs.at(kIndex0)->GetDtype();
+  value_size_ = abstract::TypeIdSize(dtype_);
+  indice_size_ = abstract::TypeIdSize(itype_);
+  shape_size_ = abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype());
+  return true;
+}
+
+int SparseSparseMinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs,
+                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  input_size_list_.clear();
+  output_size_list_.clear();
+  outputs_ = outputs;
+  auto x1_indice_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto x2_indice_shape = inputs.at(kIndex3)->GetShapeVector();
+  x1_nnz_ = x1_indice_shape[0];
+  x2_nnz_ = x2_indice_shape[0];
+  num_dims_ = x1_indice_shape[1];
+  auto max_nnz = x1_nnz_ + x2_nnz_;
+  input_size_list_.emplace_back(x1_nnz_ * num_dims_ * indice_size_);
+  input_size_list_.emplace_back(x1_nnz_ * value_size_);
+  input_size_list_.emplace_back(num_dims_ * shape_size_);
+  input_size_list_.emplace_back(x2_nnz_ * num_dims_ * indice_size_);
+  input_size_list_.emplace_back(x2_nnz_ * value_size_);
+  input_size_list_.emplace_back(num_dims_ * shape_size_);
+  output_size_list_.emplace_back(max_nnz * num_dims_ * indice_size_);
+  output_size_list_.emplace_back(max_nnz * value_size_);
+  return KRET_OK;
 }
 
 template <typename T>
@@ -186,7 +186,20 @@ void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   for (size_t n = 0; n < static_cast<size_t>(y_nnz_); n++) {
     y_values_addr[n] = static_cast<T>(out_values[n]);
   }
-}  // namespace kernel
+}
+
+void SparseSparseMinimumCpuKernelMod::SyncData() {
+  std::vector<int64_t> dims;
+  (void)dims.emplace_back(y_nnz_);
+  (void)dims.emplace_back(num_dims_);
+  std::vector<int64_t> dim;
+  (void)dim.emplace_back(y_nnz_);
+  outputs_[0]->SetShapeVector(dims);
+  outputs_[1]->SetShapeVector(dim);
+  outputs_[0]->SetDtype(TypeIdToType(itype_));
+  outputs_[1]->SetDtype(TypeIdToType(dtype_));
+}
+
 #define ADD_KERNEL(t1, t2, t3, t4, t5, t6, t7, t8) \
   KernelAttr()                                     \
     .AddInputAttr(kNumberType##t1)                 \

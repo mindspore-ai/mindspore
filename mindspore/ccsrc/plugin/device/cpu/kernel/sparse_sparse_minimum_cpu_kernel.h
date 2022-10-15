@@ -32,27 +32,39 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseSparseMinimumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseSparseMinimumCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseSparseMinimumCpuKernelMod() = default;
   ~SparseSparseMinimumCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
+  void SyncData() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void CheckParam(const CNodePtr &kernel_node) const;
+
+  std::vector<KernelTensorPtr> outputs_{};
+  std::string kernel_name_;
   TypeId dtype_{kTypeUnknown};
+  TypeId itype_{kTypeUnknown};
+  int64_t indice_size_;
+  int64_t value_size_;
+  int64_t shape_size_;
   int64_t x1_nnz_;
   int64_t x2_nnz_;
   int64_t num_dims_;
   int64_t y_nnz_;
-  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SPARSESPARSEMAXIMUM_H_
-#define MINDSPORE_CORE_OPS_SPARSESPARSEMAXIMUM_H_
-#include <memory>
-#include <vector>
+#ifndef MINDSPORE_CORE_OPS_SPARSE_SPARSE_ARITHMETIC_H_
+#define MINDSPORE_CORE_OPS_SPARSE_SPARSE_ARITHMETIC_H_
 
-#include "mindapi/base/types.h"
+#include <vector>
 #include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSparseSparseMaximum = "SparseSparseMaximum";
-
-class MIND_API SparseSparseMaximum : public BaseOperator {
- public:
-  /// \brief Constructor.
-  MIND_API_BASE_MEMBER(SparseSparseMaximum);
-  SparseSparseMaximum() : BaseOperator(kNameSparseSparseMaximum) {
-    InitIOName({"x1_indices", "x1_values", "x1_shape", "x2_indices", "x2_values", "x2_shape"},
-               {"y_indices", "y_values"});
-  }
-  /// \brief Init.
-  void Init() const {}
-};
+abstract::AbstractBasePtr SparseSparseArithMeticInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_CTCLOSS_H_
+#endif  // MINDSPORE_CORE_OPS_SPARSE_SPARSE_ARITHMETIC_H_
