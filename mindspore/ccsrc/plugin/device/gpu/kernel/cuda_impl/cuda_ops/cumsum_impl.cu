@@ -178,11 +178,3 @@ template CUDA_LIB_EXPORT void CumSum<float>(const float *input, float *output, f
 template CUDA_LIB_EXPORT void CumSum<half>(const half *input, half *output, half *workspace, size_t dim0, size_t dim1,
                                            size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
                                            const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<Complex<float>>(const Complex<float> *input, Complex<float> *output,
-                                                     Complex<float> *workspace, size_t dim0, size_t dim1, size_t dim2,
-                                                     size_t stride, size_t stride2, bool exclusive_, bool reverse_,
-                                                     const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<Complex<double>>(const Complex<double> *input, Complex<double> *output,
-                                                      Complex<double> *workspace, size_t dim0, size_t dim1, size_t dim2,
-                                                      size_t stride, size_t stride2, bool exclusive_, bool reverse_,
-                                                      const uint32_t &device_id, cudaStream_t stream);

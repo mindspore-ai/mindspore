@@ -252,7 +252,6 @@ from .math_func import (
     baddbmm,
     cummin,
     cummax,
-    cumsum,
     amin,
     amax,
     mean,
