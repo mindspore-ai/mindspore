@@ -450,18 +450,32 @@ class GraphSplitter {
   // with the same 'color'.
   void DyeGraph();
 
+  // Create the execution mode.
+  void CreateExecutionMode();
+
+  // Traverse all nodes and split these nodes to multiple segments according to the split label.
+  std::vector<SplitGraphSegment> GenerateSplitSegments();
+
+  /**
+   * @description: Reassign the operator label for 'TupleGetItem' nodes. This is an optimization for nodes with multiple
+   * outputs.
+   * @return {void}
+   */
+  void ReassignTupleGetItemNodeLabel();
+
+  /**
+   * @description: Recursively visit TupeGetItem nodes and set their labels.
+   * @param {CNodePtr} &tuple_get_item_node: The TupeGetItem node.
+   * @return {OperatorLabel}: The OperatorLabel of this TupeGetItem node.
+   */
+  OperatorLabel RecursiveSetTupeGetItemLabel(const CNodePtr &tuple_get_item_node);
+
   /**
    * @description: Add data-sync node pairs for reference nodes like trainable parameters. These nodes are used to
    * synchronize updates of parameters between nodes.
    * @return {void}
    */
   void ProcessRefNodes();
-
-  // Create the execution mode.
-  void CreateExecutionMode();
-
-  // Traverse all nodes and split these nodes to multiple segments according to the split label.
-  std::vector<SplitGraphSegment> GenerateSplitSegments();
 
   /**
    * @description: Add some extra control edges between nodes with different labels to keep the consistency of
@@ -615,6 +629,9 @@ class GraphSplitter {
 
   // Whether need to fuse rpc nodes.
   bool need_fuse_rpc_nodes_;
+
+  // Visited TupleGetItem nodes when recursively setting their labels.
+  std::map<AnfNodePtr, bool> visited_tuple_get_item_nodes_;
 };
 using GraphSplitterPtr = std::shared_ptr<GraphSplitter>;
 }  // namespace parallel
