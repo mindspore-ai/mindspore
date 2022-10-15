@@ -117,7 +117,11 @@ static bool CheckDeviceNum(const std::vector<std::vector<int64_t>> &strategies, 
   return true;
 }
 
-static Shapes GenerateDefaultStrategyForParam(const CNodePtr &cnode, const Shapes &input_strategy) {
+// Generate strategy for cnode by input_strategy.
+// For the i-th input:
+// 1. If it is specified in input_strategy, the strategy in input_strategy is used;
+// 2. Otherwise, its strategy is assigned as ()
+static Shapes GenerateDefaultStrategiesForCNode(const CNodePtr &cnode, const Shapes &input_strategy) {
   auto current_inputs = cnode->inputs();
   Shapes elements;
   for (size_t i = 1; i < current_inputs.size(); ++i) {
@@ -154,6 +158,29 @@ static Shapes ValueTuplePtrToShapes(const ValueTuplePtr &value_tuple_ptr) {
   (void)std::transform(value_list.begin(), value_list.end(), std::back_inserter(shapes),
                        [](const ValuePtr &value_ptr) { return GetValue<Shape>(value_ptr); });
   return shapes;
+}
+
+AnfNodeIndexSet FindAnfNodeIndexSetToInsertStrategy(const FuncGraphPtr &func_graph, const AnfNodeIndexSet &node_users) {
+  FuncGraphManagerPtr manager = func_graph->manager();
+  AnfNodeIndexSet ret_set;
+  std::queue<std::pair<AnfNodePtr, int>> bfs_list;
+  (void)std::for_each(node_users.begin(), node_users.end(),
+                      [&bfs_list](const std::pair<AnfNodePtr, int> &user) { bfs_list.push(user); });
+
+  while (!bfs_list.empty()) {
+    auto user = bfs_list.front();
+    bfs_list.pop();
+    CNodePtr cnode = user.first->cast<CNodePtr>();
+    // If the cnode is not a splittable operator, apply strategy to the next cnode
+    if (!IsSplittableOperator(GetPrimName(cnode)) || IsPrimitiveCNode(cnode, prim::kPrimVirtualDataset)) {
+      auto tmp_users = manager->node_users()[cnode];
+      (void)std::for_each(tmp_users.begin(), tmp_users.end(),
+                          [&bfs_list](const std::pair<AnfNodePtr, int> &user) { bfs_list.push(user); });
+      continue;
+    }
+    ret_set.insert(user);
+  }
+  return ret_set;
 }
 
 static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_strategy,
@@ -196,26 +223,30 @@ static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const A
                         << " is not equal to in_strategy dimension: " << input_strategy[i].size() << " at index " << i;
     }
     AnfNodeIndexSet param_sub_set = manager->node_users()[parameter];
-    for (auto &param_pair : param_sub_set) {
-      auto tuple_getitem_nodes = manager->node_users()[param_pair.first];
-      for (auto &tuple_getitem_node : tuple_getitem_nodes) {
-        auto nodes = manager->node_users()[tuple_getitem_node.first];
-        for (auto &node : nodes) {
-          CNodePtr param_cnode = node.first->cast<CNodePtr>();
-          (void)concerned_nodes.insert(param_cnode);
-        }
+    auto to_insert_nodes_set = FindAnfNodeIndexSetToInsertStrategy(func_graph, param_sub_set);
+    for (auto &node : to_insert_nodes_set) {
+      CNodePtr param_cnode = node.first->cast<CNodePtr>();
+      auto param_attrs = GetCNodePrimitive(param_cnode)->attrs();
+      if (StrategyFound(param_attrs)) {
+        auto origin_strategies = ValueTuplePtrToShapes(param_attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
+        MS_LOG(WARNING) << "For " << param_cnode->fullname_with_scope() << ", its in_strategy has been set to "
+                        << origin_strategies << ", the relevant settings in input_strategy will be ignored";
+        continue;
       }
+      (void)concerned_nodes.insert(param_cnode);
     }
   }
+
   for (auto &cnode : concerned_nodes) {
-    Shapes ret_strategy = GenerateDefaultStrategyForParam(cnode, input_strategy);
+    Shapes ret_strategy = GenerateDefaultStrategiesForCNode(cnode, input_strategy);
     // Set in_strategy
     auto strategy = ShapesToValueTuplePtr(ret_strategy);
-    PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    PrimitivePtr prim = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
     auto attrs_temp = prim->attrs();
     attrs_temp[parallel::IN_STRATEGY] = strategy;
-    PrimitivePyPtr prim_py = dyn_cast<PrimitivePy>(prim);
+    PrimitivePyPtr prim_py = prim->cast<PrimitivePyPtr>();
+    MS_EXCEPTION_IF_NULL(prim_py);
     PrimitivePtr new_prim = std::make_shared<PrimitivePy>(*prim_py);
     (void)new_prim->SetAttrs(attrs_temp);
     ValuePtr new_prim_value = MakeValue(new_prim);
@@ -287,26 +318,14 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
       continue;
     }
     AnfNodeIndexSet users = manager->node_users()[parameter];
-    std::queue<std::pair<AnfNodePtr, int>> to_solve_list;
-    (void)std::for_each(users.begin(), users.end(),
-                        [&to_solve_list](const std::pair<AnfNodePtr, int> &user) { to_solve_list.push(user); });
+    auto to_insert_nodes_set = FindAnfNodeIndexSetToInsertStrategy(func_graph, users);
 
-    while (!to_solve_list.empty()) {
-      auto user = to_solve_list.front();
-      to_solve_list.pop();
+    for (auto user : to_insert_nodes_set) {
       CNodePtr cnode = user.first->cast<CNodePtr>();
-      // If the cnode is not a splittable operator, apply strategy to the next cnode
-      if (!IsSplittableOperator(GetPrimName(cnode))) {
-        auto tmp_users = manager->node_users()[cnode];
-        (void)std::for_each(tmp_users.begin(), tmp_users.end(),
-                            [&to_solve_list](const std::pair<AnfNodePtr, int> &user) { to_solve_list.push(user); });
-        continue;
-      }
-
       PrimitivePtr prim = GetCNodePrimitive(cnode);
       MS_EXCEPTION_IF_NULL(prim);
       auto attrs = prim->attrs();
-      if (attrs.count(parallel::IN_STRATEGY) == 0) {
+      if (!StrategyFound(attrs)) {
         auto empty_strategies = GenerateEmptyStrategies(cnode);
         attrs[parallel::IN_STRATEGY] = ShapesToValueTuplePtr(empty_strategies);
       }
@@ -321,7 +340,7 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
       }
       current_strategies[user.second - 1] = param_layout;
       attrs[parallel::IN_STRATEGY] = ShapesToValueTuplePtr(current_strategies);
-      PrimitivePyPtr prim_py = dyn_cast<PrimitivePy>(prim);
+      PrimitivePyPtr prim_py = prim->cast<PrimitivePyPtr>();
       MS_EXCEPTION_IF_NULL(prim_py);
       PrimitivePtr new_prim = std::make_shared<PrimitivePy>(*prim_py);
       (void)new_prim->SetAttrs(attrs);
