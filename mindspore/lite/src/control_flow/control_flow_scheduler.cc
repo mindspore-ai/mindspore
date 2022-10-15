@@ -410,6 +410,10 @@ int ControlFlowScheduler::GetSubGraphsWhichNeedBoundary() {
     std::vector<kernel::KernelExec *> all_call_nodes{};
     for (auto partial_node : item.second) {
       auto call_node = kernel::KernelExecUtil::GetPartialOutputCall(partial_node);
+      if (call_node == nullptr) {
+        MS_LOG(ERROR) << "call_node is nullptr.";
+        return RET_ERROR;
+      }
       all_call_nodes.push_back(call_node);
     }
 
