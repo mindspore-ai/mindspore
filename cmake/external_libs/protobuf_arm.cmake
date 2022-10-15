@@ -64,7 +64,8 @@ if(APPLE)
             -Dprotobuf_WITH_ZLIB=OFF
             -DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}
             -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
-            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
+            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch)
 else()
     mindspore_add_pkg(protobuf_arm
             VER 3.13.0
@@ -79,7 +80,8 @@ else()
             -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
             -Dprotobuf_WITH_ZLIB=OFF
-            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
+            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch)
 endif()
 
 include_directories(${protobuf_arm_INC})

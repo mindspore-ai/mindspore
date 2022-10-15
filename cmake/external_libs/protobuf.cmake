@@ -74,7 +74,8 @@ mindspore_add_pkg(protobuf
         CMAKE_PATH cmake/
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
             -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
-        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
+        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch)
 else()
 mindspore_add_pkg(protobuf
         VER 3.13.0
@@ -84,7 +85,8 @@ mindspore_add_pkg(protobuf
         MD5 ${MD5}
         CMAKE_PATH cmake/
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
-        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
+        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch)
 endif()
 
 include_directories(${protobuf_INC})
