@@ -32,11 +32,9 @@ class MIND_API UpsampleTrilinear3D : public BaseOperator {
   MIND_API_BASE_MEMBER(UpsampleTrilinear3D);
   UpsampleTrilinear3D() : BaseOperator(kNameUpsampleTrilinear3D) { InitIOName({"x"}, {"y"}); }
   bool get_align_corners() const;
-  std::vector<int64_t> get_out_spatial_size() const;
-  std::vector<float> get_scale_factors() const;
+  std::vector<int64_t> get_output_size_attr() const;
+  std::vector<float> get_scales_attr() const;
 };
-abstract::AbstractBasePtr UpsampleTrilinear3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimUpsampleTrilinear3D = std::shared_ptr<UpsampleTrilinear3D>;
 }  // namespace ops
 }  // namespace mindspore

@@ -88,8 +88,8 @@ bool UpsampleTrilinear3DGpuKernelMod::GetUpsampleTrilinear3DAttr(const BaseOpera
   }
   auto kernel_ptr = std::make_shared<ops::UpsampleTrilinear3D>(base_operator->GetPrim());
   align_corners_ = kernel_ptr->get_align_corners();
-  out_spatial_size_me_ = kernel_ptr->get_out_spatial_size();
-  scale_factors_ = kernel_ptr->get_scale_factors();
+  out_spatial_size_me_ = kernel_ptr->get_output_size_attr();
+  scale_factors_ = kernel_ptr->get_scales_attr();
   return true;
 }
 

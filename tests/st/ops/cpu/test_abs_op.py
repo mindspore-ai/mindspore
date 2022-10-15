@@ -26,6 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class Grad(nn.Cell):
+
     def __init__(self, network):
         super(Grad, self).__init__()
         self.grad = GradOperation(get_all=True, sens_param=True)
@@ -37,12 +38,14 @@ class Grad(nn.Cell):
 
 
 class Net(nn.Cell):
+
     def __init__(self):
         super(Net, self).__init__()
         self.ops = P.Abs()
 
     def construct(self, x):
         return self.ops(x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
