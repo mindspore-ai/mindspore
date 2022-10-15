@@ -59,8 +59,8 @@ void SSLClient::InitSSL() {
   MS_LOG(INFO) << "client cert: " << client_cert;
 
   // 2. Parse the client password.
-  std::string client_password = PSContext::instance()->client_password();
-  if (client_password.empty()) {
+  char *client_password = PSContext::instance()->client_password();
+  if (strlen(client_password) == 0) {
     MS_LOG(EXCEPTION) << "The client password's value is empty.";
   }
   EVP_PKEY *pkey = nullptr;
@@ -71,26 +71,29 @@ void SSLClient::InitSSL() {
     MS_LOG(EXCEPTION) << "Read client cert file failed.";
   }
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
+  BIO_free_all(bio);
   if (p12 == nullptr) {
     MS_LOG(EXCEPTION) << "Create PKCS12 cert failed, please check whether the certificate is correct.";
   }
-  BIO_free_all(bio);
-  if (!PKCS12_parse(p12, client_password.c_str(), &pkey, &cert, &ca_stack)) {
-    MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
+  if (PKCS12_parse(p12, client_password, &pkey, &cert, &ca_stack) == 0) {
+    if (ERR_GET_REASON(ERR_peek_last_error()) == PKCS12_R_MAC_VERIFY_FAILURE) {
+      MS_LOG(EXCEPTION) << "The client password is invalid!";
+    }
+    MS_LOG(EXCEPTION) << "PKCS12_parse failed, the reason is " << ERR_reason_error_string(ERR_peek_last_error());
   }
+  PSContext::instance()->ClearClientPassword();
 
   PKCS12_free(p12);
-  if (cert == nullptr) {
-    MS_LOG(EXCEPTION) << "the cert is nullptr";
-  }
-  if (pkey == nullptr) {
-    MS_LOG(EXCEPTION) << "the key is nullptr";
+  MS_EXCEPTION_IF_NULL(cert);
+  MS_EXCEPTION_IF_NULL(pkey);
+  if (ca_stack != nullptr) {
+    MS_LOG(EXCEPTION) << "The cert is invalid: ca_stack should be empty.";
   }
 
   // 3. load ca cert.
   std::string ca_path = CommUtil::ParseConfig(*config_, kCaCertPath);
   if (!CommUtil::IsFileExists(ca_path)) {
-    MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
+    MS_LOG(EXCEPTION) << "The key:" << kCaCertPath << "'s value is not exist.";
   }
   BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
   if (ca_bio == nullptr) {
@@ -113,6 +116,8 @@ void SSLClient::InitSSL() {
   StartCheckCertTime(*config_, cert);
 
   EVP_PKEY_free(pkey);
+  X509_free(caCert);
+  X509_free(cert);
   BIO_vfree(ca_bio);
   if (crl != nullptr) {
     X509_CRL_free(crl);

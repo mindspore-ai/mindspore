@@ -266,8 +266,8 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) const {
     return;
   }
   auto err_msg = ERR_reason_error_string(static_cast<uint64_t>(err));
-  MS_LOG(ERROR) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
-                << ", err info: " << err_msg;
+  MS_LOG(WARNING) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
+                  << ", err info: " << err_msg;
   if (err == SSL_ERROR_WANT_WRITE) {
     (void)conn->recv_event_loop->UpdateEpollEvent(fd, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
   } else if (err == SSL_ERROR_WANT_READ) {

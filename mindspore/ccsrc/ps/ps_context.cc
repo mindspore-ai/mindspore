@@ -255,11 +255,41 @@ bool PSContext::enable_ssl() const { return enable_ssl_; }
 
 void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
 
-std::string PSContext::client_password() const { return client_password_; }
-void PSContext::set_client_password(const std::string &password) { client_password_ = password; }
+char *PSContext::client_password() { return client_password_; }
+void PSContext::set_client_password(const char *password) {
+  if (strlen(password) >= kMaxPasswordLen) {
+    MS_LOG(EXCEPTION) << "Client password is longer than max password length " << kMaxPasswordLen;
+  }
+  int ret = memcpy_s(client_password_, kMaxPasswordLen, password, strlen(password));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "memcpy_s client password failed, error: " << ret;
+  }
+}
 
-std::string PSContext::server_password() const { return server_password_; }
-void PSContext::set_server_password(const std::string &password) { server_password_ = password; }
+void PSContext::ClearClientPassword() {
+  int ret = memset_s(client_password_, kMaxPasswordLen, 0x00, kMaxPasswordLen);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Clear client password failed, error: " << ret;
+  }
+}
+
+char *PSContext::server_password() { return server_password_; }
+void PSContext::set_server_password(const char *password) {
+  if (strlen(password) >= kMaxPasswordLen) {
+    MS_LOG(EXCEPTION) << "Client password is longer than max password length " << kMaxPasswordLen;
+  }
+  int ret = memcpy_s(server_password_, kMaxPasswordLen, password, strlen(password));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "memcpy_s server password failed, error: " << ret;
+  }
+}
+
+void PSContext::ClearServerPassword() {
+  int ret = memset_s(server_password_, kMaxPasswordLen, 0x00, kMaxPasswordLen);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Clear client password failed, error: " << ret;
+  }
+}
 
 std::string PSContext::http_url_prefix() const { return http_url_prefix_; }
 
