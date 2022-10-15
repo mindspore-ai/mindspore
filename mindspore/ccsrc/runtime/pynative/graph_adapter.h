@@ -24,7 +24,8 @@
 namespace mindspore::pynative {
 class GraphAdapter {
  public:
-  static void UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph, const device::DeviceContext *device_context);
+  static void UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
+                                              bool no_control_flow);
   static void ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
                                               const std::vector<tensor::TensorPtr> &input_tensors,
                                               const device::DeviceContext *device_context);
