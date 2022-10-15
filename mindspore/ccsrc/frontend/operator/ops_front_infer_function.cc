@@ -362,6 +362,7 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr size_t args_num = 2;
   CheckArgsSize(primitive->name(), args_spec_list, args_num);
+  py::gil_scoped_acquire gil;
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   auto x = args_spec_list[0];
   auto cmp = args_spec_list[1];

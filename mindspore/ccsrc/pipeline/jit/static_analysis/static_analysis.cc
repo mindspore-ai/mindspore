@@ -485,6 +485,7 @@ EvalResultPtr AnalysisEngine::Execute(const AbstractFunctionPtr &func, const Abs
 }
 
 void AnalysisEngine::ClearEvaluatorCache() {
+  py::gil_scoped_acquire gil;
   for (auto &element : evaluators_) {
     EvaluatorPtr evaluator = element.second;
     MS_EXCEPTION_IF_NULL(evaluator);

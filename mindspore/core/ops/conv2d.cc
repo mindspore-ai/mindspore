@@ -215,10 +215,14 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
                       << ", and 'group': " << group << ".";
   }
   int64_t out_channel = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("out_channel"), "out_channel");
-  if ((w_shape[n_axis] != abstract::Shape::kShapeDimAny) && (w_shape[n_axis] != out_channel)) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'w_shape[" << n_axis
-                      << "]' must be equal to 'out_channel', but got 'w_shape[" << n_axis << "]': " << w_shape[n_axis]
-                      << ", 'out_channel': " << out_channel << ".";
+  if (w_shape[n_axis] == abstract::Shape::kShapeDimAny) {
+    out_channel = w_shape[n_axis];
+  } else {
+    if (w_shape[n_axis] != out_channel) {
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'w_shape[" << n_axis
+                        << "]' must be equal to 'out_channel', but got 'w_shape[" << n_axis << "]': " << w_shape[n_axis]
+                        << ", 'out_channel': " << out_channel << ".";
+    }
   }
   std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(primitive->GetAttr("kernel_size"), 0, kernel_size_num);
   if ((w_shape[h_axis] != abstract::Shape::kShapeDimAny) && (w_shape[h_axis] != kernel_size[0])) {

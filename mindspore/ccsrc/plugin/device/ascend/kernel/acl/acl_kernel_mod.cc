@@ -76,8 +76,15 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
 
   // Current enable binary->fuzz->stable mode.
-  if (aclSetCompileopt(ACL_OP_JIT_COMPILE, "false")) {
-    MS_LOG(ERROR) << "Acl set compile mode failed! op_name is " << op_type_;
+  auto set_compile_flag = ACL_SUCCESS;
+  if (is_dynamic_) {
+    set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_FUZZ);
+  } else {
+    set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_DEFAULT);
+  }
+  if (set_compile_flag != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Acl set compile mode failed! op_name is " << op_type_ << " and error flag is "
+                  << set_compile_flag;
     return false;
   }
 
@@ -87,7 +94,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                                     op_desc_ptr->output_tensor_desc().size(), op_desc_ptr->output_tensor_desc().data(),
                                     op_desc_ptr->output_tensor_data().data(), op_desc_ptr->acl_attr(), ACL_ENGINE_SYS,
                                     ACL_COMPILE_SYS, nullptr, stream_ptr);
-  if (ret) {
+  if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Acl compile and execute failed! op_name is " << op_type_ << " and op info is "
                   << anf_node_.lock()->DebugString();
     return false;

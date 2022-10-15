@@ -267,10 +267,12 @@ class ResetDeferInline : public AnfVisitor {
 // {PrimFill, {PrimDType, Y}, {PrimShape, Y}, 0}
 class ZeroLikeFillZero : public AnfVisitor {
  public:
-  ZeroLikeFillZero()
-      : PrimFill_(prim::GetPythonOps("fill_", "mindspore.ops.functional")->cast<PrimitivePtr>()),
-        PrimShape_(prim::GetPythonOps("shape_", "mindspore.ops.functional")->cast<PrimitivePtr>()),
-        PrimDType_(prim::GetPythonOps("dtype", "mindspore.ops.functional")->cast<PrimitivePtr>()) {}
+  ZeroLikeFillZero() {
+    py::gil_scoped_acquire gil;
+    PrimFill_ = prim::GetPythonOps("fill_", "mindspore.ops.functional")->cast<PrimitivePtr>();
+    PrimShape_ = prim::GetPythonOps("shape_", "mindspore.ops.functional")->cast<PrimitivePtr>();
+    PrimDType_ = prim::GetPythonOps("dtype", "mindspore.ops.functional")->cast<PrimitivePtr>();
+  }
   ~ZeroLikeFillZero() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {

@@ -41,6 +41,7 @@ namespace mindspore {
 namespace parse {
 FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mod_get_parse_method) {
   (void)python_adapter::set_python_scoped();
+  py::gil_scoped_acquire gil;
 
   if (!obj || py::isinstance<py::none>(obj)) {
     MS_LOG(ERROR) << "Parse the python code failed, obj is nullptr or none";
