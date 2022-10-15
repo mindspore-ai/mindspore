@@ -351,6 +351,8 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf,
 #endif
 LiteModel *LiteImportFromPath(const char *model_path);
 Model *ImportFromPath(const char *model_path);
+
+std::string ModelDebugString(Model *model);
 }  // namespace lite
 }  // namespace mindspore
 
