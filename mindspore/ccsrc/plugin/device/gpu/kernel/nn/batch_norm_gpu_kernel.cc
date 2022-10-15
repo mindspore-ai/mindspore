@@ -110,6 +110,7 @@ bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   InitResource();
   is_train_ = kernel_ptr->get_is_training();
   epsilon_ = kernel_ptr->get_epsilon();
+  format_ = kernel_ptr->get_format();
   exp_avg_factor_ = kernel_ptr->get_momentum();
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
@@ -135,7 +136,6 @@ int BatchNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (ret != 0) {
     return ret;
   }
-  format_ = inputs[kIndex0]->GetFormat();
   auto shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
   if (shape.size() != kInputSize2 && shape.size() != kInputSize4) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 2 or 4, but got "
@@ -151,7 +151,11 @@ int BatchNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
 
   CheckTensorSize({shape});
-  SetTensorDescriptor(format_, shape);
+  auto format = inputs[kIndex0]->GetFormat();
+  if (format_ == Format::NHWC) {
+    format = Format::NHWC;
+  }
+  SetTensorDescriptor(format, shape);
   InitSizeLists();
   return KRET_OK;
 }
