@@ -428,10 +428,7 @@ PYBIND11_MODULE(_c_expression, m) {
     (void)iterators.attr("_cleanup")();
     MS_LOG(INFO) << "End release dataset handles.";
 #endif
-    if (!mindspore::distributed::cluster_exit_with_exception()) {
-      // Finalize MindSpore cluster only when this process exits without any exception.
-      mindspore::pipeline::FinalizeCluster();
-    }
+    mindspore::pipeline::FinalizeCluster();
 
     // only in case that c++ calling python interface, ClearResAtexit should be called.
     if (mindspore::python_adapter::IsPythonEnv()) {
