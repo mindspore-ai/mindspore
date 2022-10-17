@@ -295,16 +295,14 @@ def test_grad_operation_single_param():
     w = Tensor([6], mstype.int32)
     b = Tensor([2], mstype.int32)
     expect_graph = Tensor([10], mstype.int32)
-    expect_pynative = (Tensor([10], mstype.int32), Tensor([1], mstype.int32))
 
     context.set_context(mode=context.GRAPH_MODE)
     out_graph = GradOperationNetWrtParameter(Net(w, b), get_by_list=True)(x)
     check_grad_result(out_graph, expect_graph)
 
-    # In Pynative mode, the gradient values of all weights are returned.
     context.set_context(mode=context.PYNATIVE_MODE)
     out_pynative = GradOperationNetWrtParameter(Net(w, b), get_by_list=True)(x)
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0
@@ -416,7 +414,6 @@ def test_grad_operation_single_input_and_single_param():
     w = Tensor([6], mstype.int32)
     b = Tensor([2], mstype.int32)
     expect_graph = ((Tensor([6], mstype.int32),), Tensor([10], mstype.int32))
-    expect_pynative = ((Tensor([6], mstype.int32),), (Tensor([10], mstype.int32), Tensor([1], mstype.int32)))
 
     context.set_context(mode=context.GRAPH_MODE)
     out_graph = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)(x)
@@ -424,7 +421,7 @@ def test_grad_operation_single_input_and_single_param():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     out_pynative = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)(x)
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0
@@ -512,8 +509,6 @@ def test_grad_operation_multiple_inputs_and_single_param():
     w = Tensor([6], mstype.int32)
     b = Tensor([2], mstype.int32)
     expect_graph = ((Tensor([6], mstype.int32), Tensor([2], mstype.int32)), Tensor([10], mstype.int32))
-    expect_pynative = ((Tensor([6], mstype.int32), Tensor([2], mstype.int32)),
-                       (Tensor([10], mstype.int32), Tensor([20], mstype.int32)))
 
     context.set_context(mode=context.GRAPH_MODE)
     out_graph = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)(x, y)
@@ -521,7 +516,7 @@ def test_grad_operation_multiple_inputs_and_single_param():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     out_pynative = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)(x, y)
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0
@@ -610,7 +605,6 @@ def test_grad_operation_no_input_and_single_param():
     w = Tensor([6], mstype.int32)
     b = Tensor([2], mstype.int32)
     expect_graph = ((), Tensor([1], mstype.int32))
-    expect_pynative = ((), (Tensor([1], mstype.int32), Tensor([1], mstype.int32)))
 
     context.set_context(mode=context.GRAPH_MODE)
     out_graph = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)()
@@ -618,7 +612,7 @@ def test_grad_operation_no_input_and_single_param():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     out_pynative = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)()
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0
@@ -640,7 +634,6 @@ def test_grad_operation_no_input_and_single_param_tuple():
 
     w = Tensor([6], mstype.int32)
     expect_graph = ((), (Tensor([1], mstype.int32),))
-    expect_pynative = ((), ())
 
     context.set_context(mode=context.GRAPH_MODE)
     out_graph = GradOperationNetWrtParameterTuple(Net(w), get_all=True, get_by_list=True)()
@@ -648,7 +641,7 @@ def test_grad_operation_no_input_and_single_param_tuple():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     out_pynative = GradOperationNetWrtParameterTuple(Net(w), get_all=True, get_by_list=True)()
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0
@@ -948,9 +941,9 @@ def test_grad_constant_tensor():
     out_graph = grad(Net())(1, 2)
     assert out_graph == ()
 
-    with pytest.raises(RuntimeError):
-        context.set_context(mode=context.PYNATIVE_MODE)
-        grad(Net())(1, 2)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    out_pynative = grad(Net())(1, 2)
+    assert out_pynative == ()
 
 
 @pytest.mark.level0
@@ -976,7 +969,6 @@ def test_grad_int_position_and_single_param():
     w = Tensor([6], mstype.int32)
     b = Tensor([2], mstype.int32)
     expect_graph = (Tensor([6], mstype.int32), Tensor([10], mstype.int32))
-    expect_pynative = (Tensor([6], mstype.int32), (Tensor([10], mstype.int32), Tensor([20], mstype.int32)))
 
     context.set_context(mode=context.GRAPH_MODE)
     net = Net(w, b)
@@ -986,7 +978,7 @@ def test_grad_int_position_and_single_param():
     context.set_context(mode=context.PYNATIVE_MODE)
     net2 = Net(w, b)
     out_pynative = grad(net2, grad_position=0, weights=net2.trainable_params()[0])(x, y)
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0
@@ -1109,8 +1101,6 @@ def test_grad_tuple_position_and_single_param():
     w = Tensor([6], mstype.int32)
     b = Tensor([2], mstype.int32)
     expect_graph = ((Tensor([2], mstype.int32), Tensor([1], mstype.int32)), Tensor([10], mstype.int32))
-    expect_pynative = ((Tensor([2], mstype.int32), Tensor([1], mstype.int32)),
-                       (Tensor([10], mstype.int32), Tensor([20], mstype.int32)))
 
     context.set_context(mode=context.GRAPH_MODE)
     net = Net(w, b)
@@ -1121,7 +1111,7 @@ def test_grad_tuple_position_and_single_param():
     context.set_context(mode=context.PYNATIVE_MODE)
     net2 = Net(w, b)
     out_pynative = grad(net2, grad_position=(1, 2), weights=net2.trainable_params()[0])(x, y, z)
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0
@@ -1247,7 +1237,6 @@ def test_grad_none_position_and_single_param():
     w = Tensor([6], mstype.int32)
     b = Tensor([2], mstype.int32)
     expect_graph = Tensor([10], mstype.int32)
-    expect_pynative = (Tensor([10], mstype.int32), Tensor([20], mstype.int32))
 
     context.set_context(mode=context.GRAPH_MODE)
     net = Net(w, b)
@@ -1257,7 +1246,7 @@ def test_grad_none_position_and_single_param():
     context.set_context(mode=context.PYNATIVE_MODE)
     net2 = Net(w, b)
     out_pynative = grad(net2, grad_position=None, weights=net2.trainable_params()[0])(x, y)
-    check_grad_result(out_pynative, expect_pynative)
+    check_grad_result(out_pynative, expect_graph)
 
 
 @pytest.mark.level0

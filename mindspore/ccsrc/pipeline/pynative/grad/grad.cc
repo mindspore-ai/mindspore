@@ -570,12 +570,24 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   // Get params(weights) require derivative
   auto w_args = GetWeightsArgs(weights, df_builder);
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
-  if (w_args.empty() && !df_builder->parameters().empty()) {
+  bool weight_param_is_tuple = true;
+  if (w_args.empty()) {
     MS_LOG(DEBUG) << "Add weights params to w_args";
-    (void)w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
+    if (py::isinstance<py::tuple>(weights) || py::isinstance<py::list>(weights)) {
+      auto weights_list = py::cast<py::list>(weights);
+      for (size_t i = 0; i < weights_list.size(); ++i) {
+        (void)w_args.emplace_back(GetInput(PyNativeAlgo::DataConvert::PyObjToValue(weights_list[i])));
+      }
+    } else if (!py::isinstance<py::none>(weights)) {
+      // Single input
+      (void)w_args.emplace_back(GetInput(PyNativeAlgo::DataConvert::PyObjToValue(weights)));
+      weight_param_is_tuple = false;
+    }
   }
   // Get bprop graph of top cell
-  auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
+  ad::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_,
+                         weight_param_is_tuple);
+  auto bprop_graph = GetBpropGraph(grad_attr, cell, w_args, p_args, size, args);
   MS_EXCEPTION_IF_NULL(bprop_graph);
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
   resource->set_func_graph(bprop_graph);
@@ -760,7 +772,7 @@ void GradExecutor::UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr
   }
 }
 
-FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
+FuncGraphPtr GradExecutor::GetBpropGraph(const ad::GradAttr &grad_attr, const py::object &cell,
                                          const std::vector<AnfNodePtr> &weights,
                                          const std::vector<size_t> &grad_position, size_t arg_size,
                                          const py::args &args) {
@@ -775,8 +787,6 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
 
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-  MS_EXCEPTION_IF_NULL(grad);
-  ad::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_);
   FuncGraphPtr bprop_graph =
     ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad_position, grad_attr, build_formal_param);
   MS_EXCEPTION_IF_NULL(bprop_graph);
@@ -787,11 +797,11 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
   // Set sens abstract
-  if (grad->sens_param()) {
+  if (grad_attr.has_sens) {
     const auto &sens_v = PyNativeAlgo::DataConvert::PyObjToValue(args[arg_size - 1]);
     dynamic_shape()->UpdateValueBaseShape(sens_v, top_cell()->last_output_abs());
   }
-  UpdateParamAbsByArgs(PyNativeAlgo::PyParser::FilterTensorArgs(args, grad->sens_param_), bprop_graph);
+  UpdateParamAbsByArgs(PyNativeAlgo::PyParser::FilterTensorArgs(args, grad_attr.has_sens), bprop_graph);
   // Dynamic shape graph need add some other pass
   if (top_cell()->dynamic_shape()) {
     bprop_graph->set_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE, true);

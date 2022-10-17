@@ -366,11 +366,10 @@ class KPynativeCellImpl : public KPynativeCell {
   // Set sens and weights parameter nodes by user input info
   void SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg);
   // Set return node according to grad flag
-  void SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, bool grad_all_inputs,
-                 bool grad_weights, const bool get_by_position);
+  void SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr);
   AnfNodePtr GetGradNodeByIndex(const AnfNodePtrList &node_list, size_t index) const;
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position) const;
-  AnfNodePtr GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights) const;
+  AnfNodePtr GetWeightGrad(bool grad_weights, bool weight_param_is_tuple, const AnfNodePtrList &weights) const;
 
   // for higher order gradient;
   // Build k mapped node owned by tape_ for each cnode in primal funcgraph, so these node can be
@@ -419,7 +418,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, const std:
   if (grad_attr.get_by_position && grad_position.empty()) {
     MS_LOG(EXCEPTION) << "grad_position should not be empty when grad by position!";
   }
-  SetOutput(weights, grad_position, grad_attr.grad_all_inputs, grad_attr.grad_weights, grad_attr.get_by_position);
+  SetOutput(weights, grad_position, grad_attr);
   // Replace Parameter of primal funcgraph  with parameter of tape_;
   ReplacePrimalParameter(weights, grad_attr.has_sens);
 #ifdef ENABLE_DUMP_IR
@@ -1117,20 +1116,26 @@ void KPynativeCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool ha
 
 AnfNodePtr KPynativeCellImpl::GetGradNodeByIndex(const AnfNodePtrList &node_list, size_t index) const {
   if (index >= node_list.size()) {
-    MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size.";
+    MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size " << node_list.size();
   }
   auto grad_node = node_list[index];
   MS_EXCEPTION_IF_NULL(grad_node);
 
   const auto &input_adjoint_iter = anfnode_to_adjoin_.find(grad_node);
   if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-    // If weight is not used in the forward network, just return zeros_like() as dout.
     if (grad_node->isa<Parameter>()) {
-      MS_LOG(WARNING) << "Weight does not participate in forward calculation, weight: " << grad_node->DebugString();
+      // If weight is not used in the forward network, just return zeros_like() as dout.
       auto w = grad_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(w);
-      auto default_param = w->default_param();
+      const auto &default_param = w->default_param();
       MS_EXCEPTION_IF_NULL(default_param);
+      if (last_node_->isa<ValueNode>()) {
+        auto last_node_value = last_node_->cast<ValueNodePtr>();
+        if (last_node_value->value() == default_param) {
+          return BuildOnesLikeValue(tape_, default_param, oneslike_sens_value_);
+        }
+      }
+      MS_LOG(WARNING) << "Weight does not participate in forward calculation, weight: " << grad_node->DebugString();
       return BuildZerosLikeValue(tape_, default_param);
     }
     // If input is not used in the forward network, just return zeros_like() as dout.
@@ -1144,6 +1149,11 @@ AnfNodePtr KPynativeCellImpl::GetInputGrad(bool grad_all_inputs, bool get_by_pos
                                            const std::vector<size_t> &grad_position) const {
   std::vector<size_t> grad_pos_list;
   if (get_by_position) {
+    // If grad call from ops.grad, get_by_position is true by default. So if cell_inputs_ is empty indicate input are
+    // all not tensor
+    if (cell_inputs_.empty()) {
+      return nullptr;
+    }
     grad_pos_list = grad_position;
   } else if (grad_all_inputs) {
     grad_pos_list.resize(cell_inputs_.size());
@@ -1169,28 +1179,33 @@ AnfNodePtr KPynativeCellImpl::GetInputGrad(bool grad_all_inputs, bool get_by_pos
   return input_grad_ret;
 }
 
-AnfNodePtr KPynativeCellImpl::GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights) const {
+AnfNodePtr KPynativeCellImpl::GetWeightGrad(bool grad_weights, bool weight_param_is_tuple,
+                                            const AnfNodePtrList &weights) const {
   // No need to return gradient of weights.
   if (!grad_weights) {
     return nullptr;
   }
-  AnfNodePtrList weights_grad_list{NewValueNode(prim::kPrimMakeTuple)};
-  AbstractBasePtrList weights_grad_spec;
-  for (size_t index = 0; index < weights.size(); ++index) {
-    auto grad_node = GetGradNodeByIndex(weights, index);
-    MS_EXCEPTION_IF_NULL(grad_node);
-    (void)weights_grad_list.emplace_back(grad_node);
-    (void)weights_grad_spec.emplace_back(grad_node->abstract());
+  if (weight_param_is_tuple) {
+    AnfNodePtrList weights_grad_list{NewValueNode(prim::kPrimMakeTuple)};
+    AbstractBasePtrList weights_grad_spec;
+    for (size_t index = 0; index < weights.size(); ++index) {
+      auto grad_node = GetGradNodeByIndex(weights, index);
+      MS_EXCEPTION_IF_NULL(grad_node);
+      (void)weights_grad_list.emplace_back(grad_node);
+      (void)weights_grad_spec.emplace_back(grad_node->abstract());
+    }
+    auto weight_grad_ret = tape_->NewCNode(weights_grad_list);
+    weight_grad_ret->set_abstract(std::make_shared<abstract::AbstractTuple>(weights_grad_spec));
+    return weight_grad_ret;
+  } else {
+    return GetGradNodeByIndex(weights, 0);
   }
-  auto weight_grad_ret = tape_->NewCNode(weights_grad_list);
-  weight_grad_ret->set_abstract(std::make_shared<abstract::AbstractTuple>(weights_grad_spec));
-  return weight_grad_ret;
 }
 
 void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
-                                  bool grad_all_inputs, bool grad_weights, const bool get_by_position) {
-  auto inputs_grad_ret = GetInputGrad(grad_all_inputs, get_by_position, grad_position);
-  auto weights_grad_ret = GetWeightGrad(grad_weights, weights);
+                                  const GradAttr &grad_attr) {
+  auto inputs_grad_ret = GetInputGrad(grad_attr.grad_all_inputs, grad_attr.get_by_position, grad_position);
+  auto weights_grad_ret = GetWeightGrad(grad_attr.grad_weights, grad_attr.weight_param_is_tuple, weights);
   // Gradients wrt inputs and weights.
   if (inputs_grad_ret != nullptr && weights_grad_ret != nullptr) {
     auto tape_output = tape_->NewCNode({NewValueNode(prim::kPrimMakeTuple), inputs_grad_ret, weights_grad_ret});
