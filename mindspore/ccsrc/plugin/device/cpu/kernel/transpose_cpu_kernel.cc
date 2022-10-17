@@ -76,7 +76,7 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kDynamicPermInputNum
                       << ", but got " << input_num;
   }
-  if (output_shape_.size() != input_shape_.size()) {
+  if (!IsDynamicRank(output_shape_) && output_shape_.size() != input_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the output_shape's size must be equal to input_shape's size, but got "
                       << output_shape_.size() << " vs " << input_shape_.size();
