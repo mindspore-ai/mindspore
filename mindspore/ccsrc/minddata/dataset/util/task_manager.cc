@@ -100,7 +100,7 @@ Task *TaskManager::FindMe() {
   SharedLock lock(&tm.lru_lock_);
   auto id = this_thread::get_id();
   for (auto iter = tm.lru_.begin(); iter != tm.lru_.end(); ++iter) {
-    if (iter->id_ == id) {
+    if (iter->id_ == id && iter->running_) {
       return &(*iter);
     }
   }
