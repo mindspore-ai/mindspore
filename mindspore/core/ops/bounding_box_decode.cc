@@ -57,11 +57,11 @@ abstract::ShapePtr BoundingBoxDecodeInferShape(const PrimitivePtr &primitive,
   }
 
   const int64_t last_dimension = 4;
-  if (anchor_box_shape[1] != last_dimension) {
+  if (anchor_box_shape[1] > 0 && anchor_box_shape[1] != last_dimension) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', 'anchor_box' last dimension must be 4, but got: " << anchor_box_shape[1] << ".";
   }
-  if (deltas_shape[1] != last_dimension) {
+  if (deltas_shape[1] > 0 && deltas_shape[1] != last_dimension) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', 'deltas' last dimension must be 4, but got: " << deltas_shape[1] << ".";
   }
