@@ -712,7 +712,6 @@ ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerCon
 }
 
 std::vector<MSTensor> ModelPool::GetInputs() {
-  std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   std::vector<MSTensor> inputs;
   if (inputs_info_.empty()) {
     MS_LOG(ERROR) << "model input is empty.";
@@ -735,7 +734,6 @@ std::vector<MSTensor> ModelPool::GetInputs() {
 }
 
 std::vector<MSTensor> ModelPool::GetOutputs() {
-  std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   std::vector<MSTensor> outputs;
   if (outputs_info_.empty()) {
     MS_LOG(ERROR) << "model output is empty.";
@@ -887,7 +885,6 @@ Status ModelPool::CanUseAllPhysicalResources(int *percentage) {
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
-  std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
   model_path_ = model_path;
   int percentage;
   auto status = CanUseAllPhysicalResources(&percentage);
@@ -951,7 +948,6 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   for (size_t i = 0; i < kNumMaxTaskQueueSize; i++) {
     free_tasks_id_.push(i);
   }
-  is_initialized_ = true;
   return kSuccess;
 }
 
@@ -1021,7 +1017,6 @@ void ModelPool::UpdateFreeTaskId(size_t id) {
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   int max_wait_worker_node_id = 0;
   int max_wait_worker_num = 0;
   if (inputs.size() == 0 || inputs.front().Shape().size() == 0) {
@@ -1055,8 +1050,6 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
 
 ModelPool::~ModelPool() {
   MS_LOG(INFO) << "free model pool.";
-  std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
-  is_initialized_ = false;
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
   }

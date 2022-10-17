@@ -58,8 +58,6 @@ class ModelPool {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
-  bool IsInitialized() { return is_initialized_; }
-
  private:
   ModelPoolConfig CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config);
   std::shared_ptr<Context> GetInitContext(const std::shared_ptr<RunnerConfig> &runner_config);
@@ -156,7 +154,6 @@ class ModelPool {
   char *graph_buf_ = nullptr;
 
   std::shared_mutex model_pool_mutex_;
-  bool is_initialized_ = false;
   std::string model_path_ = "";
 };
 }  // namespace mindspore
