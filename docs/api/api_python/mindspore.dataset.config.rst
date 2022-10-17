@@ -321,5 +321,22 @@ API示例所需模块的导入代码如下：
     返回：
         int，表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（默认300秒）。
 
+.. py:function:: mindspore.dataset.config.set_fast_recovery(fast_recovery)
+
+    在数据集管道故障恢复时，是否开启快速恢复模式（快速恢复模式下，无法保证随机性的数据增强操作得到与故障之前相同的结果）。
+
+    参数：
+        - **fast_recovery** (bool) - 是否开启快速恢复模式。
+
+    异常：
+        - **TypeError** - `fast_recovery` 不是bool类型。
+
+.. py:function:: mindspore.dataset.config.get_fast_recovery()
+
+    获取当前数据管道是否开启快速恢复模式。
+
+    返回：
+        bool，当前数据管道是否开启快速恢复模式。
+
 .. automodule:: mindspore.dataset.config
     :members:

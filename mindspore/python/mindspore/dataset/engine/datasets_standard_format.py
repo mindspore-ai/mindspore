@@ -41,7 +41,7 @@ from . import samplers
 class CSVDataset(SourceDataset, UnionBaseDataset):
     """
     A source dataset that reads and parses comma-separated values
-    `(CSV) <http://en.volupedia.org/wiki/Comma-separated_values>`_ files as dataset.
+    `(CSV) <https://en.wikipedia.org/wiki/Comma-separated_values>`_ files as dataset.
 
     The columns of generated dataset depend on the source CSV files.
 

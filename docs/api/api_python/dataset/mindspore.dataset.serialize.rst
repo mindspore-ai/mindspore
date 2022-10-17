@@ -12,7 +12,7 @@
 
     参数：
         - **dataset** (Dataset) - 数据处理管道对象。
-        - **json_filepath** (str) - 生成序列化JSON文件的路径。
+        - **json_filepath** (str) - 生成序列化JSON文件的路径，默认值：''，不指定JSON路径。
 
     返回：
         Dict，包含序列化数据集图的字典。

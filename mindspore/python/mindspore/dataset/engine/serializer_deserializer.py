@@ -63,7 +63,8 @@ def deserialize(input_dict=None, json_filepath=None):
 
     Args:
         input_dict (dict): A Python dictionary containing a serialized dataset graph (default=None).
-        json_filepath (str): A path to the JSON file (default=None).
+        json_filepath (str): A path to the JSON file containing dataset graph.
+            User can obtain this file by calling API `mindspore.dataset.serialize()` (default=None).
 
     Returns:
         de.Dataset or None if error occurs.
