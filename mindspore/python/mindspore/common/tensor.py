@@ -933,7 +933,7 @@ class Tensor(Tensor_):
             Tensor, has the same type as the `x`.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
@@ -960,7 +960,7 @@ class Tensor(Tensor_):
             Tensor, has the same type as the `x`.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
@@ -987,7 +987,7 @@ class Tensor(Tensor_):
             Tensor, has the same type as the `x`.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
@@ -1555,7 +1555,7 @@ class Tensor(Tensor_):
             ValueError: If `weight` could not be broadcast to tensor with shapes of `end` when it is a tensor.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
@@ -1670,7 +1670,7 @@ class Tensor(Tensor_):
                         but data type conversion of Parameter is not supported.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore.common import dtype as mstype
@@ -3040,7 +3040,7 @@ class Tensor(Tensor_):
             ValueError: the Tensor shape is different from that of v.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
