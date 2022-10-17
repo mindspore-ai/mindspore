@@ -155,7 +155,7 @@ class AdaMax(Optimizer):
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms

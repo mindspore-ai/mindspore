@@ -5656,7 +5656,7 @@ class ApplyAdaMax(Primitive):
         RuntimeError: If the data type of `var`, `m`, `v` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
