@@ -229,7 +229,6 @@ EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, i
   auto ctx = EVP_CIPHER_CTX_new();
   if (InitCipherCtx(ctx, funcPtr, work_mode, key, key_len, iv, iv_len, is_encrypt) != 0) {
     MS_LOG(ERROR) << "InitCipherCtx failed.";
-    EVP_CIPHER_CTX_free(ctx);
     return nullptr;
   }
   return ctx;
