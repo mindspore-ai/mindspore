@@ -175,4 +175,7 @@ def test_missing_construct():
     np_input = np.arange(2 * 3 * 4).reshape((2, 3, 4)).astype(np.bool_)
     tensor = Tensor(np_input)
     net = NetMissConstruct()
-    assert net(tensor) is None
+    with pytest.raises(AttributeError) as info:
+        net(tensor)
+    assert "construct" in str(info.value)
+    assert "not defined" in str(info.value)
