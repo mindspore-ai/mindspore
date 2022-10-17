@@ -2869,10 +2869,12 @@ class Unstack(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, axis=0):
+    def __init__(self, axis=0, num=None):
         """Initialize Unstack"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("axis", axis, [int], self.name)
+        if num is not None:
+            validator.check_value_type("num", num, [int], self.name)
 
 
 class Slice(Primitive):

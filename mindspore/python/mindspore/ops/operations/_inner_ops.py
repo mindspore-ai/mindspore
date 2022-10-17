@@ -2178,19 +2178,3 @@ class MixedPrecisionCast(Primitive):
             return data
 
         return self.hyper_map(cast_inner, x)
-
-
-class UnstackWithNum(Primitive):
-    r"""
-    Unstacks tensor in specified axis with specified output number.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, num, axis):
-        """Initialize Unstack"""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_value_type("num", num, [int], self.name)

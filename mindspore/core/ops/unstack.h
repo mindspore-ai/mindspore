@@ -44,9 +44,6 @@ class MIND_API Unstack : public BaseOperator {
   /// \return axis.
   int64_t get_axis() const;
 };
-
-abstract::AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
