@@ -43,20 +43,13 @@ std::unique_ptr<cukernel::GpuKernelHelperBase> CreateSliceKernelPtr(const std::s
 }
 
 std::vector<std::pair<KernelAttr, SliceGradPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
    CreateSliceKernelPtr<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   CreateSliceKernelPtr<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   CreateSliceKernelPtr<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   CreateSliceKernelPtr<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   CreateSliceKernelPtr<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   CreateSliceKernelPtr<uchar>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-   CreateSliceKernelPtr<bool>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
@@ -64,6 +57,41 @@ std::vector<std::pair<KernelAttr, SliceGradPtrCreatorFunc>> kernel_attr = {
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
    CreateSliceKernelPtr<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateSliceKernelPtr<half>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateSliceKernelPtr<int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateSliceKernelPtr<int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateSliceKernelPtr<uchar>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateSliceKernelPtr<bool>},
 };
 
 std::vector<KernelAttr> SliceGradGpuKernelMod::GetOpSupport() {
@@ -79,9 +107,6 @@ SliceGradGpuKernelMod::SliceGradGpuKernelMod() : kernel_name_("SliceGrad") {
 
 bool SliceGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of the dynamic attr!";
-  }
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -98,16 +123,7 @@ bool SliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-
   (void)CheckParam(inputs, outputs);
-
-  if (!is_dynamic_attr_) {
-    auto begin_value = kernel_ptr->GetAttr(ops::kBegin);
-    begin_ = GetValue<std::vector<int64_t>>(begin_value);
-    auto size_value = kernel_ptr->GetAttr(ops::kSize);
-    size_ = GetValue<std::vector<int64_t>>(size_value);
-    ProccessAttr(inputs);
-  }
 
   return true;
 }
@@ -115,12 +131,9 @@ bool SliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (is_dynamic_attr_) {
-    if (GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_) &&
-        GetDynamicAttrIntValue(inputs, kSizeIndex_, inputsOnHost, kernel_name_, &size_)) {
-      get_dynamic_attr_value_ = true;
-      ProccessAttr(inputs);
-    }
+  if (GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_) &&
+      GetDynamicAttrIntValue(inputs, kSizeIndex_, inputsOnHost, kernel_name_, &size_)) {
+    ProccessAttr(inputs);
   }
   helper_ptr_->SetKernelParam(attr_ptr_);
   std::vector<std::vector<int64_t>> input_shapes;
@@ -196,9 +209,6 @@ void SliceGradGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &input
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 7, but got "
                       << input_shape.size();
-  }
-  if (inputs.size() == DynamicInputNum) {
-    is_dynamic_attr_ = true;
   }
 }
 

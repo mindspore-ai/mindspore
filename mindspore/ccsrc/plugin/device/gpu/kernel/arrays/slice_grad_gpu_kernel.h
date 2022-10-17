@@ -67,8 +67,6 @@ class SliceGradGpuKernelMod : public NativeGpuKernelMod {
   ShapeVector input_shape_;
   ShapeVector dy_shape_;
 
-  bool is_dynamic_attr_{false};
-  bool get_dynamic_attr_value_{false};
   std::string kernel_name_;
   std::shared_ptr<cukernel::SliceGradAttr> attr_ptr_{nullptr};
 

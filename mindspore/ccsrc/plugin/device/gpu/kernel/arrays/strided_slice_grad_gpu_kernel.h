@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int DynamicInputNum = 5;
 constexpr auto kStridedSliceMaxDims = 8;
 class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSliceGpuCommon {
  public:
@@ -50,8 +49,6 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
 
  protected:
   bool is_null_input_{false};
-  bool is_dynamic_attr_{false};
-  bool get_dynamic_attr_value_{false};
   static constexpr size_t kShapexIndex_{1};
   static constexpr size_t kBeginIndex_{2};
   static constexpr size_t kEndIndex_{3};

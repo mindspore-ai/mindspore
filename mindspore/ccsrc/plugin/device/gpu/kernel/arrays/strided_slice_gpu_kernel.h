@@ -59,8 +59,6 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
   StridedSliceFunc kernel_func_;
 
   bool is_null_input_{false};
-  bool is_dynamic_attr_{false};
-  bool get_dynamic_attr_value_{false};
   static constexpr size_t kBeginIndex_{1};
   static constexpr size_t kEndIndex_{2};
   static constexpr size_t kStrideIndex_{3};

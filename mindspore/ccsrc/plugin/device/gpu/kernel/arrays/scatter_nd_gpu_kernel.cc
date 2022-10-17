@@ -24,48 +24,10 @@ namespace kernel {
     KernelAttr().AddInputAttr(INDICES).AddInputAttr(UPDATES).AddInputAttr(SHAPE).AddOutputAttr(OUTPUT), \
       &ScatterNdGpuKernelMod::LaunchKernel<T, S>                                                        \
   }
-#define DTYPE_REGISTER_ATTR(INDICES, UPDATES, OUTPUT, T, S)                         \
-  {                                                                                 \
-    KernelAttr().AddInputAttr(INDICES).AddInputAttr(UPDATES).AddOutputAttr(OUTPUT), \
-      &ScatterNdGpuKernelMod::LaunchKernel<T, S>                                    \
-  }
 
 const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &ScatterNdGpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> func_list = {
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeFloat64, kNumberTypeFloat64, double, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, double, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64, double, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeFloat32, kNumberTypeFloat32, float, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, float, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, float, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeFloat16, kNumberTypeFloat16, half, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, half, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, half, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, int64_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, int32_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt16, kNumberTypeInt16, int16_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int16_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int16_t, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt8, kNumberTypeInt8, int8_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int8_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int8_t, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int64_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int16_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int32_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int64_t),
     DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int64_t),
@@ -121,10 +83,6 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
   T *update = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
 
-  if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of the dynamic attr!";
-  }
-
   if (!memcpy_flag_) {
     const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
     const size_t vec_work_len = sizeof(S) * attr_shape_.size();
@@ -165,29 +123,16 @@ bool ScatterNdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  size_t input_num = inputs.size();
-  constexpr size_t kDynamicScatterNdInputNum = 3;
   kernel_name_ = base_operator->name();
-
-  if (input_num == kDynamicScatterNdInputNum) {
-    is_dynamic_attr_ = true;
-    return true;
-  }
-
-  auto attr = base_operator->GetPrim()->GetAttr(kAttrShape);
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "The attr \"shape\" is not found in kernel 'ScatterNd'.";
-    return false;
-  }
-  attr_shape_ = GetValue<std::vector<int64_t>>(attr);
   return true;
 }
 
 int ScatterNdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (GetDynamicAttrIntValue(inputs, kShapeIndex_, inputsOnHost, kernel_name_, &attr_shape_)) {
-    get_dynamic_attr_value_ = true;
+  if (!GetDynamicAttrIntValue(inputs, kShapeIndex_, inputsOnHost, kernel_name_, &attr_shape_)) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << "can't get shape input!";
+    return KRET_RESIZE_FAILED;
   }
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;

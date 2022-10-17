@@ -61,12 +61,6 @@ class UnsortedSegmentMaxGpuKernelMod : public NativeGpuKernelMod {
     auto output_shapes = outputs[0]->GetShapeVector();
     auto input_shapes = Convert2SizeTClipNeg(input_shape_signed);
 
-    size_t input_num = inputs.size();
-    if (input_num == 3) {
-      MS_LOG(INFO) << "UnsortedSegmentMax Kernel Input count is 3 - dynamic mode";
-    } else {
-      MS_LOG(INFO) << "UnsortedSegmentMax Kernel Input count is 2";
-    }
     if (output_shapes.size() < 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 1, but got "
                         << output_shapes.size();
