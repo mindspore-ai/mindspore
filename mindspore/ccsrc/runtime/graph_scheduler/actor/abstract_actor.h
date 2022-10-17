@@ -120,6 +120,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Send recorder info to recorder actor.
   virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) const {}
 
+  // Judge whether skip the launch by the env MS_KERNEL_LAUNCH_SKIP.
+  bool IsSkippedLaunch();
+
   // Fetch the sub actor in the fusion actor by the name.
   AbstractActor *FetchSubActorInFusionActor(const std::string &sub_actor_name) const;
 
