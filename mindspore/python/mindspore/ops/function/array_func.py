@@ -615,11 +615,11 @@ def unique_with_pad(x, pad_num):
         >>> import numpy as np
         >>> from mindspore import Tensor, nn
         >>> from mindspore import ops
-        >>> x = Tensor(np.array([1, 2, 5, 2, 3, 5]), mindspore.int32)
+        >>> x = Tensor(np.array([1, 2, 2, 3, 5, 5]), mindspore.int32)
         >>> output = ops.unique_with_pad(x, 0)
         >>> print(output)
-        (Tensor(shape=[6], dtype=Int32, value= [1, 2, 5, 3, 0, 0]),
-         Tensor(shape=[6], dtype=Int32, value= [0, 1, 2, 1, 3, 2]))
+        (Tensor(shape=[6], dtype=Int32, value= [1, 2, 3, 5, 0, 0]),
+         Tensor(shape=[6], dtype=Int32, value= [0, 1, 1, 2, 3, 3]))
         >>> y = output[0]
         >>> print(y)
         [1 2 5 3 0 0]
