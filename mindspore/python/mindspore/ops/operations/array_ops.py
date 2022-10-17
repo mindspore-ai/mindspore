@@ -6080,7 +6080,7 @@ class IdentityN(Primitive):
         TypeError: If input `x` type is not RealNumber.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = [Tensor(np.array([1, 2, 3, 4]), mstype.int64), Tensor(np.array([4, 3, 1, 1]), mstype.int64)]
