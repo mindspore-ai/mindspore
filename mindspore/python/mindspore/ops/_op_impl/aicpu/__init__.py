@@ -165,3 +165,4 @@ from .parallel_concat import _parallel_concat_aicpu
 from .concat_offset import _concat_offset_aicpu
 from .range import _range_aicpu
 from .list_diff import _list_diff_aicpu
+from .slice_grad import _slice_grad_aicpu

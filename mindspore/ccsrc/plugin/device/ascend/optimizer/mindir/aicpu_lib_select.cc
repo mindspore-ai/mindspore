@@ -44,6 +44,7 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                       kReservoirReplayBufferDestroy,
                                                       kGatherDGradV2OpName,
                                                       kConcatOffsetOpName,
+                                                      kSliceGradOpName,
                                                       kRandomShuffleOpName,
                                                       kListDiffOpName,
                                                       kRangeOpName};
