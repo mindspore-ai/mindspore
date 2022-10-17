@@ -177,9 +177,10 @@ using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 
 // Tensor entity class
-class MS_CORE_API Tensor final : public MetaTensor {
+class MS_CORE_API Tensor : public MetaTensor {
  public:
   abstract::AbstractBasePtr ToAbstract() override;
+  Tensor() = default;
 
   /// \brief Create tensor from another tensor, data is shared.
   ///

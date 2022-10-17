@@ -18,12 +18,15 @@
 #define MINDSPORE_CCSRC_UTILS_MAP_TENSOR_PY_H_
 
 #include <tuple>
+#include <memory>
 #include "pybind11/numpy.h"
 #include "ir/map_tensor.h"
 
 namespace py = pybind11;
 
 namespace mindspore {
+using MapTensor = tensor::MapTensor;
+using MapTensorPtr = std::shared_ptr<MapTensor>;
 //
 // MapTensor python adapter class.
 //
