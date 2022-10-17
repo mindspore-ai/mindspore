@@ -245,6 +245,7 @@ static bool is_cluster_initialized = false;
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_abs, bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
+  py::gil_scoped_acquire gil;
   auto engine = resource->engine();
   MS_EXCEPTION_IF_NULL(engine);
   if (clear || resource->is_load()) {

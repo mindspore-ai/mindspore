@@ -114,6 +114,10 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
     MS_LOG(EXCEPTION) << "SetIOSize failed for node:" << anf_node->DebugString();
   }
 
+  if (common::AnfAlgo::IsDynamicShape(anf_node)) {
+    kernel_mod_ptr->SetDynamic(true);
+  }
+
   SetGeInfo(anf_node, kernel_mod_ptr);
   return kernel_mod_ptr;
 }

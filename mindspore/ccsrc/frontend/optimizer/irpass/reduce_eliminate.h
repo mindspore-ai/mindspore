@@ -90,6 +90,7 @@ class ReduceOneEliminater : public AnfVisitor {
       }
 
       auto new_shape = std::make_shared<ValueTuple>(elements);
+      py::gil_scoped_acquire gil;
       auto reshape_op = prim::GetPythonOps("reshape_", "mindspore.ops.functional")->cast<PrimitivePtr>();
       auto node_abstract = node->abstract();
       // handle auto_parallel get nullptr abstract

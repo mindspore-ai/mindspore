@@ -75,7 +75,10 @@ class EnvironGetEliminater : public AnfVisitor {
 // {prim::GetPythonOps("hyper_add"), {prim::kPrimEnvironGet, X, C, Z}, {prim::kPrimEnvironGet, Y, C, Z}}
 class EnvironGetAddEliminater : public AnfVisitor {
  public:
-  EnvironGetAddEliminater() : PrimHyperAdd_(prim::GetPythonOps("hyper_add")) {}
+  EnvironGetAddEliminater() {
+    py::gil_scoped_acquire gil;
+    PrimHyperAdd_ = prim::GetPythonOps("hyper_add");
+  }
   ~EnvironGetAddEliminater() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {

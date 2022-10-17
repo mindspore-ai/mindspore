@@ -139,6 +139,8 @@ void AclOpDesc::AddTensorAttr(const std::string &attr_name, const ValuePtr &valu
     ret = aclopSetAttrBool(acl_attr_, attr_name.c_str(), GetValue<bool>(value));
   } else if (value->isa<Int64Imm>()) {
     ret = aclopSetAttrInt(acl_attr_, attr_name.c_str(), GetValue<int64_t>(value));
+  } else if (value->isa<Int32Imm>()) {
+    ret = aclopSetAttrInt(acl_attr_, attr_name.c_str(), IntToLong(GetValue<int>(value)));
   } else if (value->isa<FP32Imm>()) {
     ret = aclopSetAttrFloat(acl_attr_, attr_name.c_str(), GetValue<float>(value));
   } else if (value->isa<StringImm>()) {
@@ -169,6 +171,12 @@ void AclOpDesc::SetListAttr(const std::string &attr_name, const ValuePtr &value)
   } else if (val->isa<Int64Imm>()) {
     auto value_list = GetValue<std::vector<int64_t>>(value);
     ret = aclopSetAttrListInt(acl_attr_, attr_name.c_str(), value_list.size(), value_list.data());
+  } else if (val->isa<Int32Imm>()) {
+    auto value_list = GetValue<std::vector<int>>(value);
+    std::vector<int64_t> value_list_int64;
+    std::transform(value_list.begin(), value_list.end(), std::back_inserter(value_list_int64),
+                   [](const int val) { return IntToLong(val); });
+    ret = aclopSetAttrListInt(acl_attr_, attr_name.c_str(), value_list_int64.size(), value_list_int64.data());
   } else if (val->isa<FP32Imm>()) {
     auto value_list = GetValue<std::vector<float>>(value);
     ret = aclopSetAttrListFloat(acl_attr_, attr_name.c_str(), value_list.size(), value_list.data());

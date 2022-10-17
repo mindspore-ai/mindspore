@@ -253,6 +253,7 @@ py::object ValueToPyData(const ValuePtr &value) {
   if (value == nullptr) {
     MS_LOG(EXCEPTION) << "The `value` should not be null";
   }
+  py::gil_scoped_acquire gil;
   for (auto &iter : value_name_to_converter) {
     if (value->IsFromTypeId(iter.first)) {
       return iter.second(value);

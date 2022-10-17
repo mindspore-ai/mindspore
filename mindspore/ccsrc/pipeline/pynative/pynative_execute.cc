@@ -85,6 +85,10 @@ py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args);
   py::object ret = py::none();
   PyNativeExecutorTry(forward_executor()->RunOpS, &ret, op_run_info);
+  if (PyGILState_Check() == 0) {
+    PyGILState_Ensure();
+  }
+  op_run_info.reset();
   return ret;
 }
 
