@@ -12,11 +12,11 @@ mindspore.ops.glu
     其中，:math:`a` 表示输入input_x 拆分后 Tensor的前一半元素，:math:`b` 表示输入拆分Tensor的另一半元素。
 
     参数：
-        - **axis** (int) - 指定分割轴。数据类型为整型，默认值：0。
-        - **x** (Tensor) - Tensor的shape为 (x_1, x_2, ..., x_R) 。x 必须在axis 轴能够被平均分成两份。
+        - **x** (Tensor) - :math:`(\ast_1, N, \ast_2)`  。 `x` 必须在 `axis` 轴能够被平均分成两份。
+        - **axis** (int) - 指定分割轴。数据类型为整型，默认值：-1。
 
     返回：
-        Tensor，数据类型与输入 x 相同，shape等于 x 按照axis 拆分后的一半。
+        Tensor，数据类型与输入 `x` 相同，shape等于 `x` 按照 `axis` 拆分后的一半。
 
     异常：
         - **TypeError** -  `x` 数据类型不是Number。
