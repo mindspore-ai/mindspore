@@ -177,6 +177,7 @@ constexpr auto kSign = "Sign";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kRange = "Range";
+constexpr auto kListDiff = "ListDiff";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -258,6 +259,7 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kGatherDGradV2,
                                               kConcatOffset,
                                               kRandomShuffle,
+                                              kListDiff,
                                               kRange};
 const std::set<std::string> kDynamicInputOps{kPrint,
                                              kPack,
