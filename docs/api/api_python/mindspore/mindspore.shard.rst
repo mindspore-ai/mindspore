@@ -9,10 +9,11 @@ mindspore.shard
 
     .. note::
         需设置执行模式为PyNative模式，同时设置 `set_auto_parallel_context` 中的并行模式为"auto_parallel"且搜索模式(search mode)为"sharding_propagation"。
+        如果输入含有Parameter，其对应的策略应该在 `in_strategy` 里设置。
         如果你想了解更多关于shard的信息，可以参考 `函数式算子切分 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/pynative_shard_function_parallel.html>`_ 。
 
     参数：
-        - **fn** (Union[Cell, Function]) - 待通过分布式并行执行的函数，它的参数和返回值类型应该均为Tensor。
+        - **fn** (Union[Cell, Function]) - 待通过分布式并行执行的函数，它的参数和返回值类型应该均为Tensor或Parameter。
           如果fn是Cell类型且含有参数，则fn必须是一个实例化的对象，否则无法访问到其内部参数。
         - **in_strategy** (tuple) - 指定各输入的切分策略，输入元组的每个元素可以为元组或None，元组即具体指定输入每一维的切分策略，None则会默认以数据并行执行。
         - **out_strategy** (Union[tuple, None]) - 指定各输出的切分策略，用法同 `in_strategy`，目前未使能。默认值：None。
