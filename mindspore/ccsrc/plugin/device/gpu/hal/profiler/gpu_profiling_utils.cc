@@ -119,7 +119,6 @@ void ProfilingUtils::SetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order
 
   std::string bp_end_str;
   // Contain hccl kernel (try to find the last communication op)
-  uint32_t cnode_size = cnode_exec_order.size();
   auto iter = cnode_exec_order.rbegin();
   while (iter != cnode_exec_order.rend()) {
     if (common::AnfAlgo::IsCommunicationOp(*iter)) {
@@ -153,7 +152,7 @@ void ProfilingUtils::SetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order
     bp_end_str = GetGraphSecondLastKernelName(cnode_exec_order);
   }
 
-  if (!bp_end_str.empty() && cnode_size > 1) {
+  if (!bp_end_str.empty()) {
     profiling_trace.trace_bp_end = bp_end_str;
   }
 }

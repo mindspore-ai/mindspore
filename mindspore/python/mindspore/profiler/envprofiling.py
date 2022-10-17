@@ -61,7 +61,7 @@ def construct_profiling_options():
             " it will be set to True.")
     if options.get("start"):
         output_path = profiling_options.get("output_path")
-        if not output_path:
+        if not output_path or not os.path.isabs(output_path):
             output_path = os.path.join(os.getcwd(), "data")
         if not os.path.exists(output_path):
             os.makedirs(output_path, exist_ok=True)
@@ -102,7 +102,6 @@ def get_rank_id_and_target():
         dev_id = os.getenv('DEVICE_ID')
     if not dev_id or not dev_id.isdigit():
         dev_id = "0"
-        logger.warning("Fail to get DEVICE_ID, use 0 instead.")
 
     if device_target and device_target not in [DeviceTarget.ASCEND.value, DeviceTarget.GPU.value,
                                                DeviceTarget.CPU.value]:
@@ -175,7 +174,7 @@ class EnvProfiler:
         profiler.analyse()
 
 
-def profiler_init():
+def profiler_check_env():
     """Profiler initialization according to environment."""
     if os.getenv("MS_PROFILER_RUN_CONFIG"):
         return
@@ -191,4 +190,4 @@ def profiler_init():
              sync_enable=config.get("sync_enable"))
 
 
-profiler_init()
+profiler_check_env()

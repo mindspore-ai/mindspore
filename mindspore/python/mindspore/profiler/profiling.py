@@ -158,7 +158,7 @@ class Profiler:
 
     def __init__(self, **kwargs):
         if kwargs.get("env_enable"):
-            self.profiler_init(kwargs)
+            self._profiler_init(kwargs)
             return
         if Profiler._has_initialized:
             msg = "Do not init twice in the profiler."
@@ -231,27 +231,6 @@ class Profiler:
                     job_start_time = line[16:len(line) - 3]
 
         return job_start_time
-
-    def profiler_init(self, kwargs):
-        """Initialize variables when profiler is enabled by environment variables."""
-        options = kwargs.get("env_enable")
-        self._filt_optype_names = ''
-        self._stop_time = 0
-        self._has_started = True
-        self._start_time = options.get("start_time")
-        self._output_path = options.get('output_path')
-        self._profile_memory = options.get('profile_memory')
-        self._profile_communication = options.get('profile_communication')
-        self._device_target = context.get_context("device_target").lower()
-        self._profiler_manager = c_expression.ProfilerManager.get_instance()
-        self._cpu_profiler = c_expression.Profiler.get_instance("CPU")
-        self._md_profiler = cde.GlobalContext.profiling_manager()
-        if self._device_target == DeviceTarget.GPU.value:
-            self._gpu_profiler = c_expression.Profiler.get_instance("GPU")
-
-        if self._device_target == DeviceTarget.ASCEND.value:
-            self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
-        self._get_devid_rankid_and_devtarget()
 
     def op_analyse(self, op_name, device_id=None):
         """
@@ -460,6 +439,26 @@ class Profiler:
             self._stop_time = int(time.time() * 10000000)
         ProfilerInfo.set_profiling_stop_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         logger.info("Profiling: stop time: %d", self._stop_time)
+
+    def _profiler_init(self, kwargs):
+        """Initialize variables when profiler is enabled by environment variables."""
+        options = kwargs.get("env_enable")
+        self._filt_optype_names = ''
+        self._has_started = True
+        self._start_time = options.get("start_time")
+        self._output_path = options.get('output_path')
+        self._profile_memory = options.get('profile_memory')
+        self._profile_communication = options.get('profile_communication')
+        self._device_target = context.get_context("device_target").lower()
+        self._profiler_manager = c_expression.ProfilerManager.get_instance()
+        self._cpu_profiler = c_expression.Profiler.get_instance("CPU")
+        self._md_profiler = cde.GlobalContext.profiling_manager()
+        if self._device_target == DeviceTarget.GPU.value:
+            self._gpu_profiler = c_expression.Profiler.get_instance("GPU")
+
+        if self._device_target == DeviceTarget.ASCEND.value:
+            self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
+        self._get_devid_rankid_and_devtarget()
 
     def _init_profiler_info(self):
         """Init profiler info filer."""
