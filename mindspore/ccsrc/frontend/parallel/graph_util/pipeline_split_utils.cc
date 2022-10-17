@@ -424,19 +424,19 @@ void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePa
   }
 }
 
-void ReorderForParams(const std::vector<AnfNodePtr> &backward_params, const std::vector<AnfNodePtr> &forward_params,
-                      const PipelinePair &forward_params_pair, const std::vector<AnfNodePtr> &backward_end,
-                      const PipelinePair &forward_start_pair, const FuncGraphPtr &root) {
+void ReorderForParams(const PipelinePair &backward_params_pair, const PipelinePair &forward_params_pair,
+                      const PipelinePair &backward_end_pair, const PipelinePair &forward_start_pair,
+                      const FuncGraphPtr &root) {
   auto manager = root->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  if (!forward_params.empty()) {
-    auto prior_node = forward_params_pair.second[0];
-    auto post_node = forward_start_pair.first[0];
+  if (!forward_params_pair.second.empty()) {
+    auto prior_node = forward_params_pair.second.back();
+    auto post_node = forward_start_pair.first.front();
     InsertDepend(prior_node, post_node, manager, root);
   }
-  if (!backward_params.empty()) {
-    auto prior_node2 = backward_end.back();
-    auto post_node2 = backward_params[0];
+  if (!backward_params_pair.first.empty()) {
+    auto prior_node2 = backward_end_pair.second.back();
+    auto post_node2 = backward_params_pair.first.front();
     InsertDepend(prior_node2, post_node2, manager, root);
   }
 }
@@ -450,14 +450,15 @@ int64_t GetMicroBatch(const AnfNodePtr &node) {
   return GetValue<int64_t>(micro_value);
 }
 
-PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncGraphPtr &root, int64_t micro_max) {
+PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncGraphPtr &root, int64_t micro_max,
+                         bool is_train) {
   std::vector<AnfNodePtr> temp_vec;
   std::vector<AnfNodePtr> out_vec_begin;
   std::vector<AnfNodePtr> out_vec_end;
   auto manager = root->manager();
   for (int64_t i = 0; i <= micro_max; ++i) {
     temp_vec.clear();
-    if (!root->has_flag(kTraining)) {
+    if (!is_train) {
       temp_vec = node_vector;
     } else {
       for (auto &node : node_vector) {
@@ -734,21 +735,21 @@ void Reorder(const FuncGraphPtr &root) {
   GetBorderNode(&forward_start, &forward_end, &backward_start, &backward_end, &forward_params, &backward_params,
                 &allreduce_params, root);
   int64_t micro_max = 0;
-  if (root->has_flag(kTraining)) {
-    if (forward_end.empty()) {
-      MS_LOG(EXCEPTION) << "can not find the end node of pipeline, you are advised to use 'PipelineCell' to fix it.";
-    } else {
-      auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
-      auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
-      MS_EXCEPTION_IF_NULL(micro_size);
-      micro_max = GetValue<int64_t>(micro_size);
-    }
+  if (forward_end.empty()) {
+    MS_LOG(EXCEPTION) << "can not find the end node of pipeline, you are advised to use 'PipelineCell' to fix it.";
+  } else {
+    auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
+    auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
+    MS_EXCEPTION_IF_NULL(micro_size);
+    micro_max = GetValue<int64_t>(micro_size);
   }
-  auto backward_start_pair = Deduplicate(backward_start, root, micro_max);
-  auto backward_end_pair = Deduplicate(backward_end, root, micro_max);
-  auto forward_start_pair = Deduplicate(forward_start, root, micro_max);
-  auto forward_end_pair = Deduplicate(forward_end, root, micro_max);
-  auto forward_params_pair = Deduplicate(forward_params, root, micro_max);
+
+  auto backward_start_pair = Deduplicate(backward_start, root, micro_max, true);
+  auto backward_end_pair = Deduplicate(backward_end, root, micro_max, true);
+  auto forward_start_pair = Deduplicate(forward_start, root, micro_max, true);
+  auto forward_end_pair = Deduplicate(forward_end, root, micro_max, true);
+  auto forward_params_pair = Deduplicate(forward_params, root, micro_max, true);
+  auto backward_params_pair = Deduplicate(backward_params, root, micro_max, true);
   CheckBorderNode(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair, LongToSize(micro_max));
   PipelinePair forward_end_before_pair;
   if (!IsLastStage()) {
@@ -770,7 +771,7 @@ void Reorder(const FuncGraphPtr &root) {
   ReorderForForward(forward_start_pair.first, forward_end_pair.second, root);
   ReorderForBackward(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair,
                      forward_end_before_pair, root);
-  ReorderForParams(backward_params, forward_params, forward_params_pair, backward_end, forward_start_pair, root);
+  ReorderForParams(backward_params_pair, forward_params_pair, backward_end_pair, forward_start_pair, root);
 }
 
 void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
@@ -795,9 +796,9 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
   std::sort(forward_start.begin(), forward_start.end(), CompFunc);
   std::sort(forward_end.begin(), forward_end.end(), CompFunc);
   std::sort(forward_params.begin(), forward_params.end(), CompFunc);
-  auto forward_start_pair = Deduplicate(forward_start, root, 0);
-  auto forward_end_pair = Deduplicate(forward_end, root, 0);
-  auto forward_params_pair = Deduplicate(forward_params, root, 0);
+  auto forward_start_pair = Deduplicate(forward_start, root, 0, false);
+  auto forward_end_pair = Deduplicate(forward_end, root, 0, false);
+  auto forward_params_pair = Deduplicate(forward_params, root, 0, false);
   if (!forward_end.empty() && !forward_params.empty()) {
     InsertDepend(forward_params_pair.second[0], forward_end_pair.first[0], manager, root);
   }

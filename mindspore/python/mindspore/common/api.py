@@ -34,14 +34,11 @@ from mindspore.common.tensor import Tensor as PythonTensor
 from mindspore.common.tensor import CSRTensor as PythonCSRTensor
 from mindspore.common.tensor import COOTensor as PythonCOOTensor
 from mindspore.common.tensor import RowTensor as PythonRowTensor
-from mindspore.common.initializer import initializer
 from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, \
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
     _ms_memory_recycle
-from mindspore.parallel._tensor import _load_tensor_by_layout
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
-from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _get_pipeline_stages, \
-    _is_pynative_parallel
+from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel
 from mindspore._checkparam import Validator
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
@@ -294,39 +291,8 @@ class _MindsporeFunctionExecutor:
         obj = self.shard_parent_obj if self.obj is None else self.obj
         if not isinstance(obj, ms.nn.Cell):
             return
-
         obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
         obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
-        replace = obj.init_parameters_data(auto_parallel_mode=True)
-        new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}
-        self._graph_executor.updata_param_node_default_input(phase, new_param)
-        obj.load_parameter_slice(None)
-
-        if _pynative_executor.get_optimizer():
-            params = obj.trainable_params()
-            opt_params = _pynative_executor.get_optimizer().trainable_params()
-            opt_states = []
-            for opt_param in opt_params:
-                for param in params:
-                    if opt_param.name.find(param.name) > 0:
-                        opt_states.append(opt_param)
-                        obj.parameter_layout_dict[opt_param.name] = obj.parameter_layout_dict[param.name]
-                        continue
-
-            if len(opt_states) != len(params):
-                states_tuple = (opt_states[:len(params)], opt_states[len(params):])
-            else:
-                states_tuple = (opt_states[:len(params)],)
-            for states in states_tuple:
-                for param, state in zip(params, states):
-                    if param.shape != state.shape:
-                        if state.has_init:
-                            state.set_data(initializer("zeros", param.shape), True)
-                        else:
-                            layout = obj.parameter_layout_dict[param.name]
-                            new_tensor = _load_tensor_by_layout(state.data, layout)
-                            state.set_data(new_tensor, True)
-
         _pynative_executor.get_top_cell().parameter_layout_dict = obj.parameter_layout_dict
 
     def compile(self, args_list, method_name):
@@ -386,11 +352,9 @@ class _MindsporeFunctionExecutor:
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
-        # init sliced parameter and optimizer state
         if _is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
             self._parallel_process_for_ms_function(phase)
 
-        # init the rest optimizer states
         if _is_pynative_parallel() and _pynative_executor.get_optimizer():
             opt_states = _pynative_executor.get_optimizer().trainable_params()
             self._optimizer_state_init(opt_states)
@@ -1189,7 +1153,11 @@ class _CellGraphExecutor:
         if graph is None:
             raise RuntimeError("Compile graph failed for phase {}.".format(phase))
 
-        self._auto_parallel_process(obj, phase, auto_parallel_mode, *args)
+        if not auto_parallel_mode:
+            replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
+            self._update_param_node_default_input(phase, replace)
+        else:
+            obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
 
         if not do_convert:
             return phase, True
@@ -1203,23 +1171,6 @@ class _CellGraphExecutor:
             _parameter_broadcast(obj, auto_parallel_mode)
 
         return phase, True
-
-    def _auto_parallel_process(self, obj, phase, auto_parallel_mode, *args):
-        """compile graph in auto parallel mode."""
-        if not auto_parallel_mode:
-            replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
-            self._update_param_node_default_input(phase, replace)
-            return
-
-        obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
-        obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
-        replace = obj.init_parameters_data(auto_parallel_mode=True)
-        if _get_pipeline_stages() > 1 and (not hasattr(obj, "is_first_iteration") or not obj.is_first_iteration):
-            obj.remove_redundant_parameters()
-        if not context.get_context("enable_debug_runtime") or context.get_context("enable_ge"):
-            obj.load_parameter_slice(None)
-
-        self._update_param_node_default_input(phase, replace)
 
     def _update_param_node_default_input(self, phase, replace):
         new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}

@@ -93,12 +93,11 @@ def _need_to_full():
 
 def _slice_parameter(parameter, phase, layout):
     """Slice python parameter obj according to the layout."""
-    if not parameter.sliced:
-        graph_executor = GraphExecutor_.get_instance()
-        new_param = parameter.init_data(layout, set_sliced=True)
-        parameter = new_param
-        graph_executor.updata_param_node_default_input(phase, {parameter.name: parameter})
-    else:
+    graph_executor = GraphExecutor_.get_instance()
+    new_param = parameter.init_data(layout, set_sliced=True)
+    parameter = new_param
+    graph_executor.updata_param_node_default_input(phase, {parameter.name: parameter})
+    if not parameter.sliced and (layout is not None):
         new_tensor = _load_tensor_by_layout(parameter, layout)
         parameter.set_data(new_tensor, True)
 

@@ -72,6 +72,7 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
 
 // for specific scenarios
 RankList FindCommonMirrorGroup(const FuncGraphPtr &root);
+bool IsTraining(const FuncGraphManagerPtr &manager);
 void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input);
 void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes);
 AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const TypePtr &compute_node_type);

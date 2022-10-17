@@ -1155,15 +1155,7 @@ class Cell(Cell_):
         def _updata(param):
             if param in replace:
                 return replace.get(param)
-            layout = None
-            set_sliced = False
-            if auto_parallel_mode:
-                set_sliced = True
-                if param.name not in self.parameter_layout_dict:
-                    logger.debug("Layout dict does not contain the key %s.", param.name)
-                else:
-                    layout = self.parameter_layout_dict[param.name]
-            new_p = param.init_data(layout, set_sliced=set_sliced)
+            new_p = param.init_data(None, set_sliced=False)
             replace[param] = new_p
             return new_p
 

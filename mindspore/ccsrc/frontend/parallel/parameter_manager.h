@@ -25,6 +25,9 @@
 #include "base/base.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace parallel {
@@ -32,6 +35,11 @@ constexpr char EXP_AVG[] = "exp_avg";
 constexpr char EXP_AVG_SQ_ROW[] = "exp_avg_sq_row_";
 constexpr char EXP_AVG_SQ_COL[] = "exp_avg_sq_col_";
 constexpr char EXP_AVG_SQ[] = "exp_avg_sq_";
+constexpr char OBJ[] = "obj";
+constexpr char CLONED_OBJ[] = "cloned_obj";
+constexpr char SLICE_PARAMETER_FN_PATH[] = "mindspore.parallel._utils";
+constexpr char SLICE_PARAMETER_FN_NAME[] = "_slice_parameter";
+
 using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
 using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
 
@@ -53,6 +61,7 @@ void HandleMirrorInAdaSum(
   const FuncGraphPtr &root,
   std::unordered_map<std::string, std::shared_ptr<TensorLayout>> *adasum_param_tensor_layout_map);
 bool ParameterIsCloned(const AnfNodePtr &parameter_node);
+py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &obj);
 bool IsFullySplitParameter(const ParameterPtr &param_ptr, size_t allow_repeat_num = 1);
 }  // namespace parallel
 }  // namespace mindspore

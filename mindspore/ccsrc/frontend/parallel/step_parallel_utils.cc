@@ -81,6 +81,15 @@ std::string GetPrimName(const CNodePtr &node) {
   return prim->name();
 }
 
+bool IsTraining(const FuncGraphManagerPtr &manager) {
+  for (auto &fg : manager->func_graphs()) {
+    if (fg->has_flag(kTraining)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info) {
   auto user_cnode = param_info.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(user_cnode);
