@@ -20,6 +20,7 @@ from mindspore.common import dtype as mstype
 from mindspore.numpy.array_ops import where
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
 from mindspore.ops._grad.grad_base import bprop_getters, dyn_rank, dyn_fill, dyn_ones, create_tensor_by_element
+from mindspore.ops._grad.grad_base import convert_to_tensor
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.array_ops import MatrixDiagV3
@@ -569,13 +570,134 @@ def get_bprop_affinegrid(self):
     ones = P.Ones()
     transpose = P.Transpose()
     concat = P.Concat(1)
+    concat0 = P.Concat(0)
     tile = P.Tile()
     reshape = P.Reshape()
     linspace = P.LinSpace()
     batmatmul = P.BatchMatMul()
     expend_dims = P.ExpandDims()
+    dyn_shape = P.TensorShape()
+    reducesum = P.ReduceSum(keep_dims=False)
 
-    def bprop(theta, output_size, out, dout):
+    def dyn_bprop_five(theta, output_size, out, dout):
+        perm1 = (1, 0)
+        perm2 = (0, 2, 1)
+        n_value = reducesum(output_size[0])
+        d_value = reducesum(output_size[2])
+        h_value = reducesum(output_size[3])
+        w_value = reducesum(output_size[len_output_size - 1])
+        start = Tensor(-1, mstype.float32)
+        stop = Tensor(1, mstype.float32)
+        vecx = Tensor([0], dtype=mstype.float32)
+        if w_value != 1:
+            vecx = linspace(start, stop, w_value.astype("int64"))
+        vecy = Tensor([0], dtype=mstype.float32)
+        if h_value != 1:
+            vecy = linspace(start, stop, h_value.astype("int64"))
+        vecz = Tensor([0], dtype=mstype.float32)
+        if d_value != 1:
+            vecz = linspace(start, stop, d_value.astype("int64"))
+        if align_corners is False:
+            vecx = vecx * (w_value - 1) / w_value
+            vecy = vecy * (h_value - 1) / h_value
+            vecz = vecz * (d_value - 1) / d_value
+        out = vecx
+        if h_value*d_value != 1:
+            multiples = concat0((expend_dims(h_value * d_value, -1), one_tensor))
+            out = tile(vecx, multiples)
+        hwd_value = h_value * w_value * d_value
+        hwd_shape = concat0((expend_dims(hwd_value, -1), one_tensor))
+        one = reshape(out, hwd_shape)
+        if w_value == 1:
+            out = expend_dims(vecy, 0)
+        elif w_value != 1:
+            multiples = concat0((expend_dims(w_value, -1), one_tensor))
+            out = tile(vecy, multiples)
+        out = transpose(out, perm1)
+        if d_value != 1:
+            multiples = concat0((expend_dims(d_value, -1), one_tensor))
+            out = tile(out, multiples)
+        two = reshape(out, hwd_shape)
+        out = expend_dims(vecz, 0)
+        if w_value*h_value != 1:
+            multiples = concat0((expend_dims(w_value * h_value, -1), one_tensor))
+            out = tile(vecz, multiples)
+        out = transpose(out, perm1)
+        tre = reshape(out, hwd_shape)
+        fou = dyn_ones(hwd_shape, mstype.float32)
+        output = concat((one, two, tre, fou))
+        output = transpose(output, perm1)
+        if n_value != 1:
+            multiples = concat0((expend_dims(n_value, -1), one_tensor))
+            output = tile(output, multiples)
+        three_tensor = create_tensor_by_element((3,), mstype.int32)
+        four_tensor = create_tensor_by_element((4,), mstype.int32)
+        output_shape = concat0((expend_dims(n_value, -1), four_tensor, expend_dims(hwd_value, -1)))
+        dout_shape = concat0((expend_dims(n_value, -1), expend_dims(hwd_value, -1), three_tensor))
+        output = reshape(output, output_shape)
+        dout_ = reshape(dout, dout_shape)
+        dtheta = batmatmul(output, dout_)
+        dtheta = transpose(dtheta, perm2)
+        return dtheta, fou
+
+
+    def dyn_bprop_four(theta, output_size, out, dout):
+        perm1 = (1, 0)
+        perm2 = (0, 2, 1)
+        one_tensor = create_tensor_by_element((1,), mstype.int32)
+        n_value = reducesum(output_size[0])
+        h_value = reducesum(output_size[2])
+        w_value = reducesum(output_size[3])
+        start = Tensor(-1, mstype.float32)
+        stop = Tensor(1, mstype.float32)
+        vecx = Tensor([0], dtype=mstype.float32)
+        if w_value != 1:
+            vecx = linspace(start, stop, w_value.astype("int64"))
+        vecy = Tensor([0], dtype=mstype.float32)
+        if h_value != 1:
+            vecy = linspace(start, stop, h_value.astype("int64"))
+        if align_corners is False:
+            vecx = vecx * (w_value - 1) / w_value
+            vecy = vecy * (h_value - 1) / h_value
+        out = vecx
+        if h_value != 1:
+            multiples = concat0((expend_dims(h_value, -1), one_tensor))
+            out = tile(vecx, multiples)
+        hw_shape = concat0((expend_dims(h_value * w_value, -1), one_tensor))
+        one = reshape(out, hw_shape)
+        if w_value == 1:
+            out = expend_dims(vecy, 0)
+        elif w_value != 1:
+            multiples = concat0((expend_dims(w_value, -1), one_tensor))
+            out = tile(vecy, multiples)
+        out = transpose(out, perm1)
+        two = reshape(out, hw_shape)
+        tre = dyn_ones(hw_shape, mstype.float32)
+        output = concat((one, two, tre))
+        multiples = concat0((expend_dims(n_value, -1), one_tensor))
+        output = transpose(output, perm1)
+        output = tile(output, multiples)
+        two_tensor = create_tensor_by_element((2,), mstype.int32)
+        three_tensor = create_tensor_by_element((3,), mstype.int32)
+        output_shape = concat0((expend_dims(n_value, -1), three_tensor, expend_dims(h_value * w_value, -1)))
+        dout_shape = concat0((expend_dims(n_value, -1), expend_dims(h_value * w_value, -1), two_tensor))
+        output = reshape(output, output_shape)
+        dout_ = reshape(dout, dout_shape)
+        dtheta = batmatmul(output, dout_)
+        dtheta = transpose(dtheta, perm2)
+        return dtheta, tre
+
+    def dyn_bprop(theta, output_size, out, dout):
+        len_output_size = reducesum(dyn_shape(output_size))
+        dtheta = dyn_ones(Tensor([1, 3, 2], mstype.int32), mstype.float32)
+        ret = dyn_ones(Tensor([1, 6], mstype.int32), mstype.float32)
+        if len_output_size == 5:
+            dtheta, ret = dyn_bprop_five(theta, output_size, out, dout)
+        elif len_output_size == 4:
+            dtheta, ret = dyn_bprop_four(theta, output_size, out, dout)
+        return dtheta, ret
+
+    def static_bprop(theta, output_size, out, dout):
         x_shape = P.Shape()(dout)
         n_value = x_shape[0]
         h_value = x_shape[1]
@@ -671,6 +793,12 @@ def get_bprop_affinegrid(self):
             dtheta = batmatmul(output, dout_)
             dtheta = transpose(dtheta, perm2)
         return dtheta, tre
+
+    def bprop(theta, output_size, out, dout):
+        is_tensor, _ = convert_to_tensor(output_size)
+        if is_tensor:
+            return dyn_bprop(theta, output_size, out, dout)
+        return static_bprop(theta, output_size, out, dout)
 
     return bprop
 

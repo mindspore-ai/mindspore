@@ -183,11 +183,18 @@ template <typename T>
 void ReduceCpuKernelFunc<T>::HandleInputAxis() {
   int64_t dimension = SizeToLong(input_shape_.size());
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
-    if (a < -dimension || a >= dimension) {
-      MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [" << -dimension << ", " << dimension
-                        << "), but got " << a;
+    if (dimension == 0) {
+      if (a != -1 && a != 0) {
+        MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [-1, 0], but got " << a;
+      }
+      a = 0;
+    } else {
+      if (a < -dimension || a >= dimension) {
+        MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [" << -dimension << ", " << dimension
+                          << "), but got " << a;
+      }
+      a = a < 0 ? dimension + a : a;
     }
-    a = a < 0 ? dimension + a : a;
   });
 
   // Delete the duplicate axis.
