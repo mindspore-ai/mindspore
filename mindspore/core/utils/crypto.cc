@@ -92,7 +92,7 @@ bool ParseEncryptData(const Byte *encrypt_data, size_t encrypt_len, std::vector<
   int_buf.assign(encrypt_data, encrypt_data + sizeof(int32_t));
   auto iv_len = ByteToInt(int_buf.data(), int_buf.size());
   if (iv_len != AES_BLOCK_SIZE) {
-    MS_LOG(ERROR) << "iv_len must be 16, but got: " << iv_len;
+    MS_LOG(ERROR) << "iv_len must be " << AES_BLOCK_SIZE << ", but got: " << iv_len;
     return false;
   }
 
@@ -229,7 +229,6 @@ EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, i
   auto ctx = EVP_CIPHER_CTX_new();
   if (InitCipherCtx(ctx, funcPtr, work_mode, key, key_len, iv, iv_len, is_encrypt) != 0) {
     MS_LOG(ERROR) << "InitCipherCtx failed.";
-    EVP_CIPHER_CTX_free(ctx);
     return nullptr;
   }
   return ctx;
@@ -450,9 +449,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
   fid.clear();
   fid.seekg(0);
 
-  std::vector<char> block_buf(DecryptBlockBufSize);
+  std::vector<char> block_buf(DECRYPT_BLOCK_BUF_SIZE);
   std::vector<char> int_buf(sizeof(int32_t));
-  std::vector<Byte> decrypt_block_buf(DecryptBlockBufSize);
+  std::vector<Byte> decrypt_block_buf(DECRYPT_BLOCK_BUF_SIZE);
   auto decrypt_data = std::make_unique<Byte[]>(file_size);
   int32_t decrypt_block_len;
 
@@ -506,7 +505,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
   }
   std::vector<char> block_buf;
   std::vector<char> int_buf(sizeof(int32_t));
-  std::vector<Byte> decrypt_block_buf(DecryptBlockBufSize);
+  std::vector<Byte> decrypt_block_buf(DECRYPT_BLOCK_BUF_SIZE);
   auto decrypt_data = std::make_unique<Byte[]>(data_size);
   int32_t decrypt_block_len;
 
