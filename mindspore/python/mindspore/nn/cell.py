@@ -501,6 +501,7 @@ class Cell(Cell_):
         Note:
             Only effective in PYNATIVE_MODE and in either ParallelMode.AUTO_PARALLEL with
             search_mode in auto_parallel_context set as sharding_propagation.
+            If the input contain Parameter, its strategy should be set in `in_strategy`.
 
         Args:
             in_strategy (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None. Tuple

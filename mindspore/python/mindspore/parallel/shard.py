@@ -132,10 +132,11 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         You need to set the execution mode to PyNative mode,
         set the parallel mode in `set_auto_parallel_context` to "auto_parallel"
         and the search mode to "sharding_propagation".
+        If the input contain Parameter, its strategy should be set in `in_strategy`.
 
     Args:
         fn (Union[Cell, Function]): Function to be executed in parallel.
-                                    Its arguments and return value must be Tensor.
+                                    Its arguments and return value must be Tensor or Parameter.
                                     If fn is a Cell with parameters, fn needs to be an instantiated object,
                                     otherwise its arguments cannot be accessed.
         in_strategy (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None.

@@ -529,7 +529,9 @@
         其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： `mindspore.ops.Primitive.shard` 的描述。也可以设置为None，会默认以数据并行执行。
         其余算子的并行策略由输入输出指定的策略推导得到。
 
-        .. note:: 需设置为PyNative模式，并且ParallelMode.AUTO_PARALLEL，同时设置 `set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"。
+        .. note:: 需设置为PyNative模式，并且ParallelMode.AUTO_PARALLEL，
+            同时设置 `set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"。
+            如果输入含有Parameter，其对应的策略应该在 `in_strategy` 里设置。
 
         参数：
             - **in_strategy** (tuple) - 指定各输入的切分策略，输入元组的每个元素可以为元组或None，元组即具体指定输入每一维的切分策略，None则会默认以数据并行执行。
