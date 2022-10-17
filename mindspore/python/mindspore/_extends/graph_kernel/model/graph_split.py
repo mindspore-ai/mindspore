@@ -1236,7 +1236,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             if dom.is_output or len(to_ops) != 1 or len(dom.out_relations) != 1:
                 return []
             to_area = list(dom.out_relations.keys())[0]
-            if (to_area.pattern > PrimLib.REDUCE and to_area.dom_op().prim not in injective_ops) or \
+            if (to_area.pattern >= PrimLib.REDUCE and to_area.dom_op().prim not in injective_ops) or \
                     to_ops[0] not in to_area.ops:
                 return []
             if len(to_area.ops) > self.TRANSPOSE_FUSE_DEPTH:
