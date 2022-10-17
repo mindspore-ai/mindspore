@@ -6,6 +6,10 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
     ${MODEL_LOADER_FRAMEWORK_SRC})
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    if(PLATFORM_ARM64)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions")
+    endif()
     set(ENABLE_CPU on)
     set(LOAD_PLUGIN_STATIC on)
     add_compile_definitions(USE_GLOG)

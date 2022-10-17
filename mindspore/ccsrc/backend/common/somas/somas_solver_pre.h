@@ -25,6 +25,7 @@
 #include <memory>
 #include <stack>
 #include <vector>
+#include <climits>
 #include "utils/hash_map.h"
 #include "backend/common/session/kernel_graph.h"
 
