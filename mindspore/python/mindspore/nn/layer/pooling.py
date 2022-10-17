@@ -206,7 +206,7 @@ class MaxPool2d(_PoolNd):
             or a tuple of two int numbers that represent height and width respectively.
             Default: 1.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
+            the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
@@ -228,10 +228,10 @@ class MaxPool2d(_PoolNd):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
-        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:

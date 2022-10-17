@@ -7,9 +7,9 @@ mindspore.shard
     其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： :func:`mindspore.ops.Primitive.shard` 的描述。也可以设置为None，会默认以数据并行执行。
     其余算子的并行策略由输入输出指定的策略推导得到。
 
-    .. note:: 需设置执行模式为PyNative模式，同时设置 `set_auto_parallel_context` 中的并行模式为"auto_parallel"且搜索模式(search mode)为"sharding_propagation"。
-        如果你想了解更多关于shard的信息，可以参考`函数式算子切分<https://www.mindspore.cn/tutorials/
-        experts/zh-CN/master/parallel/pynative_shard_function_parallel.html>`_。
+    .. note::
+        需设置执行模式为PyNative模式，同时设置 `set_auto_parallel_context` 中的并行模式为"auto_parallel"且搜索模式(search mode)为"sharding_propagation"。
+        如果你想了解更多关于shard的信息，可以参考 `函数式算子切分 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/pynative_shard_function_parallel.html>`_ 。
 
     参数：
         - **fn** (Union[Cell, Function]) - 待通过分布式并行执行的函数，它的参数和返回值类型应该均为Tensor。
@@ -39,6 +39,3 @@ mindspore.shard
           - 如果 `parameter_plan` 不是dict或None。
           - 如果 `parameter_plan` 里的任何一个键值类型不是str。
           - 如果 `parameter_plen` 里的任何一个值类型不是tuple。
-
-    支持平台：
-        ``Ascend`` ``GPU``

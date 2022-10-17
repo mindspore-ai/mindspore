@@ -141,7 +141,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         in_strategy (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None.
                              Tuple defines the layout of the corresponding input
                              and None represents a data parallel strategy.
-        out_strategy (Union[None, tuple]): Define the layout of outputs similar with in_strategy.
+        out_strategy (Union[tuple, None]): Define the layout of outputs similar with in_strategy.
                                            It is not in use right now. Default: None.
         parameter_plan (Union[dict, None]): Define the layout for the specified parameters. Each element in dict
                                             defines the layout of the parameter like "param_name: layout".
