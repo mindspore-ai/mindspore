@@ -39,56 +39,30 @@ def grad_dyn_case(is_dynamic_rank, reduction="none"):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape():
-    """
-    Feature: test UnsortedSegmentMin dynamic shape on GPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    grad_dyn_case(False)
-    grad_dyn_case(False, "mean")
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank():
-    """
-    Feature: test UnsortedSegmentMin dynamic rank on GPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    grad_dyn_case(True)
-    grad_dyn_case(True, "mean")
-
-
-@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_cpu_grad_dynamic_shape():
+def test_grad_dynamic_shape():
     """
-    Feature: test UnsortedSegmentMin dynamic shape on CPU.
+    Feature: test UnsortedSegmentMin dynamic shape.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(False)
     grad_dyn_case(False, "mean")
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_cpu_grad_dynamic_rank():
+def test_grad_dynamic_rank():
     """
-    Feature: test UnsortedSegmentMin dynamic rank on CPU.
+    Feature: test UnsortedSegmentMin dynamic rank.
     Description: input is dynamic rank.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(True)
     grad_dyn_case(True, "mean")

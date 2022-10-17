@@ -39,6 +39,7 @@ def divnonan_test(is_dyn_rank):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_divnonan_dyn_shape():
     """
     Feature: DivNoNan Grad DynamicShape.
@@ -53,6 +54,7 @@ def test_divnonan_dyn_shape():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_divnonan_dyn_rank():
     """
     Feature: DivNoNan Grad DynamicShape.

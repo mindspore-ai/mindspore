@@ -48,36 +48,19 @@ def run_dynamic_rank():
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
-def test_dynamic_truncate_mode_gpu():
-    """
-    Feature: TruncateMod Grad DynamicShape.
-    Description: Test case of dynamic shape for  TruncateMod grad operator on GPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    run_dynamic_shape()
-    run_dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    run_dynamic_shape()
-    run_dynamic_rank()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
-def test_dynamic_truncate_mode_ascend():
+def test_dynamic_truncate_mode():
     """
     Feature: TruncateMod Grad DynamicShape.
-    Description: Test case of dynamic shape for  TruncateMod grad operator on Ascend.
+    Description: Test case of dynamic shape for  TruncateMod grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     run_dynamic_shape()
     run_dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     run_dynamic_shape()
     run_dynamic_rank()

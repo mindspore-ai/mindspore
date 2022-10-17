@@ -57,29 +57,15 @@ def run_dynamic_rank():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dynamic_matrix_diag_v3_cpu():
-    """
-    Feature: MatrixDiagV3 Grad DynamicShape.
-    Description: Test case of dynamic shape for  MatrixDiagV3 grad operator on CPU.
-    Expectation: success.
-    """
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    run_dynamic_shape()
-    run_dynamic_rank()
-
-
-@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dynamic_matrix_diag_v3_gpu():
+def test_dynamic_matrix_diag_v3():
     """
     Feature: MatrixDiagV3 Grad DynamicShape.
-    Description: Test case of dynamic shape for  MatrixDiagV3 grad operator on GPU.
+    Description: Test case of dynamic shape for  MatrixDiagV3 grad operator.
     Expectation: success.
     """
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     run_dynamic_shape()
     run_dynamic_rank()

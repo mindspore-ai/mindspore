@@ -25,14 +25,7 @@ class NetConv3d(nn.Cell):
         super(NetConv3d, self).__init__()
         out_channel = 4
         kernel_size = 2
-        self.conv = Conv3D(out_channel,
-                           kernel_size,
-                           mode=1,
-                           pad_mode="valid",
-                           pad=0,
-                           stride=1,
-                           dilation=1,
-                           group=1)
+        self.conv = Conv3D(out_channel, kernel_size, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1)
 
     def construct(self, x, w):
         return self.conv(x, w)
@@ -46,8 +39,8 @@ def grad_dyn_case(is_dynamic_rank):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grad_dynamic_shape_1():
     """
@@ -60,8 +53,8 @@ def test_grad_dynamic_shape_1():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grad_dynamic_rank_1():
     """

@@ -31,129 +31,53 @@ class NetLerp(nn.Cell):
 
 def grad_dyn_case(is_dynamic_rank):
     test_dynamic = TestDynamicGrad(NetLerp())
-    x = np.array([[1., -1., 2.], [3.1, 2, 1.]], dtype=np.float32)
-    y = np.array([[1.2, -1., 2.1], [3., 2., 1.1]], dtype=np.float32)
-    z = np.array([[1., -1.2, 0.9], [0.1, 2., 1.]], dtype=np.float32)
+    x = np.array([[1.0, -1.0, 2.0], [3.1, 2, 1.0]], dtype=np.float32)
+    y = np.array([[1.2, -1.0, 2.1], [3.0, 2.0, 1.1]], dtype=np.float32)
+    z = np.array([[1.0, -1.2, 0.9], [0.1, 2.0, 1.0]], dtype=np.float32)
     test_dynamic.test_dynamic_grad_net([Tensor(x), Tensor(y), Tensor(z)], is_dynamic_rank)
 
 
 def grad_partial_dyn_case(is_dynamic_rank):
     test_dynamic = TestDynamicGrad(NetLerp())
     test_dynamic.skip_convert_in_ids = [2]
-    x = np.array([[1., -1., 2.], [3.1, 2, 1.]], dtype=np.float32)
-    y = np.array([[1.2, -1., 2.1], [3., 2., 1.1]], dtype=np.float32)
-    z = np.array([[1., -1.2, 0.9], [0.1, 2., 1.]], dtype=np.float32)
+    x = np.array([[1.0, -1.0, 2.0], [3.1, 2, 1.0]], dtype=np.float32)
+    y = np.array([[1.2, -1.0, 2.1], [3.0, 2.0, 1.1]], dtype=np.float32)
+    z = np.array([[1.0, -1.2, 0.9], [0.1, 2.0, 1.0]], dtype=np.float32)
     test_dynamic.test_dynamic_grad_net([Tensor(x), Tensor(y), Tensor(z)], is_dynamic_rank)
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape_1():
+def test_grad_dynamic_shape():
     """
-    Feature: test Lerp grad dynamic shape on GPU.
+    Feature: test Lerp grad dynamic shape.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
+    grad_dyn_case(False)
+    grad_partial_dyn_case(False)
+    context.set_context(mode=context.GRAPH_MODE)
     grad_dyn_case(False)
     grad_partial_dyn_case(False)
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank_1():
+def test_grad_dynamic_rank():
     """
-    Feature: test Lerp grad dynamic rank on GPU.
+    Feature: test Lerp grad dynamic rank.
     Description: input is dynamic rank.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(True)
     grad_partial_dyn_case(True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape_2():
-    """
-    Feature: test Lerp grad dynamic shape on GPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    grad_dyn_case(False)
-    grad_partial_dyn_case(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank_2():
-    """
-    Feature: test Lerp grad dynamic shape on GPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    grad_dyn_case(True)
-    grad_partial_dyn_case(True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_shape_1():
-    """
-    Feature: test Lerp grad dynamic shape on CPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    grad_dyn_case(False)
-    grad_partial_dyn_case(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_rank_1():
-    """
-    Feature: test Lerp grad dynamic rank on CPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    grad_dyn_case(True)
-    grad_partial_dyn_case(True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_shape_2():
-    """
-    Feature: test Lerp grad dynamic shape on CPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    grad_dyn_case(False)
-    grad_partial_dyn_case(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_rank_2():
-    """
-    Feature: test Lerp grad dynamic rank on CPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE)
     grad_dyn_case(True)
     grad_partial_dyn_case(True)
 
@@ -163,7 +87,7 @@ def test_cpu_grad_dynamic_rank_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_ascend_grad_dynamic_shape_1():
+def test_ascend_grad_dynamic_shape():
     """
     Feature: test Lerp grad dynamic rank on Ascend.
     Description: input is dynamic rank.
@@ -172,35 +96,6 @@ def test_ascend_grad_dynamic_shape_1():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     grad_dyn_case(False)
     grad_partial_dyn_case(False)
-
-
-@pytest.mark.skip(reason="Ascend does not support dynamic shape")
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_ascend_grad_dynamic_rank_1():
-    """
-    Feature: test Lerp grad dynamic rank on Ascend.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    grad_dyn_case(True)
-    grad_partial_dyn_case(True)
-
-
-@pytest.mark.skip(reason="Ascend does not support dynamic shape")
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_ascend_grad_dynamic_shape_2():
-    """
-    Feature: test Lerp grad dynamic rank on Ascend.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     grad_dyn_case(False)
     grad_partial_dyn_case(False)
@@ -211,12 +106,15 @@ def test_ascend_grad_dynamic_shape_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_ascend_grad_dynamic_rank_2():
+def test_ascend_grad_dynamic_rank():
     """
     Feature: test Lerp grad dynamic rank on Ascend.
     Description: input is dynamic rank.
     Expectation: the result match with static shape
     """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    grad_dyn_case(True)
+    grad_partial_dyn_case(True)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     grad_dyn_case(True)
     grad_partial_dyn_case(True)

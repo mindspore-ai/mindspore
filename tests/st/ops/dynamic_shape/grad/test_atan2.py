@@ -46,57 +46,21 @@ def dynamic_rank():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dynamic_atan2_cpu():
-    """
-    Feature: Atan2 Grad DynamicShape.
-    Description: Test case of dynamic shape for Atan2 grad operator on CPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-
-
-@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_dynamic_atan2_gpu():
-    """
-    Feature: Atan2 Grad DynamicShape.
-    Description: Test case of dynamic shape for Atan2 grad operator on GPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    dynamic_shape()
-    dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    dynamic_shape()
-    dynamic_rank()
-
-
-@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_dynamic_atan2_ascend():
+def test_dynamic_atan2():
     """
     Feature: Atan2 Grad DynamicShape.
-    Description: Test case of dynamic shape for Atan2 grad operator on Ascend.
+    Description: Test case of dynamic shape for Atan2 grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     dynamic_shape()
     dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     dynamic_shape()
     dynamic_rank()

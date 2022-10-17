@@ -51,51 +51,27 @@ def tensor_scatter_max_min_dynamic_shape(is_dyn_rank=False):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_gpu_tensor_scatter_max_min_dynamic_shape():
+def test_tensor_scatter_max_min_dynamic_shape():
     """
     Feature: TensorScatterMax/Min Grad DynamicShape.
-    Description: Test case of dynamic shape for TensorScatterMax/Min grad operator on GPU.
+    Description: Test case of dynamic shape for TensorScatterMax/Min grad operator.
     Expectation: success.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     tensor_scatter_max_min_dynamic_shape()
 
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_gpu_tensor_scatter_max_min_dynamic_rank():
+def test_tensor_scatter_max_min_dynamic_rank():
     """
     Feature: TensorScatterMax/Min Grad DynamicShape.
-    Description: Test case of dynamic rank for TensorScatterMax/Min grad operator on GPU.
+    Description: Test case of dynamic rank for TensorScatterMax/Min grad operator.
     Expectation: success.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    tensor_scatter_max_min_dynamic_shape(True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_tensor_scatter_max_min_dynamic_shape():
-    """
-    Feature: TensorScatterMax/Min Grad DynamicShape.
-    Description: Test case of dynamic shape for TensorScatterMax/Min grad operator on CPU.
-    Expectation: success.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    tensor_scatter_max_min_dynamic_shape()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_tensor_scatter_max_min_dynamic_rank():
-    """
-    Feature: TensorScatterMax/Min Grad DynamicShape.
-    Description: Test case of dynamic rank for TensorScatterMax/Min grad operator on CPU.
-    Expectation: success.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     tensor_scatter_max_min_dynamic_shape(True)

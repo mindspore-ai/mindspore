@@ -39,6 +39,7 @@ def floor_test(is_dyn_rank):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_floor_dyn_shape():
     """
     Feature: Floor Grad DynamicShape.
@@ -54,6 +55,7 @@ def test_floor_dyn_shape():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_floor_dyn_rank():
     """
     Feature: Floor Grad DynamicShape.

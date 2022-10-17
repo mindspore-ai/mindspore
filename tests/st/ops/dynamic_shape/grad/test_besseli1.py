@@ -36,28 +36,30 @@ def grad_dyn_case(is_dynamic_rank):
 
 
 @pytest.mark.level2
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape_1():
+def test_grad_dynamic_shape():
     """
-    Feature: test BesselI1 grad dynamic shape on GPU.
+    Feature: test BesselI1 grad dynamic shape.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(False)
 
 
 @pytest.mark.level2
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank_1():
+def test_grad_dynamic_rank():
     """
-    Feature: test BesselI1 grad dynamic rank on GPU.
+    Feature: test BesselI1 grad dynamic rank.
     Description: input is dynamic rank.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(True)
 
 
@@ -86,30 +88,4 @@ def test_gpu_grad_dynamic_rank_2():
     Expectation: the result match with static shape
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    grad_dyn_case(True)
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_shape():
-    """
-    Feature: test BesselI1 grad dynamic shape on CPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    grad_dyn_case(False)
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_rank():
-    """
-    Feature: test BesselI1 grad dynamic rank on CPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     grad_dyn_case(True)

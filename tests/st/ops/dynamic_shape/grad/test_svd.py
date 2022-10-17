@@ -39,106 +39,45 @@ def grad_dyn_case(is_dynamic_rank):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape():
-    """
-    Feature: test Svd grad dynamic shape on GPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    grad_dyn_case(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank():
-    """
-    Feature: test Svd grad dynamic rank on GPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    grad_dyn_case(True)
-
-
-@pytest.mark.skip(reason="MatrixDiagV3在GRAPH_MODE下不支持`num_rows`动态shape")
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_shape_2():
-    """
-    Feature: test Svd grad dynamic shape on GPU.
-    Description: input is dynamic shape.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    grad_dyn_case(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_grad_dynamic_rank_2():
-    """
-    Feature: test Svd grad dynamic rank on GPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    grad_dyn_case(True)
-
-
-@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_cpu_grad_dynamic_shape():
+def test_grad_dynamic_shape():
     """
-    Feature: test Svd grad dynamic shape on CPU.
+    Feature: test Svd grad dynamic shape.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     grad_dyn_case(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_grad_dynamic_rank():
-    """
-    Feature: test Svd grad dynamic rank on CPU.
-    Description: input is dynamic rank.
-    Expectation: the result match with static shape
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    grad_dyn_case(True)
 
 
 @pytest.mark.skip(reason="MatrixDiagV3在GRAPH_MODE下不支持`num_rows`动态shape")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_cpu_grad_dynamic_shape_2():
+def test_grad_dynamic_shape_2():
     """
-    Feature: test Svd grad dynamic shape on CPU.
+    Feature: test Svd grad dynamic shape.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE)
     grad_dyn_case(False)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_cpu_grad_dynamic_rank_2():
+def test_grad_dynamic_rank():
     """
-    Feature: test Svd grad dynamic rank on CPU.
+    Feature: test Svd grad dynamic rank.
     Description: input is dynamic rank.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
+    grad_dyn_case(True)
+    context.set_context(mode=context.GRAPH_MODE)
     grad_dyn_case(True)

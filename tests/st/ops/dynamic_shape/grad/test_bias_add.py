@@ -46,57 +46,40 @@ def run_dynamic_rank():
 
 
 @pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-def test_dynamic_bias_add_cpu():
-    """
-    Feature: BiasAdd Grad DynamicShape.
-    Description: Test case of dynamic shape for  BiasAdd grad operator on CPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    run_dynamic_shape()
-    run_dynamic_rank()
-    # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    run_dynamic_shape()
-    run_dynamic_rank()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
-def test_dynamic_bias_add_gpu():
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_shape_bias_add():
     """
     Feature: BiasAdd Grad DynamicShape.
-    Description: Test case of dynamic shape for  BiasAdd grad operator on GPU.
+    Description: Test case of dynamic shape for  BiasAdd grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     run_dynamic_shape()
-    run_dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     run_dynamic_shape()
-    run_dynamic_rank()
 
 
 @pytest.mark.level1
-@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_dynamic_bias_add_ascend():
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_rank_bias_add():
     """
-    Feature: BiasAdd Grad DynamicShape.
-    Description: Test case of dynamic shape for  BiasAdd grad operator on Ascend.
+    Feature: BiasAdd Grad DynamicRank.
+    Description: Test case of dynamic rank for  BiasAdd grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_dynamic_shape()
+    context.set_context(mode=context.GRAPH_MODE)
     run_dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    run_dynamic_shape()
+    context.set_context(mode=context.PYNATIVE_MODE)
     run_dynamic_rank()
