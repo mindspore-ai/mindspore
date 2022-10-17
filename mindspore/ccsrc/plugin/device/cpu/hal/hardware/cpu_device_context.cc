@@ -327,12 +327,14 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       auto thread_pool = kernel::GetActorMgrInnerThreadPool();
       cpu_kernel->SetThreadPool(thread_pool);
       auto args = kernel::AbstractArgsFromCNode(node);
+      auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
+      kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
+      kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, kernel::KernelModType::NativeCpuKernelMod);
       auto ret = cpu_kernel->Init(args.op, args.inputs, args.outputs);
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
       }
-      if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(node)) ==
-          kernel::KRET_RESIZE_FAILED) {
+      if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
         MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Resize failed.";
       }
       AnfAlgo::SetKernelMod(cpu_kernel, node.get());

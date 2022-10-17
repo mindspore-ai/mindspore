@@ -87,9 +87,9 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     if (is_dynamic_attr_) {
-      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel::GetKernelDepends(kernel_node));
-      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel::GetKernelDepends(kernel_node));
-      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel::GetKernelDepends(kernel_node));
+      TryGetIntValue(kernel_node, kBeginIndex_, &begin_);
+      TryGetIntValue(kernel_node, kEndIndex_, &end_);
+      TryGetIntValue(kernel_node, kStrideIndex_, &strides_);
     } else {
       begin_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
       end_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);

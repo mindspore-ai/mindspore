@@ -404,6 +404,38 @@ inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, c
   *attr_value = res.value();
   return true;
 }
+
+BACKEND_EXPORT std::optional<std::vector<int64_t>> TryGetIntValueFromInputs(const std::vector<KernelTensorPtr> &inputs,
+                                                                            const size_t input_index,
+                                                                            const std::string &kernel_name,
+                                                                            bool data_from_host);
+
+inline bool TryGetIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+                           const std::string &kernel_name, int64_t *attr_value, bool data_from_host = true) {
+  auto res = TryGetIntValueFromInputs(inputs, input_index, kernel_name, data_from_host);
+  if (!res.has_value()) {
+    return false;
+  }
+  if (res.value().empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', value of the dynamic attr is empty!";
+  }
+  *attr_value = res.value()[0];
+  return true;
+}
+
+inline bool TryGetIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+                           const std::string &kernel_name, std::vector<int64_t> *attr_value,
+                           bool data_from_host = true) {
+  auto res = TryGetIntValueFromInputs(inputs, input_index, kernel_name, data_from_host);
+  if (!res.has_value()) {
+    return false;
+  }
+  *attr_value = res.value();
+  return true;
+}
+
+BACKEND_EXPORT bool TryGetIntValue(const CNodePtr &kernel_node, const size_t input_index,
+                                   std::vector<int64_t> *attr_value, bool data_from_host = true);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -372,7 +372,7 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (input_num == DynamicInput) {
       is_dynamic_attr_ = true;
     }
-    if (GetDynamicAttrIntValue(kernel_node, kShapeIndex_, &input_shape_, kernel::GetKernelDepends(kernel_node))) {
+    if (TryGetIntValue(kernel_node, kShapeIndex_, &input_shape_)) {
       get_dynamic_attr_value_ = true;
     }
     if (is_dynamic_attr_ && !get_dynamic_attr_value_) {

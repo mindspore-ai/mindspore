@@ -212,7 +212,7 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
       InitCudnnResource();
       return KRET_OK;
     }
-    if (!GetDynamicAttrIntValue(inputs, kIndex1, inputsOnHost, kernel_name_, &attr_axis)) {
+    if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &attr_axis)) {
       InitCudnnResource();
       return KRET_OK;
     }
