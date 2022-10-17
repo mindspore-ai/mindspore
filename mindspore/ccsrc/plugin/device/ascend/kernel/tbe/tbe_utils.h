@@ -64,6 +64,8 @@ class TbeUtils {
 
   static std::string GetTuneDumpPath();
 
+  static void SavePrebuildInfo(const std::string &json_name, const std::string &build_res);
+
   static void SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag);
 
   static void GetCompileInfo(const AnfNodePtr &node, std::string *compile_info, bool *get_flag);
