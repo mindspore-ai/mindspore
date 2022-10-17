@@ -306,3 +306,18 @@ def test_margin_ranking_loss():
     input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
     target = Tensor(np.array([-1, -1, 1]), ms.float32)
     loss(input1, input2, target)
+
+
+def test_gaussian_nll_loss():
+    """
+    Feature: Test GaussianNLLLoss.
+    Description: Test GaussianNLLLoss functionality.
+    Expectation: Success.
+    """
+    loss_func = nn.GaussianNLLLoss()
+    arr1 = np.arange(8).reshape((4, 2))
+    arr2 = np.array([2, 3, 1, 4, 6, 4, 4, 9]).reshape((4, 2))
+    a = Tensor(arr1, mstype.float32)
+    b = Tensor(arr2, mstype.float32)
+    var = Tensor(np.ones((4, 1)), mstype.float32)
+    loss_func(a, b, var)

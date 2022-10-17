@@ -230,6 +230,7 @@ Dropout层
     mindspore.nn.CrossEntropyLoss
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
+    mindspore.nn.GaussianNLLLoss
     mindspore.nn.HuberLoss
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss

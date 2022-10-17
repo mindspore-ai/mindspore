@@ -15,6 +15,7 @@
 """loss"""
 from __future__ import absolute_import
 
+import math
 import mindspore
 import mindspore.common.dtype as mstype
 from mindspore import log
@@ -2008,9 +2009,9 @@ class NLLLoss(LossBase):
 
 
 @constexpr
-def _check_cross_entropy_inputs(logits_shape, label_shape, \
-                                logits_rank, label_rank, \
-                                logits_dtype, label_dtype, \
+def _check_cross_entropy_inputs(logits_shape, label_shape,
+                                logits_rank, label_rank,
+                                logits_dtype, label_dtype,
                                 prim_name=None):
     """Internal function, used to check whether the shape of logits and labels meets the requirements."""
     validator.check_type_name('logits', logits_dtype, [mstype.float16, mstype.float32], prim_name)
@@ -2159,9 +2160,9 @@ class CrossEntropyLoss(LossBase):
     def construct(self, logits, labels):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
-        _check_cross_entropy_inputs(logits.shape, labels.shape, \
-                                    logits.ndim, labels.ndim, \
-                                    logits.dtype, labels.dtype, \
+        _check_cross_entropy_inputs(logits.shape, labels.shape,
+                                    logits.ndim, labels.ndim,
+                                    logits.dtype, labels.dtype,
                                     self.cls_name)
         if logits.ndim == labels.ndim and self.ignore_index > 0:
             _cross_entropy_ignore_index_warning(self.cls_name)
@@ -2239,3 +2240,93 @@ class KLDivLoss(LossBase):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         return F.kl_div(logits, labels, self.reduction)
+
+
+class GaussianNLLLoss(LossBase):
+    r"""Gaussian negative log likelihood loss.
+
+    The targets are treated as samples from Gaussian distributions with expectations and variances predicted by the
+    neural network. For a `labels` tensor modelled as having Gaussian distribution with a tensor of expectations
+    `logits` and a tensor of positive variances `var` the loss is:
+
+    .. math::
+        \text{loss} = \frac{1}{2}\left(\log\left(\text{max}\left(\text{var},
+        \ \text{eps}\right)\right) + \frac{\left(\text{logits} - \text{labels}\right)^2}
+        {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
+
+    where `eps` is used for stability of :math:`log`. By default, the constant term of the loss function is omitted
+    unless :math:`full=True`. If the shape of :math:`var` is not the same as `logits` (due to a
+    homoscedastic assumption), it must either have a final dimension of 1 or have one fewer dimension
+    (with all other sizes being the same) for correct broadcasting.
+
+    Args:
+        full (bool): Include the constant term in the loss calculation. When :math:`full=True`, the constant term
+            `const.` will be :math:`0.5 * log(2\pi)`. Default: False.
+        eps (float): Used to improve the stability of log function. Default: 1e-6.
+        reduction (string): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` or :math:`(*)` where :math:`*` means any number of
+          additional dimensions.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, *)` or :math:`(*)`, same shape as the logits, or same shape
+          as the logits but with one dimension equal to 1 (to allow for broadcasting).
+        - **var** - Tensor of shape :math:`(N, *)` or :math:`(*)`, same shape as logits, or same shape as the logits
+          but with one dimension equal to 1, or same shape as the logits but with one fewer dimension
+          (to allow for broadcasting).
+
+    Returns:
+        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+
+    Raises:
+        TypeError: If `logits` is not a Tensor.
+        TypeError: If `labels` is not a Tensor.
+        TypeError: If `full` is not a bool.
+        TypeError: If `eps` is not a float.
+        ValueError: If `eps` is not a float within [0, inf).
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.nn as nn
+        >>> import mindspore.common.dtype as mstype
+        >>> arr1 = np.arange(8).reshape((4, 2))
+        >>> arr2 = np.array([2, 3, 1, 4, 6, 4, 4, 9]).reshape((4, 2))
+        >>> logits = Tensor(arr1, mstype.float32)
+        >>> labels = Tensor(arr2, mstype.float32)
+        >>> loss = nn.GaussianNLLLoss(reduction='mean')
+        >>> var = Tensor(np.ones((4, 1)), mstype.float32)
+        >>> output = loss(logits, labels, var)
+        >>> print(output)
+        Tensor(shape=[], dtype=Float32, value= 1.4375)
+
+    Reference:
+        Nix, D. A. and Weigend, A. S., "Estimating the mean and variance of the
+        target probability distribution", Proceedings of 1994 IEEE International
+        Conference on Neural Networks (ICNN'94), Orlando, FL, USA, 1994, pp. 55-60
+        vol.1, doi: 10.1109/ICNN.1994.374138.
+    """
+
+    def __init__(self, *, full=False, eps=1e-6, reduction='mean'):
+        super(GaussianNLLLoss, self).__init__(reduction)
+        validator.check_float_range(eps, 0, float('inf'), Rel.INC_LEFT, "eps", self.cls_name)
+        validator.check_value_type('full', full, [bool], self.cls_name)
+        self.full = full
+        self.eps = eps
+        self.max = P.Maximum()
+        self.log = P.Log()
+        self.square = P.Square()
+
+    def construct(self, logits, labels, var):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        _check_is_tensor('var', var, self.cls_name)
+        maxima = self.max(var, self.eps)
+        logarithm = self.log(maxima)
+        squared_loss = self.square(logits - labels)
+        c = 0 if not self.full else 0.5 * math.log(2 * math.pi)
+        loss = 0.5 * (logarithm + squared_loss / maxima) + c
+        return self.get_loss(loss)
