@@ -13,4 +13,4 @@ mindspore.train.LearningRateScheduler
         在step结束时更改学习率。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。
+            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。

@@ -32,6 +32,14 @@ class JitConfig:
 
         task_sink (bool): Determines whether to pass the data through dataset channel. Default: True.
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
+
+    Examples:
+        >>> from mindspore.common.jit_config import JitConfig
+        >>>
+        >>> jitconfig = JitConfig(jit_level="O1")
+        >>> net = LeNet5()
+        >>>
+        >>> net.set_jit_config(jitconfig)
     """
     def __init__(self, jit_level="O1", task_sink=True, **kwargs):
         if jit_level not in ["O0", "O1", "O2"]:
