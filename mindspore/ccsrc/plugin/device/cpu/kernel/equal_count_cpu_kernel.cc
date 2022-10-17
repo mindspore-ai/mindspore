@@ -24,9 +24,11 @@ constexpr size_t kEqualCountInputsNum = 2;
 constexpr size_t kEqualCountOutputsNum = 1;
 }  // namespace
 
-void EqualCountCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool EqualCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+
+  return true;
 }
 
 bool EqualCountCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -39,6 +41,7 @@ bool EqualCountCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
                       << "', the address size of inputs must be the same, but got the address size of 'inputs[0]': "
                       << inputs[0]->size << " and the address size of 'inputs[1]': " << inputs[1]->size;
   }
+
   int count = 0;
   auto left = reinterpret_cast<int *>(inputs[0]->addr);
   auto right = reinterpret_cast<int *>(inputs[1]->addr);

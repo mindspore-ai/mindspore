@@ -3681,16 +3681,6 @@ class EqualCount(PrimitiveWithInfer):
         """Initialize EqualCount"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
-    def infer_shape(self, x_shape, y_shape):
-        validator.check("x_shape", x_shape, "y_shape", y_shape, Rel.EQ, self.name)
-        output_shape = (1,)
-        return output_shape
-
-    def infer_dtype(self, x_dtype, y_dtype):
-        args = {'x': x_dtype, 'y': y_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type + (mstype.bool_,), self.name)
-        return x_dtype
-
 
 class NotEqual(Primitive):
     """
