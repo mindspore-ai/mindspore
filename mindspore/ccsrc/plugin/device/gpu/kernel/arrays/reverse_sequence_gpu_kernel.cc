@@ -17,9 +17,13 @@
 #include "plugin/device/gpu/kernel/arrays/reverse_sequence_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "mindspore/core/ops/reverse_sequence.h"
+#include "mindspore/core/abstract/utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 bool ReverseSequenceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
   constexpr size_t input_num = 2;
@@ -128,6 +132,36 @@ std::vector<std::pair<KernelAttr, ReverseSequenceGpuKernelMod::ReverseSequenceLa
      &ReverseSequenceGpuKernelMod::LaunchKernel<bool, int>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
      &ReverseSequenceGpuKernelMod::LaunchKernel<bool, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint8_t, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint16_t, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint32_t, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint64_t, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<Complex<float>, int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<Complex<double>, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &ReverseSequenceGpuKernelMod::LaunchKernel<Complex<double>, int64_t>},
 };
 
 std::vector<KernelAttr> ReverseSequenceGpuKernelMod::GetOpSupport() {
