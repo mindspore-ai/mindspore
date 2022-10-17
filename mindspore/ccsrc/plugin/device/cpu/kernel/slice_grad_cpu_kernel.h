@@ -30,6 +30,8 @@ namespace kernel {
 constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStridedSliceGrad = "StridedSliceGrad";
 constexpr auto kUnknown = "Unknown";
+constexpr auto kSecondIndex = 2;
+constexpr auto kIndex = 4;
 
 class SliceGradCpuKernelMod : public NativeCpuKernelMod {
  public:
@@ -53,7 +55,6 @@ class SliceGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-
   template <typename T>
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
                         const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,

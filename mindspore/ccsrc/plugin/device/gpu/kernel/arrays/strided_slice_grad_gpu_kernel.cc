@@ -158,6 +158,14 @@ std::vector<std::pair<KernelAttr, StridedSliceGradGpuKernelMod::StridedSliceGrad
        .AddOutputAttr(kNumberTypeFloat32),
      &StridedSliceGradGpuKernelMod::LaunchKernel<float, int64_t>},
     {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &StridedSliceGradGpuKernelMod::LaunchKernel<float, int64_t>},
+    {KernelAttr()
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
