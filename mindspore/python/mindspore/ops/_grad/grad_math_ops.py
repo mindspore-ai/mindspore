@@ -26,11 +26,11 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
 from .grad_base import convert_to_tensor
-from .grad_base import sum_grad_reduce_axis, dyn_fill
+from .grad_base import sum_grad_reduce_axis, dyn_fill, dyn_rank
 from .grad_base import dyn_ones, dyn_rank_1d
 from ..primitive import constexpr
 from ..composite.multitype_ops import _constexpr_utils as const_utils
-from ..operations._inner_ops import DynamicStitch, DynamicBroadcastGradientArgs, DynamicBroadcastTo
+from ..operations._inner_ops import DynamicBroadcastGradientArgs, DynamicBroadcastTo
 from ...common import Tensor
 from .._utils.utils import is_shape_unknown, is_dim_unknown
 from ...common import dtype as mstype
@@ -174,31 +174,31 @@ def binop_grad_common_with_shift(x, y, dx, dy, shift):
     return dyn_binop_grad_common_with_shift(x, y, dx, dy, shift)
 
 
-def _dyn_reduced_shape(input_shape, axis):
+def _dyn_reduced_shape(input_shape, axis, x):
     """Dynamic reduce shape"""
-    range_op = P.Range()
     input_shape = P.Cast()(input_shape, ms.int32)
-    input_rank = dyn_shape_op(input_shape)[0]
+    if x is not None and not is_dim_unknown(shape_op(x)):
+        input_rank = len(shape_op(x))
+    else:
+        input_rank = dyn_rank(x)
     input_rank = P.Cast()(input_rank, ms.int32)
-    start = Tensor(0, dtype=mstype.int32)
-    delta = Tensor(1, dtype=mstype.int32)
-    all_axis = range_op(start, input_rank, delta)
+
     if isinstance(axis, (tuple, list)) and axis == ():
-        axis = all_axis
+        return (1,) * input_rank
+
+    if isinstance(axis, int):
+        axis = (axis,)
+
+    real_axis = axis
     if not isinstance(axis, Tensor):
-        axis = Tensor(axis, ms.int32)
+        real_axis = Tensor(axis, ms.int32)
 
-    if is_shape_unknown(shape_op(axis)):
-        expanded_axis = P.ExpandDims()(axis, 1)
-        update = P.Cast()(P.OnesLike()(axis), ms.int32)
-        return P.TensorScatterUpdate()(input_shape, expanded_axis, update)
-
-    real_axis = (axis + input_rank) % input_rank
-    axis_shape = shape_op(real_axis)
-
-    real_axis = P.Cast()(real_axis, ms.int32)
-    return DynamicStitch()([all_axis, real_axis],
-                           [input_shape, P.Fill()(ms.int32, axis_shape, 1)])
+    real_axis = (real_axis + input_rank) % input_rank
+    expanded_axis = P.ExpandDims()(real_axis, 1)
+    expanded_axis = P.Cast()(expanded_axis, ms.int32)
+    update = P.Cast()(P.OnesLike()(real_axis), ms.float32)
+    input_shape = P.Cast()(input_shape, ms.float32)
+    return P.TensorScatterUpdate()(input_shape, expanded_axis, update)
 
 
 def _sum_grad(x, axis, dout):
@@ -207,7 +207,8 @@ def _sum_grad(x, axis, dout):
     is_mutable, axis = convert_to_tensor(axis)
     if is_shape_unknown(input_shape) or is_mutable:
         input_shape = dyn_shape_op(x)
-        output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis)
+        output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis, x)
+        output_shape_kept_dims = P.Cast()(output_shape_kept_dims, ms.int32)
         grad = reshape(dout, output_shape_kept_dims)
         return DynamicBroadcastTo()(grad, input_shape)
 
@@ -223,7 +224,8 @@ def _min_or_max_grad(x, axis, out, dout):
     output_shape_kept_dims = ()
     if is_shape_unknown(input_shape):
         input_shape = dyn_shape_op(x)
-        output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis)
+        output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis, x)
+        output_shape_kept_dims = P.Cast()(output_shape_kept_dims, ms.int32)
     else:
         output_shape_kept_dims = reduced_shape(input_shape, axis)
 
@@ -1025,9 +1027,8 @@ def get_bprop_reduce_mean(self):
         if is_shape_unknown(shape_x):
             shape_x = dyn_shape_op(x)
             shape_out = dyn_shape_op(out)
-            shape_x = P.Cast()(shape_x, ms.float64)
-            shape_out = P.Cast()(shape_out, ms.float64)
-            div_shape = reduce_prod(cast(shape_x, mstype.float32)) / reduce_prod(cast(shape_out, mstype.float32))
+            div_shape = reduce_prod(cast(shape_x, mstype.float32), axis) /\
+                        reduce_prod(cast(shape_out, mstype.float32), axis)
             dx = div_op(grad, cast(div_shape, dtype(grad)))
         else:
             div_shape = F.shape_mul(shape_x) / F.shape_mul(shape_out)
