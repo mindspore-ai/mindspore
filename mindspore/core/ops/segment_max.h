@@ -30,8 +30,6 @@ class MIND_API SegmentMax : public BaseOperator {
   SegmentMax() : BaseOperator(kNameSegmentMax) { InitIOName({"input_x", "segment_ids"}, {"output"}); }
   MIND_API_BASE_MEMBER(SegmentMax);
 };
-abstract::AbstractBasePtr SegmentMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSegmentMaxPtr = std::shared_ptr<SegmentMax>;
 }  // namespace ops
 }  // namespace mindspore

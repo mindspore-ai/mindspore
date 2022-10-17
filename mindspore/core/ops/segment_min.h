@@ -30,8 +30,6 @@ class MIND_API SegmentMin : public BaseOperator {
   SegmentMin() : BaseOperator(kNameSegmentMin) { InitIOName({"input_x", "segment_ids"}, {"output"}); }
   MIND_API_BASE_MEMBER(SegmentMin);
 };
-abstract::AbstractBasePtr SegmentMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSegmentMinPtr = std::shared_ptr<SegmentMin>;
 }  // namespace ops
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SEGMENT_MEAN_H_
-#define MINDSPORE_CORE_OPS_SEGMENT_MEAN_H_
-#include <vector>
-#include <memory>
+#ifndef MINDSPORE_CORE_OPS_SEGMENT_ARITHMETIC_H_
+#define MINDSPORE_CORE_OPS_SEGMENT_ARITHMETIC_H_
 
+#include <vector>
 #include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSegmentMean = "SegmentMean";
-class MIND_API SegmentMean : public BaseOperator {
- public:
-  SegmentMean() : BaseOperator(kNameSegmentMean) { InitIOName({"input_x", "segment_ids"}, {"output"}); }
-  MIND_API_BASE_MEMBER(SegmentMean);
-};
-using PrimSegmentMeanPtr = std::shared_ptr<SegmentMean>;
+abstract::AbstractBasePtr SegmentArithmeticInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SEGMENT_MEAN_H_
+#endif  // MINDSPORE_CORE_OPS_SEGMENT_ARITHMETIC_H_
