@@ -5,6 +5,10 @@ mindspore.ops.csr_add
 
     返回alpha * csr_a + beta * csr_b的结果，其中csr_a和csr_b是CSRTensor，alpha和beta是Tensor。
 
+    .. note::
+        用户需要确保输入的稀疏算子的合法性。否则，算子将返回错误结果。
+        例如，当同一个位置有多个元素时，算子可能会返回错误结果或执行失败。
+
     参数：
         - **a** (CSRTensor) - 稀疏的 CSRTensor。
         - **b** (CSRTensor) - 稀疏的 CSRTensor。
