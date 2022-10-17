@@ -216,18 +216,21 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
 FuncGraphPtr ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size) {
   auto graph = BuildFuncGraph(param, buff, size);
   MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Build func graph return nullptr.");
-  auto ret = SaveOutputNames(graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "save output name failed.";
-    return nullptr;
+  auto value = graph->get_attr(kIsOptimized);
+  if (value != nullptr) {
+    auto ret = SaveOutputNames(graph);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "save output name failed.";
+      return nullptr;
+    }
   }
 
   MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
   graph = funcgraph_transform_->Transform(graph, param);
   MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Transform anf graph return nullptr.");
   graph->set_attr(kIsOptimized, MakeValue(true));
-  ret = UpdateFuncGraphInputAndOutputNames(graph);
-  if (ret != RET_OK) {
+  auto status = UpdateFuncGraphInputAndOutputNames(graph);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
     return nullptr;
   }

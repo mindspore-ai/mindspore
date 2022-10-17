@@ -117,6 +117,7 @@
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/parser/conv2d_transpose_input_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/parser/unify_format.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -755,10 +756,20 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     }
     return old_graph;
   }
+  auto value = old_graph->get_attr(kIsOptimized);
   if (param->is_runtime_converter) {
-    if (RunFormatTrans(old_graph) != RET_OK) {
-      MS_LOG(ERROR) << "Run format trans failed";
-      return nullptr;
+    if (value != nullptr) {
+      if (RunFormatTrans(old_graph) != RET_OK) {
+        MS_LOG(ERROR) << "Run format trans failed";
+        return nullptr;
+      }
+    } else {
+      auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
+      MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
+      if (!unify_format->Run(old_graph)) {
+        MS_LOG(ERROR) << "Run insert transpose failed.";
+        return nullptr;
+      }
     }
   }
 
