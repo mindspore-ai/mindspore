@@ -44,6 +44,10 @@ OpParameter *PopulateTileParameter(const void *prim) {
       return nullptr;
     }
     for (size_t i = 0; i < dims->size(); ++i) {
+      if (static_cast<int>(dims->Get(i)) < 0) {
+        free(param);
+        return nullptr;
+      }
       param->dims_[i] = static_cast<int>(dims->Get(i));
     }
     param->dims_size_ = dims->size();
