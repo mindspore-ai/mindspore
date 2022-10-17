@@ -50,7 +50,7 @@ def assign(variable, value):
         >>> value = Tensor([2.0], mindspore.float32)
         >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
         >>> ops.assign(variable, value)
-        >>> print(variable)
+        >>> print(variable.asnumpy())
         [2.]
     """
     return assign_(variable, value)
@@ -191,7 +191,7 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
         >>> x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="name_x")
         >>> indices = Tensor(np.array([0, 2]), mindspore.int32)
         >>> y = Tensor(np.array([[0.5, 1.0], [1.0, 1.5], [2.0, 2.5]]), mindspore.float32)
-        >>> ops.index_add(x, indices, y, 1)
+        >>> output = ops.index_add(x, indices, y, 1)
         >>> print(output)
         [[ 1.5  2.   4. ]
          [ 5.   5.   7.5]
