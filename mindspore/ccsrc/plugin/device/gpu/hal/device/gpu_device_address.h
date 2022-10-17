@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "runtime/device/device_address.h"
+#include "runtime/device/loadable_device_address.h"
 
 using ShapeVecotr = std::vector<int>;
 
@@ -29,16 +30,16 @@ class Debugger;
 #endif
 namespace device {
 namespace gpu {
-class GPUDeviceAddress : public DeviceAddress {
+class GPUDeviceAddress : public LoadableDeviceAddress {
  public:
-  GPUDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
+  GPUDeviceAddress(void *ptr, size_t size) : LoadableDeviceAddress(ptr, size) {}
   GPUDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
-      : DeviceAddress(ptr, size, format, type_id) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id) {}
   GPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const KernelWithIndex &node_index)
-      : DeviceAddress(ptr, size, format, type_id, node_index) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id, node_index) {}
   GPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
                    uint32_t device_id)
-      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
   ~GPUDeviceAddress() override;
 
   bool SyncDeviceToHost(size_t size, void *host_ptr) const override;

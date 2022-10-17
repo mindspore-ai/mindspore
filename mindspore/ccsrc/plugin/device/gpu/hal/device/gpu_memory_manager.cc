@@ -35,6 +35,13 @@ std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(const std::
   return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(size_list);
 }
 
+size_t GPUMemoryManager::GetAvailableMemSize() {
+  auto available_mem_size = GPUMemoryAllocator::GetInstance().free_mem_size() +
+                            GPUMemoryAllocator::GetInstance().TotalMemStatistics() -
+                            GPUMemoryAllocator::GetInstance().TotalUsedMemStatistics();
+  return available_mem_size;
+}
+
 bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                                       std::vector<size_t> size_list) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);

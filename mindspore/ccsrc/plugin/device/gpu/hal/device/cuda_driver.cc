@@ -96,6 +96,15 @@ bool CudaDriver::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &
   return true;
 }
 
+bool CudaDriver::CopyHostMemToHost(const HostMemPtr &dst, const void *src, size_t size) {
+  auto ret = cudaMemcpy(dst, src, size, cudaMemcpyHostToHost);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaMemcpy failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
+  return true;
+}
+
 bool CudaDriver::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size,
                                           CudaDeviceStream stream) {
   auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, (cudaStream_t)stream);

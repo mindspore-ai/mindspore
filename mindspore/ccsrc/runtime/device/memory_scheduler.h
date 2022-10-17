@@ -85,21 +85,19 @@ class MemScheduler {
 
   bool Mock();
 
-  void AdjustFirstEventIndex();
+  bool PreComputeMock(const MemEventPtr<const void *> &event);
 
-  bool PreComputeMock(const MemEventPtr &event);
+  bool PreComputeInit(const MemEventPtr<const void *> &event, void *stream);
 
-  bool PreComputeInit(const MemEventPtr &event, void *stream);
+  bool PreComputeMalloc(const MemEventPtr<const void *> &event, void *stream);
 
-  bool PreComputeMalloc(const MemEventPtr &event, void *stream);
+  bool PreComputeSwapIn(const MemEventPtr<const void *> &event, void *stream);
 
-  bool PreComputeSwapIn(const MemEventPtr &event, void *stream);
-
-  bool PreComputeGet(const MemEventPtr &event, void *stream);
+  bool PreComputeGet(const MemEventPtr<const void *> &event, void *stream);
 
   const HashSet<const void *> &GetNoReuseKeys() const { return step_keys_[current_step_]; }
 
-  void *Malloc(const MemEventPtr &event, void *stream);
+  void *Malloc(const MemEventPtr<const void *> &event, void *stream);
 
   // Scheduler status
   bool need_record_event_{true};
@@ -109,12 +107,13 @@ class MemScheduler {
   size_t total_step_{0};
   size_t current_step_{0};
   // Memory status
-  std::map<const void *, MemEventPtrList> mem_events_;
+  std::map<const void *, MemEventPtrList<const void *>> mem_events_;
   std::map<const void *, MemPriority> mem_priority_;
   std::vector<HashSet<const void *>> step_keys_;
   std::set<const void *> high_priority_mem_need_init_;
-  std::shared_ptr<ContinuousMemInfoHelper> continuous_mem_info_helper_{std::make_shared<ContinuousMemInfoHelper>()};
-  std::set<std::shared_ptr<ContinuousMemInfo>> cur_step_allocated_continuous_mem_;
+  std::shared_ptr<ContinuousMemInfoHelper<const void *>> continuous_mem_info_helper_{
+    std::make_shared<ContinuousMemInfoHelper<const void *>>()};
+  std::set<ContinuousMemInfoPtr<const void *>> cur_step_allocated_continuous_mem_;
   std::set<const void *> manual_offload_keys_;
   // Compute time
   std::vector<double> compute_time_;
@@ -122,7 +121,7 @@ class MemScheduler {
 
   std::shared_ptr<AutoMemoryOffload> auto_mem_offload_;
   std::shared_ptr<MemHandler> mem_handler_{nullptr};
-  std::shared_ptr<MemOffloadStrategy> strategy_{nullptr};
+  std::shared_ptr<MemOffloadStrategy<const void *>> strategy_{nullptr};
 };
 
 class MemSchedulerManager {

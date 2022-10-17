@@ -22,6 +22,7 @@
 #include <memory>
 #include <map>
 #include <utility>
+#include <mutex>
 #include "ir/tensor.h"
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
@@ -88,8 +89,14 @@ class DeviceAddress : public mindspore::DeviceSync {
         device_id_(device_id) {}
   virtual ~DeviceAddress() { ptr_ = nullptr; }
 
-  const void *GetPtr() const { return ptr_; }
-  void set_ptr(void *ptr) { ptr_ = ptr; }
+  const void *GetPtr() const {
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    return ptr_;
+  }
+  void set_ptr(void *ptr) {
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    ptr_ = ptr;
+  }
   size_t GetSize() const { return size_; }
   void SetSize(size_t size) { size_ = size; }
 
@@ -103,10 +110,14 @@ class DeviceAddress : public mindspore::DeviceSync {
   ShapeVector host_shape() const { return host_shape_; }
   bool from_persistent_mem() const { return from_persistent_mem_; }
   void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
+  bool mem_offloaded() const { return mem_offloaded_; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceType GetDeviceType() const { return DeviceType::kUnknown; }
-  void *GetMutablePtr() const override { return ptr_; }
+  void *GetMutablePtr() const override {
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    return ptr_;
+  }
   std::string device_name() const { return device_name_; }
   uint32_t device_id() const { return device_id_; }
 
@@ -149,6 +160,27 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
 #endif
 
+  // Offload data from device to host and free device memory
+  virtual bool Offload(size_t stream_id) {
+    MS_LOG(WARNING) << "Not implemented.";
+    return true;
+  }
+
+  // Load data from host to device and free host memory
+  virtual bool Load(size_t stream_id) {
+    MS_LOG(WARNING) << "Not implemented.";
+    return true;
+  }
+
+  // Set host ptr data offloaded to
+  virtual void SetOffloadPtr(void *offload_ptr) { MS_LOG(WARNING) << "Not implemented."; }
+
+  // Get offloaded host ptr
+  virtual void *GetOffloadPtr() const {
+    MS_LOG(WARNING) << "Not implemented.";
+    return nullptr;
+  }
+
   // Asynchronously copy host memory to device side.
   virtual bool AsyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
                                  size_t stream_id) const {
@@ -166,6 +198,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   size_t size() const { return size_; }
 
   mutable void *ptr_{nullptr};
+  void *offload_ptr_{nullptr};
   size_t size_{0};
   string format_{"DefaultFormat"};
   TypeId type_id_{kNumberTypeFloat16};
@@ -181,6 +214,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   // Application scenario: set to true when the hardware execution mode requires that ptr cannot be changed during
   // execution.
   bool is_ptr_persisted_{false};
+  // Thread lock for ptr_ and offload_ptr_.
+  mutable std::recursive_mutex ptr_mutex_;
 
   // The device address generated in the control flow scene uses dynamic_ref_count_.
   std::atomic_int32_t dynamic_ref_count_{INT32_MAX};
@@ -189,6 +224,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name_{""};
   uint32_t device_id_{0};
   bool from_persistent_mem_{false};
+  bool mem_offloaded_{false};
 
   friend class KernelRuntime;
   friend class MemoryManager;

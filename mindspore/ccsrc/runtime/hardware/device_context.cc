@@ -15,10 +15,13 @@
  */
 
 #include "runtime/hardware/device_context.h"
-#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
+void *DeviceResManager::AllocateOffloadMemory(size_t size) const { return offloaded_mem_pool_->MallocHost(size); }
+
+void DeviceResManager::FreeOffloadMemory(void *ptr) const { offloaded_mem_pool_->FreeHost(ptr); }
+
 bool DeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   if (address->GetPtr() != nullptr) {

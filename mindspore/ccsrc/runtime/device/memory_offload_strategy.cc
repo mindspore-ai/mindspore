@@ -20,48 +20,85 @@
 #include <utility>
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "runtime/device/device_address.h"
 
 namespace mindspore {
 namespace device {
 constexpr size_t kFirstGetMemEventIndex = 1;
 constexpr size_t kInitOrMallocMemEventIndex = 0;
 
-MemEventPtrList &MemOffloadStrategy::GetPreComputeEvents(size_t step) {
-  if (pre_compute_events_.size() <= step) {
-    MS_LOG_EXCEPTION << "Index out of pre event range, index:" << step << ", event size:" << pre_compute_events_.size();
-  }
-  return pre_compute_events_[step];
+MemoryOffloadConflict &MemoryOffloadConflict::GetInstance() {
+  static MemoryOffloadConflict instance;
+  return instance;
 }
 
-MemEventPtrList &MemOffloadStrategy::GetPostComputeEvents(size_t step) {
-  if (post_compute_events_.size() <= step) {
-    MS_LOG_EXCEPTION << "Index out of post event range, index:" << step
+void MemoryOffloadConflict::AddMemoryOffloadConflict(const HashSet<const void *> &conflict_set) {
+  for (const auto &key : conflict_set) {
+    conflict_map_[key].insert(conflict_set.cbegin(), conflict_set.cend());
+  }
+}
+
+const HashSet<const void *> &MemoryOffloadConflict::GetConflictMap(const void *key) { return conflict_map_[key]; }
+
+template <typename Key>
+void GraphMemStatistic<Key>::Record(Key key, const MemEventType &event_type, size_t mem_size, MemPriority priority,
+                                    size_t index) {
+  if (mem_priority_.count(key) == 0) {
+    mem_priority_[key] = priority;
+    if (event_type == kGet) {
+      auto event = std::make_shared<MemEvent<Key>>(kMalloc, index);
+      event->mem_size = mem_size;
+      event->key = key;
+      (void)mem_events_[key].emplace_back(event);
+    }
+  }
+  auto event = std::make_shared<MemEvent<Key>>(event_type, index);
+  event->mem_size = mem_size;
+  event->key = key;
+  (void)mem_events_[key].emplace_back(event);
+}
+
+template <typename Key>
+MemEventPtrList<Key> &MemOffloadStrategy<Key>::GetPreComputeEvents(size_t index) {
+  if (pre_compute_events_.size() <= index) {
+    MS_LOG_EXCEPTION << "Index out of pre event range, index:" << index
+                     << ", event size:" << pre_compute_events_.size();
+  }
+  return pre_compute_events_[index];
+}
+
+template <typename Key>
+MemEventPtrList<Key> &MemOffloadStrategy<Key>::GetPostComputeEvents(size_t index) {
+  if (post_compute_events_.size() <= index) {
+    MS_LOG_EXCEPTION << "Index out of post event range, index:" << index
                      << ", event size:" << post_compute_events_.size();
   }
-  return post_compute_events_[step];
+  return post_compute_events_[index];
 }
 
-void MemOffloadStrategy::Execute() {
+template <typename Key>
+void MemOffloadStrategy<Key>::Execute() {
   CountMemUsage();
   CheckMemSize();
   if (need_swap_) {
     GenEventSpan();
     GenSwapEventSet();
   } else {
-    GenContinuousMemAllocSteps();
+    GenContinuousMemAllocInfo();
   }
   GenComputeMemEvents();
 }
 
-void MemOffloadStrategy::CountMemUsage() {
+template <typename Key>
+void MemOffloadStrategy<Key>::CountMemUsage() {
   if (!min_mem_used_.empty()) {
     return;
   }
-  if (mem_events_.empty() || total_step_ == 0) {
+  if (mem_events_.empty() || total_compute_index_ == 0) {
     return;
   }
-  min_mem_used_.resize(total_step_, 0);
-  std::vector<size_t> total_mem_used(total_step_, 0);
+  min_mem_used_.resize(total_compute_index_, 0);
+  std::vector<size_t> total_mem_used(total_compute_index_, 0);
   size_t high_priority_mem_size = 0;
   MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   for (auto &item : mem_events_) {
@@ -102,7 +139,8 @@ void MemOffloadStrategy::CountMemUsage() {
   }
 }
 
-bool MemOffloadStrategy::IsHighPriorityMem(const void *key) const {
+template <typename Key>
+bool MemOffloadStrategy<Key>::IsHighPriorityMem(Key key) const {
   auto iter = mem_priority_.find(key);
   if (iter != mem_priority_.end()) {
     return iter->second == kMemPriorityHigh;
@@ -110,16 +148,17 @@ bool MemOffloadStrategy::IsHighPriorityMem(const void *key) const {
   return false;
 }
 
-void MemOffloadStrategy::CheckMemSize() {
+template <typename Key>
+void MemOffloadStrategy<Key>::CheckMemSize() {
   if (mem_size_ < mem_used_without_swap_ || !manual_offload_keys_.empty()) {
     need_swap_ = true;
   }
-
   MS_LOG(INFO) << "Available mem size: " << mem_size_ << ", graph needs mem size: " << mem_used_without_swap_
                << " without swap, and needs at least " << min_mem_needed_ << " with swap.";
 }
 
-void MemOffloadStrategy::GenEventSpan() {
+template <typename Key>
+void MemOffloadStrategy<Key>::GenEventSpan() {
   if (!event_span_.empty()) {
     return;
   }
@@ -141,9 +180,9 @@ void MemOffloadStrategy::GenEventSpan() {
       }
       MS_EXCEPTION_IF_NULL(latest_get_event);
       auto span = GetSpanBetweenMemEvents(latest_get_event->index, event->index);
-      // High priority memory that is only used once in a total step
+      // High priority memory that is only used once in one step
       if (is_high_priority && span == 0 && latest_get_event == event) {
-        span = total_step_;
+        span = total_compute_index_;
       }
       if (span > 1) {
         const size_t span_mul_size = (span - 1) * event->mem_size;
@@ -153,7 +192,8 @@ void MemOffloadStrategy::GenEventSpan() {
   }
 }
 
-void MemOffloadStrategy::GenSwapEventSet() {
+template <typename Key>
+void MemOffloadStrategy<Key>::GenSwapEventSet() {
   swap_events_.clear();
   // manual offload strategy
   if (!manual_offload_keys_.empty()) {
@@ -171,14 +211,14 @@ void MemOffloadStrategy::GenSwapEventSet() {
   continuous_mem_info_helper_->ClearContinuousMallocIndex();
   std::vector<size_t> cur_mem_used(min_mem_used_.begin(), min_mem_used_.end());
 
-  auto compare_total_size = [](const ContinuousMemInfoPtr &l, const ContinuousMemInfoPtr &r) -> bool {
+  auto compare_total_size = [](const ContinuousMemInfoPtr<Key> &l, const ContinuousMemInfoPtr<Key> &r) -> bool {
     MS_EXCEPTION_IF_NULL(l);
     MS_EXCEPTION_IF_NULL(r);
     return l->total_size_ < r->total_size_;
   };
   auto all_continuous_mem_info = continuous_mem_info_helper_->GetAllContinuousMemInfo();
   std::sort(all_continuous_mem_info.begin(), all_continuous_mem_info.end(), compare_total_size);
-  std::set<std::shared_ptr<MemEvent>> events_no_need_swap;
+  std::set<MemEventPtr<Key>> events_no_need_swap;
   for (const auto &continuous_mem_info : all_continuous_mem_info) {
     GenContinuousMemSwapEvent(continuous_mem_info, &cur_mem_used, &events_no_need_swap);
   }
@@ -192,11 +232,12 @@ void MemOffloadStrategy::GenSwapEventSet() {
   }
 }
 
-void MemOffloadStrategy::AddToSwapEventSetIfOutOfMem(const std::shared_ptr<MemEvent> &event, size_t span,
-                                                     std::vector<size_t> *mem_used) {
+template <typename Key>
+void MemOffloadStrategy<Key>::AddToSwapEventSetIfOutOfMem(const MemEventPtr<Key> &event, size_t span,
+                                                          std::vector<size_t> *mem_used) {
   MS_EXCEPTION_IF_NULL(event);
   MS_EXCEPTION_IF_NULL(mem_used);
-  const auto start_index = (GetPreMemEventIndex(event->index, span) + 1) % total_step_;
+  const auto start_index = (GetPreMemEventIndex(event->index, span) + 1) % total_compute_index_;
   bool revert = false;
   size_t cur_index = start_index;
   while (cur_index != event->index) {
@@ -205,7 +246,7 @@ void MemOffloadStrategy::AddToSwapEventSetIfOutOfMem(const std::shared_ptr<MemEv
       revert = true;
     }
     cur_index += 1;
-    if (cur_index >= total_step_) {
+    if (cur_index >= total_compute_index_) {
       cur_index = 0;
     }
   }
@@ -214,7 +255,7 @@ void MemOffloadStrategy::AddToSwapEventSetIfOutOfMem(const std::shared_ptr<MemEv
     while (cur_index != event->index) {
       (*mem_used)[cur_index] -= event->mem_size;
       cur_index += 1;
-      if (cur_index >= total_step_) {
+      if (cur_index >= total_compute_index_) {
         cur_index = 0;
       }
     }
@@ -222,9 +263,10 @@ void MemOffloadStrategy::AddToSwapEventSetIfOutOfMem(const std::shared_ptr<MemEv
   }
 }
 
-void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &continuous_mem_info,
-                                                   std::vector<size_t> *mem_used,
-                                                   std::set<std::shared_ptr<MemEvent>> *events_no_need_swap) {
+template <typename Key>
+void MemOffloadStrategy<Key>::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr<Key> &continuous_mem_info,
+                                                        std::vector<size_t> *mem_used,
+                                                        std::set<MemEventPtr<Key>> *events_no_need_swap) {
   MS_EXCEPTION_IF_NULL(continuous_mem_info);
   MS_EXCEPTION_IF_NULL(mem_used);
   MS_EXCEPTION_IF_NULL(events_no_need_swap);
@@ -285,8 +327,9 @@ void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &c
   continuous_mem_info_helper_->AddContinuousMallocIndex(continuous_mem_info, index);
 }
 
-size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr &continuous_mem_info,
-                                                      const std::vector<size_t> &mem_used) const {
+template <typename Key>
+size_t MemOffloadStrategy<Key>::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr<Key> &continuous_mem_info,
+                                                           const std::vector<size_t> &mem_used) const {
   MS_EXCEPTION_IF_NULL(continuous_mem_info);
   const size_t continuous_mem_used_index = continuous_mem_info->compute_index_;
   size_t earliest_malloc_index = GetFirstMallocIndex(continuous_mem_info);
@@ -302,7 +345,8 @@ size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr
   return max_span_mem_in_device;
 }
 
-size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) const {
+template <typename Key>
+size_t MemOffloadStrategy<Key>::GetFirstMallocIndex(const ContinuousMemInfoPtr<Key> &continuous_mem_info) const {
   MS_EXCEPTION_IF_NULL(continuous_mem_info);
   size_t earliest_malloc_index = continuous_mem_info->compute_index_;
   for (const auto &key_index : continuous_mem_info->key_index_map_) {
@@ -319,14 +363,35 @@ size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &conti
   return earliest_malloc_index;
 }
 
-void MemOffloadStrategy::GenContinuousMemAllocSteps() {
+template <typename Key>
+void MemOffloadStrategy<Key>::GenContinuousMemAllocInfo() {
   MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   for (const auto &continuous_mem_info : continuous_mem_info_helper_->GetAllContinuousMemInfo()) {
-    GenContinuousMemAllocStep(continuous_mem_info);
+    GenContinuousMemAllocInfo(continuous_mem_info);
   }
 }
 
-void MemOffloadStrategy::GenContinuousMemAllocStep(const ContinuousMemInfoPtr &continuous_mem_info) {
+template <typename Key>
+void MemOffloadStrategy<Key>::AdjustFirstEventIndex() {
+  for (const auto &item : mem_events_) {
+    const auto &mem_events = item.second;
+    if (mem_events.empty()) {
+      continue;
+    }
+    auto &first_event = mem_events[0];
+    MS_EXCEPTION_IF_NULL(first_event);
+    const auto &priority_iter = mem_priority_.find(item.first);
+    const bool is_high_priority = (priority_iter != mem_priority_.end() && priority_iter->second == kMemPriorityHigh);
+    if (first_event->type == kInit && !is_high_priority && mem_events.size() > 1) {
+      const auto &second_event = mem_events[1];
+      MS_EXCEPTION_IF_NULL(second_event);
+      first_event->index = second_event->index;
+    }
+  }
+}
+
+template <typename Key>
+void MemOffloadStrategy<Key>::GenContinuousMemAllocInfo(const ContinuousMemInfoPtr<Key> &continuous_mem_info) {
   MS_EXCEPTION_IF_NULL(continuous_mem_info);
   MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   if (!continuous_mem_info->is_input_) {
@@ -337,11 +402,12 @@ void MemOffloadStrategy::GenContinuousMemAllocStep(const ContinuousMemInfoPtr &c
   }
 }
 
-void MemOffloadStrategy::GenComputeMemEvents() {
+template <typename Key>
+void MemOffloadStrategy<Key>::GenComputeMemEvents() {
   pre_compute_events_.clear();
   post_compute_events_.clear();
-  pre_compute_events_.resize(total_step_);
-  post_compute_events_.resize(total_step_);
+  pre_compute_events_.resize(total_compute_index_);
+  post_compute_events_.resize(total_compute_index_);
   for (auto &item : mem_events_) {
     auto &mem_events = item.second;
     // No need to generate events for memory that has only one event, which means it is never used by any kernel.
@@ -357,7 +423,7 @@ void MemOffloadStrategy::GenComputeMemEvents() {
     if (is_high_priority && swap_events_.find(first_get_event) != swap_events_.end()) {
       first_event->index = first_get_event->index;
     }
-    if ((first_event->type == kInit || first_event->type == kMalloc) && first_event->index < total_step_) {
+    if ((first_event->type == kInit || first_event->type == kMalloc) && first_event->index < total_compute_index_) {
       (void)pre_compute_events_[first_event->index].emplace_back(first_event);
     } else {
       MS_LOG_EXCEPTION << "First event should be init or malloc!";
@@ -370,13 +436,13 @@ void MemOffloadStrategy::GenComputeMemEvents() {
       auto &event = mem_events[i];
       MS_EXCEPTION_IF_NULL(event);
       if (need_swap_ && swap_events_.find(event) != swap_events_.end()) {
-        auto swap_out_event = std::make_shared<MemEvent>(kSwapOut, pre_index);
+        auto swap_out_event = std::make_shared<MemEvent<Key>>(kSwapOut, pre_index);
         swap_out_event->key = item.first;
         swap_out_event->mem_size = first_event->mem_size;
         (void)post_compute_events_[pre_index].emplace_back(swap_out_event);
         // avoid swap-in-event follow init-event
         if (i != kFirstGetMemEventIndex || first_event->type != kInit) {
-          auto swap_in_event = std::make_shared<MemEvent>(kSwapIn, event->index);
+          auto swap_in_event = std::make_shared<MemEvent<Key>>(kSwapIn, event->index);
           swap_in_event->key = item.first;
           swap_in_event->mem_size = first_event->mem_size;
           (void)pre_compute_events_[event->index].emplace_back(swap_in_event);
@@ -393,23 +459,26 @@ void MemOffloadStrategy::GenComputeMemEvents() {
   }
 }
 
-void MemOffloadStrategy::GenFreeEvent(const std::shared_ptr<MemEvent> &last_event) {
+template <typename Key>
+void MemOffloadStrategy<Key>::GenFreeEvent(const MemEventPtr<Key> &last_event) {
   MS_EXCEPTION_IF_NULL(last_event);
-  auto free_event = std::make_shared<MemEvent>(kFree, last_event->index);
+  auto free_event = std::make_shared<MemEvent<Key>>(kFree, last_event->index);
   free_event->key = last_event->key;
   if (last_event->index < post_compute_events_.size()) {
     (void)post_compute_events_[last_event->index].emplace_back(free_event);
   }
 }
 
-std::shared_ptr<ContinuousMemInfo> ContinuousMemInfoHelper::GetContinuousMemInfo(const void *address_key) const {
+template <typename Key>
+ContinuousMemInfoPtr<Key> ContinuousMemInfoHelper<Key>::GetContinuousMemInfo(Key address_key) const {
   const auto &continuous_info_iter = key_continuous_info_map_.find(address_key);
   return continuous_info_iter == key_continuous_info_map_.end() ? nullptr : continuous_info_iter->second;
 }
 
-std::vector<ContinuousMemInfoPtr> ContinuousMemInfoHelper::GetAllContinuousMemInfo() const {
-  std::vector<ContinuousMemInfoPtr> all_continuous_mem_info(input_continuous_mem_info_.size() +
-                                                            output_continuous_mem_info_.size());
+template <typename Key>
+std::vector<ContinuousMemInfoPtr<Key>> ContinuousMemInfoHelper<Key>::GetAllContinuousMemInfo() const {
+  std::vector<ContinuousMemInfoPtr<Key>> all_continuous_mem_info(input_continuous_mem_info_.size() +
+                                                                 output_continuous_mem_info_.size());
   (void)std::copy(input_continuous_mem_info_.begin(), input_continuous_mem_info_.end(),
                   all_continuous_mem_info.begin());
   (void)std::copy_backward(output_continuous_mem_info_.begin(), output_continuous_mem_info_.end(),
@@ -417,25 +486,28 @@ std::vector<ContinuousMemInfoPtr> ContinuousMemInfoHelper::GetAllContinuousMemIn
   return all_continuous_mem_info;
 }
 
-bool ContinuousMemInfoHelper::IsContinuousMem(const void *address_key) const {
+template <typename Key>
+bool ContinuousMemInfoHelper<Key>::IsContinuousMem(Key address_key) const {
   const auto continuous_mem_info = GetContinuousMemInfo(address_key);
   return (continuous_mem_info != nullptr);
 }
 
-bool ContinuousMemInfoHelper::IsContinuousInputMem(const void *address_key) const {
+template <typename Key>
+bool ContinuousMemInfoHelper<Key>::IsContinuousInputMem(Key address_key) const {
   const auto continuous_mem_info = GetContinuousMemInfo(address_key);
   return (continuous_mem_info != nullptr && continuous_mem_info->is_input_);
 }
 
-void ContinuousMemInfoHelper::AddContinuousMemInfo(bool is_input, size_t compute_index, size_t total_size,
-                                                   const std::vector<size_t> &align_size_list,
-                                                   const std::vector<const void *> &address_key_list) {
+template <typename Key>
+void ContinuousMemInfoHelper<Key>::AddContinuousMemInfo(bool is_input, size_t compute_index, size_t total_size,
+                                                        const std::vector<size_t> &align_size_list,
+                                                        const std::vector<Key> &address_key_list) {
   if (align_size_list.size() != address_key_list.size()) {
     MS_LOG(EXCEPTION) << "Number of align size[" << align_size_list.size()
                       << "] is supposed to be equal to number of address[" << address_key_list.size() << "]";
   }
-  ContinuousMemInfoPtr continuous_mem_info =
-    std::make_shared<ContinuousMemInfo>(is_input, total_size, compute_index, align_size_list);
+  ContinuousMemInfoPtr<Key> continuous_mem_info =
+    std::make_shared<ContinuousMemInfo<Key>>(is_input, total_size, compute_index, align_size_list);
   for (size_t i = 0; i < address_key_list.size(); i += 1) {
     auto key = address_key_list[i];
     MS_EXCEPTION_IF_NULL(key);
@@ -450,7 +522,8 @@ void ContinuousMemInfoHelper::AddContinuousMemInfo(bool is_input, size_t compute
   (void)index_continuous_info_map_[compute_index].emplace_back(continuous_mem_info);
 }
 
-void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_used) const {
+template <typename Key>
+void MemOffloadStrategy<Key>::CountContinuousMemUsage(std::vector<size_t> *total_mem_used) const {
   MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   const auto &input_continuous_mem_info_ = continuous_mem_info_helper_->GetAllContinuousMemInfo();
   for (const auto &continuous_mem_info : input_continuous_mem_info_) {
@@ -474,9 +547,9 @@ void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_
       }
       const auto &last_events = mem_events[mem_events.size() - 1];
       MS_EXCEPTION_IF_NULL(last_events);
-      const auto end_step = IsHighPriorityMem(key) ? total_step_ - 1 : last_events->index;
+      const auto end_index = IsHighPriorityMem(key) ? total_compute_index_ - 1 : last_events->index;
       const auto mem_size = last_events->mem_size;
-      for (size_t start_index = compute_index + 1; start_index <= end_step; start_index += 1) {
+      for (size_t start_index = compute_index + 1; start_index <= end_index; start_index += 1) {
         (*total_mem_used)[start_index] += mem_size;
       }
     }
@@ -485,5 +558,11 @@ void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_
     }
   }
 }
+
+template class MemOffloadStrategy<const void *>;
+template class ContinuousMemInfoHelper<const void *>;
+template class MemOffloadStrategy<DeviceAddress *>;
+template class ContinuousMemInfoHelper<DeviceAddress *>;
+template struct GraphMemStatistic<DeviceAddress *>;
 }  // namespace device
 }  // namespace mindspore
