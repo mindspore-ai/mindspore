@@ -39,7 +39,6 @@ bool UnsortedSegmentProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
 
-  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
   ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
@@ -65,23 +64,13 @@ int UnsortedSegmentProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   for (int64_t i = 0; i < batch_rank_; i++) {
     batch_size_ *= input_shapes[i];
   }
-  in_stride_ = 1;
-  for (size_t i = batch_rank_; i < input_shapes.size(); i++) {
-    in_stride_ *= input_shapes[i];
-  }
-  ids_stride_ = 1;
-  for (size_t i = batch_rank_; i < ids_shapes.size(); i++) {
-    ids_stride_ *= ids_shapes[i];
-  }
-  out_stride_ = 1;
-  for (size_t i = batch_rank_; i < output_shapes.size(); i++) {
-    out_stride_ *= output_shapes[i];
-  }
 
+  in_stride_ = 1;
   auto axis = ids_shapes.size();
   input_dim0_ = 1;
   input_dim1_ = 1;
   for (size_t i = batch_rank_; i < input_shapes.size(); i++) {
+    in_stride_ *= input_shapes[i];
     if (i < axis) {
       input_dim0_ *= input_shapes[i];
     } else {
@@ -89,12 +78,21 @@ int UnsortedSegmentProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     }
   }
 
-  output_dim0_ = output_shapes[batch_rank_];
-  output_dim1_ = 1;
-  for (size_t j = batch_rank_ + 1; j < output_shapes.size(); j++) {
-    output_dim1_ *= output_shapes[j];
+  ids_stride_ = 1;
+  for (size_t i = batch_rank_; i < ids_shapes.size(); i++) {
+    ids_stride_ *= ids_shapes[i];
   }
 
+  out_stride_ = output_shapes[batch_rank_];
+  output_dim0_ = output_shapes[batch_rank_];
+  output_dim1_ = 1;
+  for (size_t i = batch_rank_ + 1; i < output_shapes.size(); i++) {
+    out_stride_ *= output_shapes[i];
+    output_dim1_ *= output_shapes[i];
+  }
+
+  num_segments_ = output_shapes[batch_rank_];
+  loop_size_ = LongToSize(in_stride_) / output_dim1_;
   return KRET_OK;
 }
 
@@ -110,6 +108,18 @@ bool UnsortedSegmentProdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     T *input_batch_addr = input_addr + i * in_stride_;
     S *ids_batch_addr = ids_addr + i * ids_stride_;
     T *output_batch_addr = output_addr + i * out_stride_;
+
+    std::vector<S> ids(loop_size_);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpy(ids.data(), ids_addr, ids_unit_size_ * loop_size_, cudaMemcpyDeviceToHost),
+      "For '" << kernel_name_ << "', cudaMemcpy input 'segment_ids' device to host failed.");
+    for (size_t index = 0; index < loop_size_; index++) {
+      if (ids[index] >= num_segments_) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, " << num_segments_ << ")";
+        return false;
+      }
+    }
+
     UnsortedSegmentProd(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
                         output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
   }
@@ -162,7 +172,29 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentProdGpuK
     {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, uint64_t, int)},
     {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt32, uint64_t, int64_t)},
     {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int)},
-    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int, int64_t)}};
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, double, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt64, double, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, float, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt64, float, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, half, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt64, half, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, uint8_t, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeInt64, uint8_t, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, int16_t, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, int16_t, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, int8_t, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt64, int8_t, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, uint16_t, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeInt64, uint16_t, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, uint32_t, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt64, uint32_t, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, uint64_t, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, uint64_t, int64_t)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, int, int)},
+    {UNSORTED_SEGMENT_PROD_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int, int64_t)}};
   return func_list;
 }
 

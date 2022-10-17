@@ -62,13 +62,14 @@ class UnsortedSegmentProdGpuKernelMod : public NativeGpuKernelMod,
   size_t input_dim1_ = 1;
   size_t output_dim0_ = 1;
   size_t output_dim1_ = 1;
-  size_t data_unit_size_ = 0; /* size of T */
-  size_t ids_unit_size_ = 0;  /* size of S */
+  size_t ids_unit_size_ = 0; /* size of S */
   int64_t batch_rank_ = 0;
   int64_t batch_size_ = 1;
   int64_t in_stride_ = 1;
   int64_t ids_stride_ = 1;
   int64_t out_stride_ = 1;
+  int64_t num_segments_ = 1;
+  size_t loop_size_ = 0;
   void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
