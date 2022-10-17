@@ -30,8 +30,6 @@ class MIND_API SegmentSum : public BaseOperator {
   SegmentSum() : BaseOperator(kNameSegmentSum) { InitIOName({"input_x", "segment_ids"}, {"output"}); }
   MIND_API_BASE_MEMBER(SegmentSum);
 };
-abstract::AbstractBasePtr SegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSegmentSumPtr = std::shared_ptr<SegmentSum>;
 }  // namespace ops
 }  // namespace mindspore

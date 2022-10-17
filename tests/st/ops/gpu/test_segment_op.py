@@ -24,7 +24,8 @@ import mindspore.common.dtype as mstype
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 
-class  SegmentMaxNet(Cell):
+class SegmentMaxNet(Cell):
+
     def __init__(self):
         super().__init__()
         self.segmentmax = SegmentMax()
@@ -33,7 +34,8 @@ class  SegmentMaxNet(Cell):
         return self.segmentmax(x, segment_ids)
 
 
-class  SegmentMinNet(Cell):
+class SegmentMinNet(Cell):
+
     def __init__(self):
         super().__init__()
         self.segmentmin = SegmentMin()
@@ -42,7 +44,8 @@ class  SegmentMinNet(Cell):
         return self.segmentmin(x, segment_ids)
 
 
-class  SegmentMeanNet(Cell):
+class SegmentMeanNet(Cell):
+
     def __init__(self):
         super().__init__()
         self.segmentmean = SegmentMean()
@@ -51,7 +54,8 @@ class  SegmentMeanNet(Cell):
         return self.segmentmean(x, segment_ids)
 
 
-class  SegmentSumNet(Cell):
+class SegmentSumNet(Cell):
+
     def __init__(self):
         super().__init__()
         self.segmentsum = SegmentSum()
@@ -60,7 +64,8 @@ class  SegmentSumNet(Cell):
         return self.segmentsum(x, segment_ids)
 
 
-class  SegmentProdNet(Cell):
+class SegmentProdNet(Cell):
+
     def __init__(self):
         super().__init__()
         self.segmentprod = SegmentProd()
@@ -153,7 +158,6 @@ def test_segment_mean_fp():
     np.testing.assert_almost_equal(output_py, expect)
 
 
-
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -174,3 +178,134 @@ def test_segment_prod_fp():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     output_py = net(input_x, segment_ids).asnumpy()
     np.testing.assert_almost_equal(output_py, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_segment_max_dyn():
+    """
+    Feature: test SegmentMax op in gpu.
+    Description: test the op in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = SegmentMaxNet()
+
+    x_dyn = Tensor(shape=[None, 3], dtype=mstype.float64)
+    segment_ids_dyn = Tensor(shape=[None], dtype=mstype.int64)
+
+    net.set_inputs(x_dyn, segment_ids_dyn)
+
+    x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
+    segment_ids = Tensor([0, 0, 2], mstype.int64)
+
+    output = net(x, segment_ids)
+
+    expect_shape = (3, 3)
+    assert expect_shape == output.asnumpy().shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_segment_min_dyn():
+    """
+    Feature: test SegmentMin op in gpu.
+    Description: test the op in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = SegmentMinNet()
+
+    x_dyn = Tensor(shape=[None, 3], dtype=mstype.float64)
+    segment_ids_dyn = Tensor(shape=[None], dtype=mstype.int64)
+
+    net.set_inputs(x_dyn, segment_ids_dyn)
+
+    x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
+    segment_ids = Tensor([0, 0, 2], mstype.int64)
+
+    output = net(x, segment_ids)
+
+    expect_shape = (3, 3)
+    assert expect_shape == output.asnumpy().shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_segment_sum_dyn():
+    """
+    Feature: test SegmentSum op in gpu.
+    Description: test the op in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = SegmentSumNet()
+
+    x_dyn = Tensor(shape=[None, 3], dtype=mstype.float64)
+    segment_ids_dyn = Tensor(shape=[None], dtype=mstype.int64)
+
+    net.set_inputs(x_dyn, segment_ids_dyn)
+
+    x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
+    segment_ids = Tensor([0, 0, 2], mstype.int64)
+
+    output = net(x, segment_ids)
+
+    expect_shape = (3, 3)
+    assert expect_shape == output.asnumpy().shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_segment_mean_dyn():
+    """
+    Feature: test SegmentMean op in gpu.
+    Description: test the op in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = SegmentMeanNet()
+
+    x_dyn = Tensor(shape=[None, 3], dtype=mstype.float64)
+    segment_ids_dyn = Tensor(shape=[None], dtype=mstype.int64)
+
+    net.set_inputs(x_dyn, segment_ids_dyn)
+
+    x = Tensor([[1, 2, 3], [1, 2, 3], [7, 8, 9]], mstype.float64)
+    segment_ids = Tensor([0, 0, 2], mstype.int64)
+
+    output = net(x, segment_ids)
+
+    expect_shape = (3, 3)
+    assert expect_shape == output.asnumpy().shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_segment_prod_dyn():
+    """
+    Feature: test SegmentProd op in gpu.
+    Description: test the op in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = SegmentProdNet()
+
+    x_dyn = Tensor(shape=[None, 3], dtype=mstype.float64)
+    segment_ids_dyn = Tensor(shape=[None], dtype=mstype.int64)
+
+    net.set_inputs(x_dyn, segment_ids_dyn)
+
+    x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
+    segment_ids = Tensor([0, 0, 2], mstype.int64)
+
+    output = net(x, segment_ids)
+
+    expect_shape = (3, 3)
+    assert expect_shape == output.asnumpy().shape
+    

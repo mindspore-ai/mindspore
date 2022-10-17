@@ -43,16 +43,28 @@ T ComplexDiv(T sum, size_t num) {
   }
 }
 
-void SegmentMeanCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  segment_ids_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  segment_ids_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+bool SegmentMeanCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  input_x_dtype_ = inputs.at(kIndex0)->GetDtype();
+  segment_ids_dtype_ = inputs.at(kIndex1)->GetDtype();
+  output_dtype_ = outputs.at(kIndex0)->GetDtype();
+  return true;
+}
+
+int SegmentMeanCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input_x_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
   input_x_num_ = SizeOf(input_x_shape_);
   segment_ids_num_ = SizeOf(segment_ids_shape_);
   output_num_ = SizeOf(output_shape_);
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> SegmentMeanCPUKernelMod::GetOpSupport() {
