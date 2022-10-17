@@ -250,6 +250,10 @@ int Flags::InitExportMindIR() {
     std::cerr << "INPUT ILLEGAL: exportMindIR must be MINDIR|MINDIR_LITE " << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
+
+  if (this->exportMindIR == "MINDIR") {
+    this->disableFusion = true;
+  }
   return RET_OK;
 }
 
@@ -342,17 +346,19 @@ int Flags::Init(int argc, const char **argv) {
     std::cerr << "Init pre inference failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
-  ret = InitNoFusion();
-  if (ret != RET_OK) {
-    std::cerr << "Init no fusion failed." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
 
   ret = InitExportMindIR();
   if (ret != RET_OK) {
     std::cerr << "Init export mindir failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
+
+  ret = InitNoFusion();
+  if (ret != RET_OK) {
+    std::cerr << "Init no fusion failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
   return RET_OK;
 }
 }  // namespace mindspore::converter
