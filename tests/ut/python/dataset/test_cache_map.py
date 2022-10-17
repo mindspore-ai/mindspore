@@ -1409,10 +1409,10 @@ def test_cache_map_prefetch_size_100():
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_map_to_device():
+def test_cache_map_device_que():
     """
     Feature: DatasetCache op
-    Description: Test Cache with to_device
+    Description: Test Cache with device_que
 
      DeviceQueue
          |
@@ -1428,7 +1428,7 @@ def test_cache_map_to_device():
 
     Expectation: Output is the same as expected output
     """
-    logger.info("Test cache map to_device")
+    logger.info("Test cache map device_que")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
@@ -1442,10 +1442,10 @@ def test_cache_map_to_device():
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
-    ds1 = ds1.to_device()
+    ds1 = ds1.device_que()
     ds1.send()
 
-    logger.info("test_cache_map_to_device Ended.\n")
+    logger.info("test_cache_map_device_que Ended.\n")
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
@@ -2516,7 +2516,7 @@ if __name__ == '__main__':
     test_cache_map_num_connections_100()
     test_cache_map_prefetch_size_1()
     test_cache_map_prefetch_size_100()
-    test_cache_map_to_device()
+    test_cache_map_device_que()
     test_cache_map_epoch_ctrl1()
     test_cache_map_epoch_ctrl2()
     test_cache_map_epoch_ctrl3()

@@ -275,14 +275,14 @@ def test_udpos_dataset_get_datasetsize():
     assert size == 6
 
 
-def test_udpos_dataset_to_device():
+def test_udpos_dataset_device_que():
     """
     Feature: UDPOSDataset
-    Description: Test UDPOSDataset to_device
+    Description: Test UDPOSDataset device_que
     Expectation: Runs successfully
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="test", shuffle=False)
-    data = data.to_device()
+    data = data.device_que()
     data.send()
 
 
@@ -327,5 +327,5 @@ if __name__ == "__main__":
     test_udpos_dataset_distribution()
     test_udpos_dataset_repeat()
     test_udpos_dataset_get_datasetsize()
-    test_udpos_dataset_to_device()
+    test_udpos_dataset_device_que()
     test_udpos_dataset_exceptions()

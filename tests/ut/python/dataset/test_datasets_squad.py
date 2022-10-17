@@ -162,14 +162,14 @@ def test_squad_version2():
     assert count == 4
 
 
-def test_squad_to_device():
+def test_squad_device_que():
     """
     Feature: SQuADDataset.
-    Description: Test SQuAD with to_device.
+    Description: Test SQuAD with device_que.
     Expectation: The data is processed successfully.
     """
     data = ds.SQuADDataset(DATASET_DIR_V1, usage='train', shuffle=False)
-    data = data.to_device()
+    data = data.device_que()
     data.send()
 
 
@@ -249,6 +249,6 @@ if __name__ == "__main__":
     test_squad_dataset_get_datasetsize()
     test_squad_version1()
     test_squad_version2()
-    test_squad_to_device()
+    test_squad_device_que()
     test_squad_invalid_dir()
     test_squad_exception()

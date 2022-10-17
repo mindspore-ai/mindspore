@@ -212,14 +212,14 @@ def test_get_column_name_tfrecord():
     assert data.get_col_names() == ["line", "words", "chinese"]
 
 
-def test_get_column_name_to_device():
+def test_get_column_name_device_que():
     """
     Feature: get_col_names
-    Description: Test get_col_names after to_device operation
+    Description: Test get_col_names after device_que operation
     Expectation: Output is equal to the expected output
     """
     data = ds.Cifar10Dataset(CIFAR10_DIR)
-    data = data.to_device()
+    data = data.device_que()
     assert data.get_col_names() == ["image", "label"]
 
 
@@ -288,7 +288,7 @@ if __name__ == "__main__":
     test_get_column_name_mnist()
     test_get_column_name_numpy_slices()
     test_get_column_name_tfrecord()
-    test_get_column_name_to_device()
+    test_get_column_name_device_que()
     test_get_column_name_voc()
     test_get_column_name_project()
     test_get_column_name_rename()

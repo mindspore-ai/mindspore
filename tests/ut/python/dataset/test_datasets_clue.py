@@ -365,15 +365,16 @@ def test_clue_wsc():
         })
     assert len(buffer) == 3
 
-def test_clue_to_device():
+
+def test_clue_device_que():
     """
     Feature: CLUEDataset
-    Description: Test CLUEDataset with to_device
+    Description: Test CLUEDataset with device_que
     Expectation: The dataset is processed as expected
     """
     train_file = '../data/dataset/testCLUE/afqmc/train.json'
     data = ds.CLUEDataset(train_file, task='AFQMC', usage='train', shuffle=False)
-    data = data.to_device()
+    data = data.device_que()
     data.send()
 
 
@@ -440,6 +441,6 @@ if __name__ == "__main__":
     test_clue_iflytek()
     test_clue_tnews()
     test_clue_wsc()
-    test_clue_to_device()
+    test_clue_device_que()
     test_clue_invalid_files()
     test_clue_exception_file_path()

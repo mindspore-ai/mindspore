@@ -473,16 +473,16 @@ def test_serdes_pyop_fill_value_parm():
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_serdes_to_device(remove_json_files=True):
+def test_serdes_device_que(remove_json_files=True):
     """
     Feature: Serialize and Deserialize Support
-    Description: Test serialize and deserialize on pipeline with to_device op
+    Description: Test serialize and deserialize on pipeline with device_que op
     Expectation: Serialized versus Deserialized+reserialized pipeline output verified
     """
     data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
     data1 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
-    data1 = data1.to_device()
+    data1 = data1.device_que()
     util_check_serialize_deserialize_file(data1, "transfer_dataset_pipeline", remove_json_files)
 
 
@@ -1069,7 +1069,7 @@ if __name__ == '__main__':
     test_serdes_zip_dataset()
     test_serdes_random_crop()
     test_serdes_pyop_fill_value_parm()
-    test_serdes_to_device()
+    test_serdes_device_que()
     test_serdes_pyvision()
     test_serdes_pyfunc_exception()
     test_serdes_pyfunc_exception2()
