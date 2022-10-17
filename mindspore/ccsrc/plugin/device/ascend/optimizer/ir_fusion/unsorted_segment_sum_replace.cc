@@ -46,52 +46,27 @@ const AnfNodePtr UnsortedSegmentSumReplace::Process(const FuncGraphPtr &func_gra
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(primitive);
-  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  if (cnode->inputs().size() == 0) {
-    return nullptr;
-  }
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto cnode = CheckAnfNodeIfCNodeAndInputSize(node, kUnsortedSegmentSumDInputTensorNum);
   if (!common::AnfAlgo::HasNodeAttr(kNumSegments, cnode)) {
     MS_LOG(INFO) << "Has no num_segments attr.";
     return nullptr;
   }
 
-  // Copy a new node to check supported.
+  // Convert attr num_segments to the tensor input
+  auto num_segments = common::AnfAlgo::GetNodeAttr<int64_t>(node, kNumSegments);
+  auto value_node =
+    kernel_graph->NewValueNode(std::make_shared<tensor::Tensor>(static_cast<int32_t>(num_segments), kInt32));
+  MS_EXCEPTION_IF_NULL(value_node);
+
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kUnsortedSegmentSumOpName))};
   (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+  new_inputs.push_back(value_node);
   CNodePtr new_cnode = NewCNode(new_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
-  CheckCNodeInputSize(new_cnode, kUnsortedSegmentSumInputTensorNum);
-  // Convert attr num_segments to the tensor input
-  auto value = primitive->GetAttr(kNumSegments);
-  if (value == nullptr) {
-    MS_LOG(INFO) << "Can not get attr[" << kNumSegments << "] num_segments.";
-    return nullptr;
-  }
-  tensor::TensorPtr tensor_ptr = nullptr;
-  if (value->isa<tensor::Tensor>()) {
-    tensor_ptr = value->cast<tensor::TensorPtr>();
-  } else if (value->isa<Scalar>()) {
-    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-  } else if (value->isa<ValueTuple>()) {
-    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-  } else {
-    MS_LOG(INFO) << "The value of attr[" << kNumSegments << "] should be a tensor or scalar or value tuple.";
-    return nullptr;
-  }
-  if (tensor_ptr == nullptr) {
-    MS_LOG(INFO) << "Convert attr[" << kNumSegments << "] to tensor value failed.";
-    return nullptr;
-  }
-  auto value_node = kernel_graph->NewValueNode(tensor_ptr);
-  MS_EXCEPTION_IF_NULL(value_node);
-  new_inputs.push_back(value_node);
-  new_cnode->set_inputs(new_inputs);
+
   if (!CheckAICoreSupportedAny(new_cnode)) {
     MS_LOG(INFO) << "Replace unsorted_segment_sum_d op to unsorted_segment_sum op failed.";
     return nullptr;

@@ -27,8 +27,8 @@ namespace opt {
 namespace {
 bool CheckInputs(const CNodePtr &origin_node) {
   MS_EXCEPTION_IF_NULL(origin_node);
-  if (common::AnfAlgo::GetInputTensorNum(origin_node) != kUnsortedSegmentSumInputTensorNum) {
-    MS_LOG(DEBUG) << "UnsortedSegmentSum has wrong inputs num, not equal " << kUnsortedSegmentSumInputTensorNum
+  if (common::AnfAlgo::GetInputTensorNum(origin_node) != kUnsortedSegmentSumDInputTensorNum) {
+    MS_LOG(DEBUG) << "UnsortedSegmentSumD has wrong inputs num, not equal " << kUnsortedSegmentSumDInputTensorNum
                   << ". CNode= " << origin_node->DebugString();
     return false;
   }
