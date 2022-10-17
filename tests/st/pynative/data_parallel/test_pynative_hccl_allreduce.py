@@ -65,9 +65,10 @@ def train_allreduce_8p(q, device_id, device_num):
     net = AllReduceNet()
     input_x = np.ones([3, 4]).astype(np.float32)
     output = net(Tensor(input_x, mstype.float32))
-    q.put(output)
+    q.put(output.asnumpy())
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
