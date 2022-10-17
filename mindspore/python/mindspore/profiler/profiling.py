@@ -891,6 +891,10 @@ class Profiler:
         except ProfilerException as err:
             logger.warning(err.message)
 
+        parser = GpuFrameWorkParser(self._output_path, self._dev_id)
+        graph_ids = parser.get_graph_ids()
+        ProfilerInfo.set_graph_ids(graph_ids)
+
         # analyse step trace info
         try:
             logger.info("Profiling: analyzing the step trace info.")
@@ -898,19 +902,14 @@ class Profiler:
                 is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
                 is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
             )
+            if len(graph_ids) > 1:
+                logger.warning("Current model has multiple sub graphs, the segmentation of steps may be inaccurate.")
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
-        parser = GpuFrameWorkParser(self._output_path, self._dev_id)
-        graph_ids = parser.get_graph_ids()
-        ProfilerInfo.set_graph_ids(graph_ids)
         if self._dynamic_status:
             parser.analyse_dynamic_shape_data(self._timeline_meta)
-        logger.warning(
-            '\nThe GPU supports only the training mode or inference mode, '
-            'it does not support train and infer at the same time.'
-        )
 
     def _get_step_reduce_op_type(self):
         """Gets all communication operator names."""
