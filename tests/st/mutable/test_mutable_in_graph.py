@@ -626,3 +626,39 @@ def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
                         [1.9, 1.9, 1.9],
                         [1.5, 1.5, 1.5]]).astype(np.float32)]
     assert compare(output, expect)
+
+
+def test_grad_mutable_in_primal():
+    """
+    Feature: Support mutable in graph.
+    Description: Get gradient with respect to const tensor input defined outside the graph which is set mutable
+                 and uses mutable in primal graph.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+
+        def construct(self, x, y):
+            out = self.matmul(mutable(x), y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = GradOperation()
+
+        def construct(self, x):
+            y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(mutable(x), y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
+    grad_net = GradNetWrtX(Net())
+    output = grad_net(x)
+    expect_output = np.array([[1.4100001, 1.5999999, 6.6],
+                              [1.4100001, 1.5999999, 6.6]]).astype(np.float32)
+    assert np.allclose(output.asnumpy(), expect_output)
