@@ -754,6 +754,10 @@ int Scheduler::InferNodeShape(const lite::LiteGraph::Node *node) {
     return InferCallShape(node);
   }
   ret = KernelInferShape(inputs, outputs, parameter, context_->allocator);
+  if (ret != RET_OK && ret != RET_INFER_INVALID) {
+    FreeOpParameters();
+    return RET_ERROR;
+  }
 
   if (*is_control_flow_) {
     for (auto &output : outputs) {
