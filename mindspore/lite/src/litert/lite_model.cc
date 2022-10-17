@@ -165,8 +165,17 @@ int LiteModel::NodeVerify() const {
       return RET_ERROR;
     }
     if (IsPartialNode(node->primitive_, schema_version_)) {
-      auto subgraph_index = GetPartialGraphIndex(node->primitive_, schema_version_);
-      if (static_cast<uint32_t>(subgraph_index) >= subgraph_size) {
+      auto partial_fusion = reinterpret_cast<const schema::Primitive *>(node->primitive_)->value_as_PartialFusion();
+      if (partial_fusion == nullptr) {
+        MS_LOG(ERROR) << "partial_fusion is nullptr ";
+        return RET_ERROR;
+      }
+      int64_t subgraph_index = partial_fusion->sub_graph_index();
+      if (subgraph_index < 0) {
+        MS_LOG(ERROR) << "invalid subgraph index：" << subgraph_index;
+        return RET_ERROR;
+      }
+      if (subgraph_index >= static_cast<int64_t>(subgraph_size)) {
         MS_LOG(ERROR) << "subgraph index：" << subgraph_index << " is beyond subgraph_size: " << subgraph_size;
         return RET_ERROR;
       }
