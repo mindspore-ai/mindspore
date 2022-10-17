@@ -4,6 +4,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.common import dtype as mstype
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
@@ -100,11 +101,28 @@ def test_net_float64_0_dim():
     net = Net(seq_dim, batch_dim)
     output = net(Tensor(x), Tensor(seq_lengths))
     expected = np.array([[[[3., 4.], [1., 2.]],
-                          [[7.,  8.], [5., 6.]],
+                          [[7., 8.], [5., 6.]],
                           [[9., 10.], [11., 12.]],
                           [[13., 14.], [15., 16.]]],
                          [[[19., 20.], [17., 18.]],
                           [[23., 24.], [21., 22.]],
                           [[25., 26.], [27., 28.]],
                           [[29., 30.], [31., 21.]]]]).astype(np.float32)
+    assert np.array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reverse_sequence_tensor_api():
+    """
+    Feature: ReverseSequence GPU operation
+    Description: input the seq_dim and batch_dim, test the output value
+    Expectation: the values match the predefined values
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mstype.int8)
+    seq_lengths = Tensor(np.array([1, 2, 3]))
+    output = x.reverse_sequence(seq_lengths, seq_dim=1)
+    expected = np.array([[1, 2, 3], [5, 4, 6], [9, 8, 7]]).astype(np.int8)
     assert np.array_equal(output.asnumpy(), expected)

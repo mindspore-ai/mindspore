@@ -17,6 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.common import dtype as mstype
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
@@ -52,4 +53,12 @@ def test_net_int32():
     net = Net(seq_dim, batch_dim)
     output = net(Tensor(x), Tensor(seq_lengths))
     expected = np.array([[1, 2, 3], [5, 4, 6], [9, 8, 7]]).astype(np.int32)
+    assert np.array_equal(output.asnumpy(), expected)
+
+
+def test_reverse_sequence_tensor_api():
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mstype.int8)
+    seq_lengths = Tensor(np.array([1, 2, 3]))
+    output = x.reverse_sequence(seq_lengths, seq_dim=1)
+    expected = np.array([[1, 2, 3], [5, 4, 6], [9, 8, 7]]).astype(np.int8)
     assert np.array_equal(output.asnumpy(), expected)
