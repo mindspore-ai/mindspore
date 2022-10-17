@@ -71,7 +71,7 @@ class CPUKernelExecutor : public KernelExecutor {
   // execution operators, and set final device data type and format information for backend kernels, device
   // data type and format which replace original data type and format will use for executing kernels.
   void SetOperatorInfo(const KernelGraphPtr &graph) const;
-
+  void SingleOpGraphOptimize(const KernelGraphPtr &graph) const;
   void OptimizeGraphImpl(const KernelGraphPtr &graph) const;
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
