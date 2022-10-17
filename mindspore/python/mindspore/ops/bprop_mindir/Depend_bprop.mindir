@@ -1,5 +1,5 @@
 
-0.1.1	MindSpore*1.9.0:²
+0.1.1	MindSpore*2.0.0:²
 ­
 bprop_depend.189:ybprop_depend.189:[CNode]190:1bprop_depend.189:[CNode]190:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:/Default/S-Prim-hyper_map[zeros_like_leaf]-op138
 ­

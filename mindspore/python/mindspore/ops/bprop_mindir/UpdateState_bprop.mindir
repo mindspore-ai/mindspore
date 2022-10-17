@@ -1,5 +1,5 @@
 
-0.1.1	MindSpore*1.9.0:Ö
+0.1.1	MindSpore*2.0.0:Ö
 Å
 bprop_update_state.202:u_monad#bprop_update_state.202:[CNode]203:1#bprop_update_state.202:[CNode]203:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:/Default/S-Prim-hyper_map[zeros_like_leaf]-op148
 ¿

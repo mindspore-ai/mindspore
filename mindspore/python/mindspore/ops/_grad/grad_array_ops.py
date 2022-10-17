@@ -605,7 +605,7 @@ def get_bprop_gather_d(self):
     """Generate bprop for GatherD"""
 
     def bprop(x, dim, index, out, dout):
-        dx = G.GatherDGradV2(dim)(x, index, dout)
+        dx = G.GatherDGradV2()(x, dim, index, dout)
         return dx, zeros_like(dim), zeros_like(index)
 
     return bprop

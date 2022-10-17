@@ -50,12 +50,17 @@ class GatherDGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
+  int64_t GetGatherDGradV2DimValue(const std::vector<kernel::AddressPtr> &inputs);
+  ShapeVector dim_shapes_;
   std::vector<size_t> index_shape_;
   std::vector<size_t> grad_shape_;
   std::vector<size_t> output_shape_;
   int64_t axis_{0};
   size_t index_idx_{0};
   size_t grad_idx_{0};
+  size_t dim_idx_{0};
+  TypeId dim_type_{0};
+  bool is_v2_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -52,7 +52,9 @@ class GatherGradGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
  private:
-  void CalculateDim(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs);
+  int GetGatherDGradDimValue(const BaseOperatorPtr &base_operator);
+  int GetGatherDGradV2DimValue(const std::vector<AddressPtr> &inputs);
+  void CalculateDim(int axis);
 
   using GatherGradOpFunc = std::function<bool(GatherGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &, void *)>;
@@ -60,18 +62,21 @@ class GatherGradGpuKernelMod : public NativeGpuKernelMod {
     kernel_attr_map_;
   GatherGradOpFunc kernel_func_;
 
+  ShapeVector dim_shapes_;
   ShapeVector index_shapes_;
   ShapeVector grad_shapes_;
   ShapeVector output_shapes_;
-
+  TypeId dim_type_{0};
   std::string kernel_name_;
   size_t dims_[4] = {};
   int axis_{0};
   void *cuda_stream_{nullptr};
+  size_t dim_idx_{0};
   size_t index_idx_{0};
   size_t grad_idx_{0};
   size_t idx_type_size_{0};
   size_t grad_type_size_{0};
+  bool is_v2_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

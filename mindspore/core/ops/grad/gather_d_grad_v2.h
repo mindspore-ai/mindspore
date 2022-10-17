@@ -24,10 +24,8 @@ constexpr auto kNameGatherDGradV2 = "GatherDGradV2";
 class MIND_API GatherDGradV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GatherDGradV2);
-  GatherDGradV2() : BaseOperator(kNameGatherDGradV2) { InitIOName({"x", "index", "grad"}, {"output"}); }
-  void Init(int64_t dim = 0);
-  void set_dim(int64_t dim);
-  int64_t get_dim() const;
+  GatherDGradV2() : BaseOperator(kNameGatherDGradV2) { InitIOName({"x", "dim", "index", "grad"}, {"output"}); }
+  void Init() {}
 };
 abstract::AbstractBasePtr GatherDGradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args);

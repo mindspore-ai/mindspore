@@ -1914,12 +1914,9 @@ class GatherDGradV2(Primitive):
     """Performs grad of GatherD operation."""
 
     @prim_attr_register
-    def __init__(self, dim=0):
+    def __init__(self):
         """Initialize GatherDGradV2"""
-        validator.check_is_int(dim, int)
-        self.add_prim_attr("dim", dim)
-        self.dim = dim
-        self.init_prim_io_names(inputs=['x', 'index', 'grad'], outputs=['output'])
+        self.init_prim_io_names(inputs=['x', 'dim', 'index', 'grad'], outputs=['output'])
 
 
 class ResizeBilinearGrad(Primitive):
