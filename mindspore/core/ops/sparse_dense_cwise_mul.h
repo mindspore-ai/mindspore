@@ -31,8 +31,6 @@ class MIND_API SparseDenseCwiseMul : public BaseOperator {
     InitIOName({"x1_indices", "x1_values", "x1_shape", "x2"}, {"y"});
   }
 };
-abstract::AbstractBasePtr SparseDenseCwiseMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
