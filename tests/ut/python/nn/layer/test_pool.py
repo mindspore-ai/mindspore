@@ -27,8 +27,8 @@ class MaxPoolNet(nn.Cell):
 
     def __init__(self):
         super(MaxPoolNet, self).__init__()
-        self.pool1 = nn.MaxPool3d(kernel_size=3, strides=1, pads=1)
-        self.pool2 = nn.MaxPool3d(kernel_size=3, strides=1, pads=1, return_indices=True)
+        self.pool1 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1)
+        self.pool2 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1, return_indices=True)
 
     def construct(self, x):
         output1 = self.pool1(x)
@@ -52,7 +52,7 @@ class AvgPoolNet(nn.Cell):
 
     def __init__(self):
         super(AvgPoolNet, self).__init__()
-        self.pool = nn.AvgPool3d(kernel_size=3, strides=1)
+        self.pool = nn.AvgPool3d(kernel_size=3, stride=1)
 
     def construct(self, x):
         return self.pool(x)

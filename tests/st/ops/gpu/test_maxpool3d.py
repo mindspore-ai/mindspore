@@ -23,7 +23,7 @@ import mindspore.nn as nn
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.pool = nn.MaxPool3d(kernel_size=3, strides=1, pads=1)
+        self.pool = nn.MaxPool3d(kernel_size=3, stride=1, padding=1)
 
     def construct(self, x):
         out = self.pool(x)
@@ -33,7 +33,7 @@ class Net(nn.Cell):
 class Net2(nn.Cell):
     def __init__(self):
         super(Net2, self).__init__()
-        self.pool = nn.MaxPool3d(kernel_size=3, strides=1, pads=1, return_indices=True)
+        self.pool = nn.MaxPool3d(kernel_size=3, stride=1, padding=1, return_indices=True)
 
     def construct(self, x):
         out = self.pool(x)
