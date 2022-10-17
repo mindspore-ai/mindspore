@@ -69,6 +69,9 @@ class OpTilingCalculateAdapter {
   ::ge::NodePtr CreateGeNode(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
                              const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
                              const std::string &op_compile_info);
+  ShapeVector UpdateShape(const ShapeVector &shape, const std::string &format, const CNodePtr &node,
+                          const bool is_input);
+
   std::string op_name_;
   std::string op_compile_info_;
   std::vector<std::string> input_names_;
