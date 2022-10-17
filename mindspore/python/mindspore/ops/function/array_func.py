@@ -3438,13 +3438,39 @@ def affine_grid(theta, output_size, align_corners=False):
 
 def broadcast_to(x, shape):
     """
-    Broadcasts input tensor to a given shape.
-    Input shape can be broadcast to target shape if for each dimension pair they are either equal or input is one or
-    the target dimension is -1. In case of -1 in target shape, it will be replaced by the input shape's value
-    in that dimension.
-    When input shape is broadcast to target shape, it starts with the trailing
-    dimensions. If there is a -1 in the target shape, the -1 cannot be in a leading,
-    non-existing dimension.
+    Broadcasts input tensor to a given shape. The dim of input shape must be smaller
+    than or equal to that of target shape, suppose input shape :math:`(x1, x2, ..., xm)`,
+    target shape :math:`(*, y_1, y_2, ..., y_m)`. The broadcast rules are as follows:
+
+    Compare the value of `x_m` and `y_m`, `x_{m-1}` and `y_{m-1}`, ..., `x_1` and `y_1` consecutively and
+    decide whether these shapes are broadcastable and what the broadcast result is.
+
+    If the value pairs at a specific dim are equal, then that value goes right into that dim of output shape.
+    With an input shape :math:`(2, 3)`, target shape :math:`(2, 3)` , the inferred outpyt shape is :math:`(2, 3)`.
+
+    If the value pairs are unequal, there are three cases:
+
+    Case 1: Value of target shape is -1, then the value of the output shape is that of the input shape's.
+    With an input shape :math:`(3, 3)`, target shape :math:`(-1, 3)`, the output shape is :math:`(3, 3)`.
+
+    Case 2: Value of target shape is not -1 but the value ot the input shape is 1, then the value of the output shape
+    is that of the target shape's. With an input shape :math:`(1, 3)`, target
+    shape :math:`(8, 3)`, the output shape is :math:`(8, 3)`.
+
+    Case 3: All other cases mean that the two shapes are not broadcastable.
+
+    So far we got the last m dims of the outshape, now focus on the first :math:`*` dims, there are
+    two cases:
+
+    If the first :math:`*` dims of output shape does not have -1 in it, then fill the input
+    shape with ones until their length are the same, and then refer to
+    Case 2 mentioned above to calculate the output shape. With target shape :math:` (3, 1, 4, 1, 5, 9)`,
+    input shape :math:`(1, 5, 9)`, the filled input shape will be :math:`(1, 1, 1, 1, 5, 9)` and thus the
+    output shape is :math:` (3, 1, 4, 1, 5, 9)`.
+
+    If the first :math:`*` dims of output shape have -1 in it, it implies this -1 is conrresponding to
+    a non-existing dim so they're not broadcastable. With target shape :math:` (3, -1, 4, 1, 5, 9)`,
+    input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
 
     Args:
         x (Tensor): The input tensor.

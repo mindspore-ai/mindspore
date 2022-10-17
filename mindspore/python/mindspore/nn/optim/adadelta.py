@@ -141,7 +141,7 @@ class Adadelta(Optimizer):
         ValueError: If `learning_rate`, `epsilon` or `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import nn, Model
