@@ -18,6 +18,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore import Parameter
 from mindspore import Tensor
+from mindspore import context
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 
