@@ -23,6 +23,7 @@ from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops.functional import vmap
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class BatchToSpaceNDNet(nn.Cell):
@@ -95,23 +96,18 @@ def test_batch_to_space_nd_function():
 
 
 class BatchToSpaceNDDynamicShapeNetMS(nn.Cell):
-    def __init__(self, block_shape, crops, axis=1):
+    def __init__(self, block_shape, crops, is_dynamic_rank):
         super().__init__()
-        self.unique = ops.Unique()
-        self.gather = ops.Gather()
         self.batch_to_space_nd = ops.BatchToSpaceND(block_shape, crops)
-        self.axis = axis
+        self.convert_to_dynamic = inner.ConvertToDynamic(
+            is_dynamic_rank=is_dynamic_rank).add_prim_attr("primitive_target", "CPU")
 
-    def construct(self, x, indices):
-        unique_indices, _ = self.unique(indices)
-        x = self.gather(x, unique_indices, self.axis)
+    def construct(self, x):
+        x = self.convert_to_dynamic(x)
         return self.batch_to_space_nd(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_batch_to_space_nd_dynamic():
+def batch_to_space_nd_dynamic(is_dynamic_rank):
     """
     Feature: test BatchToSpaceND dynamic shape.
     Description: the input to BatchToSpaceND is dynamic.
@@ -122,17 +118,31 @@ def test_batch_to_space_nd_dynamic():
     crops = [[0, 0], [0, 0]]
 
     input_x = Tensor(x, mindspore.float32)
-    input_y = Tensor(np.array([0, 0, 0, 0]), mindspore.int32)
+    x_dyn = Tensor(shape=[None, None, None, None], dtype=mindspore.float32)
     expect = np.array([[[[0, 1],
                          [2, 3]]]]).astype(np.float32)
-    dyn_net = BatchToSpaceNDDynamicShapeNetMS(block_shape, crops)
+    dyn_net = BatchToSpaceNDDynamicShapeNetMS(block_shape, crops, is_dynamic_rank)
+    dyn_net.set_inputs(x_dyn)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    output = dyn_net(input_x, input_y)
+    output = dyn_net(input_x)
     assert (output.asnumpy() == expect).all()
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    output = dyn_net(input_x, input_y)
+    output = dyn_net(input_x)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batch_to_space_nd_dynamic_case():
+    """
+    Feature: test BatchToSpaceND dynamic shape.
+    Description: the input to BatchToSpaceND is dynamic.
+    Expectation: the result match with numpy result
+    """
+    batch_to_space_nd_dynamic(True)
+    batch_to_space_nd_dynamic(False)
 
 
 def vmap_case():

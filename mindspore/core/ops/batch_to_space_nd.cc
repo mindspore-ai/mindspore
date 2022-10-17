@@ -32,6 +32,13 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
+  if (IsDynamicShape(x_shape)) {
+    std::vector<int64_t> res(x_shape.size(), abstract::Shape::kShapeDimAny);
+    return std::make_shared<abstract::Shape>(res);
+  }
   constexpr int64_t len = 4;
   (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kGreaterEqual, len, prim_name);
   auto out_shape = x_shape;
