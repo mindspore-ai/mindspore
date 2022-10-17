@@ -102,6 +102,7 @@ int LstmCPUKernel::InitInputWeightBias() {
   int b_stride = (gpu_orig_state_) ? gate_num * (dir_mul * b_size) : gate_num * (b_size);
   if (in_tensors_.size() > mindir_input_tensors) {
     bias_data = reinterpret_cast<float *>(in_tensors_.at(onnx_bias_index)->data());
+    CHECK_NULL_RETURN(bias_data);
     PackLstmBias(input_bias_, bias_data, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_col_align_,
                  lstm_param_->bidirectional_, weights_order);
   } else {

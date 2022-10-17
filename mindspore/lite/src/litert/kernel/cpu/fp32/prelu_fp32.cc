@@ -86,6 +86,10 @@ int PReluCPUKernel::ReSize() {
   auto &input = in_tensors_[kInputIndex];
   param_->input_num_ = input->ElementsNum();
   CHECK_NOT_EQUAL_RETURN(out_tensors_.front()->ElementsNum(), param_->input_num_);
+  if (input->Channel() == RET_ERROR) {
+    MS_LOG(ERROR) << "get channel failed.";
+    return RET_ERROR;
+  }
   param_->channel_num_ = input->Channel();
   return RET_OK;
 }
