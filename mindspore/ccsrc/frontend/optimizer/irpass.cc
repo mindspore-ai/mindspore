@@ -51,12 +51,7 @@
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
-#include "frontend/optimizer/irpass/ge/ge_tensor_array.h"
-#include "frontend/optimizer/irpass/ge/sparse_softmax_cross_entropy_with_logits_split.h"
-#include "frontend/optimizer/irpass/ge/avg_pool_grad_for_ge.h"
-#include "frontend/optimizer/irpass/ge/dropout_for_ge.h"
-#include "frontend/optimizer/irpass/ge/lamb_split.h"
-#include "frontend/optimizer/irpass/ge/clip_by_norm_split.h"
+
 namespace mindspore {
 namespace opt {
 namespace irpass {
@@ -261,27 +256,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Workaround
   stop_gradient_special_op_ =
     MakeSubstitution(std::make_shared<StopGradientSpecialOp>(), "stop_gradient_special_op", prim::kPrimBiasAddGrad);
-
-  // ge_tensor_array_link_flow
-  ge_tensor_array_add_flow_ = MakeSubstitution(std::make_shared<GeTensorArrayAddFlow>(), "ge_tensor_array_add_flow",
-                                               {prim::kPrimTensorArrayWrite, prim::kPrimTensorArrayGather});
-  // ge_tensor_array_cast_index
-  ge_tensor_array_cast_index_ = MakeSubstitution(std::make_shared<GeTensorArrayCastIndex>(),
-                                                 "ge_tensor_array_cast_index", prim::kPrimTensorArrayWrite);
-  // sparse_softmax_cross_entropy_with_logits split for ge
-  sparse_softmax_cross_entropy_with_logits_ = MakeSubstitution(
-    std::make_shared<SparseSoftmaxCrossEntropyWithLogitsSplit>(), "sparse_softmax_cross_entropy_with_logits_", IsCNode);
-  // process AvgPoolGrad for ge
-  avg_pool_grad_for_ge_ =
-    MakeSubstitution(std::make_shared<AvgPoolGradForGE>(), "avg_pool_grad_for_ge", prim::kPrimAvgPoolGrad);
-
-  // process Dropout and DropoutGrad for ge
-  dropout_for_ge_ = MakeSubstitution(std::make_shared<DropoutForGE>(), "dropout_for_ge", prim::kPrimDropout);
-  dropout_grad_for_ge_ =
-    MakeSubstitution(std::make_shared<DropoutGradForGE>(), "dropout_grad_for_ge", prim::kPrimDropoutGrad);
-  lamb_for_ge_ = MakeSubstitution(std::make_shared<LambForGE>(), "lamb_for_ge", prim::kPrimLamb);
-  clip_by_norm_for_ge_ =
-    MakeSubstitution(std::make_shared<ClipByNormForGE>(), "clip_by_norm_for_ge", prim::kPrimClipByNorm);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
