@@ -49,12 +49,16 @@ def _raise_type_error():
 def _convert_grad_position_type(grad_position):
     """Check and convert the type and size of grad position index."""
     if isinstance(grad_position, tuple):
-        grad_position = tuple(set(grad_position))
-        for gp in grad_position:
+        _grad_position = list(set(grad_position))
+        _grad_position.sort(key=grad_position.index)
+        for i, gp in enumerate(_grad_position):
+            if isinstance(gp, bool):
+                _grad_position[i] = int(gp)
             if not isinstance(gp, int):
                 raise TypeError(f"For 'F.grad', the element in 'grad_position' must be int.")
             if gp < 0:
                 raise ValueError("The element in grad_position must be >= 0.")
+        grad_position = tuple(_grad_position)
     elif isinstance(grad_position, int):
         if grad_position < 0:
             raise ValueError("grad_position must be >= 0.")
@@ -860,14 +864,12 @@ def _jac_generate_target_dimension(x):
 def _jacfwd_trans_item(item, inputs_shape, grad_position):
     """transfer origin item to derivative of each output with respect to each input."""
     output_wrt_input_all = ()
-    length = len(inputs_shape) - 1
-    for i in range(length):
-        if i in grad_position:
-            origin_output_wrt_input = item[inputs_shape[i][1]:inputs_shape[i + 1][1]]
-            target_dimension = _jac_generate_target_dimension(origin_output_wrt_input.shape)
-            temp = transpose(origin_output_wrt_input, target_dimension)
-            output_wrt_input = reshape(temp, temp.shape[:-1] + inputs_shape[i + 1][0])
-            output_wrt_input_all += (output_wrt_input,)
+    for i in grad_position:
+        origin_output_wrt_input = item[inputs_shape[i][1]:inputs_shape[i + 1][1]]
+        target_dimension = _jac_generate_target_dimension(origin_output_wrt_input.shape)
+        temp = transpose(origin_output_wrt_input, target_dimension)
+        output_wrt_input = reshape(temp, temp.shape[:-1] + inputs_shape[i + 1][0])
+        output_wrt_input_all += (output_wrt_input,)
     return output_wrt_input_all
 
 
@@ -1177,6 +1179,7 @@ def jacrev(fn, grad_position=0, has_aux=False):
         [[ 1.  4.]
          [ 9. 16.]]
     """
+    _check_has_aux_type(has_aux)
 
     def aux_fn(*args):
         outputs = fn(*args)
