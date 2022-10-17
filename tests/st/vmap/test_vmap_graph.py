@@ -465,3 +465,41 @@ def test_vmap_as_vmap_input():
     output = VmapNet()(x)
     expect_res = Tensor(np.ones((4, 4, 4), dtype=int), mstype.float32) * 3
     assert np.allclose(output.asnumpy(), expect_res.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_with_celllist_nested_grad():
+    """
+    Feature: vmap
+    Description: This case mainly tests the following `vmap` application scenarios in graph mode:
+        1. `vmap` and `grad` are used in combination.
+        2. `vmap` accepts celllist type inputs.
+    Expectation: success
+    """
+    class AssignNet(nn.Cell):
+        def __init__(self):
+            super(AssignNet, self).__init__()
+            self.assign = P.Assign()
+            self.ref_a = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_a')
+
+        def construct(self, replace_tensor):
+            replace_tensor = replace_tensor * 2
+            self.assign(self.ref_a, replace_tensor)
+            out = self.ref_a + replace_tensor
+            return out
+
+    m1 = AssignNet()
+    m2 = AssignNet()
+    m3 = AssignNet()
+    mm = nn.CellList([m1, m2, m3])
+    vmap_net = F.vmap(mm)
+
+    replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+
+    output_grad = F.grad(vmap_net)(replace_tensor)
+
+    expect_res = Tensor([[2, 2, 2], [2, 2, 2], [2, 2, 2]], mstype.float32)
+    assert np.allclose(output_grad.asnumpy(), expect_res.asnumpy())

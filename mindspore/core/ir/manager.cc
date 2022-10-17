@@ -707,6 +707,14 @@ void FuncGraphManager::OnEdgeAdded(const AnfNodePtr &node, int index, const AnfN
         IsPrimitiveCNode(node, prim::kPrimTaylor) || IsPrimitiveCNode(node, prim::kPrimShard)) {
       fg->AddMetaFgPrimValueNode(input);
     }
+  } else if (IsPrimitiveCNode(node, prim::kPrimVmap) && IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+    // To handle the model ensembling scenario in vmap, whose input is a celllist, taking an arbitrary function graph
+    // is sufficient.
+    constexpr int64_t kIndex1 = 1;
+    auto func_union = dyn_cast<CNode>(input);
+    if (IsValueNode<FuncGraph>(func_union->input(kIndex1))) {
+      fg->AddMetaFgPrimValueNode(func_union->input(kIndex1));
+    }
   } else if (fg != nullptr && fg != input->func_graph()) {
     if (fg->AddFreeVariable(input)) {
       signals_->InvalidateComputer();
