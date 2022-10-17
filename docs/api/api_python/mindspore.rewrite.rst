@@ -9,6 +9,10 @@ mindspore.rewrite
     参数：
         - **network** (Cell) - 要重写的网络。现在只支持Cell类型的网络。
 
+    异常：
+        - **RuntimeError** - 如果 `network` 不是Cell对象。
+        - **RuntimeError** - 如果 `network` 中包含不支持解析和优化的ast节点类型。
+
     .. py:method:: mindspore.rewrite.SymbolTree.after(node: Node)
 
         获取插入位置，位置为 `node` 之后。
@@ -134,6 +138,10 @@ mindspore.rewrite
         返回：
             当前SymbolTree中节点的生成器。
 
+     .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate()
+
+        打印当前SymbolTree的节点信息表格。
+
     .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: [Node])
 
         使用新节点列表来替代旧节点。
@@ -194,7 +202,7 @@ mindspore.rewrite
     下面提到的NodeImpl是Node的实现，它不是Rewrite的接口。Rewrite建议调用Node的特定 `create` 方法来实例化Node的实例，例如 `create_call_cell`，而不是直接调用Node的构造函数，所以不要关心NodeImpl是什么，只需要看做一个句柄即可。
 
     参数：
-        - **node** (Node) - SymbolTree中节点的具体实现类的实例。
+        - **node** (NodeImpl) - SymbolTree中节点的具体实现类的实例。
 
     .. py:method:: mindspore.rewrite.Node.create_call_cell(cell: Cell, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = "", is_sub_net: bool = False)
         :staticmethod:
@@ -203,9 +211,9 @@ mindspore.rewrite
 
         参数：
             - **cell** (Cell) - 该节点对应的前向计算的Cell对象。
-            - **targets** (Union[ScopedValue, str]) - 表示输出名称。在源代码中作为节点的输出。Rewrite将在插入节点时检查并确保每个目标的唯一性。
-            - **args** (ScopedValue) - 该节点的参数名称。用作源代码中代码语句的参数。默认为None表示单元格没有参数输入。Rewrite将在插入节点时检查并确保每个 `arg` 的唯一性。
-            - **kwargs** ({str: ScopedValue}) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示单元格没有 `kwargs` 输入。Rewrite将在插入节点时检查并确保每个 `kwarg` 的唯一性。
+            - **targets** (list[ScopedValue]) - 表示输出名称。在源代码中作为节点的输出。Rewrite将在插入节点时检查并确保每个目标的唯一性。
+            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认为None表示单元格没有参数输入。Rewrite将在插入节点时检查并确保每个 `arg` 的唯一性。
+            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示单元格没有 `kwargs` 输入。Rewrite将在插入节点时检查并确保每个 `kwarg` 的唯一性。
             - **name** (str) - 表示节点的名称。用作源代码中的字段名称。默认为无。当名称为无时，ReWrite将根据 `target` 生成一个默认名称。Rewrite将在插入节点时检查并确保名称的唯一性。
             - **is_sub_net** (bool) - 表示 `cell` 是否是一个网络。如果 `is_sub_net` 为真，Rewrite将尝试将 `cell` 解析为TreeNode，否则为CallCell节点。默认为False。
 
@@ -382,7 +390,7 @@ mindspore.rewrite
 
         参数：
             - **key** (str) - 属性的名称。
-            - **value** - 属性值。
+            - **value** (object) - 属性值。
 
         异常：
             - **TypeError** - 如果参数 `key` 不是str类型。
@@ -516,7 +524,7 @@ mindspore.rewrite
         使用一个类型的列表来创建一个Pattern。
 
         参数：
-            - **type_list** (list) - 类型列表，当前支持Cell和Primitive。
+            - **type_list** (list[type]) - 类型列表，当前支持Cell和Primitive。
 
         返回：
             根据列表生成的模式的根节点。
