@@ -5,7 +5,7 @@ mindspore.ops.gather_nd
 
     根据索引获取输入Tensor指定位置上的元素。
 
-    `indices` 是K维integer Tensor。假设`indices`是一个(K-1)维的张量，它的每个元素定义了 `input_x` 的一个slice：
+    `indices` 是K维integer Tensor。假设 `indices` 是一个(K-1)维的张量，它的每个元素定义了 `input_x` 的一个slice：
 
     .. math::
         output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]

@@ -19,5 +19,5 @@ mindspore.ops.glu
         Tensor，数据类型与输入 x 相同，shape等于 x 按照axis 拆分后的一半。
 
     异常：
-        - **TypeError**:  `x` 数据类型不是Number。
-        - **TypeError**:  `x` 不是Tensor。
+        - **TypeError** -  `x` 数据类型不是Number。
+        - **TypeError** -  `x` 不是Tensor。

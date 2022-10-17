@@ -20,7 +20,7 @@ mindspore.nn.MaxPool3d
         - **padding** (Union[int, tuple[int]]) - 池化填充长度。可以是一个整数表示在深度，高度和宽度方向的填充长度，或者包含三个整数的tuple，分别表示在深度，高度和宽度方向的填充长度。
         - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。默认值：1。
         - **return_indices** (bool) - 若为True，则返回一个包含两个Tensor的Tuple，表示池化的计算结果以及生成max值的位置，否则，仅返回池化计算结果。
-        - **ceil_mode** (Union[bool, None]) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
+        - **ceil_mode** (bool) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型必须为int8、 int16、 int32、 int64、 uint8、 uint16、 uint32、 uint64、 float16、 float32 或者 float64。
