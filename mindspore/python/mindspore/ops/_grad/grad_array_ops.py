@@ -278,7 +278,6 @@ def _tile_shape(multiples, shapex):
 def get_bprop_tile(self):
     """Generate bprop for Tile"""
     cast = P.Cast()
-    stack_op = P.Stack(1)
     concat = P.Concat()
     stridedslice = P.StridedSlice()
 
@@ -313,7 +312,10 @@ def get_bprop_tile(self):
             shape_x = shape_x[1:]
             shapey = concat((P.Ones()((1,), mstype.int64), shapey))
             shapey = shapey[1:]
-            tile_shape = transpose(stack_op((shapey, shape_x)), (1, 0))
+            if rankx == ranky:
+                tile_shape = transpose(P.Stack()((shapey, shape_x)), (1, 0))
+            else:
+                tile_shape = transpose(P.Stack(1)((shapey, shape_x)), (1, 0))
             r_shape = P.Reshape()(tile_shape, (-1,))
             axis = get_reduce_axis(r_shape)
 
