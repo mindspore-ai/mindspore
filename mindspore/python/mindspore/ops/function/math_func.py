@@ -4300,6 +4300,45 @@ def sparse_segment_mean(x, indices, segment_ids):
     return sparse_segment_mean_(x, indices, segment_ids)
 
 
+def atleast_2d(inputs):
+    r"""
+    Reshapes `inputs` as arrays with at least two dimensions.
+    Input tensor with two or more dimensions will be returned as is.
+
+    Args:
+        inputs (Union[tensor, List[tensor]]): one or more input tensors.
+
+    Returns:
+        Tensor or list of tensors, each with ``a.ndim >= 2``.
+
+    Raises:
+        TypeError: If the input is not a tensor or a list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x1 = np.ones((2, 3))
+        >>> x2 = np.ones(())
+        >>> x3 = np.ones(5)
+        >>> out = ops.atleast_2d([x1, x2, x3])
+        >>> print(out)
+        [Tensor(shape=[2, 3], dtype=Float32, value=
+        [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
+         [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]), Tensor(shape=[1, 1], dtype=Float32, value=
+        [[1.00000000e+000]]), Tensor(shape=[1, 5], dtype=Float32, value=
+        [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000, 1.00000000e+000, 1.00000000e+000]])]
+    """
+    if isinstance(inputs, Tensor):
+        return _expand(inputs, 2)
+    for tensor in inputs:
+        if not isinstance(tensor, Tensor):
+            msg = "expect Tensor or list of tensors, but got " + f"{type(tensor)}"
+            raise TypeError(msg)
+    return [_expand(arr, 2) for arr in inputs]
+
+
 def vstack(inputs):
     r"""
     Stacks tensors in sequence vertically.
@@ -6555,6 +6594,7 @@ __all__ = [
     'all',
     'any',
     'sparse_segment_mean',
+    'atleast_2d',
     'vstack',
     'copysign',
     'log2',
