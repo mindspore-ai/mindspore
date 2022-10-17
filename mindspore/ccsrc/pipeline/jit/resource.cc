@@ -330,6 +330,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"cross", std::string("cross")},                                    // cross()
        {"erfinv", std::string("erfinv")},                                  // erfinv()
        {"less_equal", std::string("less_equal")},                          // less_equal()
+       {"fold", std::string("fold")},                                      // fold()
+       {"unfold", std::string("unfold")},                                  // unfold()
      }},
     {kObjectTypeRowTensorType,
      {

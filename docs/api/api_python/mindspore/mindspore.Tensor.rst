@@ -193,6 +193,7 @@ Array操作
     mindspore.Tensor.dtype
     mindspore.Tensor.expand_as
     mindspore.Tensor.expand_dims
+    mindspore.Tensor.fold
     mindspore.Tensor.gather
     mindspore.Tensor.gather_elements
     mindspore.Tensor.gather_nd
@@ -235,6 +236,7 @@ Array操作
     mindspore.Tensor.to_tensor
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
+    mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad
     mindspore.Tensor.unsorted_segment_max

@@ -314,6 +314,7 @@ Array Operation
     mindspore.ops.dyn_shape
     mindspore.ops.expand
     mindspore.ops.expand_dims
+    mindspore.ops.fold
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
@@ -360,6 +361,7 @@ Array Operation
     mindspore.ops.tile
     mindspore.ops.top_k
     mindspore.ops.transpose
+    mindspore.ops.unfold
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad
