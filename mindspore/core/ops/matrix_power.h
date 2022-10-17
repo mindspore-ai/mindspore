@@ -32,6 +32,9 @@ class MIND_API MatrixPower : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixPower);
   MatrixPower() : BaseOperator(kNameMatrixPower) { InitIOName({"x"}, {"y"}); }
+  void Init(const int64_t exponent);
+  void set_exponent(const int64_t exponent);
+  int64_t get_exponent();
 };
 
 abstract::AbstractBasePtr MatrixPowerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

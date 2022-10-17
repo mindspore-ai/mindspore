@@ -15,11 +15,15 @@
  */
 
 #include "plugin/device/cpu/kernel/matrix_diag_v3_cpu_kernel.h"
+#include <set>
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
+#include "mindspore/core/ops/op_name.h"
+#include "mindspore/core/ops/matrix_diag_v3.h"
+#include "mindspore/core/utils/check_convert_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -40,51 +44,59 @@ static std::pair<int64_t, int64_t> ComputeTwo(int64_t diag_index, int64_t max_di
 }
 }  // namespace
 
-void MatrixDiagV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-  if (common::AnfAlgo::HasNodeAttr("align", kernel_node)) {
-    align_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "align");
-    if (!(align_ == "" || align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT" || align_ == "LEFT_LEFT" ||
-          align_ == "LEFT_RIGHT")) {
-      MS_LOG(EXCEPTION) << "Attr 'align' of 'MatrixDiagV3' is not in: 'LEFT_RIGHT', "
-                           "'RIGHT_LEFT', 'LEFT_LEFT', 'RIGHT_RIGHT'.";
-    }
-    if (align_ == "") {
-      align_ = "RIGHT_LEFT";
-    }
-  } else {
-    align_ = "RIGHT_LEFT";
+bool MatrixDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  MS_LOG(WARNING) << "in new init " << kernel_name_;
+  auto op_prim = std::dynamic_pointer_cast<ops::MatrixDiagV3>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  auto align = op_prim->get_align();
+  if (!align.empty()) {
+    align_ = align;
   }
+  const std::set<std::string> support_list = {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"};
+  (void)CheckAndConvertUtils::CheckString(ops::kAlign, align_, support_list, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "MatrixDiagV3 does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
 
-  diagonal_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto padding_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndexPaddingValue);
-  auto output_data_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+int MatrixDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  MS_ERROR_IF_NULL(base_operator);
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  MS_LOG(WARNING) << "in new resize ..";
+  diagonal_data_type_ = inputs[kIndex0]->GetDtype();
+  auto padding_type = inputs[kIndexPaddingValue]->GetDtype();
+  auto output_data_type = outputs[kIndex0]->GetDtype();
 
   if (diagonal_data_type_ != padding_type) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagV3, the data type of x need be same with padding_value.";
+    MS_LOG(ERROR) << "For MatrixDiagV3, the data type of x need be same with padding_value.";
+    return KRET_RESIZE_FAILED;
   }
 
   if (diagonal_data_type_ != output_data_type) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagV3, The data type of x need be same with output.";
+    MS_LOG(ERROR) << "For MatrixDiagV3, The data type of x need be same with output.";
+    return KRET_RESIZE_FAILED;
   }
-
-  diagonal_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  k_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  size_t k_dim_size = k_shape_.size();
-  const size_t k_dim_size_max = 1;
-  if (k_dim_size > k_dim_size_max) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagV3, k_dim_size can not be greater than 1, received " << k_dim_size << ".";
+  diagonal_shape_ = inputs[kIndex0]->GetShapeVector();
+  k_shape_ = inputs[kIndex1]->GetShapeVector();
+  const size_t dim_size_max = 1;
+  if (k_shape_.size() > dim_size_max) {
+    MS_LOG(ERROR) << "For MatrixDiagV3, k_dim_size can not be greater than 1, received " << k_shape_.size() << ".";
+    return KRET_RESIZE_FAILED;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "MatrixDiagV3 does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>

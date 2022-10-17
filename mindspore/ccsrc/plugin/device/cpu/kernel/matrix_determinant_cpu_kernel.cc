@@ -22,22 +22,47 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputSize = 1;
-constexpr size_t kOutputSize = 1;
+constexpr size_t kInputOutputNumber = 1;
 static constexpr int kNumber0 = 0;
 static constexpr int kNumber1 = 1;
 static constexpr int kNumber2 = 2;
 }  // namespace
 
-void MatrixDeterminantCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputSize, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputSize, kernel_name_);
+bool MatrixDeterminantCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != kInputOutputNumber) {
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", the inputs number must be 1, but got " << inputs.size();
+    return false;
+  }
+  if (outputs.size() != kInputOutputNumber) {
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", the inputs number must be 1, but got " << outputs.size();
+    return false;
+  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
+}
+
+int MatrixDeterminantCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_ = inputs[kIndex0]->GetShapeVector();
+  if (input_.size() < kNumber2) {
+    MS_LOG(ERROR) << "input must be at least rank 2, but got " << input_.size();
+    return KRET_RESIZE_FAILED;
+  }
+  if (input_[input_.size() - kNumber1] != input_[input_.size() - kNumber2]) {
+    MS_LOG(ERROR) << "The last two dimensions of Input x must be equal.";
+    return KRET_RESIZE_FAILED;
+  }
+  return KRET_OK;
 }
 
 bool MatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -60,26 +85,15 @@ bool MatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
 template <typename T>
 void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<AddressPtr> &inputs,
                                                             const std::vector<AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output);
-  // Check if it's a square array
-  auto dims = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
-  if (dims.size() < kNumber2) {
-    MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
-  }
-  if (dims[dims.size() - kNumber1] != dims[dims.size() - kNumber2]) {
-    MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
-  }
-  size_t m = LongToSize(dims[dims.size() - 1]);
+
+  size_t m = LongToSize(input_[input_.size() - 1]);
   int64_t n = 1;
-  for (size_t i = kNumber0; i < dims.size() - kNumber2; i++) {
-    n *= dims[i];
+  for (size_t i = kNumber0; i < input_.size() - kNumber2; i++) {
+    n *= input_[i];
   }
   auto task = [this, &m, input, output](size_t start, size_t end) {
     for (size_t k = start; k < end; k++) {

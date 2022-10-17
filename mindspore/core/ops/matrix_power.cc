@@ -25,6 +25,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr auto kExponent = "n";
+
 TypePtr MatrixPowerInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto x_type = input_args[0]->BuildType();
@@ -50,6 +52,15 @@ abstract::ShapePtr MatrixPowerInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(x_shape);
 }
 }  // namespace
+
+void MatrixPower::Init(const int64_t exponent) { set_exponent(exponent); }
+
+void MatrixPower::set_exponent(const int64_t exponent) { (void)this->AddAttr(kExponent, api::MakeValue(exponent)); }
+
+int64_t MatrixPower::get_exponent() {
+  auto value_ptr = GetAttr(kExponent);
+  return GetValue<int64_t>(value_ptr);
+}
 
 MIND_API_OPERATOR_IMPL(MatrixPower, BaseOperator);
 AbstractBasePtr MatrixPowerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

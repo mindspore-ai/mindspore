@@ -16,7 +16,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/LU"
-
+#include "mindspore/core/ops/matrix_power.h"
 #include "plugin/device/cpu/kernel/matrix_power_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -28,11 +28,25 @@ constexpr size_t kOutputSize = 1;
 static constexpr int kNumber2 = 2;
 }  // namespace
 
-void MatrixPowerCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool MatrixPowerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs[kIndex0]->GetDtype();
+  auto op_prim = std::dynamic_pointer_cast<ops::MatrixPower>(base_operator);
+  power_ = op_prim->get_exponent();
+  return true;
+}
+
+int MatrixPowerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+  return KRET_OK;
 }
 
 bool MatrixPowerCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -45,7 +59,8 @@ bool MatrixPowerCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
+    MS_LOG(ERROR) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
+    return false;
   }
   return true;
 }
@@ -53,21 +68,16 @@ bool MatrixPowerCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 template <typename T>
 void MatrixPowerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
   T *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(x_addr);
   T *y_addr = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(y_addr);
-  auto shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0));
-  size_t batch = shape[0];
-  size_t dim = shape[1];
+  size_t batch = output_shape_[0];
+  size_t dim = output_shape_[1];
   size_t matrix_size = dim * dim;
   std::vector<std::vector<float>> temp_x(batch, std::vector<float>(matrix_size));
   std::vector<std::vector<float>> temp_y(batch, std::vector<float>(matrix_size));
-  power_ = common::AnfAlgo::GetNodeAttr<int64_t>(node_, "n");
+
   for (size_t i = 0; i < batch; i++) {
     int64_t n = power_;
     for (size_t j = 0; j < matrix_size; j++) {
