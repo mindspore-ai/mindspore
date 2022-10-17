@@ -15,6 +15,7 @@
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
+from math import pi
 
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
@@ -3299,6 +3300,107 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
     return outputs
 
 
+def elu(input_x, alpha=1.0):
+    r"""
+    Exponential Linear Unit activation function.
+
+    Applies the exponential linear unit function element-wise.
+    The activation function is defined as:
+
+    .. math::
+
+        \text{ELU}(x)= \left\{
+        \begin{array}{align}
+            \alpha(e^{x}  - 1) & \text{if } x \le 0\\
+            x & \text{if } x \gt 0\\
+        \end{array}\right.
+
+    The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
+    Activation_function#/media/File:Activation_elu.svg>`_ .
+
+    Args:
+        input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
+        alpha (float): The alpha value of ELU, the data type is float. Only support '1.0' currently. Default: 1.0.
+
+    Returns:
+        Tensor, has the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If `alpha` is not a float.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        ValueError: If `alpha` is not equal to 1.0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> output = ops.elu(x)
+        >>> print(output)
+        [[-0.63212055  4.         -0.99966455]
+         [ 2.         -0.99326205  9.        ]]
+    """
+    return _get_cache_prim(P.Elu)(alpha=alpha)(input_x)
+
+
+def gelu(input_x, approximate='none'):
+    r"""
+    Gaussian Error Linear Units activation function.
+
+    GeLU is described in the paper `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_.
+    And also please refer to `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+    <https://arxiv.org/abs/1810.04805>`_.
+
+    When `approximate` argument is `none`, GeLU is defined as follows:
+
+    .. math::
+        GELU(x_i) = x_i*P(X < x_i)
+
+    where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
+    :math:`x_i` is the input element.
+
+    When `approximate` argument is `tanh`, GeLU is estimated with:
+
+    .. math::
+        GELU(x_i) = 0.5 * x_i * (1 + tanh[\sqrt{\\frac{2}{pi}}(x + 0.044715 * x_{i}^{3})] )
+
+    Args:
+        input_x (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
+        approximate (str): the gelu approximation algorithm to use. Acceptable vaslues are 'none' and 'tanh'.
+            Default: 'none'.
+
+    Returns:
+        Tensor, with the same type and shape as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        ValueError: If `approximate` value is neither `none` or `tanh`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor([1.0, 2.0, 3.0], mindspore.float32)
+        >>> result = ops.gelu(x)
+        >>> print(result)
+        [0.841192 1.9545976 2.9963627]
+    """
+    if approximate not in ['none', 'tanh']:
+        raise ValueError("For ops.gelu, approximate value should be either 'none' or 'tanh'.")
+
+    output = _get_cache_prim(P.GeLU)()(input_x)
+
+    if approximate == 'tanh':
+        output = _get_cache_prim(P.Pow)()(input_x, Tensor([3]))
+        output = output * Tensor([0.044715]) + input_x
+        output = output * _get_cache_prim(P.Sqrt)()(Tensor(2.0 / pi))
+        output = _get_cache_prim(P.Tanh)()(output) + Tensor([1.0])
+        output = output * input_x * Tensor([0.5])
+
+    return output
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -3349,6 +3451,8 @@ __all__ = [
     'conv3d',
     'glu',
     'multi_margin_loss',
-    'multi_label_margin_loss'
+    'multi_label_margin_loss',
+    'elu',
+    'gelu',
 ]
 __all__.sort()

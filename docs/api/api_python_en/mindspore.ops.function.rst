@@ -69,8 +69,10 @@ Activation Functions
 
     mindspore.ops.celu
     mindspore.ops.dropout
+    mindspore.ops.elu
     mindspore.ops.fast_gelu
-    mindspore.ops.glu
+    mindspore.ops.gelu
+    mindspore.ops.glu    
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
@@ -311,6 +313,7 @@ Array Operation
     mindspore.ops.concat
     mindspore.ops.count_nonzero
     mindspore.ops.diag
+    mindspore.ops.diagonal
     mindspore.ops.dyn_shape
     mindspore.ops.expand
     mindspore.ops.expand_dims

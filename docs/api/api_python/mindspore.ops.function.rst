@@ -68,7 +68,9 @@ mindspore.ops.function
 
     mindspore.ops.celu
     mindspore.ops.dropout
+    mindspore.ops.elu
     mindspore.ops.fast_gelu
+    mindspore.ops.gelu
     mindspore.ops.glu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
@@ -311,6 +313,7 @@ Array操作
     mindspore.ops.concat
     mindspore.ops.count_nonzero
     mindspore.ops.diag
+    mindspore.ops.diagonal
     mindspore.ops.dyn_shape
     mindspore.ops.expand
     mindspore.ops.expand_dims
