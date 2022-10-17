@@ -17,17 +17,29 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SIGMOID_MUL_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SIGMOID_MUL_FUSION_H_
 
+#include <string>
+#include <unordered_map>
 #include "tools/optimizer/common/pattern_process_pass_extends.h"
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace opt {
-class SigmoidMulFusion : public LitePatternProcessPass {
+class SigmoidMulFusion : public MultiplePatternProcessPass {
  public:
-  explicit SigmoidMulFusion(bool multigraph = true) : LitePatternProcessPass("SigmoidMulFusion", multigraph) {}
+  explicit SigmoidMulFusion(const std::string &name = "SigmoidMulFusion", bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {}
   ~SigmoidMulFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
+
+ private:
+  VectorRef DefineSigmoidMulFirstPattern() const;
+  VectorRef DefineSigmoidMulSecondPattern() const;
+
+  bool CheckPattern(const std::string &pattern_name, const FuncGraphPtr &func_graph, const CNodePtr &act_cnode,
+                    const CNodePtr &mul_cnode) const;
 };
 }  // namespace opt
 }  // namespace mindspore
