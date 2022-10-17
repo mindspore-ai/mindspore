@@ -243,7 +243,7 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
       top_graph->add_parameter(param_ptr);
       size_t fv_param_count = top_graph->fv_param_count();
       top_graph->set_fv_param_count(++fv_param_count);
-      drop_node_list.emplace_back(param_ptr);
+      (void)drop_node_list.emplace_back(param_ptr);
       resolved_graph->set_fv_param_count(--resolved_graph_count);
     } else {
       input_params.push_back(param_ptr);
