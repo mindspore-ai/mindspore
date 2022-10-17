@@ -44,21 +44,32 @@ const size_t kInputValue = 3;
 const size_t kOutputData = 0;
 }  // namespace
 
-void AddcmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool AddcmulCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  kernel_name_ = base_operator->GetPrim()->name();
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
+}
 
-  input_shape0_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputData);
-  input_shape1_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputX1);
-  input_shape2_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputX2);
-  input_shape3_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputValue);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputData);
+int AddcmulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
 
+  input_shape0_ = inputs[kInputData]->GetDeviceShapeAdaptively();
+  input_shape1_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
+  input_shape2_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
+  input_shape3_ = inputs[kInputValue]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kOutputData]->GetShapeVector();
   data_shape_size_ = input_shape0_.size();
   inputx_shape_size_ = input_shape1_.size();
   inputy_shape_size_ = input_shape2_.size();
   value_shape_size_ = input_shape3_.size();
+  return KRET_OK;
 }
 
 template <typename T>

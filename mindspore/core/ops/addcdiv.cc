@@ -41,6 +41,9 @@ abstract::ShapePtr AddcdivInferShape(const PrimitivePtr &primitive, const std::v
   auto x2_shape = x2_shape_map[kShape];
   auto value_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape());
   auto value_shape = value_shape_map[kShape];
+  if (IsDynamicRank(input_data) || IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape) || IsDynamicRank(value_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
   auto broadcast_shape = CalBroadCastShape(x1_shape, x2_shape, op_name, "x1", "x2");
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>()) {
     (void)CalBroadCastShape(x1_shape, value_shape, op_name, "x1", "value");
