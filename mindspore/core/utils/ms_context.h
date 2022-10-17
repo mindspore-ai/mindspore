@@ -46,7 +46,7 @@ const char kGpuInferenceDevice[] = "GpuInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
-const unsigned int kOpTimeout = 600;
+const unsigned int kOpTimeout = 0;
 const int kOptimizeO0 = 0;
 const int kOptimizeO1 = 1;
 
