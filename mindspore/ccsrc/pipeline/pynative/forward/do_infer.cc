@@ -75,6 +75,8 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
 }
 
 void FillUnknownShapeForDynamicInputOp(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &infer_res) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(infer_res);
   auto dynamic_op_iter = kDynamicInputOpMap.find(op_run_info->base_op_run_info.op_name);
   if (dynamic_op_iter == kDynamicInputOpMap.end()) {
     return;
@@ -82,8 +84,26 @@ void FillUnknownShapeForDynamicInputOp(const FrontendOpRunInfoPtr &op_run_info, 
 
   MS_LOG(DEBUG) << "Find op in kDynamicInputOpMap, op name:" << op_run_info->base_op_run_info.op_name
                 << " origin infer result " << infer_res->ToString();
+  auto base_shape = infer_res->BuildShape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->IsDynamic()) {
+    // ops infer result is dynamic, no need to update shape.
+    MS_LOG(DEBUG) << "Find op in kDynamicInputOpMap, op name:" << op_run_info->base_op_run_info.op_name
+                  << " shape is already dynamic";
+    return;
+  }
+
+  auto get_dim_any_shape_vector = [](const BaseShapePtr &base_shape_ptr) -> ShapeVector {
+    MS_EXCEPTION_IF_NULL(base_shape_ptr);
+    const auto &shape_ptr = base_shape_ptr->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    auto tensor_shape = shape_ptr->shape();
+    std::fill(tensor_shape.begin(), tensor_shape.end(), abstract::Shape::kShapeDimAny);
+    return tensor_shape;
+  };
+
   if (infer_res->isa<abstract::AbstractTensor>()) {
-    auto updata_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    auto updata_shape = std::make_shared<abstract::Shape>(get_dim_any_shape_vector(base_shape));
     infer_res->set_shape(updata_shape);
   } else if (infer_res->isa<abstract::AbstractTuple>()) {
     auto abstract_tuple = infer_res->cast<abstract::AbstractTuplePtr>();
@@ -93,7 +113,13 @@ void FillUnknownShapeForDynamicInputOp(const FrontendOpRunInfoPtr &op_run_info, 
     for (size_t idx = 0; idx < abstract_tuple->size(); ++idx) {
       auto cur_element = abstract_tuple->elements()[idx];
       MS_EXCEPTION_IF_NULL(cur_element);
-      auto updata_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+      if (!cur_element->isa<abstract::AbstractTensor>()) {
+        MS_LOG(INFO) << "cur_element is not a AbstractTensor, " << cur_element->ToString();
+        continue;
+      }
+      auto cur_elem_shape = cur_element->BuildShape();
+      MS_EXCEPTION_IF_NULL(cur_elem_shape);
+      auto updata_shape = std::make_shared<abstract::Shape>(get_dim_any_shape_vector(cur_elem_shape));
       cur_element->set_shape(updata_shape);
     }
   } else {
