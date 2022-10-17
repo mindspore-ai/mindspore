@@ -22,6 +22,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
+from mindspore import context
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore.common.api import ms_function
@@ -390,13 +391,13 @@ def test_callbackmanager_begin_called():
     Description: Test CallbackManager called begin
     Expectation: run success
     """
-    context = dict()
+    run_context = dict()
     with mock.patch.object(Callback, 'begin', return_value=None) as mock_begin:
         cb1, cb2 = Callback(), Callback()
         with _CallbackManager([cb1, cb2]) as cm:
-            cm.begin(context)
+            cm.begin(run_context)
     for call_args in mock_begin.call_args_list:
-        assert call_args == mock.call(context)
+        assert call_args == mock.call(run_context)
     assert mock_begin.call_count == 2
 
 
@@ -443,6 +444,7 @@ def test_step_end_save_graph():
     Description: Test save graph at step end
     Expectation: run success
     """
+    context.set_context(mode=context.GRAPH_MODE)
     train_config = CheckpointConfig(
         save_checkpoint_steps=16,
         save_checkpoint_seconds=0,

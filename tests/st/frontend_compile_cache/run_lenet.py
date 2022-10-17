@@ -68,7 +68,7 @@ def train(net, data, label):
 
 
 if __name__ == "__main__":
-    context.set_context(enable_compile_cache=True, compile_cache_path=sys.argv[1])
+    context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
     input_data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     input_label = Tensor(np.ones([32]).astype(np.int32))
     lenet = LeNet()

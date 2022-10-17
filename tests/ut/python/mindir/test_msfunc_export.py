@@ -15,7 +15,7 @@
 
 import numpy as np
 from mindspore import ms_function
-from mindspore import Tensor, export, load, Parameter, dtype
+from mindspore import Tensor, export, load, Parameter, dtype, context
 from mindspore.nn import GraphCell
 
 
@@ -38,6 +38,7 @@ def test_controller():
             x += y
         return x + y
 
+    context.set_context(mode=context.GRAPH_MODE)
     input1 = Tensor(np.array([3], np.float32))
     input2 = Tensor(np.array([0], np.float32))
     controller_graph = ms_function(fn=controller)

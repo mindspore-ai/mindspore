@@ -29,6 +29,7 @@
 #include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ad {
@@ -42,6 +43,8 @@ class TestAD : public UT::Common {
 
  protected:
   void AssertExpect(const std::string& testCase) {
+    auto ms_context = MsContext::GetInstance();
+    ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
     FuncGraphPtr g = getPyFun(testCase);
     resourcePtr->manager()->RemoveRoots();
     resourcePtr->manager()->AddFuncGraph(g, true);

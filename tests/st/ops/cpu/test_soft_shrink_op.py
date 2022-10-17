@@ -152,6 +152,7 @@ def test_softshrink_grad(data_shape):
     Description: test the rightness of SoftShrinkGrad cpu kernel
     Expectation: the output is same as softshrink_grad_op_np_bencmark output
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     grad_data = np.random.random(data_shape).astype(np.float32)
     input_data = np.random.uniform(
         low=-1, high=1, size=data_shape).astype(np.float32)

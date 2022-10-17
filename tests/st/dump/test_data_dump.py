@@ -446,6 +446,7 @@ def check_data_dump(dump_file_path):
 
 
 def run_train():
+    context.set_context(mode=context.GRAPH_MODE)
     add = Net()
     add(Tensor(x), Tensor(y))
 

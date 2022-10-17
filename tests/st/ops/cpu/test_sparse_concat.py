@@ -274,6 +274,7 @@ def test_sparse_concat_error_case():
     Description: Test spare_concat, test error case: wrong COOTensor input, wrong concat_dim input.
     Expectation: Success.
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     error_case_wrong_intput()
     error_case_wrong_intput_num()
     error_case_wrong_axis()

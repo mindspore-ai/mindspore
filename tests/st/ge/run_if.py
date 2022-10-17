@@ -17,8 +17,6 @@ from mindspore import Tensor, nn
 from mindspore.common import dtype as mstype
 from mindspore import Parameter
 
-context.set_context(mode=context.GRAPH_MODE)
-
 
 class IfNet(nn.Cell):
     def __init__(self):
@@ -43,6 +41,7 @@ def test_if_ge():
     Description: test if with ge backend.
     Expectation: success.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     net = IfNet()
     x = Tensor(3, mstype.int32)
     out0, out1 = net(x)

@@ -15,7 +15,7 @@
 import numpy as np
 from mindspore.nn import Cell, GraphCell
 
-from mindspore import Tensor, export, load, Parameter, dtype
+from mindspore import Tensor, export, load, Parameter, dtype, context
 
 
 def test_export_control_flow():
@@ -42,6 +42,7 @@ def test_export_control_flow():
 
             return x + y
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = np.array([3], np.float32)
     y = np.array([0], np.float32)
     net = Net()

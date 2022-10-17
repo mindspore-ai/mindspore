@@ -276,6 +276,7 @@ def test_fused_sparse_ftrl_invalid_input_type_indices_invalid2():
     Description: list tensor, invalid indices data type
     Expectation: raise expected exception
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     var_np = np.ones([3, 3, 3]).astype(np.float32)
     accum_np = np.ones([3, 3, 3]).astype(np.float32)
     linear_np = np.ones([3, 3, 3]).astype(np.float32)
@@ -299,6 +300,7 @@ def test_fused_sparse_ftrl_invalid_input_type_gradient_invalid():
     Description: list tensor, invalid gradient data type
     Expectation: raise expected exception
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     var_np = np.ones([3, 3, 3]).astype(np.float32)
     accum_np = np.ones([3, 3, 3]).astype(np.float32)
     linear_np = np.ones([3, 3, 3]).astype(np.float32)
@@ -342,6 +344,7 @@ def test_fused_sparse_ftrl_dynamic():
             out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
             return out
 
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     grad = Tensor(np.array([[[0.1, 0.1]], [[0.1, 0.1]], [[0.1, 0.1]]]).astype(np.float32))
     indices = Tensor(np.array([0, 1, 2]).astype(np.int32))
     indices_dy = Tensor([0, 1], mstype.int32)

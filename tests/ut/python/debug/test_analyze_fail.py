@@ -20,8 +20,10 @@ import os
 import shutil
 import pytest
 import mindspore
-from mindspore import ops, Tensor, nn
+from mindspore import ops, Tensor, nn, context
 from tests.security_utils import security_off_wrap
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(nn.Cell):

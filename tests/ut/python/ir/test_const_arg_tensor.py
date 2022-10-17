@@ -21,8 +21,7 @@ from mindspore.common.api import _CellGraphExecutor, _MindsporeFunctionExecutor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor
-from mindspore import ms_function
+from mindspore import Tensor, context, ms_function
 
 
 def test_tensor_compile_phase1():
@@ -201,6 +200,7 @@ def test_grad_constant_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
     y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
     grad_net = GradNetWrtX(Net())
@@ -235,6 +235,7 @@ def test_grad_constant_tensor_mixed_call():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
     y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
     x = mutable(x)
@@ -271,6 +272,7 @@ def test_ms_function_grad_constant_tensor():
         grad_op = GradOperation()
         return grad_op(net)(x, y)
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
     y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
     output = fn(x, y)
@@ -294,6 +296,7 @@ def test_tensor_constant_folding():
             out = self.add(x, y)
             return out
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
     y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3]], dtype=mstype.float32, const_arg=True)
     net = Net()
@@ -314,6 +317,7 @@ def test_ms_function_tensor_constant_folding():
     def fn(x, y):
         return P.Add()(x, y)
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
     y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3]], dtype=mstype.float32, const_arg=True)
     output = fn(x, y)
@@ -340,6 +344,7 @@ def test_constant_tensor_if():
                 out = out + y
             return out
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([0], dtype=mstype.int32, const_arg=True)
     y = Tensor([1], dtype=mstype.int32, const_arg=True)
     net = Net()
@@ -363,6 +368,7 @@ def test_ms_function_constant_tensor_if():
             out = out + y
         return out
 
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([0], dtype=mstype.int32, const_arg=True)
     y = Tensor([1], dtype=mstype.int32, const_arg=True)
     output = fn(x, y)
@@ -376,6 +382,7 @@ def test_check_mutable_value():
     Description: Check the illegal arg.
     Expectation: Raise the correct error log.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     try:
         x = Tensor([0], dtype=mstype.int32, const_arg=1)
     except TypeError as e:

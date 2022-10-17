@@ -103,7 +103,7 @@ def test_space_to_batch_nd_function():
     Description: test interface.
     Expectation: the result match with numpy result
     """
-    context.set_context(device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x = Tensor(np.arange(16).reshape((1, 1, 4, 4)).astype(np.float32), mindspore.float32)
     output = ops.space_to_batch_nd(x, 2, [[0, 0], [0, 0]])
     expect = np.array([[[[0, 2],

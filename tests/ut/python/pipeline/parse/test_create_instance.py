@@ -85,6 +85,7 @@ class Net1(nn.Cell):
 def test_create_primitive_object_on_construct():
     """ test_create_primitive_object_on_construct """
     log.debug("begin test_create_object_on_construct")
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array([[1, 2, 3], [1, 2, 3]], np.float32))
     y = Tensor(np.array([[2, 3, 4], [1, 1, 2]], np.float32))
 
@@ -214,6 +215,7 @@ def test_create_cell_with_tensor():
     Description: None
     Expectation: TypeError.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     t = Tensor(np.zeros((2, 2), np.float), dtype.float32)
     with pytest.raises(TypeError):
         print(WrapCell()(t))
@@ -246,6 +248,7 @@ def test_create_grad_operation():
             gradient_function = ops.GradOperation(get_all=True, get_by_list=True)(self.net, self.params)
             return gradient_function(x, y)
 
+    context.set_context(mode=context.GRAPH_MODE)
     a = Tensor([[1, 2, 3]], dtype.float32)
     b = Tensor([[7, 8, 9], [10, 11, 12], [13, 14, 15]], dtype.float32)
     GradNetWrtInputsAndParams(NetInner())(a, b)

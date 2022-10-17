@@ -105,6 +105,7 @@ def test_cell_in_list():
     Description: test recursive switch layer.
     Expectation: success if grad and output are correct.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     net = CellInList()
     t = Tensor(10, mstype.int32)
     x = Tensor(0, mstype.int32)

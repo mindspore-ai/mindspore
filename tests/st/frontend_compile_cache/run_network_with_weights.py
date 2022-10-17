@@ -46,6 +46,6 @@ def run_simple_net():
 
 
 if __name__ == "__main__":
-    context.set_context(enable_compile_cache=True, compile_cache_path=sys.argv[1])
+    context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
     run_simple_net()
     context.set_context(enable_compile_cache=False)

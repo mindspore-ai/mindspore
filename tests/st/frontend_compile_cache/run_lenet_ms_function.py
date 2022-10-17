@@ -13,7 +13,7 @@ def func(input_x, input_y):
 
 
 if __name__ == "__main__":
-    context.set_context(enable_compile_cache=True, compile_cache_path=sys.argv[1])
+    context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
     x = Tensor(np.array([1]).astype(np.float32))
     y = Tensor(np.array([2]).astype(np.float32))
     res = func(x, y)

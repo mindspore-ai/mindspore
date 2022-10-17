@@ -22,6 +22,9 @@
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "utils/ms_context.h"
+
+using namespace pybind11::literals;
 
 namespace mindspore {
 namespace parallel {
@@ -52,6 +55,8 @@ void Init_Device_Manager() {
 }
 
 void TestStepParallel::SetUp() {
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   UT::InitPythonPath();
   Init_Device_Manager();
 }
@@ -306,6 +311,9 @@ TEST_F(TestStepParallel, CreateOpInstance) {
   OperatorAttrs attrs = {attr0, attr1};
   OperatorName op_name = "AllReduce";
   OperatorParams operator_param;
+  py::object context = py::module::import("mindspore.context");
+  py::object set_context = context.attr("set_context");
+  set_context("mode"_a=kGraphMode);
   OperatorArgs args = std::make_pair(attrs, operator_param);
   auto op_instance = CreateOpInstance(args.first, op_name, "test");
   ASSERT_TRUE(op_instance);
@@ -444,6 +452,9 @@ TEST_F(TestStepParallel, ForwardCommunication1) {
   OperatorArgs args = std::make_pair(attrs, operator_param);
   Operator op = std::make_pair(op_name, args);
   OperatorVector op_list = {op, op};
+  py::object context = py::module::import("mindspore.context");
+  py::object set_context = context.attr("set_context");
+  set_context("mode"_a=kGraphMode);
   FuncGraphManagerPtr manager = Make_Manager();
   FuncGraphSet graphs = manager->func_graphs();
   FuncGraphPtr graph = *graphs.begin();

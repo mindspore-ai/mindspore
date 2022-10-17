@@ -831,9 +831,9 @@ def set_context(**kwargs):
             be located, when the value is set to True, the operator is executed synchronously on the device. It will
             reduce the execution performance of the program. At this time, when an error occurs in the execution of
             the operator, the location of the error script code can be located according to the call stack of the error.
-        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: GRAPH_MODE(0).
+        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE(1).
             GRAPH_MODE or PYNATIVE_MODE can be set by `mode` attribute and both modes support all backends, default
-            mode is GRAPH_MODE.
+            mode is PYNATIVE_MODE.
         enable_graph_kernel (bool): Whether to enable graph kernel fusion to optimize network execution performance.
             Default: False.
             Indicates whether to enable image-computing convergence to optimize network execution performance.
