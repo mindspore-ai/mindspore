@@ -31,6 +31,7 @@
 #include "runtime/graph_scheduler/actor/copy_actor.h"
 #include "runtime/graph_scheduler/actor/custom_actor.h"
 #include "runtime/graph_scheduler/actor/fusion/fusion_actor.h"
+#include "runtime/graph_scheduler/actor/memory/memory_swap_actor.h"
 #include "runtime/graph_scheduler/actor/memory/memory_alloc_actor.h"
 #include "runtime/graph_scheduler/actor/memory/memory_free_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/control_actor.h"
@@ -55,6 +56,7 @@ void DumpCopyActors(const std::vector<CopyActorPtr> &actors, std::ofstream &ofs)
 void DumpFusionActors(const std::vector<FusionActorPtr> &actors, std::ofstream &ofs);
 void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs);
 void DumpCustomActors(const std::vector<CustomActorPtr> &actors, std::ofstream &ofs);
+void DumpSwapActors(const std::vector<std::vector<MemSwapActorPtr>> &actors, std::ofstream &ofs);
 }  // namespace runtime
 }  // namespace mindspore
 

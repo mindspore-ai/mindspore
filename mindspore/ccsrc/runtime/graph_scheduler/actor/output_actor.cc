@@ -282,8 +282,10 @@ void OutputActor::UpdateOutputDeviceAddress() {
       // Move the device ptr from device_tensor to tensor_device_address.
       tensor_device_address->set_ptr(device_tensor->GetMutablePtr());
       tensor_device_address->set_from_mem_pool(device_tensor->from_mem_pool());
+      tensor_device_address->SetOffloadPtr(device_tensor->GetOffloadPtr());
       device_tensor->set_ptr(nullptr);
       device_tensor->set_from_mem_pool(false);
+      device_tensor->SetOffloadPtr(nullptr);
     }
   }
 

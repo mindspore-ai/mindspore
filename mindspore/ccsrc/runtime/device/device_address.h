@@ -160,6 +160,21 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
 #endif
 
+  // Return whether DeviceAddress has a valid ptr_ or offload_ptr_.
+  virtual bool IsPtrValid() {
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    return ptr_ != nullptr || offload_ptr_ != nullptr;
+  }
+
+  // Load first if data is offloaded and return the device ptr.
+  virtual void *GetValidPtr(size_t stream_id) {
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    if (mem_offloaded() && !Load(stream_id)) {
+      MS_LOG(EXCEPTION) << "Load offloaded memory failed.";
+    }
+    return ptr_;
+  }
+
   // Offload data from device to host and free device memory
   virtual bool Offload(size_t stream_id) {
     MS_LOG(WARNING) << "Not implemented.";

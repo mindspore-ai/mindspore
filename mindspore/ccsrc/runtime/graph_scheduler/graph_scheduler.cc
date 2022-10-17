@@ -727,6 +727,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   actor_set->data_prepare_actor_ =
     BuildDataPrepareActor(graph_compiler_info, actor_set->data_source_actors_, host_queue);
   actor_set->control_actors_ = control_node_scheduler_.Build(graph_compiler_info, memory_manager_aid_);
+  actor_set->swap_actors_ = swap_node_scheduler_.Build(graph_compiler_info, recorder_aid_);
 
 #ifdef ENABLE_RPC_ACTOR
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
@@ -820,6 +821,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited()) {
     control_node_scheduler_.Link(actor_set, graph_compiler_info);
   }
+  swap_node_scheduler_.Link(graph_compiler_info, actor_set);
 
 #ifdef ENABLE_RPC_ACTOR
   // Link inter-process arrows for rpc actors.
@@ -840,7 +842,9 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
     optimizer->AddPass(std::make_shared<MemoryActorInsert>());
   }
   optimizer->AddPass(std::make_shared<InvalidDataArrowElimination>());
-  optimizer->AddPass(std::make_shared<MultiActorFusion>());
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
+    optimizer->AddPass(std::make_shared<MultiActorFusion>());
+  }
   optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
   optimizer->Optimize(actor_set);
 }
@@ -1094,11 +1098,14 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
     for (size_t index = 0; index < graph_compiler_info.graphs_.size(); ++index) {
       const auto &graph = graph_compiler_info.graphs_[index];
       MS_EXCEPTION_IF_NULL(graph);
-      if (graph->is_graph_run_mode()) {
-        continue;
-      }
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
+      // Memory swap strategy will take over the continuous memory.
+      const bool enable_mem_offload =
+        ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD) && !graph->is_dynamic_shape();
       // Somas will take over the continuous memory.
-      if (graph->somas_whole_block_size() != 0) {
+      const bool using_somas = graph->is_graph_run_mode() || (graph->somas_whole_block_size() != 0);
+      if (enable_mem_offload || using_somas) {
         continue;
       }
 
@@ -1115,7 +1122,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
         if (common::AnfAlgo::GetOutputTensorNum(kernel) > 1) {
           value.second = true;
         }
-        if ((value.first == true) || (value.second == true)) {
+        if (value.first || value.second) {
           data_prepare_actor->continuous_memory_nodes_[key] = value;
         }
       }
@@ -1820,14 +1827,15 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
   MS_EXCEPTION_IF_NULL(actor_set);
   // Link the control arrow by the execution order.
   if (execution_order_running_) {
-    for (auto &graph : graph_compiler_info.graphs_) {
-      LinkControlArrowByExecutionOrder(graph);
+    for (const auto &graph : graph_compiler_info.graphs_) {
+      LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
     }
   }
 
   for (const auto &communication_nodes : communication_node_groups) {
     // Link the control arrows by the communication nodes to ensure communication nodes running order.
-    LinkControlArrowByCommunicationNode(communication_nodes.second.first, communication_nodes.second.second);
+    LinkControlArrowByCommunicationNode(communication_nodes.second.first, communication_nodes.second.second,
+                                        graph_compiler_info);
   }
 
   // Auto monad actor may modify the device tensor store.
@@ -1969,7 +1977,8 @@ void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
   }
 }
 
-void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph) const {
+void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
+                                                      const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto &execution_order = graph->execution_order();
   for (size_t i = 1; i < execution_order.size(); ++i) {
@@ -1977,9 +1986,12 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
     if (IsRpcActor(execution_order[i - 1]) || IsRpcActor(execution_order[i])) {
       continue;
     }
-
-    auto from_actor = FetchActor(execution_order[i - 1]->fullname_with_scope());
-    auto to_actor = FetchActor(execution_order[i]->fullname_with_scope());
+    const auto &from_kernel = execution_order[i - 1];
+    const auto from_kernel_type = FetchKernelTransformType(from_kernel, graph, {}, GraphExecutionStrategy::kPipeline);
+    auto from_actor = FetchActor(from_kernel_type, graph_compiler_info.name_, from_kernel, graph);
+    const auto &to_kernel = execution_order[i];
+    const auto to_kernel_type = FetchKernelTransformType(to_kernel, graph, {}, GraphExecutionStrategy::kPipeline);
+    auto to_actor = FetchActor(to_kernel_type, graph_compiler_info.name_, to_kernel, graph);
     if ((from_actor != nullptr) && (to_actor != nullptr)) {
       SchedulerHelper::AddControlArrow(from_actor, to_actor);
     }
@@ -1987,7 +1999,8 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
 }
 
 void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
-                                                         const std::vector<KernelGraphPtr> &graphs) const {
+                                                         const std::vector<KernelGraphPtr> &graphs,
+                                                         const GraphCompilerInfo &graph_compiler_info) const {
   const size_t kCommunicationNodesMinNum = 2;
   if (communication_nodes.size() < kCommunicationNodesMinNum) {
     return;
@@ -2005,8 +2018,8 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
   // Ensure all actors execute orderly to optimize the execution performance in the multi device scenario currently.
   // Using the multi stream to optimize the performance in the future.
   if (!execution_order_running_) {
-    for (auto &graph : graphs) {
-      LinkControlArrowByExecutionOrder(graph);
+    for (const auto &graph : graphs) {
+      LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
     }
   }
 }

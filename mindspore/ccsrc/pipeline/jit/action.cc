@@ -125,7 +125,7 @@ void DisableMindRT(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) == false) {
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     return;
   }
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -139,9 +139,11 @@ void DisableMindRT(const ResourcePtr &resource) {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
-  bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-  bool use_old_vm_for_control_parallel =
-    func_graph->exist_multi_target() && ExistControlFlow(func_graph) && is_parallel_mode;
+  const bool is_parallel_mode =
+    parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+  const bool task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  const bool use_old_vm_for_control_parallel =
+    func_graph->exist_multi_target() && ExistControlFlow(func_graph) && is_parallel_mode && task_sink;
   if (use_old_vm_for_control_parallel) {
     MS_LOG(INFO) << "Disable mindRT in the heterogeneous + control flow + parallel scenario.";
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);

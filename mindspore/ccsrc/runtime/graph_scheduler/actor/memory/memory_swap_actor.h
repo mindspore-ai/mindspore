@@ -34,6 +34,7 @@ class MemorySwapActor : public AbstractActor {
       : AbstractActor(name, KernelTransformType::kMemorySwapActor, recorder_aid),
         stream_id_(stream_id),
         device_tensors_to_swap_(std::move(device_tensors_to_swap)) {}
+  ~MemorySwapActor() override = default;
 
  protected:
   void FetchRealParameters(OpContext<DeviceTensor> *context);
@@ -56,6 +57,7 @@ class MemorySwapInActor : public MemorySwapActor {
     device_contexts_.emplace_back(device_context);
     real_parameters_.resize(real_parameter_size);
   }
+  ~MemorySwapInActor() override = default;
 
  protected:
   void Run(OpContext<DeviceTensor> *context) override;
@@ -76,6 +78,7 @@ class MemorySwapOutActor : public MemorySwapActor {
         swap_out_real_parameter_(swap_out_real_parameter) {
     real_parameters_.resize(swap_out_real_parameter.size());
   }
+  ~MemorySwapOutActor() override = default;
 
  protected:
   void Run(OpContext<DeviceTensor> *context) override;

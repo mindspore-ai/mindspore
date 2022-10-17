@@ -23,6 +23,7 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/memory_manager.h"
+#include "runtime/device/auto_mem_offload.h"
 #include "plugin/device/gpu/hal/hardware/gpu_deprecated_interface.h"
 
 namespace mindspore {
@@ -46,6 +47,8 @@ class GPUDeviceResManager : public DeviceResManager {
 
   std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
+  size_t GetAvailableMemSize() const override { return mem_manager_->GetAvailableMemSize(); }
+
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape = ShapeVector()) const override;
 
@@ -67,6 +70,7 @@ class GPUDeviceResManager : public DeviceResManager {
   friend class GPUKernelExecutor;
   bool InitDevice();
   std::shared_ptr<MemoryManager> mem_manager_;
+  std::shared_ptr<MindRTAutoOffloadAdapter> auto_mem_offload_{nullptr};
 };
 
 class GPUKernelExecutor : public DeprecatedKernelExecutor {

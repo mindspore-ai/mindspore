@@ -596,21 +596,21 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
     MS_EXCEPTION_IF_NULL(launch_info_.inputs_[i]);
-    launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
+    launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
   }
 
   for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(output_device_tensors_[i]);
     MS_EXCEPTION_IF_NULL(launch_info_.outputs_[i]);
-    launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
+    launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
   }
 
   for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(workspace_device_tensors_[i]);
     MS_EXCEPTION_IF_NULL(launch_info_.workspaces_[i]);
-    launch_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
+    launch_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
   }
 }

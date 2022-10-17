@@ -372,10 +372,9 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
   MS_EXCEPTION_IF_NULL(context);
   const auto &data = output_data->data_;
   MS_EXCEPTION_IF_NULL(data);
-  if ((data->GetMutablePtr() == nullptr) || (data->ref_count() != SIZE_MAX) ||
-      (data->dynamic_ref_count() != INT32_MAX)) {
+  if ((!data->IsPtrValid()) || (data->ref_count() != SIZE_MAX) || (data->dynamic_ref_count() != INT32_MAX)) {
     std::string error_info = "The address of the " + std::to_string(formal_parameter_position) +
-                             "position real parameter is nullptr or ref count is wrong.";
+                             " position real parameter is nullptr or ref count is wrong.";
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
@@ -423,7 +422,7 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     }
 
     // Ref node may use the ptr of device tensor as the output address, so need set the ptr from data.
-    device_tensor->set_ptr(data->GetMutablePtr());
+    device_tensor->set_ptr(data->GetValidPtr(kDefaultStreamIndex));
     MS_LOG(DEBUG) << "Set the ptr: " << data->GetMutablePtr()
                   << " for the ref formal parameter: " << formal_parameter.first->DebugString()
                   << " in the actor: " << GetAID().Name();

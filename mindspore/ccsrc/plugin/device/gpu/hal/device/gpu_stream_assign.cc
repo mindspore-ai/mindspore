@@ -34,7 +34,11 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
   std::vector<CNodePtr> allreduce_kernels;
   auto execution_kernels = kernel_graph->execution_order();
   // All operators in pynative mode use default_stream.
-  const bool use_default_stream = kernel_graph->has_flag(kFlagPyNativeRunInGraph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  const bool enable_mem_offload =
+    ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD) && !kernel_graph->is_dynamic_shape();
+  const bool use_default_stream = kernel_graph->has_flag(kFlagPyNativeRunInGraph) || enable_mem_offload;
   if (use_default_stream) {
     AssignDefaultGpuStream(kernel_graph);
     return;

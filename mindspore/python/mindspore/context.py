@@ -216,6 +216,22 @@ class _Context:
         else:
             self.set_param(ms_ctx_param.memory_optimize_level, 1)
 
+    def set_memory_offload(self, memory_offload):
+        """
+        Enable memory offload or not, support "ON", "OFF".
+
+        Args:
+            memory_offload (str): "ON", "OFF"
+        """
+        memory_offload_options = ["ON", "OFF"]
+        if memory_offload not in memory_offload_options:
+            raise ValueError(f"For 'context.set_context', the argument 'memory_offload' must be one of "
+                             f"{memory_offload_options}, but got {memory_offload}.")
+        if memory_offload == "ON":
+            self.set_param(ms_ctx_param.memory_offload, True)
+        else:
+            self.set_param(ms_ctx_param.memory_offload, False)
+
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
@@ -386,7 +402,8 @@ class _Context:
         'inter_op_parallel_num': set_inter_op_parallel_num,
         'runtime_num_threads': set_runtime_num_threads,
         'memory_optimize_level': set_memory_optimize_level,
-        'op_timeout': set_op_timeout
+        'op_timeout': set_op_timeout,
+        'memory_offload': set_memory_offload
     }
 
     @property

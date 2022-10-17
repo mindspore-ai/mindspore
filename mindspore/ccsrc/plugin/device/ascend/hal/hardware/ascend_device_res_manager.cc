@@ -1,4 +1,5 @@
 /**
+ *
  * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +42,10 @@ void AscendDeviceResManager::Initialize() {
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
     // get actual rank id if it's distribution training case.
     rank_id_ = GetRankId();
+  }
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
+    auto_mem_offload_ =
+      std::make_shared<MindRTAutoOffloadAdapter>(&AscendMemoryPool::GetInstance(), kDefaultStreamIndex);
   }
   MS_LOG(INFO) << "Device resource manager Initialize success.";
 }
@@ -96,6 +101,9 @@ bool AscendDeviceResManager::AllocateMemory(DeviceAddress *const &address) const
   }
 
   runtime_instance_->SetContext();
+  if (auto_mem_offload_ != nullptr) {
+    return auto_mem_offload_->Malloc(address);
+  }
   auto device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
   if (!device_ptr) {
     return false;
@@ -114,6 +122,9 @@ std::vector<void *> AscendDeviceResManager::AllocateContinuousMemory(const std::
   for (size_t size : size_list) {
     auto align_size = device::MemoryManager::GetCommonAlignSize(size);
     align_size_list.emplace_back(align_size);
+  }
+  if (auto_mem_offload_ != nullptr) {
+    return auto_mem_offload_->MallocContinuousMem(align_size_list);
   }
   return mem_manager_->MallocContinuousMemFromMemPool(align_size_list);
 }

@@ -23,7 +23,9 @@ namespace runtime {
 void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
-  MS_EXCEPTION_IF_NULL(input_data->data_->GetPtr());
+  if (!input_data->data_->IsPtrValid()) {
+    MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr.";
+  }
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
@@ -125,7 +127,7 @@ void AbstractActor::InitOutputData() {
 
     // Identify whether the output data flag is kOutputDataFlagToStack.
     bool is_to_stack = (to_op_name.find(kStackActorNameSuffix) != std::string::npos);
-    size_t output_data_flag = (is_to_stack == true) ? kOutputDataFlagToStack : kOutputDataFlagInit;
+    size_t output_data_flag = is_to_stack ? kOutputDataFlagToStack : kOutputDataFlagInit;
 
     // Add the batch output data.
     if (TEST_FLAG(data_arrow->flag_, kOutputDataFlagBatch)) {
