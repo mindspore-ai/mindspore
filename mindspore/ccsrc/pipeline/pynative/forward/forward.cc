@@ -166,7 +166,6 @@ void ForwardExecutor::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   device_target_ = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  enable_mind_rt_ = ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
   init_ = true;
 }
 
@@ -257,19 +256,6 @@ ValuePtr ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
     SetNodeAbsMapByValue(op_run_info->base_op_run_info.op_name, out_real_value, op_run_info->base_op_run_info.abstract);
   }
   return out_real_value;
-}
-
-session::SessionPtr ForwardExecutor::GetCurrentSession(const std::string &device_target) {
-  auto iter = session_backends_.find(device_target);
-  if (iter == session_backends_.end()) {
-    auto session = session::SessionFactory::Get().Create(device_target);
-    MS_EXCEPTION_IF_NULL(session);
-    session->Init(device_id_);
-    session_backends_[device_target] = session;
-    return session;
-  } else {
-    return iter->second;
-  }
 }
 
 compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const std::string &device_target) {
@@ -436,20 +422,10 @@ std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim)
 
 void ForwardExecutor::Sync() {
   ExecuteLazyTask();
-  if (!enable_mind_rt_) {
-    for (auto &item : session_backends_) {
-      MS_EXCEPTION_IF_NULL(item.second);
-      item.second->SyncStream();
-    }
-  } else {
-    for (auto &item : mindrt_backends_) {
-      MS_EXCEPTION_IF_NULL(item.second);
-      item.second->SyncStream();
-    }
-    for (auto &item : session_backends_) {
-      MS_EXCEPTION_IF_NULL(item.second);
-      item.second->SyncStream();
-    }
+
+  for (auto &item : mindrt_backends_) {
+    MS_EXCEPTION_IF_NULL(item.second);
+    item.second->SyncStream();
   }
 }
 
@@ -474,15 +450,9 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
 #endif
 
   VectorRef outputs;
-  if (enable_mind_rt_) {
-    const auto &cur_mind_rt_backend = GetMindRtBackend(cur_target);
-    MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-    cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
-  } else {
-    auto cur_session = GetCurrentSession(cur_target);
-    MS_EXCEPTION_IF_NULL(cur_session);
-    cur_session->RunOp(backend_op_run_info, &outputs);
-  }
+  const auto &cur_mind_rt_backend = GetMindRtBackend(cur_target);
+  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
+  cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
   const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";
@@ -501,7 +471,6 @@ void ForwardExecutor::ClearRes() {
   infer_operation()->ClearPrimAbsList();
   infer_operation()->ClearConstFlagPrimCache();
   std::stack<CellPtr>().swap(forward_cell_stack_);
-  session_backends_.clear();
   mindrt_backends_.clear();
 }
 }  // namespace pynative

@@ -25,8 +25,6 @@
 #include "pipeline/pynative/forward/do_cast.h"
 #include "pipeline/pynative/forward/do_infer.h"
 #include "pipeline/pynative/dynamic_shape.h"
-#include "backend/common/session/session_factory.h"
-#include "backend/common/session/session_basic.h"
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
 
@@ -36,7 +34,6 @@ class GradExecutor;
 using GradExecutorPtr = std::shared_ptr<GradExecutor>;
 using GradExecutorWeakPtr = std::weak_ptr<GradExecutor>;
 
-using SessionBackendMap = std::map<std::string, std::shared_ptr<session::SessionBasic>>;
 using MindrtBackendMap = std::map<std::string, std::shared_ptr<compile::MindRTBackend>>;
 
 class ForwardExecutor {
@@ -88,7 +85,6 @@ class ForwardExecutor {
  private:
   GradExecutorPtr grad() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim);
-  session::SessionPtr GetCurrentSession(const std::string &device_target);
   compile::MindRTBackendPtr GetMindRtBackend(const std::string &device_target);
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);
@@ -108,7 +104,6 @@ class ForwardExecutor {
  private:
   bool init_{false};
   bool lazy_build_{false};
-  bool enable_mind_rt_{false};
   uint32_t device_id_;
   std::string last_target_{"Unknown"};
   std::string device_target_;
@@ -117,7 +112,6 @@ class ForwardExecutor {
   CastOperationPtr cast_operation_;
   InferOperationPtr infer_operation_;
   DynamicShapePtr dynamic_shape_;
-  SessionBackendMap session_backends_;
   MindrtBackendMap mindrt_backends_;
   bool is_ms_function_compiling_{false};
 };
