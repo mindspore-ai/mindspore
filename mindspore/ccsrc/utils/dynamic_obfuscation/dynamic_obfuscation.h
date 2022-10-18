@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <stack>
 #include "load_mindir/load_model.h"
 #include "include/common/visible.h"
 
@@ -33,21 +35,39 @@ class COMMON_EXPORT DynamicObfuscator {
   FuncGraphPtr ObfuscateMindIR(const FuncGraphPtr &func_graph);
 
  private:
-  void op_wise_fake_branch(FuncGraphPtr func_graph);
-  std::string single_op_obfuscate_type(AnfNodePtr node);
-  CNodePtr get_control_node(FuncGraphPtr func_graph, AnfNodePtr prev_node);
-  CNodePtr password_mode_control(FuncGraphPtr func_graph);
-  CNodePtr custom_op_mode_control(FuncGraphPtr func_graph, AnfNodePtr prev_node);
-  void replace_matmul_node(CNodePtr node, FuncGraphPtr func_graph, CNodePtr flag_node);
+  void SubGraphFakeBranch(FuncGraphPtr func_graph);
+  std::string ObfuscateOpType(const AnfNodePtr &node);
+  CNodePtr GetControlNode(const FuncGraphPtr &func_graph, const AnfNodePtr &prev_node);
+  CNodePtr PasswordModeControl(FuncGraphPtr func_graph);
+  CNodePtr CustomOpModeControl(FuncGraphPtr func_graph, const AnfNodePtr &prev_node);
+
+  bool IsTarget(std::string &cnode_name);
+  void UpdateDict(const AnfNodePtr &node, const bool isParent);
+  void CheckDuplicatedParent(const AnfNodePtr &node);
+  CNodePtr CheckInputNodes(const CNodePtr &node);
+  void AddSwitchNode(FuncGraphPtr fg);
+  FuncGraphPtr CloneSubGraph(const FuncGraphPtr &fg, const std::vector<CNodePtr> &node_arr,
+                             const AnfNodePtr &parent_node);
+  FuncGraphPtr BuildFakeGraph(const FuncGraphPtr &fg, const std::vector<CNodePtr> &node_arr,
+                              const AnfNodePtr &parent_node);
+  CNodePtr BuildReluNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node);
+  CNodePtr BuildSigmoidNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node);
+  CNodePtr BuildOneInputWithWeightNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node, const CNodePtr &conv_node,
+                                       const AnfNodePtr &weights);
+  CNodePtr AddPartialBranch(FuncGraphPtr fg, FuncGraphPtr fg_sub, const std::vector<mindspore::CNodePtr> &nodes);
 
   const float obf_ratio_ = 0.01;
   const int obf_password_;
   const int append_password_;
   bool has_build_appended_input = false;
   std::vector<bool> customized_func_results_;
+  std::map<std::string, AnfNodePtr> node_dict_;
+  std::stack<std::string> node_names_;
+  std::stack<std::string> parent_names_;
   int used_control_node_ = 0;
+  int subgraph_obf_num_ = 0;
   bool switch_branch_ = true;
-  const std::vector<std::string> obf_target_op = {"MatMul-op", "Add-op", "Mat-op", "Sub-op", "Softmax-op", "Relu-op"};
+  const std::vector<std::string> subgraph_target_op_ = {"Conv2D-op", "ReLU-op", "Sigmoid-op", "MatMul-op"};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_DYNAMIC_OBFUSCATION_H
