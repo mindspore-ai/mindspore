@@ -252,7 +252,7 @@ void AtomicCleanInserter::InsertAtomicClean(const FuncGraphPtr &main_graph, cons
   // Insert extra input(broadcast node output) to composite node, and make ReduceSum inplace-assign to it.
   ProcessOriginCNode(origin_composite_node, info_and_inplace_assignee_addr);
 
-  // Insert UpdateState + Load before origin ReduceSum's user to keep execution order.
+  // Insert Depend before origin ReduceSum's user to keep execution order.
   ProcessOriginCNodeUser(main_graph, origin_composite_node, info_and_inplace_assignee_addr, mng);
   std::stringstream ss;
   ss << "Target node: " << origin_composite_node->fullname_with_scope() << ", clean nodes: ";

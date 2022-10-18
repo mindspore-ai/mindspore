@@ -823,7 +823,7 @@ bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
     }
     return ret;
   }
-  if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
+  if (IsPrimitiveCNode(node, prim::kPrimLoad) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
     return IsFeatureMapOutput(node->cast<CNodePtr>()->input(1));
   }
   auto kernel_info = dynamic_cast<const device::KernelInfo *>(node->kernel_info());

@@ -41,10 +41,9 @@ namespace mindspore::graphkernel {
  * main(x, y, z){
  *   %1 = Op1(x, y)
  *   %2 = subgraph(%1, z)
- *   %3 = UpdateState(U, %2)
- *   %4 = Load(%1, %3)
- *   %5 = Op2(%4)
- *   return %5
+ *   %3 = Depend(%1, %2)
+ *   %4 = Op2(%3)
+ *   return %4
  * }
  * ----
  * subgraph(a, b){
