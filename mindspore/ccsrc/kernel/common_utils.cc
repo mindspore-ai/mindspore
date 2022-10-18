@@ -47,6 +47,7 @@ constexpr char kTypeInt32[] = "Int32";
 constexpr auto kStridedSliceMaxDims = 8;
 constexpr auto kQuad = 4;
 constexpr size_t kInputFirstIndex = 0;
+constexpr char kOperatorOriginFormat[] = "operator_origin_format";
 
 // Define all patterns here for different schedule
 const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
@@ -129,6 +130,12 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
   KernelTensorPtr res_tensor = std::make_shared<KernelTensor>();
   res_tensor->SetTensorInfo(tensor_info);
   return res_tensor;
+}
+
+void AdditionalAttrProcess(const ops::PrimitiveCPtr &primc, const CNodePtr &cnode) {
+  mindspore::HashMap<std::string, ValuePtr> additional_attrs;
+  additional_attrs[kOperatorOriginFormat] = MakeValue(AnfAlgo::GetOriginDataFormat(cnode));
+  (void)primc->SetAttrs(additional_attrs);
 }
 }  // namespace
 std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment) {
@@ -1280,6 +1287,7 @@ KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
   if (primc_fns.find(kernel_name) != primc_fns.end()) {
     primc_ptr = primc_fns[kernel_name]();
     (void)primc_ptr->SetAttrs(prim->attrs());
+    AdditionalAttrProcess(primc_ptr, cnode);
   }
   MS_EXCEPTION_IF_NULL(primc_ptr);
 
