@@ -19,6 +19,9 @@
 
 #include <memory>
 #include <vector>
+#include <map>
+#include <string>
+#include "mindspore/core/ops/square_sum_all.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/square_sum_all_impl.cuh"
@@ -26,10 +29,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SquareSumAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SquareSumAllFwdGpuKernelMod() : input_size_(1), is_null_input_(false) {}
-  ~SquareSumAllFwdGpuKernelMod() override {}
+  SquareSumAllFwdGpuKernelMod() = default;
+  ~SquareSumAllFwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -47,35 +50,58 @@ class SquareSumAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= static_cast<size_t>(input_shape[i]);
-    }
-    InitSizeLists();
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    dtype_ = inputs.at(kIndex0)->GetDtype();
+    dtype_size_ = abstract::TypeIdSize(dtype_);
     return true;
   }
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    auto input_shape = inputs[0]->GetShapeVector();
+    auto output_shape = outputs[0]->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
+    is_null_output_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
+    input_size_ = 1;
+    output_size_ = 1;
+    if (is_null_input_ || is_null_output_) {
+      InitSizeLists();
+      return true;
+    }
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      input_size_ *= static_cast<size_t>(input_shape[i]);
+    }
+    for (size_t i = 0; i < output_shape.size(); ++i) {
+      output_size_ *= static_cast<size_t>(output_shape[i]);
+    }
+    InitSizeLists();
+    return KRET_OK;
+  }
+
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(sizeof(T));
-    output_size_list_.push_back(sizeof(T));
-    workspace_size_list_.push_back(sizeof(float));
-    workspace_size_list_.push_back(sizeof(float));
+  void InitSizeLists() {
+    input_size_list_.clear();
+    workspace_size_list_.clear();
+    output_size_list_.clear();
+    input_size_list_.push_back(input_size_ * dtype_size_);
+    input_size_list_.push_back(input_size_ * dtype_size_);
+    output_size_list_.push_back(dtype_size_);
+    output_size_list_.push_back(dtype_size_);
+    workspace_size_list_.push_back(output_size_ * dtype_size_);
+    workspace_size_list_.push_back(output_size_ * dtype_size_);
   }
 
  private:
-  size_t input_size_;
-  bool is_null_input_;
+  std::string kernel_name_;
+  TypeId dtype_;
+  size_t dtype_size_;
+  size_t input_size_{1};
+  size_t output_size_{1};
+  bool is_null_input_{false};
+  bool is_null_output_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

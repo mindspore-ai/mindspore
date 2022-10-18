@@ -19,10 +19,12 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import functional as F
+import mindspore as ms
 import mindspore.ops.operations as P
 
 
 class Net(Cell):
+
     def __init__(self):
         super(Net, self).__init__()
         self.squaresumall = P.SquareSumAll()
@@ -47,11 +49,36 @@ def run_net(datatype, input_tensors, output_tensors):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_square_sum_all_dynamic_shape():
+    """
+    Feature: test SquareSumAll cpu op.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = Net()
+    x_dyn = Tensor(shape=[None], dtype=ms.float32)
+    y_dyn = Tensor(shape=[None], dtype=ms.float32)
+    net.set_inputs(x_dyn, y_dyn)
+
+    x = Tensor(np.array([0, 0, 2, 0]), ms.float32)
+    y = Tensor(np.array([0, 0, 2, 4]), ms.float32)
+    out_x, out_y = net(x, y)
+    print("out_x : \n", out_x)
+    print("out_y : \n", out_y)
+    expect_out_x_shape = ()
+    expect_out_y_shape = ()
+    assert out_x.asnumpy().shape == expect_out_x_shape
+    assert out_y.asnumpy().shape == expect_out_y_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
-@pytest.mark.parametrize('input_tensors, output_tensors', [
-    ([[1, 2, 4], [0, 1, -1]], [21, 2]),
-    ([[[1, 2], [3, 4]], [[0, 0], [1, 0]]], [30, 1])
-])
+@pytest.mark.parametrize('input_tensors, output_tensors',
+                         [([[1, 2, 4], [0, 1, -1]], [21, 2]),
+                          ([[[1, 2], [3, 4]], [[0, 0], [1, 0]]], [30, 1])])
 def test_cpu(dtype, input_tensors, output_tensors):
     """
     Feature: SquareSumAll cpu op.
@@ -142,6 +169,7 @@ def test_vmap_square_sum_all():
     Description: test the vmap feature of SquareSumAll.
     Expectation: success.
     """
+
     def manually_batched(op, inp0, inp1):
         out0_manual = []
         out1_manual = []
@@ -150,6 +178,7 @@ def test_vmap_square_sum_all():
             out0_manual.append(out[0])
             out1_manual.append(out[1])
         return (F.stack(out0_manual), F.stack(out1_manual))
+
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     inp0 = Tensor(np.arange(0, 10, 1).reshape(2, 5).astype(np.float32))
     inp1 = Tensor(np.arange(0, 10, 1).reshape(2, 5).astype(np.float32))
