@@ -24,11 +24,11 @@ namespace mindspore {
 namespace ops {
 namespace {
 inline void CheckShapeValid(const ShapeVector &x_shape, const ShapeVector &output_shape) {
+  if (IsDynamic(x_shape) || IsDynamic(output_shape)) {
+    return;
+  }
   auto outer_dim_offset = output_shape.size() - x_shape.size();
   for (size_t i = 0; i < x_shape.size(); ++i) {
-    if (output_shape[i + outer_dim_offset] == -1 || x_shape[i] == -1) {
-      continue;
-    }
     if (output_shape[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
       MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: " << x_shape
                                << ", target shape: " << output_shape;

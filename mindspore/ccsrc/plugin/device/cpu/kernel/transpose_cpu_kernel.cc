@@ -60,6 +60,7 @@ void TransposeFwdCpuKernelMod::InitPerm(const std::vector<kernel::AddressPtr> &i
   auto perm_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex1);
   auto perm_ptr = static_cast<T *>(inputs[kIndex1]->addr);
   std::vector<T> perm{perm_ptr, perm_ptr + perm_shape[0]};
+  perm_.clear();
   (void)std::transform(perm.begin(), perm.end(), std::back_inserter(perm_),
                        [](const T &value) { return static_cast<int64_t>(value); });
   CheckPermValue();
