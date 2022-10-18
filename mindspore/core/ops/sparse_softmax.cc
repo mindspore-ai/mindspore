@@ -32,6 +32,15 @@ constexpr int64_t kIndicesSize = 2;
 constexpr int64_t kValuesSize = 1;
 constexpr int64_t kShapeSize = 1;
 constexpr int64_t kShapeMin = 2;
+
+inline bool CheckShapePositive(const std::vector<int64_t> &input_shape) {
+  if (input_shape.size() != 0) {
+    if (std::all_of(input_shape.begin(), input_shape.end(), [](int64_t i) { return i > 0; })) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 
 abstract::ShapePtr SparseSoftmaxInferShape(const PrimitivePtr &primitive,
@@ -43,21 +52,31 @@ abstract::ShapePtr SparseSoftmaxInferShape(const PrimitivePtr &primitive,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_shape_ptr)[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, kIndicesSize,
-                                           prim_name);
+  if (IsDynamicRank(values_shape)) {
+    return std::make_shared<abstract::Shape>(values_shape);
+  }
+  if (!IsDynamicRank(indices_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual,
+                                             kIndicesSize, prim_name);
+  }
   (void)CheckAndConvertUtils::CheckInteger("values dimension", SizeToLong(values_shape.size()), kEqual, kValuesSize,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("shape dimension", SizeToLong(shape_shape.size()), kEqual, kShapeSize,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("shape size", shape_shape[kInputIndex0], kGreaterEqual, kShapeMin,
-                                           prim_name);
-  if (indices_shape[kInputIndex0] != values_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << " the indices size[0] must equal to values number "
-                             << values_shape[kInputIndex0] << ", but got " << indices_shape[kInputIndex0] << ".";
+  if (!IsDynamicRank(shape_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("shape dimension", SizeToLong(shape_shape.size()), kEqual, kShapeSize,
+                                             prim_name);
   }
-  if (indices_shape[kInputIndex1] != shape_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << " the indices size[1] must equal to shape number "
-                             << shape_shape[kInputIndex0] << ", but got " << indices_shape[kInputIndex1] << ".";
+  if (CheckShapePositive(indices_shape) && CheckShapePositive(values_shape) && CheckShapePositive(shape_shape)) {
+    auto shape_shape_size = LongToSize(shape_shape[kInputIndex0]);
+    (void)CheckAndConvertUtils::CheckInteger("shape size", SizeToLong(shape_shape_size), kGreaterEqual, kShapeMin,
+                                             prim_name);
+    if (indices_shape[kInputIndex0] != values_shape[kInputIndex0]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << " the indices size[0] must equal to values number "
+                               << values_shape[kInputIndex0] << ", but got " << indices_shape[kInputIndex0] << ".";
+    }
+    if (indices_shape[kInputIndex1] != shape_shape[kInputIndex0]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << " the indices size[1] must equal to shape number "
+                               << shape_shape[kInputIndex0] << ", but got " << indices_shape[kInputIndex1] << ".";
+    }
   }
   return std::make_shared<abstract::Shape>(values_shape);
 }
