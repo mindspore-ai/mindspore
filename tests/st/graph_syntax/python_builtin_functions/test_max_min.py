@@ -302,7 +302,7 @@ def test_builtin_function_max_with_several_elements_tensor(mode):
     def foo():
         return max(Tensor([1, 2, 3]), Tensor([3, 4, 5]))
 
-    with pytest.raises(ValueError, match="The truth value of an array with several elements is ambiguous."):
+    with pytest.raises(ValueError, match="The truth value of an array with more than one element is ambiguous."):
         context.set_context(mode=mode)
         foo()
 
@@ -366,5 +366,47 @@ def test_builtin_function_min_with_tensor_number(mode):
         return min(Tensor(1), 4)
 
     with pytest.raises(TypeError, match="cannot contain both tensor and non-tensor type."):
+        context.set_context(mode=mode)
+        foo()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_max_with_several_elements_one_tensor(mode):
+    """
+    Feature: Check the arg of max.
+    Description: The arg of max do not support one tensor with more than one elements.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return max(Tensor([[1, 2, 3], [3, 4, 5]]))
+
+    with pytest.raises(ValueError, match="The truth value of an array with more than one element is ambiguous."):
+        context.set_context(mode=mode)
+        foo()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_builtin_function_max_with_tensor_elements_in_two_tuple(mode):
+    """
+    Feature: Check the arg of max.
+    Description: The arg of max do not support two tensor with more than one elements.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return max([Tensor([1, 2]), Tensor([3, 4])], [Tensor([5, 6]), Tensor([7, 8])])
+
+    with pytest.raises(ValueError, match="The truth value of an array with more than one element is ambiguous."):
         context.set_context(mode=mode)
         foo()

@@ -262,7 +262,7 @@ class Tensor(Tensor_):
             return bool(data)
         if data.shape == (1,):
             return bool(data[0])
-        raise ValueError("The truth value of an array with several elements is ambiguous.")
+        raise ValueError("The truth value of an array with more than one element is ambiguous.")
 
     @staticmethod
     def _convert_scalar_(data, func, message):
