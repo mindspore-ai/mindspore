@@ -1498,18 +1498,21 @@ class GLU(Cell):
         axis (int): the dimension on which to split the input. Default: -1
 
     Inputs:
-        - **x** (Tensor) - :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
+        - **x** (Tensor) - :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`
+        Tensor, :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`, with the same dtype as the `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> m = nn.GLU()
-        >>> input = Tensor(np.randomn.randn(4, 2))
+        >>> input = Tensor([[0.1,0.2,0.3,0.4],[0.5,0.6,0.7,0.8]])
         >>> output = m(input)
+        >>> print(out)
+        [[0.05744425 0.11973753
+         [0.33409387 0.41398472]]
     """
 
     def __init__(self, axis=-1):
