@@ -52,6 +52,23 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto values_shp = values->shape()->shape();
   CheckSparseShape(values_shp.size(), kSizeOne, "Values");
 
+  // Convert dense_shape from tuple to shapevector(dense_shape_vec)
+  auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(dense_shape_value);
+  auto shp = dense_shape_value->value();
+  ShapeVector dense_shape_vec;
+  (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
+                       [](const ValuePtr &e) -> int64_t {
+                         auto elem = GetValue<int64_t>(e);
+                         return elem;
+                       });
+
+  if (IsDynamicShape(indices_shp) || IsDynamicShape(values_shp) || IsDynamicShape(dense_shape_vec)) {
+    MS_LOG(DEBUG) << "Dynamic shape in MakeCOOTensor's inputs! Ignore shape check.";
+    AbstractBasePtrList element_list{indices, values, dense_shape};
+    return std::make_shared<abstract::AbstractCOOTensor>(element_list);
+  }
+
   if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {
     MS_EXCEPTION(ValueError) << "For COOTensor, `indices.shape[" << kIndexZero << "]` must be equal to `values.shape["
                              << kIndexZero << "]`, but got `indices.shape[" << kIndexZero
@@ -70,20 +87,7 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
                               << elem_type->ToString();
     }
   }
-  auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
-  MS_EXCEPTION_IF_NULL(dense_shape_value);
-  auto shp = dense_shape_value->value();
-  auto min_elem = *std::min_element(std::begin(shp), std::end(shp));
-  if (min_elem <= 0) {
-    MS_EXCEPTION(ValueError) << "For COOTensor, the element of `shape` must be positive integer. But got " << min_elem
-                             << "int it";
-  }
-  ShapeVector dense_shape_vec;
-  (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
-                       [](const ValuePtr &e) -> int64_t {
-                         auto elem = GetValue<int64_t>(e);
-                         return elem;
-                       });
+
   if (LongToSize(indices_shp[kIndexOne]) != dense_shape_vec.size()) {
     MS_EXCEPTION(TypeError) << "For COOTensor, `indices.shape[" << indices_shp << "]` must be equal to the second "
                             << "dimension of `indices`: " << dense_shape_vec.size() << " but got "

@@ -192,6 +192,12 @@ AnfNodePtr MakeDynShapeSensNode(const FuncGraphPtr &tape, const ValuePtr &sens_v
     MS_LOG(DEBUG) << "Tuple sens value abstract " << value_node_abs->ToString();
     ones_like_value->set_abstract(value_node_abs);
     return ones_like_value;
+  } else if (sens_value->isa<tensor::COOTensor>()) {
+    auto cootensor = sens_value->cast<tensor::COOTensorPtr>();
+    return MakeDynShapeSensNode(tape, cootensor->GetValues());
+  } else if (sens_value->isa<tensor::CSRTensor>()) {
+    auto csrtensor = sens_value->cast<tensor::CSRTensorPtr>();
+    return MakeDynShapeSensNode(tape, csrtensor->GetValues());
   } else {
     MS_LOG(EXCEPTION) << "Sens value must be a tensor or value tuple";
   }
