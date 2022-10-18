@@ -28,15 +28,57 @@
 namespace mindspore {
 namespace ops {
 namespace {
+void CheckAndUpdateDim(const PrimitivePtr &primitive, const ShapeVector &x1_shape, const int64_t &default_dim,
+                       int64_t *dim) {
+  if (*dim == default_dim) {
+    int64_t dim_size_value = 3;
+    for (size_t i = 0; i < x1_shape.size(); i++) {
+      if (x1_shape[i] == dim_size_value) {
+        *dim = SizeToLong(i);
+        break;
+      }
+      if (i == x1_shape.size() - 1 && x1_shape[i] != dim_size_value) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size of inputs dim must be 3, but got "
+                                 << x1_shape[i] << ".";
+      }
+    }
+  }
+  if ((*dim < -static_cast<int64_t>(x1_shape.size()) || *dim > static_cast<int64_t>(x1_shape.size()) - 1) &&
+      *dim != default_dim) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', dim must be between "
+                             << -static_cast<int64_t>(x1_shape.size()) << " and "
+                             << static_cast<int64_t>(x1_shape.size()) - 1 << " , but got " << *dim << ".";
+  }
+  if (*dim < 0 && *dim != default_dim) {
+    *dim = static_cast<int64_t>(x1_shape.size()) + *dim;
+  }
+  return;
+}
+
 abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   auto dim = GetValue<int64_t>(primitive->GetAttr("dim"));
   if (x1_shape.size() != x2_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the shape of two inputs must have the same size, but got 'x1' shape size: "
                              << x1_shape.size() << ", 'x2' shape size: " << x2_shape.size() << ".";
   }
+
+  // Dynamic Shape
+  if (IsDynamic(x1_shape) || IsDynamic(x2_shape)) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < x1_shape.size(); ++i) {
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(shape_out);
+  }
+
   for (size_t i = 0; i < x1_shape.size(); ++i) {
     if (x1_shape[i] != x2_shape[i]) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
@@ -48,29 +90,10 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
                                            primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("dim of x2", SizeToLong(x2_shape.size()), kGreaterThan, 0,
                                            primitive->name());
+
   int64_t default_dim = -65530;
-  if (dim == default_dim) {
-    int64_t dim_size_value = 3;
-    for (size_t i = 0; i < x1_shape.size(); i++) {
-      if (x1_shape[i] == dim_size_value) {
-        dim = SizeToLong(i);
-        break;
-      }
-      if (i == x1_shape.size() - 1 && x1_shape[i] != dim_size_value) {
-        MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size of inputs dim must be 3, but got "
-                                 << x1_shape[i] << ".";
-      }
-    }
-  }
-  if ((dim < -static_cast<int64_t>(x1_shape.size()) || dim > static_cast<int64_t>(x1_shape.size()) - 1) &&
-      dim != default_dim) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', dim must be between "
-                             << -static_cast<int64_t>(x1_shape.size()) << " and "
-                             << static_cast<int64_t>(x1_shape.size()) - 1 << " , but got " << dim << ".";
-  }
-  if (dim < 0 && dim != default_dim) {
-    dim = static_cast<int64_t>(x1_shape.size()) + dim;
-  }
+  CheckAndUpdateDim(primitive, x1_shape, default_dim, &dim);
+
   int64_t dim_size = 3;
   if (x1_shape[LongToSize(dim)] != dim_size && x2_shape[LongToSize(dim)] != dim_size && dim != default_dim) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size of inputs dim must be 3, but got "
@@ -95,6 +118,8 @@ TypePtr CrossInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());
   return CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, {element}, primitive->name());
 }
+}  // namespace
+
 AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -104,10 +129,16 @@ AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto infer_shape = CrossInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+MIND_API_OPERATOR_IMPL(Cross, BaseOperator);
+void Cross::Init(const int64_t dim) { this->set_dim(dim); }
+
+void Cross::set_dim(const int64_t dim) { (void)this->AddAttr("dim", api::MakeValue(dim)); }
+
+int64_t Cross::get_dim() const {
+  auto value_ptr = this->GetAttr("dim");
+  return GetValue<int64_t>(value_ptr);
+}
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Cross, prim::kPrimCross, CrossInfer, nullptr, true);
-}  // namespace
-
-MIND_API_OPERATOR_IMPL(Cross, BaseOperator);
 }  // namespace ops
 }  // namespace mindspore
