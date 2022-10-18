@@ -949,7 +949,7 @@ class CropAndResizeGradImage(Primitive):
         ValueError: If the value of image_height or image_width of `image_size` is not positive.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> crop_and_resize_grad_image = ops.CropAndResizeGradImage(T = mindspore.float32, method = "bilinear")
