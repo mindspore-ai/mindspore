@@ -27,24 +27,33 @@ const size_t kInputNum = 1;
 const size_t kOutputNum = 1;
 }  // namespace
 
-void RGBToHSVCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  CNodeWeakPtr node_wpt_ = kernel_node;
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "kernel_node is expired.";
+bool RGBToHSVCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  input_dtype = inputs.at(kIndex0)->GetDtype();
+  if (input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat64 && input_dtype != kNumberTypeFloat16) {
+    MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the type of inputs are invalid";
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", it does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int RGBToHSVCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
 
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   input0_elements_nums_ = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
     input0_elements_nums_ *= static_cast<size_t>(input_shape[i]);
-  }
-
-  if (input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat64 && input_dtype != kNumberTypeFloat16) {
-    MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the type of inputs are invalid";
   }
 
   if (input_shape[input_shape.size() - 1] != static_cast<int64_t>(kNumberOfRGB)) {
@@ -55,13 +64,7 @@ void RGBToHSVCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the dimension of the input tensor must be at least 1.";
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", it does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
