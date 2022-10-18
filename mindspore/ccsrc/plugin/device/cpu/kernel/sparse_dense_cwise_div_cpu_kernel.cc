@@ -32,13 +32,25 @@ const size_t kIndex3 = 3;
 const double epslon = 1e-6;
 }  // namespace
 
-void SparseDenseCwiseDivCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  shape_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
-  dense_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex3);
-  data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex3);
+bool SparseDenseCwiseDivCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs) {
+  data_type_ = inputs.at(kIndex3)->GetDtype();
+  return true;
+}
+
+int SparseDenseCwiseDivCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs,
+                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  indices_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  values_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  shape_shape_ = inputs.at(kIndex2)->GetShapeVector();
+  dense_shape_ = inputs.at(kIndex3)->GetShapeVector();
+  return KRET_OK;
 }
 
 template <typename T>

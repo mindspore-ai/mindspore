@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SPARSE_DENSE_CWISE_DIV_H_
-#define MINDSPORE_CORE_OPS_SPARSE_DENSE_CWISE_DIV_H_
+#ifndef MINDSPORE_CORE_OPS_SPARSE_DENSE_CWISE_ARITHMETIC_H_
+#define MINDSPORE_CORE_OPS_SPARSE_DENSE_CWISE_ARITHMETIC_H_
 #include <vector>
 #include <memory>
 #include "ops/base_operator.h"
@@ -23,15 +23,10 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSparseDenseCwiseDiv = "SparseDenseCwiseDiv";
-class MIND_API SparseDenseCwiseDiv : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(SparseDenseCwiseDiv);
-  SparseDenseCwiseDiv() : BaseOperator(kNameSparseDenseCwiseDiv) {
-    InitIOName({"x1_indices", "x1_values", "x1_shape", "x2"}, {"y"});
-  }
-};
+abstract::AbstractBasePtr SparseDenseCwiseArithmeticInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SPARSE_DENSE_CWISE_DIV_H_
+#endif  // MINDSPORE_CORE_OPS_SPARSE_DENSE_CWISE_ARITHMETIC_H_

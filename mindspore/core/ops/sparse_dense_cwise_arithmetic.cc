@@ -18,18 +18,21 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "ops/sparse_dense_cwise_div.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/tensor_construct_utils.h"
 #include "mindapi/src/helper.h"
+#include "ops/sparse_dense_cwise_arithmetic.h"
+#include "ops/sparse_dense_cwise_add.h"
+#include "ops/sparse_dense_cwise_mul.h"
+#include "ops/sparse_dense_cwise_div.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr SparseDenseCwiseDivInferShape(const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SparseDenseCwiseArithmeticInferShape(const PrimitivePtr &primitive,
+                                                        const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(indices_shape_ptr);
@@ -75,7 +78,8 @@ abstract::ShapePtr SparseDenseCwiseDivInferShape(const PrimitivePtr &primitive,
   return output_shape;
 }
 
-TypePtr SparseDenseCwiseDivInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr SparseDenseCwiseArithmeticInferType(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto indiecs_type_ptr = input_args[kInputIndex0]->BuildType();
   auto shape_type_ptr = input_args[kInputIndex2]->BuildType();
@@ -89,17 +93,25 @@ TypePtr SparseDenseCwiseDivInferType(const PrimitivePtr &primitive, const std::v
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SparseDenseCwiseDiv, BaseOperator);
-AbstractBasePtr SparseDenseCwiseDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr SparseDenseCwiseArithmeticInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 4;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
-  auto infer_type = SparseDenseCwiseDivInferType(primitive, input_args);
-  auto infer_shape = SparseDenseCwiseDivInferShape(primitive, input_args);
+  auto infer_type = SparseDenseCwiseArithmeticInferType(primitive, input_args);
+  auto infer_shape = SparseDenseCwiseArithmeticInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseDenseCwiseDiv, prim::kPrimSparseDenseCwiseDiv, SparseDenseCwiseDivInfer, nullptr,
-                             true);
+
+MIND_API_OPERATOR_IMPL(SparseDenseCwiseAdd, BaseOperator);
+MIND_API_OPERATOR_IMPL(SparseDenseCwiseMul, BaseOperator);
+MIND_API_OPERATOR_IMPL(SparseDenseCwiseDiv, BaseOperator);
+
+REGISTER_PRIMITIVE_EVAL_IMPL(SparseDenseCwiseAdd, prim::kPrimSparseDenseCwiseAdd, SparseDenseCwiseArithmeticInfer,
+                             nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(SparseDenseCwiseMul, prim::kPrimSparseDenseCwiseMul, SparseDenseCwiseArithmeticInfer,
+                             nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(SparseDenseCwiseDiv, prim::kPrimSparseDenseCwiseDiv, SparseDenseCwiseArithmeticInfer,
+                             nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
