@@ -37,8 +37,7 @@ def grad_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net([x, y], is_dynamic_rank)
 
 
-@pytest.mark.skip(reason="Dependent on [ClipByNorm infer shape/CPU kernel dynamic shape] and [_dyn_reduced_shape]")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_dynamic_shape():
@@ -51,8 +50,7 @@ def test_grad_dynamic_shape():
     grad_dyn_case(False)
 
 
-@pytest.mark.skip(reason="Dependent on [ClipByNorm infer shape/CPU kernel dynamic shape] and [_dyn_reduced_shape]")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_dynamic_rank():
