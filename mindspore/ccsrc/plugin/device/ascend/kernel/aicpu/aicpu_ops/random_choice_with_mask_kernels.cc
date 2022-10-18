@@ -232,7 +232,14 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
     return kAicpuKernelStateInternalError;
   }
   size_t copy_output_bytes = IntToSize(new_output_length) * sizeof(int32_t);
-  (void)memcpy_s(output_coordinate, copy_output_bytes, output, copy_output_bytes);
+  if (memcpy_s(output_coordinate, copy_output_bytes, output, copy_output_bytes) != EOK) {
+    AICPU_LOGE("memcpy_s memory failed!");
+    free(input_dim);
+    free(mask_dim);
+    free(tmp_output);
+    free(output);
+    return kAicpuKernelStateInternalError;
+  }
   UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
   AICPU_LOGI("no zero num is %d, output_length is %d ", non_zero_num, output_length);
   UpdateOutputShapeValue(non_zero_num, output_length);
