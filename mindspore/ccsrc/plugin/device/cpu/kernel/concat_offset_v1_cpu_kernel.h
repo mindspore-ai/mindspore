@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONCAT_OFFSET_V1_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONCAT_OFFSET_V1_CPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <memory>
 #include <utility>
@@ -25,12 +26,17 @@
 
 namespace mindspore {
 namespace kernel {
-class ConcatOffsetV1CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class ConcatOffsetV1CpuKernelMod : public NativeCpuKernelMod {
  public:
   ConcatOffsetV1CpuKernelMod() = default;
   ~ConcatOffsetV1CpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -48,6 +54,8 @@ class ConcatOffsetV1CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, ConcatOffsetV1Func>> func_list_;
   ConcatOffsetV1Func kernel_func_;
   size_t axis_;
+  ShapeVector input0_;
+  ShapeVector output_;
 };
 }  // namespace kernel
 }  // namespace mindspore
