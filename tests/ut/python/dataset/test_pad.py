@@ -90,10 +90,11 @@ def test_pad_op2():
     data1 = data1.map(operations=ctrans, input_columns=["image"])
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(data["image"].shape)
-        # It pads left, top with 100 and right, bottom with 9,
-        # so the final size of image is 90 + 100 + 9 = 199
-        assert data["image"].shape[0] == 199
-        assert data["image"].shape[1] == 199
+        # It pads left, right with 100 and top, bottom with 9,
+        # so the final size of image row is 90 + 9 + 9 = 108
+        # so the final size of image col is 90 + 100 + 100 = 290
+        assert data["image"].shape[0] == 108
+        assert data["image"].shape[1] == 290
 
 
 def test_pad_grayscale():

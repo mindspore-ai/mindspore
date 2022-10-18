@@ -1568,8 +1568,8 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         padding (Union[int, Sequence[int, int], Sequence[int, int, int, int]]): The number of pixels
             to pad each border of the image.
             If a single number is provided, it pads all borders with this value.
-            If a tuple or lists of 2 values are provided, it pads the (left and top)
-            with the first value and (right and bottom) with the second value.
+            If a tuple or lists of 2 values are provided, it pads the (left and right)
+            with the first value and (top and bottom) with the second value.
             If 4 values are provided as a list or tuple, it pads the left, top, right and bottom respectively.
             The pad values must be non-negative.
         fill_value (Union[int, tuple[int]], optional): The pixel intensity of the borders, only valid for
@@ -1588,12 +1588,6 @@ class Pad(ImageTensorOperation, PyTensorOperation):
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
-
-    Note:
-        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
-        the first value and right/bottom with the second, to padding left/right with the first one
-        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
-        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int, int], Sequence[int, int, int, int]].
@@ -2234,8 +2228,8 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
             The padding value(s) must be non-negative (default=None).
             If padding is not None, pad image first with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or lists of 2 values are provided, pad the (left and top)
-            with the first value and (right and bottom) with the second value.
+            If a tuple or lists of 2 values are provided, pad the (left and right)
+            with the first value and (top and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
@@ -2256,12 +2250,6 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
-
-    Note:
-        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
-        the first value and right/bottom with the second, to padding left/right with the first one
-        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
-        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -2418,8 +2406,8 @@ class RandomCropWithBBox(ImageTensorOperation):
             The padding value(s) must be non-negative (default=None).
             If padding is not None, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or lists of 2 values are provided, pad the (left and top)
-            with the first value and (right and bottom) with the second value.
+            If a tuple or lists of 2 values are provided, pad the (left and right)
+            with the first value and (top and bottom) with the second value.
             If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
@@ -2440,12 +2428,6 @@ class RandomCropWithBBox(ImageTensorOperation):
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
 
               value of edge.
-
-    Note:
-        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
-        the first value and right/bottom with the second, to padding left/right with the first one
-        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
-        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].

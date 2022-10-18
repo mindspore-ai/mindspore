@@ -8,7 +8,7 @@ mindspore.dataset.vision.Pad
     参数：
         - **padding** (Union[int, Sequence[int, int], Sequence[int, int, int, int]]) - 图像各边填充的像素数。
           如果 `padding` 是一个整数，代表为图像的所有方向填充该值大小的像素。
-          如果 `padding` 是一个包含2个值的元组或列表，第一个值会用于填充图像的左侧和上侧，第二个值会用于填充图像的右侧和下侧。
+          如果 `padding` 是一个包含2个值的元组或列表，第一个值会用于填充图像的左侧和右侧，第二个值会用于填充图像的上侧和下侧。
           如果 `padding` 是一个包含4个值的元组或列表，则分别填充图像的左侧、上侧、右侧和下侧。
           填充值必须为非负值。
         - **fill_value** (Union[int, tuple[int]], 可选) - 填充的像素值，仅在 `padding_mode` 取值为Border.CONSTANT时有效。
