@@ -45,7 +45,7 @@ const uint32_t kOutput_values = 1;
     break;                                              \
   }
 
-#define EIGEN_SHAPE_CAST(INPUT) static_cast<Eigen::DenseIndex>(AnfAlgo::GetInputDeviceShape(node_ptr, INPUT)[0])
+#define EIGEN_SHAPE_CAST(INPUT) static_cast<Eigen::DenseIndex>(INPUT)
 
 inline static int cmp(
   const Eigen::TensorMap<Eigen::Tensor<int64_t, 2, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> &a_idx,
@@ -114,49 +114,63 @@ void UnionSparseIndicesAndValues(
 }
 }  // namespace
 
-void SparseSparseMaximumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_ptr = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-}
-
-bool SparseSparseMaximumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  bool ret = false;
-  auto data_type = AnfAlgo::GetInputDeviceDataType(node_ptr, kInputa_values);
-  switch (data_type) {
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt8, int8_t)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt16, int16_t)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt32, int32_t)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt64, int64_t)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeUInt8, uint8_t)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeUInt16, uint16_t)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeFloat16, Eigen::half)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeFloat32, float)
-    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeFloat64, double)
-    default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', Unsupported input data type: " << data_type << ".";
+bool SparseSparseMaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs) {
+  is_need_retrieve_output_shape_ = true;
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  TypeId a_dtype = inputs.at(kInputa_values)->GetDtype();
+  TypeId b_dtype = inputs.at(kInputb_values)->GetDtype();
+  if (a_dtype != b_dtype) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', The type of input a must be the same as b, got ranks: " << a_dtype << ", and " << b_dtype;
   }
-  return ret;
+  dtype_ = inputs.at(kInputa_values)->GetDtype();
+  itype_ = inputs.at(kIndex0)->GetDtype();
+  value_size_ = abstract::TypeIdSize(dtype_);
+  indice_size_ = abstract::TypeIdSize(itype_);
+  shape_size_ = abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype());
+  return true;
 }
 
-void SparseSparseMaximumCpuKernelMod::CheckInputShape(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const int64_t a_nnz, const int64_t b_nnz,
-                                                      const int64_t num_dims) {
-  const int64_t a_values_shape0 = AnfAlgo::GetInputDeviceShape(node_ptr, kInputa_values)[0];
-  const int64_t b_values_shape0 = AnfAlgo::GetInputDeviceShape(node_ptr, kInputb_values)[0];
-  const int64_t a_shapes_shape0 = AnfAlgo::GetInputDeviceShape(node_ptr, kInputa_shapes)[0];
-  const int64_t b_shapes_shape0 = AnfAlgo::GetInputDeviceShape(node_ptr, kInputb_shapes)[0];
-  const int64_t b_indices_shape1 = AnfAlgo::GetInputDeviceShape(node_ptr, kInputb_indices)[1];
-  auto a_shape_addr = reinterpret_cast<int64_t *>(inputs[kInputa_shapes]->addr);
-  auto b_shape_addr = reinterpret_cast<int64_t *>(inputs[kInputb_shapes]->addr);
-  auto a_dtype = AnfAlgo::GetInputDeviceDataType(node_ptr, kInputa_values);
-  auto b_dtype = AnfAlgo::GetInputDeviceDataType(node_ptr, kInputb_values);
+int SparseSparseMaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs,
+                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  outputs_ = outputs;
+  input_size_list_.clear();
+  output_size_list_.clear();
+  auto a_indice_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto b_indice_shape = inputs.at(kIndex3)->GetShapeVector();
+  a_values_shape0_ = inputs.at(kInputa_values)->GetShapeVector()[0];
+  b_values_shape0_ = inputs.at(kInputb_values)->GetShapeVector()[0];
+  a_shapes_shape0_ = inputs.at(kInputa_shapes)->GetShapeVector()[0];
+  b_shapes_shape0_ = inputs.at(kInputb_shapes)->GetShapeVector()[0];
+  a_nnz_ = a_indice_shape[0];
+  b_nnz_ = b_indice_shape[0];
+  num_dims_ = a_indice_shape[1];
+  auto max_nnz = a_nnz_ + b_nnz_;
+  input_size_list_.emplace_back(a_nnz_ * num_dims_ * indice_size_);
+  input_size_list_.emplace_back(a_nnz_ * value_size_);
+  input_size_list_.emplace_back(num_dims_ * shape_size_);
+  input_size_list_.emplace_back(b_nnz_ * num_dims_ * indice_size_);
+  input_size_list_.emplace_back(b_nnz_ * value_size_);
+  input_size_list_.emplace_back(num_dims_ * shape_size_);
+  output_size_list_.emplace_back(max_nnz * num_dims_ * indice_size_);
+  output_size_list_.emplace_back(max_nnz * value_size_);
+  CheckInputShape(inputs, a_nnz_, b_nnz_, num_dims_);
+  return KRET_OK;
+}
+
+void SparseSparseMaximumCpuKernelMod::CheckInputShape(const std::vector<KernelTensorPtr> &inputs, const int64_t a_nnz,
+                                                      const int64_t b_nnz, const int64_t num_dims) {
+  const int64_t a_values_shape0 = inputs.at(kInputa_values)->GetShapeVector()[0];
+  const int64_t b_values_shape0 = inputs.at(kInputb_values)->GetShapeVector()[0];
+  const int64_t b_indices_shape1 = inputs.at(kInputb_indices)->GetShapeVector()[1];
+  auto a_shapes_shape = inputs.at(kInputa_shapes)->GetShapeVector();
+  auto b_shapes_shape = inputs.at(kInputb_shapes)->GetShapeVector();
   if (a_values_shape0 != a_nnz) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', x1_values.shape[0] should be same to x1_indices.shape[0], but got values size: "
@@ -175,62 +189,71 @@ void SparseSparseMaximumCpuKernelMod::CheckInputShape(const std::vector<kernel::
                       << "', b_indices.shape[1] and a_indices.shape[1] must match, but got values size: "
                       << b_indices_shape1 << ", and " << num_dims;
   }
-  if (a_shapes_shape0 != num_dims) {
+  if (a_shapes_shape[0] != num_dims) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', a_indices.shape[1] and a_shape.shape[0] must match, but got values size: " << num_dims
-                      << ", and " << a_shapes_shape0;
+                      << ", and " << a_shapes_shape[0];
   }
-  if (a_shapes_shape0 != b_shapes_shape0) {
+  if (a_shapes_shape[0] != b_shapes_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', operands do not have the same ranks, got ranks: " << a_shapes_shape0 << ", and "
-                      << b_shapes_shape0;
+                      << "', operands do not have the same ranks, got ranks: " << a_shapes_shape[0] << ", and "
+                      << b_shapes_shape[0];
   }
-  for (int64_t i = 0; i < num_dims; ++i) {
-    if (a_shape_addr[i] != b_shape_addr[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', operand's shapes do not match at index " << i
-                        << ", got value: " << a_shapes_shape0 << ", and " << b_shapes_shape0;
-    }
+}
+
+bool SparseSparseMaximumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
+  bool ret = false;
+  switch (dtype_) {
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt8, int8_t)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt16, int16_t)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt32, int32_t)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeInt64, int64_t)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeUInt8, uint8_t)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeUInt16, uint16_t)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeFloat16, Eigen::half)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeFloat32, float)
+    SPARSE_SPARSE_MAXIMUM_COMPUTE_CASE(kNumberTypeFloat64, double)
+    default:
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', Unsupported input data type: " << dtype_ << ".";
   }
-  if (a_dtype != b_dtype) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', The type of input a must be the same as b, got ranks: " << a_dtype << ", and " << b_dtype;
-  }
+  return ret;
 }
 
 template <typename T>
 bool SparseSparseMaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  const auto shape = AnfAlgo::GetInputDeviceShape(node_ptr, kInputa_indices);
-  const int64_t a_nnz = shape[0];
-  const int64_t num_dims = shape[1];
-  const int64_t b_nnz = AnfAlgo::GetInputDeviceShape(node_ptr, kInputb_indices)[0];
-  auto output_indices_dtype = AnfAlgo::GetInputDeviceDataType(node_ptr, kInputa_indices);
-  auto output_values_dtype = AnfAlgo::GetInputDeviceDataType(node_ptr, kInputa_values);
-  CheckInputShape(inputs, a_nnz, b_nnz, num_dims);
+  const int64_t a_nnz = a_nnz_;
+  const int64_t num_dims = num_dims_;
+  const int64_t b_nnz = b_nnz_;
+
   auto a_values_ptr = reinterpret_cast<T *>(inputs[kInputa_values]->addr);
-  Eigen::DSizes<Eigen::DenseIndex, 1> a_values_size(EIGEN_SHAPE_CAST(kInputa_values));
+  Eigen::DSizes<Eigen::DenseIndex, 1> a_values_size(EIGEN_SHAPE_CAST(a_values_shape0_));
   Eigen::TensorMap<Eigen::Tensor<T, 1, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> a_values(a_values_ptr,
                                                                                                      a_values_size);
   auto b_values_ptr = reinterpret_cast<T *>(inputs[kInputb_values]->addr);
-  Eigen::DSizes<Eigen::DenseIndex, 1> b_values_size(EIGEN_SHAPE_CAST(kInputb_values));
+  Eigen::DSizes<Eigen::DenseIndex, 1> b_values_size(EIGEN_SHAPE_CAST(b_values_shape0_));
   Eigen::TensorMap<Eigen::Tensor<T, 1, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> b_values(b_values_ptr,
                                                                                                      b_values_size);
   auto a_indices_ptr = reinterpret_cast<int64_t *>(inputs[kInputa_indices]->addr);
-  Eigen::DSizes<Eigen::DenseIndex, kIndex2> a_indices_size(EIGEN_SHAPE_CAST(kInputa_values),
-                                                           EIGEN_SHAPE_CAST(kInputa_shapes));
+  Eigen::DSizes<Eigen::DenseIndex, kIndex2> a_indices_size(EIGEN_SHAPE_CAST(a_values_shape0_),
+                                                           EIGEN_SHAPE_CAST(a_shapes_shape0_));
   Eigen::TensorMap<Eigen::Tensor<int64_t, kIndex2, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> a_indices_mat(
     a_indices_ptr, a_indices_size);
+
   auto b_indices_ptr = reinterpret_cast<int64_t *>(inputs[kInputb_indices]->addr);
-  Eigen::DSizes<Eigen::DenseIndex, kIndex2> b_indices_size(EIGEN_SHAPE_CAST(kInputb_values),
-                                                           EIGEN_SHAPE_CAST(kInputb_shapes));
+  Eigen::DSizes<Eigen::DenseIndex, kIndex2> b_indices_size(EIGEN_SHAPE_CAST(b_values_shape0_),
+                                                           EIGEN_SHAPE_CAST(b_shapes_shape0_));
   Eigen::TensorMap<Eigen::Tensor<int64_t, kIndex2, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> b_indices_mat(
     b_indices_ptr, b_indices_size);
+
   auto a_shape_ptr = reinterpret_cast<int64_t *>(inputs[kInputa_shapes]->addr);
-  Eigen::DSizes<Eigen::DenseIndex, 1> a_shape_size(EIGEN_SHAPE_CAST(kInputa_shapes));
+  Eigen::DSizes<Eigen::DenseIndex, 1> a_shape_size(EIGEN_SHAPE_CAST(a_shapes_shape0_));
   Eigen::TensorMap<Eigen::Tensor<int64_t, 1, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> a_shape(a_shape_ptr,
                                                                                                           a_shape_size);
   auto b_shape_ptr = reinterpret_cast<int64_t *>(inputs[kInputb_shapes]->addr);
-  Eigen::DSizes<Eigen::DenseIndex, 1> b_shape_size(EIGEN_SHAPE_CAST(kInputb_shapes));
+  Eigen::DSizes<Eigen::DenseIndex, 1> b_shape_size(EIGEN_SHAPE_CAST(b_shapes_shape0_));
   Eigen::TensorMap<Eigen::Tensor<int64_t, 1, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> b_shape(b_shape_ptr,
                                                                                                           b_shape_size);
 
@@ -239,7 +262,7 @@ bool SparseSparseMaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   UnionSparseIndicesAndValues(a_indices_mat, a_values, a_nnz, b_indices_mat, b_values, b_nnz, num_dims,
                               &a_augmented_values, &b_augmented_values, &entries_to_copy);
   const int64_t sum_nnz = a_augmented_values.size();
-
+  sum_nnz_ = sum_nnz;
   auto output_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_indices]->addr);
   Eigen::DSizes<Eigen::DenseIndex, kIndex2> output_indices_size(static_cast<Eigen::DenseIndex>(sum_nnz),
                                                                 static_cast<Eigen::DenseIndex>(num_dims));
@@ -261,13 +284,19 @@ bool SparseSparseMaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     output_values_ptr, output_values_size);
   // cppcheck-suppress unreadVariable
   output_values = a_augmented_values_t.binaryExpr(b_augmented_values_t, Eigen::internal::scalar_max_op<T, T>());
-  ShapeVector out_indcie_shape, out_values_shape;
-  out_indcie_shape.push_back(sum_nnz);
-  out_indcie_shape.push_back(num_dims);
-  out_values_shape.push_back(sum_nnz);
-  common::AnfAlgo::SetOutputInferTypeAndShape({output_indices_dtype, output_values_dtype},
-                                              {out_indcie_shape, out_values_shape}, cnode_ptr_.lock().get());
   return true;
+}
+
+void SparseSparseMaximumCpuKernelMod::SyncData() {
+  ShapeVector out_indcie_shape, out_values_shape;
+  out_indcie_shape.push_back(sum_nnz_);
+  out_indcie_shape.push_back(num_dims_);
+  out_values_shape.push_back(sum_nnz_);
+  // Set output shape and dtype
+  outputs_[0]->SetShapeVector(out_indcie_shape);
+  outputs_[0]->SetDtype(TypeIdToType(itype_));
+  outputs_[1]->SetShapeVector(out_values_shape);
+  outputs_[1]->SetDtype(TypeIdToType(dtype_));
 }
 
 std::vector<KernelAttr> SparseSparseMaximumCpuKernelMod::GetOpSupport() {

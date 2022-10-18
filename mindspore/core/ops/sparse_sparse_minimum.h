@@ -33,8 +33,6 @@ class MIND_API SparseSparseMinimum : public BaseOperator {
                {"y_indices", "y_values"});
   }
 };
-abstract::AbstractBasePtr SparseSparseMinimumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSparseMinimumPtr = std::shared_ptr<SparseSparseMinimum>;
 }  // namespace ops
 }  // namespace mindspore

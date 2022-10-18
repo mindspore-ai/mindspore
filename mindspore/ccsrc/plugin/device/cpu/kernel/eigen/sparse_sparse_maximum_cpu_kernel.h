@@ -27,25 +27,46 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseSparseMaximumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseSparseMaximumCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseSparseMaximumCpuKernelMod() = default;
   ~SparseSparseMaximumCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
+  void SyncData() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void CheckInputShape(const std::vector<kernel::AddressPtr> &inputs, const int64_t a_nnz, const int64_t b_nnz,
+  void CheckInputShape(const std::vector<KernelTensorPtr> &inputs, const int64_t a_nnz, const int64_t b_nnz,
                        const int64_t num_dims);
 
-  CNodePtr node_ptr;
+  std::vector<KernelTensorPtr> outputs_;
+  std::string kernel_name_;
+  TypeId dtype_{kTypeUnknown};
+  TypeId itype_{kTypeUnknown};
+  int64_t indice_size_;
+  int64_t value_size_;
+  int64_t shape_size_;
+  int64_t a_nnz_;
+  int64_t b_nnz_;
+  int64_t num_dims_;
+  int64_t sum_nnz_;
+  int64_t a_values_shape0_;
+  int64_t b_values_shape0_;
+  int64_t a_shapes_shape0_;
+  int64_t b_shapes_shape0_;
 };
 }  // namespace kernel
 }  // namespace mindspore
