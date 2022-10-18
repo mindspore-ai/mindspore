@@ -28,7 +28,7 @@ namespace {
 constexpr int64_t kDimEndFlag = INT64_MIN;
 }  // namespace
 bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
-  MS_LOG(INFO) << "Parse Node:" << node_name_ << " start";
+  MS_LOG(DEBUG) << "Parse Node:" << node_name_ << " start";
   if (ext_info.empty()) {
     MS_LOG(ERROR) << "Node:" << node_name_ << " ext_info is empty";
     return false;
@@ -89,7 +89,7 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
                   << ", ext_info_len" << ext_info_len_;
     return false;
   }
-  MS_LOG(INFO) << "Node:" << node_name_ << " parse ext info end.";
+  MS_LOG(DEBUG) << "Node:" << node_name_ << " parse ext info end.";
   return true;
 }
 
@@ -107,7 +107,6 @@ bool AicpuExtInfoHandler::ParseExtShapeType(const AicpuExtInfo &aicpu_ext_info) 
                   << " but got:" << *type;
     return false;
   }
-  MS_LOG(INFO) << "Node:" << node_name_ << " parse ext shape type success infoLen=" << aicpu_ext_info.infoLen;
   return true;
 }
 
@@ -125,7 +124,6 @@ bool AicpuExtInfoHandler::ParseExtInputShape(AicpuExtInfo *aicpu_ext_info) {
   for (uint32_t index = 0; index < input_num_; ++index) {
     (void)input_shape_and_type_.emplace_back(&input[index]);
   }
-  MS_LOG(INFO) << "Node:" << node_name_ << " parse ext input shape success infoLen=" << aicpu_ext_info->infoLen;
   return true;
 }
 
@@ -143,7 +141,6 @@ bool AicpuExtInfoHandler::ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info) {
   for (uint32_t index = 0; index < output_num_; ++index) {
     (void)output_shape_and_type_.emplace_back(&output[index]);
   }
-  MS_LOG(INFO) << "Node:" << node_name_ << " parse ext output shape success infoLen=" << aicpu_ext_info->infoLen;
   return true;
 }
 

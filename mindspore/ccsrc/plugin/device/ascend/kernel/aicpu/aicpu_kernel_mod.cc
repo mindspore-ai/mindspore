@@ -114,7 +114,6 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
   aicpu_param_head.ioAddrNum = SizeToUint(io_addrs_num);
 
   if (ext_info_.empty()) {
-    MS_LOG(INFO) << "Static Shape Kernel";
     aicpu_param_head.extInfoLength = 0;
     aicpu_param_head.extInfoAddr = 0;
   } else {
@@ -155,8 +154,8 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   if (cust_kernel_) {
     flag = RT_KERNEL_CUSTOM_AICPU;
   }
-  MS_LOG(INFO) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
-               << ", args_size:" << args_.length();
+  MS_LOG(DEBUG) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
+                << ", args_size:" << args_.length();
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   rtArgsEx_t argsInfo = {};
