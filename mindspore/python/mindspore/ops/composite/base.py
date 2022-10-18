@@ -31,6 +31,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     DictFromKeys_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import ms_function, _pynative_executor, _wrap_func
+from mindspore.common.api import _add_flags, _core
 from mindspore.ops.primitive import Primitive
 from mindspore.ops import signature as sig
 
@@ -58,18 +59,7 @@ def add_flags(fn=None, **flags):
         True
     """
 
-    def deco(fn):
-        # need set the attr and access on c++
-        if not hasattr(fn, "_func_graph_flags"):
-            fn._func_graph_flags = {}
-
-        fn._func_graph_flags.update({**flags})
-        return fn
-
-    ret = deco
-    if fn is not None:
-        ret = deco(fn)
-    return ret
+    return _add_flags(fn, **flags)
 
 
 def core(fn=None, **flags):
@@ -94,20 +84,7 @@ def core(fn=None, **flags):
         True
     """
 
-    # need set the attr and access on c++
-
-    def deco(fn):
-        fn._func_graph_flags = {
-            'core': True,
-            **flags,
-        }
-        return fn
-
-    if fn is not None:
-        ret = deco(fn)
-    else:
-        ret = deco
-    return ret
+    return _core(fn, **flags)
 
 
 def _get_grad_weights_id(weights=None):

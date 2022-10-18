@@ -106,10 +106,13 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
   trace::TraceGraphEvalEnter(new_context, call_conf);
 
   // Increase & Check the func graph call depth.
+  // Don't check it if the user set no_recursive flag.
   IncreaseFunctionCallDepth();
   IncreaseStackFrameDepth();
+  const auto &top_graph = parse::Parser::GetTopFuncGraph();
+  bool no_recursive = (top_graph == nullptr ? false : top_graph->has_flag(FUNC_GRAPH_FLAG_NO_RECURSIVE));
   const uint32_t max_depth = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH);
-  if (FunctionCallDepth() > max_depth) {
+  if (!no_recursive && FunctionCallDepth() > max_depth) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit " << max_depth
                       << ", (function call depth: " << FunctionCallDepth()
                       << ", simulate call depth: " << StackFrameDepth() << ").\n"
@@ -245,9 +248,12 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   MS_LOG(DEBUG) << ToString() << " entered first.";
   MS_EXCEPTION_IF_NULL(engine);
   // Increase & Check the func graph call depth.
+  // Don't check it if the user set no_recursive flag.
   IncreaseFunctionCallDepth();
+  const auto &top_graph = parse::Parser::GetTopFuncGraph();
+  bool no_recursive = (top_graph == nullptr ? false : top_graph->has_flag(FUNC_GRAPH_FLAG_NO_RECURSIVE));
   const uint32_t max_depth = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH);
-  if (FunctionCallDepth() > max_depth) {
+  if (!no_recursive && FunctionCallDepth() > max_depth) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit " << max_depth
                       << ", (function call depth: " << FunctionCallDepth()
                       << ", simulate call depth: " << StackFrameDepth() << ").\n"

@@ -3111,22 +3111,22 @@ void Parser::PrintPhiArgMaps(const std::map<ParameterPtr, std::set<AnfNodePtr>> 
   size_t m = 0;
   for (const auto &[phi, args] : phi_to_args) {
     MS_EXCEPTION_IF_NULL(phi);
-    oss << "phi:[" << m++ << "]:" << phi->DebugString() << "\n";
+    oss << "phi[" << m++ << "]: " << phi->DebugString() << "\n";
     size_t n = 0;
     for (auto &arg : args) {
       MS_EXCEPTION_IF_NULL(arg);
-      oss << "    args:[" << n++ << "]:" << arg->DebugString() << "\n";
+      oss << "    args[" << n++ << "]: " << arg->DebugString() << "\n";
     }
   }
 
   m = 0;
   for (const auto &[arg, phis] : arg_to_phis) {
     MS_EXCEPTION_IF_NULL(arg);
-    oss << "arg:[" << m++ << "]:" << arg->DebugString() << "\n";
+    oss << "arg[" << m++ << "]: " << arg->DebugString() << "\n";
     size_t n = 0;
     for (auto &phi : phis) {
       MS_EXCEPTION_IF_NULL(phi);
-      oss << "    phis:[" << n++ << "]:" << phi->DebugString() << "\n";
+      oss << "    phis[" << n++ << "]: " << phi->DebugString() << "\n";
     }
   }
   oss << "===============================End==============================="
@@ -3145,7 +3145,7 @@ bool UpdatePhiArgMaps(std::map<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
     }
     auto phi_arg = *args.begin();
     MS_EXCEPTION_IF_NULL(phi_arg);
-    MS_LOG(DEBUG) << "phi:" << phi->DebugString() << ", get one arg:" << phi_arg->DebugString();
+    MS_LOG(DEBUG) << "phi: " << phi->DebugString() << ", get one arg: " << phi_arg->DebugString();
     // If this phi is a arg of other phi.
     auto arg_to_phi_it = arg_to_phis->find(phi);
     if (arg_to_phi_it == arg_to_phis->end()) {
@@ -3153,11 +3153,11 @@ bool UpdatePhiArgMaps(std::map<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
     }
     // Use the new phi arg as the arg of other phi's arg. Usually other phi is a deeper subgraph's phi node.
     auto other_phis = arg_to_phi_it->second;
-    MS_LOG(DEBUG) << "Find phi as arg of other phi, other phis num:" << other_phis.size();
+    MS_LOG(DEBUG) << "Find phi as arg of other phi, other phis num: " << other_phis.size();
     // Update all other phis' arg from phi to phi_arg.
     for (auto &other_phi : other_phis) {
       MS_EXCEPTION_IF_NULL(other_phi);
-      MS_LOG(DEBUG) << "other phi:" << other_phi->DebugString();
+      MS_LOG(DEBUG) << "other phi: " << other_phi->DebugString();
       phi_arg_updated = true;
       // The phi will not be arg of any other phis.Erase map1.
       (void)(*phi_to_args)[other_phi].erase(phi);
@@ -3166,13 +3166,14 @@ bool UpdatePhiArgMaps(std::map<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
         MS_LOG(DEBUG) << "Get phi arg of phi self.";
         continue;
       }
-      MS_LOG(DEBUG) << "phi arg:" << phi_arg->DebugString() << " as new arg of other phi:" << other_phi->DebugString();
+      MS_LOG(DEBUG) << "phi arg: " << phi_arg->DebugString()
+                    << " as new arg of other phi: " << other_phi->DebugString();
       // Replace other phi's arg as this phi's arg, instead of phi. (other_phi , phi) -> (other_phi, phi_arg)
       (void)(*phi_to_args)[other_phi].insert(phi_arg);
       // Add other phi to the phi_arg's phis set. (phi_arg, {phi_x, }) -> (phi_arg, {phi_x, other_phi})
       (void)(*arg_to_phis)[phi_arg].insert(other_phi);
     }
-    MS_LOG(DEBUG) << "Remove phi type arg:" << phi;
+    MS_LOG(DEBUG) << "Remove phi type arg: " << phi;
     // The phi will not be arg of any other phis.Erase map2.
     (void)(*arg_to_phis).erase(phi);
   }
@@ -3184,7 +3185,7 @@ void Parser::UpdatePhiArgMapsRepeatedly(std::map<ParameterPtr, std::set<AnfNodeP
   bool phi_arg_updated = true;
   size_t loop_count = 0;
   while (phi_arg_updated) {
-    MS_LOG(DEBUG) << "update loop count:" << loop_count++;
+    MS_LOG(DEBUG) << "update loop count: " << loop_count++;
     PrintPhiArgMaps(*phi_to_args, *arg_to_phis);
     phi_arg_updated = UpdatePhiArgMaps(phi_to_args, arg_to_phis);
   }
@@ -3227,8 +3228,8 @@ std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> Parser::CollectRemovablePhiA
         << "\n";
     for (const auto &[phi, arg] : *need_remove_phi_args) {
       MS_EXCEPTION_IF_NULL(phi);
-      oss << "phi:[" << m << "]:" << phi->DebugString() << "\n";
-      oss << "arg:[" << m++ << "]:" << arg->DebugString() << "\n";
+      oss << "phi[" << m << "]: " << phi->DebugString() << "\n";
+      oss << "arg[" << m++ << "]: " << arg->DebugString() << "\n";
     }
     MS_LOG(DEBUG) << "\n" << oss.str();
   }
@@ -3246,10 +3247,10 @@ std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> Parser::CalRemovablePhis() {
 }
 
 void ReplacePhiAsArg(const std::map<ParameterPtr, AnfNodePtr> &removable_phis, const FuncGraphManagerPtr &manager) {
-  MS_LOG(DEBUG) << "Removable phi size:" << removable_phis.size();
+  MS_LOG(DEBUG) << "Removable phi size: " << removable_phis.size();
   for (const auto &[phi, arg] : removable_phis) {
-    MS_LOG(DEBUG) << "Removable phi:" << phi->DebugString()
-                  << ", arg:" << (arg == nullptr ? "null" : arg->DebugString());
+    MS_LOG(DEBUG) << "Removable phi: " << phi->DebugString()
+                  << ", arg: " << (arg == nullptr ? "null" : arg->DebugString());
     if (arg != nullptr) {
       (void)manager->Replace(phi, arg);
     }
@@ -3277,8 +3278,8 @@ HashSet<size_t> RemovePhiParametersAndGetRemoveIndex(const FunctionBlockPtr &blo
     // Record all removed indexes.
     (void)need_removed_indexes.insert(i);
   }
-  MS_LOG(DEBUG) << "parameters.size():" << parameters.size()
-                << ", need_removed_indexes.size():" << need_removed_indexes.size();
+  MS_LOG(DEBUG) << "parameters.size(): " << parameters.size()
+                << ", need_removed_indexes.size(): " << need_removed_indexes.size();
   // Only if need_removed_indexes not empty, parameters need be updated.
   if (!need_removed_indexes.empty()) {
     func_graph->set_parameters(new_parameters);
@@ -3327,7 +3328,7 @@ void Parser::RemoveUnnecessaryPhis() {
   // Remove the unnecessary phi parameters.
   for (const auto &block : func_block_list_) {
     MS_EXCEPTION_IF_NULL(block);
-    MS_LOG(DEBUG) << "Start remove phi of block:" << block->ToString();
+    MS_LOG(DEBUG) << "Start remove phi of block: " << block->ToString();
     // Remove the unnecessary phi parameters.
     const auto &need_removed_indexes = RemovePhiParametersAndGetRemoveIndex(block, *removable_phis);
     // Remove all block->prev_blocks()'s jump node corresponding args.
