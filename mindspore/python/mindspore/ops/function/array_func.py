@@ -3450,7 +3450,7 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
         ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore import Tensor
