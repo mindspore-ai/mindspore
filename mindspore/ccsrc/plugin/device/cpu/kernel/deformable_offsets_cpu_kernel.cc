@@ -199,7 +199,7 @@ void DeformableOffsetsCpuKernelMod::GenPositionGrid(int64_t *position_grid) {
       position_grid[index + 1] = pixel_y * strides_[h_axis_] + kernel_y * dilations_[h_axis_] - pads_[kPadTopIndex];
     }
   };
-  ParallelLaunchAutoSearch(task, LongToSize(output_h_ * output_w_), this, &parallel_search_info_, pool_);
+  ParallelLaunchAutoSearch(task, LongToSize(output_h_ * output_w_), this, &parallel_search_info_);
 }
 
 template <typename T>
@@ -253,7 +253,7 @@ void DeformableOffsetsCpuKernelMod::DeformableOffsets(const T *input_addr, const
       output_addr[i] = bilinear_val * mask;
     }
   };
-  ParallelLaunchAutoSearch(task, LongToSize(n_ * output_n_dim), this, &parallel_search_info_, pool_);
+  ParallelLaunchAutoSearch(task, LongToSize(n_ * output_n_dim), this, &parallel_search_info_);
 }
 
 template <typename T>
