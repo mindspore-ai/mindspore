@@ -32,17 +32,41 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-void SparseTensorDenseAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
-  auto shape_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex2);
-  auto x2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex3);
-  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape, shape_shape, x2_shape})) {
-    return;
+bool SparseTensorDenseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseAddInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseAddOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "SparseTensorDenseAdd does not support this kernel data type: " << kernel_attr;
   }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
 
+int SparseTensorDenseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs,
+                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto indices_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto values_shape = inputs.at(kIndex1)->GetShapeVector();
+  auto shape_shape = inputs.at(kIndex2)->GetShapeVector();
+  auto x2_shape = inputs.at(kIndex3)->GetShapeVector();
+  values_size_ = static_cast<size_t>(values_shape[0]);
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  x2_shape_ = x2_shape;
+  size_t x1_rank = static_cast<size_t>(shape_shape[0]);
+  size_t x2_rank = x2_shape_.size();
+  if (IsDynamic(values_shape) || IsDynamic(indices_shape) || IsDynamic(shape_shape) || IsDynamic(x2_shape)) {
+    return KRET_OK;
+  }
   if (indices_shape.size() != kIndicesShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'x1_indices' must be a " << kIndicesShapeSize
                       << "-D Tensor, but got " << indices_shape.size() << "-D";
@@ -53,30 +77,17 @@ void SparseTensorDenseAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << "must be equal to the first dimension length of 'indices', but got 'x1_values' shape: "
                       << Vector2Str(values_shape) << " and 'x1_indices' shape: " << Vector2Str(indices_shape);
   }
-  x2_shape_ = x2_shape;
-  size_t x1_rank = static_cast<size_t>(shape_shape[0]);
-  size_t x2_rank = x2_shape_.size();
   if (x1_rank != x2_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', x1 and x2 must have same ranks, but got 'x1' shape: " << Vector2Str(shape_shape)
                       << "and 'x2' shape: " << Vector2Str(x2_shape_);
   }
-  values_size_ = static_cast<size_t>(values_shape[0]);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "SparseTensorDenseAdd does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename I, typename T>
 bool SparseTensorDenseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseAddInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseAddOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
     return true;

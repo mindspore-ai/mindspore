@@ -21,17 +21,23 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
+#include <map>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class SparseTensorDenseAddCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseTensorDenseAddCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseTensorDenseAddCpuKernelMod() = default;
   ~SparseTensorDenseAddCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -51,8 +57,8 @@ class SparseTensorDenseAddCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     std::function<bool(SparseTensorDenseAddCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, SparseTensorDenseAddFunc>> func_list_;
+  std::string kernel_name_;
   SparseTensorDenseAddFunc kernel_func_;
-
   ShapeVector x2_shape_;
   ShapeVector output_shape_;
   size_t values_size_{0};
