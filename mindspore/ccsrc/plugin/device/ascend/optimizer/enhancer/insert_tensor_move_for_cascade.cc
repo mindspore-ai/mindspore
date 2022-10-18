@@ -125,7 +125,8 @@ void InsertTensorMoveForCascade::InsertOutputTensorMove(const FuncGraphPtr &grap
 
   AnfNodePtr node = nullptr;
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-  for (const auto &output_with_index : outputs) {
+  for (const auto &output : outputs) {
+    const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     if (!common::AnfAlgo::IsCommunicationOp(output_with_index.first)) {
       continue;
     }

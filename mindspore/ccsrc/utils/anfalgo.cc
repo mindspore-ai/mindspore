@@ -148,9 +148,9 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   // Since output num represents the number of all outputs of node, only one output is obtained per loop.
   for (size_t i = 0; i < outputs_num; ++i) {
     // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
-    // The output may be updataState node for connecting dependencies between subgraphs.
-    auto output_with_index =
-      AnfAlgo::VisitKernelWithReturnType(node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState});
+    // The output may be updataState/load node for connecting dependencies between subgraphs.
+    auto output_with_index = AnfAlgo::VisitKernelWithReturnType(
+      node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimLoad});
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
     // The MakeTuple/MakeSparse node need recurse.
@@ -299,6 +299,17 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
     return VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, skip_nop_node, return_types);
   }
   return KernelWithIndex(anf_node, index);
+}
+
+KernelWithIndex AnfAlgo::FetchRealNodeSkipMonadControl(const KernelWithIndex &node_with_index) {
+  MS_EXCEPTION_IF_NULL(node_with_index.first);
+  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> auto_monad_prims = {prim::kPrimDepend,
+                                                                                              prim::kPrimLoad};
+  if (IsOneOfPrimitiveCNode(node_with_index.first, auto_monad_prims)) {
+    return common::AnfAlgo::VisitKernelWithReturnType(node_with_index.first, node_with_index.second, false);
+  } else {
+    return node_with_index;
+  }
 }
 
 std::vector<AnfNodePtr> AnfAlgo::GetAllOutput(const AnfNodePtr &node, const std::vector<PrimitivePtr> &return_types) {

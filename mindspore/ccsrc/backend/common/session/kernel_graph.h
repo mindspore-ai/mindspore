@@ -282,7 +282,10 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   // Cache the internal parameter and corresponding to front node into internal_parameter_to_front_node_map_.
   void CacheInternalParameterToFrontNode(const AnfNodePtr &parameter, const AnfWithOutIndex &front_node_with_index);
+  // This function gets the real node that skip the monad control node.
   AnfWithOutIndex GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const;
+  // This function gets the origin node used to connect monad controls between subgraphs.
+  AnfWithOutIndex GetOriginFrontNodeByInternalParameter(const AnfNodePtr &parameter) const;
 
   // Get the funcgraph to which the kernel graph belongs.
   FuncGraphPtr GetFuncGraph();

@@ -1257,6 +1257,22 @@ void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
 AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {
   auto iter = internal_parameter_to_front_node_map_.find(parameter);
   if (iter != internal_parameter_to_front_node_map_.end()) {
+    // The load/depend node need fetch the real parameter node.
+    const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> auto_monad_prims = {prim::kPrimDepend,
+                                                                                                prim::kPrimLoad};
+    if (IsOneOfPrimitiveCNode(iter->second.first, auto_monad_prims)) {
+      return common::AnfAlgo::VisitKernelWithReturnType(iter->second.first, iter->second.second, false);
+    } else {
+      return iter->second;
+    }
+  }
+
+  return AnfWithOutIndex();
+}
+
+AnfWithOutIndex KernelGraph::GetOriginFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {
+  auto iter = internal_parameter_to_front_node_map_.find(parameter);
+  if (iter != internal_parameter_to_front_node_map_.end()) {
     return iter->second;
   }
   return AnfWithOutIndex();

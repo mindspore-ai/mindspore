@@ -1094,7 +1094,10 @@ bool ControlNodeParser::IsRootGraphPersistentDeviceTensor(const AnfNodePtr &node
     return true;
   }
 
-  return find(root_graph_parameters_.begin(), root_graph_parameters_.end(), node) != root_graph_parameters_.end();
+  // Maybe the load node, need fetch the real parameter node.
+  auto real_node = common::AnfAlgo::FetchRealNodeSkipMonadControl({node, 0}).first;
+  MS_EXCEPTION_IF_NULL(real_node);
+  return find(root_graph_parameters_.begin(), root_graph_parameters_.end(), real_node) != root_graph_parameters_.end();
 }
 
 bool ControlNodeParser::IsNeedStackControlNode(const AnfNodePtr &node) {

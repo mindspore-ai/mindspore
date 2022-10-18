@@ -190,7 +190,8 @@ void EnableGraphOutputZeroCopy(const KernelGraphPtr &graph) {
   }
   // Zero copy is only enabled for subgraph sink.
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-  for (const auto &node_with_index : outputs) {
+  for (const auto &output : outputs) {
+    const auto &node_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     const auto &node = node_with_index.first;
     const auto &index = node_with_index.second;
     MS_EXCEPTION_IF_NULL(node);

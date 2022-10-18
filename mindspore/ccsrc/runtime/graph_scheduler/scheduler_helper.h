@@ -35,6 +35,9 @@ class SchedulerHelper {
   // Convert the actors vector by the actor set.
   static std::vector<AbstractActorPtr> CollectActors(const ActorSet *actor_set);
 
+  // Judge the input node whether need the control arrow.
+  static bool HasMonadControl(const AnfNodePtr &input_node, const KernelGraphPtr &graph);
+
   static void AddDeviceTensorStore(const AnfNode *anf_node, const DeviceTensorPtr &device_tensor);
 
   // Add the arrow between from actor and to actor.

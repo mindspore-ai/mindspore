@@ -116,7 +116,7 @@ bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (node->isa<Parameter>() && (!common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
     //  Judge whether node is internal parameter.
-    const auto &front_node = graph->GetFrontNodeByInternalParameter(node);
+    const auto &front_node = graph->GetOriginFrontNodeByInternalParameter(node);
     if (front_node.first != nullptr) {
       return true;
     }
@@ -168,7 +168,11 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   if (node->isa<ValueNode>()) {
     return true;
   }
-  if (node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
+
+  // Maybe the load node, need fetch the real parameter node.
+  auto real_node = common::AnfAlgo::FetchRealNodeSkipMonadControl({node, 0}).first;
+  MS_EXCEPTION_IF_NULL(real_node);
+  if (real_node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(real_node->cast<ParameterPtr>())) {
     return true;
   }
   return false;
@@ -279,17 +283,20 @@ KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const Kerne
 
   KernelTransformType type = KernelTransformType::kUnknown;
   MS_EXCEPTION_IF_NULL(node);
-  if (IsDeviceQueueDSActor(node, strategy)) {
+  auto real_node = common::AnfAlgo::FetchRealNodeSkipMonadControl({node, 0}).first;
+  MS_EXCEPTION_IF_NULL(real_node);
+
+  if (IsDeviceQueueDSActor(real_node, strategy)) {
     type = KernelTransformType::kDeviceDataSourceActor;
-  } else if (IsHostQueueDSActor(node, kernel_graph, host_parameters, strategy)) {
+  } else if (IsHostQueueDSActor(real_node, kernel_graph, host_parameters, strategy)) {
     type = KernelTransformType::kHostDataSourceActor;
-  } else if (IsCustomActor(node)) {
+  } else if (IsCustomActor(real_node)) {
     type = KernelTransformType::kCustomActor;
-  } else if (IsKernelActor(node, strategy)) {
+  } else if (IsKernelActor(real_node, strategy)) {
     type = KernelTransformType::kKernelActor;
-  } else if (IsInternalParameter(node, kernel_graph)) {
+  } else if (IsInternalParameter(real_node, kernel_graph)) {
     type = KernelTransformType::kInternalParameter;
-  } else if (IsPersistentDeviceTensor(node)) {
+  } else if (IsPersistentDeviceTensor(real_node)) {
     type = KernelTransformType::kDeviceTensorStore;
   } else {
     // May exist the from kernel that no need link in the pynative mode.
@@ -312,6 +319,10 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
     return "";
   }
 
+  auto real_node = node;
+  if (real_node != nullptr) {
+    real_node = common::AnfAlgo::FetchRealNodeSkipMonadControl({node, 0}).first;
+  }
   std::string actor_name = "";
   switch (kernel_type) {
     case KernelTransformType::kSuperKernelActor:
@@ -324,12 +335,12 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
       actor_name = actor_set_name + kHostDSActorNameSuffix;
       break;
     case KernelTransformType::kCustomActor:
-      MS_EXCEPTION_IF_NULL(node);
-      actor_name = AnfUtils::GetCustomActorName(node);
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = AnfUtils::GetCustomActorName(real_node);
       break;
     case KernelTransformType::kKernelActor:
-      MS_EXCEPTION_IF_NULL(node);
-      actor_name = node->fullname_with_scope();
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = real_node->fullname_with_scope();
       break;
     default:
       break;
