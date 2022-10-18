@@ -74,24 +74,27 @@ class CropAndResizeInfer : public abstract::OpInferBase {
     }
 
     std::vector<int64_t> crop_size;
-    if (!IsIdentidityOrSubclass(crop_size_type, kTuple)) {
+    if (crop_size_type->isa<TensorType>()) {
+      crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name);
+    } else if (IsIdentidityOrSubclass(crop_size_type, kTuple)) {
+      auto value_tuple = value_ptr->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(value_tuple);
+      const auto &elements = value_tuple->value();
+      for (const auto &element : elements) {
+        if (element->isa<Int64Imm>()) {
+          crop_size.push_back(GetValue<int64_t>(element));
+        } else {
+          auto type = element->type();
+          std::string real_type_str = type == nullptr ? "Unknown." : type->ToString() + ".";
+          MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                                  << "], the [crop_size] must be a tuple with two Int elements, but got "
+                                  << real_type_str;
+        }
+      }
+    } else {
       MS_EXCEPTION(TypeError) << "For primitive[" + prim_name
                               << "], the [crop_size] is must be a Tuple with two Int elements, but got "
                               << crop_size_type->ToString();
-    }
-    auto value_tuple = value_ptr->cast<ValueTuplePtr>();
-    MS_EXCEPTION_IF_NULL(value_tuple);
-    const auto &elements = value_tuple->value();
-    for (const auto &element : elements) {
-      if (element->isa<Int64Imm>()) {
-        crop_size.push_back(GetValue<int64_t>(element));
-      } else {
-        auto type = element->type();
-        std::string real_type_str = type == nullptr ? "Unknown." : type->ToString() + ".";
-        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
-                                << "], the [crop_size] must be a tuple with two Int elements, but got "
-                                << real_type_str;
-      }
     }
     (void)CheckAndConvertUtils::CheckInteger("[crop_size] length", static_cast<int64_t>(crop_size.size()), kEqual,
                                              kShapeRank2, prim_name);
