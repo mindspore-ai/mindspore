@@ -112,17 +112,25 @@ abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr
   return res_shape;
 }
 
-KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
-                                   const ShapeVector &device_shape_adaptively, const std::string &format_str) {
-  auto tag_abstract = cur_abstract->Clone();
+abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_abstract, size_t idx) {
+  abstract::AbstractBasePtr child_abs = cur_abstract;
   if (cur_abstract->isa<abstract::AbstractTuple>()) {
     auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abs_tuple);
     auto abs_element = abs_tuple->elements();
     MS_EXCEPTION_IF_CHECK_FAIL((idx < abs_element.size()), "Index is out of range.");
-    tag_abstract = abs_element.at(idx);
+    child_abs = abs_element.at(idx);
+  } else {
+    MS_EXCEPTION_IF_CHECK_FAIL(
+      (idx == 0), "Cannot get " + std::to_string(idx) + " child abstract from " + cur_abstract->ToString());
   }
 
+  return child_abs;
+}
+
+KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
+                                   const ShapeVector &device_shape_adaptively, const std::string &format_str) {
+  auto tag_abstract = GetChildAbstract(cur_abstract, idx);
   TypePtr tag_type_ptr = TypeIdToType(real_type);
   auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
   auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
@@ -136,6 +144,70 @@ void AdditionalAttrProcess(const ops::PrimitiveCPtr &primc, const CNodePtr &cnod
   mindspore::HashMap<std::string, ValuePtr> additional_attrs;
   additional_attrs[kOperatorOriginFormat] = MakeValue(AnfAlgo::GetOriginDataFormat(cnode));
   (void)primc->SetAttrs(additional_attrs);
+}
+
+inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
+  auto kernel_name = prim->name();
+  // Create PrimtiveC from map and create BaseOperator.
+  ops::PrimitiveCPtr primc_ptr = nullptr;
+  static auto primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  if (primc_fns.find(kernel_name) != primc_fns.end()) {
+    primc_ptr = primc_fns[kernel_name]();
+    (void)primc_ptr->SetAttrs(prim->attrs());
+    AdditionalAttrProcess(primc_ptr, cnode);
+  }
+  MS_EXCEPTION_IF_NULL(primc_ptr);
+
+  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
+  if (operator_fns.find(kernel_name) == operator_fns.end()) {
+    MS_LOG(EXCEPTION) << "Cannot create BaseOperator for " << kernel_name;
+  }
+  auto base_operator = operator_fns[kernel_name](primc_ptr);
+  MS_EXCEPTION_IF_NULL(base_operator);
+  return base_operator;
+}
+
+using InOutKernelTensors = std::pair<std::vector<KernelTensorPtr>, std::vector<KernelTensorPtr>>;
+inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
+  // Makeup input tensors.
+  std::vector<KernelTensorPtr> input_tensors;
+  auto real_input_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
+    const auto &[prev_node, output_idx] = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
+    auto prev_abstract = prev_node->abstract();
+    auto real_input_type = real_input_types[input_idx];
+    auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
+    auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
+    auto input_tensor =
+      CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str);
+    input_tensors.push_back(input_tensor);
+  }
+
+  // Makeup output tensors.
+  std::vector<KernelTensorPtr> output_tensors;
+  auto real_output_types = AnfAlgo::GetAllOutputDeviceTypes(cnode);
+  auto cur_abstract = cnode->abstract();
+  MS_EXCEPTION_IF_NULL(cur_abstract);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
+    auto child_abs = GetChildAbstract(cur_abstract, output_idx);
+    if (child_abs->isa<abstract::AbstractMonad>()) {
+      MS_LOG(DEBUG) << "The " << output_idx << " output of " << cnode->fullname_with_scope()
+                    << " is monad: " << child_abs->ToString() << ", skip converting it.";
+      continue;
+    }
+    auto real_output_type = real_output_types[output_idx];
+    auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
+    auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
+    auto output_tensor =
+      CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str);
+    output_tensors.push_back(output_tensor);
+  }
+
+  return std::make_pair(input_tensors, output_tensors);
 }
 }  // namespace
 std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment) {
@@ -1276,67 +1348,10 @@ std::string GetFormatFromEnumToStr(Format format) {
   return format_str;
 }
 
-KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
+KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode, bool is_without_operator) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(prim);
-  auto kernel_name = prim->name();
-  // Create PrimtiveC from map and create BaseOperator.
-  ops::PrimitiveCPtr primc_ptr = nullptr;
-  static auto primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  if (primc_fns.find(kernel_name) != primc_fns.end()) {
-    primc_ptr = primc_fns[kernel_name]();
-    (void)primc_ptr->SetAttrs(prim->attrs());
-    AdditionalAttrProcess(primc_ptr, cnode);
-  }
-  MS_EXCEPTION_IF_NULL(primc_ptr);
-
-  BaseOperatorPtr base_operator = nullptr;
-  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  if (operator_fns.find(kernel_name) != operator_fns.end()) {
-    base_operator = operator_fns[kernel_name](primc_ptr);
-  }
-  MS_EXCEPTION_IF_NULL(base_operator);
-
-  // Makeup input tensors.
-  std::vector<KernelTensorPtr> input_tensors;
-  auto real_input_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
-    const auto &[prev_node, output_idx] = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
-    auto prev_abstract = prev_node->abstract();
-    auto real_input_type = real_input_types[input_idx];
-    auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
-    auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-    auto input_tensor =
-      CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str);
-    input_tensors.push_back(input_tensor);
-  }
-
-  // Makeup output tensors.
-  std::vector<KernelTensorPtr> output_tensors;
-  auto real_output_types = AnfAlgo::GetAllOutputDeviceTypes(cnode);
-  auto cur_abstract = cnode->abstract();
-  if (cur_abstract->isa<abstract::AbstractTuple>()) {
-    auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(abs_tuple);
-    size_t output_num = abs_tuple->elements().size();
-    for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
-      auto real_output_type = real_output_types[output_idx];
-      auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
-      auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-      auto output_tensor =
-        CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str);
-      output_tensors.push_back(output_tensor);
-    }
-  } else {
-    auto real_output_type = real_output_types[0];
-    auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, 0);
-    auto format_str = AnfAlgo::GetOutputFormat(cnode, 0);
-    auto output_tensor = CreateKernelTensor(cur_abstract, real_output_type, 0, device_shape_adaptively, format_str);
-    output_tensors.push_back(output_tensor);
-  }
-
+  BaseOperatorPtr base_operator = is_without_operator ? nullptr : CreateOperatorByCNode(cnode);
+  auto [input_tensors, output_tensors] = AbstractInOutFromCNode(cnode);
   KernelArgs args = {base_operator, input_tensors, output_tensors};
   return args;
 }
@@ -1435,7 +1450,7 @@ void SetInputsByConstInputs(const CNodePtr &node, std::map<uint32_t, tensor::Ten
 }
 
 void SetInputsByDependMap(const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                          std::vector<KernelTensorPtr> *inputs, const enum KernelModType &kernel_mod_type) {
+                          std::vector<KernelTensorPtr> *inputs, bool is_stored_in_device) {
   MS_EXCEPTION_IF_NULL(inputs);
   for (const auto &[i, tensor] : depend_tensor_map) {
     if (i >= inputs->size()) {
@@ -1445,7 +1460,7 @@ void SetInputsByDependMap(const std::map<uint32_t, tensor::TensorPtr> &depend_te
     MS_EXCEPTION_IF_NULL(inputs->at(i));
     MS_EXCEPTION_IF_NULL(tensor);
     auto address = std::make_shared<kernel::Address>(tensor->data_c(), tensor->Size());
-    if (kernel_mod_type == KernelModType::NativeCpuKernelMod) {
+    if (is_stored_in_device) {
       // Store the data address in device one for cpu.
       inputs->at(i)->SetData(address);
       continue;

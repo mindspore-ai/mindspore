@@ -95,8 +95,16 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
       }
       MS_EXCEPTION_IF_NULL(kernel);
+
       auto old_gpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeGpuKernelMod>(gpu_kernel_mod);
+      auto args = kernel::AbstractArgsFromCNode(kernel, old_gpu_kernel_mod != nullptr);
+      // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
+      // we will put this tensor in args.inputs.host_data_.
+      auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
+      kernel::SetInputsByConstInputs(kernel, &inputs_tensor_map);
+      kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs);
       if (old_gpu_kernel_mod) {
+        kernel::SetArgsToCNode(kernel, args);
         if (new_factory) {
           old_gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
         }
@@ -113,12 +121,6 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         MS_EXCEPTION_IF_NULL(ms_context);
         auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
         gpu_kernel_mod->SetDevicedId(device_id);
-        auto args = kernel::AbstractArgsFromCNode(kernel);
-        // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
-        // we will put this tensor in args.inputs.host_data_.
-        auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-        kernel::SetInputsByConstInputs(kernel, &inputs_tensor_map);
-        kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, kernel::KernelModType::NativeGpuKernelMod);
         if (!gpu_kernel_mod->Init(args.op, args.inputs, args.outputs)) {
           MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
         }

@@ -317,7 +317,14 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 
     // This branch would be removed When KernelMode rectification is complete
     auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
+    auto args = kernel::AbstractArgsFromCNode(node, discard_cpu_kernel_mod != nullptr);
+    // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
+    // we will put this tensor in args.inputs.data_.
+    auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
+    kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
+    kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, true);
     if (discard_cpu_kernel_mod != nullptr) {
+      kernel::SetArgsToCNode(node, args);
       discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(node);
       discard_cpu_kernel_mod->Init(node);
       AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, node.get());
@@ -326,12 +333,6 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
       auto thread_pool = kernel::GetActorMgrInnerThreadPool();
       cpu_kernel->SetThreadPool(thread_pool);
-      auto args = kernel::AbstractArgsFromCNode(node);
-      // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
-      // we will put this tensor in args.inputs.data_.
-      auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-      kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
-      kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, kernel::KernelModType::NativeCpuKernelMod);
       auto ret = cpu_kernel->Init(args.op, args.inputs, args.outputs);
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);

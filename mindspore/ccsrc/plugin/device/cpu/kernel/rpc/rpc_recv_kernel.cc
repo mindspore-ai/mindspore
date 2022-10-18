@@ -28,7 +28,9 @@ int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTe
   for (size_t i = 0; i < inputs.size(); i++) {
     auto int64_shape = inputs[i]->GetShapeVector();
     if (IsDynamic(int64_shape)) {
-      MS_LOG(EXCEPTION) << "The recv kernel's input " << i << " shape inferred is still dynamic:" << int64_shape;
+      // Shape is invalid before recv data.
+      MS_LOG(DEBUG) << "The recv kernel's input " << i << " shape inferred is still dynamic:" << int64_shape;
+      return KRET_UNKNOWN_SHAPE;
     }
 
     int64_t size = 1;
@@ -39,7 +41,9 @@ int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTe
   for (size_t i = 0; i < outputs.size(); i++) {
     auto int64_shape = outputs[i]->GetShapeVector();
     if (IsDynamic(int64_shape)) {
-      MS_LOG(EXCEPTION) << "The recv kernel's output " << i << " shape inferred is still dynamic:" << int64_shape;
+      // Shape is invalid before recv data.
+      MS_LOG(DEBUG) << "The recv kernel's output " << i << " shape inferred is still dynamic:" << int64_shape;
+      return KRET_UNKNOWN_SHAPE;
     }
 
     int64_t size = 1;
