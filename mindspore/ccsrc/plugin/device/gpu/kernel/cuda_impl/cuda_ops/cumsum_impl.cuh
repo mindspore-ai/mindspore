@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUMSUM_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUMSUM_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 template <typename T>
 CUDA_LIB_EXPORT void CumSum(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, size_t dim2,
                             size_t stride, size_t stride2, bool exclusive_, bool reverse_, const uint32_t &device_id,
