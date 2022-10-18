@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
-from mindspore import Tensor, context, Parameter, ms_function
+from mindspore import Tensor, context, Parameter, jit
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
@@ -512,14 +512,14 @@ def test_grad_mutable_dict_list_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_mutable_tuple_tensor_ms_function():
+def test_grad_mutable_tuple_tensor_jit_function():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to tuple tensor input.
     Expectation: Get the correct gradients.
     """
 
-    @ms_function
+    @jit
     def net(t):
         x = t[0]
         y = t[1]
@@ -543,14 +543,14 @@ def test_grad_mutable_tuple_tensor_ms_function():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_mutable_list_tensor_ms_function():
+def test_grad_mutable_list_tensor_jit_function():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to tuple tensor input.
     Expectation: Get the correct gradients.
     """
 
-    @ms_function
+    @jit
     def net(t):
         x = t[0]
         y = t[1]

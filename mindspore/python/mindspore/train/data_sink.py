@@ -18,7 +18,7 @@ from functools import wraps
 import mindspore.ops as ops
 from mindspore import context
 from mindspore.common.dtype import pytype_to_dtype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
 from mindspore.train.dataset_helper import _has_dynamic_shape, _check_inputs
 import mindspore.dataset as ds
@@ -104,7 +104,7 @@ def _get_sink_fun(sink_fun, key_info, is_info_queue, dataset, jit_config):
             if jit_config is None:
                 dst_sink_fun = sink_fun
             else:
-                dst_sink_fun = ms_function(sink_fun, jit_config=jit_config)
+                dst_sink_fun = jit(sink_fun, jit_config=jit_config)
             dataset.__sink_fun__ = dst_sink_fun
 
         return dataset.__sink_fun__
@@ -116,7 +116,7 @@ def _get_sink_fun(sink_fun, key_info, is_info_queue, dataset, jit_config):
         if jit_config is None:
             dst_sink_fun = sink_fun
         else:
-            dst_sink_fun = ms_function(sink_fun, jit_config=jit_config)
+            dst_sink_fun = jit(sink_fun, jit_config=jit_config)
         dataset.__sink_aux__.sink_funcs[key] = dst_sink_fun
 
     return dst_sink_fun

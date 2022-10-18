@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_single_while_4():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         z = np.array(0)
         while z <= 3:
@@ -42,7 +42,7 @@ def test_single_while_builtin_function_abs_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = np.array(-11)
         y = np.array(0)
@@ -61,7 +61,7 @@ def test_single_while_builtin_function_abs():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = -11
         y = 0
@@ -80,7 +80,7 @@ def test_single_while_builtin_function_max_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = np.array(3)
         y = np.array(5)
@@ -99,7 +99,7 @@ def test_single_while_builtin_function_first_in_while_body():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         i = 0
         while i <= 3:

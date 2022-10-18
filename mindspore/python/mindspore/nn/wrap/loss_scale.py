@@ -26,7 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 _grad_scale = C.MultitypeFuncGraph("grad_scale")
 reciprocal = P.Reciprocal()
@@ -399,7 +399,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             compute_input = F.depend(compute_input, clear_status)
         return status, compute_input
 
-    @ms_function
+    @jit
     def get_overflow_status(self, status, compute_output):
         """
         Get floating-point overflow status.

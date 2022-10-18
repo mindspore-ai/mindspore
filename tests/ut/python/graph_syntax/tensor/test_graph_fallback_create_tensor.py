@@ -15,7 +15,7 @@
 """ test graph fallback """
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -31,7 +31,7 @@ def test_fallback_tensor():
     Description: Test Tensor() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor(1)
         return me_x
@@ -44,7 +44,7 @@ def test_fallback_tensor_bool():
     Description: Test Tensor(bool) in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor([True, True, False])
         return me_x
@@ -57,7 +57,7 @@ def test_fallback_tensor_array():
     Description: Test Tensor(array) in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor([1])
         return me_x
@@ -70,7 +70,7 @@ def test_fallback_tensor_with_mstype():
     Description: Test Tensor() with mstype in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor(1, mstype.int32)
         return me_x
@@ -83,7 +83,7 @@ def test_fallback_tensor_array_with_mstype():
     Description: Test Tensor(array) with mstype in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor([1], mstype.int32)
         return me_x
@@ -96,7 +96,7 @@ def test_fallback_tensor_with_numpy():
     Description: Test Tensor() with numpy in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor(np.zeros([1, 2, 3]), mstype.float32)
         return me_x
@@ -109,7 +109,7 @@ def test_fallback_tensor_with_init():
     Description: Test Tensor() with init in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor(shape=(1, 3), dtype=mstype.float32, init=One())
         return me_x
@@ -122,7 +122,7 @@ def test_fallback_tensor_reshape():
     Description: Test Tensor() with reshape() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
         return me_x
@@ -135,7 +135,7 @@ def test_fallback_tensor_abs():
     Description: Test Tensor.abs() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         a = Tensor([1.1, -2.1])
         out = a.abs()
@@ -149,7 +149,7 @@ def test_fallback_tensor_all():
     Description: Test Tensor.all() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         a = Tensor([True, True, False])
         out = a.all()
@@ -163,7 +163,7 @@ def test_fallback_tensor_any():
     Description: Test Tensor.any() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         a = Tensor([True, True, False])
         out = a.any()
@@ -177,7 +177,7 @@ def test_fallback_tensor_argmax():
     Description: Test Tensor.argmax() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
         out = a.argmax()
@@ -191,7 +191,7 @@ def test_fallback_tensor_argmin():
     Description: Test Tensor.argmin() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
         out = a.argmin()
@@ -205,7 +205,7 @@ def test_fallback_tensor_astype():
     Description: Test Tensor.astype() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         a = Tensor(np.ones((1, 2, 2, 1), dtype=np.float32))
         out = a.astype("int32")
@@ -220,7 +220,7 @@ def test_fallback_tensor_asnumpy():
     Description: Test Tensor.asnumpy() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor(np.arange(0, 6).reshape(2, 3))
         np_x = me_x.asnumpy()
@@ -234,7 +234,7 @@ def test_fallback_tensor_from_numpy():
     Description: Test Tensor.from_numpy() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         np_x = np.array([1, 2])
         me_x = Tensor.from_numpy(np_x)
@@ -389,7 +389,7 @@ def test_fallback_tensor_slice():
     Description: support interpreted nodes in slice.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         array = np.arange(10)
         out = Tensor(array)[1:5]
@@ -403,7 +403,7 @@ def test_fallback_ms_tensor():
     Description: Test ms.Tensor() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = ms.Tensor([1])
         return me_x
@@ -417,7 +417,7 @@ def test_fallback_ms_tensor_numpy():
     Description: Test ms.Tensor() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = ms.Tensor(np.array([1, 2], dtype=np.float32))
         return me_x

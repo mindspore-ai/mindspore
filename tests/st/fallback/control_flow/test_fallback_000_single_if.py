@@ -15,7 +15,7 @@
 """ test graph fallback control flow."""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -32,7 +32,7 @@ def test_single_if_4():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = Tensor(7).astype("int32")
         y = Tensor(0).astype("int32")
@@ -55,7 +55,7 @@ def test_single_if_two_cond():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = Tensor(1)
         y = np.array(2)
@@ -76,7 +76,7 @@ def test_single_if_builtin_function_abs():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = Tensor(-11, mstype.float32)
         if abs(x) > Tensor(np.array(2)):
@@ -96,7 +96,7 @@ def test_single_if_builtin_function_abs_min():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = Tensor(-11, mstype.float32)
         y = Tensor(12, mstype.float32)

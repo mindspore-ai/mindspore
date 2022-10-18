@@ -20,7 +20,7 @@ import pytest
 
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
-from mindspore import ms_function
+from mindspore import jit
 from mindspore import ops
 
 context.set_context(mode=context.PYNATIVE_MODE)
@@ -36,7 +36,7 @@ ret_output_2 = Tensor(np.full((1, 1, 120, 640), 3.125), dtype=mstype.float32)
 @pytest.mark.env_CPU
 @pytest.mark.Function
 def test_ms_function_nested_local():
-    @ms_function
+    @jit
     def function1(x, y):
         x = x ** y
         x /= y
@@ -45,13 +45,13 @@ def test_ms_function_nested_local():
         x %= 2
         return x
 
-    @ms_function
+    @jit
     def function11(x, y):
         r = function1(x, y)
         out = r + r
         return out
 
-    @ms_function
+    @jit
     def function2(x, y):
         r1 = function1(x, y)
         r2 = function11(x, y)
@@ -62,7 +62,7 @@ def test_ms_function_nested_local():
     assert np.allclose(output2.asnumpy(), ret_output_2.asnumpy(), 0.0001, 0.0001)
 
 
-@ms_function
+@jit
 def function1_g(x, y):
     x = x ** y
     x /= y
@@ -71,7 +71,7 @@ def function1_g(x, y):
     x %= 2
     return x
 
-@ms_function
+@jit
 def function11_g(x, y):
     r = function1_g(x, y)
     out = r + r
@@ -84,7 +84,7 @@ def function11_g(x, y):
 @pytest.mark.env_CPU
 @pytest.mark.Function
 def test_ms_function_nested_global():
-    @ms_function
+    @jit
     def function2_g(x, y):
         r1 = function1_g(x, y)
         r2 = function11_g(x, y)
@@ -114,15 +114,15 @@ def test_ms_function_nested_grad():
         return x**3
 
     # 一阶：3*x^2 = 75
-    out = ms_function(ops.grad(f))(x)
+    out = jit(ops.grad(f))(x)
     assert np.allclose(out[0].asnumpy(), exp1[0].asnumpy(), 0.0001, 0.0001)
-    out = ms_function(ms_function(ops.grad(f)))(x)
+    out = jit(jit(ops.grad(f)))(x)
     assert np.allclose(out[0].asnumpy(), exp1[0].asnumpy(), 0.0001, 0.0001)
 
     # 二阶：6*x = 30
     out = ops.grad(ops.grad(f))(x)
     assert np.allclose(out[0].asnumpy(), exp2[0].asnumpy(), 0.0001, 0.0001)
-    out = ms_function(ops.grad(ops.grad(f)))(x)
+    out = jit(ops.grad(ops.grad(f)))(x)
     assert np.allclose(out[0].asnumpy(), exp2[0].asnumpy(), 0.0001, 0.0001)
-    out = ms_function(ms_function(ops.grad(ops.grad(f))))(x)
+    out = jit(jit(ops.grad(ops.grad(f))))(x)
     assert np.allclose(out[0].asnumpy(), exp2[0].asnumpy(), 0.0001, 0.0001)

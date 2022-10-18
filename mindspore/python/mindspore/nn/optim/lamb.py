@@ -22,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.nn.optim.optimizer import Optimizer
@@ -259,7 +259,7 @@ class Lamb(Optimizer):
         self.moments2 = self.params.clone(prefix="lamb_v", init='zeros')
         self.device_ascend = context.get_context("device_target") == "Ascend"
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         weight_decay = self.get_weight_decay()
         lr = self.get_lr()

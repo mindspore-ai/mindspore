@@ -1,14 +1,11 @@
-mindspore.ms_function
-=====================
+mindspore.jit
+=============
 
-.. py:function:: mindspore.ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None)
+.. py:function:: mindspore.jit(fn=None, input_signature=None, hash_args=None, jit_config=None)
 
     将Python函数编译为一张可调用的MindSpore图。
 
     MindSpore可以在运行时对图进行优化。
-
-    .. note::
-        `ms_function` 将在未来版本中弃用和移除，请改用 :func:`mindspore.jit`。
 
     参数：
         - **fn** (Function) - 要编译成图的Python函数。默认值：None。

@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, ms_function, ms_class, context
+from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, jit, jit_class, context
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -45,19 +45,19 @@ class NetCombine(Net1, Net2):
         return x + 2
 
 
-@ms_class
+@jit_class
 class MSClass1:
     def __init__(self):
         self.num1 = Tensor(1)
 
 
-@ms_class
+@jit_class
 class MSClass2:
     def __init__(self):
         self.num2 = Tensor(2)
 
 
-@ms_class
+@jit_class
 class MSCombine(MSClass1, MSClass2):
     def __init__(self):
         super(MSCombine, self).__init__()
@@ -72,7 +72,7 @@ def test_isinstance_x_cell_obj_base_type_cell():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, nn.Cell)
 
@@ -87,7 +87,7 @@ def test_isinstance_x_cell_obj_base_type_cell_2():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, Net1)
 
@@ -102,7 +102,7 @@ def test_isinstance_x_cell_obj_base_type_cell_3():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, Net2)
 
@@ -117,7 +117,7 @@ def test_isinstance_x_cell_obj_base_type_cell_4():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, NetCombine)
 
@@ -132,7 +132,7 @@ def test_isinstance_x_cell_obj_base_type_csr_tensor():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, CSRTensor)
 
@@ -147,7 +147,7 @@ def test_isinstance_x_cell_obj_base_type_tuple():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, (Net1, int, np.ndarray, MSCombine))
 
@@ -162,7 +162,7 @@ def test_isinstance_x_cell_obj_base_type_tuple_2():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, (Net2, int, np.ndarray))
 
@@ -177,7 +177,7 @@ def test_isinstance_x_cell_obj_base_type_tuple_3():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, (int, float, (CSRTensor, (Net1, nn.Cell))))
 
@@ -192,7 +192,7 @@ def test_isinstance_x_cell_obj_base_type_tuple_4():
     """
     net = Net1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(net, (int, float, (CSRTensor, (Net2, Primitive), MSClass1)))
 
@@ -207,7 +207,7 @@ def test_isinstance_x_ms_class_obj():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(ms_obj, (int, float, (MSClass1,)))
 
@@ -222,7 +222,7 @@ def test_isinstance_x_ms_class_obj_2():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(ms_obj, (int, float, (MSClass2,)))
 
@@ -237,7 +237,7 @@ def test_isinstance_x_ms_class_obj_3():
     """
     ms_obj = MSCombine()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(ms_obj, (int, float, (MSClass1, MSCombine)))
 
@@ -252,7 +252,7 @@ def test_isinstance_x_ms_class_obj_4():
     """
     ms_obj = MSClass2()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(ms_obj, (int, float, (MSClass1, MSCombine)))
 
@@ -267,7 +267,7 @@ def test_isinstance_x_ms_class_obj_5():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(ms_obj, (int, float, (MSClass2(), MSCombine)))
 
@@ -283,7 +283,7 @@ def test_isinstance_x_primitive_obj_base_type_primitive():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(P.Add(), Primitive) and isinstance(P.Add(), P.Add)
 
@@ -297,7 +297,7 @@ def test_isinstance_x_primitive_obj_base_type_primitive_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(P.Add(), (Primitive, np.ndarray, int)) and isinstance(P.Add(), (P.Add, Net2, float))
 
@@ -311,7 +311,7 @@ def test_isinstance_x_primitive_obj_base_type_primitive_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(Primitive("test"), Primitive)
 
@@ -325,7 +325,7 @@ def test_isinstance_x_primitive_obj_base_type_primitive_4():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(Primitive("test"), (Primitive, CSRTensor, MSCombine))
 
@@ -339,7 +339,7 @@ def test_isinstance_x_primitive_obj_base_type_primitive_5():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(Primitive("test"), (int, list, (Primitive,), CSRTensor))
 
@@ -353,7 +353,7 @@ def test_isinstance_x_external_obj():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(np.array(1), np.ndarray)
 
@@ -367,7 +367,7 @@ def test_isinstance_x_external_obj_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(np.array(1), list)
 
@@ -381,7 +381,7 @@ def test_isinstance_x_external_obj_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(np.array(1), (list, np.ndarray, Tensor, CSRTensor))
 
@@ -395,7 +395,7 @@ def test_isinstance_x_external_obj_4():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(np.array(1), ((int, list), np.ndarray, Tensor, CSRTensor, MSClass2))
 
@@ -409,7 +409,7 @@ def test_isinstance_x_tensor():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         return isinstance(x, (list, np.ndarray, Tensor, CSRTensor))
 
@@ -424,7 +424,7 @@ def test_isinstance_x_tensor_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(Tensor(1), (list, np.ndarray, Tensor, CSRTensor))
 
@@ -438,7 +438,7 @@ def test_isinstance_x_tensor_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         return isinstance(Tensor(1), (list, np.ndarray, CSRTensor))
 
@@ -452,7 +452,7 @@ def test_isinstance_x_tensor_4():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))
         return isinstance(F.sin(a), (list, np.ndarray, Tensor, CSRTensor, MSClass1))
@@ -466,7 +466,7 @@ def test_isinstance_x_coo_tensor():
     Description: Graph isinstance support x to be COOTensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         indices = Tensor([[0, 1], [1, 2]])
         values = Tensor([1, 2])
@@ -483,7 +483,7 @@ def test_isinstance_x_coo_tensor_2():
     Description: Graph isinstance support x to be COOTensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         indices = Tensor([[0, 1], [1, 2]])
         values = Tensor([1, 2])
@@ -500,7 +500,7 @@ def test_isinstance_x_csr_tensor():
     Description: Graph isinstance support x to be CSRTensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         indptr = Tensor([0, 1, 2])
         indices = Tensor([0, 1])
@@ -518,7 +518,7 @@ def test_isinstance_x_csr_tensor_2():
     Description: Graph isinstance support x to be CSRTensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         indptr = Tensor([0, 1, 2])
         indices = Tensor([0, 1])
@@ -536,7 +536,7 @@ def test_isinstance_x_row_tensor():
     Description: Graph isinstance support x to be RowTensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         indices = Tensor([0])
         values = Tensor([[1, 2]])
@@ -553,7 +553,7 @@ def test_isinstance_x_row_tensor_2():
     Description: Graph isinstance support x to be RowTensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         indices = Tensor([0])
         values = Tensor([[1, 2]])
@@ -570,7 +570,7 @@ def test_isinstance_wrong_cmp_input():
     Description: Graph isinstance when cmp input is wrong.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return isinstance(Tensor(1), (np.array([1, 2, 3], Tensor)))
 
@@ -585,7 +585,7 @@ def test_isinstance_wrong_cmp_input_2():
     Description: Graph isinstance when cmp input is wrong.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return isinstance(Tensor(1), Tensor(1))
 
@@ -600,7 +600,7 @@ def test_isinstance_wrong_cmp_input_3():
     Description: Graph isinstance when cmp input is wrong.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return isinstance(Tensor(1), [list, tuple])
 
@@ -615,7 +615,7 @@ def test_isinstance_wrong_cmp_input_4():
     Description: Graph isinstance when cmp input is wrong.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return isinstance(Tensor(1), [1, tuple])
 
@@ -631,7 +631,7 @@ def test_isinstance_x_mutable():
     Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return isinstance(x, (int, tuple))
 
@@ -646,7 +646,7 @@ def test_isinstance_x_mutable_2():
     Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return isinstance(x, (int, tuple))
 
@@ -661,7 +661,7 @@ def test_isinstance_x_mutable_3():
     Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return isinstance(x, (int, tuple))
 
@@ -675,7 +675,7 @@ def test_isinstance_x_mutable_4():
     Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return isinstance(x, (int, list))
 
@@ -689,7 +689,7 @@ def test_isinstance_x_mutable_5():
     Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return isinstance(x, (int, tuple))
 

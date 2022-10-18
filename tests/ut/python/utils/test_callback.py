@@ -25,7 +25,7 @@ import pytest
 from mindspore import context
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
@@ -45,7 +45,7 @@ class Net(nn.Cell):
         self.flatten = nn.Flatten()
         self.fc = nn.Dense(64 * 222 * 222, 3)
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = self.conv(x)
         x = self.bn(x)
@@ -67,7 +67,7 @@ class LossNet(nn.Cell):
         self.fc = nn.Dense(64 * 222 * 222, 3)  # padding=0
         self.loss = nn.SoftmaxCrossEntropyWithLogits()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         x = self.conv(x)
         x = self.bn(x)

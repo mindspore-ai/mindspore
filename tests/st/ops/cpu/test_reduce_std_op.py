@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
 
@@ -31,7 +31,7 @@ class NetReduceStd(nn.Cell):
         self._axis = axis
         self._keep_dims = keep_dims
 
-    @ms_function
+    @jit
     def construct(self, indice):
         if self._axis is None:
             return F.std(indice, unbiased=False, keep_dims=self._keep_dims)

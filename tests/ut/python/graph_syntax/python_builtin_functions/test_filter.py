@@ -15,7 +15,7 @@
 """ test graph fallback hybrid syntax"""
 import operator
 import numpy as np
-from mindspore import ms_function, context
+from mindspore import jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_filter_with_numpy_and_tensor():
     Description: Test filter in graph mode with numpy.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         ret = filter(lambda x: x > 2, x)
@@ -46,7 +46,7 @@ def test_fallback_filter_with_numpy_and_tensor_2():
     Description: Test filter in graph mode with numpy.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         ret = filter(filter_fn, x)

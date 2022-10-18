@@ -461,7 +461,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // If the graph is a bprop graph, it should has a hash of the bprop directory.
   std::string bprop_hash_;
 
-  // If the graph is decorated by @ms_function and runs grad process in pynative mode,
+  // If the graph is decorated with @jit and runs grad process in pynative mode,
   // forward nodes used in grad graph will be added to output for holding output values.
   bool modify_output_ = false;
   mindspore::HashSet<AnfNodePtr> used_forward_nodes_;

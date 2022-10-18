@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
@@ -29,7 +29,7 @@ class Net(nn.Cell):
         self.reduce_mean = P.ReduceMean(keep_dims=keep_dims)
         self.axis = axis
 
-    @ms_function
+    @jit
     def construct(self, inputs):
         return self.reduce_mean(inputs, self.axis)
 

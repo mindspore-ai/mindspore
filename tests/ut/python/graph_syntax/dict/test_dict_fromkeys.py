@@ -15,7 +15,7 @@
 """ test_dict_fromkeys """
 import ast
 import pytest
-from mindspore import ms_function, context
+from mindspore import jit, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -27,7 +27,7 @@ def test_dict_fromkeys_1():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_1():
         x = {'a': 1, 'b': 2}
         y = ['1', '2', '3']
@@ -43,7 +43,7 @@ def test_dict_fromkeys_2():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_2():
         x = {'a': 1, 'b': 2}
         y = ('1', '2', '3')
@@ -59,7 +59,7 @@ def test_dict_fromkeys_3():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_3():
         x = {'a': 1, 'b': 2}
         y = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
@@ -75,7 +75,7 @@ def test_dict_fromkeys_4():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_4():
         x = {'a': 1, 'b': 2}
         y = ['1', '2', "3"]
@@ -91,7 +91,7 @@ def test_dict_fromkeys_5():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_5():
         x = {'a': 1, 'b': 2}
         y = ('1', '2', '3')
@@ -107,7 +107,7 @@ def test_dict_fromkeys_6():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_6():
         x = {'a': 1, 'b': 2}
         y = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
@@ -123,7 +123,7 @@ def test_dict_fromkeys_7():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_7():
         x = {'a': 1, 'b': 2}
         y = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
@@ -139,7 +139,7 @@ def test_dict_fromkeys_8():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_8():
         x = {'a': 1, 'b': 2}
         y = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
@@ -155,7 +155,7 @@ def test_dict_fromkeys_9():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_9():
         x = {'a': 1, 'b': 2}
         y = "abcd"
@@ -171,7 +171,7 @@ def test_dict_fromkeys_10():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_10():
         x = {'a': 1, 'b': 2}
         y = "abcd"
@@ -187,7 +187,7 @@ def test_dict_fromkeys_11():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_11():
         x = {'a': 1, 'b': 2}
         y = 123
@@ -205,7 +205,7 @@ def test_dict_fromkeys_12():
     Description: support dict fromkeys.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_12():
         x = {'a': 1, 'b': 2}
         y = ['b', 1, 'c']

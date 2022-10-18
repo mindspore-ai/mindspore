@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -32,7 +32,7 @@ class Grad(nn.Cell):
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    @ms_function
+    @jit
     def construct(self, input_, output_grad):
         return self.grad(self.network)(input_, output_grad)
 
@@ -53,7 +53,7 @@ class Net(nn.Cell):
         self.w = Parameter(initializer(
             'normal', [512, 2048, 1, 1]), name='w')
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.conv(x, self.w)
 

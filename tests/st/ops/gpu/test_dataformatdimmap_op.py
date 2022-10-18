@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.api import _pynative_executor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -78,7 +78,7 @@ def test_data_formata_dim_map_vmap_gpu(data_type):
     output_vmap_gpu = vmap(data_formata_dim_map_fun_gpu, in_axes=(0,))(x_gpu)
     _pynative_executor.sync()
 
-    @ms_function
+    @jit
     def manually_batched_gpu(xs):
         """manually_batched_gpu"""
         output_gpu = []

@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore import ms_function
+from mindspore import jit
 from mindspore.ops.functional import vjp
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -86,23 +86,23 @@ def test_vjp_multiple_inputs_default_v_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_vjp_ms_function_single_input_single_output_default_v_graph():
+def test_vjp_jit_function_single_input_single_output_default_v_graph():
     """
     Features: Function vjp
-    Description: Test vjp with ms_function, single input, single output and default v in graph mode.
+    Description: Test vjp with @jit decorated function, single input, single output and default v in graph mode.
     Expectation: No exception.
     """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = SingleInputNet()
 
-    @ms_function
-    def vjp_with_ms_function(inputs, vectors):
+    @jit
+    def vjp_with_jit_function(inputs, vectors):
         output, grad_fn = vjp(net, inputs)
         vjp_grad = grad_fn(vectors)
         return output, vjp_grad
 
-    primal, gradient = vjp_with_ms_function(x, v)
+    primal, gradient = vjp_with_jit_function(x, v)
     expect_primal = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
     expect_grad = Tensor(np.array([[3, 12], [27, 48]]).astype(np.float32))
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())

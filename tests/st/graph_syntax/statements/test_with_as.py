@@ -15,12 +15,12 @@
 """ test graph with as statement. """
 import pytest
 import mindspore.nn as nn
-from mindspore import Tensor, context, ms_class, Parameter
+from mindspore import Tensor, context, jit_class, Parameter
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@ms_class
+@jit_class
 class Sample1:
     def __init__(self):
         super(Sample1, self).__init__()
@@ -36,7 +36,7 @@ class Sample1:
         return self.num * 4
 
 
-@ms_class
+@jit_class
 class Sample2:
     def __init__(self):
         super(Sample2, self).__init__()
@@ -125,7 +125,7 @@ def test_with_basic_side_effect_2():
     Description: Support with as statement.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class SampleParam:
         def __init__(self):
             super(SampleParam, self).__init__()
@@ -177,7 +177,7 @@ def test_with_basic_parameter():
     Description: Support with as statement.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class SampleParam:
         def __init__(self):
             super(SampleParam, self).__init__()
@@ -445,7 +445,7 @@ def test_with_as_exception():
     Description: Support with as statement.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class Sample():
         def __init__(self):
             super(Sample, self).__init__()

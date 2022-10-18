@@ -19,7 +19,7 @@ import pytest
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, ops, ms_function
+from mindspore import Tensor, ops, jit
 
 
 class Net(nn.Cell):
@@ -75,7 +75,7 @@ def test_round_functional():
     assert np.all(output.asnumpy() == np.array([1, 3, 4]))
 
 
-@ms_function
+@jit
 def round_fn_graph(x):
     return x.round()
 

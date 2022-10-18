@@ -21,7 +21,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import functional as F
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
@@ -31,7 +31,7 @@ class NetP(nn.Cell):
         super(NetP, self).__init__()
         self.adaptive_max_pool2d = nn.AdaptiveMaxPool2d(output_size)
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.adaptive_max_pool2d(x)
 
@@ -89,7 +89,7 @@ class NetWithIndices(nn.Cell):
         super(NetWithIndices, self).__init__()
         self.adaptive_max_pool2d = nn.AdaptiveMaxPool2d(output_size, True)
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.adaptive_max_pool2d(x)
 
@@ -130,7 +130,7 @@ class Netnn(nn.Cell):
         super(Netnn, self).__init__()
         self.adaptive_max_pool2d = nn.AdaptiveMaxPool2d((3, 5))
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.adaptive_max_pool2d(x)
 

@@ -76,7 +76,7 @@ dict_arg = {"x": tensor_x, "y": tensor_y, "u": tensor_u}
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_non_tensor_inputs(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Normal input type without tensor.
     Expectation: No exception.
     """
@@ -116,7 +116,7 @@ class GradNet1(nn.Cell):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_first_input_net(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Normal input type.
     Expectation: No exception.
     """
@@ -183,7 +183,7 @@ class GradCell(nn.Cell):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grad_parameter_input(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Grad with Parameter as input type.
     Expectation: No exception.
     """
@@ -209,7 +209,7 @@ def test_grad_parameter_input(mode):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_parameter_as_input_and_fv(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Grad with Parameters as input type and fv.
     Expectation: No exception.
     """
@@ -236,7 +236,7 @@ def test_grad_parameter_as_input_and_fv(mode):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_same_parameter_both_input_and_fv(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Grad with the same Parameter used as input type and fv at the same time.
     Expectation: No exception.
     """
@@ -304,7 +304,7 @@ class GradCellWithParameterTuple(nn.Cell):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grad_parameter_as_input_and_fv2(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Grad with Parameters as input type and fv. ParameterTuple as fv.
     Expectation: No exception.
     """

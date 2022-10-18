@@ -15,7 +15,7 @@
 """ test grad ops """
 import mindspore.ops as ops
 import mindspore.nn as nn
-from mindspore import ms_function, ms_class
+from mindspore import jit, jit_class
 from mindspore import Tensor, context
 from mindspore.common import dtype as mstype
 from mindspore import ParameterTuple, Parameter
@@ -23,13 +23,15 @@ from mindspore import ParameterTuple, Parameter
 one = Tensor([1], mstype.int32)
 zero = Tensor([0], mstype.int32)
 
-@ms_function
+
+@jit
 def local_pow(x, n):
     r = one
     while n > zero:
         n = n - one
         r = r * x
     return r
+
 
 def test_pow_first_order():
     """
@@ -124,7 +126,7 @@ def test_reftoembed_with_two_weights():
                  even SimplifyDataStructures (one more round of Renormalize) takes effect.
     Expectation: return expected value.
     """
-    @ms_class
+    @jit_class
     class SimpleData:
         def __init__(self, a):
             self.a = a

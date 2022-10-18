@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.context as context
 from mindspore.common import dtype as mstype
-from mindspore.common import ms_function
+from mindspore.common import jit
 from mindspore.common.tensor import Tensor
 
 
@@ -32,7 +32,7 @@ c4 = Tensor([0], mstype.int32)
 c5 = Tensor([14], mstype.int32)
 
 
-@ms_function
+@jit
 def simple_if(x, y):
     if x < y:
         x = x + 1
@@ -42,7 +42,7 @@ def simple_if(x, y):
     return x
 
 
-@ms_function
+@jit
 def if_by_if(x, y):
     if x < y:
         x = x + 1
@@ -52,7 +52,7 @@ def if_by_if(x, y):
     return x
 
 
-@ms_function
+@jit
 def if_in_if(x, y, z):
     out = c4
     if x < y:
@@ -65,7 +65,7 @@ def if_in_if(x, y, z):
     return out
 
 
-@ms_function
+@jit
 def simple_while(x, y):
     y = y + 4
     while x < y:
@@ -74,7 +74,7 @@ def simple_while(x, y):
     return x
 
 
-@ms_function
+@jit
 def while_by_while(x, y, z):
     while x < y:
         x = x + 1
@@ -85,7 +85,7 @@ def while_by_while(x, y, z):
     return x
 
 
-@ms_function
+@jit
 def while_in_while(x, y, z):
     out = c4
     while x < y:
@@ -98,7 +98,7 @@ def while_in_while(x, y, z):
     return out
 
 
-@ms_function
+@jit
 def while_by_while_in_while(x, y, z):
     out = c4
     while x < c2:
@@ -115,7 +115,7 @@ def while_by_while_in_while(x, y, z):
     return out
 
 
-@ms_function
+@jit
 def while_in_while_in_while(x, y, z):
     out = c4
     while x < c2:

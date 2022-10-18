@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore.nn.optim.optimizer import Optimizer
@@ -193,7 +193,7 @@ class SGD(Optimizer):
         self.accum = self._parameters.clone(prefix="accum", init='zeros')
         self.stat = self._parameters.clone(prefix="stat", init='ones')
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         params = self._parameters
         accum = self.accum

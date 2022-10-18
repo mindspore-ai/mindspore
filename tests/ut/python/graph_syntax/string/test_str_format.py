@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback """
 import pytest
-from mindspore import ms_function, Tensor, ms_class, context
+from mindspore import jit, Tensor, jit_class, context
 from mindspore.ops import prim_attr_register, Primitive
 from mindspore.nn import Cell
 
@@ -26,7 +26,7 @@ def test_str_format_single_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         ms_str = "string is {}".format("1")
         return ms_str
@@ -41,7 +41,7 @@ def test_str_format_mutiple_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         ms_str = "{} is {}".format("string", "1")
         return ms_str
@@ -56,7 +56,7 @@ def test_str_format_constant_tensor_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = Tensor([1])
         ms_str = "{} is {}".format("string", a)
@@ -72,7 +72,7 @@ def test_str_format_variable_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(b, a):
         a = a + b
         ms_str = "{} is {}".format("String", a)
@@ -90,7 +90,7 @@ def test_fallback_str_format_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = Tensor([1])
         ms_str = format(a)
@@ -109,7 +109,7 @@ def test_format_with_number_placeholder_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         ms_str = "{1} {0} {1}"
         ms_format_str = ms_str.format("hello", "world")
@@ -126,7 +126,7 @@ def test_format_with_key_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         ms_str = "hello {name2},It's me, {name1}"
         ms_format_str = ms_str.format(name2="Mind", name1="Spore")
@@ -146,7 +146,7 @@ def test_format_with_list_index():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         ms_str = "hello {0[1]},It's me {0[0]}"
         names = ["Mind", "Spore"]
@@ -164,7 +164,7 @@ def test_format_with_map():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         ms_str = "hello {0[name2]},It's me {0[name1]}"
         names = {"name1": "Mind", "name2": "Spore"}
@@ -183,7 +183,7 @@ def test_format_as_function():
     Expectation: No exception.git
     """
 
-    @ms_function
+    @jit
     def foo():
         func = "hello {0[1]},It's me {0[0]}".format
         names = ["Mind", "Spore"]
@@ -201,7 +201,7 @@ def test_format_number():
     Expectation: No exception.git
     """
 
-    @ms_function
+    @jit
     def foo():
         num1 = 3.1415926
         str1_format = "{:.2f}".format(num1)
@@ -233,7 +233,7 @@ def test_format_padding():
     Expectation: No exception.git
     """
 
-    @ms_function
+    @jit
     def foo():
         num1 = 5
         str1_format = "{:0>2}".format(num1)
@@ -260,12 +260,12 @@ def test_str_format_using_ms_class():
     Expectation: No exception.git
     """
 
-    @ms_class
+    @jit_class
     class TestClass:
         def __init__(self, value):
             self.value = value
 
-    @ms_function
+    @jit
     def test_func():
         test_obj = TestClass(123)
         format_str = "value is {0.value}".format(test_obj)
@@ -283,7 +283,7 @@ def test_str_format_using_ms_class_in_init():
 
     context.set_context(mode=context.GRAPH_MODE)
 
-    @ms_class
+    @jit_class
     class TestClass:
         def __init__(self, value):
             self.value = value
@@ -313,7 +313,7 @@ def test_str_format_using_primitive():
         def __init__(self, x):
             self.x = x
 
-    @ms_function
+    @jit
     def test_func():
         test_obj = TestPrim(123)
         format_str = "value is {0.x}".format(test_obj)

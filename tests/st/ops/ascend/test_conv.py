@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -41,7 +41,7 @@ class Net(nn.Cell):
         self.w = Parameter(initializer(
             'normal', [64, 3, 7, 7]), name='w')
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.conv(x, self.w)
 

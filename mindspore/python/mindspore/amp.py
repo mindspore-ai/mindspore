@@ -21,7 +21,7 @@ from ._checkparam import Validator as validator
 from .common import dtype as mstype
 from . import context
 from . import ops
-from .common.api import ms_class
+from .common.api import jit_class
 from .common.parameter import Parameter
 from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
@@ -96,7 +96,7 @@ def all_finite(inputs):
     return ops.stack(outputs).all()
 
 
-@ms_class
+@jit_class
 class LossScaler(ABC):
     r"""
     Loss scaler abstract class when using mixed precision.

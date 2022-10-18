@@ -17,7 +17,7 @@
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, ms_function, ms_class, context
+from mindspore import Tensor, jit, jit_class, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -29,7 +29,7 @@ def test_hasattr_tensor():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         return hasattr(x, "abs")
 
@@ -43,7 +43,7 @@ def test_hasattr_tensor_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         return hasattr(x, "abs2")
 
@@ -57,7 +57,7 @@ def test_hasattr_list():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         attr = "__" + "len" + "__"
@@ -73,7 +73,7 @@ def test_hasattr_list_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         attr = "__" + "len2" + "__"
@@ -89,7 +89,7 @@ def test_hasattr_tuple():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (1, 2, 3, 4)
         attr = "__" + "len" + "__"
@@ -105,7 +105,7 @@ def test_hasattr_tuple_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (1, 2, 3, 4)
         attr = "__" + "len2" + "__"
@@ -121,7 +121,7 @@ def test_hasattr_dict():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"1": 1, "2": 2}
         attr = "__" + "len" + "__"
@@ -137,7 +137,7 @@ def test_hasattr_dict_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"1": 1, "2": 2}
         attr = "__" + "len2" + "__"
@@ -146,7 +146,7 @@ def test_hasattr_dict_2():
     assert not foo()
 
 
-@ms_class
+@jit_class
 class MSClass1:
     def __init__(self):
         self.num0 = Tensor(0)
@@ -164,7 +164,7 @@ def test_hasattr_ms_class():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return hasattr(ms_obj, "num1")
 
@@ -179,7 +179,7 @@ def test_hasattr_ms_class_2():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return hasattr(ms_obj, "none")
 
@@ -194,7 +194,7 @@ def test_hasattr_ms_class_3():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return hasattr(ms_obj, "none2")
 
@@ -209,7 +209,7 @@ def test_hasattr_ms_class_with_concate_attr():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         ret = 0
         nums = ["0", "1", "2", "3", "4"]
@@ -245,7 +245,7 @@ def test_hasattr_cell_obj():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         return hasattr(cell_obj, "a0")
 
@@ -260,7 +260,7 @@ def test_hasattr_cell_obj_2():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         return hasattr(cell_obj, "none")
 
@@ -275,7 +275,7 @@ def test_hasattr_cell_obj_3():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         return hasattr(cell_obj, "none2")
 
@@ -290,7 +290,7 @@ def test_hasattr_cell_obj_concate_input():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         a = 0
         attrs = ["0", "1", "2", "3", "4"]
@@ -310,7 +310,7 @@ def test_hasattr_numpy_array():
     Expectation: TypeError
     """
 
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         return hasattr(x, "shape")
@@ -325,7 +325,7 @@ def test_hasattr_numpy_array_2():
     Expectation: TypeError
     """
 
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         return hasattr(x, "shape2")

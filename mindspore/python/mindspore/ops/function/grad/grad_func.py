@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 from functools import partial
 import numpy as np
-from mindspore.common import ms_function
+from mindspore.common import jit
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn.cell import Cell
@@ -647,7 +647,7 @@ def jvp(fn, inputs, v, has_aux=False):
     def grad_all(u, first_grad):
         return _grad_all(fn_)(*first_grad, u)
 
-    @ms_function(hash_args=fn_)
+    @jit(hash_args=fn_)
     def _wrap_container(*arg):
         jvp_inputs = arg[1:]
         vectors = arg[0]
@@ -730,7 +730,7 @@ def linearize(fn, inputs):
     """
     linearize_inner = _LinearizeInner()
 
-    @ms_function(hash_args=fn)
+    @jit(hash_args=fn)
     def _wrap_container(*arg):
         args = arg[1:-1]
         vectors = arg[-1]
@@ -1006,7 +1006,7 @@ def jacfwd(fn, grad_position=0, has_aux=False):
             return _grad_all(aux_fn)(*first_grad, u)
         return _grad_all(fn)(*first_grad, u)
 
-    @ms_function
+    @jit
     def wrapped(*args):
         checked_grad_position = _check_grad_position(grad_position, len(args))
         primals, v, inputs_shape = _jacfwd_construct_v(args, checked_grad_position)
@@ -1188,7 +1188,7 @@ def jacrev(fn, grad_position=0, has_aux=False):
         res = outputs[0]
         return res
 
-    @ms_function
+    @jit
     def wrapped(*args):
         checked_grad_position = _check_grad_position(grad_position, len(args))
         outputs = fn(*args)

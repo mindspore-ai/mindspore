@@ -16,7 +16,7 @@
 import math
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -27,7 +27,7 @@ def test_fallback_int_with_input_tensor():
     Description: Test int() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return int(x)
     with pytest.raises(TypeError) as ex:
@@ -41,7 +41,7 @@ def test_fallback_int_with_input_tensor_2():
     Description: Test int() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([10])
         return int(x)
@@ -57,7 +57,7 @@ def test_fallback_int_with_input_tensor_3():
     Description: Test int() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([1, 2, 3])
         return int(x)
@@ -73,7 +73,7 @@ def test_fallback_int_with_input_scalar():
     Description: Test int() in graph mode with scalar input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return int(10.0)
     ret = foo()
@@ -87,7 +87,7 @@ def test_fallback_int_with_input_int():
     Description: Test int() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3]
         return int(x)
@@ -103,7 +103,7 @@ def test_fallback_int_with_input_string():
     Description: Test int() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return int("1234")
     ret = foo()
@@ -117,7 +117,7 @@ def test_fallback_int_with_input_string_2():
     Description: Test int() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return int("abcd")
 
@@ -132,7 +132,7 @@ def test_fallback_int_with_input_numpy():
     Description: Test int() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         return int(x)
@@ -148,7 +148,7 @@ def test_fallback_int_with_input_numpy_2():
     Description: Test int() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1,])
         return int(x)
@@ -164,7 +164,7 @@ def test_fallback_int_with_no_input():
     Description: Test int() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return int()
 
@@ -179,7 +179,7 @@ def test_fallback_int_with_base_input():
     Description: Test int() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x1 = int('12', 16)
         x2 = int('0xa', 16)
@@ -199,7 +199,7 @@ def test_fallback_float_with_input_tensor():
     Description: Test float() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([1])
         return float(x)
@@ -215,7 +215,7 @@ def test_fallback_float_with_input_tensor_2():
     Description: Test int() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return float(x)
     with pytest.raises(TypeError) as ex:
@@ -229,7 +229,7 @@ def test_fallback_float_with_input_tensor_3():
     Description: Test int() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([1, 2, 3])
         return float(x)
@@ -245,7 +245,7 @@ def test_fallback_float_with_input_scalar():
     Description: Test float() in graph mode with scalar input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return float(10.0)
     ret = foo()
@@ -259,7 +259,7 @@ def test_fallback_float_with_input_float():
     Description: Test float() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3]
         return float(x)
@@ -275,7 +275,7 @@ def test_fallback_float_with_input_string():
     Description: Test int() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return int("1234")
     ret = foo()
@@ -290,7 +290,7 @@ def test_fallback_float_with_input_string_2():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x1 = float("12.3")
         x2 = float("-12.3")
@@ -313,7 +313,7 @@ def test_fallback_float_with_input_string_3():
     Description: Test float() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return float("abcd")
 
@@ -328,7 +328,7 @@ def test_fallback_float_with_input_numpy():
     Description: Test float() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         return float(x)
@@ -344,7 +344,7 @@ def test_fallback_float_with_input_numpy_2():
     Description: Test float() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1,])
         return float(x)
@@ -360,7 +360,7 @@ def test_fallback_float_with_no_input():
     Description: Test float() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return float()
 

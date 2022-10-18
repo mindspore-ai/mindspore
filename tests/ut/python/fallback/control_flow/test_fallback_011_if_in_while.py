@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow if in while scenario"""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_if_in_while_built_in_func():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_while():
         x = np.array([1, 2, 3, 4])
         y = 0
@@ -45,7 +45,7 @@ def test_if_in_while_built_in_func_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_while():
         x = np.array([1, 2, 3, 4])
         while sum(x) <= 40:

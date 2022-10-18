@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback """
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_all_tuple_number():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (0, 1, 2, 3)
         y = (1, 1)
@@ -43,7 +43,7 @@ def test_fallback_all_tuple_string():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = ('a', 'b', '', 'd')
         y = ('a', 'b', 'c', 'd')
@@ -60,7 +60,7 @@ def test_fallback_all_list_number():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [0, 1, 2, 3]
         y = [1, 1]
@@ -77,7 +77,7 @@ def test_fallback_all_list_string():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = ['a', 'b', '', 'd']
         y = ['a', 'b', 'c', 'd']
@@ -94,7 +94,7 @@ def test_fallback_all_dict():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"": 1, "2": 2}
         y = {"1": 1, "2": 2}
@@ -111,7 +111,7 @@ def test_fallback_all_numpy():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = np.array([0, 1, 2, 3])
         y = np.array([1, 1])
@@ -128,7 +128,7 @@ def test_fallback_all_tensor_constant():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = Tensor(np.array([0, 1, 2, 3]))
         y = Tensor(np.array([1, 1]))
@@ -145,7 +145,7 @@ def test_fallback_any_tuple_number():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (0, 0, 0, 0)
         y = (1, 0)
@@ -162,7 +162,7 @@ def test_fallback_any_tuple_string():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = ('a', 'b', '', 'd')
         y = ('a', 'b', 'c', 'd')
@@ -179,7 +179,7 @@ def test_fallback_any_list_number():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [0, 0, 0, 0]
         y = [1, 0]
@@ -196,7 +196,7 @@ def test_fallback_any_list_string():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = ['', '', '', '']
         y = ['a', 'b', '', 'd']
@@ -213,7 +213,7 @@ def test_fallback_any_dict():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"": 1}
         y = {"1": 1, "2": 2}
@@ -230,7 +230,7 @@ def test_fallback_any_numpy():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = np.array([0, 0, 0])
         y = np.array([1, 0])
@@ -247,7 +247,7 @@ def test_fallback_any_tensor_constant():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = Tensor(np.array([0, 0, 0]))
         y = Tensor(np.array([1, 0]))

@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -34,7 +34,7 @@ def test_list_comprehension_with_variable_tensor():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         x = [i + 1 for i in a]
         return x
@@ -58,7 +58,7 @@ def test_list_comprehension_with_variable_dict():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         m = {"1": a, "2": a+1, "3": a-1}
         x = [m[i]+1 for i in m if i != "1"]
@@ -82,7 +82,7 @@ def test_list_comprehension_with_variable_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         x = [a for i in range(3)]
         return x
@@ -106,7 +106,7 @@ def test_list_comprehension_with_variable_input_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         x = [a + i for i in range(3)]
         return x
@@ -130,7 +130,7 @@ def test_list_comprehension_with_variable_input_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         a = a + 10
         x = [a + i for i in range(3)]
@@ -155,7 +155,7 @@ def test_list_comprehension_with_variable_input_and_condition():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         x = [a for i in range(5) if i%2 == 0]
         return x
@@ -179,7 +179,7 @@ def test_list_comprehension_with_variable_input_and_condition_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         x = [a + i for i in range(5) if i%2 == 0]
         return x
@@ -203,7 +203,7 @@ def test_list_comprehension_with_variable_input_and_condition_3():
     Expectation: RuntimeError.
     """
 
-    @ms_function
+    @jit
     def foo(a):
         x = [a + i for i in range(5) if P.ReduceSum()(a + i) > 10]
         return x

@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow for after if in if scenario"""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_for_after_if_in_if_tensor():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_after_if_in_if():
         x = Tensor([1])
         y = Tensor([0])
@@ -50,7 +50,7 @@ def test_for_after_if_in_if_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_after_if_in_if():
         x = np.array([0, 1, 2, 3, 4])
         y = np.array([3, 4, 5])
@@ -74,7 +74,7 @@ def test_for_after_if_in_if_numpy_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_after_if_in_if():
         x = np.array([0, 1, 2, 3, 4])
         y = np.array([3, 4, 5])

@@ -17,14 +17,14 @@
 
 from mindspore import context
 from mindspore.common import ParameterTuple
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.nn import Cell
 from mindspore.ops.composite.base import GradOperation
 
 
 class Bprop(Cell):
     """
-    The gradient wraper.
+    The gradient wrapper.
     """
 
     def __init__(self, func, wrt_params, params, grad_op, sens):
@@ -90,7 +90,7 @@ def bprop(func, *inputs, grads_wrt_outputs=None, wrt: list = None, params: list 
 
     if context.get_context("mode") == context.PYNATIVE_MODE:
         def func_pynative(*inputs):
-            @ms_function
+            @jit
             def _func_pynative(*inputs):
                 return grad(*inputs)
 

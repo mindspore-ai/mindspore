@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
@@ -28,7 +28,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.sigmoid_cross_entropy_with_logits = P.SigmoidCrossEntropyWithLogits()
 
-    @ms_function
+    @jit
     def construct(self, features, labels):
         return self.sigmoid_cross_entropy_with_logits(features, labels)
 

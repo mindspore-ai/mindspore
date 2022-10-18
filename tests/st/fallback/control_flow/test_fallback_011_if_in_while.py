@@ -15,7 +15,7 @@
 """ test graph fallback control flow if in while scenario"""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,7 +31,7 @@ def test_if_in_while_1():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_while():
         x = Tensor(1)
         y = Tensor(0)
@@ -55,7 +55,7 @@ def test_if_in_while_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_while():
         x = Tensor(1)
         while x < Tensor(5):
@@ -78,7 +78,7 @@ def test_if_in_while_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_while():
         x = Tensor(1)
         y = Tensor(0)
@@ -104,7 +104,7 @@ def test_if_in_while_4():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_while():
         x = Tensor(1)
         y = Tensor(0)
@@ -135,7 +135,7 @@ def test_if_in_while_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_while():
         x = np.array([1, 2])
         y = np.array([3, 2])

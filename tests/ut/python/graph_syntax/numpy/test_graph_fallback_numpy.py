@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 import numpy.random as rand
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 import mindspore.nn as nn
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -28,7 +28,7 @@ def test_np_array_1():
     Description: Test numpy with ndarray in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_1():
         a = np.array([1, 2, 3])
         return Tensor(a)
@@ -43,7 +43,7 @@ def test_np_array_2():
     Description: Test numpy with ndarray in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_2():
         a = np.array([[1, 2], [3, 4]])
         return Tensor(a)
@@ -58,7 +58,7 @@ def test_np_array_3():
     Description: Test numpy with ndarray in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_3():
         a = np.array([1, 2, 3, 4, 5], ndmin=2)
         return Tensor(a)
@@ -73,7 +73,7 @@ def test_np_array_4():
     Description: Test numpy with ndarray in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_4():
         a = np.array([1, 2, 3], dtype=complex)
         return Tensor(a)
@@ -88,7 +88,7 @@ def test_np_dtype_1():
     Description: Test numpy with dtype in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_dtype_1():
         t = np.dtype(np.int32)
         return Tensor(np.array([1, 2, 3], dtype=t))
@@ -103,7 +103,7 @@ def test_np_dtype_2():
     Description: Test numpy with dtype in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_dtype_2():
         t = np.dtype('i4')
         return Tensor(np.array([1, 2, 3], dtype=t))
@@ -118,7 +118,7 @@ def test_np_array_ndim():
     Description: Test numpy with array ndim in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_ndim():
         a = np.arange(24)
         return Tensor(a.ndim)
@@ -132,7 +132,7 @@ def test_np_array_reshape_1():
     Description: Test numpy with array reshape in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_reshape_1():
         a = np.array([[1, 2, 3], [4, 5, 6]])
         b = a.reshape(3, 2)
@@ -148,7 +148,7 @@ def test_np_array_reshape_2():
     Description: Test numpy with array reshape in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_reshape_2():
         a = np.array([[1, 2, 3], [4, 5, 6]])
         a.shape = (3, 2)
@@ -163,7 +163,7 @@ def test_np_array_itemsize():
     Description: Test numpy with array reshape in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_itemsize():
         a = np.array([1, 2, 3, 4, 5], dtype=np.int8)
         return Tensor(a.itemsize)
@@ -178,7 +178,7 @@ def test_np_empty_zeros_ones():
     Description: Test numpy with array empty, zeros, ones in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_empty_zeros_ones():
         x = np.empty([3, 2], dtype=np.int)
         y = np.zeros(x.shape, dtype=np.int)
@@ -195,7 +195,7 @@ def test_np_asarray_list():
     Description: Test numpy with list to array in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_asarray_list():
         x = [1, 2, 3]
         y = np.asarray(x)
@@ -211,7 +211,7 @@ def test_np_asarray_tuple():
     Description: Test numpy with tuple to array in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_asarray_tuple():
         x = (1, 2, 3)
         y = np.asarray(x)
@@ -228,7 +228,7 @@ def test_np_frombuffer():
     Description: Test numpy with frombuffer in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_frombuffer():
         s = b'Hello World'
         a = np.frombuffer(s, dtype='S1')
@@ -243,7 +243,7 @@ def test_np_fromiter():
     Description: Test numpy with fromiter in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_fromiter():
         l = range(5)
         it = iter(l)
@@ -260,7 +260,7 @@ def test_np_arange():
     Description: Test numpy with arange in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_arange():
         x = np.arange(5, dtype=float)
         y = np.arange(10, 20, 2)
@@ -276,7 +276,7 @@ def test_np_logspace():
     Description: Test numpy with logspace in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_logspace():
         a = np.logspace(0, 9, 10, base=2)
         return Tensor(a)
@@ -291,7 +291,7 @@ def test_np_array_shape():
     Description: Test numpy with array shape in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_shape():
         a = np.array([[1, 2, 3], [4, 5, 6]])
         return Tensor(a.shape)
@@ -305,7 +305,7 @@ def test_np_array_size():
     Description: Test numpy with array size in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_size():
         a = np.array([[1, 2, 3], [4, 5, 6]])
         return Tensor(a.size)
@@ -319,7 +319,7 @@ def test_np_array_real():
     Description: Test numpy with complex in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_real():
         a = np.array([1, 2, 3], dtype=complex)
         return Tensor(a.real)
@@ -333,7 +333,7 @@ def test_np_array_imag():
     Description: Test numpy with complex in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_imag():
         a = np.array([1, 2, 3], dtype=complex)
         return Tensor(a.imag)
@@ -347,7 +347,7 @@ def test_np_binop():
     Description: Test numpy's binary operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_binop():
         a = np.array([1, 2, 3])
         b = np.array([4, 5, 6])
@@ -363,7 +363,7 @@ def test_np_binop_2():
     Description: Test numpy's binary operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_binop():
         a = np.int_(1)
         b = 4 + a
@@ -378,7 +378,7 @@ def test_np_compare():
     Description: Test numpy's compare operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_compare():
         a = np.array([1, 2, 3])
         b = np.array([0, 2, 4])
@@ -394,7 +394,7 @@ def test_np_compare_2():
     Description: Test numpy's compare operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_compare():
         a = 1
         b = np.int_(3)
@@ -410,7 +410,7 @@ def test_np_bool_and():
     Description: Test AND operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_bool_and():
         a = np.bool_(True)
         b = np.bool_(False)
@@ -426,7 +426,7 @@ def test_np_bool_or():
     Description: Test OR operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_bool_or():
         a = np.bool_(True)
         b = np.bool_(False)
@@ -442,7 +442,7 @@ def test_np_bool_or_2():
     Description: Test OR operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_bool_or():
         out = 0 or np.bool_(True)
         return Tensor(out)
@@ -456,7 +456,7 @@ def test_np_bool_not():
     Description: Test NOT operation in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_bool_not():
         a = np.bool_(True)
         b = not a
@@ -471,7 +471,7 @@ def test_np_augassign():
     Description: Test augassign method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_augassign():
         value_add = np.array([1, 2, 3])
         value_add += np.array([4, 5, 6])
@@ -499,7 +499,7 @@ def test_np_augassign_2():
     Description: Test augassign method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_augassign():
         value_mod = np.int_(5)
         value_mod %= np.int_(2)
@@ -527,7 +527,7 @@ def test_np_augassign_3():
     Description: Test augassign method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_augassign():
         value_bitand = np.int_(6)
         value_bitand &= 3
@@ -546,7 +546,7 @@ def test_np_subscript():
     Description: Test subscript method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_subscript():
         a = np.array([1, 2, 3])
         b = a[np.int32(1)]
@@ -561,7 +561,7 @@ def test_np_slice():
     Description: Test slice method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_slice():
         a = np.arange(10)
         b = a[1:5]
@@ -576,7 +576,7 @@ def test_np_random():
     Description: Test numpy.random module in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_random():
         a = rand.randint(100, size=(5))
         b = a[1:5]

@@ -15,7 +15,7 @@
 """ test graph and or syntax """
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,7 +31,7 @@ def test_and_int_tensor():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x, y):
         print(x and y)
         return x and y
@@ -51,7 +51,7 @@ def test_and_int_tensor_2():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([0])
         y = Tensor([1])
@@ -73,7 +73,7 @@ def test_and_multi_int_tensor():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([0, 1])
         y = Tensor([1, 2])
@@ -96,7 +96,7 @@ def test_and_multi_int_tensor_2():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x, y):
         print(x and y)
         return x and y
@@ -117,7 +117,7 @@ def test_and_bool_tensor():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x, y):
         print(x and y)
         return x and y
@@ -137,7 +137,7 @@ def test_and_bool_tensor_2():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([True])
         y = Tensor([True])
@@ -159,7 +159,7 @@ def test_and_different_type_variable_tensor():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x, y):
         print(x and y)
         return x and y
@@ -180,7 +180,7 @@ def test_and_different_type_constant_tensor():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([1])
         y = Tensor([2.0])
@@ -202,7 +202,7 @@ def test_and_constant_and_variable_tensor():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         y = Tensor([2])
         print(x and y)
@@ -223,7 +223,7 @@ def test_and_constant_and_variable_tensor_2():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         y = Tensor([2.0])
         print(x and y)
@@ -245,7 +245,7 @@ def test_and_constant_and_variable_tensor_3():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         y = Tensor([2.0])
         print(y and x)
@@ -266,7 +266,7 @@ def test_and_variable_tensor_and_numpy_input():
     Description: Test and syntax in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         y = np.array([1, 2, 3, 4])
         print(x and y)

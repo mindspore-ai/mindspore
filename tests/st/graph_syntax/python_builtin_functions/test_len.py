@@ -15,7 +15,7 @@
 """ test len operation """
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -32,7 +32,7 @@ def test_len_numpy_with_variable():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         x = x + len(np.array([1, 2, 3, 4]))
         return x
@@ -53,7 +53,7 @@ def test_len_list_with_variable():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         x = x + len([1, 2, 3, 4])
         return x
@@ -74,7 +74,7 @@ def test_len_dict_with_variable():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         x = x + len({"1": 1, "2": 2, "3": 3, "4": 4})
         return x

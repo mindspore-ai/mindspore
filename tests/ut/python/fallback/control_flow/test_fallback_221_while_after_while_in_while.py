@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_while_after_while_in_while_numpy_1():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while_after_while_in_while():
         x = np.array([-1])
         y = np.array([-2])
@@ -49,7 +49,7 @@ def test_while_after_while_in_while_numpy_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while_after_while_in_while():
         x = np.array([-1])
         y = np.array([-2])
@@ -74,7 +74,7 @@ def test_while_after_while_in_while_numpy_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while_after_while_in_if():
         x = np.array([-1])
         y = np.array([-2])

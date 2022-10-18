@@ -546,14 +546,14 @@ MindSpore Numpy与MindSpore特性结合
 
 mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自动微分，并使用图模式加速运算，帮助用户快速构建高效的模型。同时，MindSpore还支持多种后端设备，包括Ascend、GPU和CPU等，用户可以根据自己的需求灵活设置。以下提供了几种常用方法：
 
-- `ms_function`: 将代码包裹进图模式，用于提高代码运行效率。
+- `jit` 装饰器: 将代码包裹进图模式，用于提高代码运行效率。
 - `GradOperation`: 用于自动求导。
 - `mindspore.set_context`: 用于设置运行模式和后端设备等。
 - `mindspore.nn.Cell`: 用于建立深度学习模型。
 
 使用示例如下：
 
-- ms_function使用示例
+- `jit` 装饰器使用示例
 
   首先，以神经网络里经常使用到的矩阵乘与矩阵加算子为例：
 
@@ -585,13 +585,13 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
        [2816. 2816. 2816. 2816.]]
     
 
-  对上述示例，我们可以借助 `ms_function` 将所有算子编译到一张静态图里以加快运行效率，示例如下：
+  对上述示例，我们可以借助 `jit` 装饰器将所有算子编译到一张静态图里以加快运行效率，示例如下：
 
   .. code-block:: python
 
-      from mindspore import ms_function
+      from mindspore import jit
 
-      forward_compiled = ms_function(forward)
+      forward_compiled = jit(forward)
       print(forward(x, w1, b1, w2, b2, w3, b3))
 
   运行结果如下：
@@ -602,11 +602,11 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
        [2816. 2816. 2816. 2816.]]
   
   .. note::
-      目前静态图不支持在Python交互式模式下运行，并且有部分语法限制。`ms_function` 的更多信息可参考 `API ms_function <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.ms_function.html>`_ 。
+      目前静态图不支持在Python交互式模式下运行，并且有部分语法限制。
 
 - GradOperation使用示例
 
-  `GradOperation` 可以实现自动求导。以下示例可以实现对上述没有用 `ms_function` 修饰的 `forward` 函数定义的计算求导。
+  `GradOperation` 可以实现自动求导。以下示例可以实现对上述没有用 `jit` 修饰的 `forward` 函数定义的计算求导。
 
   .. code-block:: python
 
@@ -630,15 +630,15 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  如果要对 `ms_function` 修饰的 `forward` 计算求导，需要提前使用 `set_context` 设置运算模式为图模式，示例如下：
+  如果要对 `jit` 修饰的 `forward` 计算求导，需要提前使用 `set_context` 设置运算模式为图模式，示例如下：
 
   .. code-block:: python
 
-      from mindspore import ms_function, set_context, GRAPH_MODE
+      from mindspore import jit, set_context, GRAPH_MODE
 
       set_context(mode=GRAPH_MODE)
       grad_all = ops.composite.GradOperation(get_all=True)
-      print(grad_all(ms_function(forward))(x, w1, b1, w2, b2, w3, b3))
+      print(grad_all(jit(forward))(x, w1, b1, w2, b2, w3, b3))
 
   运行结果如下：
 

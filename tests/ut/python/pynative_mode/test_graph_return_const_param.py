@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 
@@ -33,7 +33,7 @@ class ChooseInitParameter(nn.Cell):
         super(ChooseInitParameter, self).__init__()
         self.x = Parameter(Tensor(np.ones(2), dtype=mstype.int32), name='x')
 
-    @ms_function
+    @jit
     def construct(self):
         return self.x
 
@@ -43,7 +43,7 @@ class ChooseInitParameterWithInput(nn.Cell):
         super(ChooseInitParameterWithInput, self).__init__()
         self.x = Parameter(Tensor(np.ones(2), dtype=mstype.int32), name='x')
 
-    @ms_function
+    @jit
     def construct(self, input_data):
         return self.x
 

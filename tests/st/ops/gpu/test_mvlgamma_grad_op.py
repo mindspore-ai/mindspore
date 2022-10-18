@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations._grad_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -34,7 +34,7 @@ class MvlgammaGradNet(nn.Cell):
         self.x = Tensor(self.x_np)
 
 
-    @ms_function
+    @jit
     def construct(self):
         return self.mvlgamma_grad(self.y_grad, self.x)
 

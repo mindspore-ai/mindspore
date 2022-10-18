@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_list_count """
 import pytest
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -31,7 +31,7 @@ def test_list_count_1():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_1():
         x = [1, 2, 3, 4]
         res = x.count(1)
@@ -51,7 +51,7 @@ def test_list_count_2():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_2():
         x = [1, 2, 3, 4]
         res = x.count(0)
@@ -71,7 +71,7 @@ def test_list_count_3():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_3():
         aa = 20
         x = ['a', 'b', aa, 4]
@@ -92,7 +92,7 @@ def test_list_count_4():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_4():
         aa = 20
         bb = 'b'
@@ -114,7 +114,7 @@ def test_list_count_5():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_5():
         aa = 20
         x = ['a', ['bb', '2', 3], aa, 4]
@@ -135,7 +135,7 @@ def test_list_count_6():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_6():
         aa = 20
         x = ['a', ('Michael', 'Bob', '2'), aa, 4]
@@ -156,7 +156,7 @@ def test_list_count_7():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_7():
         aa = 20
         bb = Tensor(1)
@@ -178,7 +178,7 @@ def test_list_count_8():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_8():
         aa = 20
         bb = {'Michael': 1, 'Bob': 'bb', '2': [1, 2]}
@@ -200,7 +200,7 @@ def test_list_count_9():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_9():
         aa = 20
         bb = Tensor([10, 20, True])
@@ -222,7 +222,7 @@ def test_list_count_10():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_10(aa, bb):
         x = ['a', {'Michael': 1, 'Bob': 'bb', '2': [1, '2']}, aa, bb]
         res = x.count(aa + bb)
@@ -247,7 +247,7 @@ def test_list_count_11():
     Description: support list count.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_11(aa, bb):
         x = [30, {'Michael': 1, 'Bob': 'bb', '2': [1, '2']}, aa + bb, bb]
         res = x.count(30)

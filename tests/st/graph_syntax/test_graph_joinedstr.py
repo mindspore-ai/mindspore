@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 import mindspore.nn as nn
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 import mindspore.ops as ops
 import mindspore.ops.operations as P
 
@@ -34,7 +34,7 @@ def test_joinedstr_basic_tuple_list_dict():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net():
         x = (1, 2, 3, 4, 5)
         y = [1, 2, 3, 4, 5]
@@ -61,7 +61,7 @@ def test_joinedstr_basic_dict_key():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net():
         c = (1, 2, 3, 4, 5)
         dict_key = f"c: {c}"
@@ -84,7 +84,7 @@ def test_joinedstr_basic_numpy_scalar():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net():
         x = np.array([1, 2, 3, 4, 5])
         y = 3
@@ -104,7 +104,7 @@ def test_joinedstr_basic_variable_gpu():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net(x, y):
         if (x > 2 * y).all():
             res = f"res: {2 * y}"
@@ -128,7 +128,7 @@ def test_joinedstr_basic_variable_ascend():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net(x, y):
         if (x > 2 * y).all():
             res = f"res: {2 * y}"
@@ -153,7 +153,7 @@ def test_joinedstr_basic_variable_2():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net(x, y):
         if (x > 2 * y).all():
             res = f"{2 * y}"
@@ -177,7 +177,7 @@ def test_joinedstr_inner_tensor():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net():
         x = (1, 2, 3, 4, 5)
         inner_tensor_1 = Tensor(x)
@@ -199,7 +199,7 @@ def test_joinedstr_out_tensor():
     Description: Support joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def joined_net(x):
         return f"x: {x}"
 

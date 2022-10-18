@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 import mindspore as ms
@@ -33,7 +33,7 @@ class RLBufferAppend(nn.Cell):
         self.head = Parameter(Tensor(0, ms.int32), name="head")
         self.buffer_append = P.BufferAppend(self._capacity, shapes, types)
 
-    @ms_function
+    @jit
     def construct(self, buffer, exps):
         return self.buffer_append(buffer, exps, self.count, self.head)
 
@@ -46,7 +46,7 @@ class RLBufferGet(nn.Cell):
         self.head = Parameter(Tensor(0, ms.int32), name="head")
         self.buffer_get = P.BufferGetItem(self._capacity, shapes, types)
 
-    @ms_function
+    @jit
     def construct(self, buffer, index):
         return self.buffer_get(buffer, self.count, self.head, index)
 
@@ -59,7 +59,7 @@ class RLBufferSample(nn.Cell):
         self.head = Parameter(Tensor(0, ms.int32), name="head")
         self.buffer_sample = P.BufferSample(self._capacity, batch_size, shapes, types)
 
-    @ms_function
+    @jit
     def construct(self, buffer):
         return self.buffer_sample(buffer, self.count, self.head)
 

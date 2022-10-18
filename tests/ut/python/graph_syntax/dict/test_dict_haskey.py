@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_dict_has_key """
-from mindspore import ms_function, context
+from mindspore import jit, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -25,7 +25,7 @@ def test_dict_haskey_1():
     Description: support dict has_key.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_1():
         x = {'a': 1, 'b': 2}
         res = x.has_key('a')
@@ -40,7 +40,7 @@ def test_dict_haskey_2():
     Description: support dict has_key.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_2():
         x = {'a': [2, 3, "123"], 'b': 2}
         res = x.has_key('a')
@@ -55,7 +55,7 @@ def test_dict_haskey_3():
     Description: support dict has_key.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_3():
         x = {'a': 1, 'b': 2}
         res = x.has_key('c')
@@ -70,7 +70,7 @@ def test_dict_haskey_4():
     Description: support dict has_key.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_4():
         x = {"a": 1, "b": 2, "cd": 3, "c": 4}
         res = x.has_key('c')

@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow if after if scenario"""
 import pytest
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -30,7 +30,7 @@ def test_if_after_if_tensor():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_after_if():
         x = Tensor(1)
         y = Tensor(0)
@@ -54,7 +54,7 @@ def test_if_after_if_tensor_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_after_if():
         x = Tensor(1)
         y = Tensor(0)
@@ -84,7 +84,7 @@ def test_if_after_if_tensor_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_after_if(a):
         if a > 15:
             y = Tensor(1)

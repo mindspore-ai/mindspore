@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 import mindspore.nn as nn
 from mindspore.ops.operations.math_ops import NextAfter
 
@@ -12,7 +12,7 @@ class NextAfterNet(nn.Cell):
         super(NextAfterNet, self).__init__()
         self.nextafter = NextAfter()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         return self.nextafter(x, y)
 

@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 
@@ -104,7 +104,7 @@ class ReduceMax(nn.Cell):
         self.axis8 = axis8
         self.keep_dims8 = keep_dims8
 
-    @ms_function
+    @jit
     def construct(self):
         return (P.ReduceMax(self.keep_dims0)(self.x0, self.axis0),
                 P.ReduceMax(self.keep_dims1)(self.x1, self.axis1),

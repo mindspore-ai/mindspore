@@ -15,7 +15,7 @@
 """ test graph fallback control flow."""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context, nn
+from mindspore import Tensor, jit, context, nn
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -34,7 +34,7 @@ def test_for_in_while_tensor():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_while():
         x = Tensor(1)
         y = Tensor(0)
@@ -59,7 +59,7 @@ def test_for_in_while_numpy_append():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_while():
         x = np.array([[1, 2, 3], [3, 4, 5], [4, 5, 6]])
         y = Tensor(0)
@@ -119,7 +119,7 @@ def test_for_in_while_print():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_while():
         x = Tensor(1)
         y = Tensor(0)
@@ -145,7 +145,7 @@ def test_for_in_while_round():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_while():
         x = 3.14159
         y = 3

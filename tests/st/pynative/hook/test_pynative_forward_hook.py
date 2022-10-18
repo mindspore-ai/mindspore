@@ -19,7 +19,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import GradOperation
 from mindspore.common import ParameterTuple
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore import ops as P
 
 
@@ -64,7 +64,7 @@ def forward_hook_fn_mul(cell_id, inp, outp):
     return out
 
 
-@ms_function
+@jit
 def forward_hook_fn_with_ms_func(cell_id, inp, outp):
     return outp
 
@@ -135,7 +135,7 @@ class SingleNetMsFuncInner(nn.Cell):
         self.bn.register_backward_hook(backward_hook_fn_inner)
         self.relu = nn.ReLU()
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = self.bn(x)
         x = self.relu(x)
@@ -439,7 +439,7 @@ def test_pynative_forward_hook_exception():
 def test_pynative_forward_hook_with_ms_func():
     """
     Feature: PyNative hook function.
-    Description: Test PyNative forward hook function and forward pre hook function with ms_function.
+    Description: Test PyNative forward hook function and forward pre hook function with @jit decorated function.
     Expectation: The calculation result is correct.
     """
 

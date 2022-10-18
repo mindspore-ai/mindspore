@@ -1689,7 +1689,7 @@ class Cell(Cell_):
         Register forward pre hook function for Cell object.
 
         Note:
-            - The `register_forward_pre_hook(hook_fn)` does not work in graph mode or ms_function.
+            - The `register_forward_pre_hook(hook_fn)` does not work in graph mode or functions decorated with 'jit'.
             - 'hook_fn' must be defined as the following code.
               `cell_id` is the information of registered Cell object, including name and ID. `inputs` is the forward
               input objects passed to the Cell. The 'hook_fn' can modify the forward input objects by returning new
@@ -1752,7 +1752,7 @@ class Cell(Cell_):
             raise TypeError(f"When using 'register_forward_pre_hook(hook_fn)', the type of 'hook_fn' must be python "
                             f"function, but got {type(hook_fn)}.")
         if hook_fn.__code__.co_name == "staging_specialize":
-            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@ms_function' is not supported.")
+            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
 
         self._enable_forward_pre_hook = True
         _pynative_executor.set_hook_changed(self)
@@ -1791,7 +1791,7 @@ class Cell(Cell_):
         Set the Cell forward hook function.
 
         Note:
-            - The `register_forward_hook(hook_fn)` does not work in graph mode or ms_function.
+            - The `register_forward_hook(hook_fn)` does not work in graph mode or functions decorated with 'jit'.
             - 'hook_fn' must be defined as the following code.
               `cell_id` is the information of registered Cell object, including name and ID. `inputs` is the forward
               input objects passed to the Cell. `output` is the forward output object of the Cell. The 'hook_fn' can
@@ -1856,7 +1856,7 @@ class Cell(Cell_):
             raise TypeError(f"When using 'register_forward_hook(hook_fn)', the type of 'hook_fn' must be python "
                             f"function, but got {type(hook_fn)}.")
         if hook_fn.__code__.co_name == "staging_specialize":
-            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@ms_function' is not supported.")
+            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
 
         self._enable_forward_hook = True
         _pynative_executor.set_hook_changed(self)
@@ -1893,7 +1893,7 @@ class Cell(Cell_):
         Register the backward hook function.
 
         Note:
-            - The `register_backward_hook(hook_fn)` does not work in graph mode or ms_function.
+            - The `register_backward_hook(hook_fn)` does not work in graph mode or functions decorated with 'jit'.
             - The 'hook_fn' must be defined as the following code.
               `cell_id` is the information of registered Cell object, including name and ID. `grad_input` is the
               gradient passed to the Cell. `grad_output` is the gradient computed and passed to the next Cell or

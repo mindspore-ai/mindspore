@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback """
 
-from mindspore import ms_function
+from mindspore import jit
 
 
 def test_fallback_dict_empty():
@@ -24,7 +24,7 @@ def test_fallback_dict_empty():
     Expectation:No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         dict_x = dict()
         dict_x['a'] = [1, 2, 3]
@@ -40,7 +40,7 @@ def test_fallback_dict_zip_iter_assign():
     Expectation:No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         dict_x1 = dict(zip(['one', 'two', 'three'], [1, 2, 3]))
         dict_x2 = dict([("one", 1), ("two", 2)])

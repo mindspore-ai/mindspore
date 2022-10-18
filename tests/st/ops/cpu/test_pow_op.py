@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, ms_function, ops
+from mindspore import Tensor, jit, ops
 from mindspore.ops import operations as P
 
 
@@ -96,7 +96,7 @@ def test_tensor_pow_pynative():
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
 
 
-@ms_function
+@jit
 def tensor_pow_func(x, y):
     return x.pow(y)
 

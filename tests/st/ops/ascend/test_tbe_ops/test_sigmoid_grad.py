@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 
@@ -29,7 +29,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.sigmoid = P.Sigmoid()
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.sigmoid(x)
 
@@ -40,7 +40,7 @@ class Grad(nn.Cell):
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         return self.grad(self.network)(x, y)
 

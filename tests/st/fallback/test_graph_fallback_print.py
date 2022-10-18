@@ -22,7 +22,7 @@ import pytest
 import numpy as np
 import mindspore.nn as nn
 import mindspore as ms
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 from tests.security_utils import security_off_wrap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -70,7 +70,7 @@ def test_np_print_1():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_print():
         x = np.array([1, 2, 3, 4, 5])
         print("x: ", x)
@@ -117,7 +117,7 @@ def test_tensor_print_1():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_print():
         x = np.array([1, 2, 3, 4, 5])
         print("Tensor(x): ", Tensor(x))
@@ -140,7 +140,7 @@ def test_print_cnode_1():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func(x, y):
         res_sum = x + y
         print("res_sum: ", res_sum)
@@ -165,7 +165,7 @@ def test_print_cnode_2():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         x = Tensor(np.array([1, 2, 3, 4, 5]))
         y = Tensor(np.array([1, 2, 3, 4, 5]))
@@ -190,7 +190,7 @@ def test_print_cnode_3():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([1, 2, 3, 4, 5])
@@ -215,7 +215,7 @@ def test_print_validate_tuple():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         x = Tensor(np.array([1, 2, 3, 4, 5]))
         y = Tensor(np.array([1, 2, 3, 4, 5]))
@@ -241,7 +241,7 @@ def test_print_validate():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         np_x = np.array([1, 2, 3, 4, 5])
         np_y = np.array([1, 2, 3, 4, 5])
@@ -262,7 +262,7 @@ def test_print_format_np():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         np_x = np.array([1, 2, 3, 4, 5])
         np_y = np.array([1, 2, 3, 4, 5])
@@ -287,7 +287,7 @@ def test_print_format_tensor():
     Description: Support print.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         x = Tensor(np.array([1, 2, 3, 4, 5]))
         y = Tensor(np.array([1, 2, 3, 4, 5]))
@@ -312,7 +312,7 @@ def test_print_string_format():
     Description: Support print(string % var).
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         print("I'm %s. I'm %d years old." % ('MindSpore', 3))
         return 0
@@ -337,7 +337,7 @@ def test_print_string_add_string():
     def name():
         return "MindSpore"
 
-    @ms_function
+    @jit
     def print_func():
         print("I'm " + name() + ". I'm 3 years old.")
         return 0
@@ -359,7 +359,7 @@ def test_print_list():
     Description: Support print(list).
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         list_x = [1, 2, 3, 4, 5]
         print("list_x:", list_x)
@@ -382,7 +382,7 @@ def test_print_tuple():
     Description: Support print(tuple).
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         tuple_x = (6, 7, 8, 9, 10)
         print("tuple_x:", tuple_x)
@@ -405,7 +405,7 @@ def test_print_dict():
     Description: Support print(dict).
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def print_func():
         dict_x1 = dict(zip(['one', 'two', 'three'], [1, 2, 3]))
         dict_x2 = dict([("one", 1), ("two", 2)])
@@ -458,7 +458,7 @@ def test_print_joinedstr():
     Description: Test print joinedstr.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_print():
         x = (1, 2, 3, 4, 5)
         c = f"x:{x}"

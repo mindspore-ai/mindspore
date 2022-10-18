@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.functional import vmap
@@ -43,7 +43,7 @@ class Conv2dFilter(nn.Cell):
 
         self.get_shape = P.Shape()
 
-    @ms_function
+    @jit
     def construct(self, out, x, w):
         return self.conv_filter(out, x, self.get_shape(w))
 

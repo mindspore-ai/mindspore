@@ -18,7 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -29,7 +29,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.reverse_sequence = P.ReverseSequence(seq_dim=seq_dim, batch_dim=batch_dim)
 
-    @ms_function
+    @jit
     def construct(self, x, seq_lengths):
         return self.reverse_sequence(x, seq_lengths)
 

@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -34,7 +34,7 @@ class Slice(nn.Cell):
             Tensor(np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]).astype(
                 np.float32)), [3, 2, 3]), name='x1')
 
-    @ms_function
+    @jit
     def construct(self):
         return self.cat(self.x1, (0, 1, 0), (2, 1, 3))
 

@@ -18,7 +18,7 @@ import os
 import pytest
 import numpy as np
 
-from mindspore import Tensor, CSRTensor, ms_function, nn, ops
+from mindspore import Tensor, CSRTensor, jit, nn, ops
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import export, load
 from mindspore.ops import functional as F
@@ -48,7 +48,7 @@ def test_make_csr():
 
     def test_pynative():
         return CSRTensor(indptr, indices, values, shape)
-    test_graph = ms_function(test_pynative)
+    test_graph = jit(test_pynative)
 
     csr1 = test_pynative()
     csr2 = test_graph()
@@ -89,10 +89,10 @@ def test_csr_attr():
     def test_pynative_4():
         return csr.to_tuple()
 
-    test_graph_1 = ms_function(test_pynative_1)
-    test_graph_2 = ms_function(test_pynative_2)
-    test_graph_3 = ms_function(test_pynative_3)
-    test_graph_4 = ms_function(test_pynative_4)
+    test_graph_1 = jit(test_pynative_1)
+    test_graph_2 = jit(test_pynative_2)
+    test_graph_3 = jit(test_pynative_3)
+    test_graph_4 = jit(test_pynative_4)
 
     py_indptr, py_indices = test_pynative_1()
     py_values, py_shape = test_pynative_2()
@@ -155,7 +155,7 @@ def test_csr_tensor_in_while():
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
 
-        @ms_function
+        @jit
         def construct(self, a, b, indptr, indices, values):
             x = CSRTensor(indptr, indices, values, self.shape)
             x = self.op2(x)
@@ -225,7 +225,7 @@ def test_csr_tensor_in_while_cpu():
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
 
-        @ms_function
+        @jit
         def construct(self, a, b, indptr, indices, values):
             x = CSRTensor(indptr, indices, values, self.shape)
             x = self.op2(x)
@@ -284,7 +284,7 @@ def test_batch_csr_ops():
         return sparse1, sparse2
 
     res_reducesum = test_ops_pynative_reducesum()
-    test_ops_graph_reducesum = ms_function(test_ops_pynative_reducesum)
+    test_ops_graph_reducesum = jit(test_ops_pynative_reducesum)
     graph_res_reducesum = test_ops_graph_reducesum()
     expect1 = np.array([[2., 1., 3.]], dtype=np.float32)
     expect2 = np.array([[2., 1., 3.]], dtype=np.float32)
@@ -294,7 +294,7 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_reducesum[2].asnumpy(), expect2)
 
     res_elemwise = test_ops_pynative_sparse_elemwise()
-    test_ops_graph_elemwise = ms_function(test_ops_pynative_sparse_elemwise)
+    test_ops_graph_elemwise = jit(test_ops_pynative_sparse_elemwise)
     graph_res_elemwise = test_ops_graph_elemwise()
     expect3 = np.array([[2., 1., 3.], [4., 2., 6.]], dtype=np.float32)
     expect4 = np.array([[2., 1., 3.], [1., 0.5, 1.5]], dtype=np.float32)
@@ -305,7 +305,7 @@ def test_batch_csr_ops():
 
     expect5 = np.array([[1, 1, 1], [2, 2, 2]], dtype=np.float32)
     res_gather = test_ops_pynative_gather()
-    test_ops_graph_gather = ms_function(test_ops_pynative_gather)
+    test_ops_graph_gather = jit(test_ops_pynative_gather)
     graph_res_gather = test_ops_graph_gather()
     assert np.allclose(res_gather.asnumpy(), expect5)
     assert np.allclose(graph_res_gather.asnumpy(), expect5)
@@ -346,8 +346,8 @@ def test_csr_ops():
         sparse3 = csr_tensor / dense_tensor
         return sparse1, sparse2, sparse3
 
-    test_ops_graph_dense = ms_function(test_ops_pynative_dense)
-    test_ops_graph_sparse = ms_function(test_ops_pynative_sparse)
+    test_ops_graph_dense = jit(test_ops_pynative_dense)
+    test_ops_graph_sparse = jit(test_ops_pynative_sparse)
 
     pynative_res_dense = test_ops_pynative_dense()
     graph_res_dense = test_ops_graph_dense()
@@ -507,7 +507,7 @@ def test_isinstance_csr_tensor():
         is_tensor_2 = isinstance(indptr, CSRTensor)
         is_tuple_2 = isinstance(indptr, (Tensor, CSRTensor))
         return is_tensor, is_bool, is_float, is_tuple, is_csr_tensor, is_tensor_2, is_tuple_2
-    graph_test_csr_tensor = ms_function(pynative_test_csr_tensor)
+    graph_test_csr_tensor = jit(pynative_test_csr_tensor)
 
     out1 = pynative_test_csr_tensor()
     out2 = graph_test_csr_tensor()
@@ -535,7 +535,7 @@ def test_dtype_csr_tensor():
     def pynative_test():
         x = CSRTensor(indptr, indices, values, shape)
         return F.dtype(x), x.dtype
-    graph_test = ms_function(pynative_test)
+    graph_test = jit(pynative_test)
 
     out1, out2 = pynative_test()
     out3, out4 = graph_test()
@@ -560,25 +560,25 @@ def test_bprop():
     grad_op = ops.GradOperation(get_all=True)
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_mul(indptr, indices, values, shape, dense):
         csr_tensor = CSRTensor(indptr, indices, values, shape)
         return csr_tensor * dense
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_div(indptr, indices, values, shape, dense):
         csr_tensor = CSRTensor(indptr, indices, values, shape)
         return csr_tensor / dense
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_reduce_sum(indptr, indices, values, shape, axis):
         csr_tensor = CSRTensor(indptr, indices, values, shape)
         return F.csr_reduce_sum(csr_tensor, axis)
 
     @grad_op
-    @ms_function
+    @jit
     def test_csrmv(indptr, indices, values, shape, dense):
         csr_tensor = CSRTensor(indptr, indices, values, shape)
         return F.csr_mv(csr_tensor, dense)
@@ -693,67 +693,67 @@ def test_bprop2():
     dense_shape = (3, 4)
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_tensor(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_indptr(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.indptr
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_indices(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.indices
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_values(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.values
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_shape(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.shape
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_cast(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.astype(mstype.int32)
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_dtype(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.dtype
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_to_tuple(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.to_tuple()
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_to_abs(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.abs()
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_to_coo(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.to_coo()
 
     @grad_op
-    @ms_function
+    @jit
     def test_csr_to_dense(indptr, indices, values, dense_shape):
         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         return csr_tensor.to_dense()
@@ -789,7 +789,7 @@ def test_dense_to_csr():
         return dense_tensor.to_csr()
 
     csr_tensor = test_to_csr(dense_tensor)
-    csr_tensor_graph = ms_function(test_to_csr)(dense_tensor)
+    csr_tensor_graph = jit(test_to_csr)(dense_tensor)
     expect = CSRTensor(Tensor([0, 2, 2, 3], dtype=mstype.int32),
                        Tensor([1, 2, 0], dtype=mstype.int32),
                        Tensor([1, 2, 1], dtype=mstype.float32),
@@ -841,14 +841,14 @@ def test_csr_magic_methods():
     neg_expect = CSRTensor(indptr, indices, Tensor([3.5, 2.5, 1.5, 0.5, -0.5, -1.5], mstype.float32), shape)
     neg_output = test_csr_neg(indptr, indices, values, shape)
     compare_csr(neg_output, neg_expect)
-    neg_output = ms_function(test_csr_neg)(indptr, indices, values, shape)
+    neg_output = jit(test_csr_neg)(indptr, indices, values, shape)
     compare_csr(neg_output, neg_expect)
 
     add_expect = CSRTensor(Tensor([0, 2, 5, 7], mstype.int32), Tensor([2, 3, 0, 1, 2, 1, 3], mstype.int32),
                            Tensor([-2.5, -5, -3, -1.5, -0.5, 1, 1.5], mstype.float32), shape)
     add_output = test_csr_add(indptr, indptr_2, indices, indices_2, values, values_2, shape)
     compare_csr(add_output, add_expect)
-    add_output = ms_function(test_csr_add)(indptr, indptr_2, indices, indices_2, values, values_2, shape)
+    add_output = jit(test_csr_add)(indptr, indptr_2, indices, indices_2, values, values_2, shape)
     compare_csr(add_output, add_expect)
 
     sub_expect = CSRTensor(Tensor([0, 2, 5, 7], mstype.int32), Tensor([2, 3, 0, 1, 2, 1, 3], mstype.int32),
@@ -856,5 +856,5 @@ def test_csr_magic_methods():
     sub_output = test_csr_sub(indptr, indptr_2, indices, indices_2, values, values_2, shape)
     compare_csr(sub_output, sub_expect)
 
-    sub_output = ms_function(test_csr_sub)(indptr, indptr_2, indices, indices_2, values, values_2, shape)
+    sub_output = jit(test_csr_sub)(indptr, indptr_2, indices, indices_2, values, values_2, shape)
     compare_csr(sub_output, sub_expect)

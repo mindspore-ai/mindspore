@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.utils.bprop_util import bprop
@@ -36,7 +36,7 @@ class Net(nn.Cell):
         self.matmul = P.MatMul()
         self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         x = x * self.z
         out = self.matmul(x, y)

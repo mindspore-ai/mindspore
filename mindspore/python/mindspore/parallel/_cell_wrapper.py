@@ -19,7 +19,7 @@ from __future__ import division
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations.comm_ops import AllGather
 from mindspore.communication import GlobalComm
-from mindspore.common import ms_function
+from mindspore.common import jit
 
 _ALLGATHER_CELL = None
 
@@ -35,7 +35,7 @@ class AllGatherCell(Cell):
         self.allgather = AllGather(group)
         self.add_flags(skip_auto_parallel_compile=True)
 
-    @ms_function()
+    @jit()
     def construct(self, x):
         x = self.allgather(x)
 

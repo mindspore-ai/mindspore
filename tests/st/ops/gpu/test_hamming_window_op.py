@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 import mindspore.ops.operations.array_ops as P2
 
 
@@ -28,7 +28,7 @@ class HammingWindowNet(nn.Cell):
         super(HammingWindowNet, self).__init__()
         self.hammingwindow = P2.HammingWindow(periodic=periodic, alpha=alpha, beta=beta, dtype=dtype)
 
-    @ms_function
+    @jit
     def construct(self, input_x):
         return self.hammingwindow(input_x)
 

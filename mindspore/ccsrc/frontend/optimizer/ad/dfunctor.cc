@@ -189,8 +189,8 @@ static bool HasSideEffectBackProp(const CNodePtr &cnode) {
 static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsPrimitiveCNode(node, prim::kPrimHookBackward) || IsPrimitiveCNode(node, prim::kPrimCellBackwardHook)) {
-    MS_LOG(WARNING)
-      << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
+    MS_LOG(WARNING) << "Hook operation does not work in graph mode or functions decorated with 'jit', it will be "
+                       "eliminated during compilation.";
     auto output_cnode = node->cast_ptr<CNode>();
     if (output_cnode->size() - 1 == 1) {
       return output_cnode->input(1);
@@ -220,8 +220,8 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
     auto tuple_get_item = node->cast_ptr<CNode>();
     auto inp = tuple_get_item->input(1);
     if (IsPrimitiveCNode(inp, prim::kPrimHookBackward) || IsPrimitiveCNode(inp, prim::kPrimCellBackwardHook)) {
-      MS_LOG(WARNING)
-        << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
+      MS_LOG(WARNING) << "Hook operation does not work in graph mode or functions decorated with 'jit', it will be "
+                         "eliminated during compilation.";
       constexpr size_t idx = 2;
       auto v_node = dyn_cast_ptr<ValueNode>(tuple_get_item->input(idx));
       MS_EXCEPTION_IF_NULL(v_node);
@@ -362,7 +362,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     TraceGuard guard(std::make_shared<TraceGradFpropApp>(cnode_morph->debug_info()));
     k_app = k_graph_->NewCNode(inputs);
   }
-  // Run in pynative mode, when @ms_function is used.
+  // Run in pynative mode, when @jit is used.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
     auto grad_exec = pynative_exec->grad_executor();

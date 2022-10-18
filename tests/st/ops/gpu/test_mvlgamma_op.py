@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class MvlgammaNet(nn.Cell):
@@ -31,7 +31,7 @@ class MvlgammaNet(nn.Cell):
         self.a = Tensor(self.a_np)
 
 
-    @ms_function
+    @jit
     def construct(self):
         return self.mvlgamma(self.a)
 

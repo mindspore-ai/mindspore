@@ -19,7 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore import Tensor
 from mindspore.ops.operations.image_ops import AdjustSaturation
 
@@ -29,7 +29,7 @@ class AdSaturation(nn.Cell):
         super().__init__()
         self.adjustsaturation = AdjustSaturation()
 
-    @ms_function
+    @jit
     def construct(self, input_images, saturation_scale):
         return self.adjustsaturation(input_images, saturation_scale)
 

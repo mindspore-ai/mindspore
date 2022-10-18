@@ -15,7 +15,7 @@
 """test python built-in functions in graph mode"""
 import pytest
 import numpy as np
-from mindspore import Tensor, context, nn, ms_function
+from mindspore import Tensor, context, nn, jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -47,7 +47,7 @@ def test_fallback_all_list_hybrid():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo(a, b):
         x = [a, np.array([1]), Tensor(1)]
         y = [a, np.array([0]), Tensor(1)]
@@ -85,7 +85,7 @@ def test_fallback_any_list_hybrid():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo(a, b):
         x = [a, np.array([1]), Tensor(1)]
         y = [a, np.array([0]), Tensor(1)]

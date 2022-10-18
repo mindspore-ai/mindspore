@@ -15,7 +15,7 @@
 """ test a list of cell, and getattr by its item """
 import pytest
 import numpy as np
-from mindspore import context, nn, dtype, Tensor, ms_function, ms_class
+from mindspore import context, nn, dtype, Tensor, jit, jit_class
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 
@@ -25,7 +25,7 @@ class Actor(nn.Cell):
         return x + y
 
 
-@ms_class
+@jit_class
 class Actor2:
     def act(self, x, y):
         return x + y
@@ -223,7 +223,7 @@ class Trainer3(nn.Cell):
         super(Trainer3, self).__init__()
         self.msrl = msrl
 
-    @ms_function
+    @jit
     def test(self, x, y):
         num_actor = 0
         output = 0

@@ -21,7 +21,7 @@ import mindspore as ms
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
-from mindspore import ms_function
+from mindspore import jit
 
 
 class NetInner(nn.Cell):
@@ -67,7 +67,7 @@ class CmpNetInner(nn.Cell):
         self.addn = ops.AddN()
         self.relu = nn.ReLU()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         x = self.addn((x, y))
         x = self.log(x)
@@ -77,7 +77,7 @@ class CmpNetInner(nn.Cell):
         return x
 
 
-@ms_function
+@jit
 def cmp_func_inner(x, y):
     x = ops.AddN()((x, y))
     x = ops.Log()(x)

@@ -16,7 +16,7 @@
 import mindspore.ops.composite as C
 import mindspore.ops.functional as F
 from mindspore import context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 def setup_module(module):
@@ -31,7 +31,7 @@ def partial_simple_add(x):
     return F.partial(myadd, x)
 
 
-@ms_function
+@jit
 def full_simple_add(x, y):
     p = partial_simple_add(x)
     return p(y)
@@ -59,7 +59,7 @@ def partial_multi_add(x):
     return F.partial(MULTI_ADD, x)
 
 
-@ms_function
+@jit
 def full_multi_add(x, y, m, n):
     p = partial_multi_add(x)(y)
     q = partial_multi_add(m)(n)

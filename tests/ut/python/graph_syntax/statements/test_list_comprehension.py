@@ -15,7 +15,7 @@
 """test graph list comprehension"""
 import numpy as np
 
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -27,7 +27,7 @@ def test_list_comprehension_with_local_inputs():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [i for i in range(3)]
         return Tensor(x)
@@ -43,7 +43,7 @@ def test_list_comprehension_with_local_inputs_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [i + 1 for i in range(3)]
         return Tensor(x)
@@ -59,7 +59,7 @@ def test_list_comprehension_with_local_inputs_and_condition():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [i + 1 for i in range(5) if i%2 == 0]
         return Tensor(x)
@@ -75,7 +75,7 @@ def test_list_comprehension_with_pre_block_local_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = 10
         x = [a for i in range(3)]
@@ -92,7 +92,7 @@ def test_list_comprehension_with_pre_block_local_input_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = 10
         x = [a + i for i in range(3)]
@@ -109,7 +109,7 @@ def test_list_comprehension_with_pre_block_local_input_and_condition():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = 10
         x = [a + i for i in range(3) if a > 5]
@@ -126,7 +126,7 @@ def test_list_comprehension_with_pre_block_local_input_and_condition_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = 10
         x = [a + i for i in range(5) if a + i < 13]
@@ -143,7 +143,7 @@ def test_list_comprehension_with_numpy_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = np.array([1, 2, 3])
         x = [a for i in range(3)]
@@ -163,7 +163,7 @@ def test_list_comprehension_with_numpy_input_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = np.array([1, 2, 3])
         x = [a + i for i in range(3)]
@@ -183,7 +183,7 @@ def test_list_comprehension_with_numpy_input_and_condition():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = np.array([1, 2, 3])
         x = [a for i in range(5) if i%2 == 0]
@@ -203,7 +203,7 @@ def test_list_comprehension_with_numpy_input_and_condition_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = np.array([1, 2, 3])
         x = [a + i for i in range(5) if np.sum(a + i) > 10]
@@ -223,7 +223,7 @@ def test_list_comprehension_with_numpy_input_and_condition_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = np.array([1, 2, 3])
         x = [a + i for i in range(5) if np.sum(a + i) > 20]
@@ -240,7 +240,7 @@ def test_list_comprehension_with_iter_list():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = 10
         m = [1, 2, 3, 4, 5]
@@ -258,7 +258,7 @@ def test_list_comprehension_with_iter_list_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = 10
         m = np.array([1, 2, 3, 4, 5])
@@ -276,7 +276,7 @@ def test_list_comprehension_with_iter_list_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         a = 10
         m = [Tensor([1]), Tensor([2]), Tensor([3])]

@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.context as context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -32,7 +32,7 @@ class TileNet(Cell):
 
         self.input_parameter = Parameter(initializer(Tensor(numpy_input), numpy_input.shape), name='x')
 
-    @ms_function
+    @jit
     def construct(self, mul):
         return self.Tile(self.input_parameter, mul)
 

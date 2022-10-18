@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore.ops import composite as C
 from mindspore.nn import Momentum
 from mindspore import context, Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -28,7 +28,7 @@ class CellBprop(nn.Cell):
     def construct(self, x, y):
         return 2 * x * x + y * y
 
-    @ms_function
+    @jit
     def bprop(self, x, y, out, dout):
         return dout, 2 * y
 
@@ -58,7 +58,7 @@ class MomentumWithMsFunc(nn.Cell):
         self.net = net
         self.optimizer = Momentum(filter(lambda x: x.requires_grad, self.net.get_parameters()), 0.1, 0.9)
 
-    @ms_function
+    @jit
     def construct(self, grads):
         ret = self.optimizer(grads)
         return ret

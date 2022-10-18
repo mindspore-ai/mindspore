@@ -21,7 +21,7 @@ from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common import mutable
-from mindspore import ms_function
+from mindspore import jit
 
 
 @pytest.mark.level0
@@ -56,14 +56,14 @@ def test_cal_constant_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_cal_constant_tensor_ms_function():
+def test_cal_constant_tensor_jit_function():
     """
     Feature: Set mutable tensor input to constant.
-    Description: Get the matmul result for two constant tensor in ms_function.
+    Description: Get the matmul result for two constant tensor in @jit decorated function.
     Expectation: Get the correct result.
     """
 
-    @ms_function
+    @jit
     def net(x, y):
         out = P.MatMul()(x, y)
         return out
@@ -125,10 +125,10 @@ def test_grad_const_arg_tensor_to_mutable():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_ms_function_grad_const_arg_tensor_to_mutable():
+def test_jit_function_grad_const_arg_tensor_to_mutable():
     """
     Feature: Set mutable tensor input to constant.
-    Description: Get gradient with respect to constant tensor input for ms_function.
+    Description: Get gradient with respect to constant tensor input for the function decorated with jit.
     Expectation: Get the correct gradients.
     """
 
@@ -141,7 +141,7 @@ def test_ms_function_grad_const_arg_tensor_to_mutable():
             out = self.matmul(x, y)
             return out
 
-    @ms_function
+    @jit
     def fn(x, y):
         net = Net()
         grad_op = GradOperation()

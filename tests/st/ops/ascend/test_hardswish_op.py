@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import functional as F
@@ -31,7 +31,7 @@ class Grad(nn.Cell):
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    @ms_function
+    @jit
     def construct(self, input_, output_grad):
         return self.grad(self.network)(input_, output_grad)
 
@@ -145,7 +145,7 @@ def test_hswish_vmap(dtype, shape=(100, 2)):
     x = F.sub(x, 0)
     output_vmap = F.vmap(hswish_func, in_axes=(0,))(x)
 
-    @ms_function
+    @jit
     def manually_batched(xs):
         """manually_batched"""
         output = []
@@ -185,7 +185,7 @@ def test_hswish_grad_vmap(dtype, shape=(100, 2)):
     x = F.sub(x, 0)
     output_vmap = F.vmap(hswish_grad_func, in_axes=(0, 0))(dy, x)
 
-    @ms_function
+    @jit
     def manually_batched(dys, xs):
         """manually_batched"""
         output = []

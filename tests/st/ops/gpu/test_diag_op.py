@@ -22,7 +22,7 @@ import mindspore.ops as P
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 class NetDiag(nn.Cell):
     def __init__(self):
@@ -202,7 +202,7 @@ def test_diag_vmap():
     def cal_diag(x):
         return P.Diag()(x)
 
-    @ms_function
+    @jit
     def manually_batched(xs):
         output = []
         for i in range(xs.shape[0]):

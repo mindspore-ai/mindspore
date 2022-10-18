@@ -15,7 +15,7 @@
 """ test_list_extend """
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -32,7 +32,7 @@ def test_list_extend_1():
     Description: support list extend.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_1():
         x = [1, 2, 3, 4]
         y = [5, 6, 7]
@@ -53,7 +53,7 @@ def test_list_extend_2():
     Description: support list extend.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_2():
         aa = 20
         x = [1, 2, 3, 4]
@@ -77,7 +77,7 @@ def test_list_extend_3():
     Description: support list extend.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_3():
         aa = 20
         bb = Tensor(1)
@@ -104,7 +104,7 @@ def test_list_extend_4():
     Description: support list extend.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_4():
         x = []
         y = []

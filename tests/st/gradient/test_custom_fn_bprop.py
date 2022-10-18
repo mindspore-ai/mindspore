@@ -21,7 +21,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Parameter
 from mindspore import context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -79,7 +79,7 @@ def test_custom_vjp_inline_mul_add():
 
     mul_add.defbwd(bprop_mul_add)
 
-    @ms_function
+    @jit
     def inline_mul_add(x, y):
         param = 2
         return mul_add(x, y) + x + param * y
@@ -140,7 +140,7 @@ def test_custom_vjp_bprop_in_fn_2():
 
     fn_2.defbwd(bprop_fn_2)
 
-    @ms_function
+    @jit
     def fn_3(x, y):
         return fn_2(x, y)
 

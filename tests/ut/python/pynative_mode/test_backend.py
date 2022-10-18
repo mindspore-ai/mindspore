@@ -18,7 +18,7 @@ import shutil
 import pytest
 
 import mindspore.nn as nn
-from mindspore import context, ms_function
+from mindspore import context, jit
 from mindspore._checkparam import args_type_check
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
@@ -39,7 +39,7 @@ class Net(nn.Cell):
         self.x = Parameter(initializer('normal', [1, 3, 3, 4]), name='x')
         self.y = Parameter(initializer('normal', [1, 3, 3, 4]), name='y')
 
-    @ms_function
+    @jit
     def construct(self):
         return self.add(self.x, self.y)
 

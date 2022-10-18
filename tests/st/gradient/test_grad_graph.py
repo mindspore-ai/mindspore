@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore import ms_function
+from mindspore import jit
 from mindspore.ops.functional import grad, value_and_grad
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
@@ -66,7 +66,7 @@ def iteration_grad_function(x, y, z):
     return x ** 2 * y * z
 
 
-@ms_function
+@jit
 def grad_wrap_with_msfunction(x, y, z):
     output = grad(function)(x, y, z)
     return output
@@ -175,7 +175,7 @@ def test_grad_iteration_function_graph():
 def test_grad_wrap_with_msfunction_graph():
     """
     Features: Function grad.
-    Description: Test F.grad wrapped with ms_function in graph mode.
+    Description: Test F.grad wrapped with @jit decorated function in graph mode.
     Expectation: No exception.
     """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
@@ -266,7 +266,7 @@ def test_grad_with_weights_has_aux_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_ms_function_grad_with_weights_has_aux_graph():
+def test_jit_function_grad_with_weights_has_aux_graph():
     """
     Features: Function grad.
     Description: Test F.grad with different weights and has_aux in graph mode.
@@ -285,7 +285,7 @@ def test_ms_function_grad_with_weights_has_aux_graph():
     net = ParamMultipleInputNet()
     weights = net.trainable_params()
 
-    @ms_function
+    @jit
     def user_fn(x, y):
         res, aux = grad(net, 0, weights, True)(x, y)
         return res, aux

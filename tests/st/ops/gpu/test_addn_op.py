@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore import dtype as mstype
 
@@ -29,7 +29,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.add = P.AddN()
 
-    @ms_function
+    @jit
     def construct(self, x, y, z):
         return self.add((x, y, z))
 

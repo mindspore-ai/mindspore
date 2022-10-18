@@ -16,7 +16,7 @@
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor, context, nn, ms_function
+from mindspore import Tensor, context, nn, jit
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
@@ -99,7 +99,7 @@ class ControlMixedWhileIf(nn.Cell):
         self.assign = P.Assign()
         self.var = ms.Parameter(ms.Tensor([1], ms.float32), name="var")
 
-    @ms_function
+    @jit
     def construct(self, x, y, z, c2, c4):
         out = self.assign(self.var, c4)
         while x < c2:

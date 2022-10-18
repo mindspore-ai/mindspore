@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
@@ -42,7 +42,7 @@ class Net(nn.Cell):
         self.m = Parameter(Tensor(np.array([0.1, 0.3, 0.5]).astype(np.float32)), name='m')
         self.v = Parameter(Tensor(np.array([0.1, 0.3, 0.5]).astype(np.float32)), name='v')
 
-    @ms_function
+    @jit
     def construct(self, beta1, beta2, gradient, eps, weight_decay_tensor, lr):
         param_fp32 = self.op_cast(self.param, mstype.float32)
         m_fp32 = self.op_cast(self.m, mstype.float32)

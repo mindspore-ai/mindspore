@@ -18,7 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.sparse_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class SparseSegmentSumWithNumSegmentsNet(nn.Cell):
@@ -26,7 +26,7 @@ class SparseSegmentSumWithNumSegmentsNet(nn.Cell):
         super(SparseSegmentSumWithNumSegmentsNet, self).__init__()
         self.net = P.SparseSegmentSumWithNumSegments()
 
-    @ms_function
+    @jit
     def construct(self, x, indices, segment_ids, num_segments):
         return self.net(x, indices, segment_ids, num_segments)
 

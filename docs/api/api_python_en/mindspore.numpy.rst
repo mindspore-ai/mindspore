@@ -551,14 +551,14 @@ Interact With MindSpore Functions
 
 Since `mindspore.numpy` directly wraps MindSpore tensors and operators, it has all the advantages and properties of MindSpore. In this section, we will briefly introduce how to employ MindSpore execution management and automatic differentiation in `mindspore.numpy` coding scenarios. These include:
 
-- `ms_function`: for running codes in static graph mode for better efficiency.
+- `jit` decorator: for running codes in static graph mode for better efficiency.
 - `GradOperation`: for automatic gradient computation.
 - `mindspore.set_context`: for `mindspore.numpy` execution management.
 - `mindspore.nn.Cell`: for using `mindspore.numpy` interfaces in MindSpore Deep Learning Models.
 
 The following are examples:
 
-- Use ms_function to run code in static graph mode
+- Use `jit` decorator to run code in static graph mode
 
   Let's first see an example consisted of matrix multiplication and bias add, which is a typical process in Neural Networks:
 
@@ -590,13 +590,13 @@ The following are examples:
        [2816. 2816. 2816. 2816.]]
     
 
-  In this function, MindSpore dispatches each computing kernel to device separately. However, with the help of `ms_function`, we can compile all operations into a single static computing graph.
+  In this function, MindSpore dispatches each computing kernel to device separately. However, with the help of `jit` decorator, we can compile all operations into a single static computing graph.
 
   .. code-block:: python
 
-      from mindspore import ms_function
+      from mindspore import jit
 
-      forward_compiled = ms_function(forward)
+      forward_compiled = jit(forward)
       print(forward(x, w1, b1, w2, b2, w3, b3))
 
   The result is as follows:
@@ -607,11 +607,11 @@ The following are examples:
        [2816. 2816. 2816. 2816.]]
     
   .. note::
-      Currently, static graph cannot run in Python interactive mode and not all python types can be passed into functions decorated with `ms_function`. For details about how to use `ms_function`, see `API ms_function <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.ms_function.html>`_ .
+      Currently, static graph cannot run in Python interactive mode and not all python types can be passed into functions decorated with `jit`.
 
 - Use GradOperation to compute deratives
 
-  `GradOperation` can be used to take deratives from normal functions and functions decorated with `ms_function`. Take the previous example:
+  `GradOperation` can be used to take deratives from normal functions and functions decorated with `jit`. Take the previous example:
 
   .. code-block:: python
 
@@ -635,16 +635,16 @@ The following are examples:
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  To take the gradient of `ms_function` compiled functions, first we need to set the execution mode to static graph mode.
+  To take the gradient of `jit` compiled functions, first we need to set the execution mode to static graph mode.
 
 
   .. code-block:: python
 
-      from mindspore import ms_function, set_context, GRAPH_MODE
+      from mindspore import jit, set_context, GRAPH_MODE
 
       set_context(mode=GRAPH_MODE)
       grad_all = ops.composite.GradOperation(get_all=True)
-      print(grad_all(ms_function(forward))(x, w1, b1, w2, b2, w3, b3))
+      print(grad_all(jit(forward))(x, w1, b1, w2, b2, w3, b3))
 
   The result is as follows:
 

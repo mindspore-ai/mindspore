@@ -16,7 +16,7 @@
 import operator
 import pytest
 import numpy as np
-from mindspore import Tensor, context, ms_function
+from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -33,7 +33,7 @@ def test_builtin_function_max_min_with_tensor():
     Description: Support the type of the input of built-in function max is tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x, y):
         return max(x, y), min(x, y)
 
@@ -53,7 +53,7 @@ def test_builtin_function_max_min_with_multiple_tensor():
     Description: Support the type of the input of built-in function max is tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x, y, z):
         return max(x, y, z), min(x, y, z)
 
@@ -73,7 +73,7 @@ def test_builtin_function_max_min_with_tensor_numpy():
     Description: Support the type of the input of built-in function min is tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor(np.array([1, 2, 3, 4, 5]), dtype=mstype.float32)
         return min(x), max(x)
@@ -94,7 +94,7 @@ def test_builtin_function_max_min_with_tensor_list():
     Description: Support the type of the input of built-in function min is tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return min(x), max(x)
 
@@ -114,7 +114,7 @@ def test_builtin_function_max_with_tuple_tensor():
     Description: Support the type of the input of built-in function max min is tensor tuple.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         tuple_x = (Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32"))
         sum_max_x = Tensor(0).astype("float32")
@@ -142,7 +142,7 @@ def test_builtin_function_max_with_list_tensor():
     Description: Support the type of the input of built-in function max min is tensor tuple.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         list_x = [Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32")]
         sum_max_x = Tensor(0).astype("float32")
@@ -170,7 +170,7 @@ def test_builtin_function_max_min_with_tuple_tuple_tensor():
     Description: Support the type of the input of built-in function max min is tensor tuple.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         tuple_x = ((Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32")),)
         return max(tuple_x), min(tuple_x)
@@ -190,7 +190,7 @@ def test_builtin_function_max_min_with_list_list_tensor():
     Description: Support the type of the input of built-in function max min is tensor list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         tuple_x = [[Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32")],]
         return max(tuple_x), min(tuple_x)
@@ -210,7 +210,7 @@ def test_builtin_function_max_min_with_list_list_tensor_2():
     Description: Support the type of the input of built-in function max min is tensor list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         tuple_x = [[Tensor(10).astype("float32"), Tensor(30).astype("float32"), Tensor(50).astype("float32")],
                    [Tensor(20).astype("float32"), Tensor(40).astype("float32"), Tensor(60).astype("float32")]]
@@ -231,7 +231,7 @@ def test_builtin_function_max_min_with_list_list_tensor_out():
     Description: Support the type of the input of built-in function max min is tensor list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         tuple_x = [[x / 4, 2 * x],
                    [x / 2, 3 * x]]
@@ -253,7 +253,7 @@ def test_builtin_function_max_with_out_tensor():
     Description: Support the type of the input of built-in function max min is tensor tuple.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         y = x - Tensor(3)
         tuple_x = (2 * x, y)

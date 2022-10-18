@@ -20,7 +20,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.ops.composite import core
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 from mindspore import Tensor
 from mindspore.ops import functional as F
@@ -73,7 +73,7 @@ def test_remove_and_fv_2():
             ret += (ele,)
         return ret
 
-    @ms_function
+    @jit
     def out_loop(input1, input_data0, input_data1):
         ret = ()
 

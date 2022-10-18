@@ -21,7 +21,7 @@ from mindspore.common.api import _CellGraphExecutor, _MindsporeFunctionExecutor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, ms_function
+from mindspore import Tensor, context, jit
 
 
 def test_tensor_compile_phase1():
@@ -71,7 +71,7 @@ def test_ms_function_tensor_compile_phase1():
     Expectation: The phases are the same only when the tensor inputs are set mutable.
     """
 
-    @ms_function
+    @jit
     def fn(x, y):
         out = P.MatMul()(x, y)
         return out
@@ -146,7 +146,7 @@ def test_ms_function_tensor_compile_phase2():
     Expectation: The phases are the same only when the tensor inputs are set mutable.
     """
 
-    @ms_function
+    @jit
     def fn(x, y):
         out = P.MatMul()(x, y)
         return out
@@ -266,7 +266,7 @@ def test_ms_function_grad_constant_tensor():
             out = self.matmul(x, y)
             return out
 
-    @ms_function
+    @jit
     def fn(x, y):
         net = Net()
         grad_op = GradOperation()
@@ -313,7 +313,7 @@ def test_ms_function_tensor_constant_folding():
     Expectation: Get a correct result.
     """
 
-    @ms_function
+    @jit
     def fn(x, y):
         return P.Add()(x, y)
 
@@ -360,7 +360,7 @@ def test_ms_function_constant_tensor_if():
     Expectation: Get the correct result.
     """
 
-    @ms_function
+    @jit
     def fn(x, y):
         z = Tensor([3], dtype=mstype.int32)
         out = y

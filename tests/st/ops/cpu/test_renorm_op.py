@@ -20,7 +20,7 @@ from mindspore import Tensor, context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class ReNormNet(nn.Cell):
@@ -222,7 +222,7 @@ def vmap_case():
         def construct(self, x):
             return vmap(self.net, self.in_axes, self.out_axes)(x)
 
-    @ms_function
+    @jit
     def for_net(input_x, p, axis, maxnorm):
         # split and concat along dimension 0
         output = []
@@ -261,7 +261,7 @@ def vmap_nested_case():
         def construct(self, x):
             return vmap(vmap(self.net, self.ii, self.io), self.oi, self.oo)(x)
 
-    @ms_function
+    @jit
     def for_net(input_x, p, axis, maxnorm):
         # split and concat along dimension 0 and 1
         output = []

@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_dict_update """
 import ast
-from mindspore import ms_function, context
+from mindspore import jit, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -26,7 +26,7 @@ def test_dict_update_1():
     Description: support dict update.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_1():
         x = {'a': 1, 'b': 2}
         y = {'c': 3, 'b': 4}
@@ -42,7 +42,7 @@ def test_dict_update_2():
     Description: support dict update.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_2():
         x = {'a': 1, 'b': 2, 'aa': 11, 'bb': 22}
         y = {'dd': {'ab': 12}, 'c': 3, 'b': "aaaa", 'ddd': [1, 2, 3]}
@@ -59,7 +59,7 @@ def test_dict_update_3():
     Description: support dict update.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_3():
         x = {'a': 1, 'b': 2}
         y = {'c': 3}
@@ -75,7 +75,7 @@ def test_dict_update_4():
     Description: support dict update.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_4():
         x = {'a': ["aa", "bb"], 'b': 2}
         y = {'c': 3, "a": {"sub": "test"}}

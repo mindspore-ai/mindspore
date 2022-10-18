@@ -16,7 +16,7 @@
 import numpy as np
 from mindspore import context
 from mindspore.nn import Cell
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -73,7 +73,7 @@ def test_single_if_1():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = Tensor(1)
         if x > Tensor(7):
@@ -89,7 +89,7 @@ def test_single_if_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = np.array([1, 2, 3, 4, 5])
         y = x % 2
@@ -107,7 +107,7 @@ def test_single_if_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = np.array([1])
         if x <= 1:
@@ -123,7 +123,7 @@ def test_single_if_else_1():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_else():
         x = Tensor(1)
         if x > Tensor(7):
@@ -140,7 +140,7 @@ def test_single_if_else_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_else():
         x = np.array([1, 2, 3, 4, 5])
         y = x % 2
@@ -159,7 +159,7 @@ def test_single_if_builtin_function_sum():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = Tensor(-11, mstype.float32)
         y = Tensor(12, mstype.float32)
@@ -176,7 +176,7 @@ def test_single_if_change_variable_value():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = np.array([1, 2, 3, 4])
         y = np.array([4, 5, 6])
@@ -194,7 +194,7 @@ def test_single_if_np_all():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if():
         x = np.array([1, 2, 3, 4])
         y = np.array([4, 5, 6])

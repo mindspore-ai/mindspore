@@ -248,7 +248,7 @@ ValuePtr ConvertModuleNameSpace(const py::object &obj) {
 
 ValuePtr ConvertMsClass(const py::object &obj) {
   MS_LOG(DEBUG) << "Converting ms class";
-  // Convert class instance decorated with ms_class.
+  // Convert class instance decorated with jit_class.
   if (py::hasattr(obj, PYTHON_PARSE_METHOD)) {
     MS_LOG(DEBUG) << "Convert obj to func graph.";
     FuncGraphPtr func_graph = ConvertToFuncGraph(obj);

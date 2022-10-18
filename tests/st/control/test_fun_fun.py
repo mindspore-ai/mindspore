@@ -14,11 +14,11 @@
 # ============================================================================
 import pytest
 import mindspore.context as context
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype
 
 
-@ms_function
+@jit
 def hof(x):
     def f(x):
         return x + 3

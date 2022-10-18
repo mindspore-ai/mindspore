@@ -19,7 +19,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
 
@@ -39,7 +39,7 @@ class NetReduce(nn.Cell):
         self.reduce_max = P.ReduceMax(False)
         self.reduce_min = P.ReduceMin(False)
 
-    @ms_function
+    @jit
     def construct(self, indice):
         return (self.reduce_mean(indice, self.axis0),
                 self.reduce_mean(indice, self.axis1),
@@ -71,7 +71,7 @@ class NetReduceLogic(nn.Cell):
         self.reduce_all = P.ReduceAll(False)
         self.reduce_any = P.ReduceAny(False)
 
-    @ms_function
+    @jit
     def construct(self, indice):
         return (self.reduce_all(indice, self.axis0),
                 self.reduce_all(indice, self.axis1),
@@ -94,7 +94,7 @@ class NetReduceProd(nn.Cell):
         self.reduce_prod = P.ReduceProd(False)
         self.reduce_prod_keep = P.ReduceProd(True)
 
-    @ms_function
+    @jit
     def construct(self, indices):
         return (self.reduce_prod(indices, self.axis0),
                 self.reduce_prod(indices, self.axis1),

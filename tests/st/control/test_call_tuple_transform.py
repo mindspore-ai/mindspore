@@ -15,7 +15,7 @@
 import mindspore as ms
 from mindspore import context
 from mindspore.ops import operations as P
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.tensor import Tensor
 import mindspore.nn as nn
 
@@ -67,7 +67,7 @@ class TestClass(nn.Cell):
         out = self.test(state, init_global_obs)
         return out
 
-    @ms_function
+    @jit
     def test(self, state, init_global_obs):
         num_agent = self.zero
         while self.less(num_agent, 3):

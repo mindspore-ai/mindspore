@@ -18,7 +18,7 @@ import numpy as np
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 from mindspore.ops import Primitive
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -68,7 +68,7 @@ def test_np_tensor_list():
     Description: support Basic method of Tensor list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_tensor_list():
         a = Tensor(np.array(4), mstype.int32)
         b = Tensor(np.array(5), mstype.int32)
@@ -95,7 +95,7 @@ def test_list_count():
     Description: support attr/method of builtin type.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_count():
         x = list([1, 2, 3])
         res = x.count(1)
@@ -114,7 +114,7 @@ def test_list_append():
     Description: support attr/method of builtin type.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_append():
         x = list([1, 2, 3])
         x.append(4)
@@ -122,7 +122,7 @@ def test_list_append():
     assert np.all(list_append().asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@ms_function
+@jit
 def np_fallback_func_tensor_index(x):
     array_x = tuple([2, 3, 4, 5])
     np_x = np.array(array_x).astype(np.float32)
@@ -159,7 +159,7 @@ def test_np_calculate():
     Description: Support numpy calculation.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_calculate():
         x = np.array([3, 1, 2, 4, 5])
         y = x % 2
@@ -179,7 +179,7 @@ def test_fallback_tensor_array_astype():
     Description: Test Tensor(array) with astype() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         me_x = Tensor([1.1, -2.1]).astype("float32")
         return me_x
@@ -204,7 +204,7 @@ def test_fallback_tuple_with_mindspore_function():
                 return True
         return False
 
-    @ms_function
+    @jit
     def foo():
         return test_isinstance(np.array(1), (np.ndarray, nn.Cell, Primitive))
 
@@ -222,7 +222,7 @@ def test_fallback_tensor_compare_with_variable():
     Description: Test ms.Tensor() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         while x > Tensor([0]):
             x = x - abs(Tensor([-1]))
@@ -243,7 +243,7 @@ def test_np_tensor_add():
     Description: support Tensor add.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_tensor_add():
         a = Tensor(np.array(4))
         b = Tensor(np.array(5))

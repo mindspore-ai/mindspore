@@ -15,7 +15,7 @@
 """ test list pop operation """
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -30,7 +30,7 @@ def test_list_pop_1():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop():
         x = [1, 2, 3, 4]
         y = x.pop()
@@ -51,7 +51,7 @@ def test_list_pop_2():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop():
         x = [1, 2, 3, 4]
         y = x.pop(-2)
@@ -72,7 +72,7 @@ def test_list_pop_3():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop():
         x = [1, 2, 3, 4]
         y = x.pop(1)
@@ -93,7 +93,7 @@ def test_list_pop_4():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop():
         x = [1, 2, 3, 4]
         y = x.pop(4)
@@ -115,7 +115,7 @@ def test_list_pop_5():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert():
         x = [1, 2, 3, 4]
         y = x.pop(-5)
@@ -137,7 +137,7 @@ def test_list_pop_6():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert():
         x = []
         y = x.pop()
@@ -159,7 +159,7 @@ def test_list_pop_7():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop():
         x1 = [1, 2, 3, 4]
         x2 = [5, 6, 7, 8]
@@ -183,7 +183,7 @@ def test_list_pop_8():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop(index):
         x = [Tensor([1]), Tensor([2]), Tensor([3])]
         y = x.pop(index)
@@ -204,7 +204,7 @@ def test_list_pop_9():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop(x, index):
         y = x.pop(index)
         return x, y
@@ -225,7 +225,7 @@ def test_list_pop_type_error():
     Description: support list pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_pop():
         x = [1, 2, 3]
         x.pop(1.0)

@@ -17,15 +17,15 @@ import mindspore as ms
 
 
 class Net:
-    @ms.ms_function
+    @ms.jit
     def test(self, x, y):
         return ms.ops.mul(x, y)
 
 
-def test_user_defined_class_with_ms_function():
+def test_user_defined_class_with_jit_decorated_function():
     """
-    Feature: User defined class with ms_function.
-    Description: Test user defined class method with ms_function.
+    Feature: User defined class in the function decorated with jit.
+    Description: Test user defined class method in the function decorated with jit.
     Expectation: No exception.
     """
     x = ms.Tensor([3])
@@ -34,17 +34,17 @@ def test_user_defined_class_with_ms_function():
     net.test(x, y)
 
 
-@ms.ms_class
+@ms.jit_class
 class MsClassNet:
-    @ms.ms_function
+    @ms.jit
     def test(self, x, y):
         return ms.ops.mul(x, y)
 
 
-def test_ms_class_with_ms_function():
+def test_jit_class_with_jit_decorated_function():
     """
-    Feature: ms_class with ms_function.
-    Description: Test ms_class method with ms_function.
+    Feature: jit_class in the function decorated with jit.
+    Description: Test jit_class method in the function decorated with jit.
     Expectation: No exception.
     """
     x = ms.Tensor([3])
@@ -54,15 +54,15 @@ def test_ms_class_with_ms_function():
 
 
 class CellNet(ms.nn.Cell):
-    @ms.ms_function
+    @ms.jit
     def test(self, x, y):
         return ms.ops.mul(x, y)
 
 
-def test_cell_with_ms_function():
+def test_cell_with_jit_decorated_function():
     """
-    Feature: Cell with ms_function.
-    Description: Test Cell method with ms_function.
+    Feature: Cell in the function decorated with jit.
+    Description: Test Cell method in the function decorated with jit.
     Expectation: No exception.
     """
     x = ms.Tensor([3])

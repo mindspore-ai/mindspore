@@ -697,7 +697,7 @@ AnfNodePtr ExpandVmap(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr
     return NewValueNode(tf_fg);
   }
   MS_LOG(EXCEPTION) << "Currently, the first argument in F.vmap only supports Cell, Python defined "
-                       "function or @ms_function decorated function.";
+                       "function or @jit decorated function.";
 }
 
 std::string GetShapeString(const ShapeVector &tensor_shape) {

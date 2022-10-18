@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test ms_class """
+""" test jit_class """
 import pytest
 import numpy as np
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, ms_class
+from mindspore import Tensor, context, jit_class
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,10 +31,10 @@ context.set_context(mode=context.GRAPH_MODE)
 def test_ms_class_attr():
     """
     Feature: JIT Fallback
-    Description: Access the attributes of user-defined classes decorated by ms_class.
+    Description: Access the attributes of user-defined classes decorated with jit_class.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self):
             self.number = Tensor(1, dtype=mstype.int32)
@@ -61,10 +61,10 @@ def test_ms_class_attr():
 def test_ms_class_method():
     """
     Feature: JIT Fallback
-    Description: Access the methods of user-defined classes decorated by ms_class.
+    Description: Access the methods of user-defined classes decorated with jit_class.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self):
             self.val = Tensor(2, dtype=mstype.int32)
@@ -96,10 +96,10 @@ def test_ms_class_method():
 def test_ms_class_call():
     """
     Feature: JIT Fallback
-    Description: Call the __call__ function of user-defined classes decorated by ms_class.
+    Description: Call the __call__ function of user-defined classes decorated with jit_class.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self, val):
             self.val = val
@@ -132,10 +132,10 @@ def test_ms_class_call():
 def test_ms_class_input_attr():
     """
     Feature: JIT Fallback
-    Description: Access the attributes of user-defined classes decorated by ms_class.
+    Description: Access the attributes of user-defined classes decorated with jit_class.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self):
             self.number = Tensor(np.array([1, 2, 3]))
@@ -163,10 +163,10 @@ def test_ms_class_input_attr():
 def test_ms_class_input_method():
     """
     Feature: JIT Fallback
-    Description: Access the methods of user-defined classes decorated by ms_class.
+    Description: Access the methods of user-defined classes decorated with jit_class.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self):
             self.val = Tensor(2, dtype=mstype.int32)
@@ -196,15 +196,15 @@ def test_ms_class_input_method():
 def test_ms_class_nested():
     """
     Feature: JIT Fallback
-    Description: Test nested ms_class in graph.
+    Description: Test nested jit_class in graph.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class Inner:
         def __init__(self):
             self.number = Tensor(1, dtype=mstype.int32)
 
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self):
             self.inner = Inner()
@@ -231,7 +231,7 @@ def test_ms_class_nested():
 def test_ms_class_cell_nested():
     """
     Feature: JIT Fallback
-    Description: Test nested ms_class and cell in graph.
+    Description: Test nested jit_class and cell in graph.
     Expectation: No exception.
     """
     class Net(nn.Cell):
@@ -242,7 +242,7 @@ def test_ms_class_cell_nested():
         def construct(self, x):
             return x + self.val
 
-    @ms_class
+    @jit_class
     class TrainNet():
         class Loss(nn.Cell):
             def __init__(self, net):
@@ -284,7 +284,7 @@ def test_ms_class_type_attr():
     Description: Access the attributes of class type.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         val = Tensor(2, dtype=mstype.int32)
 
@@ -318,7 +318,7 @@ def test_ms_class_create_instance_attr():
     Description: Access the attributes of the created class instance.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self, val):
             self.number = val + 3
@@ -348,7 +348,7 @@ def test_ms_class_create_instance_method():
     Description: Access the methods of the created class instance.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self, val):
             self.number = val
@@ -384,7 +384,7 @@ def test_ms_class_create_instance_call():
     Description: Call the __call__ function of the created class instance.
     Expectation: No exception.
     """
-    @ms_class
+    @jit_class
     class InnerNet:
         def __init__(self, number):
             self.number = number
@@ -418,11 +418,11 @@ def test_ms_class_create_instance_call():
 def test_raise_error_not_class_type():
     """
     Feature: JIT Fallback
-    Description: Decorator ms_class cannot be used for non-class types.
+    Description: Decorator jit_class cannot be used for non-class types.
     Expectation: No exception.
     """
     with pytest.raises(TypeError):
-        @ms_class
+        @jit_class
         def func(x, y):
             return x + y
 
@@ -437,11 +437,11 @@ def test_raise_error_not_class_type():
 def test_raise_error_decorate_cell():
     """
     Feature: JIT Fallback
-    Description: Decorator ms_class cannot be used for nn.Cell
+    Description: Decorator jit_class cannot be used for nn.Cell
     Expectation: No exception.
     """
     with pytest.raises(TypeError):
-        @ms_class
+        @jit_class
         class Net(nn.Cell):
             def construct(self, x):
                 return x

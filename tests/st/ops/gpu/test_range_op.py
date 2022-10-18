@@ -18,7 +18,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, ops, ms_function
+from mindspore import Tensor, ops, jit
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -228,7 +228,7 @@ def test_range_functional():
     assert np.all(output.asnumpy() == np.array([0, 4, 8]))
 
 
-@ms_function
+@jit
 def range_fn(x, y, z, a):
     return ops.range(x, y, z) + a
 

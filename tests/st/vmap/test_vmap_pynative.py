@@ -21,7 +21,7 @@ import mindspore.ops.functional as F
 from mindspore import dtype as mstype
 from mindspore.common import Tensor
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -37,7 +37,7 @@ def test_vmap_nested():
     Feature: vmap
     Description: This case mainly tests the following `vmap` application scenarios in PyNative mode:
         1.Calling nested `vmap` functions.
-        2.`fn` is a function wrapped `ms_function`.
+        2.`fn` is a function wrapped `jit`.
         3.Function contains free variables.
     Expectation: success
     """
@@ -46,7 +46,7 @@ def test_vmap_nested():
     def add_fn(x):
         return F.add(x, outter_tensor)
 
-    @ms_function
+    @jit
     def inner_vmap_fn(x, outter_tensor):
         vmap_funtion = vmap(add_fn, 1)
         out = vmap_funtion(x)

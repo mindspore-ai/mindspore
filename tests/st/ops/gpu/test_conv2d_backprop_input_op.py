@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 
@@ -42,7 +42,7 @@ class Conv2dInput(nn.Cell):
 
         self.get_shape = P.Shape()
 
-    @ms_function
+    @jit
     def construct(self, out, w, x):
         return self.conv_input(out, w, self.get_shape(x))
 

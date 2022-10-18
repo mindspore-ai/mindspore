@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(device_target="Ascend")
 
@@ -27,7 +27,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.dense = nn.Dense(2048, 1001)
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.dense(x)
 
@@ -37,7 +37,7 @@ class MultiLayerDense(nn.Cell):
         self.dense1 = nn.Dense(in_channels=256, out_channels=512)
         self.dense2 = nn.Dense(in_channels=512, out_channels=1024)
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = self.dense1(x)
         x = self.dense2(x)

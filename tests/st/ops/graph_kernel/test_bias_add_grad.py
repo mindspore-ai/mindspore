@@ -17,7 +17,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.operations import _grad_ops as G
 
 class Net(nn.Cell):
@@ -25,7 +25,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.bias_add_grad = G.BiasAddGrad()
 
-    @ms_function
+    @jit
     def construct(self, dout):
         return self.bias_add_grad(dout)
 

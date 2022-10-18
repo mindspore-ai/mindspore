@@ -20,7 +20,7 @@ import pytest
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
-from mindspore import ms_function
+from mindspore import jit
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -33,7 +33,7 @@ class NetInner(nn.Cell):
         self.addn = ops.AddN()
         self.relu = nn.ReLU()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         x = self.addn((x, y))
         x = self.log(x)
@@ -70,7 +70,7 @@ class NetOuter(nn.Cell):
         self.relu = nn.ReLU()
         self.inner = NetInner()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         x = self.addn((x, y))
         x = self.inner(x, y)
@@ -88,7 +88,7 @@ class CmpNetInner(nn.Cell):
         self.addn = ops.AddN()
         self.relu = nn.ReLU()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         x = self.addn((x, y))
         x = self.log(x)

@@ -18,7 +18,7 @@ import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore.ops import composite as C
 from mindspore import context, Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -47,7 +47,7 @@ class MsFuncVarHook(nn.Cell):
         self.relu = nn.ReLU()
         self.hook = P.HookBackward(var_hook_function)
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = x + x
         x = x * x
@@ -115,7 +115,7 @@ class MsFuncCellHook(nn.Cell):
         self.relu = nn.ReLU()
         self.relu.register_backward_hook(cell_hook_function)
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = x + x
         x = x * x

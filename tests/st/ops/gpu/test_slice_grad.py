@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -30,7 +30,7 @@ class SliceGrad(nn.Cell):
         super(SliceGrad, self).__init__()
         self.slice_grad = G.SliceGrad()
 
-    @ms_function
+    @jit
     def construct(self, dy, x):
         return self.slice_grad(dy, x, (0, 1, 0), (2, 1, 3))
 
@@ -74,7 +74,7 @@ class SliceGrad7D(nn.Cell):
         super(SliceGrad7D, self).__init__()
         self.slice_grad = G.SliceGrad()
 
-    @ms_function
+    @jit
     def construct(self, dy, x):
         return self.slice_grad(dy, x, (1, 0, 2, 0, 0, 0, 0), (1, 2, 1, 1, 1, 1, 2))
 

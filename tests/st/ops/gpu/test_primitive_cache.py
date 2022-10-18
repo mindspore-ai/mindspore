@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore import ms_function
+from mindspore import jit
 from mindspore.ops import operations as P
 from mindspore.ops._primitive_cache import _get_cache_prim
 
@@ -31,15 +31,15 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ms_function_run_in_pynative():
+def test_jit_function_run_in_pynative():
     """
-    Feature: test ms_function run in PyNative.
-    Description: test ms_function run in PyNative.
+    Feature: test @jit decorated function run in PyNative.
+    Description: test @jit decorated function run in PyNative.
     Expectation: Success.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
-    @ms_function
+    @jit
     def pow_function(x, y):
         _pow = _get_cache_prim(P.Pow)()
         return _pow(x, y)

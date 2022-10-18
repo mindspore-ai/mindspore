@@ -17,7 +17,7 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, COOTensor, ms_function, nn, ops
+from mindspore import Tensor, COOTensor, jit, nn, ops
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 
@@ -42,7 +42,7 @@ def test_make_coo():
 
     def test_pynative():
         return COOTensor(indices, values, dense_shape)
-    test_graph = ms_function(test_pynative)
+    test_graph = jit(test_pynative)
 
     coo1 = test_pynative()
     coo2 = test_graph()
@@ -121,7 +121,7 @@ def test_coo_tensor_in_while():
             super(COOTensorWithControlWhile, self).__init__()
             self.shape = shape
 
-        @ms_function
+        @jit
         def construct(self, a, b, indices, values):
             x = COOTensor(indices, values, self.shape)
             while a > b:
@@ -231,7 +231,7 @@ def test_dtype_coo_tensor():
     def pynative_test():
         x = COOTensor(indices, values, shape)
         return F.dtype(x), x.dtype
-    graph_test = ms_function(pynative_test)
+    graph_test = jit(pynative_test)
 
     out1, out2 = pynative_test()
     out3, out4 = graph_test()
@@ -269,9 +269,9 @@ def test_coo_attr():
     def test_pynative_3():
         return coo.to_tuple()
 
-    test_graph_1 = ms_function(test_pynative_1)
-    test_graph_2 = ms_function(test_pynative_2)
-    test_graph_3 = ms_function(test_pynative_3)
+    test_graph_1 = jit(test_pynative_1)
+    test_graph_2 = jit(test_pynative_2)
+    test_graph_3 = jit(test_pynative_3)
 
     py_indices, py_values, py_shape = test_pynative_1()
     py_coo = test_pynative_2()
@@ -314,61 +314,61 @@ def test_coo_bprop():
     dense_shape = (3, 4)
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_tensor(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_indices(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.indices
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_values(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.values
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_shape(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.shape
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_cast(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.astype(mstype.int32)
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_dtype(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.dtype
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_to_tuple(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.to_tuple()
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_to_abs(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.abs()
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_to_csr(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.to_csr()
 
     @grad_op
-    @ms_function
+    @jit
     def test_coo_to_dense(indices, values, dense_shape):
         coo_tensor = COOTensor(indices, values, dense_shape)
         return coo_tensor.to_dense()
@@ -404,7 +404,7 @@ def test_dense_to_coo():
         return dense_tensor.to_coo()
 
     coo_tensor = test_to_coo(dense_tensor)
-    coo_tensor_graph = ms_function(test_to_coo)(dense_tensor)
+    coo_tensor_graph = jit(test_to_coo)(dense_tensor)
     expect = COOTensor(Tensor([[0, 1], [0, 2], [2, 0]], dtype=mstype.int32),
                        Tensor([1, 2, 1], dtype=mstype.float32),
                        (3, 4))
@@ -481,59 +481,59 @@ def test_coo_magic_methods():
     neg_expect = COOTensor(indices, Tensor([1, -2], mstype.float32), shape)
     neg_output = test_coo_neg(indices, values, shape)
     compare_coo(neg_output, neg_expect)
-    neg_output = ms_function(test_coo_neg)(indices, values, shape)
+    neg_output = jit(test_coo_neg)(indices, values, shape)
     compare_coo(neg_output, neg_expect)
 
     coo_add_coo_expect = COOTensor(Tensor([[0, 1], [0, 2], [1, 2], [2, 3]], mstype.int64),
                                    Tensor([-1, 3, 0, 1], mstype.float32), shape)
     coo_add_coo_output = test_coo_add_coo(indices, indices_2, values, values_2, shape)
     compare_coo(coo_add_coo_output, coo_add_coo_expect)
-    coo_add_coo_output = ms_function(test_coo_add_coo)(indices, indices_2, values, values_2, shape)
+    coo_add_coo_output = jit(test_coo_add_coo)(indices, indices_2, values, values_2, shape)
     compare_coo(coo_add_coo_output, coo_add_coo_expect)
 
     coo_add_dense_expect = np.array([[0, 0, 2, 0], [0, 0, 4, 0,], [1, 0, 0, 0,]], np.int64)
     coo_add_dense_output = test_coo_add_dense(indices, values, shape, dense)
     assert np.allclose(coo_add_dense_expect, coo_add_dense_output.asnumpy())
-    coo_add_dense_output = ms_function(test_coo_add_dense)(indices, values, shape, dense)
+    coo_add_dense_output = jit(test_coo_add_dense)(indices, values, shape, dense)
     assert np.allclose(coo_add_dense_expect, coo_add_dense_output.asnumpy())
 
     dense_add_coo_output = test_dense_add_coo(indices, values, shape, dense)
     assert np.allclose(coo_add_dense_expect, dense_add_coo_output.asnumpy())
-    dense_add_coo_output = ms_function(test_dense_add_coo)(indices, values, shape, dense)
+    dense_add_coo_output = jit(test_dense_add_coo)(indices, values, shape, dense)
     assert np.allclose(coo_add_dense_expect, dense_add_coo_output.asnumpy())
 
     coo_sub_coo_expect = COOTensor(Tensor([[0, 1], [0, 2], [1, 2], [2, 3]], mstype.int64),
                                    Tensor([-1, -3, 4, -1], mstype.float32), shape)
     coo_sub_coo_output = test_coo_sub_coo(indices, indices_2, values, values_2, shape)
     compare_coo(coo_sub_coo_output, coo_sub_coo_expect)
-    coo_sub_coo_output = ms_function(test_coo_sub_coo)(indices, indices_2, values, values_2, shape)
+    coo_sub_coo_output = jit(test_coo_sub_coo)(indices, indices_2, values, values_2, shape)
     compare_coo(coo_sub_coo_output, coo_sub_coo_expect)
 
     coo_sub_dense_expect = np.array([[0, -2, -2, 0], [0, 0, 0, 0], [-1, 0, 0, 0]], np.int32)
     coo_sub_dense_output = test_coo_sub_dense(indices, values, shape, dense)
     assert np.allclose(coo_sub_dense_expect, coo_sub_dense_output.asnumpy())
-    coo_sub_dense_output = ms_function(test_coo_sub_dense)(indices, values, shape, dense)
+    coo_sub_dense_output = jit(test_coo_sub_dense)(indices, values, shape, dense)
     assert np.allclose(coo_sub_dense_expect, coo_sub_dense_output.asnumpy())
 
     dense_sub_coo_expect = np.array([[0, 2, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]], np.int64)
     dense_sub_coo_output = test_dense_sub_coo(indices, values, shape, dense)
     assert np.allclose(dense_sub_coo_expect, dense_sub_coo_output.asnumpy())
-    dense_sub_coo_output = ms_function(test_dense_sub_coo)(indices, values, shape, dense)
+    dense_sub_coo_output = jit(test_dense_sub_coo)(indices, values, shape, dense)
     assert np.allclose(dense_sub_coo_expect, dense_sub_coo_output.asnumpy())
 
     coo_mul_dense_expect = COOTensor(indices, Tensor([-1, 4], mstype.float32), shape)
     coo_mul_dense_output = test_coo_mul_dense(indices, values, shape, dense)
     compare_coo(coo_mul_dense_output, coo_mul_dense_expect)
-    coo_mul_dense_output = ms_function(test_coo_mul_dense)(indices, values, shape, dense)
+    coo_mul_dense_output = jit(test_coo_mul_dense)(indices, values, shape, dense)
     compare_coo(coo_mul_dense_output, coo_mul_dense_expect)
 
     dense_mul_coo_output = test_dense_mul_coo(indices, values, shape, dense)
     compare_coo(dense_mul_coo_output, coo_mul_dense_expect)
-    dense_mul_coo_output = ms_function(test_dense_mul_coo)(indices, values, shape, dense)
+    dense_mul_coo_output = jit(test_dense_mul_coo)(indices, values, shape, dense)
     compare_coo(dense_mul_coo_output, coo_mul_dense_expect)
 
     coo_div_dense_expect = COOTensor(indices, Tensor([-1, 1], mstype.float32), shape)
     coo_div_dense_output = test_coo_div_dense(indices, values, shape, dense)
     compare_coo(coo_div_dense_output, coo_div_dense_expect)
-    coo_div_dense_output = ms_function(test_coo_div_dense)(indices, values, shape, dense)
+    coo_div_dense_output = jit(test_coo_div_dense)(indices, values, shape, dense)
     compare_coo(coo_div_dense_output, coo_div_dense_expect)

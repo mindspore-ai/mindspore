@@ -23,7 +23,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -155,7 +155,7 @@ def test_fast_gelu_grad_vmap(dtype, shape=(100, 2)):
 
     output_vmap = vmap(fast_gelu_grad_func, in_axes=(0, 0))(dy, x)
 
-    @ms_function
+    @jit
     def manually_batched(dys, xs):
         """manually_batched"""
         output = []
@@ -189,7 +189,7 @@ def test_fast_gelu_vmap(dtype, shape=(100, 2)):
 
     output_vmap = vmap(fast_gelu_func, in_axes=(0,))(x)
 
-    @ms_function
+    @jit
     def manually_batched(xs):
         """manually_batched"""
         output = []

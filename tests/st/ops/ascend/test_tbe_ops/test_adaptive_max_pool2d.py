@@ -18,7 +18,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class Net(nn.Cell):
@@ -26,7 +26,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.adaptive_max_pool2d = nn.AdaptiveMaxPool2d(output_size, return_indices)
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.adaptive_max_pool2d(x)
 

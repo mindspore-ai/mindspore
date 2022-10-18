@@ -27,7 +27,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import context, ops, dtype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common import Tensor, Parameter
 from mindspore.ops import operations as P
 from ...ut_filter import non_graph_engine
@@ -74,7 +74,7 @@ class Net1(nn.Cell):
         super(Net1, self).__init__()
         self.add = P.Add()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         add = P.Add()
         result = add(x, y)

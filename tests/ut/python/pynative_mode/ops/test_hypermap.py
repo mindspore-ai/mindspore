@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import Primitive
 from mindspore.ops import _constants
 from mindspore.ops import composite as C
@@ -46,7 +46,7 @@ def add_tensor(x, y):
 hyper_add = C.HyperMap(add)
 
 
-@ms_function
+@jit
 def mainf(x, y):
     return hyper_add(x, y)
 
@@ -83,7 +83,7 @@ def test_hypermap_tuple_mix():
 hyper_map = C.HyperMap()
 
 
-@ms_function
+@jit
 def main_noleaf(x, y):
     return hyper_map(add, x, y)
 
@@ -122,7 +122,7 @@ def add3_scalar(x, y, z):
     return scala_add(scala_add(x, y), z)
 
 
-@ms_function
+@jit
 def main_add3_easy(x, y):
     add2 = F.partial(add3_scalar, 1)
     return add2(x, y)
@@ -146,13 +146,13 @@ def add3_tensor(x, y, z):
     return tensor_add(y, z)
 
 
-@ms_function
+@jit
 def main_add3_scala(x, y):
     add2 = partial(add3_scala, 1)
     return hyper_map(add2, x, y)
 
 
-@ms_function
+@jit
 def main_add3(x, y):
     add2 = partial(add3, 1)
     return hyper_map(add2, x, y)

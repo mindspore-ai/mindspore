@@ -22,7 +22,7 @@ import mindspore.nn as nn
 from mindspore import Parameter, ParameterTuple
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.functional import stop_gradient
@@ -87,19 +87,19 @@ def stop_test4(x, y):
     return e
 
 
-@ms_function
+@jit
 def grad_stop_test(x, y):
     """ grad_stop_test """
     return grad_all(stop_test2)(x, y)
 
 
-@ms_function
+@jit
 def grad_stop_test1(x, y):
     """ grad_stop_test1 """
     return grad_all(stop_test3)(x, y)
 
 
-@ms_function
+@jit
 def grad_stop_test5(x, y):
     """ grad_stop_test5 """
     return grad_all(stop_test5)(x, y)
@@ -128,7 +128,7 @@ class GradWrap(nn.Cell):
         self.network = network
         self.weights = ParameterTuple(network.get_parameters())
 
-    @ms_function
+    @jit
     def construct(self, x, label):
         weights = self.weights
         return grad_by_list(self.network, weights)(x, label)
@@ -146,7 +146,7 @@ def test_softmaxloss_grad():
             self.loss = nn.SoftmaxCrossEntropyWithLogits()
             self.network = network
 
-        @ms_function
+        @jit
         def construct(self, x, label):
             predict = self.network(x)
             return self.loss(predict, label)
@@ -164,7 +164,7 @@ def test_softmaxloss_grad():
             self.relu = nn.ReLU()
             self.cast = P.Cast()
 
-        @ms_function
+        @jit
         def construct(self, x):
             x = self.fc(x, self.weight)
             x = self.cast(x, mstype.float32)
@@ -188,7 +188,7 @@ def test_stop_gradient_1():
         def __init__(self):
             super(Mul, self).__init__()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             ret = x * y
             ret = stop_gradient(ret)
@@ -206,7 +206,7 @@ def test_stop_gradient_2():
         def __init__(self):
             super(Mul, self).__init__()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             c = x * y
             z = x * y
@@ -217,7 +217,7 @@ def test_stop_gradient_2():
             super(MulAdd, self).__init__()
             self.mul = Mul()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             u = x + y
             v = x - y
@@ -238,7 +238,7 @@ def test_stop_gradient_3():
         def __init__(self):
             super(TupleGetItem, self).__init__()
 
-        @ms_function
+        @jit
         def construct(self, x1, x2, x3, x4, x5):
             z1 = x1 + x1
             z2 = x1 * x2
@@ -311,7 +311,7 @@ def test_stop_gradient_7():
             super(PrimWithMultiOutputs_, self).__init__()
             self.prim_with_multi_outputs = PrimWithMultiOutputs()
 
-        @ms_function
+        @jit
         def construct(self, x1, x2):
             x1, x2 = self.prim_with_multi_outputs(x1, x2)
             x1 = stop_gradient(x1)
@@ -331,7 +331,7 @@ def test_stop_gradient_8():
             super(PrimWithMultiOutputs_, self).__init__()
             self.prim_with_multi_output = PrimWithMultiOutputs()
 
-        @ms_function
+        @jit
         def construct(self, x1, x2):
             x1, x2 = stop_gradient(self.prim_with_multi_output(x1, x2))
             return x1, x2
@@ -349,7 +349,7 @@ def test_stop_gradient_9():
         def __init__(self):
             super(Mul, self).__init__()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             c = x * y
             z = x * y
@@ -360,7 +360,7 @@ def test_stop_gradient_9():
             super(MulAdd, self).__init__()
             self.mul = Mul()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             u = x + y
             v = x - y
@@ -399,7 +399,7 @@ def test_stop_gradient_10():
             super(PrimWithNoBprop_, self).__init__()
             self.prim_with_no_bprop = PrimWithNoBprop()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             x = x * y
             x, y = self.prim_with_no_bprop(x, y)
@@ -419,7 +419,7 @@ def test_stop_gradient_11():
             super(PrimWithNoBprop_, self).__init__()
             self.prim_with_no_bprop = PrimWithNoBprop()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             x, y = self.prim_with_no_bprop(x, y)
             x = stop_gradient(x)

@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -56,7 +56,7 @@ class Net(nn.Cell):
             [-3, -2, -3, -16]]]]).astype(np.float32)), [1, 1, 4, 4]), name='y')
         self.get_shape = P.Shape()
 
-    @ms_function
+    @jit
     def construct(self):
         return self.conv_filter(self.out, self.x, self.get_shape(self.w))
 

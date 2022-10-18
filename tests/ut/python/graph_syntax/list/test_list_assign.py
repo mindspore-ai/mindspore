@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore import context
 
 
@@ -568,7 +568,7 @@ def test_list_double_slice():
     Expectation: ValueError
     """
     context.set_context(mode=context.PYNATIVE_MODE)
-    @ms_function
+    @jit
     def foo(a, b, start1, stop1, step1, start2, stop2, step2):
         a[start1:stop1:step1][start2: stop2: step2] = b
         return a
@@ -717,7 +717,7 @@ def test_list_slice_negetive_step():
     Description: Test negative step list slice assign
     Expectation: ValueError
     """
-    @ms_function
+    @jit
     def ms_func():
         a = [1, 2, 3, 4, 5]
         b = [11, 22, 33, 44, 55]
@@ -741,7 +741,7 @@ def test_list_double_slice_assign_error():
     Description: Test negative step list slice assign
     Expectation: ValueError
     """
-    @ms_function
+    @jit
     def ms_func():
         a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         b = [11, 22, 33, 44]
@@ -760,7 +760,7 @@ def test_list_slice_only_with_step():
     Expectation: ValueError
     """
 
-    @ms_function
+    @jit
     def ms_func():
         a = [1, 2, 3, 4]
         b = [11, 22]

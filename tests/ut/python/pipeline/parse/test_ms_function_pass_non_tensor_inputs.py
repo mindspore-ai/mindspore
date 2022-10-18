@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test ms_function pass non_tensor inputs"""
+""" test jit pass non_tensor inputs"""
 import numpy as np
 
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore import context
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@ms_function
+@jit
 def compute(x, y, tuple_p, list_q, dict_w):
     return x + y - tuple_p[0] + list_q[1] - dict_w["x"]
 
@@ -45,7 +45,7 @@ def test_tensor_compute():
     compute(tensor_x, tensor_y, p, q, w)
 
 
-@ms_function
+@jit
 def tensor_reduce(tensor_x, axis, tensor_y):
     reduce_sum = P.ReduceSum()
     ret = reduce_sum(tensor_x, axis) + tensor_y

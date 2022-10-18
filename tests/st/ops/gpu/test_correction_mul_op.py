@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.operations import _quant_ops as Q
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -30,7 +30,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.op = Q.CorrectionMul()
 
-    @ms_function
+    @jit
     def construct(self, x, batch_var, moving_var):
         return self.op(x, batch_var, moving_var)
 

@@ -211,7 +211,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bp
 }
 
 void PynativeDFunctor::ReplaceEquivdout(const CNodePtr &k_app, const CNodePtr &cnode_morph) {
-  // The process of replacing forward node only works in pynative mode, when @ms_function is used.
+  // The process of replacing forward node only works in pynative mode, when @jit is used.
   MS_EXCEPTION_IF_NULL(cnode_morph);
   MS_LOG(DEBUG) << "Run replace for cnode morph: " << cnode_morph->DebugString(2);
   // Get forward node and its fprop graph, bprop graph.

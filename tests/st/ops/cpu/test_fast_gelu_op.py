@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
@@ -102,7 +102,7 @@ def test_fast_gelu_vmap(dtype, shape=(100, 2)):
 
     output_vmap = vmap(fast_gelu_fun, in_axes=(0,))(x)
 
-    @ms_function
+    @jit
     def manually_batched(xs):
         """manually_batched"""
         output = []

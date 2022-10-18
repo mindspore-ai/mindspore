@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
 from mindspore import ops, Parameter, context
-from mindspore import ms_function
+from mindspore import jit
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -218,7 +218,7 @@ class Grad(nn.Cell):
 grad1 = C.GradOperation()
 
 
-@ms_function
+@jit
 def f1(x, y):
     return grad1(grad1(TargetNet()))(x, y)
 

@@ -19,7 +19,7 @@ from mindspore import dtype as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import nn
-from mindspore import ms_function
+from mindspore import jit
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -47,7 +47,7 @@ def test_while_with_param_forward_with_const_branch():
             self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
             self.reduce = P.ReduceSum()
 
-        @ms_function
+        @jit
         def construct(self, idx, end, x):
             out = self.zero
             while idx < end:
@@ -91,7 +91,7 @@ def test_while_opt_endless():
             super(GradNet, self).__init__()
             self.net = net
 
-        @ms_function
+        @jit
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
@@ -112,7 +112,7 @@ def test_no_while_call():
             self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
             self.reduce = P.ReduceSum()
 
-        @ms_function
+        @jit
         def construct(self, idx, end, x):
             out = self.zero
             if 2 > 1:
@@ -154,7 +154,7 @@ def test_while_with_param_grad_with_const_branch():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -194,7 +194,7 @@ def test_for_while_with_param_grad_with_const_branch():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -231,7 +231,7 @@ def test_for_while_with_param_grad_basic():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -268,7 +268,7 @@ def test_for_while_with_param_grad_normal():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -302,7 +302,7 @@ def test_while_with_param_basic_grad():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -336,7 +336,7 @@ def test_while_with_param_basic_grad_mul():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -371,7 +371,7 @@ def test_while_with_param_basic_grad_two():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -407,7 +407,7 @@ def test_while_with_param_basic_grad_three():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -444,7 +444,7 @@ def test_while_if_with_param_grad():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -477,7 +477,7 @@ def test_while_with_param_grad_not_enter_while():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
 
@@ -497,7 +497,7 @@ def test_with_param_if_by_if_forward():
             self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
             self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             out = self.zero
             if a < b:
@@ -539,7 +539,7 @@ def test_with_param_if_by_if_grad_inputs():
             super(GradNet, self).__init__()
             self.net = net
 
-        @ms_function
+        @jit
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
@@ -573,7 +573,7 @@ def test_with_param_if_by_if_grad_parameter():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, *inputs):
             return grad_by_list(self.net, self.weights)(*inputs)
 
@@ -605,7 +605,7 @@ def test_with_param_if_by_if_grad_param_excute_null():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, *inputs):
             return grad_by_list(self.net, self.weights)(*inputs)
 
@@ -639,7 +639,7 @@ def test_if_by_if_return_inside_grad():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
-        @ms_function
+        @jit
         def construct(self, *inputs):
             return grad_by_list(self.net, self.weights)(*inputs)
 
@@ -660,7 +660,7 @@ def test_if_by_if_forward():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             if a < b:
                 a = self.add(a, b)
@@ -728,7 +728,7 @@ def test_if_by_if_forward_control_tuple_switch():
             self.div = P.RealDiv()
             self.net = Branch2Net()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             if a < b:
                 a = self.add(a, b)
@@ -790,7 +790,7 @@ def test_if_by_if_forward_control_inside_net():
             self.div = P.RealDiv()
             self.net = Branch2Net()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             if a < b:
                 a = self.add(a, b)
@@ -816,7 +816,7 @@ def test_if_by_if_forward_use_namespace():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             if a < b:
                 a = P.Add()(a, b)
@@ -851,7 +851,7 @@ def test_if_by_if_forward_use_global_op():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             add = P.Add()
             sub = P.Sub()
@@ -888,7 +888,7 @@ def test_for_with_if_by_if_forward():
             self.add = P.Add()
             self.sub = P.Sub()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             for _ in range(0, 4):
                 if a < b:
@@ -916,7 +916,7 @@ def test_for_with_if_by_if_forward_namespace():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             for _ in range(0, 6):
                 if a < b:
@@ -944,7 +944,7 @@ def test_if_by_if_forward_const_branch_inner():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             add = P.Add()
             sub = P.Sub()
@@ -983,7 +983,7 @@ def test_if_by_if_forward_all_const_branch():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
-        @ms_function
+        @jit
         def construct(self, a, b, x):
             add = P.Add()
             sub = P.Sub()

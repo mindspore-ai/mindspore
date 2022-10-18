@@ -24,7 +24,7 @@ import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore import Parameter
-from mindspore import ms_function
+from mindspore import jit
 
 
 @pytest.mark.skip(reason="No runtime support")
@@ -312,7 +312,7 @@ def test_check_mutable_value():
         assert "For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) " \
                "or their nested structures, but got" in str(e)
 
-    @ms_function
+    @jit
     def net():
         x = mutable(2)
         return x

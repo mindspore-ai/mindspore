@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_string_ops """
-from mindspore import context, ms_function
+from mindspore import context, jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -24,7 +24,7 @@ def test_string_add():
     Description: Test string addition in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "ab"
         y = "cd"
@@ -39,7 +39,7 @@ def test_string_mul():
     Description: Test Multiplication of strings in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "abc" * 2
         y = 3 * "abc"
@@ -58,7 +58,7 @@ def test_string_getitem():
     Description: Test getting item of string by number index in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "string"
         return x[0], x[-1]
@@ -74,7 +74,7 @@ def test_string_equal():
     Description: Test string equal to another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "str"
         y = "str"
@@ -91,7 +91,7 @@ def test_string_not_equal():
     Description: Test string not equal to another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "str"
         y = "str"
@@ -108,7 +108,7 @@ def test_string_less():
     Description: Test string less than another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "abd"
         y = "abc"
@@ -125,7 +125,7 @@ def test_string_greater():
     Description: Test string greater than another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "abd"
         y = "abc"
@@ -142,7 +142,7 @@ def test_string_less_equal():
     Description: Test string less than or equal to another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "abd"
         y = "abc"
@@ -160,7 +160,7 @@ def test_string_greater_equal():
     Description: Test string greater than or equal to another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "abd"
         y = "abc"
@@ -178,7 +178,7 @@ def test_string_logical_not():
     Description: Test logical_not of string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = ""
         y = "str"
@@ -194,7 +194,7 @@ def test_string_and():
     Description: Test string and string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "" and "abc"
         y = "abc" and ""
@@ -211,7 +211,7 @@ def test_string_or():
     Description: Test string or string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "" or "abc"
         y = "abc" or ""
@@ -228,7 +228,7 @@ def test_string_in_string():
     Description: Test whether string in another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "op"
         y = "ops"
@@ -245,7 +245,7 @@ def test_string_not_in_string():
     Description: Test whether string not in another string in graph mode
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = "op"
         y = "ops"

@@ -18,7 +18,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
@@ -31,7 +31,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.argmax = P.Argmax(axis=1)
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.argmax(x)
 

@@ -19,12 +19,12 @@ import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common import Parameter, ParameterTuple
 import mindspore.context as context
 context.set_context(mode=context.PYNATIVE_MODE)
 
-@ms_function
+@jit
 def ConvBnReLU(x):
     conv = nn.Conv2d(1, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
     bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
@@ -58,7 +58,7 @@ class CellConvBnReLU(nn.Cell):
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = self.conv(x)
         x = self.bn(x)
@@ -99,7 +99,7 @@ class AddMulMul(nn.Cell):
         super(AddMulMul, self).__init__()
         self.param = Parameter(Tensor(0.5, ms.float32))
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = x + x
         x = x * self.param
@@ -158,7 +158,7 @@ class Mul(nn.Cell):
         super(Mul, self).__init__()
         self.param = Parameter(Tensor(1.5, ms.float32))
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = x * self.param
         return x
@@ -220,7 +220,7 @@ def test_pynative_ms_function():
             super().__init__()
             self.param = Parameter(Tensor(1, ms.float32))
 
-        @ms_function
+        @jit
         def construct(self, x):
             x = self.param * x
             return x
@@ -276,7 +276,7 @@ def test_pynative_ms_function_mix_execute():
     """
 
     class Net(nn.Cell):
-        @ms_function
+        @jit
         def test_ms_function(self, x, y):
             return x * y
 
@@ -310,7 +310,7 @@ def test_pynative_ms_function_empty_graph():
             self.y = y
             self.relu = P.ReLU()
 
-        @ms_function
+        @jit
         def max(self):
             if self.x > self.y:
                 return self.x
@@ -342,7 +342,7 @@ def test_pynative_ms_function_control_flow_if_break():
             self.relu = P.ReLU()
             self.add = P.TensorAdd()
 
-        @ms_function
+        @jit
         def construct(self, x, y, z):
             out = z
             for _ in range(5):
@@ -376,7 +376,7 @@ def test_pynative_ms_function_with_dynamic_shape():
     Expectation: The calculation result is correct.
     """
 
-    @ms_function()
+    @jit()
     def test(x):
         return ms.numpy.unique(x, return_inverse=True)
 
@@ -403,7 +403,7 @@ def test_pynative_ms_function_with_tuple_inputs():
             super(Net, self).__init__()
             self.enable_tuple_broaden = True
 
-        @ms_function
+        @jit
         def construct(self, grads):
             new_grads = []
             for grad in grads:
@@ -431,7 +431,7 @@ def test_pynative_ms_function_with_optional_inputs():
     Expectation: The calculation result is correct.
     """
 
-    @ms_function
+    @jit
     def foo(x, y=1):
         return x + y
 
@@ -455,7 +455,7 @@ def test_pynative_ms_function_with_args_inputs():
     Expectation: The calculation result is correct.
     """
 
-    @ms_function
+    @jit
     def foo(x, *args):
         return x + args[0] + args[1]
 
@@ -476,7 +476,7 @@ def test_pynative_ms_function_with_kwargs_inputs():
     Expectation: Raise expected exception
     """
 
-    @ms_function
+    @jit
     def foo(x, **kwargs):
         return x + kwargs.get('y')
 

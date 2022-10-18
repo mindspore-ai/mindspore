@@ -15,7 +15,7 @@
 """ test_list_reverse """
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -32,7 +32,7 @@ def test_list_reverse_1():
     Description: support list reverse.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_1():
         x = [1, 2, 3, 4]
         x.reverse()
@@ -52,7 +52,7 @@ def test_list_reverse_2():
     Description: support list reverse.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_2():
         aa = 20
         x = ['a', ('bb', '2', 3), aa, 4]
@@ -73,7 +73,7 @@ def test_list_reverse_3():
     Description: support list reverse.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_3():
         aa = 20
         bb = Tensor(1)
@@ -95,7 +95,7 @@ def test_list_reverse_4():
     Description: support list reverse.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_net_4():
         x = []
         x.reverse()

@@ -18,7 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class ParallelConcatNet(nn.Cell):
@@ -26,7 +26,7 @@ class ParallelConcatNet(nn.Cell):
         super(ParallelConcatNet, self).__init__()
         self.net = P.ParallelConcat()
 
-    @ms_function
+    @jit
     def construct(self, inputs):
         return self.net(inputs)
 

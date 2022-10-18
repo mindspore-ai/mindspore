@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import Tensor, ms_function, context, Parameter
+from mindspore import Tensor, jit, context, Parameter
 from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -33,7 +33,7 @@ def test_single_while_1():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = Tensor(1)
         while x < Tensor(7):
@@ -54,7 +54,7 @@ def test_single_while_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = Tensor(7).astype("int32")
         y = Tensor(0).astype("int32")
@@ -76,7 +76,7 @@ def test_single_while_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = Tensor(7).astype("int32")
         y = Tensor(0).astype("int32")
@@ -99,7 +99,7 @@ def test_single_while_two_cond_1():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = Tensor(1)
         y = Tensor(8)
@@ -123,7 +123,7 @@ def test_single_while_two_cond_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = Tensor(7).astype("int32")
         y = Tensor(0).astype("int32")
@@ -172,7 +172,7 @@ def test_single_while_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([0, 2, 4, 6, 8])
@@ -193,7 +193,7 @@ def test_single_while_two_cond_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while():
         x = np.array([1, 2, 3, 4, 5])
         y = Tensor(1)

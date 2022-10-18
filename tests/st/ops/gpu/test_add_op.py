@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -53,7 +53,7 @@ class AddNet(nn.Cell):
         self.y3 = Parameter(initializer(
             Tensor(np.arange(3 * 3 * 3 * 3).reshape(3, 3, 3, 3).astype(nptype)), [3, 3, 3, 3]), name='y3')
 
-    @ms_function
+    @jit
     def construct(self):
         output = (self.add(self.x, self.y), self.add(self.x1, self.y1),
                   self.add(self.x2, self.y2), self.add(self.x3, self.y3))
