@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_POWER_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_POWER_CPU_KERNEL_H_
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -24,11 +25,14 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixPowerCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatrixPowerCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixPowerCpuKernelMod() = default;
   ~MatrixPowerCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -43,6 +47,7 @@ class MatrixPowerCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   CNodeWeakPtr node_wpt_;
   int64_t power_{0};
   TypeId dtype_{kTypeUnknown};
+  ShapeVector output_shape_;
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };

@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_DIAG_V3_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_DIAG_V3_CPU_KERNEL_H_
 
+#include <map>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -26,12 +27,16 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixDiagV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatrixDiagV3CpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixDiagV3CpuKernelMod() = default;
   ~MatrixDiagV3CpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -54,7 +59,7 @@ class MatrixDiagV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int64_t> diagonal_shape_;
   std::vector<int64_t> k_shape_;
   TypeId diagonal_data_type_;
-  std::string align_;
+  std::string align_{"RIGHT_LEFT"};
   bool align_superdiag_ = true;
   bool align_subdiag_ = true;
   int64_t num_batches_ = 0;
