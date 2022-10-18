@@ -222,7 +222,8 @@ class DfGraphConvertor {
   void SetMakeTupleInput(const OpAdapterPtr &adpt, const CNodePtr &make_tuple_node);
   void SetMergeInput(const OpAdapterPtr &adpt, const CNodePtr &merge_node);
   bool IsMergeInput(const CNodePtr &node) const;
-  std::vector<OutHandler> GetMakeTupleAllInputHandle(const CNodePtr &node);
+  void SetDynamicInputHandleByMultiInput(const OpAdapterPtr &adpt, const CNodePtr &node,
+                                         const CNodePtr &from_node_input);
   void SetNodeControlInput(const AnfNodePtr &node, const AnfNodePtr &input);
   void SetGraphOutputs();
   std::vector<OutHandler> GetInputHandles(const AnfNodePtr &node, const AnfNodePtr &input);
