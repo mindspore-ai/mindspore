@@ -2036,6 +2036,10 @@ def get_tensor_num(data):
     tensor_num = 0
     for input_data in data:
         if isinstance(input_data, Tensor):
+            tensor_shape = F.shape(input_data)
+            tensor_shape_len = len(tensor_shape)
+            if tensor_shape_len != 0 and not (tensor_shape_len == 1 and tensor_shape[0] == 1):
+                const_utils.raise_value_error("The truth value of an array with several elements is ambiguous.")
             tensor_num = tensor_num + 1
     return tensor_num
 
@@ -2059,9 +2063,14 @@ def ms_max(*data):
     elif len_data == 1:
         x = data[0]
         if isinstance(x, Tensor):
+            tensor_shape = F.shape(x)
+            if len(tensor_shape) == 0:
+                const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
             return x.max()
         # Deal with Tensor in tuple or list
         if isinstance(x, (list, tuple)):
+            if len(x) == 0:
+                const_utils.raise_value_error("max() arg is an empty sequence.")
             tensor_num = get_tensor_num(x)
             if tensor_num == len(x):
                 return max_tensor(x)
@@ -2115,9 +2124,14 @@ def ms_min(*data):
     elif len_data == 1:
         x = data[0]
         if isinstance(x, Tensor):
+            tensor_shape = F.shape(x)
+            if len(tensor_shape) == 0:
+                const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
             return x.min()
         # Deal with Tensor in tuple or list
         if isinstance(x, (list, tuple)):
+            if len(x) == 0:
+                const_utils.raise_value_error("min() arg is an empty sequence.")
             tensor_num = get_tensor_num(x)
             if tensor_num == len(x):
                 return min_tensor(x)
@@ -2145,6 +2159,10 @@ def ms_sum(*data):
     if not isinstance(x, Tensor) and not hasattr(x, "__ms_iter__"):
         data_type = F.typeof(x)
         const_utils.raise_type_error(str(data_type) + " object is not iterable.")
+    if isinstance(x, Tensor):
+        tensor_shape = F.shape(x)
+        if len(tensor_shape) == 0:
+            const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
     if isinstance(x, dict):
         x = x.keys()
     result = 0
