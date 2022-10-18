@@ -287,14 +287,14 @@ def test_conll2000_dataset_get_datasetsize():
     assert size == 12
 
 
-def test_conll2000_dataset_to_device():
+def test_conll2000_dataset_device_que():
     """
     Feature: CoNLL2000Dataset
-    Description: Test CoNLL2000Dataset to_device
+    Description: Test CoNLL2000Dataset device_que
     Expectation: Runs successfully
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False)
-    data = data.to_device()
+    data = data.device_que()
     data.send()
 
 
@@ -341,5 +341,5 @@ if __name__ == "__main__":
     test_conll2000_dataset_distribution()
     test_conll2000_dataset_repeat()
     test_conll2000_dataset_get_datasetsize()
-    test_conll2000_dataset_to_device()
+    test_conll2000_dataset_device_que()
     test_conll2000_dataset_exceptions()

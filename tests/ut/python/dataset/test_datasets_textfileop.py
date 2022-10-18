@@ -291,14 +291,14 @@ def test_textline_dataset_get_datasetsize():
     assert size == 3
 
 
-def test_textline_dataset_to_device():
+def test_textline_dataset_device_que():
     """
     Feature: TextFileDataset
-    Description: Test TextFileDataset to_device
+    Description: Test TextFileDataset device_que
     Expectation: The dataset is processed as expected
     """
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
-    data = data.to_device()
+    data = data.device_que()
     data.send()
 
 
@@ -345,5 +345,5 @@ if __name__ == "__main__":
     test_textline_dataset_repeat()
     test_textline_dataset_output_tensor()
     test_textline_dataset_get_datasetsize()
-    test_textline_dataset_to_device()
+    test_textline_dataset_device_que()
     test_textline_dataset_exceptions()

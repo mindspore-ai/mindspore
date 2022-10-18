@@ -381,18 +381,6 @@ class Dataset:
             _OP_PROCESS.update(generator_process)
         return op_name
 
-    def close_pool(self):
-        """
-        Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
-        as a destructor for a processingPool object.
-
-        Note:
-            This interface will be deleted or invisible in the future. Please don't use it.
-            When you find that there are residual processes that do not exit correctly, you can use `kill -9 PROCESS_ID`
-            to end it, or through www.gitee.com/mindspore/mindspore send us an issue.
-        """
-        logger.warning("This interface will be deleted or invisible in the future. Please don't use it.")
-
     def create_ir_tree(self):
         """
         Internal method to build an IR tree.
@@ -1364,33 +1352,6 @@ class Dataset:
         Returns:
             Dataset, dataset for transferring.
         """
-        return TransferDataset(self, send_epoch_end, create_data_info_queue)
-
-    @check_device_send
-    def to_device(self, send_epoch_end=True, create_data_info_queue=False):
-        """
-        Transfer data from CPU to GPU or Ascend or other devices.
-
-        Args:
-            send_epoch_end (bool, optional): Whether to send the end of sequence to device or not (default=True).
-            create_data_info_queue (bool, optional): Whether to create queue which stores
-                types and shapes of data or not(default=False).
-
-        Note:
-            This interface will be deleted or invisible in the future.
-            Please use `device_que` to enable dataset sink mode.
-            If device is Ascend, features of data will be transferred one by one. The limitation
-            of data transmission per second is 256M.
-
-        Returns:
-            TransferDataset, dataset for transferring.
-
-        Raises:
-            RuntimeError: If distribution file path is given but failed to read.
-        """
-        logger.warning("This interface will be deleted or invisible in the future. "
-                       "Please use 'device_que' to enable dataset sink mode.")
-
         return TransferDataset(self, send_epoch_end, create_data_info_queue)
 
     @check_save

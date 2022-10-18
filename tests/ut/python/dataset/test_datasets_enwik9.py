@@ -247,14 +247,14 @@ def test_enwik9_total_rows_dataset_get_datasetsize():
     assert size == 13
 
 
-def test_enwik9_total_rows_dataset_to_device():
+def test_enwik9_total_rows_dataset_device_que():
     """
     Feature: EnWik9Dataset
-    Description: Test the function, to_device()
+    Description: Test the function, device_que()
     Expectation: size = 13
     """
     data = ds.EnWik9Dataset(DATA_FILE, shuffle=False)
-    data = data.to_device()
+    data = data.device_que()
     data.send()
 
 
@@ -292,5 +292,5 @@ if __name__ == "__main__":
     test_enwik9_dataset_distribution()
     test_enwik9_total_rows_dataset_repeat()
     test_enwik9_total_rows_dataset_get_datasetsize()
-    test_enwik9_total_rows_dataset_to_device()
+    test_enwik9_total_rows_dataset_device_que()
     test_enwik9_dataset_exceptions()

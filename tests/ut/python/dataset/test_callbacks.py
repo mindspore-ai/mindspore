@@ -444,7 +444,7 @@ def test_callbacks_sink_simulation():
     my_cb = MyWaitedCallback(events, 1)
     data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
     data = data.map(operations=(lambda x: x), callbacks=my_cb)
-    data = data.to_device()
+    data = data.device_que()
     data.send(num_epochs=epochs)
     for e in range(epochs):
         for s in range(4):
@@ -511,7 +511,7 @@ def test_callbacks_train_end():
     my_cb = MyWaitedCallback(events, 1)
     data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
     data = data.map(operations=(lambda x: x), callbacks=[my_cb])
-    data = data.to_device()
+    data = data.device_que()
     data.send(num_epochs=epochs)
     time.sleep(0.5)
     my_cb.end(run_context={})

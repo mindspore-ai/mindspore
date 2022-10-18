@@ -137,7 +137,7 @@ def test_case_tf_file():
     """
     data = ds.TFRecordDataset(TF_FILES, TF_SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
 
-    data = data.to_device()
+    data = data.device_que()
     data.send()
     time.sleep(0.1)
     data.stop_send()

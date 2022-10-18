@@ -95,12 +95,10 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.close_pool
     mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
-    mindspore.dataset.Dataset.to_device
 
 {% elif objname in ['Caltech101Dataset', 'Caltech256Dataset', 'CelebADataset', 'Cifar100Dataset', 'Cifar10Dataset', 'CityscapesDataset', 'CocoDataset', 'DIV2KDataset', 'EMnistDataset', 'FakeImageDataset', 'FashionMnistDataset', 'FlickrDataset', 'Flowers102Dataset', 'ImageFolderDataset', 'KMnistDataset', 'ManifestDataset', 'MnistDataset', 'PhotoTourDataset', 'Places365Dataset', 'QMnistDataset', 'SBDataset', 'SBUDataset', 'SemeionDataset', 'STL10Dataset', 'SVHNDataset', 'USPSDataset', 'VOCDataset', 'WIDERFaceDataset']%}
 
@@ -194,12 +192,10 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.close_pool
     mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
-    mindspore.dataset.Dataset.to_device
 
 
 {% elif objname in ['LJSpeechDataset', 'SpeechCommandsDataset', 'TedliumDataset', 'YesNoDataset'] %}
@@ -294,12 +290,10 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.close_pool
     mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
-    mindspore.dataset.Dataset.to_device
 
 
 {% elif objname in ['AGNewsDataset', 'AmazonReviewDataset', 'CLUEDataset', 'CoNLL2000Dataset', 'CSVDataset', 'DBpediaDataset', 'EnWik9Dataset', 'GeneratorDataset', 'IMDBDataset', 'IWSLT2016Dataset', 'IWSLT2017Dataset', 'MindDataset', 'NumpySlicesDataset', 'OBSMindDataset', 'PaddedDataset', 'PennTreebankDataset', 'RandomDataset', 'SogouNewsDataset', 'TextFileDataset', 'TFRecordDataset', 'UDPOSDataset', 'WikiTextDataset', 'YahooAnswersDataset', 'YelpReviewDataset'] %}
@@ -395,12 +389,10 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.close_pool
     mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
-    mindspore.dataset.Dataset.to_device
 
 
 {% elif fullname=="mindspore.dataset.WaitedDSCallback" %}

@@ -337,14 +337,14 @@ def test_wiki_text_dataset_get_datasetsize():
     assert size == 3
 
 
-def test_wiki_text_dataset_to_device():
+def test_wiki_text_dataset_device_que():
     """
     Feature: Test WikiText Dataset.
-    Description: Test to_device.
+    Description: Test device_que.
     Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='test')
-    data = data.to_device()
+    data = data.device_que()
     data.send()
 
 
@@ -389,5 +389,5 @@ if __name__ == "__main__":
     test_wiki_text_dataset_distribution()
     test_wiki_text_dataset_repeat()
     test_wiki_text_dataset_get_datasetsize()
-    test_wiki_text_dataset_to_device()
+    test_wiki_text_dataset_device_que()
     test_wiki_text_dataset_exceptions()

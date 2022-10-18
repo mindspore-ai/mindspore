@@ -1511,7 +1511,7 @@ def check_positive_int32(method):
 
 
 def check_device_send(method):
-    """check the input argument for to_device and device_que."""
+    """check the input argument of device_que."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
