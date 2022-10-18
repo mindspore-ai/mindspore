@@ -7024,3 +7024,52 @@ class Eig(Primitive):
         """Initialize Eig"""
         self.init_prim_io_names(inputs=['x'], outputs=['eigen_values', 'eigen_vectors'])
         validator.check_value_type('compute_v', compute_v, [bool], self.name)
+
+
+class Qr(Primitive):
+    """
+    Returns the QR decomposition of one or more matrices. If `full_matrices` is true, compute full-sized q and r,
+    If False (the default), compute the P columns of q where P is minimum of the 2 innermost dimensions of x.
+
+    Args:
+        full_matrices (bool): The default value is Fasle.
+
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions.
+          types: float16, float32, float64, complex64, complex128.
+          Define the shape of x as (..., m, n), p as the minimum values of m and n.
+
+    Outputs:
+        - **q** (Tensor) - The orthonormal matrices of x.
+        If `full_matrices` is true, the shape is (m, m), else the shape is (m, p).
+        The dtype of `q` is same as `x`.
+        - **r** (Tensor) - The upper triangular matrices of x.
+        If `full_matrices` is true, the shape is (m, n), else the shape is (p, n).
+        The dtype of `r` is same as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `full_matrices` is not a bool.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> qr_op = ops.Qr(full_matrices=False)
+        >>> x = Tensor([[12., -51, 4], [6, 167, -68], [-4, 24, -41]], mstype.float32)
+        >>> q, r = qr_op(x)
+        >>> print(q)
+        [[-0.8571428   0.39428577  0.3314286 ]
+        [-0.42857143 -0.90285724 -0.03428572]
+        [ 0.2857143  -0.17142859  0.94285715]]
+        >>> print(r)
+        [[ -14.        -21.000008   13.999999]
+        [   0.       -175.         70.000015]
+        [   0.          0.        -34.999996]]
+    """
+
+    @prim_attr_register
+    def __init__(self, full_matrices=False):
+        """Initialize Qr"""
+        validator.check_value_type('full_matrices', full_matrices, [bool], self.name)
