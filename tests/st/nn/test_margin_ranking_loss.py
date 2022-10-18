@@ -96,3 +96,33 @@ def test_margin_ranking_loss_mean(mode):
     output = loss(input1, input2, target)
     expect_output = np.array(1.2293333)
     assert np.allclose(output.asnumpy(), expect_output)
+
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+def test_tensor_dim(mode):
+    """
+    Feature: test tensor dim
+    Description: Verify the result of dim.
+    Expectation: expect correct forward result.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.tensor = Tensor([[1, 2, 3], [4, 5, 6]])
+
+        def construct(self, x):
+            return x.dim(), self.tensor.dim()
+
+    net = Net()
+    input11 = Tensor([[1, 2, 3], [4, 5, 6]])
+    input22 = Tensor([[[1, 2, 3], [4, 5, 6]]])
+    net(input11)
+    net(input22)

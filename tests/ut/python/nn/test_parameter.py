@@ -277,3 +277,15 @@ def test_parameter_init_from_tensor():
     assert np.allclose(param.asnumpy(), np.array([1]))
     tensor.asnumpy()[0] = 2
     assert np.allclose(param.asnumpy(), np.array([2]))
+
+
+def test_parameter_copy():
+    """
+    Feature: Parameter copy.
+    Description: Parameter copy.
+    Expectation: The two Parameter's data are the same.
+    """
+    tensor = Tensor(np.array([[1, 2, 3], [2, 3, 4]]))
+    param1 = Parameter(tensor, name="testParameter")
+    param2 = param1.copy()
+    np.all(param1.data.asnumpy() == param2.data.asnumpy())

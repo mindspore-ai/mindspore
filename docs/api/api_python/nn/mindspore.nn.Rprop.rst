@@ -5,7 +5,7 @@ mindspore.nn.Rprop
 
     弹性反向传播（Rprop）算法的实现。
 
-    请参阅论文 `A Direct Adaptive Method for Faster Backpropagation Learning <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.21.1417>`_ 。
+    请参阅论文 `A Direct Adaptive Method for Faster Backpropagation Learning <https://ieeexplore.ieee.org/document/298623>`_ 。
 
     更新公式如下：
 
