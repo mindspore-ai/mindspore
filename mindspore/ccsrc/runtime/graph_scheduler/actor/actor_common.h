@@ -73,6 +73,8 @@ const char kFusionActorNameSuffix[] = "_FusionActor";
 const char kMemoryAllocActorNameSuffix[] = "_MemoryAllocActor";
 const char kMemoryFreeActorNameSuffix[] = "_MemoryFreeActor";
 const char kCopyActorNameSignFromStore[] = "_device_tensor_store:";
+const char kMemSwapInActorNameSuffix[] = "_MemorySwapInActor";
+const char kMemSwapOutActorNameSuffix[] = "_MemorySwapOutActor";
 
 enum class KernelTransformType {
   kUnknown,
@@ -102,7 +104,8 @@ enum class KernelTransformType {
   kFusionActor,
   // Memory actor type.
   kMemoryAllocActor,
-  kMemoryFreeActor
+  kMemoryFreeActor,
+  kMemorySwapActor
 };
 
 #define SET_FLAG(value, flag) ((value) = ((value) | (flag)))

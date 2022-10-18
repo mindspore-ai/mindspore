@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace device {
+// LoadableDeviceAddress provide the ability to offload data on device to host and load it back later.
 class LoadableDeviceAddress : public DeviceAddress {
  public:
   LoadableDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
