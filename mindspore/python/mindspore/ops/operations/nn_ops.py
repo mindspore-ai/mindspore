@@ -4043,7 +4043,7 @@ class PReLU(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.prelu` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
