@@ -15,6 +15,7 @@
 """ test loss """
 import numpy as np
 import pytest
+import mindspore as ms
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
@@ -292,3 +293,16 @@ def test_nll_loss_4d():
     input_data = Tensor(np.random.randn(3, 5, 1, 1).astype(np.float32))
     target_data = Tensor(np.array([[[1]], [[0]], [[4]]]).astype(np.int32))
     loss(input_data, target_data)
+
+
+def test_margin_ranking_loss():
+    """
+    Feature: Test MarginRankingLoss.
+    Description: Test MarginRankingLoss functional.
+    Expectation: Success.
+    """
+    loss = nn.MarginRankingLoss()
+    input1 = Tensor(np.array([0.3864, -2.4093, -1.4076]), ms.float32)
+    input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
+    target = Tensor(np.array([-1, -1, 1]), ms.float32)
+    loss(input1, input2, target)
