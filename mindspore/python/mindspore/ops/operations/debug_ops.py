@@ -98,7 +98,7 @@ class ScalarSummary(Primitive):
         self.add_prim_attr("side_effect_io", True)
 
     def __call__(self, *args):
-        logger.warning("PyNative not support Operator {}".format(self.__class__.__name__))
+        raise RuntimenError(f"PyNative not support Operator '{self.__class__.__name__}'")
 
 
 class ImageSummary(PrimitiveWithInfer):
@@ -156,7 +156,7 @@ class ImageSummary(PrimitiveWithInfer):
         return SUMMARY_RETURN_VALUE
 
     def __call__(self, *args):
-        logger.warning("PyNative not support Operator {}".format(self.__class__.__name__))
+        raise RuntimenError(f"PyNative not support Operator '{self.__class__.__name__}'")
 
 
 class TensorSummary(Primitive):
@@ -203,7 +203,7 @@ class TensorSummary(Primitive):
         self.add_prim_attr("side_effect_io", True)
 
     def __call__(self, *args):
-        logger.warning("PyNative not support Operator {}".format(self.__class__.__name__))
+        raise RuntimenError(f"PyNative not support Operator '{self.__class__.__name__}'")
 
 
 class HistogramSummary(PrimitiveWithInfer):
@@ -261,7 +261,7 @@ class HistogramSummary(PrimitiveWithInfer):
         return SUMMARY_RETURN_VALUE
 
     def __call__(self, *args):
-        logger.warning("PyNative not support Operator {}".format(self.__class__.__name__))
+        raise RuntimenError(f"PyNative not support Operator '{self.__class__.__name__}'")
 
 
 class InsertGradientOf(PrimitiveWithInfer):
