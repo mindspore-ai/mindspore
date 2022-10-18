@@ -195,7 +195,7 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     std::vector<tensor::Tensor> outputs;
     const std::map<string, string> compile_options;
     MS_EXCEPTION_IF_NULL(device_contexts_[0]->graph_executor_);
-    if (!IsSkippedLaunch()) {
+    if (!IsSkippedLaunch(nullptr, graph_)) {
       auto ret = device_contexts_[0]->graph_executor_->RunGraph(graph_, inputs, &outputs, compile_options);
       if (!ret) {
         std::string error_info = "Launch graph failed, graph id: " + std::to_string(graph_->graph_id());
