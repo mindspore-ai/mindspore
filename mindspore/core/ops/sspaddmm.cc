@@ -25,23 +25,16 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 const int64_t MAX_LEN = 1000000;
 
-int64_t compute_output_indices_unique_size_int32(const int32_t *indices, size_t size) {
-  std::set<int32_t> mat1_indices_set;
-  size_t half_size = size / 2;
-  for (size_t i = 0; i < half_size; i++) {
-    (void)mat1_indices_set.insert(indices[i]);
-  }
-  return mat1_indices_set.size();
-}
-
-int64_t compute_output_indices_unique_size_int64(const int64_t *indices, size_t size) {
-  std::set<int64_t> mat1_indices_set;
+template <typename T>
+int64_t compute_output_indices_unique_size(const T *indices, size_t size) {
+  std::set<T> mat1_indices_set;
   size_t half_size = size / 2;
   for (size_t i = 0; i < half_size; i++) {
     (void)mat1_indices_set.insert(indices[i]);
@@ -343,6 +336,7 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
         !input_args[kInputIndex7]->BuildValue()->isa<AnyValue>() &&
         !input_args[kInputIndex7]->BuildValue()->isa<None>()) {
       CheckIndices(input_args);
+      CheckInputTensor(input_args);
       auto alpha_abstract = input_args[kInputIndex7]->cast<abstract::AbstractTensorPtr>();
       auto alpha_value_ptr = alpha_abstract->BuildValue();
       MS_EXCEPTION_IF_NULL(alpha_value_ptr);
@@ -394,10 +388,10 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(x2_indices_type_element);
     int64_t x2_indices_unique_size = 0;
     if (x2_indices_type_element->type_id() == kNumberTypeInt32) {
-      x2_indices_unique_size = compute_output_indices_unique_size_int32(
+      x2_indices_unique_size = compute_output_indices_unique_size<int32_t>(
         reinterpret_cast<int32_t *>(x2_indices_tensor->data_c()), x2_indices_tensor->DataSize());
     } else {
-      x2_indices_unique_size = compute_output_indices_unique_size_int64(
+      x2_indices_unique_size = compute_output_indices_unique_size<int64_t>(
         reinterpret_cast<int64_t *>(x2_indices_tensor->data_c()), x2_indices_tensor->DataSize());
     }
     auto x1_indices_shape =
@@ -405,23 +399,22 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
     auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
     int64_t x2_indices_shape_right = x2_indices_unique_size * x3_shape[1] + x1_indices_shape[1];
     std::vector<int64_t> output_indices_shape = {2, x2_indices_shape_right};
-    abstract::ShapePtr output_indices_shape_list =
-      std::make_shared<abstract::Shape>(output_indices_shape, output_indices_shape, output_indices_shape);
+    abstract::ShapePtr output_indices_shape_list = std::make_shared<abstract::Shape>(output_indices_shape);
     std::vector<int64_t> output_values_shape = {x2_indices_shape_right};
-    abstract::ShapePtr output_values_shape_list =
-      std::make_shared<abstract::Shape>(output_values_shape, output_values_shape, output_values_shape);
+    abstract::ShapePtr output_values_shape_list = std::make_shared<abstract::Shape>(output_values_shape);
     auto input_shape = input_args[kInputIndex2]->BuildShape();
     abstract::ShapePtr output_shape_shape_list = input_shape->cast<abstract::ShapePtr>();
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
       output_indices_shape_list, output_values_shape_list, output_shape_shape_list});
   } else {
-    std::vector<int64_t> output_shape = {abstract::Shape::kShapeDimAny};
-    std::vector<int64_t> infer_shape_min = {0};
-    std::vector<int64_t> infer_shape_max = {MAX_LEN};
-    abstract::ShapePtr output_shape_list =
-      std::make_shared<abstract::Shape>(output_shape, infer_shape_min, infer_shape_max);
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{output_shape_list, output_shape_list, output_shape_list});
+    std::vector<int64_t> output_indices_shape = {2, -1};
+    abstract::ShapePtr output_indices_shape_list = std::make_shared<abstract::Shape>(output_indices_shape);
+    std::vector<int64_t> output_values_shape = {-1};
+    abstract::ShapePtr output_values_shape_list = std::make_shared<abstract::Shape>(output_values_shape);
+    auto input_shape = input_args[kInputIndex2]->BuildShape();
+    abstract::ShapePtr output_shape_shape_list = input_shape->cast<abstract::ShapePtr>();
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      output_indices_shape_list, output_values_shape_list, output_shape_shape_list});
   }
 }
 
@@ -472,12 +465,12 @@ AbstractBasePtr SspaddmmInfer(const abstract::AnalysisEnginePtr &, const Primiti
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 9;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  CheckInputTensor(input_args);
   auto infer_type = SspaddmmInferType(primitive, input_args);
   auto infer_shape = SspaddmmInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
+MIND_API_OPERATOR_IMPL(Sspaddmm, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Sspaddmm, prim::kPrimSspaddmm, SspaddmmInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

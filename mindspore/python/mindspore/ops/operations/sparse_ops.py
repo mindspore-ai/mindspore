@@ -980,7 +980,7 @@ class Sspaddmm(Primitive):
         ValueError: If the shape of `alpha`, `beta` is not () or (1,).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1_indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int64)
@@ -1003,6 +1003,17 @@ class Sspaddmm(Primitive):
         >>> print(out_shapes)
         [3 3]
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x1_indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('x1_values', dtype=sig.sig_dtype.T),
+        sig.make_sig('x1_shape', dtype=sig.sig_dtype.T2),
+        sig.make_sig('x2_indices', dtype=sig.sig_dtype.T3),
+        sig.make_sig('x2_values', dtype=sig.sig_dtype.T),
+        sig.make_sig('x2_shape', dtype=sig.sig_dtype.T4),
+        sig.make_sig('x3_dense', dtype=sig.sig_dtype.T),
+        sig.make_sig('alpha', dtype=sig.sig_dtype.T),
+        sig.make_sig('beta', dtype=sig.sig_dtype.T)
+    )
 
     @prim_attr_register
     def __init__(self):
