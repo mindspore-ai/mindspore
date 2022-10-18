@@ -29,9 +29,21 @@ abstract::ShapePtr CholeskyInverseInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = x_shape_map[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
   if (x_shape.size() != kDimNum) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', The dimension of x must be equal to 2, but got: " << x_shape.size() << ".";
+  }
+  // support dynamic shape
+  if (IsDynamic(x_shape)) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < x_shape.size(); ++i) {
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(shape_out);
   }
   if (x_shape[x_shape.size() - 1] != x_shape[x_shape.size() - kDimNum]) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', input must be square matrix, "
@@ -51,6 +63,12 @@ TypePtr CholeskyInverseInferType(const PrimitivePtr &prim, const std::vector<Abs
   return out_type;
 }
 }  // namespace
+
+void CholeskyInverse::set_upper(const bool upper) { (void)this->AddAttr("upper", api::MakeValue(upper)); }
+
+bool CholeskyInverse::get_upper() const { return GetValue<bool>(GetAttr("upper")); }
+
+void CholeskyInverse::Init(const bool upper) { set_upper(upper); }
 
 MIND_API_OPERATOR_IMPL(CholeskyInverse, BaseOperator);
 AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
