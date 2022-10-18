@@ -252,9 +252,9 @@ void OptimizeNopNode(KernelGraph *graph) {
   graph->set_execution_order(new_execution_order);
 }
 
-void SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
+bool SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
   if (run_in_pynative) {
-    return;
+    return false;
   }
 
   MS_EXCEPTION_IF_NULL(graph);
@@ -264,7 +264,7 @@ void SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
   bool is_multi_graph_sink = ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
   // If the run mode is not subgraph sink, the flag should not be set.
   if (!task_sink || is_multi_graph_sink) {
-    return;
+    return false;
   }
 
   auto parallel_context = parallel::ParallelContext::GetInstance();
@@ -273,14 +273,15 @@ void SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
   bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
   // If there are auto parallel in graph, the flag should not be set.
   if (is_parallel_mode) {
-    return;
+    return false;
   }
 
   MS_LOG(INFO) << "Set zero copy flag for graph:" << graph->ToString();
   if (common::GetEnv("ENABLE_ZERO_COPY") != "1") {
-    return;
+    return false;
   }
   graph->set_flag(kFlagEnableZeroCopyInGraph, true);
+  return true;
 }
 }  // namespace
 
@@ -473,7 +474,10 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
 #endif
-  SetZeroCopyFlag(graph, run_in_pynative);
+  // If the zero copy flag has been set in graph, the relationship between partial and parameter should be disabled.
+  if (SetZeroCopyFlag(graph, run_in_pynative)) {
+    session_->ClearPartialParameterMap();
+  }
   MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // Execute optimization pass.
   device_context->kernel_executor_->OptimizeGraph(graph);
