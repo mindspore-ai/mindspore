@@ -6445,6 +6445,10 @@ class COOTensor(COOTensor_):
          [0, 0, 2, 0],
          [0, 0, 0, 0]]
 
+    Common arithmetic operations include: addition (+), subtraction (-), multiplication (*),
+    and division (/). For details about operations supported by `COOTensor`, see
+    [operators](https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators).
+
     Note:
         This is an experimental feature and is subjected to change.
         Currently, duplicate coordinates in the indices will not be coalesced.
@@ -6516,7 +6520,7 @@ class COOTensor(COOTensor_):
             return tensor_operator_registry.get("tensor_scatter_add")(other, self.indices, self.values)
         if isinstance(other, COOTensor):
             return tensor_operator_registry.get('coo_add')(self, other, Tensor(0, self.values.dtype))
-        raise TypeError("Add with %s is not supported." % type(other))
+        raise TypeError("COOTensor add with %s is not supported." % type(other))
 
     def __sub__(self, other):
         if not self.shape == other.shape:
@@ -6526,7 +6530,7 @@ class COOTensor(COOTensor_):
         if isinstance(other, COOTensor):
             return tensor_operator_registry.get('coo_add')(
                 self, -other, Tensor(0, self.values.dtype))
-        raise TypeError("Subtract with %s is not supported." % type(other))
+        raise TypeError("COOTensor subtract with %s is not supported." % type(other))
 
     def __mul__(self, other):
         if not self.shape == other.shape:
@@ -6534,7 +6538,7 @@ class COOTensor(COOTensor_):
         if isinstance(other, Tensor):
             other_values = tensor_operator_registry.get("gather_nd")(other, self.indices)
             return COOTensor(self.indices, self.values * other_values, self.shape)
-        raise TypeError("Multiply with %s is not supported." % type(other))
+        raise TypeError("COOTensor multiply with %s is not supported." % type(other))
 
     def __div__(self, other):
         if not self.shape == other.shape:
@@ -6543,7 +6547,7 @@ class COOTensor(COOTensor_):
             logger.warning("For sparse divide, zero values in the dense tensor are ignored.")
             other_values = tensor_operator_registry.get("gather_nd")(other, self.indices)
             return COOTensor(self.indices, self.values / other_values, self.shape)
-        raise TypeError("Divide with %s is not supported." % type(other))
+        raise TypeError("COOTensor divide with %s is not supported." % type(other))
 
     def __truediv__(self, other):
         return self.__div__(other)
@@ -6756,9 +6760,15 @@ class CSRTensor(CSRTensor_):
          [0., 0., 2., 0.],
          [0., 0., 0., 0.]]
 
+    Common arithmetic operations include: addition (+), subtraction (-), multiplication (*),
+    and division (/). For details about operations supported by `CSRTensor`, see
+    [operators](https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators).
+
     Note:
         This is an experimental feature and is subjected to change.
-        If the length of values or indices exceeds the range indicated by indptr, its behavior will be undefined.
+        If the values given by `indptr` or `indices` are invalid, the results may be undefined. Invalid values include
+    when the length of `values` or `indices` exceeds the range indicated by indptr, and when the columns indicated by
+    `indices` are repeated on the same row.
 
     Args:
         indptr (Tensor): 1-D Tensor of shape `[M]`, which equals to `shape[0] + 1`, which indicates the
@@ -6839,7 +6849,7 @@ class CSRTensor(CSRTensor_):
         if isinstance(other, CSRTensor):
             return tensor_operator_registry.get('csr_add')(
                 self, other, Tensor(1, self.values.dtype), Tensor(1, self.values.dtype))
-        raise TypeError("Add with %s is not supported." % type(other))
+        raise TypeError("CSRTensor add with %s is not supported." % type(other))
 
     def __sub__(self, other):
         if not self.shape == other.shape:
@@ -6847,7 +6857,7 @@ class CSRTensor(CSRTensor_):
         if isinstance(other, CSRTensor):
             return tensor_operator_registry.get('csr_add')(
                 self, other, Tensor(1, self.values.dtype), Tensor(-1, self.values.dtype))
-        raise TypeError("Subtract with %s is not supported." % type(other))
+        raise TypeError("CSRTensor subtract with %s is not supported." % type(other))
 
     @property
     def indptr(self):
