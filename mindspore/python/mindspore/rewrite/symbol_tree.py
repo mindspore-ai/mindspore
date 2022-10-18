@@ -20,11 +20,13 @@ import sys
 import ast
 import tempfile
 import importlib
+import types
 
 import astunparse
 
 from mindspore.nn import Cell
 from mindspore import log as logger
+from mindspore.rewrite.ast_creator_register import ast_creator_registry
 from .node import Node, TreeNode, PASS_THROUGH_METHOD
 from .api.node_type import NodeType
 from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, FindConstValueInInit
@@ -279,11 +281,76 @@ class SymbolTree(Observer, Observable):
         """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)
 
-    def create_call_function(self, ast_node, func_name, func, targets, args, kwargs):
+    def create_assign_node(self, targets, func_name, args, kwargs):
+        """
+        Create a ast.Assign type node.
+
+        Args:
+            targets (list): _description_
+            func_name (_type_): _description_
+            args (_type_): _description_
+            kwargs (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        # create targets
+        ast_targets = [ast_creator_registry.get("Name")(targets)]
+        # create call
+        ast_func = ast_creator_registry.get("Attribute")(func_name)
+        ast_args = ast_creator_registry.get("Args")(args)
+        ast_kwargs = ast_creator_registry.get("KwArgs")(kwargs) if kwargs else []
+        ast_value = ast_creator_registry.get("Call")(func=ast_func, args=ast_args, keywords=ast_kwargs)
+        # create assign
+        ast_node = ast_creator_registry.get("Assign")(targets=ast_targets, value=ast_value)
+        return ast_node
+
+    def create_call_function(self, func, targets, args, kwargs):
+        """
+        Create a Node object and generate the execution code to insert into the source code.
+        The source code calls the 'func' function with 'args' and' kwargs' as parameters.
+
+        Args:
+            func (FunctionType) - The function to be called.
+            targets (list [str]) - indicates the output name. As the output of the node in the source code.
+            args (ParamType) - parameter name of the node. Used as a parameter to a code statement in source
+                code. The default value is None, which means there is no parameter input in the cell.
+            kwargs ({str: ParamType}) - The key type must be str, and the value type must be ParamType. The
+                input parameter name used to describe the formal parameter with a keyword. Enter the name in the source
+                code as the 'kwargs' in the statement expression. The default value is None, which means there is no
+                'kwargs' input.
+
+        Returns:
+            An instance of `Node`.
+        """
+        if not isinstance(func, types.FunctionType):
+            raise TypeError("The 'func' parameter must be a Function, but got ", type(func))
+
+        _package = func.__globals__['__package__']
+        func_name = ".".join([_package, func.__name__]) if _package else func.__name__
+
+        ast_assign = self.create_assign_node(targets, func_name, args, kwargs)
+        scope_targets = [ScopedValue.create_naming_value(targets[0])]
+        scope_func = ScopedValue.create_naming_value(func_name, "")
+        call_args = list()
+        for arg in args:
+            if isinstance(arg, Node):
+                call_args.append(ScopedValue.create_variable_value(arg.get_targets()[0].value))
+            else:
+                call_args.append(ScopedValue.create_variable_value(arg))
+        call_kwargs = {}
+        for k, v in kwargs.items():
+            call_kwargs[k] = ScopedValue.create_variable_value(v)
+        node = self.inner_create_call_function(func_name, ast_assign, scope_func, func, scope_targets, call_args,
+                                               call_kwargs)
+        return node
+
+    def inner_create_call_function(self, node_name, ast_node, func_name, func, targets, args, kwargs):
         '''
         Instantiate an instance of node whose type is `CallFunction`.
 
         Args:
+            node_name (str): Name of node.
             func_name (str): Name of function.
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
             targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
@@ -293,10 +360,9 @@ class SymbolTree(Observer, Observable):
                 class.
         '''
         logger.info(f"func name: {func_name}; func: {func}; targets: {targets}; args: {args}; kwargs: {kwargs}")
-        node = Node(NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, func_name, func)
+        node = Node(NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, func)
         node.set_belong_symbol_tree(self)
         return node
-
 
     def get_ori_cls_name(self) -> str:
         """
