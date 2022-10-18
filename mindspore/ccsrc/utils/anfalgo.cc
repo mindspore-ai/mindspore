@@ -27,6 +27,7 @@
 #include "utils/anf_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "utils/ms_context.h"
+#include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 namespace common {
@@ -186,11 +187,11 @@ bool IsNodeDynamicShape(const AnfNodePtr &node) {
   auto in_dynamic = AnfAlgo::IsNodeInputDynamicShape(cnode);
   auto out_dynamic = AnfUtils::IsNodeOutputDynamicShape(cnode);
   if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
+    AnfAlgo::SetNodeAttrSafely(kAttrInputIsDynamicShape, MakeValue(true), cnode);
     MS_LOG(DEBUG) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
   }
   if (out_dynamic && !AnfAlgo::HasNodeAttr(kAttrOutputIsDynamicShape, cnode)) {
-    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
+    AnfAlgo::SetNodeAttrSafely(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
     MS_LOG(DEBUG) << "Set Output Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
   }
   return in_dynamic || out_dynamic;
@@ -424,6 +425,20 @@ std::string AnfAlgo::GetNodeDebugString(const AnfNodePtr &node) {
 void AnfAlgo::SetNodeAttr(const std::string &key, const ValuePtr &value, const AnfNodePtr &node) {
   // this function was moved to AnfUtils.
   return AnfUtils::SetNodeAttr(key, value, node);
+}
+
+void AnfAlgo::SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node) {
+  // Make CNode safe to set attr firstly.
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return;
+  }
+  auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
+  auto new_prim = prim->isa<PrimitivePy>() ? prim : prim->Clone();
+  cnode->set_input(0, NewValueNode(new_prim));
+
+  // Set attr secondly.
+  common::AnfAlgo::SetNodeAttr(key, value, node);
 }
 
 void AnfAlgo::CopyNodeAttr(const std::string &key, const AnfNodePtr &from, const AnfNodePtr &to) {

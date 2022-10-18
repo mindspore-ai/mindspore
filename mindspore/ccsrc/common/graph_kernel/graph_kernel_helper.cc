@@ -403,18 +403,7 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
 }
 
 void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node) {
-  // Make CNode safe to set attr firstly.
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return;
-  }
-  AnfNodePtrList new_inputs = {NewValueNode(common::AnfAlgo::GetCNodePrimitive(cnode)->Clone())};
-  auto inputs = cnode->inputs();
-  (void)new_inputs.insert(new_inputs.cend(), inputs.cbegin() + 1, inputs.cend());
-  cnode->set_inputs(new_inputs);
-
-  // Set attr secondly.
-  common::AnfAlgo::SetNodeAttr(key, value, node);
+  common::AnfAlgo::SetNodeAttrSafely(key, value, node);
 }
 
 bool IsBufferStitchNode(const AnfNodePtr &node) {

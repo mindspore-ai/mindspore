@@ -96,6 +96,8 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsTupleOutput(const AnfNodePtr &anf);
   // set attr of anf node
   static void SetNodeAttr(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
+  // set attr of anf node safely(use a copy of primitive)
+  static void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
   // set attr of key from 'from' node to 'to' node
   static void CopyNodeAttr(const std::string &key, const AnfNodePtr &from, const AnfNodePtr &to);
   // set a new key for attr from 'from' node to 'to' node
