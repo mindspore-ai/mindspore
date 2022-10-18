@@ -80,6 +80,12 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   std::vector<int64_t> begins;
   std::vector<int64_t> sizes;
   if (input_num == kSliceGradInputTensorNum) {
+    auto begin_value = GetValueNode(slice_grad->input(kIndex3));
+    auto size_value = GetValueNode(slice_grad->input(kIndex4));
+    if (IsDynamic(x_shape) || begin_value == nullptr || size_value == nullptr || !begin_value->isa<ValueSequence>() ||
+        !size_value->isa<ValueSequence>()) {
+      return nullptr;
+    }
     begins = GetTupleValue(slice_grad->input(kIndex3));
     sizes = GetTupleValue(slice_grad->input(kIndex4));
   } else {

@@ -178,6 +178,7 @@ constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kRange = "Range";
 constexpr auto kListDiff = "ListDiff";
+constexpr auto kSliceGrad = "SliceGrad";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -258,6 +259,7 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kReservoirReplayBufferDestroy,
                                               kGatherDGradV2,
                                               kConcatOffset,
+                                              kSliceGrad,
                                               kRandomShuffle,
                                               kListDiff,
                                               kRange};
