@@ -388,7 +388,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
       // especially the collective communication operators.
       MS_LOG(WARNING) << "Collective communication need reinitialize, skip launch kernel: "
                       << kernel_->fullname_with_scope();
-    } else {
+    } else if (!IsSkippedLaunch()) {
       auto ret = LaunchKernel(context);
       if (!ret) {
         std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
