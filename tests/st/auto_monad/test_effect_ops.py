@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ from mindspore.train.summary.summary_record import SummaryRecord
 from tests.summary_utils import SummaryReader
 from tests.security_utils import security_off_wrap
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class AssignAddNet(nn.Cell):
@@ -41,10 +41,16 @@ class AssignAddNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_add():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign_add.
+    Expectation: No exception.
+    """
     x = Tensor(1, dtype=mstype.int32)
     y = Tensor(2, dtype=mstype.int32)
     expect = Tensor(3, dtype=mstype.int32)
@@ -65,10 +71,16 @@ class AssignSubNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_sub():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign_sub.
+    Expectation: No exception.
+    """
     x = Tensor(3, dtype=mstype.int32)
     y = Tensor(2, dtype=mstype.int32)
     expect = Tensor(1, dtype=mstype.int32)
@@ -89,10 +101,16 @@ class ScatterAddNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_add():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_add.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mstype.float32)
     indices = Tensor(np.array([[0, 1], [1, 1]]), mstype.int32)
     updates = Tensor(np.ones([2, 2, 3]), mstype.float32)
@@ -114,10 +132,16 @@ class ScatterSubNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_sub():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_sub.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mstype.float32)
     indices = Tensor(np.array([[0, 1]]), mstype.int32)
     updates = Tensor(np.array([[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]), mstype.float32)
@@ -139,10 +163,16 @@ class ScatterMulNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_mul():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_mul.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32)
     indices = Tensor(np.array([[0, 1]]), mstype.int32)
     updates = Tensor(np.array([[[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]]), mstype.float32)
@@ -164,10 +194,16 @@ class ScatterDivNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_div():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_div.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mstype.float32)
     indices = Tensor(np.array([[0, 1]]), mstype.int32)
     updates = Tensor(np.array([[[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]]), mstype.float32)
@@ -189,10 +225,16 @@ class ScatterMaxNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_max():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_max.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mstype.float32)
     indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
     updates = Tensor(np.ones([2, 2, 3]) * 88, mstype.float32)
@@ -214,10 +256,16 @@ class ScatterMinNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_min():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_min.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mstype.float32)
     indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
     updates = Tensor(np.ones([2, 2, 3]), mstype.float32)
@@ -243,6 +291,12 @@ class ScatterUpdateNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_update():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_update.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
     indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
     updates = Tensor(np.array([[[1.0, 2.2, 1.0], [2.0, 1.2, 1.0]], [[2.0, 2.2, 1.0], [3.0, 1.2, 1.0]]]), mstype.float32)
@@ -264,10 +318,16 @@ class ScatterNdAddNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_nd_add():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_nd_add.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mstype.float32)
     indices = Tensor(np.array([[2], [4], [1], [7]]), mstype.int32)
     updates = Tensor(np.array([6, 7, 8, 9]), mstype.float32)
@@ -289,10 +349,16 @@ class ScatterNdSubNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_nd_sub():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_nd_sub.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mstype.float32)
     indices = Tensor(np.array([[2], [4], [1], [7]]), mstype.int32)
     updates = Tensor(np.array([6, 7, 8, 9]), mstype.float32)
@@ -314,10 +380,16 @@ class ScatterNdUpdateNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_nd_update():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_nd_update.
+    Expectation: No exception.
+    """
     input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
     indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
     updates = Tensor(np.array([1.0, 2.2]), mstype.float32)
@@ -343,6 +415,12 @@ class ScatterNonAliasingAddNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_non_aliasing_add():
+    """
+    Feature: Auto monad feature.
+    Description: Verify scatter_non_aliasing_add.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     input_x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mstype.float32)
     indices = Tensor(np.array([[2], [4], [1], [7]]), mstype.int32)
     updates = Tensor(np.array([6, 7, 8, 9]), mstype.float32)
@@ -382,11 +460,17 @@ def train_summary_record(test_writer, steps):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_summary():
+    """
+    Feature: Auto monad feature.
+    Description: Verify summary operator.
+    Expectation: No exception.
+    """
     with tempfile.TemporaryDirectory() as tmp_dir:
         steps = 2
         with SummaryRecord(tmp_dir) as test_writer:
@@ -401,10 +485,16 @@ def test_summary():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_igamma():
+    """
+    Feature: Auto monad feature.
+    Description: Verify igamma operator.
+    Expectation: No exception.
+    """
     class IGammaTest(nn.Cell):
         def __init__(self):
             super().__init__()

@@ -31,7 +31,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops.composite import GradOperation
 from tests.security_utils import security_off_wrap
 
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class _Grad(Cell):
@@ -56,16 +56,6 @@ class _Grad(Cell):
         if self.wrt_params:
             return self.grad(self.network, self.params)(*real_inputs, sense_param_inputs)
         return self.grad(self.network)(*real_inputs, sense_param_inputs)
-
-
-class GradOfAllInputs(_Grad):
-    '''
-    get grads of all inputs
-    '''
-
-    def __init__(self, network, sens_param=True, real_inputs_count=None):
-        super().__init__(grad=GradOperation(get_all=True, sens_param=sens_param),
-                         network=network, real_inputs_count=real_inputs_count)
 
 
 class GradOfAllInputsAndParams(_Grad):
@@ -132,7 +122,16 @@ class SideEffectCastAll(Cell):
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support")
 def test_side_effect_castall():
+    """
+    Feature: Auto monad feature.
+    Description: Verify cast all fusion.
+    Expectation: No exception.
+    """
     clear_files()
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     net = SideEffectCastAll()
@@ -170,6 +169,11 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_side_effect_control_flow_assign_depend_while_net():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign.
+    Expectation: No exception.
+    """
     net = SideEffectControlFlowAssignDependWhileNet()
     context.set_context(mode=context.GRAPH_MODE)
     out1 = net(Tensor([9.0], ms.float32), Tensor(
@@ -179,128 +183,6 @@ def test_side_effect_control_flow_assign_depend_while_net():
     out2 = net(Tensor([9.0], ms.float32), Tensor(
         [99.0], ms.float32), Tensor([1.0], ms.float32))
     allclose_nparray(out1.asnumpy(), out2.asnumpy(), 0.001, 0.001)
-
-
-class Addn(Cell):
-    def __init__(self):
-        super().__init__()
-        self.parameter3 = Parameter(Tensor([1.0], ms.float32),
-                                    name="parameter3")
-        self.parameter4 = Parameter(Tensor([3.0], ms.float32),
-                                    name="parameter4")
-        self.addn = P.AddN()
-
-    def construct(self, inputs):
-        out = self.addn((inputs, self.parameter3, self.parameter4))
-        return out
-
-
-class Relu(Cell):
-    def __init__(self):
-        super().__init__()
-        self.relu = P.ReLU()
-
-    def construct(self, inputs):
-        out = self.relu(inputs)
-        return out
-
-
-class SideEffectTwoAssignTwoAddnDependencyNet(Cell):
-    def __init__(self):
-        super().__init__()
-        self.parameter1 = Parameter(Tensor([1.0], ms.float32),
-                                    name="parameter1")
-        self.parameter2 = Parameter(Tensor([3.0], ms.float32),
-                                    name="parameter2")
-        self.assign = P.Assign()
-        self.addN = P.AddN()
-
-    def construct(self, inputs):
-        self.assign(self.parameter1, inputs)
-        out = self.addN((inputs, self.parameter1, self.parameter2))
-        self.assign(self.parameter2, inputs)
-        out = self.addN((out, self.parameter1, self.parameter2))
-        return out
-
-    def grad_mindspore_impl(self, params, grad_ys):
-        grad_net = GradOfAllInputsAndParams(self)
-        grad_net.set_train()
-        grad_out = grad_net(params, grad_ys)
-        return grad_out
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_ctrl_while_by_while_and_if_in_first_while():
-    class Net(Cell):
-        def __init__(self):
-            super().__init__()
-            self.relu = P.ReLU()
-            self.sigmoid = P.Sigmoid()
-            self.tanh = P.Tanh()
-            self.add = P.Add()
-            a = np.full((1,), 5, dtype=np.float32)
-            self.a = Parameter(Tensor(a), name="a")
-            b = np.full((1,), 4, dtype=np.float32)
-            self.b = Parameter(Tensor(b), name="b")
-            c = np.full((1,), 7, dtype=np.float32)
-            self.c = Parameter(Tensor(c), name="c")
-
-        def construct(self, x):
-            out = x
-            while self.a < 7:
-                if self.a < self.c:
-                    out = self.relu(x)
-                self.a += 1
-            while self.c > 5:
-                out = self.add(out, out)
-                self.c -= 1
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE)
-    input_np_a = np.random.randn(2, 3, 4, 5).astype(np.float32)
-    input_me_a = Tensor(input_np_a)
-    net = Net()
-    net(input_me_a)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_ctrl_while_by_while_and_while_in_first_while():
-    class Net(Cell):
-        def __init__(self):
-            super().__init__()
-            self.relu = P.ReLU()
-            self.sigmoid = P.Sigmoid()
-            self.tanh = P.Tanh()
-            self.add = P.Add()
-            a = np.full((1,), 5, dtype=np.float32)
-            self.a = Parameter(Tensor(a), name="a")
-            b = np.full((1,), 4, dtype=np.float32)
-            self.b = Parameter(Tensor(b), name="b")
-            c = np.full((1,), 7, dtype=np.float32)
-            self.c = Parameter(Tensor(c), name="c")
-
-        def construct(self, x):
-            out = x
-            while self.a < self.c:
-                out = self.relu(x)
-                while self.b > 1:
-                    self.b -= 1
-                self.a += 1
-
-            while self.c > 5:
-                out = self.add(out, out)
-                self.c -= 1
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE)
-    input_np_a = np.random.randn(2, 3, 4, 5).astype(np.float32)
-    input_me_a = Tensor(input_np_a)
-    net = Net()
-    net(input_me_a)
 
 
 class InplaceNet(Cell):
@@ -338,7 +220,16 @@ class InplaceNet(Cell):
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support")
 def test_ir_fusion_inplace_bn_conv_conv():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ir fusion.
+    Expectation: No exception.
+    """
     clear_files()
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     input_np = np.random.uniform(0.0, 255.0,
@@ -381,15 +272,6 @@ def read_file():
         content = f.read()
     clean_all_ir_files('./')
     return content
-
-
-class Add(Cell):
-    def __init__(self):
-        super().__init__()
-        self.add = P.Add()
-
-    def construct(self, x, y):
-        return self.add(x, y)
 
 
 class MixControlNet(Cell):
@@ -464,7 +346,17 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_auto_mixed_precision_controlflow_auto():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True)
     net = MixControlNet(3, 5)
     input_x = Tensor(
@@ -479,7 +371,15 @@ def test_auto_mixed_precision_controlflow_auto():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_updatestate_between_assigns():
+    """
+    Feature: Auto monad feature.
+    Description: Verify updatestate eliminate.
+    Expectation: No exception.
+    """
     class UpdateState_Assigns(Cell):
         def __init__(self):
             super().__init__()
@@ -505,7 +405,16 @@ def test_updatestate_between_assigns():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support")
 def test_updatestate_between_maketuple_assign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify updatestate eliminate.
+    Expectation: No exception.
+    """
     class UpdateState_MakeTuple_Assign(Cell):
         def __init__(self):
             super().__init__()
@@ -533,7 +442,16 @@ def test_updatestate_between_maketuple_assign():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support")
 def test_updatestate_between_assign_maketuple():
+    """
+    Feature: Auto monad feature.
+    Description: Verify updatestate eliminate.
+    Expectation: No exception.
+    """
     class UpdateState_Assign_MakeTuple(Cell):
         def __init__(self):
             super().__init__()

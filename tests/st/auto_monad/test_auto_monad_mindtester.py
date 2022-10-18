@@ -124,10 +124,16 @@ class ControlGraphSupportNotEqual(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_while_graph_support_not_equal_true():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     x = np.array(0).astype(np.float32)
     y = np.array(3).astype(np.float32)
     input_shape = (512, 512, 7, 7)
@@ -144,10 +150,16 @@ def test_ctrl_if_while_graph_support_not_equal_true():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_while_graph_support_not_equal_false():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     x = np.array(0).astype(np.float32)
     y = np.array(0).astype(np.float32)
     z = np.array(3).astype(np.float32)
@@ -187,10 +199,16 @@ class ControlBprop(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_while_bprop_true():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     x = np.array(0).astype(np.float32)
     y = np.array(3).astype(np.float32)
     input_shape = (512, 512, 7, 7)
@@ -238,10 +256,16 @@ class InlineBpropTwoInput1(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_while_bprop_inlinebprop_twoinput():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     net = InlineBpropTwoInput1()
     input1 = Tensor(np.array(2).astype(np.float32))
     input2 = Tensor(np.array(1).astype(np.float32))
@@ -272,10 +296,16 @@ class ControlOneIfOneParaOneAddn(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_para_addn_true():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     x = Tensor(1, ms.float32)
     y = Tensor(0, ms.float32)
     input_shape = (1024, 512, 7, 7)
@@ -317,14 +347,26 @@ class SideEffectMemoryCellAddnNet(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_grad_memory_addn():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     net = SideEffectMemoryCellAddnNet()
     grad_ys = Tensor([18.0], ms.float32)
     inputs = Tensor([9.0], ms.float32)
-    net.grad_mindspore_impl(inputs, grad_ys)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net.grad_mindspore_impl(inputs, grad_ys)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net.grad_mindspore_impl(inputs, grad_ys)
+    allclose_nparray(graph_out[0][0].asnumpy(), pynative_out[0][0].asnumpy(), 0.0001, 0.0001)
+    allclose_nparray(graph_out[1][0].asnumpy(), pynative_out[1][0].asnumpy(), 0.0001, 0.0001)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class SideEffectIOCellAddnNet(Cell):
@@ -350,14 +392,26 @@ class SideEffectIOCellAddnNet(Cell):
 
 @security_off_wrap
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_grad_io_addn():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     net = SideEffectIOCellAddnNet()
     grad_ys = Tensor([18.0], ms.float32)
     inputs = Tensor([9.0], ms.float32)
-    net.grad_mindspore_impl(inputs, grad_ys)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net.grad_mindspore_impl(inputs, grad_ys)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net.grad_mindspore_impl(inputs, grad_ys)
+    allclose_nparray(graph_out[0][0].asnumpy(), pynative_out[0][0].asnumpy(), 0.0001, 0.0001)
+    allclose_nparray(graph_out[1][0].asnumpy(), pynative_out[1][0].asnumpy(), 0.0001, 0.0001)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class SideEffectReturnParameterNet(Cell):
@@ -383,14 +437,26 @@ class SideEffectReturnParameterNet(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_grad_read_dependency_return_parameter():
+    """
+    Feature: Auto monad feature.
+    Description: Verify parameter.
+    Expectation: No exception.
+    """
     net = SideEffectReturnParameterNet()
     grad_ys = Tensor([18.0], ms.float32)
     inputs = Tensor([9.0], ms.float32)
-    net.grad_mindspore_impl(inputs, grad_ys)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net.grad_mindspore_impl(inputs, grad_ys)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net.grad_mindspore_impl(inputs, grad_ys)
+    allclose_nparray(graph_out[0][0].asnumpy(), pynative_out[0][0].asnumpy(), 0.0001, 0.0001)
+    allclose_nparray(graph_out[1][0].asnumpy(), pynative_out[1][0].asnumpy(), 0.0001, 0.0001)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class SideEffectAssignAddnReluReturnParNet(Cell):
@@ -417,10 +483,16 @@ class SideEffectAssignAddnReluReturnParNet(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_side_effect_grad_read_dependency_assign_addn_relu_return_parameter():
+    """
+    Feature: Auto monad feature.
+    Description: Verify parameter.
+    Expectation: No exception.
+    """
     net = SideEffectAssignAddnReluReturnParNet()
     grad_ys = Tensor([18.0], ms.float32)
     inputs = Tensor([9.0], ms.float32)
@@ -466,10 +538,16 @@ class SideEffectPrintInHighOrdeAddnNet(Cell):
 
 @security_off_wrap
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_side_effect_high_order_print_in_high_order_net():
+    """
+    Feature: Auto monad feature.
+    Description: Verify high order net.
+    Expectation: No exception.
+    """
     print_file = os.getcwd() + "/test_side_effect_high_order_print_in_high_order_net.data"
     context.set_context(print_file_path=print_file)
     net = SideEffectPrintInHighOrdeAddnNet()
@@ -513,15 +591,29 @@ class SideEffectControlFlowAssignDependTwoIfNet(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_side_effect_grad_control_flow_assign_depend_of_two_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     net = SideEffectControlFlowAssignDependTwoIfNet()
     grad_ys = Tensor([18.0], ms.float32)
     inputs1 = Tensor([9.0], ms.float32)
     inputs2 = Tensor([6.0], ms.float32)
     net.grad_mindspore_impl(inputs1, inputs2, grad_ys)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net.grad_mindspore_impl(inputs1, inputs2, grad_ys)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net.grad_mindspore_impl(inputs1, inputs2, grad_ys)
+    allclose_nparray(graph_out[0][0].asnumpy(), pynative_out[0][0].asnumpy(), 0.0001, 0.0001)
+    allclose_nparray(graph_out[0][1].asnumpy(), pynative_out[0][1].asnumpy(), 0.0001, 0.0001)
+    allclose_nparray(graph_out[1][0].asnumpy(), pynative_out[1][0].asnumpy(), 0.0001, 0.0001)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class SideEffectTwoAddnSwitchNet(Cell):
@@ -545,15 +637,20 @@ class SideEffectTwoAddnSwitchNet(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_side_effect_grad_two_addn_switch():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     net = SideEffectTwoAddnSwitchNet()
     grad_ys = Tensor([18.0], ms.float32)
     inputs = Tensor([9.0], ms.float32)
     out1 = net.grad_mindspore_impl(inputs, grad_ys)
-    net = SideEffectTwoAddnSwitchNet()
     try:
         expect = 54.0
         allclose_nparray(out1[0][0].asnumpy(), expect, 0.001, 0.001)
@@ -586,16 +683,21 @@ class SideEffectGradIfNet(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_side_effect_grad_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     context.set_context(mode=context.GRAPH_MODE)
     net = SideEffectGradIfNet()
     grad_ys = Tensor([18.0], ms.float32)
     inputs = Tensor([9.0], ms.float32)
     out1 = net.grad_mindspore_impl(inputs, grad_ys)
-    net = SideEffectGradIfNet()
     try:
         expect = 18.0
         allclose_nparray(out1.asnumpy(), expect, 0.001, 0.001)
@@ -630,10 +732,16 @@ class HighGrad(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_highgrad_one_input_sec_grad():
+    """
+    Feature: Auto monad feature.
+    Description: Verify high grad.
+    Expectation: No exception.
+    """
     net = OneInputBprop()
     x = Tensor(np.array([2, 2]).astype(np.float32))
     grad_net = HighGrad(net, [GradOfFirstInput, GradOfFirstInput])
@@ -642,10 +750,16 @@ def test_highgrad_one_input_sec_grad():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_highgrad_one_input_third_grad():
+    """
+    Feature: Auto monad feature.
+    Description: Verify high grad.
+    Expectation: No exception.
+    """
     net = OneInputBprop()
     x = Tensor(np.array([2, 2]).astype(np.float32))
     grad_net = HighGrad(
@@ -681,10 +795,16 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_side_effect_grad_control_flow_assign_depend_while_net():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     context.set_context(mode=context.GRAPH_MODE)
     net = SideEffectControlFlowAssignDependWhileNet()
     grad_ys = Tensor([18.0], ms.float32)
@@ -724,8 +844,9 @@ class AssignInZipLoop(Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_in_zip_loop():
     """

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,6 +47,11 @@ class Sampling(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sample_graph():
+    """
+    Feature: Auto monad feature.
+    Description: Verify normal distribution.
+    Expectation: No exception.
+    """
     shape = (2, 3)
     seed = 0
     samp = Sampling(shape, seed=seed)
@@ -73,6 +78,11 @@ class CompositeNormalNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_composite_normal():
+    """
+    Feature: Auto monad feature.
+    Description: Verify normal distribution.
+    Expectation: No exception.
+    """
     shape = (3, 2, 4)
     mean = Tensor(0.0, mstype.float32)
     stddev = Tensor(1.0, mstype.float32)
@@ -100,6 +110,11 @@ class CompositeLaplaceNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_composite_laplace():
+    """
+    Feature: Auto monad feature.
+    Description: Verify laplace distribution.
+    Expectation: No exception.
+    """
     shape = (3, 2, 4)
     mean = Tensor(1.0, mstype.float32)
     lambda_param = Tensor(1.0, mstype.float32)
@@ -127,6 +142,11 @@ class CompositeGammaNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_composite_gamma():
+    """
+    Feature: Auto monad feature.
+    Description: Verify gamma distribution.
+    Expectation: No exception.
+    """
     shape = (3, 2, 4)
     alpha = Tensor(1.0, mstype.float32)
     beta = Tensor(1.0, mstype.float32)
@@ -154,6 +174,11 @@ class CompositePoissonNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_composite_poisson():
+    """
+    Feature: Auto monad feature.
+    Description: Verify poisson distribution.
+    Expectation: No exception.
+    """
     shape = (3, 2, 4)
     mean = Tensor(2.0, mstype.float32)
     net = CompositePoissonNet(shape)
@@ -180,6 +205,11 @@ class CompositeUniformNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_composite_uniform():
+    """
+    Feature: Auto monad feature.
+    Description: Verify uniform distribution.
+    Expectation: No exception.
+    """
     shape = (3, 2, 4)
     a = Tensor(0.0, mstype.float32)
     b = Tensor(1.0, mstype.float32)
@@ -209,6 +239,11 @@ class StandardNormalNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_standard_normal():
+    """
+    Feature: Auto monad feature.
+    Description: Verify standard normal distribution.
+    Expectation: No exception.
+    """
     shape = (4, 16)
     net = StandardNormalNet(shape)
     s1, s2, s3 = net()
@@ -236,6 +271,11 @@ class StandardLaplaceNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_standard_laplace():
+    """
+    Feature: Auto monad feature.
+    Description: Verify standard laplace distribution.
+    Expectation: No exception.
+    """
     shape = (4, 16)
     net = StandardLaplaceNet(shape)
     s1, s2, s3 = net()
@@ -265,6 +305,11 @@ class GammaNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_gamma():
+    """
+    Feature: Auto monad feature.
+    Description: Verify gamma distribution.
+    Expectation: No exception.
+    """
     shape = (4, 16)
     alpha = Tensor(1.0, mstype.float32)
     beta = Tensor(1.0, mstype.float32)
@@ -294,6 +339,11 @@ class PoissonNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_poisson():
+    """
+    Feature: Auto monad feature.
+    Description: Verify poisson distribution.
+    Expectation: No exception.
+    """
     shape = (4, 16)
     mean = Tensor(5.0, mstype.float32)
     net = PoissonNet(shape=shape)
@@ -322,6 +372,11 @@ class UniformIntNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_uniform_int():
+    """
+    Feature: Auto monad feature.
+    Description: Verify uniform int distribution.
+    Expectation: No exception.
+    """
     shape = (4, 16)
     minval = Tensor(1, mstype.int32)
     maxval = Tensor(5, mstype.int32)
@@ -351,6 +406,11 @@ class UniformRealNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_uniform_real():
+    """
+    Feature: Auto monad feature.
+    Description: Verify uniform real distribution.
+    Expectation: No exception.
+    """
     shape = (4, 16)
     net = UniformRealNet(shape)
     s1, s2, s3 = net()
@@ -376,6 +436,11 @@ class DropoutGenMaskNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dropout_gen_mask():
+    """
+    Feature: Auto monad feature.
+    Description: Verify DropoutGenMask.
+    Expectation: No exception.
+    """
     shape = (2, 4, 5)
     keep_prob = Tensor(0.5, mstype.float32)
     net = DropoutGenMaskNet(shape)
@@ -401,6 +466,11 @@ class RandomChoiceWithMaskNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_random_choice_with_mask():
+    """
+    Feature: Auto monad feature.
+    Description: Verify RandomChoiceWithMask.
+    Expectation: No exception.
+    """
     mode = context.get_context('mode')
     assert (mode == context.GRAPH_MODE), 'GRAPH_MODE required but got ' + str(mode)
     net = RandomChoiceWithMaskNet()
@@ -428,6 +498,11 @@ class RandomCategoricalNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_random_categorical():
+    """
+    Feature: Auto monad feature.
+    Description: Verify RandomCategorical.
+    Expectation: No exception.
+    """
     num_sample = 8
     net = RandomCategoricalNet(num_sample)
     x = Tensor(np.random.random((10, 5)).astype(np.float32))

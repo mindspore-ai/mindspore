@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -64,6 +64,11 @@ class NpuFloatNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_float_not_overflow():
+    """
+    Feature: Auto monad feature.
+    Description: Verify overflow operator.
+    Expectation: No exception.
+    """
     input_data = Tensor(np.full((8, 5, 3, 1), 655, dtype=np.float16), dtype=mstype.float16)
     net = NpuFloatNet()
     out = net(input_data)
@@ -78,6 +83,11 @@ def test_float_not_overflow():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_float_overflow():
+    """
+    Feature: Auto monad feature.
+    Description: Verify overflow operator.
+    Expectation: No exception.
+    """
     input_data = Tensor(np.full((8, 5, 3, 1), 65504, dtype=np.float16), dtype=mstype.float16)
     net = NpuFloatNet()
     out = net(input_data)

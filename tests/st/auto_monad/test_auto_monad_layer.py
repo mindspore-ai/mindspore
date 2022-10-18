@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import pytest
 from tqdm import tqdm
 import numpy as np
 import mindspore as ms
@@ -19,7 +20,7 @@ import mindspore.nn as nn
 from mindspore.dataset import NumpySlicesDataset
 from mindspore import context, Tensor
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
 
 class AutoEncoderTrainNetwork(nn.Cell):
     def __init__(self):
@@ -59,7 +60,17 @@ class AutoEncoderTrainNetwork(nn.Cell):
         return transformed_dataset
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_auto_monad_layer():
+    """
+    Feature: Auto monad feature.
+    Description: Verify auto monad feature.
+    Expectation: No exception.
+    """
     ae_with_loss = AutoEncoderTrainNetwork()
     transformed_dataset = ae_with_loss.create_synthetic_dataset()
     dataloader = NumpySlicesDataset(data=(transformed_dataset,), shuffle=True)
