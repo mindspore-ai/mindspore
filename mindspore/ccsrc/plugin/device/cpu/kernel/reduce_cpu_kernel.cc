@@ -242,6 +242,9 @@ void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
     } else if (kernel_name_ == kReduceMean) {
       reduce_type_ = ReduceFuncType::kReduceMeanType;
       reduce_func_ = ReduceMean<T>;
+    } else if (kernel_name_ == kReduceSum) {
+      reduce_type_ = ReduceFuncType::kReduceSumType;
+      reduce_func_ = ReduceSum<T>;
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for complex.";
     }
