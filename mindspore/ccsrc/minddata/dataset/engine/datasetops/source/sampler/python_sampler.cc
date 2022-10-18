@@ -54,9 +54,7 @@ Status PythonSamplerRT::GetNextSample(TensorRow *out) {
 
         if (HasChildSampler()) {
           for (auto it = sample_ids->begin<int64_t>(); it != sample_ids->end<int64_t>(); ++it) {
-            int64_t associated_child_id = 0;
-            RETURN_IF_NOT_OK(GetAssociatedChildId(&associated_child_id, associated_child_id));
-            *it = associated_child_id;
+            RETURN_IF_NOT_OK(GetAssociatedChildId(it.operator->(), *it));
           }
         }
       } catch (const py::error_already_set &e) {

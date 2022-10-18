@@ -387,26 +387,19 @@ def test_sampler_chain_errors():
     """
     logger.info("test_sampler_chain_errors")
 
-    error_msg_1 = "'NoneType' object has no attribute 'add_child'"
-    # Test add child sampler within child sampler
-    sampler = ds.SequentialSampler(start_index=1, num_samples=2)
-    sampler = sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=2))
-    with pytest.raises(AttributeError, match=error_msg_1):
-        sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=2))
+    conflict_error = "Conflicting arguments during sampler assignments."
 
-    error_msg_3 = "Conflicting arguments during sampler assignments."
     # Test conflicting arguments (sampler and shuffle=False) for sampler (no chain)
     np_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     sampler = ds.SequentialSampler(start_index=1, num_samples=3)
-    with pytest.raises(ValueError, match=error_msg_3):
+    with pytest.raises(ValueError, match=conflict_error):
         ds.NumpySlicesDataset(np_data, shuffle=False, sampler=sampler)
 
-    error_msg_4 = "Conflicting arguments during sampler assignments."
     # Test conflicting arguments (sampler and shuffle=False) for sampler chaining
     np_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     sampler = ds.SequentialSampler(start_index=1, num_samples=3)
     sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=2))
-    with pytest.raises(ValueError, match=error_msg_4):
+    with pytest.raises(ValueError, match=conflict_error):
         ds.NumpySlicesDataset(np_data, shuffle=False, sampler=sampler)
 
 
@@ -469,6 +462,65 @@ def test_manifest_sampler_chain_batch_repeat():
 
     # Verify number of rows
     assert sum([1 for _ in data1]) == 10
+
+
+def test_add_user_defined_sampler_dataset_size():
+    """
+    Feature: add_sampler
+    Description: Test using add_sampler to add a user defined sampler
+    Expectation: The dataset size after sampling is correct
+    """
+
+    class MySampler(ds.Sampler):
+        def __iter__(self):
+            if self.num_samples % 2 == 0:
+                interval = 2
+            elif self.num_samples % 3 == 0:
+                interval = 3
+            else:
+                interval = 1
+            for i in range(0, self.num_samples, interval):
+                yield i
+
+    data = np.random.randint(0, 255, (100, 28, 28, 1))
+    dataset = ds.NumpySlicesDataset(data, column_names=["data"], shuffle=True)
+    assert dataset.get_dataset_size() == 100
+
+    distributed_sampler = ds.DistributedSampler(num_shards=4, shard_id=0)
+    dataset.add_sampler(distributed_sampler)
+    assert dataset.get_dataset_size() == 25
+
+    sequential_sampler = ds.SequentialSampler(0, num_samples=15)
+    dataset.add_sampler(sequential_sampler)
+    assert dataset.get_dataset_size() == 15
+
+    my_sampler = ds.IterSampler(MySampler(dataset.get_dataset_size()))
+    dataset.add_sampler(my_sampler)
+    assert dataset.get_dataset_size() == 5
+
+
+def test_add_user_defined_sampler_result():
+    """
+    Feature: add_sampler
+    Description: Test using add_sampler to add a user defined sampler
+    Expectation: The result after sampling is correct
+    """
+
+    class MySampler(ds.Sampler):
+        def __iter__(self):
+            for index in range(0, self.num_samples, 2):
+                yield index
+
+    data = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
+    dataset = ds.NumpySlicesDataset(data, column_names=["data"], shuffle=False)
+    first_sampler = ds.IterSampler(MySampler(dataset.get_dataset_size()))
+    dataset.add_sampler(first_sampler)
+    second_sampler = ds.IterSampler(MySampler(dataset.get_dataset_size()))
+    dataset.add_sampler(second_sampler)
+
+    expected_result = np.array(["a", "e", "i", "m"])
+    for i, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        assert item["data"] == expected_result[i]
 
 
 if __name__ == '__main__':
