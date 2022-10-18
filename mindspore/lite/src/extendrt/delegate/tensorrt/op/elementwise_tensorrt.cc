@@ -185,6 +185,25 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
   }
   *x_input = input(ctx, 0);
   *y_input = input(ctx, 1);
+  if (x_input->trt_tensor_->getType() != y_input->trt_tensor_->getType()) {
+    MS_LOG(INFO) << "trt op elementwise layer not support different input data type, cast to higher one";
+    auto higher_index = in_tensors_[0].DataType() > in_tensors_[1].DataType() ? 0 : 1;
+    auto highter_trt_tensor = input(ctx, higher_index).trt_tensor_;
+    auto cast_layer = ctx->network()->addIdentity(*input(ctx, 1 - higher_index).trt_tensor_);
+    CHECK_NULL_RETURN(cast_layer);
+    cast_layer->setOutputType(0, highter_trt_tensor->getType());
+    auto cast_output = cast_layer->getOutput(0);
+    CHECK_NULL_RETURN(cast_output);
+    ctx->RegisterTensor(
+      ITensorHelper{cast_output, input(ctx, higher_index).format_, input(ctx, higher_index).same_format_},
+      out_tensors_[0].Name());
+    cast_layer->setName((op_name_ + "_cast").c_str());
+    if (higher_index != 0) {
+      x_input->trt_tensor_ = cast_output;
+    } else {
+      y_input->trt_tensor_ = cast_output;
+    }
+  }
 
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*x_input);
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*y_input);
@@ -280,6 +299,10 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
 
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
+  if (in_tensors_[0].IsConst() && in_tensors_[1].IsConst()) {
+    auto large_size_index = in_tensors_[0].ElementNum() >= in_tensors_[1].ElementNum() ? 0 : 1;
+    const_tensor_index = 1 - large_size_index;
+  }
   auto expect_shape = ConvertMSShape(input(ctx, 1 - const_tensor_index).trt_tensor_->getDimensions());
   auto &const_tensor = in_tensors_[const_tensor_index];
   nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(ctx, const_tensor, expect_shape, op_name_);

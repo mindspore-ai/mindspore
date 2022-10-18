@@ -75,7 +75,20 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "addTopK input " << GetTensorFormat(topk_input);
   MS_LOG(DEBUG) << op_name_ << " has k: " << top_k_ << ", axis: " << axis_value_;
 
-  nvinfer1::ITopKLayer *topk_layer = ctx->network()->addTopK(*topk_input.trt_tensor_, topk_op_, top_k_, axis_);
+  nvinfer1::ITopKLayer *topk_layer;
+  if (topk_input.trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
+    MS_LOG(INFO) << "trt op topk not support INT32 as input, cast to float.";
+    auto cast_layer = ctx->network()->addIdentity(*topk_input.trt_tensor_);
+    CHECK_NULL_RETURN(cast_layer);
+    cast_layer->setOutputType(0, nvinfer1::DataType::kFLOAT);
+    auto cast_output = cast_layer->getOutput(0);
+    CHECK_NULL_RETURN(cast_output);
+    cast_layer->setName((op_name_ + "_cast").c_str());
+    topk_layer = ctx->network()->addTopK(*cast_output, topk_op_, top_k_, axis_);
+  } else {
+    topk_layer = ctx->network()->addTopK(*topk_input.trt_tensor_, topk_op_, top_k_, axis_);
+  }
+
   CHECK_NULL_RETURN(topk_layer);
   this->layer_ = topk_layer;
   topk_layer->setName(op_name_.c_str());
@@ -130,8 +143,19 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
   } else if (type_ == ops::kNameTopKFusion) {
     auto topk_prim = AsOps<ops::TopKFusion>();
     CHECK_NULL_RETURN(topk_prim);
-    topk_op_ = topk_prim->get_largest() == 1 ? nvinfer1::TopKOperation::kMAX : nvinfer1::TopKOperation::kMIN;
-    axis_value_ = topk_prim->get_axis();
+    if (topk_prim->HasAttr(ops::kLargest)) {
+      topk_op_ = topk_prim->get_largest() == 1 ? nvinfer1::TopKOperation::kMAX : nvinfer1::TopKOperation::kMIN;
+    } else {
+      MS_LOG(INFO) << "No attribute Largest for TopKFusion, use Default: MAX";
+      topk_op_ = nvinfer1::TopKOperation::kMAX;
+    }
+
+    if (topk_prim->HasAttr(ops::kAxis)) {
+      axis_value_ = topk_prim->get_axis();
+    } else {
+      MS_LOG(INFO) << "No attribute Axis for TopKFusion, use Default: input dims - 1";
+      axis_value_ = input_nbDims - 1;
+    }
     axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
     if (in_tensors_.size() < INPUT_SIZE2) {
       MS_LOG(ERROR) << "invalid input size " << in_tensors_.size() << "for " << op_name_;
