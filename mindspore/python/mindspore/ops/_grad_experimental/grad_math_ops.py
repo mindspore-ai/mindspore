@@ -1256,8 +1256,11 @@ def get_bprop_cholesky_solve(self):
             else:
                 dx2 = neg_op(matmul_op(common_term, x2))
         else:
-            common_term = batchmatmul_op(dx1, transpose(out, (0, 2, 1)))
-            common_term = common_term + transpose(common_term, (0, 2, 1))
+            x2_dim_size = len(shape_op(x2))
+            x2_dim_order = list(range(x2_dim_size))
+            target_order = x2_dim_order[:-2] + x2_dim_order[-2:][::-1]
+            common_term = batchmatmul_op(dx1, transpose(out, tuple(target_order)))
+            common_term = common_term + transpose(common_term, tuple(target_order))
             if upper is True:
                 dx2 = neg_op(batchmatmul_op(x2, common_term))
             else:

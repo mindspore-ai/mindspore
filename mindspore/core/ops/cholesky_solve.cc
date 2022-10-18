@@ -30,7 +30,7 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const size_t kDefalutRank = 2;
-  const size_t kBatchRank = 3;
+  const size_t kBatchRank = 1;
   const size_t kBatchIndex = 3;
   const size_t kRowIndex = 2;
   const size_t kColIndex = 1;
@@ -44,12 +44,12 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
     out_shape.push_back(abstract::Shape::kShapeRankAny);
     return std::make_shared<abstract::Shape>(out_shape);
   }
-  if (x1_shape.size() != kDefalutRank && x1_shape.size() != kBatchRank) {
-    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 must be equal to 2 or 3"
+  if (x1_shape.size() <= kBatchRank) {
+    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 have at least 2 dimensions"
                              << ", while got x1 rank " << x1_shape.size() << ".";
   }
-  if (x2_shape.size() != kDefalutRank && x2_shape.size() != kBatchRank) {
-    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x2 must be equal to 2 or 3"
+  if (x2_shape.size() <= kBatchRank) {
+    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x2 have at least 2 dimensions"
                              << ", while got x2 rank " << x2_shape.size() << ".";
   }
   if (x1_shape.size() != x2_shape.size()) {

@@ -6655,6 +6655,7 @@ class CholeskySolve(Primitive):
           with float32 or float64 data type.
         - **x2** (Tensor) - Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
           upper or lower triangular Cholesky factor, with float32 or float64 data type.
+          x1 and x2 must have the same type.
 
     Outputs:
         Tensor, has the same shape and data type as `x1`.
@@ -6670,7 +6671,7 @@ class CholeskySolve(Primitive):
         ValueError: If `x2` is not 2D or 3D square matrices.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), mindspore.float32)
