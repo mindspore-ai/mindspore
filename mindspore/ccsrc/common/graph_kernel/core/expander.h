@@ -65,20 +65,12 @@ using ExpanderCreatorFuncList = std::vector<ExpanderCreatorFunc>;
 
 class COMMON_EXPORT InputToAttrDeco : public ExpanderDecorator {
  public:
-  InputToAttrDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
-      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
+  explicit InputToAttrDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
   ~InputToAttrDeco() = default;
-  AnfNodePtr Run(const AnfNodePtr &node) override;
-
-  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
-    return [input_idx](const ExpanderPtr &decorated) {
-      return std::static_pointer_cast<Expander>(std::make_shared<InputToAttrDeco>(decorated, input_idx));
-    };
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<InputToAttrDeco>(decorated));
   }
-
- protected:
-  bool ConstInputToAttr(const CNodePtr &cnode) const;
-  HashSet<size_t> input_idx_;
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
 /**

@@ -50,7 +50,6 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
     output_size_ = 1;
     shape_size_ = 1;
     is_null_input_ = false;
-    is_dynamic_case_ = false;
     input_shape_.clear();
     output_shape_.clear();
     input_size_list_.clear();
@@ -68,7 +67,6 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
   ShapeVector input_shape_;
   ShapeVector output_shape_;
   bool is_null_input_;
-  bool is_dynamic_case_;
   std::vector<int64_t> multiples;
   using TileLaunchFunc =
     std::function<bool(TileGpuKernelMod *, const std::vector<kernel::AddressPtr> &,

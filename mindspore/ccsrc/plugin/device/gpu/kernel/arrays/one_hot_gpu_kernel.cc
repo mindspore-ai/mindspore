@@ -31,9 +31,6 @@ bool OneHotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input num should be 3 or 4, but get: " << inputs.size();
     return false;
   }
-  if (inputs.size() == max_input_num) {
-    is_dynamic_shape_ = true;
-  }
   constexpr size_t output_num = 1;
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
@@ -94,10 +91,8 @@ bool OneHotGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   size_t on_value_idx = 1;
   size_t off_value_idx = 2;
-  if (is_dynamic_shape_) {
-    on_value_idx++;
-    off_value_idx++;
-  }
+  on_value_idx++;
+  off_value_idx++;
   const S *indices = GetDeviceAddress<S>(inputs, 0);
   const T *on_value = GetDeviceAddress<T>(inputs, on_value_idx);
   const T *off_value = GetDeviceAddress<T>(inputs, off_value_idx);

@@ -223,16 +223,15 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
   auto expander = std::make_shared<DefaultExpander>(Callback::Instance());
   ExpanderCreatorFuncList decos = {InferValueDeco::Creator};
   std::map<std::string, ExpanderCreatorFuncList> creators = {
-    {prim::kPrimReduceFusion->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
-    {prim::kPrimExpandDims->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
+    {prim::kPrimReduceFusion->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
+    {prim::kPrimExpandDims->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
     {prim::kPrimUnsqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimSqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimShape->name(), {FixFormatDeco::Creator}},
-    {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
-    {prim::kPrimConstantOfShape->name(), {InputToAttrDeco::GetCreator({0}), FixFormatDeco::Creator}},
-    {prim::kPrimTranspose->name(), {TensorToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
-    {prim::kPrimGather->name(),
-     {TensorToValueDeco::GetCreator({2}), InputToAttrDeco::GetCreator({2}), FixFormatDeco::Creator}},
+    {prim::kPrimReshape->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
+    {prim::kPrimConstantOfShape->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
+    {prim::kPrimTranspose->name(), {TensorToValueDeco::GetCreator({1}), InputToAttrDeco::Creator}},
+    {prim::kPrimGather->name(), {TensorToValueDeco::GetCreator({2}), InputToAttrDeco::Creator, FixFormatDeco::Creator}},
     {prim::kPrimConcat->name(), {FixFormatDeco::Creator}},
     {prim::kPrimStridedSlice->name(), {FixFormatDeco::Creator}},
     {prim::kPrimConv2DFusion->name(), {SubstituteConv2D::Creator}},

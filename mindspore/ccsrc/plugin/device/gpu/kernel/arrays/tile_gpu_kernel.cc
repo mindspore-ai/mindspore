@@ -22,8 +22,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kStaticInputNum = 1;
-constexpr size_t kDynInputNum = 2;
+constexpr size_t kInputNum = 2;
 constexpr size_t kTileOutputsNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
@@ -35,12 +34,8 @@ bool TileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   MS_EXCEPTION_IF_NULL(prim);
   kernel_name_ = base_operator->name();
   size_t input_num = inputs.size();
-  if (input_num == kStaticInputNum) {
-    is_dynamic_case_ = false;
-  } else if (input_num == kDynInputNum) {
-    is_dynamic_case_ = true;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1 or 2, but got " << input_num;
+  if (input_num != kInputNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     return false;
   }
 
@@ -83,16 +78,7 @@ int TileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
   shape_size_ = output_shape_.size();
   output_size_ = SizeOf(output_shape_);
-  if (!is_dynamic_case_) {
-    const std::string kAttrMultiples = "multiples";
-    auto multi_attr = base_operator->GetPrim()->GetAttr(kAttrMultiples);
-    if (multi_attr == nullptr) {
-      return KRET_RESIZE_FAILED;
-    }
-    multiples = GetValue<std::vector<int64_t>>(multi_attr);
-  } else {
-    TryGetIntValue(inputs, kIndex1, kernel_name_, &multiples);
-  }
+  TryGetIntValue(inputs, kIndex1, kernel_name_, &multiples);
   int64_t filling_value = static_cast<int64_t>(multiples.size()) - static_cast<int64_t>(input_shape_.size());
   (void)input_shape_.insert(input_shape_.begin(), filling_value, kIndex1);
   workspace_size_list_.push_back(input_shape_.size() * sizeof(size_t));
@@ -127,24 +113,6 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 std::vector<std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc>> TileGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &TileGpuKernelMod::LaunchKernel<Complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &TileGpuKernelMod::LaunchKernel<Complex<double>>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &TileGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &TileGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &TileGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &TileGpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &TileGpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &TileGpuKernelMod::LaunchKernel<bool>},
-  // For dynamic shape case:
   {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
    &TileGpuKernelMod::LaunchKernel<Complex<float>>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),

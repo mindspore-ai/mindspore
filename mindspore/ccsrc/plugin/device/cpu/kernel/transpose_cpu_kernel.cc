@@ -27,8 +27,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kTransposeInputsNum = 1;
-constexpr size_t kDynamicPermInputNum = 2;
+constexpr size_t kTransposeInputNum = 2;
 constexpr size_t kTransposeOutputsNum = 1;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
@@ -86,6 +85,9 @@ int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != KRET_OK) {
     return ret;
   }
+
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputNum, kernel_name_);
+
   input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
   output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
   dtype_ = inputs[kIndex0]->GetDtype();
@@ -98,23 +100,24 @@ int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     strides_[i - 1] = input_shape_[i] * strides_[i];
     out_strides_[i - 1] = output_shape_[i] * out_strides_[i];
   }
-  if (inputs.size() == kDynamicPermInputNum) {
-    perm_type_ = inputs[kIndex1]->GetDtype();
-    perm_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-    return KRET_OK;
+
+  perm_type_ = inputs[kIndex1]->GetDtype();
+  perm_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+
+  perm_.clear();
+  got_perm_value_ = TryGetIntValue(inputs, kIndex1, kernel_name_, &perm_, false);
+  if (got_perm_value_) {
+    CheckPermValue();
   }
-  auto prim = std::dynamic_pointer_cast<ops::Transpose>(base_operator);
-  MS_ERROR_IF_NULL(prim);
-  perm_ = prim->get_perm();
-  CheckPermValue();
   return KRET_OK;
 }
 
 bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
-  if (inputs.size() == kDynamicPermInputNum) {
+  if (!got_perm_value_) {
     if (perm_type_ == kNumberTypeInt32) {
       InitPerm<int32_t>(inputs);
     } else {
@@ -126,34 +129,6 @@ bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 std::vector<std::pair<KernelAttr, TransposeFwdCpuKernelMod::TypeKernel>> TransposeFwdCpuKernelMod::launch_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-   &TransposeFwdCpuKernelMod::LaunchKernel<bool>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   &TransposeFwdCpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &TransposeFwdCpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &TransposeFwdCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &TransposeFwdCpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   &TransposeFwdCpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &TransposeFwdCpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &TransposeFwdCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &TransposeFwdCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &TransposeFwdCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &TransposeFwdCpuKernelMod::LaunchKernel<complex64>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &TransposeFwdCpuKernelMod::LaunchKernel<complex128>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
    &TransposeFwdCpuKernelMod::LaunchKernel<bool>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
@@ -165,7 +140,7 @@ std::vector<std::pair<KernelAttr, TransposeFwdCpuKernelMod::TypeKernel>> Transpo
   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
    &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
    &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
@@ -193,7 +168,7 @@ std::vector<std::pair<KernelAttr, TransposeFwdCpuKernelMod::TypeKernel>> Transpo
   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
    &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
    &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),

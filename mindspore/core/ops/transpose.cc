@@ -29,8 +29,6 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
-
 std::vector<int64_t> Transpose::get_perm() {
   PrimitivePtr prim = this->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
@@ -46,46 +44,31 @@ std::vector<int64_t> Transpose::get_perm() {
   return perm;
 }
 
-bool CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, ShapeVector *perm_value,
-                          const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(perm_value);
-  bool is_dynamic = false;
+MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
+
+ShapeVector CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, const PrimitivePtr &primitive) {
   const std::string &op_name = primitive->name();
-
-  if (input_args.size() == 1) {
-    if (!primitive->HasAttr("perm")) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of 'input_perm' is necessary, but missing it.";
-    }
-    ValuePtr perm = primitive->GetAttr("perm");
-    MS_EXCEPTION_IF_NULL(perm);
-    if (perm->isa<tensor::Tensor>()) {
-      *perm_value = CheckAndConvertUtils::CheckTensorIntValue("perm", perm, op_name);
-    } else {
-      *perm_value = CheckAndConvertUtils::CheckTupleInt("perm", perm, op_name);
-    }
-    return is_dynamic;
-  }
-
+  const size_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto input_value = input_args[kInputIndex1]->BuildValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractTuple>()) {
-    *perm_value = CheckAndConvertUtils::CheckTupleInt("perm", input_value, op_name);
+    return CheckAndConvertUtils::CheckTupleInt("perm", input_value, op_name);
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     if (input_value->isa<tensor::Tensor>()) {
-      *perm_value = CheckAndConvertUtils::CheckTensorIntValue("perm", input_value, op_name);
-    } else {
-      is_dynamic = true;
-      auto perm_shape = CheckAndConvertUtils::GetTensorInputShape("perm", input_args, 1);
-      if (perm_shape->shape().size() != 1) {
-        MS_EXCEPTION(ValueError) << "For 'transpose perm', " << op_name << " must be 1-D, but got"
-                                 << perm_shape->shape().size() << "-D.";
-      }
+      return CheckAndConvertUtils::CheckTensorIntValue("perm", input_value, op_name);
+    }
+    auto perm_shape = CheckAndConvertUtils::GetTensorInputShape("perm", input_args, 1);
+    if (perm_shape->shape().size() != 1) {
+      MS_EXCEPTION(ValueError) << "For 'transpose perm', " << op_name << " must be 1-D, but got"
+                               << perm_shape->shape().size() << "-D.";
     }
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << op_name
                             << "], the perm must be a tuple or a tensor with all Int elements, but got "
                             << input_args[kInputIndex1]->type_name() << ".";
   }
-  return is_dynamic;
+
+  return {};
 }
 
 class TransposeInfer : public abstract::OpInferBase {
@@ -97,7 +80,6 @@ class TransposeInfer : public abstract::OpInferBase {
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, op_name);
     ShapeVector p_value;
-    ShapeVector p_value_raw;
     if (x_shape[0] == 0) {
       MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
     }
@@ -105,10 +87,10 @@ class TransposeInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
 
-    bool perm_is_dynamic = CheckAndGetPermValue(input_args, &p_value_raw, primitive);
-    if (perm_is_dynamic) {
+    auto p_value_raw = CheckAndGetPermValue(input_args, primitive);
+    if (p_value_raw.empty()) {
       ShapeVector out_shape;
-      (void)out_shape.insert(out_shape.end(), x_shape.size(), -1);
+      (void)out_shape.insert(out_shape.end(), x_shape.size(), abstract::Shape::kShapeDimAny);
       return std::make_shared<abstract::Shape>(out_shape);
     }
 

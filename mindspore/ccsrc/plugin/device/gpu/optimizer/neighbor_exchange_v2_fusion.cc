@@ -22,6 +22,7 @@
 
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/convert_utils.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
@@ -124,6 +125,23 @@ void CalSplitAttrs(SplitvNodeInfo *splitv_node_info) {
   splitv_node_info->num_split = num_split;
 }
 
+AnfNodePtr ConvertValueToTensor(const KernelGraphPtr &kernel_graph, const ValueNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto value_node = input_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  tensor::TensorPtr tensor_ptr = CreateTupleTensor(value->cast<ValueTuplePtr>());
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  auto tensor_input = std::make_shared<ValueNode>(tensor_ptr);
+  MS_EXCEPTION_IF_NULL(tensor_input);
+  tensor_input->set_abstract(tensor_ptr->ToAbstract());
+  tensor_input = kernel_graph->NewValueNode(tensor_input);
+  kernel_graph->AddValueNodeToGraph(tensor_input);
+  tensor_input->set_scope(input_node->scope());
+  return tensor_input;
+}
+
 CNodePtr CreateSliceNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &slice_input,
                          const SliceNodeInfo slice_node_info, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -131,20 +149,13 @@ CNodePtr CreateSliceNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
     MS_LOG(EXCEPTION) << "The input is empty, can not create slice node.";
     return nullptr;
   }
-
   auto slice = pass.NewCNode(slice_input, graph);
   MS_EXCEPTION_IF_NULL(slice);
   ShapeVector slice_shape(slice_node_info.base_shape);
-  std::vector<int64_t> begins(slice_shape.size(), 0);
-
   slice_shape[slice_node_info.slice_dim] = slice_node_info.slice_size;
-  begins[slice_node_info.slice_dim] = slice_node_info.slice_begin;
-
   std::vector<ShapeVector> shapes = {slice_shape};
   std::vector<TypeId> dtypes(1, slice_node_info.input_dtype);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, slice.get());
-  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(begins), slice);
-  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(slice_shape), slice);
   return slice;
 }
 
@@ -152,6 +163,8 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &split_inpu
                          const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(splitv_node_info);
+  auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
 
   CalSplitAttrs(splitv_node_info);
 
@@ -168,7 +181,18 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &split_inpu
 
   for (int64_t idx = 0; idx < splitv_node_info->num_split; ++idx) {
     slice_node_info.slice_size = splitv_node_info->size_splits[idx];
-    std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)), split_input};
+    ShapeVector slice_shape(slice_node_info.base_shape);
+    slice_shape[slice_node_info.slice_dim] = slice_node_info.slice_size;
+    // begins
+    std::vector<int64_t> begins(slice_shape.size(), 0);
+    begins[slice_node_info.slice_dim] = slice_node_info.slice_begin;
+    auto beigns_node = NewValueNode(MakeValue<std::vector<int64_t>>(begins));
+    auto beigns_tensor = ConvertValueToTensor(kernel_graph, beigns_node);
+    // slice_shape
+    auto slice_shape_node = NewValueNode(MakeValue<std::vector<int64_t>>(slice_shape));
+    auto slice_shape_tensor = ConvertValueToTensor(kernel_graph, slice_shape_node);
+    std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)), split_input,
+                                            beigns_tensor, slice_shape_tensor};
     slice = CreateSliceNode(graph, slice_inputs, slice_node_info, pass);
     MS_EXCEPTION_IF_NULL(slice);
     AddNewOutputs(graph, slice, 1, &make_tuple_inputs);

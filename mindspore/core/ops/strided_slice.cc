@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -447,6 +447,7 @@ int64_t StridedSlice::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);
   return GetValue<int64_t>(value_ptr);
 }
+
 std::vector<int64_t> StridedSlice::get_begin() const {
   auto value_ptr = GetAttr(kAttrBegin);
   return GetValue<std::vector<int64_t>>(value_ptr);
@@ -459,6 +460,7 @@ std::vector<int64_t> StridedSlice::get_strides() const {
   auto value_ptr = GetAttr(kAttrStrides);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
+
 void StridedSlice::Init(int64_t begin_mask, int64_t end_mask, int64_t ellipsis_mask, int64_t new_axis_mask,
                         int64_t shrink_axis_mask) {
   this->set_begin_mask(begin_mask);

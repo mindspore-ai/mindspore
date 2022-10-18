@@ -988,11 +988,21 @@ std::vector<DShape> StandardNormalOp::InferShape(const NodePtrList &, const DAtt
 }
 
 void StridedSliceOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) {
-  (void)primitive->AddAttr("new_axis_mask", MakeValue((int64_t(0))));
-  (void)primitive->AddAttr("shrink_axis_mask", MakeValue((int64_t(0))));
-  (void)primitive->AddAttr("end_mask", MakeValue((int64_t(0))));
-  (void)primitive->AddAttr("begin_mask", MakeValue((int64_t(0))));
-  (void)primitive->AddAttr("ellipsis_mask", MakeValue((int64_t(0))));
+  if (!primitive->HasAttr("new_axis_mask")) {
+    (void)primitive->AddAttr("new_axis_mask", MakeValue((int64_t(0))));
+  }
+  if (!primitive->HasAttr("shrink_axis_mask")) {
+    (void)primitive->AddAttr("shrink_axis_mask", MakeValue((int64_t(0))));
+  }
+  if (!primitive->HasAttr("end_mask")) {
+    (void)primitive->AddAttr("end_mask", MakeValue((int64_t(0))));
+  }
+  if (!primitive->HasAttr("begin_mask")) {
+    (void)primitive->AddAttr("begin_mask", MakeValue((int64_t(0))));
+  }
+  if (!primitive->HasAttr("ellipsis_mask")) {
+    (void)primitive->AddAttr("ellipsis_mask", MakeValue((int64_t(0))));
+  }
   const mindspore::HashSet<size_t> &convert_input_list{1, 2, 3};
   auto input_names = primitive->GetAttr(kAttrInputNames);
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
@@ -1179,6 +1189,40 @@ std::vector<TypeId> MatMulOp::InferType(const NodePtrList &inputs, const DAttrs 
 void TupleGetItemOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
   if (prim->HasAttr("index")) {
     (void)abs_list->emplace_back(prim->GetAttr("index")->ToAbstract());
+  }
+}
+
+void ReduceOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  if (prim->HasAttr("axis")) {
+    (void)abs_list->emplace_back(prim->GetAttr("axis")->ToAbstract());
+  }
+}
+
+void ReshapeOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  if (prim->HasAttr("shape")) {
+    (void)abs_list->emplace_back(prim->GetAttr("shape")->ToAbstract());
+  } else if (prim->HasAttr("input_shape")) {
+    (void)abs_list->emplace_back(prim->GetAttr("input_shape")->ToAbstract());
+  }
+}
+
+void TransposeOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  if (prim->HasAttr("input_perm")) {
+    (void)abs_list->emplace_back(prim->GetAttr("input_perm")->ToAbstract());
+  } else if (prim->HasAttr("perm")) {
+    (void)abs_list->emplace_back(prim->GetAttr("perm")->ToAbstract());
+  }
+}
+
+void TileOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  if (prim->HasAttr("multiples")) {
+    (void)abs_list->emplace_back(prim->GetAttr("multiples")->ToAbstract());
+  }
+}
+
+void OneHotOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  if (prim->HasAttr("depth")) {
+    (void)abs_list->emplace_back(prim->GetAttr("depth")->ToAbstract());
   }
 }
 }  // namespace mindspore::graphkernel::inner

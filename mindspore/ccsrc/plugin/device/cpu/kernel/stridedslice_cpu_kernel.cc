@@ -28,8 +28,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kStridedSliceInputsNum = 1;
-constexpr size_t kStridedSliceDynamicInputsNum = 4;
+constexpr size_t kStridedSliceInputsNum = 4;
 constexpr size_t kStridedSliceOutputsNum = 1;
 
 using complex64 = std::complex<float>;
@@ -58,10 +57,11 @@ int StridedSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != KRET_OK) {
     return ret;
   }
-  if (inputs.size() != kStridedSliceInputsNum && inputs.size() != kStridedSliceDynamicInputsNum) {
+  if (inputs.size() != kStridedSliceInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kStridedSliceInputsNum
-                      << " or " << kStridedSliceDynamicInputsNum << ", but got " << inputs.size();
+                      << ", but got " << inputs.size();
   }
+
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
   input_shape_ = inputs[0]->GetShapeVector();
   dtype_ = inputs[0]->GetDtype();
@@ -76,26 +76,18 @@ int StridedSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     InitParallelParam();
   }
 
-  if (inputs.size() == kStridedSliceDynamicInputsNum) {
-    // for begin, end, stride are not const input
-    begin_shape_ = inputs[kIndex1]->GetShapeVector();
-    end_shape_ = inputs[kIndex2]->GetShapeVector();
-    stride_shape_ = inputs[kIndex3]->GetShapeVector();
-    if (begin_shape_.size() != 1 || end_shape_.size() != 1 || stride_shape_.size() != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of 'begin', 'end', 'strides' must be equal "
-                           "to 1, but got the dimension of 'begin': "
-                        << begin_shape_.size() << ", the dimension of 'end': " << end_shape_.size()
-                        << ", and the dimension of 'strides': " << stride_shape_.size();
-    }
-  } else {
-    // for begin, end, stride are tuples
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
-    auto begin = kernel_ptr->get_begin();
-    auto end = kernel_ptr->get_end();
-    auto stride = kernel_ptr->get_strides();
-    InitSliceParam(base_operator, &begin, &end, &stride);
+  // for begin, end, stride are not const input
+  begin_shape_ = inputs[kIndex1]->GetShapeVector();
+  end_shape_ = inputs[kIndex2]->GetShapeVector();
+  stride_shape_ = inputs[kIndex3]->GetShapeVector();
+  if (begin_shape_.size() != 1 || end_shape_.size() != 1 || stride_shape_.size() != 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'begin', 'end', 'strides' must be equal "
+                         "to 1, but got the dimension of 'begin': "
+                      << begin_shape_.size() << ", the dimension of 'end': " << end_shape_.size()
+                      << ", and the dimension of 'strides': " << stride_shape_.size();
   }
+
   return ret;
 }
 
@@ -244,34 +236,31 @@ template <typename T, typename S>
 bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> & /* workspace */,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != kStridedSliceInputsNum && inputs.size() != kStridedSliceDynamicInputsNum) {
+  if (inputs.size() != kStridedSliceInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kStridedSliceInputsNum
-                      << " or " << kStridedSliceDynamicInputsNum << ", but got " << inputs.size();
+                      << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
   auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
 
-  size_t input_num = inputs.size();
-  if (input_num == kStridedSliceDynamicInputsNum) {
-    // for begin, end, stride are tensors
-    std::vector<int64_t> begin;
-    std::vector<int64_t> end;
-    std::vector<int64_t> stride;
-    auto begin_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-    auto end_ptr = reinterpret_cast<S *>(inputs[kIndex2]->addr);
-    auto strides_ptr = reinterpret_cast<S *>(inputs[kIndex3]->addr);
-    for (int64_t i = 0; i < begin_shape_[0]; i++) {
-      begin.push_back(static_cast<int64_t>(begin_ptr[i]));
-    }
-    for (int64_t i = 0; i < end_shape_[0]; i++) {
-      end.push_back(static_cast<int64_t>(end_ptr[i]));
-    }
-    for (int64_t i = 0; i < stride_shape_[0]; i++) {
-      stride.push_back(static_cast<int64_t>(strides_ptr[i]));
-    }
-    InitSliceParam(base_operator_, &begin, &end, &stride);
+  // for begin, end, stride are tensors
+  std::vector<int64_t> begin;
+  std::vector<int64_t> end;
+  std::vector<int64_t> stride;
+  auto begin_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
+  auto end_ptr = reinterpret_cast<S *>(inputs[kIndex2]->addr);
+  auto strides_ptr = reinterpret_cast<S *>(inputs[kIndex3]->addr);
+  for (int64_t i = 0; i < begin_shape_[0]; i++) {
+    begin.push_back(static_cast<int64_t>(begin_ptr[i]));
   }
+  for (int64_t i = 0; i < end_shape_[0]; i++) {
+    end.push_back(static_cast<int64_t>(end_ptr[i]));
+  }
+  for (int64_t i = 0; i < stride_shape_[0]; i++) {
+    stride.push_back(static_cast<int64_t>(strides_ptr[i]));
+  }
+  InitSliceParam(base_operator_, &begin, &end, &stride);
 
   int thread_num = slice_param_.op_parameter_.thread_num_;
   if (parallel_ && thread_num >= 2) {

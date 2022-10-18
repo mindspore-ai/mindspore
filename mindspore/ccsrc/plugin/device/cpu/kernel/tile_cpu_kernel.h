@@ -112,9 +112,9 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector x_shape_;
   ShapeVector y_shape_;
   ShapeVector multiple_shape;
-  size_t input_num;
-  size_t output_num;
+  size_t input_num_;
   std::vector<int> multiples_;
+  ShapeVector multiple_shape_;
   TypeId dtype_{kTypeUnknown};
   TypeId multiple_dtype_{kTypeUnknown};
 

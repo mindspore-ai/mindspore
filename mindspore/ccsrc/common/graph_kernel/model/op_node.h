@@ -96,6 +96,7 @@ class ReshapeOp : public PrimOp {
   ~ReshapeOp() = default;
 
  protected:
+  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list);
   DFormat InferFormat(const NodePtrList &, const DAttrs &attrs) override {
     return attrs.find("format") == attrs.end() ? kOpFormat_DEFAULT
                                                : GetValue<std::string>(attrs.find("format")->second);
@@ -118,12 +119,22 @@ class BroadcastOp : public PrimOp {
   ~BroadcastOp() = default;
 };
 
+class TileOp : public BroadcastOp {
+ public:
+  explicit TileOp(const std::string &op) : BroadcastOp(op) {}
+  ~TileOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
+};
+
 class ReduceOp : public PrimOp {
  public:
   explicit ReduceOp(const std::string &op) : PrimOp(op, ComputeType::REDUCE) {}
   ~ReduceOp() = default;
 
  protected:
+  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
@@ -159,9 +170,18 @@ class TransposeOp : public OpaqueOp {
   ~TransposeOp() = default;
 
  protected:
+  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
+class OneHotOp : public OpaqueOp {
+ public:
+  explicit OneHotOp(const std::string &op) : OpaqueOp(op) {}
+  ~OneHotOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
+};
 class LayoutTransformOp : public OpaqueOp {
  public:
   explicit LayoutTransformOp(const std::string &op) : OpaqueOp(op) {}

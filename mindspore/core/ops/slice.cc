@@ -28,6 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t kSliceInputNum = 3;
 constexpr int64_t kDynamicOutValue = -2;
 std::vector<int64_t> InferImplSliceFuncCalInputValue(const PrimitivePtr &primitive, const ValuePtr &input_value) {
   std::vector<int64_t> tmp_input;
@@ -87,6 +88,7 @@ ShapeVector GetOutputShape(const ShapeVector &input_size_shape, const ShapeVecto
 abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == kSliceInputNum, "Slice inputs num error");
   auto input_x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_begin_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto input_size_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());

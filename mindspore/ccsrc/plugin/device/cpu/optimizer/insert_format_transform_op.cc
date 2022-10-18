@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,25 @@ std::vector<int64_t> TransposeAxis(const int dim, FormatTransformDir dir) {
   return axis;
 }
 
+ValueNodePtr CreateValueNode(const std::vector<int64_t> &transpose_perm, const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto tensor_ptr = std::make_shared<tensor::Tensor>(transpose_perm, TypeIdToType(kNumberTypeInt64));
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  auto value_node = std::make_shared<ValueNode>(tensor_ptr);
+  MS_EXCEPTION_IF_NULL(value_node);
+  value_node->set_abstract(tensor_ptr->ToAbstract());
+
+  auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  if (kernel_graph != nullptr) {
+    value_node = kernel_graph->NewValueNode(value_node);
+    kernel_graph->AddValueNodeToGraph(value_node);
+  } else {
+    value_node = MakeValueNode(value_node);
+  }
+
+  return value_node;
+}
+
 CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &used_node,
                            int used_node_index, const std::vector<int64_t> &transpose_perm) {
   MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << ", used node: " << used_node->fullname_with_scope()
@@ -58,13 +77,13 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   auto transpose_prim = std::make_shared<Primitive>(primitive_ptr->name());
   MS_EXCEPTION_IF_NULL(transpose_prim);
   // 2.Set the input of transpose.
-  std::vector<AnfNodePtr> transpose_input = {NewValueNode(transpose_prim), node};
+  auto perm_value_node = CreateValueNode(transpose_perm, graph);
+  std::vector<AnfNodePtr> transpose_input = {NewValueNode(transpose_prim), node, perm_value_node};
   auto transpose_op = graph->NewCNode(transpose_input);
   // 3.Set the output info of transpose.
   auto transpose_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(used_node, IntToSize(used_node_index))};
   auto transpose_shape = {common::AnfAlgo::GetPrevNodeOutputDetailShape(used_node, IntToSize(used_node_index))};
   common::AnfAlgo::SetOutputTypeAndDetailShape(transpose_type, transpose_shape, transpose_op.get());
-  common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
   // 4. Set the new edge of transpose op.
   FuncGraphManagerPtr manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -78,8 +97,8 @@ void SetTransposeOpBuildInfo(const std::string &input_format, const std::string 
   auto input_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
   auto output_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  builder.SetInputsFormat({input_format});
-  builder.SetInputsDeviceType({input_type});
+  builder.SetInputsFormat({input_format, kOpFormat_DEFAULT});
+  builder.SetInputsDeviceType({input_type, kNumberTypeInt64});
   builder.SetOutputsFormat({output_format});
   builder.SetOutputsDeviceType({output_type});
   builder.SetKernelType(UNKNOWN_KERNEL_TYPE);
