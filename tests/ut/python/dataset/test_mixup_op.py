@@ -87,7 +87,7 @@ def test_mixup_batch_success2(plot=False):
     ds_original = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
     decode_op = vision.Decode()
     ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
-    ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
+    ds_original = ds_original.batch(4, drop_remainder=True)
 
     images_original = None
     for idx, (image, _) in enumerate(ds_original):
@@ -106,7 +106,7 @@ def test_mixup_batch_success2(plot=False):
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
 
     mixup_batch_op = vision.MixUpBatch(2.0)
-    data1 = data1.batch(4, pad_info={}, drop_remainder=True)
+    data1 = data1.batch(4, drop_remainder=True)
     data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
 
     images_mixup = None

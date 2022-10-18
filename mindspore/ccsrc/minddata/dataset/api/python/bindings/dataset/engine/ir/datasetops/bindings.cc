@@ -91,27 +91,28 @@ PYBIND_REGISTER(DatasetNode, 1, ([](const py::module *m) {
 // PYBIND FOR NON-LEAF NODES
 // (In alphabetical order)
 
-PYBIND_REGISTER(
-  BatchNode, 2, ([](const py::module *m) {
-    (void)py::class_<BatchNode, DatasetNode, std::shared_ptr<BatchNode>>(*m, "BatchNode", "to create a BatchNode")
-      .def(py::init([](const std::shared_ptr<DatasetNode> &self, int32_t batch_size, bool drop_remainder, bool pad,
-                       const py::list &in_col_names, const py::list &out_col_names, const py::list &col_order,
-                       const py::object &size_obj, const py::object &map_obj, const py::dict &pad_info,
-                       const std::shared_ptr<PythonMultiprocessingRuntime> &python_mp) {
-        std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> c_pad_info;
-        if (pad) {
-          THROW_IF_ERROR(toPadInfo(pad_info, &c_pad_info));
-        }
-        py::function size_func =
-          py::isinstance<py::function>(size_obj) ? size_obj.cast<py::function>() : py::function();
-        py::function map_func = py::isinstance<py::function>(map_obj) ? map_obj.cast<py::function>() : py::function();
-        auto batch = std::make_shared<BatchNode>(self, batch_size, drop_remainder, pad, toStringVector(in_col_names),
-                                                 toStringVector(out_col_names), toStringVector(col_order), size_func,
-                                                 map_func, c_pad_info, python_mp);
-        THROW_IF_ERROR(batch->ValidateParams());
-        return batch;
-      }));
-  }));
+PYBIND_REGISTER(BatchNode, 2, ([](const py::module *m) {
+                  (void)py::class_<BatchNode, DatasetNode, std::shared_ptr<BatchNode>>(*m, "BatchNode",
+                                                                                       "to create a BatchNode")
+                    .def(py::init([](const std::shared_ptr<DatasetNode> &self, int32_t batch_size, bool drop_remainder,
+                                     bool pad, const py::list &in_col_names, const py::list &out_col_names,
+                                     const py::object &size_obj, const py::object &map_obj, const py::dict &pad_info,
+                                     const std::shared_ptr<PythonMultiprocessingRuntime> &python_mp) {
+                      std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> c_pad_info;
+                      if (pad) {
+                        THROW_IF_ERROR(toPadInfo(pad_info, &c_pad_info));
+                      }
+                      py::function size_func =
+                        py::isinstance<py::function>(size_obj) ? size_obj.cast<py::function>() : py::function();
+                      py::function map_func =
+                        py::isinstance<py::function>(map_obj) ? map_obj.cast<py::function>() : py::function();
+                      auto batch = std::make_shared<BatchNode>(
+                        self, batch_size, drop_remainder, pad, toStringVector(in_col_names),
+                        toStringVector(out_col_names), size_func, map_func, c_pad_info, python_mp);
+                      THROW_IF_ERROR(batch->ValidateParams());
+                      return batch;
+                    }));
+                }));
 
 PYBIND_REGISTER(BucketBatchByLengthNode, 2, ([](const py::module *m) {
                   (void)py::class_<BucketBatchByLengthNode, DatasetNode, std::shared_ptr<BucketBatchByLengthNode>>(

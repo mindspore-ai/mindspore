@@ -106,7 +106,7 @@ def test_kitti_case():
     repeat_num = 4
     data1 = data1.repeat(repeat_num)
     batch_size = 2
-    data1 = data1.batch(batch_size, drop_remainder=True, pad_info={})
+    data1 = data1.padded_batch(batch_size, drop_remainder=True, pad_info={})
     num = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1

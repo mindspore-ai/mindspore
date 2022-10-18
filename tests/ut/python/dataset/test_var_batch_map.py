@@ -418,8 +418,9 @@ def test_multi_col_map():
     def batch_map_config(num, s, f, in_nms, out_nms, col_order=None):
         try:
             dst = ds.GeneratorDataset((lambda: gen_2_cols(num)), ["col1", "col2"])
-            dst = dst.batch(batch_size=s, input_columns=in_nms, output_columns=out_nms, per_batch_map=f,
-                            column_order=col_order)
+            dst = dst.batch(batch_size=s, input_columns=in_nms, output_columns=out_nms, per_batch_map=f)
+            if col_order is not None:
+                dst = dst.project(col_order)
             res = []
             for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
                 res.append(row)
@@ -454,7 +455,6 @@ def test_multi_col_map():
 
     # test exceptions
     assert "output_columns with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], 233)
-    assert "column_order with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], ["col1"], 233)
     assert "columns that are not involved in 'per_batch_map' should not be in output_columns" \
            in batch_map_config(2, 2, split_col, ["col2"], ["col1"])
     assert "the number of columns returned in 'per_batch_map' function should be 3" \

@@ -44,6 +44,7 @@ Batch
 
     mindspore.dataset.Dataset.batch
     mindspore.dataset.Dataset.bucket_batch_by_length
+    mindspore.dataset.Dataset.padded_batch
 
 Iterator
 ---------
@@ -142,6 +143,7 @@ Batch
 
     mindspore.dataset.Dataset.batch
     mindspore.dataset.Dataset.bucket_batch_by_length
+    mindspore.dataset.Dataset.padded_batch
 
 Iterator
 ---------
@@ -241,6 +243,7 @@ Batch
 
     mindspore.dataset.Dataset.batch
     mindspore.dataset.Dataset.bucket_batch_by_length
+    mindspore.dataset.Dataset.padded_batch
 
 Iterator
 ---------

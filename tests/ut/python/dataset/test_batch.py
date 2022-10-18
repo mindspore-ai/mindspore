@@ -577,7 +577,7 @@ def test_batch_exception_16():
     input_columns = ["num1", "num2"]
     data1 = ds.GeneratorDataset((lambda: gen(20)), input_columns)
     with pytest.raises(RuntimeError) as raise_info:
-        result = data1.batch(batch_size=batch_size, per_batch_map=swap_col, column_order=input_columns)
+        result = data1.batch(batch_size=batch_size, per_batch_map=swap_col)
         for _ in result.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
     assert "Inconsistent batch type, batch operation expects same type for each data row" in str(raise_info.value)
@@ -621,7 +621,7 @@ def test_no_input_columns_01():
     def batch_map_config(num, s, f, col_order=None):
         try:
             dst = ds.GeneratorDataset((lambda: gen_2_cols(num)), ["col1", "col2"])
-            dst = dst.batch(batch_size=s, per_batch_map=f, column_order=col_order)
+            dst = dst.batch(batch_size=s, per_batch_map=f)
             res = []
             for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
                 res.append(row)
@@ -649,7 +649,7 @@ def test_no_input_columns_02():
     def batch_map_config(num, s, f, out_nms, col_order=None):
         try:
             dst = ds.GeneratorDataset((lambda: gen_2_cols(num)), ["col1", "col2"])
-            dst = dst.batch(batch_size=s, per_batch_map=f, output_columns=out_nms, column_order=col_order)
+            dst = dst.batch(batch_size=s, per_batch_map=f, output_columns=out_nms)
             res = []
             for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
                 res.append(row)
@@ -661,6 +661,53 @@ def test_no_input_columns_02():
     res = batch_map_config(3, 3, split_col, ["col1", "col_x2", "col_y2"])[0]
     assert np.array_equal(res["col1"], [[1], [2], [3]])
     assert np.array_equal(res["col_x2"], [[1], [4], [9]]) and np.array_equal(res["col_y2"], [[-1], [-4], [-9]])
+
+
+def test_batch_exception_18():
+    """
+    Feature: Batch op
+    Description: Test batch with parameter column_order
+    Expectation: Output is equal to the expected output
+    """
+    def gen(num):
+        for i in range(num):
+            if i % 2 == 0:
+                yield (np.array([i]), np.array([i + (1 + i) * 0.01]))
+            else:
+                yield (np.array([(i + 1) * 0.01 + i]), np.array([i]))
+
+    def swap_col(col1, col2, batch_info):
+        return ([np.copy(a) for a in col2], [np.copy(b) for b in col1])
+
+    logger.info("test_batch_exception_18")
+
+    batch_size = 4
+    input_columns = ["num1", "num2"]
+    data1 = ds.GeneratorDataset((lambda: gen(20)), input_columns)
+    with pytest.raises(TypeError) as raise_info:
+        result = data1.batch(batch_size=batch_size, per_batch_map=swap_col, column_order=input_columns)
+        for _ in result.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+    assert "got an unexpected keyword argument 'column_order'" in str(raise_info.value)
+
+
+def test_batch_exception_19():
+    """
+    Feature: Batch op
+    Description: Test batch with parameter pad_info
+    Expectation: Output is equal to the expected output
+    """
+    data_dir_coco = "../data/dataset/testCOCO/train/"
+    annotation_file_coco = "../data/dataset/testCOCO/annotations/train.json"
+    data1 = ds.CocoDataset(data_dir_coco, annotation_file=annotation_file_coco, task="Detection", decode=True)
+    data1 = data1.shuffle(10)
+    with pytest.raises(TypeError) as raise_info:
+        data1 = data1.batch(3, pad_info={})
+        num_iter = 0
+        for _ in data1.create_dict_iterator(num_epochs=1):
+            num_iter += 1
+        assert num_iter == 2
+    assert "got an unexpected keyword argument 'pad_info'" in str(raise_info.value)
 
 
 if __name__ == '__main__':
@@ -695,4 +742,6 @@ if __name__ == '__main__':
     test_batch_exception_17()
     test_no_input_columns_01()
     test_no_input_columns_02()
+    test_batch_exception_18()
+    test_batch_exception_19()
     logger.info('\n')

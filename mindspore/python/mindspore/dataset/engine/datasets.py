@@ -67,7 +67,8 @@ from .queue import _SharedQueue, _Queue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_device_send, check_take, check_output_shape, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
-    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, deprecated
+    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch, \
+    deprecated
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_enable_watchdog, get_seed, set_seed
 from ..core.datatypes import mstype_to_detype
@@ -285,6 +286,7 @@ class Dataset:
 
     DatasetOperator: MapDataset(UnionBaseDataset)
                      BatchDataset(UnionBaseDataset)
+                     PaddedBatchDataset(UnionBaseDataset)
                      BucketBatchByLengthDataset(UnionBaseDataset)
                      ShuffleDataset(UnionBaseDataset)
                      FilterDataset(UnionBaseDataset)
@@ -543,7 +545,7 @@ class Dataset:
     @check_batch
     def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, **kwargs):
         """
-        Combine batch_size number of consecutive rows into batches.
+        Combine batch_size number of consecutive rows into batch which apply per_batch_map to the samples first.
 
         For any column, all the elements within that column must have the same shape.
         If a per_batch_map callable is provided, it will be applied to the batches of tensors.
@@ -585,15 +587,6 @@ class Dataset:
                   columns of the last operation. (default=None, output columns will have the same
                   name as the input columns, i.e., the columns will be replaced).
 
-                - column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in
-                  the whole dataset (default=None). The parameter is required when len(input_column) !=
-                  len(output_column). Caution: the list here is not just the columns specified in parameter
-                  input_columns and output_columns.
-
-                - pad_info (dict, optional): Whether to perform padding on selected columns.
-                  pad_info={"col1":([224,224],0)} would pad column with name "col1" to a tensor of size [224,224] and
-                  fill the missing with 0 (default=None).
-
                 - python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with
                   multi-processing. This option could be beneficial if the function is computational heavy
                   (default=False).
@@ -627,22 +620,59 @@ class Dataset:
             >>> def add_one(BatchInfo):
             ...     return BatchInfo.get_batch_num() + 1
             >>> dataset = dataset.batch(batch_size=add_one, drop_remainder=True)
-            >>>
-            >>> # 4）Create a dataset with batch, then specify the column order.
-            >>> # Assume that the original coulmn order is ["image", "label"] and change to ["label", "image"].
-            >>> dataset = dataset.batch(32, column_order=["label", "image"])
         """
-        column_order = kwargs.get("column_order", None)
-        if column_order is not None:
-            logger.warning("The parameter column_order will be deprecated in the future. "
-                           "Please use '.project(...)' operation instead.")
-
-        pad_info = kwargs.get("pad_info", None)
-        if pad_info is not None:
-            logger.warning("The parameter pad_info will be deprecated in the future. "
-                           "Please use '.map(operations=transforms.PadEnd(...), ...)' operation instead.")
-
         return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, **kwargs)
+
+    @check_padded_batch
+    def padded_batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, pad_info=None):
+        """
+        Combine batch_size number of consecutive rows into batch which apply pad_info to the samples first.
+
+        Refer to the following figure for the execution process:
+
+        .. image:: padded_batch_en.png
+
+        Note:
+            The order of using repeat and padded_batch reflects the number of batches.
+            It is recommended that the repeat operation applied after the padded_batch operation finished.
+
+        Args:
+            batch_size (Union[int, Callable]): The number of rows each batch is created with. An
+                int or callable object which takes exactly 1 parameter, BatchInfo.
+            drop_remainder (bool, optional): Determines whether or not to drop the last block
+                whose data row number is less than batch size (default=False). If True, and if there are less
+                than batch_size rows available to make the last batch, then those rows will
+                be dropped and not propagated to the child node.
+            num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
+                (default=None).
+            pad_info (dict, optional): The information about how to batch each column. The key
+                corresponds to the column name, and the value must be a tuple of 2 elements.
+                The first element corresponds to the shape to pad to, and the second
+                element corresponds to the value to pad with. If a column is not
+                specified, then that column will be padded to the longest in the current
+                batch, and 0 will be used as the padding value. Any None dimensions will
+                be padded to the longest in the current batch, unless if
+                pad_to_bucket_boundary is True. If no padding is wanted, set pad_info
+                to None (default=None).
+
+        Returns:
+            PaddedBatchDataset, dataset batched.
+
+        Examples:
+            >>> # 1) Pad every sample to the largest sample's shape and batch the samples
+            >>> dataset = dataset.padded_batch(100, True, pad_info={})
+            >>>
+            >>> # 2) Create a dataset where every 100 rows are combined into a batch
+            >>> # and drops the last incomplete batch if there is one.
+            >>> dataset = dataset.padded_batch(100, True)
+            >>>
+            >>> # 3）Create a dataset where its batch size is dynamic
+            >>> # Define a callable batch size function and let batch size increase 1 each time.
+            >>> def add_one(BatchInfo):
+            ...     return BatchInfo.get_batch_num() + 1
+            >>> dataset = dataset.padded_batch(batch_size=add_one, drop_remainder=True)
+        """
+        return PaddedBatchDataset(self, batch_size, drop_remainder, num_parallel_workers, pad_info)
 
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
@@ -2458,19 +2488,13 @@ class BatchDataset(UnionBaseDataset):
             len(output_columns). The size of this list must match the number of output
             columns of the last operation. (default=None, output columns will have the same
             name as the input columns, i.e., the columns will be replaced).
-        column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in the whole
-                dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
-                is not just the columns specified in parameter input_columns and output_columns.
-        pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
-            will pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True (default=16).
 
     """
 
     def __init__(self, input_dataset, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
-                 input_columns=None, output_columns=None, column_order=None, pad_info=None,
-                 python_multiprocessing=False, max_rowsize=16):
+                 input_columns=None, output_columns=None, python_multiprocessing=False, max_rowsize=16):
         super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers)
 
         if BatchDataset._is_ancestor_of_repeat(input_dataset):
@@ -2488,10 +2512,6 @@ class BatchDataset(UnionBaseDataset):
 
         self.input_columns = to_list(input_columns)
         self.output_columns = to_list(output_columns)
-        self.column_order = to_list(column_order)
-
-        self.pad = bool(pad_info is not None)
-        self.pad_info = replace_none(pad_info, dict())
 
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
@@ -2503,9 +2523,9 @@ class BatchDataset(UnionBaseDataset):
             del self.process_pool
 
     def parse(self, children=None):
-        return cde.BatchNode(children[0], self.batch_size, self.drop_remainder, self.pad, self.input_columns,
-                             self.output_columns, self.column_order, self.batch_size_func, self.per_batch_map,
-                             self.pad_info, self.process_pool)
+        return cde.BatchNode(children[0], self.batch_size, self.drop_remainder, False, self.input_columns,
+                             self.output_columns, self.batch_size_func, self.per_batch_map, {},
+                             self.process_pool)
 
     @staticmethod
     def _is_ancestor_of_repeat(dataset):
@@ -2657,6 +2677,80 @@ class BlockReleasePair:
             self.cv.notify_all()
 
 
+class PaddedBatchDataset(UnionBaseDataset):
+    """
+    The result of applying Batch operator to the input dataset.
+
+    Args:
+        input_dataset (Dataset): Input Dataset to be batched.
+        batch_size (Union[int, function]): The number of rows each batch is created with. An
+            int or callable which takes exactly 1 parameter, BatchInfo.
+        drop_remainder (bool, optional): Determines whether or not to drop the last
+            possibly incomplete batch (default=False). If True, and if there are less
+            than batch_size rows available to make the last batch, then those rows will
+            be dropped and not propagated to the child node.
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel (default=None).
+        pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
+            will pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
+    """
+
+    def __init__(self, input_dataset, batch_size, drop_remainder=False, num_parallel_workers=None, pad_info=None):
+        super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers)
+
+        if PaddedBatchDataset._is_ancestor_of_repeat(input_dataset):
+            logger.warning("Repeat is located before padded_batch, data from two epochs can be batched together.")
+
+        PaddedBatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
+
+        # if batch_size is callable, set batch_size to 1 and batch_size_func to that callable function
+        self.batch_size = batch_size if not callable(batch_size) else 1
+        self.batch_size_func = None if not callable(batch_size) else batch_size
+
+        self.drop_remainder = replace_none(drop_remainder, False)
+
+        self.pad = bool(pad_info is not None)
+        self.pad_info = replace_none(pad_info, dict())
+
+    def parse(self, children=None):
+        return cde.BatchNode(children[0], self.batch_size, self.drop_remainder, self.pad, [],
+                             [], self.batch_size_func, None, self.pad_info, None)
+
+    @staticmethod
+    def _is_ancestor_of_repeat(dataset):
+        """
+        Utility function to find the case where repeat is used before batch.
+
+        Args:
+             dataset (Dataset): Dataset to be checked.
+
+        Returns:
+            bool, whether repeat is used before batch.
+        """
+        if isinstance(dataset, RepeatDataset):
+            return True
+        flag = False
+        for input_dataset in dataset.children:
+            flag = flag | PaddedBatchDataset._is_ancestor_of_repeat(input_dataset)
+        return flag
+
+    @staticmethod
+    def _update_batch_size_for_syncwait(dataset, batch_size):
+        """
+        Utility function to notify batch size to sync_wait.
+
+        Args:
+             dataset (Dataset): Dataset to be checked.
+             batch_size (int): batch size to notify.
+        """
+        if isinstance(dataset, SyncWaitDataset):
+            dataset.update_sync_batch_size(batch_size)
+        for input_dataset in dataset.children:
+            PaddedBatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
+
+    def __deepcopy__(self, memodict):
+        return self.__safe_deepcopy__(memodict, exclude=("batch_size_func", "__transfer_dataset__"))
+
+
 class SyncWaitDataset(UnionBaseDataset):
     """
     The result of adding a blocking condition to the input Dataset.
@@ -2715,7 +2809,7 @@ class SyncWaitDataset(UnionBaseDataset):
         Returns:
             bool, whether sync_wait is used before batch.
         """
-        if isinstance(dataset, BatchDataset):
+        if isinstance(dataset, (BatchDataset, PaddedBatchDataset)):
             return True
         flag = False
         for input_dataset in dataset.children:
@@ -3657,8 +3751,8 @@ class ConcatDataset(UnionBaseDataset):
             if hasattr(child, 'sampler') and child.sampler.get_num_samples() is not None:
                 raise ValueError("The parameter NumSamples of %s is not support to be set!" % child)
 
-            if isinstance(child, BatchDataset):
-                raise TypeError("The parameter %s of concat must not be BatchDataset!" % child)
+            if isinstance(child, (BatchDataset, PaddedBatchDataset)):
+                raise TypeError("The parameter %s of concat must not be BatchDataset or PaddedBatchDataset!" % child)
 
             # if child is mappable and the length is greater than 0
             if not self._children_flag_and_nums[index][0] and self._children_flag_and_nums[index][1]:

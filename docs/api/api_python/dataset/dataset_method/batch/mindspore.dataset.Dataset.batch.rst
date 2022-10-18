@@ -3,7 +3,7 @@ mindspore.dataset.Dataset.batch
 
 .. py:method:: mindspore.dataset.Dataset.batch(batch_size, drop_remainder=False, num_parallel_workers=None, **kwargs)
 
-    将数据集中连续 `batch_size` 条数据合并为一个批处理数据。
+    将数据集中连续 `batch_size` 条数据合并为一个批处理数据，其中batch成一个Tensor前可选择使用per_batch_map对样本进行处理。
 
     `batch` 操作要求每列中的数据具有相同的shape。如果指定了参数 `per_batch_map` ，该参数将作用于批处理后的数据。
 
@@ -33,11 +33,6 @@ mindspore.dataset.Dataset.batch
             如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配。默认值：None，不指定。
           - output_columns (Union[str, list[str]], 可选) - 指定 `batch` 操作的输出数据列。如果输入数据列与输入数据列的长度不相等，则必须指定此参数。
             此列表中列名的数量必须与 `per_batch_map` 方法的返回值数量相匹配。默认值：None，输出列将与输入列具有相同的名称。
-          - column_order (Union[str, list[str]], 可选) - 指定传递到下一个数据集操作的数据列顺序。
-            如果 `input_column` 长度不等于 `output_column` 长度，则此参数必须指定。
-            注意：列名不限定在 `input_columns` 和 `output_columns` 中指定的列，也可以是上一个操作输出的未被处理的数据列，详细可参阅使用样例（4）。默认值：None>，按照原输入顺序排列。
-          - pad_info (dict, 可选) - 对给定数据列进行填充。通过传入dict来指定列信息与填充信息，例如 `pad_info={"col1":([224,224],0)}` ，
-            则将列名为"col1"的数据列扩充到shape为(224, 224)的Tensor，缺失的值使用0填充。默认值：None，不填充。
           - python_multiprocessing (bool, 可选) - 启动Python多进程模式并行执行 `per_batch_map` 。如果 `per_batch_map` 的计算量很大，此选项可能会很有用。默>认值：False，不启用多进程。
           - max_rowsize (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，仅当 `python_multiprocessing` 为True时，该选项有效。默认值：16，>单位为MB。
 

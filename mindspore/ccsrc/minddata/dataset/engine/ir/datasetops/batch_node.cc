@@ -32,8 +32,7 @@ namespace dataset {
 // constructor #1, called by Pybind
 BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder, bool pad,
                      const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-                     const std::vector<std::string> &col_order, py::function batch_size_func,
-                     py::function batch_map_func,
+                     py::function batch_size_func, py::function batch_map_func,
                      std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map,
                      std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
     : batch_size_(batch_size),
@@ -41,7 +40,6 @@ BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, boo
       pad_(pad),
       in_col_names_(in_col_names),
       out_col_names_(out_col_names),
-      col_order_(col_order),
       batch_size_func_(batch_size_func),
       batch_map_func_(batch_map_func),
       pad_map_(pad_map),
@@ -59,7 +57,7 @@ BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, boo
 std::shared_ptr<DatasetNode> BatchNode::Copy() {
 #ifdef ENABLE_PYTHON
   auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_, pad_, in_col_names_, out_col_names_,
-                                          col_order_, batch_size_func_, batch_map_func_, pad_map_, python_mp_);
+                                          batch_size_func_, batch_map_func_, pad_map_, python_mp_);
 #else
   auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_);
 #endif
@@ -96,13 +94,6 @@ Status BatchNode::ValidateParams() {
 
 Status BatchNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 #ifdef ENABLE_PYTHON
-  // if col_order_ isn't empty, then a project node needs to be attached after batch node. (same as map)
-  // this means project_node needs to be the parent of batch_node. this means *node_ops = [project_node, batch_node]
-  if (!col_order_.empty()) {
-    auto project_op = std::make_shared<ProjectOp>(col_order_);
-    node_ops->push_back(project_op);
-  }
-
   auto op = std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
                                       in_col_names_, out_col_names_, batch_size_func_, batch_map_func_, pad_map_);
   op->SetTotalRepeats(GetTotalRepeats());
@@ -168,7 +159,6 @@ Status BatchNode::to_json(nlohmann::json *out_json) {
 #ifdef ENABLE_PYTHON
   args["input_columns"] = in_col_names_;
   args["output_columns"] = out_col_names_;
-  args["column_order"] = col_order_;
   if (batch_map_func_ != nullptr) {
     args["per_batch_map"] = "pyfunc";
   }
