@@ -209,6 +209,7 @@ Dataset Helper
 
     mindspore.DatasetHelper
     mindspore.connect_network_with_dataset
+    mindspore.data_sink
 
 Serialization
 -------------
