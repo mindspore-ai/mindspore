@@ -565,10 +565,12 @@ void TbeKernelCompileManager::UpdateFusionTypeAndOutputDataDesc(const std::vecto
     auto kernel_name = pre_build_full_name_to_json_name_[full_name];
     auto pre_res = prebuild_res_map_[kernel_name];
     auto fusion_type = pre_res.fusion_type;
+    auto fusion_name = GetFusionNameByType(fusion_type);
     auto output_data_desc = pre_res.output_data_desc;
     auto core_type = pre_res.core_type;
     AnfAlgo::SetCoreType(node, core_type);
     AnfAlgo::SetFusionType(node, fusion_type);
+    common::AnfAlgo::SetNodeAttr(kAttrTbeFusionType, MakeValue(fusion_name), node);
     AnfAlgo::SetOutputDataDesc(node, {output_data_desc});
   }
   MS_LOG(INFO) << "End update fusion type after pre build";
