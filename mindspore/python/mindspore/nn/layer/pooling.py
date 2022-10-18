@@ -108,18 +108,19 @@ class MaxPool3d(Cell):
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8,
-          int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
+        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` or
+        :math:`(C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8, int16, int32,
+        int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
 
     Outputs:
-        If `return_indices` is False, output is a Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`,
-        with the same data type as `x`.
+        If `return_indices` is False, output is a Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, or
+        :math:`(C_{out}, D_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
 
         If `return_indices` is True, output is a Tuple of 2 Tensors, representing the maxpool result and where
         the max values are generated.
 
-        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
-          It has the same data type as `x`.
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` or
+        :math:`(C_{out}, D_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
     Raises:
@@ -175,9 +176,15 @@ class MaxPool3d(Cell):
         super(MaxPool3d, self).__init__()
         self.return_indices = return_indices
         self.max_pool = MaxPool3DWithArgmax(kernel_size, stride, padding, dilation, ceil_mode)
+        self.expand_dims = P.ExpandDims()
 
     def construct(self, x):
+        _shape = x.shape
+        if len(x.shape) == 4:
+            x = self.expand_dims(x, 0)
         output_tensor, argmax = self.max_pool(x)
+        output_tensor = output_tensor.reshape(_shape)
+        argmax = argmax.reshape(_shape)
         if self.return_indices:
             return output_tensor, argmax
         return output_tensor
@@ -375,11 +382,13 @@ class AvgPool3d(Cell):
             otherwise kernel_size will be used. Default: None.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or
+        :math:`(C, D_{in}, H_{in}, W_{in})`.
           Currently support float16 and float32 data type.
 
     Outputs:
-        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, with the same data type with `x`.
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or
+        :math:`(C, D_{in}, H_{in}, W_{in})`, with the same data type with `x`.
 
     Raises:
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
@@ -415,9 +424,17 @@ class AvgPool3d(Cell):
             divisor_override = 0
         self.avg_pool = P.AvgPool3D(kernel_size, stride, "pad", padding, ceil_mode, count_include_pad,
                                     divisor_override)
+        self.squeeze = P.Squeeze(0)
+        self.expand_dims = P.ExpandDims()
 
     def construct(self, x):
+        _is_squeeze = False
+        if len(x.shape) == 4:
+            x = self.expand_dims(x, 0)
+            _is_squeeze = True
         out = self.avg_pool(x)
+        if _is_squeeze:
+            out = self.squeeze(out)
         return out
 
 

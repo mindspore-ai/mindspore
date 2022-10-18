@@ -23,13 +23,13 @@ mindspore.nn.MaxPool3d
         - **ceil_mode** (bool) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型必须为int8、 int16、 int32、 int64、 uint8、 uint16、 uint32、 uint64、 float16、 float32 或者 float64。
+        - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型必须为int8、 int16、 int32、 int64、 uint8、 uint16、 uint32、 uint64、 float16、 float32 或者 float64。
 
     输出：
-        如果 `return_indices` 为False，则是shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
+        如果 `return_indices` 为False，则是shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或者 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型与 `x` 一致。
         如果 `return_indices` 为True，则是一个包含了两个Tensor的Tuple，表示maxpool的计算结果以及生成max值的位置。
 
-        - **output** (Tensor) - 最大池化结果，shape为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`的Tensor。数据类型与 `x` 一致。
+        - **output** (Tensor) - 最大池化结果，shape为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` 或者 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型与 `x` 一致。
         - **argmax** (Tensor) - 最大值对应的索引。数据类型为int64。
 
     异常：
