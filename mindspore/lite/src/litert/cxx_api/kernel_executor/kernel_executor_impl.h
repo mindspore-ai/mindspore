@@ -51,7 +51,7 @@ class KernelExecutorImpl {
   const schema::Primitive *primitive_ = nullptr;
   int prim_type_;
   OpParameter *parameter_ = nullptr;
-  lite::InnerContext *context_ = nullptr;
+  std::shared_ptr<lite::InnerContext> context_ = nullptr;
   TypeId data_type_;
   kernel::KernelExec *kernel_ = nullptr;
   std::vector<lite::Tensor *> inputs_;
