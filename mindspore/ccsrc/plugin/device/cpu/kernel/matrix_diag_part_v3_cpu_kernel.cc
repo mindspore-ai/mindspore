@@ -22,6 +22,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include "ops/op_name.h"
+#include "mindspore/core/ops/matrix_diag_part_v3.h"
+#include "mindspore/core/utils/check_convert_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -30,7 +33,6 @@ namespace {
 constexpr size_t kMatrixDiagPartV3InputsNum = 3;
 constexpr size_t kMatrixDiagPartV3OutputsNum = 1;
 constexpr int64_t kParallelArrayNumSameShape = 2048;  // all cores running if data size is too large
-constexpr size_t kIndexPaddingValue = 2;
 constexpr int64_t ZERO = 0;
 static std::pair<int64_t, int64_t> ComputeTwo(int64_t diag_index, int64_t max_diag_len, int64_t num_rows,
                                               int64_t num_cols, bool align_superdiag, bool align_subdiag) {
@@ -41,51 +43,61 @@ static std::pair<int64_t, int64_t> ComputeTwo(int64_t diag_index, int64_t max_di
 }
 }  // namespace
 
-void MatrixDiagPartV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-  if (common::AnfAlgo::HasNodeAttr("align", kernel_node)) {
-    align_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "align");
-    if (!(align_ == "" || align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT" || align_ == "LEFT_LEFT" ||
-          align_ == "LEFT_RIGHT")) {
-      MS_LOG(EXCEPTION) << "Attr 'align' of 'MatrixDiagPartV3' is not in: 'LEFT_RIGHT', "
-                           "'RIGHT_LEFT', 'LEFT_LEFT', 'RIGHT_RIGHT'.";
-    }
-    if (align_ == "") {
-      align_ = "RIGHT_LEFT";
-    }
-  } else {
-    align_ = "RIGHT_LEFT";
+bool MatrixDiagPartV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  const std::string input_str = "input number";
+  const size_t input_number = 3;
+  kernel_name_ = base_operator->name();
+  (void)CheckAndConvertUtils::CheckInteger(input_str, SizeToLong(inputs.size()), kEqual, input_number, kernel_name_);
+  auto op_prim = std::dynamic_pointer_cast<ops::MatrixDiagPartV3>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  auto align = op_prim->get_align();
+  if (!align.empty()) {
+    align_ = align;
   }
+  (void)CheckAndConvertUtils::CheckString(ops::kAlign, align_, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
+                                          kernel_name_);
+  return true;
+}
 
-  auto padding_data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndexPaddingValue);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto output_data_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-
-  if (padding_data_type != input_dtype_) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagPartV3, the data type of x need be same with padding_value.";
+int MatrixDiagPartV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KRET_OK;
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
-
-  if (input_dtype_ != output_data_type) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagPartV3, the data type of x need be same with output.";
+  auto padding_dtype = inputs[kIndex2]->GetDtype();
+  auto output_dtype = outputs[kIndex0]->GetDtype();
+  input_dtype_ = inputs[kIndex0]->GetDtype();
+  if (input_dtype_ != padding_dtype) {
+    MS_LOG(ERROR) << "For MatrixDiagPartV3, the data type of x need be same with padding_value.";
+    return KRET_RESIZE_FAILED;
   }
-
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  k_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  if (input_dtype_ != output_dtype) {
+    MS_LOG(ERROR) << "For MatrixDiagPartV3, the data type of x need be same with output.";
+    return KRET_RESIZE_FAILED;
+  }
+  x_shape_ = inputs[kIndex0]->GetShapeVector();
+  k_shape_ = inputs[kIndex1]->GetShapeVector();
   size_t k_dim_size = k_shape_.size();
   const size_t k_dim_size_max = 1;
   if (k_dim_size > k_dim_size_max) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagPartV3, k_dim_size can not be greater than 1, received " << k_dim_size << ".";
+    MS_LOG(ERROR) << "For MatrixDiagPartV3, k_dim_size can not be greater than 1, received " << k_dim_size << ".";
+    return KRET_RESIZE_FAILED;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "MatrixDiagPartV3 does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
+    return KRET_RESIZE_FAILED;
   }
   kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
@@ -146,12 +158,12 @@ template <typename T>
 bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   // padding_value
-  size_t padding_value_num = static_cast<size_t>(inputs[kIndexPaddingValue]->size / sizeof(T));
+  size_t padding_value_num = static_cast<size_t>(inputs[kIndex2]->size / sizeof(T));
   if (!(padding_value_num == 1)) {
     MS_LOG(EXCEPTION) << "For MatrixDiagPartV3, padding_value must have only one element, received "
                       << padding_value_num << " elements. ";
   }
-  auto *padding_value_data = static_cast<T *>(inputs[kIndexPaddingValue]->addr);
+  auto *padding_value_data = static_cast<T *>(inputs[kIndex2]->addr);
   MS_EXCEPTION_IF_NULL(padding_value_data);
   T padding_value = padding_value_data[0];
   auto output_data = static_cast<T *>(outputs[0]->addr);
