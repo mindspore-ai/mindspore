@@ -1160,7 +1160,7 @@ class Tensor(Tensor_):
             ValueError: If length of shape of self tensor is less than the last dimension of shape of `indices`.
 
         Supported Platforms:
-            ``GPU`` ``GPU`` ``CPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
