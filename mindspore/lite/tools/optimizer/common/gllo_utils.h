@@ -134,7 +134,7 @@ bool IsMarkedTrainOp(const CNodePtr &cnode);
 
 int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
 
-bool IsQuantParameterNode(const PrimitiveCPtr &prim);
+bool IsQuantParameterNode(const PrimitivePtr &prim);
 
 void UpdateManager(const FuncGraphPtr &func_graph);
 
