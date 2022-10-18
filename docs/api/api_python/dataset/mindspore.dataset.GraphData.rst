@@ -6,9 +6,6 @@ mindspore.dataset.GraphData
     从共享文件或数据库中读取用于GNN训练的图数据集。
     支持读取图数据集Cora、Citeseer和PubMed。
 
-    关于如何将源数据集加载到mindspore中请参考 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/
-    master/advanced/dataset/augment_graph_data.html>`_。
-
     参数：
         - **dataset_file** (str) - 数据集文件路径。
         - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数，默认值：None，使用mindspore.dataset.config中配置的线程数。
@@ -36,7 +33,7 @@ mindspore.dataset.GraphData
         获取图的所有边。
 
         参数：
-            - **edge_type** (int) - 指定边的类型，在数据集转换为MindRecord格式时，需要指定 `edge_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/augment_graph_data.html>`_ 。
+            - **edge_type** (int) - 指定边的类型，在数据集转换为MindRecord格式时，需要指定 `edge_type` 的值，并在此API中对应使用。
 
         返回：
             numpy.ndarray，包含边的数组。
@@ -149,7 +146,7 @@ mindspore.dataset.GraphData
         获取图中的所有节点。
 
         参数：
-            - **node_type** (int) - 指定节点的类型。在数据集转换为MindRecord格式时，需要指定 `node_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/augment_graph_data.html>`_ 。
+            - **node_type** (int) - 指定节点的类型。在数据集转换为MindRecord格式时，需要指定 `node_type` 的值，并在此API中对应使用。
 
         返回：
             numpy.ndarray，包含节点的数组。

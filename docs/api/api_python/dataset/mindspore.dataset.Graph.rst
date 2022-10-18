@@ -44,7 +44,7 @@ mindspore.dataset.Graph
         获取图的所有边。
 
         参数：
-            - **edge_type** (str) - 指定边的类型，Graph初始化未指定 `edge_type` 时，默认值为'0'。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/augment_graph_data.html>`_ 。
+            - **edge_type** (str) - 指定边的类型，Graph初始化未指定 `edge_type` 时，默认值为'0'。
 
         返回：
             numpy.ndarray，包含边的数组。
@@ -157,7 +157,7 @@ mindspore.dataset.Graph
         获取图中的所有节点。
 
         参数：
-            - **node_type** (str) - 指定节点的类型。Graph初始化未指定 `node_type` 时，默认值为'0'。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/augment_graph_data.html>`_ 。
+            - **node_type** (str) - 指定节点的类型。Graph初始化未指定 `node_type` 时，默认值为'0'。
 
         返回：
             numpy.ndarray，包含节点的数组。

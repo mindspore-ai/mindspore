@@ -78,10 +78,6 @@ class GraphData:
     Reads the graph dataset used for GNN training from the shared file and database.
     Support reading graph datasets like Cora, Citeseer and PubMed.
 
-    About how to load raw graph dataset into MindSpore please
-    refer to `Loading Graph Dataset <https://www.mindspore.cn/tutorials/zh-CN/
-    master/advanced/dataset/augment_graph_data.html>`_.
-
     Args:
         dataset_file (str): One of file names in the dataset.
         num_parallel_workers (int, optional): Number of workers to process the dataset in parallel
