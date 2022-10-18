@@ -16,18 +16,25 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SQUARE_SUM_ALL_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SQUARE_SUM_ALL_CPU_KERNEL_H_
 
+#include <map>
 #include <vector>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/square_sum_all.h"
 
 namespace mindspore {
 namespace kernel {
-class SquareSumAllCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SquareSumAllCpuKernelMod : public NativeCpuKernelMod {
  public:
   SquareSumAllCpuKernelMod() = default;
   ~SquareSumAllCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -35,16 +42,13 @@ class SquareSumAllCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  std::string kernel_name_{};
   size_t input_size_;
   TypeId dtype_;
+  size_t dtype_size_;
   size_t batch_rank_{0};
   size_t num_batch_{1};
   size_t x_size_{1};
-
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
-
-  template <typename T>
-  void InitWorkspaceSize();
 
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

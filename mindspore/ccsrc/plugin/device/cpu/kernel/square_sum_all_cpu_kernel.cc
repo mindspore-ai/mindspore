@@ -35,47 +35,43 @@ void SquareSum(const T *in0, const T *in1, float *out0, float *out1, int64_t bat
     if (index < split) {
       auto ret = pow(static_cast<float>(in0[index]), kPowerSquareExp);
       size_t batch_index = index / batch_size;
-      out0[batch_index] = (index == 0) ? ret : out0[batch_index] + ret;
+      out0[batch_index] = out0[batch_index] + ret;
     } else {
       auto ret = pow(static_cast<float>(in1[index - split]), kPowerSquareExp);
       size_t batch_index = (index - split) / batch_size;
-      out1[batch_index] = (index == split) ? ret : out1[batch_index] + ret;
+      out1[batch_index] = out1[batch_index] + ret;
     }
   }
 }
 }  // namespace
 
-void SquareSumAllCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (common::AnfAlgo::HasNodeAttr(kBatchRank, kernel_node)) {
-    int64_t batch_rank = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kBatchRank);
+bool SquareSumAllCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_size_ = abstract::TypeIdSize(dtype_);
+  PrimitivePtr prim = base_operator->GetPrim();
+  if (prim->HasAttr(kBatchRank)) {
+    int64_t batch_rank = GetValue<int64_t>(prim->GetAttr(kBatchRank));
     batch_rank_ = LongToSize(batch_rank);
   }
+  return true;
+}
+
+int SquareSumAllCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs[0]->GetShapeVector();
+  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   num_batch_ =
     std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, size_t(1), std::multiplies<size_t>());
   x_size_ = std::accumulate(input_shape.begin() + batch_rank_, input_shape.end(), size_t(1), std::multiplies<size_t>());
-}
-
-template <typename T>
-void SquareSumAllCpuKernelMod::InitWorkspaceSize() {
-  (void)workspace_size_list_.emplace_back(sizeof(T));
-  (void)workspace_size_list_.emplace_back(sizeof(T));
-}
-
-void SquareSumAllCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  if (dtype_ == kNumberTypeFloat16) {
-    InitWorkspaceSize<float16>();
-  } else if (dtype_ == kNumberTypeFloat32) {
-    InitWorkspaceSize<float>();
-  } else {
-    MS_EXCEPTION(TypeError) << "Unsupported input data type for operator [" << kernel_name_
-                            << "]: " << TypeIdToType(dtype_)->ToString();
-  }
+  workspace_size_list_.emplace_back(num_batch_ * sizeof(float));
+  workspace_size_list_.emplace_back(num_batch_ * sizeof(float));
+  return KRET_OK;
 }
 
 bool SquareSumAllCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -107,10 +103,14 @@ bool SquareSumAllCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   T *output_1_addr = reinterpret_cast<T *>(outputs[1]->addr);
   float *workspace_0_addr = reinterpret_cast<float *>(workspace[0]->addr);
   float *workspace_1_addr = reinterpret_cast<float *>(workspace[1]->addr);
+  for (size_t i = 0; i < num_batch_; ++i) {
+    workspace_0_addr[i] = static_cast<float>(0.0);
+    workspace_1_addr[i] = static_cast<float>(0.0);
+  }
   auto task = std::bind(SquareSum<T>, input_0_addr, input_1_addr, workspace_0_addr, workspace_1_addr, x_size_,
                         std::placeholders::_1, std::placeholders::_2);
   ParallelLaunchAutoSearch(task, input_size_ * kSquareSumAllInputsNum, this, &parallel_search_info_);
-  for (size_t i = 0; i < num_batch_; i++) {
+  for (size_t i = 0; i < num_batch_; ++i) {
     output_0_addr[i] = static_cast<T>(workspace_0_addr[i]);
     output_1_addr[i] = static_cast<T>(workspace_1_addr[i]);
   }
