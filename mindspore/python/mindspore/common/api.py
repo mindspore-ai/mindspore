@@ -26,6 +26,7 @@ import inspect
 import importlib
 from collections import OrderedDict
 from functools import wraps
+import numpy as np
 import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
@@ -42,7 +43,6 @@ from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcas
 from mindspore._checkparam import Validator
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
-
 
 # store ms_function class compiled pipeline cache
 ms_compile_cache = set()
@@ -634,6 +634,7 @@ class _MsFunctionCompileContext:
     """
     ms_function compile status manager
     """
+
     def __init__(self):
         pass
 
@@ -1028,10 +1029,12 @@ class _CellGraphExecutor:
     Returns:
         Graph, return the result of pipeline running.
     """
+
     def __init__(self):
         # create needed graph by lazy mode
         self.is_init = False
         self.enable_tuple_broaden = False
+        self.obfuscate_config = None  # used for model's dynamic obfuscation
         self._graph_executor = GraphExecutor_.get_instance()
         self._graph_executor.set_py_exe_path(sys.executable)
         self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
@@ -1189,8 +1192,8 @@ class _CellGraphExecutor:
         return self._graph_executor.get_allreduce_fusion(real_phase)
 
     def __call__(self, obj, *args, phase='predict'):
-        if context.get_context("precompile_only") or\
-           (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
+        if context.get_context("precompile_only") or \
+                (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
             return None
         return self.run(obj, *args, phase=phase)
 
@@ -1241,6 +1244,21 @@ class _CellGraphExecutor:
             exec_id = exec_id + '.' + obj.arguments_key
         if self._graph_executor.has_compiled(exec_id) is False:
             return None
+        if self.obfuscate_config is not None:
+            if ('obf_ratio' not in self.obfuscate_config.keys()) or (
+                    'obf_password' not in self.obfuscate_config.keys()):
+                raise ValueError("'obf_ratio' and 'obf_password' must be in obfuscate_config.")
+            obf_password = self.obfuscate_config.get('obf_password')
+            if obf_password == 0:
+                append_password = 0
+            else:
+                seed_max = 2 ** 32 - 1
+                int_max = 2 ** 31 - 1
+                np.random.seed(obf_password % seed_max)
+                append_password = np.random.randint(int_max)
+                obf_password %= int_max
+            return self._graph_executor.get_obfuscate_func_graph_proto(exec_id, self.obfuscate_config['obf_ratio'],
+                                                                       obf_password, append_password)
         return self._graph_executor.get_func_graph_proto(exec_id, ir_type)
 
     def get_optimize_graph_proto(self, obj):

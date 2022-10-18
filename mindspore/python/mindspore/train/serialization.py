@@ -55,11 +55,11 @@ from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
-from mindspore.parallel._parallel_serialization import _convert_to_list, _convert_to_layout, _build_searched_strategy,\
+from mindspore.parallel._parallel_serialization import _convert_to_list, _convert_to_layout, _build_searched_strategy, \
     _restore_group_info_list
 from mindspore.train._utils import read_proto
-from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
-
+from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir
+from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
                      "Int32": mstype.int32, "UInt32": mstype.uint32, "Int64": mstype.int64, "UInt64": mstype.uint64,
@@ -384,6 +384,17 @@ def _check_append_dict(append_dict):
     return append_dict
 
 
+def _check_load_obfuscate(**kwargs):
+    if 'obf_func' in kwargs.keys():
+        customized_func = kwargs.get('obf_func')
+        if not callable(customized_func):
+            raise ValueError("obf_func must be a callable function, but got a {}.".format(type(customized_func)))
+        clean_funcs()
+        add_opaque_predicate(customized_func.__name__, customized_func)
+        return True
+    return False
+
+
 def load(file_name, **kwargs):
     """
     Load MindIR.
@@ -436,6 +447,9 @@ def load(file_name, **kwargs):
                          "please check whether the 'file_name' is correct.")
     file_name = os.path.realpath(file_name)
 
+    # set customized functions for dynamic obfuscation
+    obfuscated = _check_load_obfuscate(**kwargs)
+
     logger.info("Execute the process of loading mindir.")
     if 'dec_key' in kwargs.keys():
         dec_key = Validator.check_isinstance('dec_key', kwargs.get('dec_key'), bytes)
@@ -448,9 +462,9 @@ def load(file_name, **kwargs):
             else:
                 dec_mode = Validator.check_isinstance('dec_mode', kwargs.get('dec_mode'), str)
         graph = load_mindir(file_name, dec_key=dec_key, key_len=len(dec_key), dec_mode=dec_mode,
-                            decrypt=dec_func)
+                            decrypt=dec_func, obfuscated=obfuscated)
     else:
-        graph = load_mindir(file_name)
+        graph = load_mindir(file_name, obfuscated=obfuscated)
 
     if graph is None:
         if _is_cipher_file(file_name):
@@ -459,6 +473,152 @@ def load(file_name, **kwargs):
                                " are the same as when exported MindIR file, or check the file integrity.")
         raise RuntimeError("Load MindIR failed.")
     return graph
+
+
+def _check_param_type(param_config, key, target_type, requested):
+    """check type of parameters"""
+    if key in param_config:
+        if not isinstance(param_config[key], target_type):
+            raise TypeError("The type of {} must be {}, but got {}.".format(key, target_type, type(param_config[key])))
+        return param_config[key]
+    if requested:
+        raise ValueError("The parameter {} is requested, but not got.".format(key))
+    if key == "obf_password":
+        return 0
+    return None
+
+
+def _check_obfuscate_params(obf_config):
+    """check obfuscation parameters, including obf_password, obf_ratio, customized_func"""
+    if 'obf_password' not in obf_config.keys() and 'customized_func' not in obf_config.keys():
+        raise ValueError(
+            "At least one of 'obf_password' or 'customized_func' must be set in obf_config, but got None of them.")
+    obfuscate_type = _check_param_type(obf_config, "type", str, False)
+    if obfuscate_type not in (None, "dynamic"):
+        raise ValueError("Only 'dynamic' type is supported by now, but got {}.".format(obfuscate_type))
+    if ('obf_ratio' in obf_config) and isinstance(obf_config['obf_ratio'], str):
+        if obf_config['obf_ratio'] not in ["small", "medium", "large"]:
+            raise ValueError("'obf_ratio' can only be 'small', 'medium', 'large' or float, but got {}.".format(
+                obf_config['obf_ratio']))
+        ratio_dict = {"small": 0.1, "medium": 0.3, "large": 0.6}
+        obf_config['obf_ratio'] = ratio_dict.get(obf_config['obf_ratio'])
+    obf_ratio = _check_param_type(obf_config, "obf_ratio", float, True)
+    if (obf_ratio <= 0) or (obf_ratio > 1):
+        raise ValueError("'obf_ratio' must be in (0, 1] if it is a float, but got {}.".format(obf_config['obf_ratio']))
+    customized_funcs = []
+    if 'customized_func' in obf_config.keys():
+        if callable(obf_config['customized_func']):
+            customized_funcs.append(obf_config['customized_func'])
+        else:
+            raise TypeError(
+                "'customized_func' must be a function, but not got {}.".format(type(obf_config['customized_func'])))
+    obf_password = _check_param_type(obf_config, "obf_password", int, False)
+    int_64_max = 9223372036854775807
+    if obf_password > int_64_max:
+        raise ValueError(
+            "'obf_password' must be less or equal than int64 ({}), but got {}.".format(int_64_max, obf_password))
+    return obf_ratio, customized_funcs, obf_password
+
+
+def obfuscate_model(obf_config, **kwargs):
+    """
+    Obfuscate a model of MindIR format. Obfuscation means changing the struct of a network without affecting its
+    predict correctness. The obfuscated model can prevent attackers from stealing the model.
+
+    Args:
+        obf_config (dict): obfuscation config.
+
+            - type (str): The type of obfuscation, only 'dynamic' is supported until now.
+            - original_model_path (str): The path of MindIR format model that need to be obfuscated. If the original
+              model is encrypted, then enc_key and enc_mode should be provided.
+            - save_model_path (str): The path to save the obfuscated model.
+            - model_inputs (list(Tensor)): The inputs of the original model, the values of Tensor can be random, which
+              is the same as using `export()`.
+            - obf_ratio (float, str): The ratio of nodes in original model that would be obfuscated. `obf_ratio` should
+              be in range of (0, 1] or in ["small", "medium", "large"].
+            - customized_func (function): A python function used for customized function mode, which used for control
+              the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
+              function needs to ensure that its result is constant for any input. Users can refer to opaque
+              predicates. If customized_func is set, then it should be passed to `load()` interface when loading
+              obfuscated model.
+            - obf_password (int): A password used for password mode, which should be larger than zero. If
+              obf_password is set, then it should be passed to `nn.GraphCell()` interface when loading obfuscated
+              model. It should be noted that at least one of 'customized_func' or 'obf_password' should be set, and
+              'obf_password' mode would be applied if both of them are set.
+
+        kwargs (dict): Configuration options dictionary.
+
+            - enc_key (bytes): Byte type key used for encryption. The valid length is 16, 24, or 32.
+            - enc_mode (str): Specifies the encryption mode, to take effect when dec_key is set.
+              Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
+
+    Raises:
+        TypeError: If obf_config is not a dict.
+        ValueError: If enc_key is passed and enc_mode is not in ["AES-GCM", "AES-CBC"].
+        ValueError: If original_model_path is not provided in obf_config.
+        ValueError: If the model saved in original_model_path has been obfuscated.
+        ValueError: If save_model_path is not provided in obf_config.
+        ValueError: If obf_ratio is not provided in obf_config.
+        ValueError: If both customized_func and obf_password are not provided in obf_config.
+        ValueError: If both obf_password is not in (0, 9223372036854775807].
+
+    Examples:
+        >>> obf_config = {'original_model_path': "./net.mindir",
+        ...          'save_model_path': "./obf_net",
+        ...          'model_inputs': [input1, ],
+        ...          'obf_ratio': 0.1, 'obf_password': 173262358423}
+        >>> obfuscate_model(obf_config)
+        >>> obf_func = load("obf_net.mindir")
+        >>> obf_net = nn.GraphCell(obf_func, obf_password=173262358423)
+        >>> print(obf_net(input1).asnumpy())
+    """
+    if not isinstance(obf_config, dict):
+        raise TypeError("'obf_config' must be a dict, but got {}.".format(type(obf_config)))
+    file_path = _check_param_type(obf_config, "original_model_path", str, True)
+    saved_path = _check_param_type(obf_config, "save_model_path", str, True)
+    model_inputs = _check_param_type(obf_config, "model_inputs", list, True)
+    for item in model_inputs:
+        if not isinstance(item, Tensor):
+            raise TypeError("The item in 'model_inputs' must be Tensor, but got {}.".format(type(item)))
+    obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(obf_config)
+    if customized_funcs and obf_password > 0:
+        logger.warning("Although customized_func and obf_password are set, the 'obf_password' mode would be"
+                       "applied, remember to set obf_password when loading obfuscated model.")
+
+    if obf_password == 0:  # apply customized_func mode
+        clean_funcs()
+        for func in customized_funcs:
+            add_opaque_predicate(func.__name__, func)
+        append_password = 0
+    else:
+        seed_max = 2 ** 32 - 1
+        int_max = 2 ** 31 - 1
+        np.random.seed(obf_password % seed_max)
+        append_password = np.random.randint(int_max)
+        obf_password %= int_max
+
+    if 'enc_key' in kwargs.keys():
+        enc_key = Validator.check_isinstance('enc_key', kwargs.get('enc_key'), bytes)
+        enc_mode = "AES-GCM"
+        if 'enc_mode' in kwargs.keys():
+            enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
+            if enc_mode not in ["AES-GCM", "AES-CBC"]:
+                raise ValueError(
+                    "Only MindIR files that encrypted with 'AES-GCM' or 'AES-CBC' is supported for obfuscate_model(),"
+                    " but got {}.".format(enc_mode))
+        obf_graph = dynamic_obfuscate_mindir(file_name=file_path, obf_ratio=obf_ratio, obf_password=obf_password,
+                                             append_password=append_password, dec_key=enc_key, key_len=len(enc_key),
+                                             dec_mode=enc_mode)
+    else:
+        obf_graph = dynamic_obfuscate_mindir(file_name=file_path, obf_ratio=obf_ratio, obf_password=obf_password,
+                                             append_password=append_password)
+
+    obf_net = nn.GraphCell(obf_graph)
+    if obf_password != 0:
+        y_tensor = Tensor(np.ones((1, 1)).astype(np.int32))
+        append_y_tensor = Tensor(np.ones((1, 1)).astype(np.int32))
+        model_inputs += [y_tensor, append_y_tensor]
+    export(obf_net, *model_inputs, file_name=saved_path, file_format="MINDIR", **kwargs)
 
 
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None,
@@ -524,7 +684,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             np_type = tensor_to_np_type.get(data_type)
             ms_type = tensor_to_ms_type[data_type]
             if data_type == 'str':
-                str_length = int(len(data)/4)
+                str_length = int(len(data) / 4)
                 np_type = np_type + str(str_length)
             element_data = np.frombuffer(data, np_type)
             param_data_list.append(element_data)
@@ -549,7 +709,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     except BaseException as e:
         logger.critical("Failed to load the checkpoint file '%s'.", ckpt_file_name)
         raise ValueError(e.__str__() + "\nFor 'load_checkpoint', "
-                         "failed to load the checkpoint file {}.".format(ckpt_file_name)) from e
+                                       "failed to load the checkpoint file {}.".format(ckpt_file_name)) from e
 
     if not parameter_dict:
         raise ValueError(f"The loaded parameter dict is empty after filter or specify, please check whether "
@@ -617,10 +777,10 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
             err_info = "Failed to read the checkpoint file {}. The file may be encrypted or tempered with, " \
-                     "please pass in the correct 'dec_key' or check the file integrity.".format(ckpt_file_name)
+                       "please pass in the correct 'dec_key' or check the file integrity.".format(ckpt_file_name)
         else:
             err_info = "Failed to read the checkpoint file {}. May not have permission to read it, please check" \
-                     " the correct of the file.".format(ckpt_file_name)
+                       " the correct of the file.".format(ckpt_file_name)
         logger.error(err_info)
         raise ValueError(err_info) from e
     return checkpoint_list
@@ -885,6 +1045,20 @@ def export(net, *inputs, file_name, file_format, **kwargs):
               - For details of using the customized encryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
 
+            - obf_config (dict): obfuscation config.
+
+              - type (str): The type of obfuscation, only 'dynamic' is supported until now.
+              - obf_ratio (float, str): The ratio of nodes in original model that would be obfuscated. `obf_ratio`
+                should be in range of (0, 1] or in ["small", "medium", "large"].
+              - customized_func (function): A python function used for customized function mode, which used for control
+                the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
+                function needs to ensure that its result is constant for any input. Users can refer to opaque
+                predicates. If customized_func is set, then it should be passed to `load()` interface when loading
+                obfuscated model.
+              - obf_password (int): A password used for password mode, which should be larger than zero. If
+                obf_password is set, then it should be passed to `nn.GraphCell()` interface when loading obfuscated
+                model. It should be noted that at least one of 'customized_func' or 'obf_password' should be set, and
+                'obf_password' mode would be applied if both of them are set.
     Examples:
         >>> import mindspore as ms
         >>> import numpy as np
@@ -920,11 +1094,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     file_name = os.path.realpath(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
-        enc_key, enc_mode = _check_key_mode_type(file_format, **kwargs)
-        dataset = kwargs.get('dataset')
-        _export(net, file_name, file_format, *inputs, enc_key=enc_key, enc_mode=enc_mode, dataset=dataset)
-    else:
-        _export(net, file_name, file_format, *inputs, **kwargs)
+        kwargs['enc_key'], kwargs['enc_mode'] = _check_key_mode_type(file_format, **kwargs)
+    _export(net, file_name, file_format, *inputs, **kwargs)
 
 
 def _export(net, file_name, file_format, *inputs, **kwargs):
@@ -1150,13 +1321,40 @@ def _cell_info(net, *inputs):
                                     do_convert=False, auto_parallel_mode=net._auto_parallel_mode)
     # pylint: disable=protected-access
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
+    # clean obfuscation config to prevent the next call
+    _executor.obfuscate_config = None
 
     net_dict = net.parameters_dict()
     return mindir_stream, net_dict
 
 
+def _set_obfuscate_config(**kwargs):
+    """Set obfuscation config for executor."""
+    logger.warning("Obfuscate model.")
+    if 'enc_mode' in kwargs.keys():
+        enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
+        if enc_mode not in ["AES-GCM", "AES-CBC"]:
+            raise ValueError(
+                "Only MindIR files that encrypted with 'AES-GCM' or 'AES-CBC' is supported for obfuscation,"
+                "but got {}.".format(enc_mode))
+    obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(kwargs.get('obf_config'))
+    if customized_funcs and obf_password > 0:
+        logger.warning("Although customized_func and obf_password are set, the 'obf_password' mode would be"
+                       "applied, remember to set obf_password when loading obfuscated model.")
+
+    if obf_password == 0:  # apply customized_func mode
+        clean_funcs()
+        for func in customized_funcs:
+            add_opaque_predicate(func.__name__, func)
+    _executor.obfuscate_config = {'obf_ratio': obf_ratio, 'obf_password': obf_password}
+
+
 def _save_mindir(net, file_name, *inputs, **kwargs):
     """Save MindIR format file."""
+    # set obfuscate configs
+    if 'obf_config' in kwargs.keys():
+        _set_obfuscate_config(**kwargs)
+
     model = mindir_model()
     if not isinstance(net, nn.Cell):
         mindir_stream, net_dict = _msfunc_info(net, *inputs)
@@ -1246,6 +1444,7 @@ def _save_dataset_to_mindir(model, dataset):
 
 def quant_mode_manage(func):
     """Inherit the quant_mode in old version."""
+
     @functools.wraps(func)
     def warpper(network, *inputs, file_format, **kwargs):
         if 'quant_mode' not in kwargs:
@@ -1744,8 +1943,8 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                 logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
                 raise RuntimeError(e.__str__() + f"\nFor 'load_distributed_checkpoint', failed to load opt shard slice"
-                                   f" in load distributed checkpoint for {param.name}. Data shape is "
-                                   f"{split_param.data.shape} and group is {opt_shard_group}.") from e
+                                                 f" in load distributed checkpoint for {param.name}. Data shape is "
+                                                 f"{split_param.data.shape} and group is {opt_shard_group}.") from e
             split_param = Parameter(Tensor(data_slice), param.name,
                                     split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param

@@ -56,6 +56,7 @@
 #include "ops/grad/max_pool_grad_with_argmax.h"
 #include "ops/max_pool_with_argmax.h"
 #include "ops/mirror_pad.h"
+#include "ops/opaquePredicate.h"
 
 namespace mindspore {
 namespace abstract {
@@ -323,6 +324,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimIdentity, R{InferImplIdentity, nullptr, true}},
     {prim::kPrimLoad, R{InferImplLoad, nullptr, true}},
     {prim::kPrimMutable, R{InferImplMutable, nullptr, true}},
+    {prim::kPrimOpaquePredicate, R{ops::OpaquePredicateInfer, nullptr, true}},
     // Set impl to null as it will use PartialEvaluator;
     {prim::kPrimPartial, R{nullptr, nullptr, true}},
     {prim::kPrimEnvironCreate, R{InferImplEnvironCreate, nullptr, true}},

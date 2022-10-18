@@ -26,7 +26,7 @@ from mindspore.train.amp import build_train_network
 from mindspore.train.loss_scale_manager import LossScaleManager, FixedLossScaleManager, DynamicLossScaleManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, export, \
     load, parse_print, build_searched_strategy, merge_sliced_parameter, load_distributed_checkpoint, \
-    async_ckpt_thread_status, restore_group_info_list, convert_model
+    async_ckpt_thread_status, restore_group_info_list, convert_model, obfuscate_model
 from mindspore.train.callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, SummaryCollector, \
     CheckpointConfig, RunContext, LearningRateScheduler, SummaryLandscape, \
     History, LambdaCallback, ReduceLROnPlateau, EarlyStopping, OnRequestExit, BackupAndRestore
@@ -39,7 +39,7 @@ __all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset", "bui
            "FixedLossScaleManager", "DynamicLossScaleManager", "save_checkpoint", "load_checkpoint",
            "load_param_into_net", "export", "load", "parse_print", "build_searched_strategy", "merge_sliced_parameter",
            "load_distributed_checkpoint", "async_ckpt_thread_status", "restore_group_info_list", "convert_model",
-           "data_sink"]
+           "data_sink", "obfuscate_model"]
 __all__.extend(callback.__all__)
 __all__.extend(summary.__all__)
 __all__.extend(train_thor.__all__)
