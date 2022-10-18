@@ -30,15 +30,27 @@ constexpr size_t kWorkSpaceIndex = 2;
 bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int, int>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
+  if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t, int64_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float, int>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeInt8) {
+    LaunchKernel<int8_t, int32_t>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeInt16) {
+    LaunchKernel<int16_t, int32_t>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeInt32) {
+    LaunchKernel<int32_t, int32_t>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeUInt8) {
+    LaunchKernel<uint8_t, int32_t>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeUInt16) {
+    LaunchKernel<uint16_t, int32_t>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernel<float16, int32_t>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeFloat32) {
+    LaunchKernel<float, int32_t>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double, int32_t>(inputs, workspace, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input must be float16, float32, int32, or int64, but got "
+                      << "', the dtype of input must be float16, 32, 64, (U)Int8, 16, Int 32 or Int 64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;

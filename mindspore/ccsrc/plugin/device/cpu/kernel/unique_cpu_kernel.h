@@ -60,6 +60,11 @@ inline size_t ToSize(int64_t input) {
 }
 
 template <>
+inline size_t ToSize(float16 input) {
+  return FloatToSize(static_cast<float>(input));
+}
+
+template <>
 inline size_t ToSize(float input) {
   return FloatToSize(input);
 }
@@ -90,13 +95,19 @@ inline bool NotEqual(float left, float right) {
   return abs(left - right) > kEps;
 }
 
+template <>
+inline bool NotEqual(double left, double right) {
+  const double kEps = 1e-30;
+  return abs(left - right) > kEps;
+}
+
 template <typename DataType>
 size_t BucketId(DataType input, size_t bucket_num) {
-  if (input < 0) {
+  if (static_cast<double>(input) < 0.0) {
     input = -input;
   }
   size_t data = ToSize<DataType>(input);
-  if (bucket_num < 1) {
+  if (static_cast<double>(bucket_num) < 1.0) {
     return data;
   }
   return data % bucket_num;
@@ -167,9 +178,16 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
       KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32)};
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+    };
     return support_list;
   }
 

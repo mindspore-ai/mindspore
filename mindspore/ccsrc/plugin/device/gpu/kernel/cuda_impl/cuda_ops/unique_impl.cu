@@ -71,8 +71,23 @@ template CUDA_LIB_EXPORT int CalUnique<float, int>(const float *input, int num_e
 template CUDA_LIB_EXPORT int CalUnique<half, int>(const half *input, int num_elements, int *input_index,
                                                   int *sorted_index, half *output, int *index,
                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalUnique<double, int>(const double *input, int num_elements, int *input_index,
+                                                    int *sorted_index, double *output, int *index,
+                                                    cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT int CalUnique<int, int>(const int *input, int num_elements, int *input_index,
                                                  int *sorted_index, int *output, int *index, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalUnique<int8_t, int>(const int8_t *input, int num_elements, int *input_index,
+                                                    int *sorted_index, int8_t *output, int *index,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalUnique<int16_t, int>(const int16_t *input, int num_elements, int *input_index,
+                                                     int *sorted_index, int16_t *output, int *index,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalUnique<uint8_t, int>(const uint8_t *input, int num_elements, int *input_index,
+                                                     int *sorted_index, uint8_t *output, int *index,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalUnique<uint16_t, int>(const uint16_t *input, int num_elements, int *input_index,
+                                                      int *sorted_index, uint16_t *output, int *index,
+                                                      cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT int CalUnique<int64_t, int64_t>(const int64_t *input, int num_elements, int64_t *input_index,
                                                          int64_t *sorted_index, int64_t *output, int64_t *index,
                                                          cudaStream_t cuda_stream);
