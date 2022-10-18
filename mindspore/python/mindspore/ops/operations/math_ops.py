@@ -7179,7 +7179,7 @@ class Qr(Primitive):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> qr_op = ops.Qr(full_matrices=False)

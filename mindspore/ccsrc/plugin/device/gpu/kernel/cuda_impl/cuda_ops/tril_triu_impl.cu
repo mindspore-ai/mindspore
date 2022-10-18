@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
+#include <complex.h>
 #include "tril_triu_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename R>
+using Complex = mindspore::utils::Complex<R>;
 
 template <typename T>
 __global__ void Tril(const size_t size, const T *input, const int diagonal, const int64_t matrix_row,
@@ -36,6 +41,36 @@ __global__ void Triu(const size_t size, const T *input, const int diagonal, cons
     int row = pos % matrix_size / matrix_col;
     int col = pos % matrix_size % matrix_col;
     output[pos] = row + diagonal <= col ? input[pos] : static_cast<T>(0.0);
+  }
+  return;
+}
+
+template <>
+__global__ void Triu(const size_t size, const Complex<float> *input, const int diagonal, const int64_t matrix_row,
+                     const int64_t matrix_col, Complex<float> *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+    int matrix_size = matrix_row * matrix_col;
+    int row = pos % matrix_size / matrix_col;
+    int col = pos % matrix_size % matrix_col;
+    float rs_real = row + diagonal <= col ? input[pos].real() : static_cast<float>(0.0);
+    float rs_imag = row + diagonal <= col ? input[pos].imag() : static_cast<float>(0.0);
+    output[pos].real(rs_real);
+    output[pos].imag(rs_imag);
+  }
+  return;
+}
+
+template <>
+__global__ void Triu(const size_t size, const Complex<double> *input, const int diagonal, const int64_t matrix_row,
+                     const int64_t matrix_col, Complex<double> *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+    int matrix_size = matrix_row * matrix_col;
+    int row = pos % matrix_size / matrix_col;
+    int col = pos % matrix_size % matrix_col;
+    double rs_real = row + diagonal <= col ? input[pos].real() : static_cast<double>(0.0);
+    double rs_imag = row + diagonal <= col ? input[pos].imag() : static_cast<double>(0.0);
+    output[pos].real(rs_real);
+    output[pos].imag(rs_imag);
   }
   return;
 }
@@ -148,6 +183,15 @@ template
 CUDA_LIB_EXPORT void CalTriu<double>(const size_t size, const double *input, const int diagonal,
                                      const int64_t matrix_row, const int64_t matrix_col, double *output,
                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template
+CUDA_LIB_EXPORT void CalTriu<Complex<float>>(const size_t size, const Complex<float> *input, const int diagonal,
+                                             const int64_t matrix_row, const int64_t matrix_col, Complex<float> *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template
+CUDA_LIB_EXPORT void CalTriu<Complex<double>>(const size_t size, const Complex<double> *input, const int diagonal,
+                                              const int64_t matrix_row, const int64_t matrix_col,
+                                              Complex<double> *output, const uint32_t &device_id,
+                                              cudaStream_t cuda_stream);
 template
 CUDA_LIB_EXPORT void CalTriu<bool>(const size_t size, const bool *input, const int diagonal,
                                    const int64_t matrix_row, const int64_t matrix_col, bool *output,
