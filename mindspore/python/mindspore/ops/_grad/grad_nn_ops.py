@@ -66,11 +66,11 @@ def bias_add_gradgrad_helper_dynamic(shape, bias_shape, data_format):
     """Helper function of BiasGradGrad to calculate expanded shape(dynamic version)."""
     if data_format == "NCHW":
         expanded_shape = P.Concat(0)((P.OnesLike()(shape[:1]), bias_shape, P.OnesLike()(shape[2:])))
-        tile_mults = P.Concat(0)((shape[:1], [1], shape[2:]))
+        tile_mults = P.Concat(0)((shape[:1], Tensor([1], dtype=mstype.int64), shape[2:]))
     else:
         expanded_shape = P.Concat(0)((P.OnesLike()(shape[:-1]), bias_shape))
-        tile_mults = P.Concat(0)((shape[:-1], [1]))
-    return tuple(expanded_shape), tuple(tile_mults)
+        tile_mults = P.Concat(0)((shape[:-1], Tensor([1], dtype=mstype.int64)))
+    return expanded_shape, tile_mults
 
 
 @bprop_getters.register(G.BiasAddGrad)
@@ -83,15 +83,15 @@ def get_bprop_bias_add_grad(self):
         reshape = P.Reshape()
         tile = P.Tile()
         dyn_shape = P.TensorShape()
-        if is_shape_unknown(dy) or is_shape_unknown(dout):
+        dy_shape = dy.shape
+        dout_shape = dout.shape
+        if is_shape_unknown(dy_shape) or is_shape_unknown(dout_shape):
             dy_shape = dyn_shape(dy)
             dout_shape = dyn_shape(dout)
             expanded_shape, tile_mults = bias_add_gradgrad_helper_dynamic(dy_shape, dout_shape, data_format)
-            expanded_grad = reshape(dout, create_tensor_by_element(expanded_shape))
-            tiled_grad = tile(expanded_grad, create_tensor_by_element(tile_mults))
+            expanded_grad = reshape(dout, expanded_shape)
+            tiled_grad = tile(expanded_grad, tile_mults)
         else:
-            dy_shape = dy.shape
-            dout_shape = dout.shape
             expanded_shape, tile_mults = bias_add_gradgrad_helper(dy_shape, dout_shape, data_format)
             expanded_grad = reshape(dout, expanded_shape)
             tiled_grad = tile(expanded_grad, tile_mults)

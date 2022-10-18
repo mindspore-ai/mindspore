@@ -95,9 +95,6 @@ bool TileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
                          [](const int64_t &value) { return static_cast<int>(value); });
   }
-  if (input_num == kTileDynamicInputsNum) {
-    multiple_shape = inputs[kIndex1]->GetShapeVector();
-  }
 
   launch_map_[kNumberTypeInt8] = &TileCpuKernelMod::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TileCpuKernelMod::LaunchKernel<int16_t>;
@@ -129,6 +126,9 @@ int TileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = outputs[kIndex0]->GetShapeVector();
+  if (input_num == kTileDynamicInputsNum) {
+    multiple_shape = inputs[kIndex1]->GetShapeVector();
+  }
   return KRET_OK;
 }
 

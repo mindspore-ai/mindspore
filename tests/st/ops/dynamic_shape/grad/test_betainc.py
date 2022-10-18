@@ -32,10 +32,9 @@ class NetBetainc(nn.Cell):
 
 def grad_dyn_case(is_dynamic_rank):
     test_dynamic = TestDynamicGrad(NetBetainc())
-    shape = (3, 3)
-    a = Tensor(np.random.randint(low=1, high=10, size=shape), mstype.float32)
-    b = Tensor(np.random.randint(low=1, high=10, size=shape), mstype.float32)
-    x = Tensor(np.random.randint(low=1, high=10, size=shape), mstype.float32)
+    a = Tensor(np.random.rand(), mstype.float32)
+    b = Tensor(np.random.rand(), mstype.float32)
+    x = Tensor(np.random.rand(), mstype.float32)
 
     test_dynamic.test_dynamic_grad_net([a, b, x], is_dynamic_rank)
 
