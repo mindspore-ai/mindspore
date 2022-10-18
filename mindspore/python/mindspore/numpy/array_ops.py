@@ -25,7 +25,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.nn import Cell
 
 from mindspore.numpy.utils import _convert_list_tensor_to_tuple_tensor, _expand, _broadcast_to_shape, \
-    _check_input_tensor, _broadcast_to, _to_tensor, _callable, _dyn_infer_out_shape
+    _check_input_tensor, _broadcast_to, _to_tensor, _callable
 from mindspore.numpy.utils_const import _check_axes_range, _check_start_normalize, \
     _raise_type_error, _raise_value_error, _infer_out_shape, _empty, _promote, \
     _check_same_type, _check_axis_valid, _add_unit_axes, _broadcast_tuples, \
@@ -722,7 +722,7 @@ def where(condition, x=None, y=None):
         # tiling with bool is not supported on GPU
         condition = F.cast(condition, mstype.float32)
     dynamic = is_shape_unknown(F.shape(condition)) or is_shape_unknown(F.shape(x)) or is_shape_unknown(F.shape(y))
-    # broadcasts input tensors
+    # As select op currently does not support broadcast, broadcasts input tensors
     if not dynamic:
         shape_out = _infer_out_shape(F.shape(condition),
                                      F.shape(x), F.shape(y))
@@ -730,10 +730,10 @@ def where(condition, x=None, y=None):
         x = _broadcast_to_shape(x, shape_out)
         y = _broadcast_to_shape(y, shape_out)
     else:
-        dyn_shapes = []
-        for tensor in [condition, x, y]:
-            dyn_shapes.append(P.TensorShape()(tensor))
-        shape_out = _dyn_infer_out_shape(dyn_shapes)
+        # Get the broadcast shape through broadcast calculation
+        add_x_y = x + y
+        add_out = condition + F.cast(add_x_y, condition.dtype)
+        shape_out = P.TensorShape()(add_out)
         condition = DynamicBroadcastTo()(condition, shape_out)
         x = DynamicBroadcastTo()(x, shape_out)
         y = DynamicBroadcastTo()(y, shape_out)
