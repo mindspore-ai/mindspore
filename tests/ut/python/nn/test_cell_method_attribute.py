@@ -71,20 +71,6 @@ def test_construct_require_self():
     assert "self" in str(info.value)
 
 
-def test_init_require_self():
-    """
-    Feature: Support use Cell method and attribute.
-    Description: Test function __init__ require self.
-    Expectation: No exception.
-    """
-    class InitRequireSelf(nn.Cell):
-        def __init__():
-            pass
-
-    with pytest.raises(TypeError):
-        InitRequireSelf()
-
-
 def test_construct_exist():
     """
     Feature: Support use Cell method and attribute.

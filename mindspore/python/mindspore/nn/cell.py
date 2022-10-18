@@ -329,9 +329,6 @@ class Cell(Cell_):
         if context.get_context is not None and context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.del_cell(self)
 
-        init_inputs_names = self.__init__.__code__.co_varnames
-        if "self" not in init_inputs_names:
-            raise TypeError("For 'Cell', the method '__init__' must have parameter 'self'. ")
         # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
         # here using pop(id(self), None) to avoid KeyError exception
         cells_compile_cache.pop(id(self), None)
