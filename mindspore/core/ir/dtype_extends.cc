@@ -17,6 +17,7 @@
 #include "ir/dtype.h"
 #include <cstdlib>
 #include <algorithm>
+#include "mindapi/base/type_id.h"
 #include "utils/log_adapter.h"
 #include "abstract/abstract_value.h"
 
@@ -39,7 +40,8 @@ std::string GetExcptionTypeString(TypeId id) {
                                                                       {kNumberTypeInt4, "Int4"},
                                                                       {kNumberTypeGLUInt, "GLUInt"},
                                                                       {kObjectTypeMonad, "Monad"},
-                                                                      {kObjectTypeCSRTensorType, "CSRTensor"}};
+                                                                      {kObjectTypeCSRTensorType, "CSRTensor"},
+                                                                      {kObjectTypeMapTensorType, "MapTensor"}};
 
   auto it = type_id_to_string.find(id);
   std::string type = "";

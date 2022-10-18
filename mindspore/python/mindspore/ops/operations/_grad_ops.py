@@ -3838,3 +3838,23 @@ class CholeskyGrad(Primitive):
     def __init__(self):
         """Initialize CholeskyGrad"""
         self.init_prim_io_names(inputs=['x', 'grad'], outputs=['y'])
+
+
+class MapTensorGetGrad(Primitive):
+    """
+    Computes gradients for MapTensorGet operation.
+
+    Inputs:
+        - **map_tensor** (MapTensor) - The input `map_tensor` of the forward operator MapTensorGet.
+        - **key_tensor** (Tensor) - The input `key_tensor` of the forward operator MapTensorGet.
+        - **default_value** (Scalar) - The input `default_value` of the forward operator MapTensorGet.
+        - **grad** (Tensor) - The grad value according the forward operator MapTensorGet.
+
+    Outputs:
+        - **output** (MapTensor) -  MapTensor with grad values.
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MapTensorGetGrad"""
+        self.init_prim_io_names(inputs=['map_tensor', 'key_tensor', 'default_value', 'grad'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)

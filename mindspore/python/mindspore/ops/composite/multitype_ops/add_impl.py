@@ -513,4 +513,20 @@ def _add_tuple_cootensor(x, y):
     x = COOTensor(x[0], x[1], y.shape)
     return _add_cootensor_cootensor(x, y)
 
+
+@_add_backward.register("MapTensor", "MapTensor")
+def _map_tensor_add_backward(x, y):
+    """
+   Adds MapTensors for backward.
+
+   Args:
+       x (MapTensor): x
+       y (MapTensor): y
+
+   Returns:
+       MapTensor.
+   """
+    return x
+
+
 hyper_add = base.HyperMap(_add_backward)

@@ -362,9 +362,11 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeMapTensorType,
      {
-       {"get", std::string("map_tensor_get")},      // C.map_tensor_get
-       {"put", std::string("map_tensor_put")},      // C.map_tensor_put
-       {"erase", std::string("map_tensor_erase")},  // C.map_tensor_erase
+       {"get", std::string("map_tensor_get")},                // C.map_tensor_get
+       {"put", std::string("map_tensor_put")},                // C.map_tensor_put
+       {"erase", std::string("map_tensor_erase")},            // C.map_tensor_erase
+       {"get_keys", std::string("map_tensor_get_keys")},      // C.map_tensor_get_keys
+       {"get_values", std::string("map_tensor_get_values")},  // C.map_tensor_get_values
      }},
     {kObjectTypeJTagged, {}},
     {kObjectTypeSymbolicKeyType, {}},

@@ -65,6 +65,35 @@ class MapTensorErase(Primitive):
         self.init_prim_io_names(inputs=['map_tensor', 'key_tensor'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
 
+
+class MapTensorGetKeys(Primitive):
+    """
+    Get all keys as a tensor.
+    """
+    __mindspore_signature__ = (sig.make_sig('map_tensor'),)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MapTensorGetKeys"""
+        self.init_prim_io_names(inputs=['map_tensor'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
+
+
+class MapTensorGetValues(Primitive):
+    """
+    Get all keys as a tensor.
+    """
+    __mindspore_signature__ = (sig.make_sig('map_tensor'),)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MapTensorGetValues"""
+        self.init_prim_io_names(inputs=['map_tensor'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
+
+
 get = MapTensorGet()
 put = MapTensorPut()
 erase = MapTensorErase()
+get_keys = MapTensorGetKeys()
+get_values = MapTensorGetValues()

@@ -18,6 +18,7 @@ import mindspore.nn as nn
 from mindspore import context, Tensor, Parameter, ParameterTuple
 from mindspore.experimental import MapParameter
 from mindspore.common.initializer import initializer
+from mindspore.ops import composite as C
 
 
 def test_basic_operations():
@@ -73,6 +74,9 @@ def test_simple_graph_compile():
             value4 = self.m[self.key]
             self.m[self.key] = value4
             self.m.erase(self.key)
+            keys = self.m.get_keys()
+            values = self.m.get_values()
+            self.m.put(keys, values)
             return self.p + value1 + value2 + value3 + value4
 
     context.set_context(mode=context.GRAPH_MODE)
@@ -126,3 +130,40 @@ def test_map_parameter_clone():
     assert clone_same.value_dtype == m.value_dtype
     assert clone_same.value_shape == m.value_shape
     assert clone_same.default_value == 'zeros'
+
+
+def test_grad_net():
+    """
+    Feature: MapParameter
+    Description: Test grad graph compiled with MapParameter.
+    Expectation: Grad graph for MapParameter created without exceptions.
+    """
+    class MyNet(nn.Cell):
+        def __init__(self):
+            nn.Cell.__init__(self)
+            self.p = Parameter(initializer('ones', (2, 3), ms.float32))
+            self.m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+            self.key = Tensor([1, 2], dtype=ms.int32)
+
+        def construct(self, x):
+            a = self.m.get(self.key, 0.1)
+            self.m.erase(self.key)
+            return x * a
+
+    class GradNet(nn.Cell):
+        def __init__(self, network):
+            super(GradNet, self).__init__()
+            self.grad_by_list = C.GradOperation(get_by_list=True)
+            self.network = network
+            self.weights = ParameterTuple(network.trainable_params())
+
+        def construct(self, *inputs):
+            gout = self.grad_by_list(self.network, self.weights)(*inputs)
+            return gout
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = MyNet()
+    grad = GradNet(net)
+    t = initializer('ones', (2, 3), ms.float32)
+    t = t.init_data()
+    grad(t)
