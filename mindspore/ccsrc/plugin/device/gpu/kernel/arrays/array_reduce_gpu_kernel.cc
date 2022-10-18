@@ -209,7 +209,8 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (inputs.size() == kDynamicAxisInputNum) {
     if (AnfAlgo::IsDynamicShapeSkipExecute(kernel_name_, inputs[kIndex1]->GetShapeVector())) {
       need_skip_execute_ = true;
-      InitCudnnResource();
+      // As size of input_size_list_ is equal to size of inputs, input_size_list_[0] is safe.
+      input_size_ = input_size_list_[0];
       return KRET_OK;
     }
     if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &attr_axis)) {

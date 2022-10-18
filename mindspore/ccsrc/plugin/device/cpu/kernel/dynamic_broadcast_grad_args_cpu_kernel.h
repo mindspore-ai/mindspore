@@ -69,6 +69,8 @@ class DynamicBroadcastGradientArgsCpuKernelMod : public NativeCpuKernelMod,
   size_t r0_size_;
   size_t r1_size_;
   std::vector<KernelTensorPtr> outputs_;
+  bool is_null_input0_{false};
+  bool is_null_input1_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

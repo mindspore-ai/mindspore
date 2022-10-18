@@ -56,12 +56,17 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
   auto y_shape0 = CheckInputsAndGetShape(input_args[1], prim_name);
 
   ShapeVector shape{abstract::Shape::kShapeDimAny};
-  if (x_shape0 < 0 && y_shape0 < 0) {
-    auto out_shape = std::make_shared<abstract::Shape>(shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  // DynamicBroadcastGradientArgs is a compute depend op
+  if (x_shape0 >= 0 && y_shape0 >= 0) {
+    min_shape = {0};
+    max_shape = {x_shape0 > y_shape0 ? x_shape0 : y_shape0};
+    // Currently, if the max_shape is 0, there may be some problems
+    max_shape[0] = max_shape[0] != 0 ? max_shape[0] : 1;
   }
 
-  auto out_shape = std::make_shared<abstract::Shape>(shape);
+  auto out_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }
 }  // namespace

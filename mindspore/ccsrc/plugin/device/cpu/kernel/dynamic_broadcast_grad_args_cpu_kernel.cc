@@ -100,23 +100,31 @@ template <typename T, typename S>
 bool DynamicBroadcastGradientArgsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                             const std::vector<kernel::AddressPtr> &,
                                                             const std::vector<kernel::AddressPtr> &outputs) {
-  const T *s0_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const T *s1_addr = reinterpret_cast<T *>(inputs[1]->addr);
+  std::vector<size_t> ranks = {input_size_list_[0] / sizeof(T), input_size_list_[1] / sizeof(T)};
+  std::vector<std::vector<T>> reverse_shapes(kDynamicBroadcastGradientArgsInputsNum);
+  if (!is_null_input0_) {
+    const T *s0_addr = reinterpret_cast<T *>(inputs[0]->addr);
+    for (size_t j = 0; j < ranks[0]; j++) {
+      reverse_shapes[0].push_back(s0_addr[ranks[0] - j - 1]);
+    }
+  } else {
+    ranks[0] = 0;
+  }
+  if (!is_null_input1_) {
+    const T *s1_addr = reinterpret_cast<T *>(inputs[1]->addr);
+    for (size_t j = 0; j < ranks[1]; j++) {
+      reverse_shapes[1].push_back(s1_addr[ranks[1] - j - 1]);
+    }
+  } else {
+    ranks[1] = 0;
+  }
   S *r0_addr = reinterpret_cast<S *>(outputs[0]->addr);
   S *r1_addr = reinterpret_cast<S *>(outputs[1]->addr);
-  std::vector<size_t> ranks = {input_size_list_[0] / sizeof(T), input_size_list_[1] / sizeof(T)};
 
   std::vector<std::vector<T>> grad_reduce_idx(kDynamicBroadcastGradientArgsInputsNum);
   size_t max_rank = ranks[0] > ranks[1] ? ranks[0] : ranks[1];
-  std::vector<std::vector<T>> reverse_shapes(kDynamicBroadcastGradientArgsInputsNum);
-  for (size_t j = 0; j < ranks[0]; j++) {
-    reverse_shapes[0].push_back(s0_addr[ranks[0] - j - 1]);
-  }
   if (reverse_shapes[0].size() < max_rank) {
     reverse_shapes[0].resize(max_rank, 1);
-  }
-  for (size_t j = 0; j < ranks[1]; j++) {
-    reverse_shapes[1].push_back(s1_addr[ranks[1] - j - 1]);
   }
   if (reverse_shapes[1].size() < max_rank) {
     reverse_shapes[1].resize(max_rank, 1);
@@ -165,7 +173,10 @@ int DynamicBroadcastGradientArgsCpuKernelMod::Resize(const BaseOperatorPtr &base
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return static_cast<int>(KRET_RESIZE_FAILED);
   }
-  // get input_shape
+  auto input_0_shape = inputs[0]->GetShapeVector();
+  auto input_1_shape = inputs[1]->GetShapeVector();
+  is_null_input0_ = CHECK_NULL_INPUT(input_0_shape);
+  is_null_input1_ = CHECK_NULL_INPUT(input_1_shape);
   outputs_ = outputs;
 
   return static_cast<int>(KRET_OK);
