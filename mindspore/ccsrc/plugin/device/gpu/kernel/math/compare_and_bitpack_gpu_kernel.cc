@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <memory>
 #include "include/curand.h"
-#include "mindspore/core/ops/compareAndBitpack.h"
+#include "mindspore/core/ops/compare_and_bitpack.h"
 #include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/compare_and_bitpack_impl.cuh"
 #include "include/common/utils/anfalgo.h"

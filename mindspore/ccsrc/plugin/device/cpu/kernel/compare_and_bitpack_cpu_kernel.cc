@@ -25,69 +25,19 @@ constexpr size_t kCompareAndBitpackInputsNum = 2;
 constexpr size_t kCompareAndBitpackOutputsNum = 1;
 }  // namespace
 
-void CompareAndBitpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  input0_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  input1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  if (input1_shape_.size() != 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input[threshold] must be 0D"
-                             << ", but got shape " << Vector2Str(input1_shape_);
-  }
-
-  if (input0_shape_.size() == 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input[x] must not be 0D"
-                             << ", but got shape " << Vector2Str(input0_shape_);
-  }
-
-  int64_t last_dim_index = input0_shape_[input0_shape_.size() - 1];
-  int32_t divisible_num = 8;
-  if (last_dim_index % divisible_num != 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the inner dimension of input[x] should be divisible by 8"
-                             << ", but got shape: " << Vector2Str(input0_shape_);
-  }
-}
-
-bool CompareAndBitpackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool CompareAndBitpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCompareAndBitpackInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCompareAndBitpackOutputsNum, kernel_name_);
-  uint32_t res = true;
-  switch (dtype_) {
-    case kNumberTypeFloat16:
-      res = LaunchKernel<float16>(inputs, outputs);
-      break;
-    case kNumberTypeFloat32:
-      res = LaunchKernel<float>(inputs, outputs);
-      break;
-    case kNumberTypeFloat64:
-      res = LaunchKernel<double>(inputs, outputs);
-      break;
-    case kNumberTypeBool:
-      res = LaunchKernel<bool>(inputs, outputs);
-      break;
-    case kNumberTypeInt8:
-      res = LaunchKernel<int8_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt16:
-      res = LaunchKernel<int16_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt32:
-      res = LaunchKernel<int32_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt64:
-      res = LaunchKernel<int64_t>(inputs, outputs);
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "CompareAndBitpack invalid input type " << TypeIdLabel(dtype_) << " which is not supported.";
-  }
-  return res;
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 template <typename T>
 bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                 const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
   T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
@@ -130,17 +80,27 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   return true;
 }
 
-std::vector<KernelAttr> CompareAndBitpackCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, CompareAndBitpackCpuKernelMod::KernelRunFunc>>
+  &CompareAndBitpackCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, CompareAndBitpackCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+     &CompareAndBitpackCpuKernelMod::LaunchKernel<int64_t>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CompareAndBitpack, CompareAndBitpackCpuKernelMod);
