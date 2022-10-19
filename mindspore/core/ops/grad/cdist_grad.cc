@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,13 @@ abstract::ShapePtr CdistGradInferShape(const PrimitivePtr &primitive, const std:
       }
     }
   }
+  if (x_shape[x_size - kInputIndex1] != y_shape[y_size - kInputIndex1]) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the number of columns of 'x' must be the same as the number of 'y', "
+                                "but got 'x_shape["
+                             << x_size - kInputIndex1 << "]': " << x_shape[x_size - kInputIndex1] << " and 'y_shape["
+                             << y_size - kInputIndex1 << "]': " << y_shape[y_size - kInputIndex1];
+  }
 
   auto out_shape = x_shape;
   return std::make_shared<abstract::Shape>(out_shape);
@@ -80,7 +87,7 @@ TypePtr CdistGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+  const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("grad", input_args[0]->BuildType());
   (void)types.emplace("input_x", input_args[1]->BuildType());
