@@ -22,6 +22,7 @@
 #include <utility>
 #include "ir/tensor.h"
 #include "utils/ms_utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 std::atomic<bool> thread_1_must_end(false);
@@ -124,6 +125,48 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
     }
   }
   return inst_context_;
+}
+
+void MsContext::Update() {
+  UpdateExecutionMode();
+  UpdateMemoryOffload();
+}
+
+void MsContext::UpdateExecutionMode() {
+  const std::string &target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (target == kAscendDevice) {
+    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+      set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+    } else if (common::GetEnv(kGraphOpRun) == "1") {
+      set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
+    }
+  }
+}
+
+void MsContext::UpdateMemoryOffload() {
+  const bool enable_mem_offload = get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
+  if (!enable_mem_offload) {
+    return;
+  }
+  const std::string &target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (target == kCPUDevice) {
+    MS_LOG(WARNING) << "Memory offload is not available on CPU device.";
+    set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
+    return;
+  }
+  if (target == kAscendDevice && get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+      common::GetEnv(kGraphOpRun) != "1") {
+    MS_LOG(WARNING) << "Memory offload is not available when GRAPH_OP_RUN is not set to 1.";
+    set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
+    return;
+  }
+  if (get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {
+    MS_LOG(WARNING) << "Memory offload is not available when memory_optimize_level is set to O1.";
+    set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
+    return;
+  }
+  MS_LOG(INFO) << "Set memory pool block size to max device memory size for memory offload.";
+  set_param(MS_CTX_MEMPOOL_BLOCK_SIZE, get_param<float>(MS_CTX_MAX_DEVICE_MEMORY));
 }
 
 bool MsContext::set_backend_policy(const std::string &policy) {
