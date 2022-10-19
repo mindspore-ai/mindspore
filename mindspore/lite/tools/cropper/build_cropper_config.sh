@@ -32,6 +32,16 @@ else
   echo "FLATBUFFERS path is ${FLATBUFFERS}"
 fi
 
+if [ ${MSLIBS_CACHE_PATH} ]; then
+  NLOHMANN_LIST=()
+  while IFS='' read -r line; do NLOHMANN_LIST+=("$line"); done < <(ls -d ${MSLIBS_CACHE_PATH}/nlohmann_*/include)
+  NLOHMANN=${NLOHMANN_LIST[0]}
+  echo "NLOHMANN path is ${NLOHMANN}"
+else
+  NLOHMANN=$(ls -d mindspore/lite/build/.mslib/nlohmann_*/include)
+  echo "NLOHMANN path is ${NLOHMANN}"
+fi
+
 HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${MINDSPORE_HOME}/mindspore/core
 -I${MINDSPORE_HOME}/mindspore/core/ir
@@ -46,6 +56,7 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${MINDSPORE_HOME}/mindspore/lite/build
 -I${MINDSPORE_HOME}/cmake/../third_party/securec/include
 -I${FLATBUFFERS}
+-I${NLOHMANN}
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema/inner
 -I${MINDSPORE_HOME}/mindspore/lite/build/src
