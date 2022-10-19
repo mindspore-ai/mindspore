@@ -50,46 +50,78 @@ class MatMulInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    const auto prim_name = primitive->name();
-    auto a_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(a_shape_ptr)[kShape];
-    auto b_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(b_shape_ptr)[kShape];
-    if (IsDynamicRank(a_shape) || IsDynamicRank(b_shape)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    constexpr auto kMatMulInputNum = 2;
+    const std::string op_name = primitive->name();
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,
+                                             kMatMulInputNum, op_name);
+    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+
+    MS_EXCEPTION_IF_NULL(x);
+    MS_EXCEPTION_IF_NULL(x->shape());
+    auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
+    MS_EXCEPTION_IF_NULL(y);
+    MS_EXCEPTION_IF_NULL(y->shape());
+    auto x_shp = x->shape()->shape();
+    auto y_shp = y->shape()->shape();
+
+    ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
+    ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
+    bool transpose_a = GetValue<bool>(transpose_a_ptr);
+    bool transpose_b = GetValue<bool>(transpose_b_ptr);
+    ShapeVector x_min_shape = x->shape()->min_shape();
+    ShapeVector x_max_shape = x->shape()->max_shape();
+    ShapeVector y_min_shape = y->shape()->min_shape();
+    ShapeVector y_max_shape = y->shape()->max_shape();
+
+    if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
+      ShapeVector ret_shape{abstract::Shape::kShapeRankAny};
+      return std::make_shared<abstract::Shape>(ret_shape);
     }
 
-    const int64_t mat_rank = 2;
-    (void)CheckAndConvertUtils::CheckInteger("rank of a", SizeToLong(a_shape.size()), kEqual, mat_rank, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("rank of b", SizeToLong(b_shape.size()), kEqual, mat_rank, prim_name);
-
-    const int dim0 = 0;
-    const int dim1 = 1;
-    bool transpose_a = GetValue<bool>(primitive->GetAttr(kTransposeA));
-    bool transpose_b = GetValue<bool>(primitive->GetAttr(kTransposeB));
-    auto a_real_shape = transpose_a ? std::vector<int64_t>{a_shape[dim1], a_shape[dim0]} : a_shape;
-    auto b_real_shape = transpose_b ? std::vector<int64_t>{b_shape[dim1], b_shape[dim0]} : b_shape;
-
-    if (!a_shape_ptr->IsDynamic() && !b_shape_ptr->IsDynamic() && a_real_shape[dim1] != b_real_shape[dim0]) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "', after transpose if specified, the second dim of 'a' and the first dim of 'b'"
-                               << " should be equal, but got " << a_real_shape[dim1] << " and " << b_real_shape[dim0]
-                               << ".";
+    const size_t SHAPE_SIZE = 2;
+    if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
+      MS_LOG(EXCEPTION) << "MatMul inputs should have the same dimension size and equal to 2.";
+    }
+    auto x_col = x_shp[(transpose_a ? 0 : 1)];
+    auto y_row = y_shp[(transpose_b ? 1 : 0)];
+    if (x_col != y_row && x_col >= 0 && y_row >= 0) {
+      MS_LOG(EXCEPTION) << "MatMul shape error, got x_col: " << x_col << ", y_row: " << y_row
+                        << ". In MatMul x_col and y_row should be equal.";
     }
 
-    ShapeVector output_shape = std::vector<int64_t>{a_real_shape[dim0], b_real_shape[dim1]};
-
-    return std::make_shared<abstract::Shape>(output_shape);
+    ShapeVector ret_shape;
+    ShapeVector ret_min_shape;
+    ShapeVector ret_max_shape;
+    auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
+                                                   const ShapeVector yshp) -> void {
+      if (!xshp.empty() && !yshp.empty()) {
+        output.push_back(xshp[(transpose_a ? 1 : 0)]);
+        output.push_back(yshp[(transpose_b ? 0 : 1)]);
+      }
+      return;
+    };
+    make_shape(ret_shape, x_shp, y_shp);
+    make_shape(ret_min_shape, x_min_shape, y_min_shape);
+    make_shape(ret_max_shape, x_max_shape, y_max_shape);
+    return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    const std::set valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kComplex64, kComplex128};
-    std::map<std::string, TypePtr> types;
-    auto a_type = input_args[kInputIndex0]->BuildType();
-    (void)types.emplace("a", a_type);
-    (void)types.emplace("b", input_args[kInputIndex1]->BuildType());
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-    return a_type;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto op_name = primitive->name();
+    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    TypePtr x_type = x->element()->GetTypeTrack();
+    if (x_type->type_id() == TypeId::kNumberTypeInt8) {
+      x_type = kInt32;
+    }
+    if (primitive->HasAttr("cast_type")) {
+      auto out_type = primitive->GetAttr("cast_type");
+      MS_EXCEPTION_IF_NULL(out_type);
+      if (!out_type->isa<Type>()) {
+        MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
+      }
+      x_type = out_type->cast<TypePtr>();
+    }
+    return x_type;
   }
 };
 
