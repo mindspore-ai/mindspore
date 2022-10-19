@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/crop_and_resize_grad_image_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/crop_and_resize_grad_image.h"
 
 namespace {
 constexpr size_t kInputNumsImage = 4;
@@ -45,71 +46,92 @@ constexpr float kNumImage = 0.5;
 
 namespace mindspore {
 namespace kernel {
-void CropAndResizeGradImageCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  cnode_ptr_ = kernel_node;
-  attr_method_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "method");
+bool CropAndResizeGradImageCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNumsImage, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutNumImage, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
 
+  auto crop_and_resize_ptr = std::dynamic_pointer_cast<ops::CropAndResizeGradImage>(base_operator);
+  MS_EXCEPTION_IF_NULL(crop_and_resize_ptr);
+  // suppose use kernel_ptr->get_method(), but the definition in lite is enumeration, not std::string. So we use this
+  // for the moment to support dynamic shape.
+  attr_method_ = GetValue<std::string>(crop_and_resize_ptr->GetAttr("method"));
+  return true;
+}
+
+int CropAndResizeGradImageCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                               const std::vector<KernelTensorPtr> &inputs,
+                                               const std::vector<KernelTensorPtr> &outputs,
+                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
   //  input grads
-  grads_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kGradsImage);
+  grads_shape_ = inputs[kGradsImage]->GetShapeVector();
   size_t input_grads_shape_len = grads_shape_.size();
   if (input_grads_shape_len != kGradsShapeLenImage) {
     MS_LOG(ERROR) << "Grads tensor is " << input_grads_shape_len << "-D, but CropAndResizeGradImage supports only "
                   << kGradsShapeLenImage << "-D image tensor.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  input image_size
-  image_size_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kImageSizeImage);
+  image_size_shape_ = inputs[kImageSizeImage]->GetShapeVector();
   size_t input_image_size_shape_len = image_size_shape_.size();
   if (input_image_size_shape_len != kImageSizeShapeLenImage) {
     MS_LOG(ERROR) << "Image_size tensor is " << input_image_size_shape_len
                   << "-D, but CropAndResizeGradImage supports only " << kImageSizeShapeLenImage
                   << "-D image_size tensor.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  input boxes
-  boxes_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kBoxesImage);
+  boxes_shape_ = inputs[kBoxesImage]->GetShapeVector();
   size_t input_boxes_shape_len = boxes_shape_.size();
   if (input_boxes_shape_len != kBoxesShapeLenImage) {
     MS_LOG(ERROR) << "Boxes tensor is " << input_boxes_shape_len << ", but CropAndResizeGradImage supports only "
                   << kBoxesShapeLenImage << "-D for boxes.";
+    return KRET_RESIZE_FAILED;
   }
   if (boxes_shape_[1] != kCoordinateLenImage) {
     MS_LOG(ERROR) << "The coordinate size of boxes is " << boxes_shape_[1]
                   << ", but CropAndResizeGradImage supports only " << kCoordinateLenImage << "for boxes.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  input box_index
-  box_ind_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kBoxIndexImage);
+  box_ind_shape_ = inputs[kBoxIndexImage]->GetShapeVector();
   size_t input_box_index_shape_len = box_ind_shape_.size();
   if (input_box_index_shape_len != kBoxIndexShapeLenImage) {
     MS_LOG(ERROR) << "Box_index tensor is " << input_box_index_shape_len
                   << "-D, but CropAndResizeGradBoxes supports only " << kBoxIndexShapeLenImage << "-D for box_index.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  output
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndexImage);
+  output_shape_ = outputs[kOutputIndexImage]->GetShapeVector();
   auto output_shape_len = output_shape_.size();
   if (output_shape_len != kOutputShapeLenImage) {
     MS_LOG(ERROR) << "Output tensor is " << output_shape_len << ", but CropAndResizeGradImage supports only "
                   << kOutputShapeLenImage << "-D for output tensor.";
+    return KRET_RESIZE_FAILED;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "CropAndResizeGradImage does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
 bool CropAndResizeGradImageCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNumsImage, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutNumImage, kernel_name_);
   auto *grads = reinterpret_cast<float *>(inputs[kGradsImage]->addr);
   auto *image_size = reinterpret_cast<int *>(inputs[kImageSizeImage]->addr);
   auto *boxes = reinterpret_cast<float *>(inputs[kBoxesImage]->addr);
@@ -127,21 +149,16 @@ bool CropAndResizeGradImageCpuKernelMod::LaunchKernel(const std::vector<kernel::
   if (image_depth != crop_depth) {
     MS_EXCEPTION(ValueError) << "shape[3] of grads and image_size[3] must be equal.";
   }
-  // output infer
-  auto node_ = cnode_ptr_.lock();
-  std::vector<TypeId> dtypes{AnfAlgo::GetOutputDeviceDataType(node_, 0)};
-  std::vector<int64_t> output_shape = {image_batch, image_height, image_width, image_depth};
-  output_shape_ = output_shape;
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {output_shape}, node_.get());
+
   const int64_t num_image1 = image_batch * image_height * image_width * image_depth;
-  auto *outputDatas = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_data = reinterpret_cast<T *>(outputs[0]->addr);
   // set the output data to 0.
   T temp = static_cast<T>(0.0);
   for (int64_t i = 0; i < num_image1; i++) {
-    *(outputDatas + i) = temp;
+    *(output_data + i) = temp;
   }
-  auto task = [this, &grads, &image_size, &boxes, &box_ind, &outputDatas](size_t start, size_t end) {
-    GradOfImageCompute<T>(grads, boxes, box_ind, image_size, outputDatas, start, end);
+  auto task = [this, &grads, &image_size, &boxes, &box_ind, &output_data](size_t start, size_t end) {
+    GradOfImageCompute<T>(grads, boxes, box_ind, image_size, output_data, start, end);
   };
   CPUKernelUtils::ParallelFor(task, nums_boxes);
   return true;
@@ -149,7 +166,7 @@ bool CropAndResizeGradImageCpuKernelMod::LaunchKernel(const std::vector<kernel::
 
 template <typename T>
 void CropAndResizeGradImageCpuKernelMod::GradOfImageCompute(const float *grads, const float *boxes, const int *box_ind,
-                                                            const int *image_size, T *outputDatas, size_t start,
+                                                            const int *image_size, T *output_data, size_t start,
                                                             size_t end) {
   const int64_t image_batch = *(image_size + kBatchImage);
   const int64_t image_height = *(image_size + kHeightImage);
@@ -210,21 +227,21 @@ void CropAndResizeGradImageCpuKernelMod::GradOfImageCompute(const float *grads, 
 
           for (int64_t d = 0; d < depth; d++) {
             const float dtop = (*(grads + b * num_crop2 + y * num_crop3 + x * crop_depth + d)) * (1 - y_lerp);
-            *(outputDatas + b_in * num_image2 + top_y_index * num_image3 + left_x_index * depth + d) +=
+            *(output_data + b_in * num_image2 + top_y_index * num_image3 + left_x_index * depth + d) +=
               static_cast<T>((1 - x_lerp) * dtop);
-            *(outputDatas + b_in * num_image2 + top_y_index * num_image3 + right_x_index * depth + d) +=
+            *(output_data + b_in * num_image2 + top_y_index * num_image3 + right_x_index * depth + d) +=
               static_cast<T>(x_lerp * dtop);
             const float dbottom = (*(grads + b * num_crop2 + y * num_crop3 + x * crop_depth + d)) * y_lerp;
-            *(outputDatas + b_in * num_image2 + bottom_y_index * num_image3 + left_x_index * depth + d) +=
+            *(output_data + b_in * num_image2 + bottom_y_index * num_image3 + left_x_index * depth + d) +=
               static_cast<T>((1 - x_lerp) * dbottom);
-            *(outputDatas + b_in * num_image2 + bottom_y_index * num_image3 + right_x_index * depth + d) +=
+            *(output_data + b_in * num_image2 + bottom_y_index * num_image3 + right_x_index * depth + d) +=
               static_cast<T>(x_lerp * dbottom);
           }
         } else {
           for (int64_t d = 0; d < depth; d++) {
             const int close_x_index = roundf(in_x);
             const int close_y_index = roundf(in_y);
-            *(outputDatas + b_in * num_image2 + close_y_index * num_image3 + close_x_index * depth + d) +=
+            *(output_data + b_in * num_image2 + close_y_index * num_image3 + close_x_index * depth + d) +=
               static_cast<T>(*(grads + b * num_crop2 + y * num_crop3 + x * crop_depth + d));
           }
         }

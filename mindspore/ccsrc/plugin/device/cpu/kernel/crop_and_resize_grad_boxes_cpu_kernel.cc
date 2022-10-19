@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,60 +19,80 @@
 
 namespace mindspore {
 namespace kernel {
-void CropAndResizeGradBoxesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool CropAndResizeGradBoxesCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNums, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int CropAndResizeGradBoxesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                               const std::vector<KernelTensorPtr> &inputs,
+                                               const std::vector<KernelTensorPtr> &outputs,
+                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
   //  input grads
-  grads_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kGrads);
+  grads_shape_ = inputs[kGrads]->GetShapeVector();
   size_t input_grads_shape_len = grads_shape_.size();
   if (input_grads_shape_len != kGradsShapeLen) {
     MS_LOG(ERROR) << "Grads tensor is " << input_grads_shape_len << "-D, but CropAndResizeGradBoxes supports only "
                   << kGradsShapeLen << "-D for grads tensor.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  input image
-  image_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kImages);
+  image_shape_ = inputs[kImages]->GetShapeVector();
   size_t input_image_shape_len = image_shape_.size();
   if (input_image_shape_len != kImageShapeLen) {
     MS_LOG(ERROR) << "Images tensor is " << input_image_shape_len << "-D, but CropAndResizeGradBoxes supports only "
                   << kImageShapeLen << "-D for images tensor.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  input boxes
-  boxes_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kBoxes);
+  boxes_shape_ = inputs[kBoxes]->GetShapeVector();
   size_t input_boxes_shape_len = boxes_shape_.size();
   if (input_boxes_shape_len != kBoxesShapeLen) {
     MS_LOG(ERROR) << "Boxes tensor is " << input_boxes_shape_len << "-D, but CropAndResizeGradBoxes supports only "
                   << kBoxesShapeLen << "-D for boxes tensor.";
+    return KRET_RESIZE_FAILED;
   }
   if (LongToSize(boxes_shape_[1]) != kCoordinateLen) {
     MS_LOG(ERROR) << "The coordinate size of boxes is " << boxes_shape_[1]
                   << ", but CropAndResizeGradBoxes supports only " << kCoordinateLen << "for boxes.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  input box_index
-  box_in_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kBoxIndex);
+  box_in_shape_ = inputs[kBoxIndex]->GetShapeVector();
   size_t input_box_index_shape_len = box_in_shape_.size();
   if (input_box_index_shape_len != kBoxIndexShapeLen) {
     MS_LOG(ERROR) << "Box_index tensor is " << input_box_index_shape_len
                   << "-D, but CropAndResizeGradBoxes supports only " << kBoxIndexShapeLen << "-D for box_index.";
+    return KRET_RESIZE_FAILED;
   }
 
   //  output
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
+  output_shape_ = outputs[kOutputIndex]->GetShapeVector();
   auto output_shape_len = output_shape_.size();
   if (output_shape_len != kOutputShapeLen) {
     MS_LOG(ERROR) << "Output tensor is " << output_shape_len << "-D, but CropAndResizeGradBoxes supports only "
                   << kOutputShapeLen << "-D for output tensor.";
+    return KRET_RESIZE_FAILED;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "Concat does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel::AddressPtr> &outputs) {
@@ -88,8 +108,6 @@ void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel:
 template <typename T>
 bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNums, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutNum, kernel_name_);
   auto *grads = reinterpret_cast<float *>(inputs[kGrads]->addr);
   auto *image = reinterpret_cast<T *>(inputs[kImages]->addr);
   auto *boxes = reinterpret_cast<float *>(inputs[kBoxes]->addr);
