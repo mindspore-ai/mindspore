@@ -32,6 +32,22 @@ class MIND_API Cross : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Cross);
   Cross() : BaseOperator(kNameCross) { InitIOName({"x1", "x2"}, {"y"}); }
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] axis Define a dim which is the first dimension to slice.
+  /// \param[in] offsets Define a vector to indicate the start index to slice on the corresponding axis.
+  void Init(const int64_t dim);
+
+  /// \brief Method to set dim attribute.
+  ///
+  /// \param[in] dim Define a dim.
+  void set_dim(const int64_t dim);
+
+  /// \brief Method to get dim attribute.
+  ///
+  /// \return dim.
+  int64_t get_dim() const;
 };
 
 abstract::AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

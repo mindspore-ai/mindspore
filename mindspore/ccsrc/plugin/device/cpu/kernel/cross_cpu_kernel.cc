@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/cross_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/cross.h"
 
 namespace {
 const size_t kDataSizeThreshold = 4 * 1024;
@@ -25,12 +26,36 @@ const size_t kNumber3 = 3;
 
 namespace mindspore {
 namespace kernel {
-void CrossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  input1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input2_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  input1_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  dim_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dim");
+bool CrossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = 2;
+  constexpr size_t output_num = 1;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int CrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs,
+                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input1_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input2_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input1_dtype_ = inputs[kIndex0]->GetDtype();
+  auto cross_ptr = std::dynamic_pointer_cast<ops::Cross>(base_operator);
+  MS_EXCEPTION_IF_NULL(cross_ptr);
+  dim_ = cross_ptr->get_dim();
   int64_t default_dim = -65530;
   if (dim_ == default_dim) {
     int64_t dim_size_value = 3;
@@ -47,6 +72,7 @@ void CrossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (dim_ < 0) {
     dim_ = static_cast<int64_t>(input1_shape_.size()) + dim_;
   }
+  return KRET_OK;
 }
 
 bool CrossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
