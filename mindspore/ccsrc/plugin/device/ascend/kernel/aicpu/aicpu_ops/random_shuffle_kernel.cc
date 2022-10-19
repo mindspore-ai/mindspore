@@ -88,7 +88,6 @@ uint32_t RandomShuffleKernel::ParseKernelParam() {
   ::aicpuops::Tensor input = node_def_.inputs(static_cast<int>(0));
   ::aicpuops::TensorShape shape = input.tensor_shape();
 
-  block_num_ = static_cast<size_t>(shape.dim(0).size());
   const auto &dtype = static_cast<::aicpuops::DataType>(input.tensor_type());
   data_size_ = GetDataTypeSize(dtype);
 
@@ -97,6 +96,7 @@ uint32_t RandomShuffleKernel::ParseKernelParam() {
     // Input is a scalar: keep block number to be 1.
     return kAicpuKernelStateSucess;
   }
+  block_num_ = static_cast<size_t>(shape.dim(0).size());
 
   for (size_t i = 1; i < dim; i++) {
     block_size_ *= static_cast<size_t>(shape.dim(SizeToInt(i)).size());
