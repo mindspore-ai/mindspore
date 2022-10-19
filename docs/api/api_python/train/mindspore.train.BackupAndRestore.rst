@@ -25,16 +25,16 @@ mindspore.train.BackupAndRestore
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
-    .. py:method:: on_train_epoch_end(run_context)
+    .. py:method:: on_train_end(run_context)
 
-        在每个epoch结束时，判断是否需要备份checkpoint文件。
+        在训练结束时，判断是否删除备份的checkpoint文件。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
 
-    .. py:method:: on_train_end(run_context)
+    .. py:method:: on_train_epoch_end(run_context)
 
-        在训练结束时，判断是否删除备份的checkpoint文件。
+        在每个epoch结束时，判断是否需要备份checkpoint文件。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。

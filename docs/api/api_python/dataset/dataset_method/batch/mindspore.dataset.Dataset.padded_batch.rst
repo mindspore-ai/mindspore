@@ -1,7 +1,7 @@
 mindspore.dataset.Dataset.padded_batch
 ======================================
 
-.. py:method:: mindspore.dataset.Dataset.padded_batch(batch_size, drop_remainder=False, num_parallel_workers=None, pad_info=None
+.. py:method:: mindspore.dataset.Dataset.padded_batch(batch_size, drop_remainder=False, num_parallel_workers=None, pad_info=None)
 
     将数据集中连续 `batch_size` 条数据合并为一个批处理数据，其中batch成一个Tensor前可选择使用pad_info预先将样本补齐。
 
