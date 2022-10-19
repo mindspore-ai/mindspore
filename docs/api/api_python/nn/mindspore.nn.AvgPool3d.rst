@@ -26,10 +26,10 @@ mindspore.nn.AvgPool3d
         - **divisor_override** (int) - 如果被指定为非0参数，该参数将会在平均计算中被用作除数，否则将会使用 `kernel_size` 作为除数，默认值：None。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型必须为float16或者float32。
+        - **x** (Tensor) - shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或者 :math:`(C, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型必须为float16或者float32。
 
     输出：
-        shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
+        shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或者 :math:`(C, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型与 `x` 一致。
 
     异常：
         - **TypeError** - `kernel_size` ，`stride` 或 `padding` 既不是整数也不是元组。
