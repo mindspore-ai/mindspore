@@ -31,20 +31,29 @@ const size_t kRightShiftInputsNum = 2;
 const size_t kRightShiftOutputsNum = 1;
 }  // namespace
 
-void RightShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kRightShiftInputsNum, common::AnfAlgo::GetCNodeName(kernel_node));
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kRightShiftOutputsNum, common::AnfAlgo::GetCNodeName(kernel_node));
-  input_type_1_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_type_2_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+bool RightShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRightShiftInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRightShiftOutputsNum, kernel_name_);
+  input_type_1_ = inputs.at(kIndex0)->GetDtype();
+  input_type_2_ = inputs.at(kIndex1)->GetDtype();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(EXCEPTION) << "input1 and input2 must have the same type.";
   }
-  input_shape_1_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  input_shape_2_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  return true;
+}
+
+int RightShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_1_ = inputs.at(kIndex0)->GetShapeVector();
+  input_shape_2_ = inputs.at(kIndex1)->GetShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  return true;
 }
 
 bool RightShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,

@@ -15,12 +15,11 @@
 
 import numpy as np
 import pytest
-
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations.array_ops import RightShift
-
 
 
 class NetRightShift(nn.Cell):
@@ -31,6 +30,30 @@ class NetRightShift(nn.Cell):
 
     def construct(self, x, y):
         return self.rightshift(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_rightshift_dyn():
+    """
+    Feature: test RightShift ops in gpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    net = NetRightShift()
+    x_dyn = Tensor(shape=[None, None], dtype=ms.int8)
+    y_dyn = Tensor(shape=[None], dtype=ms.int8)
+    net.set_inputs(x_dyn, y_dyn)
+
+    x = Tensor([[1, 2, 3], [1, 2, 3]], dtype=ms.int8)
+    y = Tensor([1, 1, 1], dtype=ms.int8)
+    out = net(x, y)
+
+    expect_shape = (2, 3)
+    assert out.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level1
