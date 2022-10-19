@@ -28,6 +28,7 @@ def test_noop_pserver():
     Expectation: Runs successfully
     """
     os.environ['MS_ROLE'] = 'MS_PSERVER'
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_ps_context(enable_ps=True)
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     num = 0
@@ -45,6 +46,7 @@ def test_noop_sched():
     Expectation: Runs successfully
     """
     os.environ['MS_ROLE'] = 'MS_SCHED'
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_ps_context(enable_ps=True)
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     num = 0

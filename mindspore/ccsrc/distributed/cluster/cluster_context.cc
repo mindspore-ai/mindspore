@@ -199,12 +199,6 @@ void ClusterContext::InitNodeRole() {
     MS_LOG(EXCEPTION) << "Role name '" << node_role_ << "' is invalid. " << kDetailedFailureReason;
   }
 
-  // If node role is valid, judge the execution mode.
-  // MindSpore cluster does not support PyNative mode.
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_LOG(EXCEPTION) << "PyNative mode is not supported in MindSpore cluster.";
-  }
-
   if (common::GetEnv(kEnvWorkerNum).empty()) {
     if (node_role_ == kEnvRoleOfWorker) {
       MS_LOG(EXCEPTION) << "Please set env 'WORKER_NUM' to a number greater than 0.";

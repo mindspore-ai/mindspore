@@ -426,6 +426,10 @@ class Primitive(Primitive_):
         Validator.check_non_negative_int(rank_id, "rank_id", "Primitive.place")
         Validator.check_string(role, "MS_WORKER", "role", "Primitive.place")
 
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("You are calling Primitive.place in pynative mode."
+                               "It's only supported in graph mode. Please switch to graph mode.")
+
         # Get the execution context and check whether calling of this 'place' method is valid.
         # This is because placing operators to arbitrary processes while other distributed training mode
         # is enabled is very unpredictable and may cause fatal error.

@@ -48,6 +48,9 @@ def set_ps_enable(enable):
     """
     Set ps enable flag.
     """
+    if context.get_context("mode") == context.PYNATIVE_MODE:
+        raise RuntimeError("Parameter server is not supported in pynative mode currently.")
+
     ps_context().set_ps_enable(enable)
     # If this is Server or Scheduler and device target is Ascend, reset the target to CPU
     if _need_reset_device_target_for_ps(context.get_context("device_target")):

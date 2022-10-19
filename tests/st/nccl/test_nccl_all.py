@@ -16,7 +16,7 @@ import os
 import pytest
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_nccl_lenet():
