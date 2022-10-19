@@ -381,8 +381,8 @@ class _Context:
 
     def set_op_timeout(self, op_timeout):
         """Set the maximum duration of executing an operator in seconds."""
-        if op_timeout <= 0:
-            raise ValueError("The num of op exe timeout must bigger than 0.")
+        if op_timeout < 0:
+            raise ValueError("The num of op exe timeout must bigger than or equal to 0.")
         self.set_param(ms_ctx_param.op_timeout, op_timeout)
     def set_inter_op_parallel_num(self, inter_op_parallel_num):
         """Check and set inter_op_parallel_num."""
@@ -802,7 +802,8 @@ def set_context(**kwargs):
             The format is "xxGB". Default: "1GB". Minimum size is "1G". The actual used memory block size is the minimum
             of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
-            If the execution time exceeds this value, system will terminate the task. Default: 28.
+            If the execution time exceeds this value, system will terminate the task. 0 means endless wait.
+            Default: 0.
         save_graphs (bool): Whether to save graphs. Default: False.
             When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
             intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
