@@ -180,7 +180,8 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
-    if (compression && !is_mixed_bit_) {
+    bool is_compression = (compression && !is_mixed_bit_ && enable_encode_);
+    if (is_compression) {
       status = DoCompression(cnode, parameter, idx);
       if (status != RET_OK) {
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " compression failed.";

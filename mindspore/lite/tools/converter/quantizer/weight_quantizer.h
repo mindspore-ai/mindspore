@@ -58,6 +58,7 @@ class WeightQuantizer : public Quantizer {
 
   explicit WeightQuantizer(const std::shared_ptr<ConverterPara> &param, double init_scale = 0) : Quantizer(param) {
     bit_num_ = param_->commonQuantParam.bit_num;
+    enable_encode_ = param_->commonQuantParam.enable_encode;
     if (bit_num_ == 0) {
       type_id_ = kNumberTypeInt16;
       is_mixed_bit_ = true;
@@ -133,6 +134,7 @@ class WeightQuantizer : public Quantizer {
   std::set<std::string> skip_quant_node_;
   std::unique_ptr<QuantStrategy> quant_strategy_;
   schema::QuantType quant_type_{schema::QuantType_WeightQuant};
+  bool enable_encode_{true};
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_
