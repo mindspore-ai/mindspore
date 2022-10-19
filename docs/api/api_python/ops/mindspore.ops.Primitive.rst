@@ -41,6 +41,18 @@ mindspore.ops.Primitive
             - **inputs** (list[str]) - 输入名称的列表。
             - **outputs** (list[str]) - 输出名称的列表。
 
+    .. py:method:: place(role, rank_id)
+        
+        设置Primitive算子标签。让此算子在对应进程上执行。
+        每个进程的标签都由进程角色 `role` 和 `rank_id` 组成，因此对算子设置标签，代表着算子在哪个进程执行，从而执行分布式训练等任务。
+
+        .. note::
+            - 此接口只在成功调用 `mindspore.communication.init()` 完成动态组网后才能生效。
+
+        参数：
+            - **role** (str) - 算子执行所在进程的角色。只支持'MS_WORKER'。
+            - **rank_id** (int) - 算子执行所在进程的id。在相同角色进程间， `rank_id` 是唯一的。
+
     .. py:method:: recompute(mode=True)
 
         设置Primitive的重计算属性。

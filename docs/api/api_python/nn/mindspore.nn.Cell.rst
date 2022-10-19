@@ -306,6 +306,18 @@
         返回：
             OrderedDict类型，返回参数字典。
 
+    .. py:method:: place(role, rank_id)
+        
+        设置Cell中所有算子标签。让此Cell中的算子在对应进程上执行。
+        每个进程的标签都由进程角色 `role` 和 `rank_id` 组成，因此对Cell设置标签，代表着Cell中的算子在哪个进程执行，从而执行分布式训练等任务。
+
+        .. note::
+            - 此接口只在成功调用 `mindspore.communication.init()` 完成动态组网后才能生效。
+
+        参数：
+            - **role** (str) - 算子执行所在进程的角色。只支持'MS_WORKER'。
+            - **rank_id** (int) - 算子执行所在进程的id。在相同角色进程间， `rank_id` 是唯一的。
+
     .. py:method:: recompute(**kwargs)
 
         设置Cell重计算。Cell中输出算子以外的所有算子将被设置为重计算。如果一个算子的计算结果被输出到一些反向节点来进行梯度计算，且被设置成重计算，那么我们会在反向传播中重新计算它，而不去存储在前向传播中的中间激活层的计算结果。

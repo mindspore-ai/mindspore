@@ -2187,14 +2187,19 @@ class Cell(Cell_):
         users can launch a distributed training job.
 
         Note:
-            - 'role' only supports the value 'MS_WORKER' for now.
             - This method is effective only after
               "mindspore.communication.init()" is called for dynamic cluster building.
-            - The rank is unique in processes with the same role.
 
         Args:
-            role (string): The role of the process on which this cell will be launched.
+            role (str): The role of the process on which this cell will be launched.
+                        Only 'MS_WORKER' is supported for now.
             rank_id (int): The rank id of the process on which this cell will be launched.
+                           The rank is unique in processes with the same role.
+
+        Examples:
+            >>> import mindspore.nn as nn
+            >>> fc = nn.Dense()
+            >>> fc.place('MS_WORKER', 0)
         """
         all_ops = self._get_prims_recursively()
         for op in all_ops:
