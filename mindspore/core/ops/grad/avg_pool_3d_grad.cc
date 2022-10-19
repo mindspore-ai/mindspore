@@ -99,19 +99,13 @@ abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckInteger("grad_rank", SizeToLong(grad_shape.size()), kEqual, k5DInputDims, op_name);
   }
   std::vector<int64_t> origin_input_size;
-  if (SizeToLong(input_args.size()) == input_num) {
-    auto shape_attr = primitive->GetAttr("origin_input_shape");
-    MS_EXCEPTION_IF_NULL(shape_attr);
-    origin_input_size = GetValue<ShapeVector>(shape_attr);
+  if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
+    origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
+  } else if (input_args[0]->isa<abstract::AbstractTensor>()) {
+    GetTensorIntValue(input_args[0], &origin_input_size, "origin_input_shape");
   } else {
-    if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
-      origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
-    } else if (input_args[0]->isa<abstract::AbstractTensor>()) {
-      GetTensorIntValue(input_args[0], &origin_input_size, "origin_input_shape");
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple or tensor, but got: "
-                        << input_args[0]->BuildShape()->ToString() << ".";
-    }
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple or tensor, but got: "
+                      << input_args[0]->BuildShape()->ToString() << ".";
   }
   return std::make_shared<abstract::Shape>(origin_input_size);
 }

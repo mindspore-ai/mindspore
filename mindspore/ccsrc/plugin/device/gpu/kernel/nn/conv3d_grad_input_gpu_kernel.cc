@@ -18,14 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
-  Conv3DBackpropInput,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  Conv3dGradInputGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(
-  Conv3DBackpropInput,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  Conv3dGradInputGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(Conv3DBackpropInput,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
