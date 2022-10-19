@@ -650,11 +650,8 @@ class Adam(Optimizer):
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False, **kwargs):
         super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale)
-        use_lazy, use_offload = False, False
-        if kwargs.get('use_lazy') is not None:
-            use_lazy = kwargs.get('use_lazy')
-        if kwargs.get('use_offload') is not None:
-            use_offload = kwargs.get('use_offload')
+        use_lazy = kwargs.get('use_lazy', False)
+        use_offload = kwargs.get('use_offload', False)
         _check_param_value(beta1, beta2, eps, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
