@@ -19,16 +19,22 @@
 
 #include <vector>
 #include <memory>
+#include <map>
+#include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
  public:
   SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod() = default;
   ~SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -40,7 +46,6 @@ class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public DeprecatedMKLCpuK
   }
 
  private:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   void ForwardPostExecute(const int *labels, const float *losses, float *output) const;
   void GradPostExecute(const int *labels, const float *losses, float *output) const;
   bool is_grad_{false};

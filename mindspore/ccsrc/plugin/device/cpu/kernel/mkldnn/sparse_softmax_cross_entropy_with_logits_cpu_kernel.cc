@@ -30,23 +30,34 @@ constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsOutputsNum = 1;
 constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
-void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t type_size = sizeof(float);
-  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-  (void)workspace_size_list_.emplace_back(tensor_size);
+bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                           const std::vector<KernelTensorPtr> &inputs,
+                                                           const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  is_grad_ = kernel_ptr->get_is_grad();
+  return true;
 }
 
-void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto label_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({shape, label_shape})) {
-    return;
+int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                            const std::vector<KernelTensorPtr> &inputs,
+                                                            const std::vector<KernelTensorPtr> &outputs,
+                                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+  auto shape = inputs.at(kIndex0)->GetShapeVector();
+  auto label_shape = inputs.at(kIndex1)->GetShapeVector();
+  if (IsDynamic(shape) || IsDynamic(label_shape)) {
+    return KRET_OK;
+  }
+  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), sizeof(float), std::multiplies<size_t>());
+  (void)workspace_size_list_.emplace_back(tensor_size);
   if (label_shape.size() > 1) {
     MS_LOG(EXCEPTION) << "Labels shape length must be equal to Logits shape length minus 1";
   }
@@ -60,7 +71,6 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr 
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
-  is_grad_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, IS_GRAD);
   auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
 
   auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, mem_desc, 1);
@@ -69,6 +79,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr 
 
   AddArgument(DNNL_ARG_SRC, mem_desc);
   AddArgument(DNNL_ARG_DST, mem_desc);
+  return KRET_OK;
 }
 
 void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const int *labels, const float *losses,

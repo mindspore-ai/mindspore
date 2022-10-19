@@ -20,6 +20,8 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <map>
+#include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cross_entropy_impl.cuh"
@@ -28,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMod {
  public:
   SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod()
       : cudnn_handle_(nullptr),
@@ -62,8 +64,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeG
 
     const float alpha = 1;
     const float beta = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSoftmaxForward(cudnn_handle_, algo_, mode_, &alpha, logits_descriptor_, logits_addr, &beta,
                           softmax_output_descriptor_, softmax_output_logits),
       "cudnnSoftmaxForward failed.");
@@ -77,51 +78,60 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeG
     }
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    InitResource();
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-    is_grad_ = GetAttr<bool>(kernel_node, "is_grad");
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
 
-    InferInputOutputSize(kernel_node);
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetTensor4dDescriptor(logits_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                           batch_size_, channel_size_, height_, width_),
-                                "cudnnSetTensor4dDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    kernel_name_ = base_operator->name();
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(base_operator);
+    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+    is_grad_ = kernel_ptr->get_is_grad();
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+    InitResource();
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    auto logits_shape = inputs.at(kIndex0)->GetShapeVector();
+    auto labels_shape = inputs.at(kIndex1)->GetShapeVector();
+    InferInputOutputSize(logits_shape, labels_shape);
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetTensor4dDescriptor(logits_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_size_, channel_size_,
+                                 height_, width_),
+      "cudnnSetTensor4dDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensor4dDescriptor(softmax_output_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_size_,
                                  channel_size_, height_, width_),
       "cudnnSetTensor4dDescriptor failed.");
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(softmax_output_descriptor_),
-                               "cudnnDestroyTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(logits_descriptor_),
-                               "cudnnDestroyTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(softmax_output_descriptor_),
+                                       "cudnnDestroyTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(logits_descriptor_),
+                                       "cudnnDestroyTensorDescriptor failed.");
   }
 
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&logits_descriptor_),
-                                "cudnnCreateTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&softmax_output_descriptor_),
-                                "cudnnCreateTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&logits_descriptor_),
+                                        "cudnnCreateTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&softmax_output_descriptor_),
+                                        "cudnnCreateTensorDescriptor failed.");
   }
-  void InitSizeLists() override {
+
+  void InitSizeLists() {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
     input_size_list_.push_back(logits_size_);
     input_size_list_.push_back(labels_size_);
     output_size_list_.push_back(output_size_);
@@ -129,12 +139,10 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeG
   }
 
  private:
-  void InferInputOutputSize(const CNodePtr &kernel_node) {
-    auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  void InferInputOutputSize(const ShapeVector &logits_shape, const ShapeVector &labels_shape) {
     is_null_input_ =
       CHECK_SHAPE_NULL(logits_shape, kernel_name_, "logits") || CHECK_SHAPE_NULL(labels_shape, kernel_name_, "labels");
-    if (is_null_input_ || AnfAlgo::IsShapesDynamic({logits_shape, labels_shape})) {
+    if (is_null_input_ || IsDynamic(logits_shape) || IsDynamic(labels_shape)) {
       InitSizeLists();
       return;
     }
@@ -155,6 +163,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeG
     output_size_ = is_grad_ ? logits_size_ : sizeof(T);
     softmax_output_logits_size_ = logits_size_;
   }
+
   void CheckShapeValidation(const ShapeVector &logits_shape, const ShapeVector &labels_shape) {
     size_t logits_dim_length = logits_shape.size();
     size_t labels_dim_length = labels_shape.size();
@@ -189,6 +198,9 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeG
   size_t channel_size_;
   size_t height_;
   size_t width_;
+
+  const size_t kInputsNum = 2;
+  const size_t kOutputsNum = 1;
 };
 }  // namespace kernel
 }  // namespace mindspore
