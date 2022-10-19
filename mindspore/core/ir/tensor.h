@@ -397,7 +397,10 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Get the internal data object.
   ///
   /// \return The reference to internal data object.
-  TensorData &data() { return *data_; }
+  TensorData &data() {
+    MS_EXCEPTION_IF_NULL(data_);
+    return *data_;
+  }
 
   /// \brief Get the internal data shared pointer.
   ///
