@@ -3225,7 +3225,7 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
         >>> inputs = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
         >>> target = Tensor(np.array([1, 2, 1]), mindspore.int64)
         >>> weight = Tensor(np.array([1, 1, 1]), mindspore.float32)
-        >>> output = ops.multi_margin_loss(inputs, target, weight)
+        >>> output = ops.multi_margin_loss(inputs, target, weight=weight)
         >>> print(output)
         0.6666667
     """
