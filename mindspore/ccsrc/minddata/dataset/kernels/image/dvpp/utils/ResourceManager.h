@@ -37,16 +37,9 @@ class ResourceManager {
   friend APP_ERROR ExistFile(const std::string &filePath);
 
  public:
-  ResourceManager(){};
+  ResourceManager() = default;
 
-  ~ResourceManager() {
-    // finalize the acl when the process exit
-    auto ret = aclFinalize();
-    if (ret != APP_ERR_OK) {
-      MS_LOG(DEBUG) << "Failed to finalize acl, ret = " << ret << ".";
-      return;
-    }
-  };
+  ~ResourceManager() = default;
 
   // Get the Instance of resource manager
   static std::shared_ptr<ResourceManager> GetInstance();

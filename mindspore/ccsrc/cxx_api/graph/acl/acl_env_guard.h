@@ -21,6 +21,21 @@
 #include "acl/acl_base.h"
 
 namespace mindspore {
+class __attribute__((visibility("default"))) AclInitAdapter {
+ public:
+  static AclInitAdapter &GetInstance();
+  aclError AclInit(const char *config_file);
+  aclError AclFinalize();
+  aclError ForceFinalize();
+
+ private:
+  AclInitAdapter() : init_flag_(false) {}
+  ~AclInitAdapter() = default;
+
+  bool init_flag_;
+  std::mutex flag_mutex_;
+};
+
 class __attribute__((visibility("default"))) AclEnvGuard {
  public:
   explicit AclEnvGuard();

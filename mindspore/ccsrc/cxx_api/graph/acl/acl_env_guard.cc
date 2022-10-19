@@ -21,7 +21,38 @@ namespace mindspore {
 std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_ = nullptr;
 std::mutex AclEnvGuard::global_acl_env_mutex_;
 
-AclEnvGuard::AclEnvGuard() : errno_(aclInit(nullptr)) {
+AclInitAdapter &AclInitAdapter::GetInstance() {
+  static AclInitAdapter instance = {};
+  return instance;
+}
+
+aclError AclInitAdapter::AclInit(const char *config_file) {
+  std::lock_guard<std::mutex> lock(flag_mutex_);
+  if (init_flag_) {
+    return ACL_ERROR_NONE;
+  }
+
+  init_flag_ = true;
+  return aclInit(config_file);
+}
+
+aclError AclInitAdapter::AclFinalize() {
+  std::lock_guard<std::mutex> lock(flag_mutex_);
+  if (!init_flag_) {
+    return ACL_ERROR_NONE;
+  }
+
+  init_flag_ = false;
+  return aclFinalize();
+}
+
+aclError AclInitAdapter::ForceFinalize() {
+  std::lock_guard<std::mutex> lock(flag_mutex_);
+  init_flag_ = false;
+  return aclFinalize();
+}
+
+AclEnvGuard::AclEnvGuard() : errno_(AclInitAdapter::GetInstance().AclInit(nullptr)) {
   if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_INITIALIZE) {
     MS_LOG(ERROR) << "Execute aclInit Failed";
     return;
@@ -30,7 +61,7 @@ AclEnvGuard::AclEnvGuard() : errno_(aclInit(nullptr)) {
 }
 
 AclEnvGuard::~AclEnvGuard() {
-  errno_ = aclFinalize();
+  errno_ = AclInitAdapter::GetInstance().AclFinalize();
   if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_FINALIZE) {
     MS_LOG(ERROR) << "Finalize acl failed";
   }

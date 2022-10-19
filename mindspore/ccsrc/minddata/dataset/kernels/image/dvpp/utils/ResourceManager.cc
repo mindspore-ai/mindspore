@@ -65,6 +65,12 @@ void ResourceManager::Release() {
     }
   }
 
+  // finalize the acl when the process exit
+  ret = mindspore::AclInitAdapter::GetInstance().ForceFinalize();
+  if (ret != APP_ERR_OK) {
+    MS_LOG(DEBUG) << "Failed to finalize acl, ret = " << ret << ".";
+  }
+
   // release all the members
   acl_env_ = nullptr;
   deviceIds_.clear();
