@@ -14,6 +14,15 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/common/optimizer/graph_optimizer.cc
         )
 
+if(NOT WIN32)
+    set(CCSRC_SRC ${CCSRC_SRC}
+        ${CCSRC_DIR}/utils/anfalgo.cc
+        ${CCSRC_DIR}/utils/convert_utils.cc
+        ${CCSRC_DIR}/utils/utils.cc
+        ${CCSRC_DIR}/utils/parallel_context.cc
+        )
+endif()
+
 if(MSLITE_ENABLE_GRAPH_KERNEL)
     add_compile_definitions(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC

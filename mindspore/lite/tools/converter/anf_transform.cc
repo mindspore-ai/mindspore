@@ -757,13 +757,14 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     return old_graph;
   }
   auto value = old_graph->get_attr(kIsOptimized);
+  auto is_ascend = (param->device.find("Ascend") != std::string::npos);
   if (param->is_runtime_converter) {
     if (value != nullptr) {
       if (RunFormatTrans(old_graph) != RET_OK) {
         MS_LOG(ERROR) << "Run format trans failed";
         return nullptr;
       }
-    } else {
+    } else if (!is_ascend) {
       auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
       MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
       if (!unify_format->Run(old_graph)) {

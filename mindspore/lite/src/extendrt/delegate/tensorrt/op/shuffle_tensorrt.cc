@@ -144,6 +144,13 @@ int ShuffleTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int ShuffleTensorRT::InputTensorPreprocess(TensorRTContext *ctx) {
+  auto input_0 = in_tensors_[0];
+  if (!ctx->HasTensor(input_0.Name()) && input_0.IsConst()) {
+    shuffler_input_ = lite::ConvertConstantTensor(ctx_, input_0, op_name_);
+    out_format_ = NCHW;
+    ctx->RegisterTensor({shuffler_input_}, input_0.Name());
+    return RET_OK;
+  }
   shuffler_input_ = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
   out_format_ = input(ctx, 0).format_;

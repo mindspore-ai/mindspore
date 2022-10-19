@@ -59,7 +59,7 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph,
   if (value != nullptr) {
     is_optimized = GetValue<bool>(value);
   }
-  if (!is_optimized && !param->is_runtime_converter) {
+  if (!is_optimized) {
     auto mindir_adjust_pass = std::make_shared<MindirAdjust>();
     MS_CHECK_TRUE_MSG(mindir_adjust_pass != nullptr, RET_NULL_PTR, "mindir_adjust_pass is nullptr.");
     mindir_adjust_pass->SetFmkType(param->fmk_type);
@@ -200,6 +200,12 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   // drop unused input_parameter and disconnect edge
   auto graph_inputs = func_graph->get_inputs();
+  std::vector<AnfNodePtr> graph_outputs;
+#if !defined(_WIN32) && !defined(_WIN64)
+  auto graph_outputs_index = opt::GetNodeInputs(func_graph->get_return());
+  std::transform(graph_outputs_index.begin(), graph_outputs_index.end(), std::back_inserter(graph_outputs),
+                 [](const auto &item) { return item.first; });
+#endif
   auto manager = Manage(func_graph);
   MS_ASSERT(manager != nullptr);
   auto nodes_users = manager->node_users();
@@ -224,6 +230,9 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
         auto node_user_cnode = utils::cast<CNodePtr>(node_user_itr.first);
         q.push(node_user_cnode);
       }
+    }
+    if (std::find(graph_outputs.begin(), graph_outputs.end(), input) != graph_outputs.end()) {
+      found_used = true;
     }
     if (!found_used) {
       if (nodes_users.find(input) != nodes_users.end()) {

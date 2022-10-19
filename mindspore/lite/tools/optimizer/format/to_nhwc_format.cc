@@ -25,11 +25,11 @@ namespace {
 int CheckKFormat(const PrimitivePtr &prim, const std::string &node_name) {
   if (prim->GetAttr(ops::kFormat) != nullptr) {
     auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-    if (node_format == mindspore::NHWC) {
+    if (node_format == mindspore::NHWC || node_format == mindspore::KHWC) {
       MS_LOG(DEBUG) << "node's format has been nhwc, no need to transfer, " << node_name;
       return lite::RET_NO_CHANGE;
     }
-    if (node_format != mindspore::NCHW) {
+    if (node_format != mindspore::NCHW && node_format != mindspore::KCHW) {
       MS_LOG(ERROR) << "node's format is invalid, which must be nhwc or nchw, now is " << node_format
                     << ", node name is " << node_name;
       return lite::RET_ERROR;
