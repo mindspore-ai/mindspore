@@ -38,6 +38,11 @@ class NetErfc(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_erfc_fp32():
+    """
+    Feature: erfc kernel
+    Description: test erfc float32
+    Expectation: just test
+    """
     erfc = NetErfc()
     x = np.random.rand(3, 8).astype(np.float32)
     output = erfc(Tensor(x, dtype=dtype.float32))
@@ -45,13 +50,36 @@ def test_erfc_fp32():
     tol = 1e-6
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_erfc_fp16():
+    """
+    Feature: erfc kernel
+    Description: test erfc float16
+    Expectation: just test
+    """
     erfc = NetErfc()
     x = np.random.rand(3, 8).astype(np.float16)
     output = erfc(Tensor(x, dtype=dtype.float16))
     expect = special.erfc(x)
     tol = 1e-3
+    assert (np.abs(output.asnumpy() - expect) < tol).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_erfc_fp64():
+    """
+    Feature: erfc kernel
+    Description: test erfc float64
+    Expectation: just test
+    """
+    erfc = NetErfc()
+    x = np.random.rand(3, 8).astype(np.float64)
+    output = erfc(Tensor(x, dtype=dtype.float64))
+    expect = special.erfc(x)
+    tol = 1e-12
     assert (np.abs(output.asnumpy() - expect) < tol).all()

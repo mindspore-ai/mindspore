@@ -1179,10 +1179,11 @@ def sin(x):
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1235,18 +1236,18 @@ def cos(x):
         out_i = cos(x_i)
 
     .. warning::
-        Currently support Float16, Float32 data type. If use Float64, there may
-        be a problem of missing precision.
+        If use Float64, there may be a problem of missing precision.
 
     Args:
         x (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1350,14 +1351,13 @@ def asin(x):
     Args:
         x (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-            The data type should be one of the following types: float16, float32, float64.
 
     Returns:
         Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32, float64.
+        TypeError: If dtype of `x` is not float16, float32, float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1382,14 +1382,13 @@ def acos(x):
     Args:
         x (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-            The data type should be one of the following types: float16, float32, float64.
 
     Returns:
         Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
+        TypeError: If dtype of `x` is not float16, float32 or float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1873,7 +1872,7 @@ def erfc(x):
         erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        x (Tensor): The input tensor with a dtype of float16 or float32,
+        x (Tensor): The input tensor with a dtype of float16, float32 or float64,
             its rank should be in [0, 7] inclusive.
 
     Returns:
@@ -1881,7 +1880,7 @@ def erfc(x):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

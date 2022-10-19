@@ -36,7 +36,7 @@ abstract::ShapePtr AsinInferShape(const PrimitivePtr &primitive, const std::vect
 
 TypePtr AsinInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   auto x_type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   return input_args[kInputIndex0]->BuildType();

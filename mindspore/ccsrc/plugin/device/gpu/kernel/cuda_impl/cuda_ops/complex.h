@@ -317,6 +317,84 @@ HOST_DEVICE inline Complex<T> tan(const Complex<T> &z) {
 }
 
 template <typename T>
+HOST_DEVICE inline Complex<T> sin(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::sin(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::sin(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> cos(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::cos(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::cos(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> acos(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::acos(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::acos(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> acosh(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::acosh(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::acosh(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> asin(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::asin(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::asin(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> asinh(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::asinh(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::asinh(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
 HOST_DEVICE inline Complex<T> atanh(const Complex<T> &z) {
   Complex<T> result;
 #if defined(__CUDACC__)
@@ -412,6 +490,19 @@ HOST_DEVICE inline Complex<T> cosh(const Complex<T> &z) {
   result.imag(thrust_result.imag());
 #else
   result(std::cosh(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> sinh(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::sinh(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::sinh(std::complex<T>(z)));
 #endif
   return result;
 }

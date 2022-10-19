@@ -25,16 +25,72 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asin_fp32():
+    """
+    Feature: asin kernel
+    Description: test asin float32
+    Expectation: just test
+    """
     x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float32)
     output_ms = P.Asin()(Tensor(x_np))
     output_np = np.arcsin(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asin_fp16():
+    """
+    Feature: asin kernel
+    Description: test asin float16
+    Expectation: just test
+    """
     x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float16)
+    output_ms = P.Asin()(Tensor(x_np))
+    output_np = np.arcsin(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asin_fp64():
+    """
+    Feature: asin kernel
+    Description: test asin float64
+    Expectation: just test
+    """
+    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float64)
+    output_ms = P.Asin()(Tensor(x_np))
+    output_np = np.arcsin(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asin_complex64():
+    """
+    Feature: asin kernel
+    Description: test asin complex64
+    Expectation: just test
+    """
+    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.complex64)
+    x_np = x_np + 2j*x_np
+    output_ms = P.Asin()(Tensor(x_np))
+    output_np = np.arcsin(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asin_complex128():
+    """
+    Feature: asin kernel
+    Description: test asin complex128
+    Expectation: just test
+    """
+    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.complex128)
+    x_np = x_np + 5j*x_np
     output_ms = P.Asin()(Tensor(x_np))
     output_np = np.arcsin(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)

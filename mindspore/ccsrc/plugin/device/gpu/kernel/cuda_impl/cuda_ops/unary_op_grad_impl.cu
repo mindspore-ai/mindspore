@@ -80,6 +80,28 @@ __global__ void AsinGradKernel(const half *input, const half *dout, half *output
 }
 
 template <typename T>
+__global__ void AsinGradKernel(const Complex<T> *input, const Complex<T> *dout,
+                               Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    Complex<T> one = Complex<T> (1);
+    Complex<T> sqt = sqrt(one - input[i] * input[i]);
+    sqt = Complex<T>(sqt.real(), -sqt.imag());
+    output[i] = dout[i] / sqt;
+  }
+  return;
+}
+
+template <>
+__global__ void AsinGradKernel(const double *input, const double *dout, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    double one = static_cast<double> (1);
+    double sqt = static_cast<double> (sqrt(one - input[i] * input[i]));
+    output[i] = dout[i] / sqt;
+  }
+  return;
+}
+
+template <typename T>
 __global__ void ACosGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     T neg_one = static_cast<T>(-1);
@@ -96,6 +118,30 @@ __global__ void ACosGradKernel(const half *input, const half *dout, half *output
     half neg_one = -1;
     half one = 1;
     half sqt = hsqrt(one - input[i] * input[i]);
+    output[i] = neg_one * dout[i] / sqt;
+  }
+  return;
+}
+
+template <>
+__global__ void ACosGradKernel(const double *input, const double *dout, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    double neg_one = static_cast<double>(-1);
+    double one = 1;
+    double sqt = sqrt(one - input[i] * input[i]);
+    output[i] = neg_one * dout[i] / sqt;
+  }
+  return;
+}
+
+template <typename T>
+__global__ void ACosGradKernel(const Complex<T> *input, const Complex<T> *dout,
+                               Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    Complex<T> neg_one = Complex<T>(-1);
+    Complex<T> one = Complex<T>(1);
+    Complex<T> sqt = sqrt(one - input[i] * input[i]);
+    sqt = Complex<T>(sqt.real(), -sqt.imag());
     output[i] = neg_one * dout[i] / sqt;
   }
   return;
@@ -132,10 +178,53 @@ __global__ void AsinhGradKernel(const T *input, const T *dout, T *output, const 
 }
 
 template <typename T>
+__global__ void AsinhGradKernel(const Complex<T> *input, const Complex<T> *dout,
+                                Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    Complex<T> inputf = input[i];
+    Complex<T> coshy = cosh(inputf);
+    coshy = Complex<T>(coshy.real(), -coshy.imag());
+    output[i] = dout[i] / coshy;
+  }
+  return;
+}
+
+template <>
+__global__ void AsinhGradKernel(const double *input, const double *dout, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    double coshy = cosh(input[i]);
+    output[i] = dout[i] / coshy;
+  }
+  return;
+}
+
+template <typename T>
 __global__ void AcoshGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     float inputf = static_cast<float>(input[i]);
     T sinhy = static_cast<T>(sinhf(inputf));
+    output[i] = dout[i] / sinhy;
+  }
+  return;
+}
+
+template <>
+__global__ void AcoshGradKernel(const double *input, const double *dout, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    double inputf = static_cast<double>(input[i]);
+    double sinhy = static_cast<double>(sinh(inputf));
+    output[i] = dout[i] / sinhy;
+  }
+  return;
+}
+
+template <typename T>
+__global__ void AcoshGradKernel(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output,
+                                const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    Complex<T> inputf = input[i];
+    Complex<T> sinhy = sinh(inputf);
+    sinhy = Complex<T>(sinhy.real(), -sinhy.imag());
     output[i] = dout[i] / sinhy;
   }
   return;
@@ -200,7 +289,21 @@ void AsinGrad(const T *input, const T *dout, T *output, const size_t count, cuda
 }
 
 template <typename T>
+void AsinGrad(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output, const size_t count,
+              cudaStream_t cuda_stream) {
+  AsinGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
+  return;
+}
+
+template <typename T>
 void ACosGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
+  ACosGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
+  return;
+}
+
+template <typename T>
+void ACosGrad(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output, const size_t count,
+               cudaStream_t cuda_stream) {
   ACosGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
   return;
 }
@@ -224,7 +327,21 @@ void AsinhGrad(const T *input, const T *dout, T *output, const size_t count, cud
 }
 
 template <typename T>
+void AsinhGrad(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output, const size_t count,
+               cudaStream_t cuda_stream) {
+  AsinhGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
+  return;
+}
+
+template <typename T>
 void AcoshGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AcoshGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
+  return;
+}
+
+template <typename T>
+void AcoshGrad(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output, const size_t count,
+               cudaStream_t cuda_stream) {
   AcoshGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
   return;
 }
@@ -447,7 +564,30 @@ template CUDA_LIB_EXPORT void ReciprocalGrad<int64_t>(const int64_t *input, cons
                                                       const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void InvGrad<int64_t>(const int64_t *input, const int64_t *dout, int64_t *output,
                                                const size_t count, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT void ACosGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                       Complex<float> *output, const size_t count,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACosGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                       Complex<double> *output, const size_t count,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void AcoshGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                        Complex<float> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void AcoshGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                        Complex<double> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void AsinGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                       Complex<float> *output, const size_t count,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void AsinGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                       Complex<double> *output, const size_t count,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void AsinhGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                        Complex<float> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void AsinhGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                        Complex<double> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void ReciprocalGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
                                                              Complex<float> *output, const size_t count,
                                                              cudaStream_t cuda_stream);

@@ -25,6 +25,11 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asingrad_fp32():
+    """
+    Feature: asin grad kernel
+    Description: test asin grad float32
+    Expectation: just test
+    """
     error = np.ones(4) * 1.0e-7
     x_np = np.array([0, -0.25, 0.5, 0.3]).astype(np.float32)
     dout_np = np.array([1, 1, 1, 1]).astype(np.float32)
@@ -33,14 +38,74 @@ def test_asingrad_fp32():
     diff = output_ms.asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asingrad_fp16():
+    """
+    Feature: asin grad kernel
+    Description: test asin grad float16
+    Expectation: just test
+    """
     error = np.ones(4) * 1.0e-3
     x_np = np.array([0, -0.25, 0.5, 0.3]).astype(np.float16)
     dout_np = np.array([1, 1, 1, 1]).astype(np.float16)
     output_ms = P.AsinGrad()(Tensor(x_np), Tensor(dout_np))
     expect = np.array([1, 1.033, 1.154, 1.048])
+    diff = output_ms.asnumpy() - expect
+    assert np.all(diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asingrad_fp64():
+    """
+    Feature: asin grad kernel
+    Description: test asin grad float64
+    Expectation: just test
+    """
+    error = np.ones(4) * 1.0e-9
+    x_np = np.array([0, -0.25, 0.5, 0.3]).astype(np.float64)
+    dout_np = np.array([1, 1, 1, 1]).astype(np.float64)
+    output_ms = P.AsinGrad()(Tensor(x_np), Tensor(dout_np))
+    expect = np.array([1, 1.032795559, 1.154700538, 1.048284837])
+    diff = output_ms.asnumpy() - expect
+    assert np.all(diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asingrad_complex64():
+    """
+    Feature: asin grad kernel
+    Description: test asin grad complex64
+    Expectation: just test
+    """
+    error = np.ones(4) * 1.0e-3
+    x_np = np.array([0, -0.25, 0.5, 0.3]).astype(np.complex64)
+    dout_np = np.array([1, 1, 1, 1]).astype(np.complex64)
+    output_ms = P.AsinGrad()(Tensor(x_np), Tensor(dout_np))
+    expect = np.array([1, 1.033, 1.154, 1.048])
+    diff = output_ms.asnumpy() - expect
+    assert np.all(diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asingrad_complex128():
+    """
+    Feature: asin grad kernel
+    Description: test asin grad complex128
+    Expectation: just test
+    """
+    error = np.ones(4) * 1.0e-6
+    x_np = np.array([0, -0.25, 0.5, 0.3]).astype(np.complex128)
+    dout_np = np.array([1, 1, 1, 1]).astype(np.complex128)
+    output_ms = P.AsinGrad()(Tensor(x_np), Tensor(dout_np))
+    expect = np.array([1, 1.032796, 1.154701, 1.048285])
     diff = output_ms.asnumpy() - expect
     assert np.all(diff < error)

@@ -25,16 +25,74 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acos_fp32():
+    """
+    Feature: acos kernel
+    Description: test acos float32
+    Expectation: just test
+    """
     x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float32)
     output_ms = P.ACos()(Tensor(x_np))
     output_np = np.arccos(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acos_fp16():
+    """
+    Feature: acos kernel
+    Description: test acos float16
+    Expectation: just test
+    """
     x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float16)
+    output_ms = P.ACos()(Tensor(x_np))
+    output_np = np.arccos(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_acos_fp64():
+    """
+    Feature: acos kernel
+    Description: test acos float64
+    Expectation: just test
+    """
+    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float64)
+    output_ms = P.ACos()(Tensor(x_np))
+    output_np = np.arccos(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_acos_complex64():
+    """
+    Feature: acos kernel
+    Description: test acos complex64
+    Expectation: just test
+    """
+    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.complex64)
+    x_np = x_np + 2j*x_np
+    output_ms = P.ACos()(Tensor(x_np))
+    output_np = np.arccos(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_acos_complex128():
+    """
+    Feature: acos kernel
+    Description: test acos complex128
+    Expectation: just test
+    """
+    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.complex128)
+    x_np = x_np + 5j*x_np
     output_ms = P.ACos()(Tensor(x_np))
     output_np = np.arccos(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)

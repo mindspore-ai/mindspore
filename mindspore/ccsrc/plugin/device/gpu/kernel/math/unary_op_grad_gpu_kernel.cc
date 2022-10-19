@@ -64,12 +64,36 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryGradOpGpuKernelMod:
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryGradOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &UnaryGradOpGpuKernelMod::LaunchKernel<half>}}},
+       &UnaryGradOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kACosGrad,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryGradOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &UnaryGradOpGpuKernelMod::LaunchKernel<half>}}},
+       &UnaryGradOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kAtanGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryGradOpGpuKernelMod::LaunchKernel<float>},
@@ -79,12 +103,36 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryGradOpGpuKernelMod:
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryGradOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &UnaryGradOpGpuKernelMod::LaunchKernel<half>}}},
+       &UnaryGradOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kAcoshGrad,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryGradOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &UnaryGradOpGpuKernelMod::LaunchKernel<half>}}},
+       &UnaryGradOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kReciprocalGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryGradOpGpuKernelMod::LaunchKernel<float>},
@@ -179,7 +227,13 @@ bool UnaryGradOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   const bool is_t_complex = (std::is_same_v<T, utils::Complex<float>>) || (std::is_same_v<T, utils::Complex<double>>);
   if constexpr (is_t_complex) {
     std::map<std::string, std::function<void(const T *, const T *, T *, const size_t, cudaStream_t)>> func_map_complex =
-      {{kReciprocalGrad, ReciprocalGrad<T>}, {kInvGrad, InvGrad<T>}, {kSqrtGrad, SqrtGrad<T>}};
+      {{kReciprocalGrad, ReciprocalGrad<T>},
+       {kInvGrad, InvGrad<T>},
+       {kACosGrad, ACosGrad<T>},
+       {kAcoshGrad, AcoshGrad<T>},
+       {kAsinGrad, AsinGrad<T>},
+       {kAsinhGrad, AsinhGrad<T>},
+       {kSqrtGrad, SqrtGrad<T>}};
     copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
   } else {
     std::map<std::string, std::function<void(const T *, const T *, T *, const size_t, cudaStream_t)>> func_map_normal =
