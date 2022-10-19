@@ -222,7 +222,7 @@ ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
   std::vector<std::pair<std::string, ValuePtr>> key_values;
   for (auto item : dict_values) {
     if (!py::isinstance<py::str>(item.first)) {
-      MS_LOG(ERROR) << "The key of dict is only support str.";
+      MS_LOG(ERROR) << "The key of dict only supports 'string' type now.";
       return nullptr;
     }
     std::string key = py::str(item.first);
