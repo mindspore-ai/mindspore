@@ -11,7 +11,7 @@ mindspore.ops.broadcast_to
 
     - 如果不相等，分以下三种情况：
 
-        - 情况一：如果目标shape该维的值为-1， 则输出shape该维的值为对应输入shape该维的值。比如说输入shape为 :math:`(3, 3)` ，目标shape为 :math:`(-1, 3)` ，则输出shape为 :math:`(3, 3)` ；
+        - 情况一：如果目标shape该维的值为-1，则输出shape该维的值为对应输入shape该维的值。比如说输入shape为 :math:`(3, 3)` ，目标shape为 :math:`(-1, 3)` ，则输出shape为 :math:`(3, 3)` ；
 
         - 情况二：如果目标shape该维的值不为-1，但是输入shape该维的值为1，则输出shape该维的值为目标shape该维的值。比如说输入shape为 :math:` (1, 3)` ，目标shape为 :math:`(8, 3)` ，则输出shape为 :math:`(8, 3)` ；
 

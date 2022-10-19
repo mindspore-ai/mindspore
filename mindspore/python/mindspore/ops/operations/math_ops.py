@@ -2957,7 +2957,7 @@ class Div(_MathBinaryOp):
 
 class DivNoNan(Primitive):
     r"""
-    Computes a safe divide and returns 0 if the x2 is zero.
+    Operates a safe division between `x1` and `x2` element-wise. Returns 0 if element of `x2` is zero.
 
     Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -2978,7 +2978,7 @@ class DivNoNan(Primitive):
           `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **x2** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+          a bool when the first input is a bool or a tensor whose data type is number or bool\_.
           When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
 
