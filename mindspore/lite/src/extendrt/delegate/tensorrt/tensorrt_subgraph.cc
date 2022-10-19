@@ -571,10 +571,7 @@ int TensorRTSubGraph::Prepare() {
   }
   int binding_num = this->engine_->getNbBindings();
   tensor_bindings_ = new (std::nothrow) void *[binding_num];
-  if (tensor_bindings_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tensor binding array failed.";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(tensor_bindings_);
 
   profile_index_ = MaxVolumnProfileIndex();
   if (this->trt_context_->setOptimizationProfile(profile_index_)) {
@@ -587,19 +584,14 @@ int TensorRTSubGraph::Prepare() {
                       max_dims_[tensor.Name()][profile_index_].d + max_dims_[tensor.Name()][profile_index_].nbDims, 1,
                       std::multiplies<int>());
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, volumn * DataType2Size(tensor.DataType()));
-    if (device_ptr == nullptr) {
-      MS_LOG(ERROR) << "malloc for inputs tensor device memory failed.";
-      return RET_ERROR;
-    }
+    CHECK_NULL_RETURN(device_ptr);
     trt_in_tensor_name_.push_back(tensor.Name());
     std::string tensor_name = GetNameByBindingIndex(tensor, profile_index_);
     int index = this->engine_->getBindingIndex(tensor_name.c_str());
     MS_LOG(INFO) << "device index " << index << " for tensor : " << tensor_name << " attr: " << device_ptr;
     tensor_bindings_[index] = device_ptr;
     nvinfer1::Dims input_dims = max_dims_[tensor.Name()][profile_index_];
-    for (int od = 0; od < input_dims.nbDims; od++) {
-      MS_LOG(DEBUG) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
-    }
+    DebugDims("input dims: ", input_dims);
     if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
       MS_LOG(ERROR) << "invalid input dims of " << tensor.Name();
       return RET_ERROR;
@@ -632,10 +624,16 @@ int TensorRTSubGraph::Prepare() {
     }
   }
   for (auto tensor : outputs_) {
+    trt_out_tensor_name_.push_back(tensor.Name());
     std::string max_tensor_name = GetNameByBindingIndex(tensor, profile_index_);
     int max_index = this->engine_->getBindingIndex(max_tensor_name.c_str());
     auto out_dims = trt_context_->getBindingDimensions(max_index);
     int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
+    if (elem_num == 0) {
+      MS_LOG(DEBUG) << "ignore empty tensor: " << tensor.Name();
+      filter_output_tensors_.insert(tensor.Name());
+      continue;
+    }
     DebugDims("out dims", out_dims);
     if (tensor.Data() == nullptr) {
       MS_LOG(INFO) << "Set output shape by tensorrt binding output";
@@ -643,16 +641,12 @@ int TensorRTSubGraph::Prepare() {
       tensor.MutableData();
     }
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, elem_num * DataType2Size(tensor.DataType()));
-    if (device_ptr == nullptr) {
-      MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";
-      return RET_ERROR;
-    }
+    CHECK_NULL_RETURN(device_ptr);
     for (size_t j = 0; j != profiles_.size(); ++j) {
       std::string tensor_name = GetNameByBindingIndex(tensor, j);
       int index = this->engine_->getBindingIndex(tensor_name.c_str());
       tensor_bindings_[index] = device_ptr;
     }
-    trt_out_tensor_name_.push_back(tensor.Name());
   }
   return RET_OK;
 }
@@ -750,6 +744,9 @@ int TensorRTSubGraph::ReSize() {
   }
 
   for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
+    if (filter_output_tensors_.find(trt_out_tensor_name_[i]) != filter_output_tensors_.end()) {
+      continue;
+    }
     int index = this->engine_->getBindingIndex(GetNameByBindingIndex(trt_out_tensor_name_[i], profile_index_).c_str());
     auto out_dims = trt_context_->getBindingDimensions(index);
     DebugDims("out dims", out_dims);
@@ -813,6 +810,9 @@ int TensorRTSubGraph::Execute() {
   }
 
   for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
+    if (filter_output_tensors_.find(trt_out_tensor_name_[i]) != filter_output_tensors_.end()) {
+      continue;
+    }
     int index = this->engine_->getBindingIndex(GetNameByBindingIndex(trt_out_tensor_name_[i], profile_index_).c_str());
     // actual output tensor dims
     auto out_dims = this->trt_context_->getBindingDimensions(index);
