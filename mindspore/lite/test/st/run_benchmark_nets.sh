@@ -159,7 +159,7 @@ if [[ $backend == "all" || $backend == "x86_gpu" ]]; then
     fi
 fi
 
-if [[ $backend == "all" || $backend == "x86_ascend310" || $backend == "x86_ascend710" ]]; then
+if [[ $backend == "all" || $backend == "x86_ascend310" || $backend == "x86_ascend710" || $backend == "arm_ascend310" ]]; then
     sh $cur_path/scripts/ascend/run_ascend.sh -r $release_path -m $models_path -d $device_id -e $backend -l $level
     ascend_status=$?
     if [[ ascend_status -ne 0 ]]; then
