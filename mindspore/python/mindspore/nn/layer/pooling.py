@@ -390,7 +390,7 @@ class AvgPool3d(Cell):
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or
-        :math:`(C, D_{in}, H_{in}, W_{in})`, with the same data type with `x`.
+        :math:`(C, D_{in}, H_{in}, W_{in})`, with the same data type as `x`.
 
     Raises:
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
