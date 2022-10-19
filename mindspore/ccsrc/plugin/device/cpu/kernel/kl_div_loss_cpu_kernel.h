@@ -57,8 +57,6 @@ class KLDivLossCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchOther(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                    const std::vector<AddressPtr> &outputs);
 
-  bool CheckParams() const;
-
   using KLDivLossFunc = std::function<bool(KLDivLossCpuKernelMod *, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
 
@@ -67,8 +65,13 @@ class KLDivLossCpuKernelMod : public NativeCpuKernelMod {
   KLDivLossFunc kernel_func_;
   std::string reductionMode_;
   int64_t batch_size_{0};
-  size_t input_x_shape_size_{1};
-  size_t input_target_shape_size_{1};
+  int64_t input_x_shape_size_{1};
+  int64_t input_target_shape_size_{1};
+  int64_t output_shape_size_{1};
+  int64_t output_before_reduction_shape_size_{1};
+  std::vector<int64_t> input_x_shape_;
+  std::vector<int64_t> input_target_shape_;
+  std::vector<int64_t> output_before_reduction_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

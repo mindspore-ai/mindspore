@@ -564,7 +564,7 @@ ShapeVector CPUKernelUtils::GetBroadcastShape(const ShapeVector &x, const ShapeV
   size_t length = x_len < y_len ? x_len : y_len;
   ShapeVector broadcast_shape;
   ShapeVector broadcast_shape_back;
-  for (int i = -length; i < 0; ++i) {
+  for (int i = -SizeToInt(length); i < 0; ++i) {
     if (x[x_len + i] == 1) {
       broadcast_shape_back.push_back(y[y_len + i]);
     } else if (y[y_len + i] == 1) {
