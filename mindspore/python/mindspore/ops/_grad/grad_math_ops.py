@@ -243,7 +243,12 @@ def _onehot_with_neg_axis(axis, indices, depth, on_value_dtype):
     indices_expand = P.ExpandDims()(indices, axis)
     indices_expand_rank = dyn_rank_1d(indices_expand)
     broad_shape = dyn_ones(indices_expand_rank, mstype.int64)
-    broad_shape[axis] = depth
+    # It should use int64 dtype, but the TensorScatterUpdate op does not support the int64
+    # dtype on Ascend device, so the float32 dtype is used here.
+    update_dtype = mstype.float32
+    broad_shape = dyn_ones(indices_expand_rank, update_dtype)
+    broad_shape[axis] = F.cast(depth, update_dtype)
+    broad_shape = F.cast(broad_shape, mstype.int64)
     depth_broad = P.Reshape()(depth_range, broad_shape)
     one_hot_bool = P.Equal()(indices_expand, depth_broad)
     one_hot_res = F.cast(one_hot_bool, on_value_dtype)
@@ -291,6 +296,10 @@ def _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout):
         onehot = P.OneHot(onehot_axis)
         dx = dout_expand * onehot(out[0], depth, on_value, off_value)
     else:
+        if out[0].value is not None:
+        # It is a temporary method: In the pynative mode, out may be a constant tensor. Constant
+        # folding occurs in ExpandDims op, but such scenarios are not supported currently.
+            out = op(x)
         dx = dout_expand * _onehot_with_neg_axis(onehot_axis, out[0], depth, on_value.dtype)
     return dx
 
@@ -631,8 +640,15 @@ def get_bprop_square_sum_all(self):
     def bprop(x, y, out, dout):
         temp_x = mul_func(dout[0], x)
         temp_y = mul_func(dout[1], y)
-        dx = mul_func(fill_func(dtype(temp_x), shape_op(x), 2.0), temp_x)
-        dy = mul_func(fill_func(dtype(temp_y), shape_op(y), 2.0), temp_y)
+        if is_shape_unknown(shape_op(x)):
+            dx = mul_func(dyn_fill(dtype(temp_x), dyn_shape_op(x), 2.0), temp_x)
+        else:
+            dx = mul_func(fill_func(dtype(temp_x), shape_op(x), 2.0), temp_x)
+
+        if is_shape_unknown(shape_op(y)):
+            dy = mul_func(dyn_fill(dtype(temp_y), dyn_shape_op(y), 2.0), temp_y)
+        else:
+            dy = mul_func(fill_func(dtype(temp_y), shape_op(y), 2.0), temp_y)
         return (dx, dy)
 
     return bprop
