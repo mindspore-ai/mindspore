@@ -19,66 +19,16 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore.common.api import _cell_graph_executor
-
-
-class MaxPoolNet(nn.Cell):
-    """MaxPool3d"""
-
-    def __init__(self):
-        super(MaxPoolNet, self).__init__()
-        self.pool1 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1)
-        self.pool2 = nn.MaxPool3d(kernel_size=3, stride=1, padding=1, return_indices=True)
-
-    def construct(self, x):
-        output1 = self.pool1(x)
-        output2 = self.pool2(x)
-        return output1, output2
-
-
-def test_compile_max():
-    """
-    Feature: Test MaxPool3d
-    Description: Test the functionality of MaxPool3d
-    Expectation: Success
-    """
-    net = MaxPoolNet()
-    x = ms.Tensor(np.random.randint(0, 10, [1, 2, 4, 4, 5]), ms.float32)
-    _cell_graph_executor.compile(net, x)
-
-
-class AvgPoolNet(nn.Cell):
-    """AvgPool3d"""
-
-    def __init__(self):
-        super(AvgPoolNet, self).__init__()
-        self.pool = nn.AvgPool3d(kernel_size=3, stride=1)
-
-    def construct(self, x):
-        return self.pool(x)
-
-
-def test_compile_avg():
-    """
-    Feature: Test AvgPool3d
-    Description: Test the functionality of AvgPool3d
-    Expectation: Success
-    """
-    net = AvgPoolNet()
-    x = ms.Tensor(np.random.randint(0, 10, [1, 2, 4, 4, 5]), ms.float32)
-    _cell_graph_executor.compile(net, x)
 
 
 class LPPool1d(nn.Cell):
     """LPPool1d"""
 
-    def __init__(self):
-        super(LPPool1d, self).__init__()
-        self.pool = nn.LPPool1d(norm_type=1, kernel_size=3, stride=1)
-
     def construct(self, x):
-        output1 = self.pool(x)
-        return output1
+        output = ops.lp_pool1d(x, norm_type=1, kernel_size=3, stride=1)
+        return output
 
 
 def test_compile_lpool1d():
@@ -95,12 +45,10 @@ def test_compile_lpool1d():
 
 
 class LPPool2d(nn.Cell):
-    def __init__(self):
-        super(LPPool2d, self).__init__()
-        self.pool = nn.LPPool2d(norm_type=1, kernel_size=3, stride=1)
+    """LPPool2d"""
 
     def construct(self, x):
-        out = self.pool(x)
+        out = ops.lp_pool2d(x, norm_type=1, kernel_size=3, stride=1)
         return out
 
 

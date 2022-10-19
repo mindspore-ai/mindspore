@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+import mindspore.ops as ops
 from mindspore._checkparam import Rel, Validator as validator
 from mindspore.ops.primitive import constexpr
 from mindspore.common.tensor import Tensor
@@ -31,7 +32,8 @@ from mindspore.nn.cell import Cell
 
 __all__ = ['AvgPool3d', 'MaxPool3d', 'AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'FractionalMaxPool2d',
            'FractionalMaxPool3d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d', 'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d',
-           'AdaptiveAvgPool2d', 'AdaptiveAvgPool3d', 'MaxUnpool1d', 'MaxUnpool2d', 'MaxUnpool3d']
+           'AdaptiveAvgPool2d', 'AdaptiveAvgPool3d', 'MaxUnpool1d', 'MaxUnpool2d', 'MaxUnpool3d', 'LPPool1d',
+           'LPPool2d']
 
 
 class _PoolNd(Cell):
@@ -78,6 +80,155 @@ def _shape_check(in_shape, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(in_shape) != 3:
         raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
+
+
+class LPPool1d(Cell):
+    r"""
+    LPPool1d pooling operation.
+
+    Applies a 1D power lp pooling over an input signal composed of several input planes.
+
+    Typically the input is of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, the output is of shape
+    :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, with the same shape as input, the operation is as follows.
+
+    .. math::
+        f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
+
+    Args:
+        norm_type (Union[int, float]): Type of normalization, represents p in the formula,
+
+            - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
+            - if p = :math:`\infty`, one gets Max Pooling.
+
+        kernel_size (int): The size of kernel window.
+        stride (int): The distance of kernel moving, an int number that represents
+            the width of movement is stride, if the value is None, the default value `kernel_size` is used;
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
+
+    Outputs:
+        - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`,
+          It has the same data type as `x`.
+
+    Raises:
+        TypeError: If `x` is not an Tensor.
+        TypeError: If `kernel_size` or `stride` is not an int.
+        TypeError: If `ceil_mode` is not a bool.
+        ValueError: If `kernel_size` or `stride` is less than 1.
+        ValueError: If length of shape of `x` is not equal to 2 or 3.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> a = Tensor(np.arange(2 * 3 * 4).reshape((2, 3, 4)), dtype=ms.float32)
+        >>> net = nn.LPPool1d(norm_type=1, kernel_size=3, stride=1)
+        >>> out = net(a)
+        >>> print(out)
+        [[[ 3.  6.]
+          [15. 18.]
+          [27. 30.]]
+         [[39. 42.]
+          [51. 54.]
+          [63. 66.]]]
+    """
+
+    def __init__(self, norm_type, kernel_size, stride=None, ceil_mode=False):
+        super(LPPool1d, self).__init__()
+        self.norm_type = norm_type
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.ceil_mode = ceil_mode
+
+    def construct(self, x):
+        return ops.lp_pool1d(x, float(self.norm_type), self.kernel_size,
+                             self.stride, self.ceil_mode)
+
+
+class LPPool2d(Cell):
+    r"""
+    LPPool2d pooling operation.
+
+    Applies a 2D power lp pooling over an input signal composed of several input planes.
+
+    Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
+    :math:`(N, C, H_{in}, W_{in})`, with the same shape as input, the operation is as follows.
+
+    .. math::
+        f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
+
+    Args:
+        norm_type(Union[int, float]) - Type of normalization, represents p in the formula,
+
+            - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
+            - if p = :math:`\infty`, one gets Max Pooling.
+
+        kernel_size(Union[int, tuple[int]]): The size of kernel window.
+            The data type of kernel_size must be int and the value represents the height and width,
+            or a tuple of two int numbers that represent height and width respectively.
+        stride(Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both stride, or a tuple of two int numbers that
+            represent height and width of movement respectively, if the value is None,
+            the default value `kernel_size` is used;
+        ceil_mode(bool): Whether to use ceil or floor to calculate output shape. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
+
+    Outputs:
+        - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{in}, W_{in})`,
+          It has the same data type as `x`.
+
+    Raises:
+        TypeError: If `x` is not an Tensor.
+        TypeError: If `kernel_size` or `stride` is neither int nor tuple.
+        TypeError: If `ceil_mode` is not a bool.
+        ValueError: If `kernel_size` or `stride` is less than 1.
+        ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2`.
+        ValueError: If length of shape of `x` is not equal to 4.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> a = Tensor(np.arange(2 * 3 * 4 * 5).reshape((2, 3, 4, 5)), dtype=ms.float32)
+        >>> net = nn.LPPool2d(norm_type=1, kernel_size=3, stride=1)
+        >>> out = net(a)
+        >>> print(out)
+        [[[[  54.   63.   72.]
+           [  99.  108.  117.]]
+          [[ 234.  243.  252.]
+           [ 279.  288.  297.]]
+          [[ 414.  423.  432.]
+           [ 459.  468.  477.]]]
+         [[[ 594.  603.  612.]
+           [ 639.  648.  657.]]
+          [[ 774.  783.  792.]
+           [ 819.  828.  837.]]
+          [[ 954.  963.  972.]
+           [ 999. 1008. 1017.]]]]
+    """
+
+    def __init__(self, norm_type, kernel_size, stride=None, ceil_mode=False):
+        super(LPPool2d, self).__init__()
+        self.norm_type = norm_type
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.ceil_mode = ceil_mode
+
+    def construct(self, x):
+        return ops.lp_pool2d(x, float(self.norm_type), self.kernel_size,
+                             self.stride, self.ceil_mode)
 
 
 class MaxPool3d(Cell):

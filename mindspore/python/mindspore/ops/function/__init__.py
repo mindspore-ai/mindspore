@@ -340,6 +340,8 @@ from .nn_func import (
     elu,
     gelu,
     hinge_embedding_loss,
+    lp_pool1d,
+    lp_pool2d,
 )
 from .linalg_func import (
     svd,

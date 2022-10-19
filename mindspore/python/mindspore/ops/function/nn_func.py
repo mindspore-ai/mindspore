@@ -201,6 +201,23 @@ def adaptive_avg_pool3d(input_x, output_size):
     return adaptive_avg_pool3d_(input_x)
 
 
+@constexpr
+def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad):
+    """Checks the type of avgpool1d input"""
+    validator.check_value_type('kernel_size', kernel_size, [int], 'avg_pool1d')
+    validator.check_value_type('stride', stride, [int], 'avg_pool1d')
+    validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool1d')
+    validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool1d')
+    validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool1d')
+    validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool1d')
+
+
+@constexpr
+def check_non_negative_int(arg_value, arg_name=None, prim_name=None):
+    """Check argument is non-negative integer, which mean arg_value >= 0."""
+    validator.check_non_negative_int(arg_value, arg_name, prim_name)
+
+
 def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True):
     r"""
     1D average pooling for temporal data.
@@ -256,21 +273,15 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if len(input_x.shape) != 3:
         raise ValueError("For avg_pool1d, input must have 3 dim, but got {}.".format(len(input_x.shape)))
 
-    validator.check_value_type('kernel_size', kernel_size, [int], 'avg_pool1d')
-    validator.check_value_type('stride', stride, [int], 'avg_pool1d')
-    validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool1d')
-    validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool1d')
-    validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool1d')
-    validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool1d')
-
+    _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad)
     if isinstance(padding, int):
-        validator.check_non_negative_int(padding, 'padding', 'avg_pool1d')
+        check_non_negative_int(padding, 'padding', 'avg_pool1d')
         padding = (0, 0, 0, 0, padding, padding)
     elif isinstance(padding, tuple):
         if len(padding) != 2:
             raise ValueError("For avg_pool1d, padding should be int or tuple of length 2.")
         for item in padding:
-            validator.check_non_negative_int(item, 'padding', 'avg_pool1d')
+            check_non_negative_int(item, 'padding', 'avg_pool1d')
         padding = (0, 0, 0, 0, padding[0], padding[1])
     else:
         raise TypeError("For avg_pool1d, padding should be int or tuple of length 2.")
@@ -288,6 +299,65 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     input_x = avg_pool_op(input_x)
     input_x = squeeze_op(input_x)
     return input_x
+
+
+@constexpr
+def _check_avgpool_2d_kernel_size(kernel_size):
+    """check and calculate the avgpool2d kernel_size"""
+    if isinstance(kernel_size, int):
+        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool2d')
+        kernel_size = (1, kernel_size, kernel_size)
+    elif isinstance(kernel_size, tuple):
+        if len(kernel_size) != 2:
+            raise ValueError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
+        for item in kernel_size:
+            validator.check_int(item, 1, Rel.GE, "kernel_size", 'avg_pool2d')
+        kernel_size = (1, kernel_size[0], kernel_size[1])
+    else:
+        raise TypeError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
+    return kernel_size
+
+
+@constexpr
+def _check_avgpool_2d_stride(stride):
+    """check and calculate the avgpool2d stride"""
+    if isinstance(stride, int):
+        validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool2d')
+        stride = (1, stride, stride)
+    elif isinstance(stride, tuple):
+        if len(stride) != 2:
+            raise ValueError("For avg_pool2d, stride should be int or tuple of length 2.")
+        for item in stride:
+            validator.check_int(item, 1, Rel.GE, "stride", 'avg_pool2d')
+        stride = (1, stride[0], stride[1])
+    else:
+        raise TypeError("For avg_pool2d, stride should be int or tuple of length 2.")
+    return stride
+
+
+@constexpr
+def _check_avgpool_2d_padding(padding):
+    """check and calculate the avgpool2d padding"""
+    if isinstance(padding, int):
+        validator.check_non_negative_int(padding, 'padding', 'avg_pool2d')
+        padding = (0, 0, padding, padding, padding, padding)
+    elif isinstance(padding, tuple):
+        if len(padding) != 4:
+            raise ValueError("For avg_pool2d, padding should be int or tuple of length 4.")
+        for item in padding:
+            validator.check_non_negative_int(item, 'padding', 'avg_pool2d')
+        padding = (0, 0, padding[0], padding[1], padding[2], padding[3])
+    else:
+        raise TypeError("For avg_pool2d, padding should be int or tuple of length 4.")
+    return padding
+
+
+@constexpr
+def _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_override):
+    """check the type of avgpool2d input"""
+    validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool2d')
+    validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool2d')
+    validator.check_non_negative_int(divisor_override, 'divisor_override', 'avg_pool2d')
 
 
 def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True,
@@ -358,45 +428,10 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if len(input_x.shape) != 4:
         raise ValueError("For avg_pool2d, input must have 4 dim, but got {}.".format(len(input_x.shape)))
 
-    if isinstance(kernel_size, int):
-        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool2d')
-        kernel_size = (1, kernel_size, kernel_size)
-    elif isinstance(kernel_size, tuple):
-        if len(kernel_size) != 2:
-            raise ValueError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
-        for item in kernel_size:
-            validator.check_int(item, 1, Rel.GE, "kernel_size", 'avg_pool2d')
-        kernel_size = (1, kernel_size[0], kernel_size[1])
-    else:
-        raise TypeError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
-
-    if isinstance(stride, int):
-        validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool2d')
-        stride = (1, stride, stride)
-    elif isinstance(stride, tuple):
-        if len(stride) != 2:
-            raise ValueError("For avg_pool2d, stride should be int or tuple of length 2.")
-        for item in stride:
-            validator.check_int(item, 1, Rel.GE, "stride", 'avg_pool2d')
-        stride = (1, stride[0], stride[1])
-    else:
-        raise TypeError("For avg_pool2d, stride should be int or tuple of length 2.")
-
-    if isinstance(padding, int):
-        validator.check_non_negative_int(padding, 'padding', 'avg_pool2d')
-        padding = (0, 0, padding, padding, padding, padding)
-    elif isinstance(padding, tuple):
-        if len(padding) != 4:
-            raise ValueError("For avg_pool2d, padding should be int or tuple of length 4.")
-        for item in padding:
-            validator.check_non_negative_int(item, 'padding', 'avg_pool2d')
-        padding = (0, 0, padding[0], padding[1], padding[2], padding[3])
-    else:
-        raise TypeError("For avg_pool2d, padding should be int or tuple of length 4.")
-
-    validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool2d')
-    validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool2d')
-    validator.check_non_negative_int(divisor_override, 'divisor_override', 'avg_pool2d')
+    kernel_size = _check_avgpool_2d_kernel_size(kernel_size)
+    stride = _check_avgpool_2d_stride(stride)
+    padding = _check_avgpool_2d_padding(padding)
+    _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_override)
 
     expand_op = _get_cache_prim(P.ExpandDims)()
     squeeze_op = _get_cache_prim(P.Squeeze)(2)
@@ -3498,6 +3533,162 @@ def gelu(input_x, approximate='none'):
     return output
 
 
+@constexpr
+def _shape_check(in_shape, dim_list, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if len(in_shape) not in dim_list:
+        raise ValueError(f"{msg_prefix} input must has dim in {dim_list}, but got {len(in_shape)}")
+
+
+def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
+    r"""
+    LPPool1d pooling operation.
+
+    Applies a 1D power lp pooling over an input signal composed of several input planes.
+
+    Typically the input is of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, the output is of shape
+    :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, with the same shape as input, the operation is as follows.
+
+    .. math::
+        f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
+
+    Args:
+        x (Tensor) - Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
+        norm_type (Union[int, float]) - Type of normalization, represents p in the formula,
+
+            - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
+            - if p = :math:`\infty`, one gets Max Pooling.
+
+        kernel_size (int): The size of kernel window.
+        stride (int): The distance of kernel moving, an int number that represents
+            the width of movement is stride, if the value is None, the default value `kernel_size` is used;
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+
+    Returns:
+        - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`,
+          It has the same data type as `x`.
+
+    Raises:
+        TypeError: If `x` is not an Tensor.
+        TypeError: If `kernel_size` or `stride` is not an int.
+        TypeError: If `ceil_mode` is not a bool.
+        ValueError: If `kernel_size` or `stride` is less than 1.
+        ValueError: If length of shape of `x` is not equal to 2 or 3.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.arange(2 * 3 * 4).reshape((2, 3, 4)), dtype=ms.float32)
+        >>> out = ops.lp_pool1d(x, norm_type=1, kernel_size=3, stride=1, ceil_mode=False)
+        >>> print(out)
+        [[[ 3.  6.]
+          [15. 18.]
+          [27. 30.]]
+         [[39. 42.]
+          [51. 54.]
+          [63. 66.]]]
+    """
+    _shape_check(x.shape, [2, 3], "lp_pool1d")
+    sign = _get_cache_prim(ops.Sign)()
+    squeeze = _get_cache_prim(ops.Squeeze)(0)
+    expand_dims = _get_cache_prim(ops.ExpandDims)()
+    _is_squeeze = False
+    if len(x.shape) == 2:
+        x = expand_dims(x, 0)
+        _is_squeeze = True
+    if stride is not None:
+        out = ops.avg_pool1d(x.pow(norm_type), kernel_size=kernel_size, stride=stride, padding=0, ceil_mode=ceil_mode)
+    else:
+        out = ops.avg_pool1d(x.pow(norm_type), kernel_size=kernel_size, stride=kernel_size, padding=0,
+                             ceil_mode=ceil_mode)
+    if _is_squeeze:
+        out = squeeze(out)
+    return ((sign(out) * ops.relu(ops.abs(out))) * kernel_size).pow(1.0 / norm_type)
+
+
+def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
+    r"""
+    LPPool2d pooling operation.
+
+    Applies a 2D power lp pooling over an input signal composed of several input planes.
+
+    Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
+    :math:`(N, C, H_{in}, W_{in})`, with the same shape as input, the operation is as follows.
+
+    .. math::
+        f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
+
+    Args:
+        x (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
+        norm_type (Union[int, float]) - Type of normalization, represents p in the formula,
+
+            - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
+            - if p = :math:`\infty`, one gets Max Pooling.
+
+        kernel_size (Union[int, tuple[int]]): The size of kernel window.
+            The data type of kernel_size must be int and the value represents the height and width,
+            or a tuple of two int numbers that represent height and width respectively.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively, if the value is None,
+            the default value `kernel_size` is used;
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+
+    Returns:
+        - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{in}, W_{in})`,
+          It has the same data type as `x`.
+
+    Raises:
+        TypeError: If `x` is not an Tensor.
+        TypeError: If `kernel_size` or `stride` is neither int nor tuple.
+        TypeError: If `ceil_mode` is not a bool.
+        ValueError: If `kernel_size` or `stride` is less than 1.
+        ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2`.
+        ValueError: If length of shape of `x` is not equal to 4.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>>import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.arange(2 * 3 * 4 * 5).reshape((2, 3, 4, 5)), dtype=ms.float32)
+        >>> out = ops.lp_pool2d(x, norm_type=1, kernel_size=3, stride=1, ceil_mode=False)
+        >>> print(out)
+        [[[[  54.   63.   72.]
+           [  99.  108.  117.]]
+          [[ 234.  243.  252.]
+           [ 279.  288.  297.]]
+          [[ 414.  423.  432.]
+           [ 459.  468.  477.]]]
+         [[[ 594.  603.  612.]
+           [ 639.  648.  657.]]
+          [[ 774.  783.  792.]
+           [ 819.  828.  837.]]
+          [[ 954.  963.  972.]
+           [ 999. 1008. 1017.]]]]
+
+    """
+    _shape_check(x.shape, [4], "lp_pool2d")
+    sign = _get_cache_prim(ops.Sign)()
+    if not isinstance(x, tuple):
+        kernel_size = tuple((kernel_size, kernel_size))
+    kw, kh = kernel_size
+    if stride is not None:
+        out = ops.avg_pool2d(x.pow(norm_type), kernel_size=kernel_size, stride=stride, padding=0, ceil_mode=ceil_mode)
+    else:
+        out = ops.avg_pool2d(x.pow(norm_type), kernel_size=kernel_size, stride=kernel_size, padding=0,
+                             ceil_mode=ceil_mode)
+    return ((sign(out) * ops.relu(ops.abs(out))) * (kw * kh)).pow(1.0 / norm_type)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -3551,6 +3742,8 @@ __all__ = [
     'multi_label_margin_loss',
     'elu',
     'gelu',
-    'hinge_embedding_loss'
+    'hinge_embedding_loss',
+    'lp_pool1d',
+    'lp_pool2d',
 ]
 __all__.sort()
