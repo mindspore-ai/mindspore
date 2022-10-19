@@ -47,8 +47,9 @@ class MirrorPadGradGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+ protected:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);

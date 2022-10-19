@@ -407,6 +407,7 @@ constexpr auto kTransposeNODOpName = "TransposeNOD";
 constexpr auto kTransposeOpName = "Transpose";
 constexpr auto kTruncatedNormal = "TruncatedNormal";
 constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
+constexpr auto kLogUniformCandidateSamplerOpName = "LogUniformCandidateSampler";
 constexpr auto kUniformIntOpName = "UniformInt";
 constexpr auto kUniformRealOpName = "UniformReal";
 constexpr auto kUniqueConsecutiveOpName = "UniqueConsecutive";

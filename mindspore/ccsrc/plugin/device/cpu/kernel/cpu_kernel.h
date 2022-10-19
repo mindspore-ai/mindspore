@@ -158,7 +158,8 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
     return temp_mod->GetAllSupportedList(kernel_name);
   }
 
-  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
+  std::vector<KernelAttr> GetOpSupport() { return {}; }
+
   enum KernelModType GetKernelModType() const override { return KernelModType::NativeCpuKernelMod; }
 
   ParallelSearchInfo parallel_search_info_;

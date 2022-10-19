@@ -31,7 +31,7 @@ namespace kernel {
 namespace {
 constexpr size_t kInputNum = 2;
 
-std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
+static std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, index);
   MS_EXCEPTION_IF_NULL(address_x);
   auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
@@ -69,13 +69,13 @@ std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
   return input_shape;
 }
 
-int64_t GetArrProd(const CNodePtr &cnode) {
+static int64_t GetArrProd(const CNodePtr &cnode) {
   auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   auto arr_prod = std::accumulate(shape_x.begin(), shape_x.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   return arr_prod;
 }
 
-std::vector<int64_t> GetOutputShapes(const CNodePtr &cnode) {
+static std::vector<int64_t> GetOutputShapesFromCNode(const CNodePtr &cnode) {
   std::vector<int64_t> output_shapes;
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != kInputNum) {
@@ -135,7 +135,7 @@ void ReshapeKernelMod::Execute() const {
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(address_x);
 
-  std::vector<int64_t> output_shapes = GetOutputShapes(cnode);
+  std::vector<int64_t> output_shapes = GetOutputShapesFromCNode(cnode);
   auto type_x = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
 
   size_t input_size_byte = LongToSize(GetArrProd(cnode)) * abstract::TypeIdSize(type_x);

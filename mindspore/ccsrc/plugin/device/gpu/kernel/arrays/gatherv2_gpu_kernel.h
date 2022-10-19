@@ -56,8 +56,9 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+ protected:
   void InitSizeLists() {
     auto input_size = std::accumulate(input_shapes_.begin(), input_shapes_.end(), 1, std::multiplies{});
     auto indices_size = std::accumulate(indices_shapes_.begin(), indices_shapes_.end(), 1, std::multiplies{});

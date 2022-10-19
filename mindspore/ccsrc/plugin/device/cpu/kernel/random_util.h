@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_GUARDED_PHILOX_RANDOM_H
 
 #include <cstdint>
+#include <iostream>
 #include <mutex>
 #include <string>
 #include "Eigen/Core"
@@ -169,6 +170,8 @@ class GuardedPhiloxRandom {
 
   random::MSPhiloxRandom ReserveSamples128(uint64_t samples);
 
+  random::MSPhiloxRandom ReserveSamples32(int64_t samples) { return ReserveSamples128((samples + 3) / 4); }
+
   random::MSPhiloxRandom ReserveRandomOutputs(int64_t output_count, int multiplier) {
     int64_t conservative_sample_count = output_count * multiplier;
     return ReserveSamples128(conservative_sample_count);
@@ -185,6 +188,36 @@ class GuardedPhiloxRandom {
 };
 
 double Uint64ToDouble(uint32_t x0, uint32_t x1);
+float Uint32ToFloat(uint32_t x);
+class SinglePhiloxRandom {
+ public:
+  explicit SinglePhiloxRandom(MSPhiloxRandom *gen)
+      : generator_(gen), group_random_idx_(MSPhiloxRandom::kResultElementCount) {}
+  uint32_t GenUint32() {
+    if (group_random_idx_ == MSPhiloxRandom::kResultElementCount) {
+      group_random_ = (*generator_)();
+      group_random_idx_ = 0;
+    }
+    return group_random_[group_random_idx_++];
+  }
+  uint64_t GenUint64() {
+    uint32_t lo = GenUint32(), hi = GenUint32();
+    return lo | static_cast<uint64_t>(hi) << 32;
+  }
+  float GenFloat() {
+    uint32_t u0 = GenUint32();
+    return Uint32ToFloat(u0);
+  }
+  double GenDouble() {
+    uint32_t lo = GenUint32(), hi = GenUint32();
+    return Uint64ToDouble(lo, hi);
+  }
+
+ private:
+  MSPhiloxRandom *generator_;
+  MSPhiloxRandom::ResType group_random_;
+  int group_random_idx_ = 0;
+};
 
 void BoxMullerDouble(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, double *data0, double *data1);
 

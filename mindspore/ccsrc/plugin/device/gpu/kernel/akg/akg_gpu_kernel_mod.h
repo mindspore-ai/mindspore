@@ -23,6 +23,7 @@
 #include <memory>
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -65,6 +66,7 @@ class AkgGpuKernelMod : public GpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
   static AkgGpuKernelManagerPtr kernel_manager_;
+  std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
  private:
   KernelPackPtr kernel_pack_;

@@ -89,8 +89,9 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
 #endif
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+ protected:
   void InitResource() override {
 #if CUDNN_VERSION >= 8000
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();

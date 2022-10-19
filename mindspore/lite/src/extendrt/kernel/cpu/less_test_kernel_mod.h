@@ -21,6 +21,7 @@
 #include <string>
 
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore::kernel {
 class LessTestKernelMod : public CpuKernelMod {
@@ -35,6 +36,7 @@ class LessTestKernelMod : public CpuKernelMod {
 
   virtual bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                     const std::vector<KernelTensorPtr> &outputs);
+  std::vector<KernelAttr> GetOpSupport() override { return {}; }
 };
 }  // namespace mindspore::kernel
 
