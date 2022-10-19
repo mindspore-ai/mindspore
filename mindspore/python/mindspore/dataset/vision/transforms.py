@@ -991,7 +991,7 @@ class Erase(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.Erase(10,10,10,10)]
+        >>> transforms_list = [vision.Decode(), vision.Erase(10,10,10,10)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -1085,7 +1085,7 @@ class GaussianBlur(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [vision.Decode(to_pil=True)), vision.GaussianBlur(3, 3)]
+        >>> transforms_list = [vision.Decode(to_pil=True), vision.GaussianBlur(3, 3)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -1125,7 +1125,7 @@ class Grayscale(PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.Grayscale(3),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
@@ -1164,7 +1164,7 @@ class HorizontalFlip(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [vision.Decode(to_pil=True)), vision.HorizontalFlip()]
+        >>> transforms_list = [vision.Decode(to_pil=True), vision.HorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -1194,7 +1194,7 @@ class HsvToRgb(PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.CenterCrop(20),
         ...                            vision.ToTensor(),
         ...                            vision.HsvToRgb()])
@@ -1319,7 +1319,7 @@ class LinearTransformation(PyTensorOperation):
         >>> dim = 3 * height * width
         >>> transformation_matrix = np.ones([dim, dim])
         >>> mean_vector = np.zeros(dim)
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.Resize((height,width)),
         ...                            vision.ToTensor(),
         ...                            vision.LinearTransformation(transformation_matrix, mean_vector)])
@@ -2568,7 +2568,7 @@ class RandomErasing(PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.ToTensor(),
         ...                            vision.RandomErasing(value='random')])
         >>> # apply the transform to dataset through map function
@@ -2622,7 +2622,7 @@ class RandomGrayscale(PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomGrayscale(0.3),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
@@ -2833,7 +2833,7 @@ class RandomPerspective(PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomPerspective(prob=0.1),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
@@ -3698,7 +3698,7 @@ class RgbToHsv(PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.CenterCrop(20),
         ...                            vision.ToTensor(),
         ...                            vision.RgbToHsv()])
@@ -3908,7 +3908,7 @@ class TenCrop(PyTensorOperation):
         >>> import numpy
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.TenCrop(size=200),
         ...                            # 4D stack of 10 images
         ...                            lambda *images: numpy.stack([vision.ToTensor()(image) for image in images])])
@@ -3955,7 +3955,7 @@ class ToNumpy(PyTensorOperation):
         >>> transforms_list = Compose([vision.Decode(True),
         ...                            vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToNumpy(),
-        ...                            vision.Resize(100, 120)])
+        ...                            vision.Resize((100, 120))])
         >>> # apply the transform to dataset through map function
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
@@ -4043,7 +4043,7 @@ class ToTensor(ImageTensorOperation):
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # create a list of transformations to be applied to the "image" column of each data row
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
@@ -4089,7 +4089,7 @@ class ToType(TypeCast):
         >>> import numpy as np
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToTensor(),
         ...                            vision.ToType(np.float32)])
@@ -4189,7 +4189,7 @@ class UniformAugment(CompoundOperation):
         ...               vision.RandomColor(),
         ...               vision.RandomSharpness(),
         ...               vision.RandomRotation(30)]
-        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.UniformAugment(transforms),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
