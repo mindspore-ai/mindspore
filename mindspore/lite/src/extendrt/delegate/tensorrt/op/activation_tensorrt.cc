@@ -171,6 +171,36 @@ nvinfer1::ILayer *ActivationTensorRT::AddHSwishActivation(TensorRTContext *ctx, 
   return real_div;
 }
 
+nvinfer1::ILayer *ActivationTensorRT::AddGeluActivation(TensorRTContext *ctx, nvinfer1::ITensor *trt_in_tensor,
+                                                        const std::string &op_name) {
+  if (trt_in_tensor->getDimensions().nbDims <= 0) {
+    MS_LOG(ERROR) << "Invalid input dims count " << trt_in_tensor->getDimensions().nbDims << ", " << op_name;
+    return nullptr;
+  }
+  auto expand_dims = [](TensorRTContext *ctx, nvinfer1::ITensor *tensor, int nbdims) {
+    while (tensor->getDimensions().nbDims != nbdims) {
+      tensor = ExpandDim(ctx, tensor, 0);
+    }
+    return tensor;
+  };
+  int nbdims = trt_in_tensor->getDimensions().nbDims;
+  auto const_three = expand_dims(ctx, ctx->ConvertTo1DTensor(3.f), nbdims);
+  auto p3 =
+    ctx->network()->addElementWise(*trt_in_tensor, *const_three, nvinfer1::ElementWiseOperation::kPOW)->getOutput(0);
+  auto gelu_p1 = expand_dims(ctx, ctx->ConvertTo1DTensor(0.044715f), nbdims);
+  auto prod1 = ctx->network()->addElementWise(*p3, *gelu_p1, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
+  auto sum = ctx->network()->addElementWise(*prod1, *trt_in_tensor, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
+  auto gelu_p2 = expand_dims(ctx, ctx->ConvertTo1DTensor(0.7978845608f), nbdims);
+  auto prod2 = ctx->network()->addElementWise(*sum, *gelu_p2, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
+  auto tanh = ctx->network()->addActivation(*prod2, nvinfer1::ActivationType::kTANH)->getOutput(0);
+  auto const_one = expand_dims(ctx, ctx->ConvertTo1DTensor(1.f), nbdims);
+  auto sum2 = ctx->network()->addElementWise(*const_one, *tanh, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
+  auto prod3 =
+    ctx->network()->addElementWise(*sum2, *trt_in_tensor, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
+  auto gelu_p3 = expand_dims(ctx, ctx->ConvertTo1DTensor(0.5f), nbdims);
+  return ctx->network()->addElementWise(*prod3, *gelu_p3, nvinfer1::ElementWiseOperation::kPROD);
+}
+
 nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, ActivationType activation_type, float alpha,
                                                     float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
                                                     const std::string &op_name, uint32_t device_id,
@@ -178,6 +208,9 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, Activa
                                                     RuntimePrecisionMode runtime_precision_mode) {
   if (activation_type == ActivationType::HSWISH) {
     return AddHSwishActivation(ctx, trt_in_tensor, op_name);
+  }
+  if (activation_type == ActivationType::GELU) {
+    return AddGeluActivation(ctx, trt_in_tensor, op_name);
   }
   // Just some action_code correct, unfind code is set to default relu. need double check.
   auto action_param_opt = TryConvertActivationType(activation_type);

@@ -20,6 +20,7 @@
 #include <memory>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "ops/softmax.h"
+#include "ops/log_softmax.h"
 
 namespace mindspore::lite {
 class SoftMaxTensorRT : public TensorRTOp {
@@ -38,7 +39,7 @@ class SoftMaxTensorRT : public TensorRTOp {
  private:
   nvinfer1::ISoftMaxLayer *AddSoftMaxOp(TensorRTContext *ctx);
 
-  std::shared_ptr<ops::Softmax> softmax_op_{nullptr};
+  std::vector<int64_t> axis_val_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_SOFTMAX_TENSORRT_H_

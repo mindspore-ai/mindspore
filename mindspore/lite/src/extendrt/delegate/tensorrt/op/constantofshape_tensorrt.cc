@@ -51,7 +51,7 @@ int ConstantOfShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   auto &&value_vector = constofshape_op->get_value();
-  auto value_tensor = ctx->ConvertTo1DTensor(value_vector);
+  auto value_tensor = ctx->ConvertTo1DTensor(value_vector[0]);
   CHECK_NULL_RETURN(value_tensor);
 
   auto unsqueeze_layer = ctx->network()->addShuffle(*value_tensor);

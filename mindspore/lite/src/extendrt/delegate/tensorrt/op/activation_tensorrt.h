@@ -42,6 +42,8 @@ class ActivationTensorRT : public TensorRTOp {
  private:
   static nvinfer1::ILayer *AddHSwishActivation(TensorRTContext *ctx, nvinfer1::ITensor *trt_in_tensor,
                                                const std::string &op_name);
+  static nvinfer1::ILayer *AddGeluActivation(TensorRTContext *ctx, nvinfer1::ITensor *trt_in_tensor,
+                                             const std::string &op_name);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_

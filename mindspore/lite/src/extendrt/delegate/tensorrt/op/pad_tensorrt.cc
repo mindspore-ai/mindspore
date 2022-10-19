@@ -44,7 +44,9 @@ int PadTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vect
     MS_LOG(ERROR) << "convert PadFusion failed: " << op_name_;
     return RET_ERROR;
   }
-  padding_mode_ = pad_op->get_padding_mode();
+  if (pad_op->HasAttr(ops::kPaddingMode)) {
+    padding_mode_ = pad_op->get_padding_mode();
+  }
 #if TRT_VERSION_GE(8, 0)
   if (padding_mode_ != PaddingMode::CONSTANT && padding_mode_ != PaddingMode::REFLECT) {
     MS_LOG(ERROR) << "Unsupported padding mode: " << PaddingMode(padding_mode_) << ", for op: " << op_name_;
