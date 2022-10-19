@@ -48,6 +48,7 @@ def test_resize_with_bbox_op_voc_c(plot_vis=False):
 
     # map to apply ops
     data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
+    data_voc2 = data_voc2.project(["image", "bbox"])
 
     filename = "resize_with_bbox_op_01_c_voc_result.npz"
     save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -75,6 +76,7 @@ def test_resize_with_bbox_op_coco_c(plot_vis=False):
     # map to apply ops
 
     data_coco2 = helper_perform_ops_bbox(data_coco2, test_op)
+    data_coco2 = data_coco2.project(["image", "bbox"])
 
     filename = "resize_with_bbox_op_01_c_coco_result.npz"
     save_and_check_md5(data_coco2, filename, generate_golden=GENERATE_GOLDEN)

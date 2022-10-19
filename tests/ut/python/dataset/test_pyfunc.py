@@ -58,8 +58,7 @@ def test_case_1():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    data1 = data1.map(operations=(lambda x: (x, x + x)), input_columns=col, output_columns=["out0", "out1"],
-                      column_order=["out0", "out1"])
+    data1 = data1.map(operations=(lambda x: (x, x + x)), input_columns=col, output_columns=["out0", "out1"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
@@ -84,8 +83,7 @@ def test_case_2():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(operations=(lambda x, y: x + y), input_columns=col, output_columns="out",
-                      column_order=["out"])
+    data1 = data1.map(operations=(lambda x, y: x + y), input_columns=col, output_columns="out")
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
@@ -109,7 +107,7 @@ def test_case_3():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(operations=(lambda x, y: (x, x + y, x + y + 1)), input_columns=col,
-                      output_columns=["out0", "out1", "out2"], column_order=["out0", "out1", "out2"])
+                      output_columns=["out0", "out1", "out2"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
@@ -137,8 +135,7 @@ def test_case_4():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(operations=(lambda x, y: (x, x + y, x + y + 1)), input_columns=col,
-                      output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
-                      column_order=["out0", "out1", "out2"])
+                      output_columns=["out0", "out1", "out2"], num_parallel_workers=4)
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
@@ -244,7 +241,6 @@ def test_case_8():
 
     data1 = data1.map(operations=(lambda x, y: (x, x + y, x + y + 1)), input_columns=col,
                       output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
-                      column_order=["out0", "out1", "out2"],
                       python_multiprocessing=True)
 
     i = 0
@@ -333,7 +329,7 @@ def test_pyfunc_implicit_compose():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(operations=[(lambda x, y: (x, x + y, x + y + 1)), (lambda x, y, z: (x, y, z))], input_columns=col,
-                      output_columns=["out0", "out1", "out2"], column_order=["out0", "out1", "out2"])
+                      output_columns=["out0", "out1", "out2"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary

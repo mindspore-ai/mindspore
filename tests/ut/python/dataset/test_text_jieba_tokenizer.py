@@ -282,7 +282,6 @@ def test_jieba_with_offsets_1():
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
@@ -308,7 +307,6 @@ def test_jieba_with_offsets_1_1():
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.HMM, with_offsets=True)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=1)
     expect = ['今天', '天气', '太', '好', '了', '我们', '一起', '去', '外面', '玩', '吧']
     expected_offsets_start = [0, 6, 12, 15, 18, 21, 27, 33, 36, 42, 45]
@@ -333,7 +331,6 @@ def test_jieba_with_offsets_1_2():
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MIX, with_offsets=True)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
@@ -361,7 +358,6 @@ def test_jieba_with_offsets_2():
     expect = ['男默女泪', '市', '长江大桥']
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=2)
     expected_offsets_start = [0, 12, 15]
     expected_offsets_limit = [12, 15, 27]
@@ -387,7 +383,6 @@ def test_jieba_with_offsets_2_1():
     jieba_op.add_word("男默女泪", 10)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=2)
     expect = ['男默女泪', '市', '长江大桥']
     expected_offsets_start = [0, 12, 15]
@@ -414,7 +409,6 @@ def test_jieba_with_offsets_2_2():
     jieba_op.add_word("江大桥", 20000)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=2)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     expected_offsets_start = [0, 6, 12, 21, 27, 30, 42, 45, 51]
@@ -444,7 +438,6 @@ def test_jieba_with_offsets_3():
     jieba_op.add_dict(user_dict)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=1)
     expect = ['男默女泪', '市', '长江大桥']
     expected_offsets_start = [0, 12, 15]
@@ -475,7 +468,6 @@ def test_jieba_with_offsets_3_1():
     jieba_op.add_dict(user_dict)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=1)
     expect = ['男默女泪', '市长', '江大桥']
     expected_offsets_start = [0, 12, 18]
@@ -504,7 +496,6 @@ def test_jieba_with_offsets_4():
     jieba_op.add_dict(dict_file)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
@@ -532,7 +523,6 @@ def test_jieba_with_offsets_5():
     jieba_op.add_word("江大桥", 20000)
     data = data.map(operations=jieba_op, input_columns=["text"],
                     output_columns=["token", "offsets_start", "offsets_limit"],
-                    column_order=["token", "offsets_start", "offsets_limit"],
                     num_parallel_workers=1)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     expected_offsets_start = [0, 6, 12, 21, 27, 30, 42, 45, 51]

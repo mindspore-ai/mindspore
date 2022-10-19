@@ -43,7 +43,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess1Shr) {
   auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, 1.0);
 
   // Create a Map operation on ds
-  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -86,7 +86,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess2Auto) {
   auto bound_box_augment_op(new vision::BoundingBoxAugment({random_rotation_op}, 1.0));
 
   // Create a Map operation on ds
-  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -132,7 +132,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess3Obj) {
   vision::BoundingBoxAugment bound_box_augment_op = vision::BoundingBoxAugment({random_rotation_op}, 1.0);
 
   // Create a Map operation on ds
-  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -176,7 +176,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail1) {
   auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, -1.0);
 
   // Create a Map operation on ds
-  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -204,7 +204,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail2) {
   auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, 2.0);
 
   // Create a Map operation on ds
-  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -229,7 +229,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail3) {
   auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(nullptr, 0.5);
 
   // Create a Map operation on ds
-  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -258,7 +258,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail4) {
   auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, 0.25);
 
   // Create a Map operation on ds
-  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({bound_box_augment_op}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

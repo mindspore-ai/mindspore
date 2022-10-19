@@ -123,12 +123,14 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   EXPECT_NE(one_hot, nullptr);
 
   // Create a Map operation, this will automatically add a project after map
-  ds = ds->Map({one_hot}, {"label"}, {"label"}, {"label"});
+  ds = ds->Map({one_hot}, {"label"}, {"label"});
   EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<ProjectDataset> project_ds = ds->Project({"label"});
 
   auto tree_adapter = std::make_shared<TreeAdapter>();
 
-  Status rc = tree_adapter->Compile(ds->IRNode(), 2);
+  Status rc = tree_adapter->Compile(project_ds->IRNode(), 2);
 
   EXPECT_TRUE(rc.IsOk());
 

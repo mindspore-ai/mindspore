@@ -53,8 +53,10 @@ class MindDataTestProfiler : public UT::DatasetOpTesting {
     EXPECT_NE(one_hot, nullptr);
 
     // Create a Map operation, this will automatically add a project after map
-    ds = ds->Map({one_hot}, {"label"}, {"label"}, {"label"});
+    ds = ds->Map({one_hot}, {"label"}, {"label"});
     EXPECT_NE(ds, nullptr);
+
+    ds = ds->Project({"label"});
 
     ds = ds->Take(op_input);
     EXPECT_NE(ds, nullptr);
@@ -98,7 +100,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManager1) {
   EXPECT_NE(one_hot, nullptr);
 
   // Create a Map operation, this will automatically add a project after map
-  ds = ds->Map({one_hot}, {"label"}, {"label"}, {"label"});
+  ds = ds->Map({one_hot}, {"label"}, {"label"});
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Take(4);
@@ -107,7 +109,6 @@ TEST_F(MindDataTestProfiler, TestProfilerManager1) {
   ds = ds->Batch(2, true);
   EXPECT_NE(ds, nullptr);
 
-  // No columns are specified, use all columns
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
@@ -160,7 +161,6 @@ TEST_F(MindDataTestProfiler, TestProfilerManager2) {
   ds = ds->Batch(2, false);
   EXPECT_NE(ds, nullptr);
 
-  // No columns are specified, use all columns
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
@@ -202,9 +202,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByEpoch) {
 
   std::shared_ptr<Dataset> ds = set_dataset(20);
 
-  // No columns are specified, use all columns
-  std::vector<std::string> columns = {};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, 3);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(3);
   EXPECT_NE(iter, nullptr);
 
   std::vector<uint8_t> cpu_result;
@@ -287,9 +285,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByStep) {
 
   std::shared_ptr<Dataset> ds = set_dataset(20);
 
-  // No columns are specified, use all columns
-  std::vector<std::string> columns = {};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, 3);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(3);
   EXPECT_NE(iter, nullptr);
 
   std::vector<uint8_t> cpu_result;
@@ -381,9 +377,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByTime) {
 
   std::shared_ptr<Dataset> ds = set_dataset(20);
 
-  // No columns are specified, use all columns
-  std::vector<std::string> columns = {};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, 5);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(5);
   EXPECT_NE(iter, nullptr);
 
   std::vector<uint8_t> cpu_result;

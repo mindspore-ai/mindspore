@@ -159,8 +159,8 @@ def test_get_column_name_map():
     data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["col1"])
     assert data.get_col_names() == ["col1", "label"]
     data = ds.Cifar10Dataset(CIFAR10_DIR)
-    data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["col1", "col2"],
-                    column_order=["col2", "col1"])
+    data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["col1", "col2"])
+    data = data.project(["col2", "col1"])
     assert data.get_col_names() == ["col2", "col1"]
 
 

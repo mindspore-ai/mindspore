@@ -232,7 +232,7 @@ def test_random_vertical_op_1():
 
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
-                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+                    output_columns=["image", "image_copy"])
     random_vertical_op = vision.RandomVerticalFlip(1.0)
     decode_op = vision.Decode()
 

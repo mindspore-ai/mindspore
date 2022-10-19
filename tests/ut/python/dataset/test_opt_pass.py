@@ -33,8 +33,8 @@ def test_map_reorder0():
     # Generator -> Map
     data0 = ds.GeneratorDataset(generator_mc, ["col0", "col1"])
 
-    data0 = data0.map(operations=(lambda x: x), input_columns="col0", output_columns="out",
-                      column_order=["col1", "out"])
+    data0 = data0.map(operations=(lambda x: x), input_columns="col0", output_columns="out")
+    data0 = data0.project(["col1", "out"])
 
     for item in data0.create_tuple_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         assert item == [np.array(1), np.array(0)]
@@ -55,11 +55,14 @@ def test_map_reorder1():
 
     # Three map and zip
     data0 = ds.GeneratorDataset(generator_mc, ["a0", "a1", "a2"])
-    data0 = data0.map(operations=(lambda x: x), input_columns="a0", column_order=["a2", "a1", "a0"])
+    data0 = data0.map(operations=(lambda x: x), input_columns="a0")
+    data0 = data0.project(["a2", "a1", "a0"])
     data1 = ds.GeneratorDataset(generator_mc, ["b0", "b1", "b2"])
-    data1 = data1.map(operations=(lambda x: x), input_columns="b0", column_order=["b1", "b2", "b0"])
+    data1 = data1.map(operations=(lambda x: x), input_columns="b0")
+    data1 = data1.project(["b1", "b2", "b0"])
     data2 = ds.zip((data0, data1))
-    data2 = data2.map(operations=(lambda x: x), input_columns="a0", column_order=["b2", "a2", "b1", "a1", "b0", "a0"])
+    data2 = data2.map(operations=(lambda x: x), input_columns="a0")
+    data2 = data2.project(["b2", "a2", "b1", "a1", "b0", "a0"])
 
     for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert item == [np.array(2), np.array(2), np.array(1), np.array(1), np.array(0), np.array(0)]

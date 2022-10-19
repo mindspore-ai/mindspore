@@ -252,7 +252,7 @@ TEST_F(MindDataTestPipeline, TestResizeWithBBoxSuccess) {
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
-  ds = ds->Map({resize_with_bbox_op, resize_with_bbox_op1}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  ds = ds->Map({resize_with_bbox_op, resize_with_bbox_op1}, {"image", "bbox"}, {"image", "bbox"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

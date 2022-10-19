@@ -92,7 +92,7 @@ def test_random_resize_op_1():
 
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
-                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+                    output_columns=["image", "image_copy"])
     resize_op = vision.RandomResize(10)
     decode_op = vision.Decode()
 

@@ -252,7 +252,7 @@ def test_random_horizontal_op_1():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
         "image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
-                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+                    output_columns=["image", "image_copy"])
     random_horizontal_op = vision.RandomHorizontalFlip(1.0)
     decode_op = vision.Decode()
 

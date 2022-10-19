@@ -53,6 +53,7 @@ def test_random_resized_crop_with_bbox_op_c(plot_vis=False):
 
     # map to apply ops
     data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
+    data_voc2 = data_voc2.project(["image", "bbox"])
 
     filename = "random_resized_crop_with_bbox_01_c_result.npz"
     save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)

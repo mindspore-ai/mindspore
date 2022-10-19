@@ -135,8 +135,8 @@ def test_voc_meta_column():
         return img, img, label
 
     data3 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True, shuffle=False, extra_metadata=True)
-    data3 = data3.map(operations=pyfunc2, input_columns=["image", "target"], output_columns=["img1", "img2", "label"],
-                      column_order=["_meta-filename", "img1", "img2", "label"])
+    data3 = data3.map(operations=pyfunc2, input_columns=["image", "target"], output_columns=["img1", "img2", "label"])
+    data3 = data3.project(["_meta-filename", "img1", "img2", "label"])
     data3 = data3.rename("_meta-filename", "filename")
     num = 0
     for item in data3.create_tuple_iterator(num_epochs=1, output_numpy=True):
@@ -148,8 +148,8 @@ def test_voc_meta_column():
         return img
 
     data4 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True, shuffle=False, extra_metadata=True)
-    data4 = data4.map(operations=pyfunc3, input_columns=["image", "target"], output_columns=["img1"],
-                      column_order=["_meta-filename", "img1"])
+    data4 = data4.map(operations=pyfunc3, input_columns=["image", "target"], output_columns=["img1"])
+    data4 = data4.project(["_meta-filename", "img1"])
     data4 = data4.rename("_meta-filename", "filename")
     num = 0
     for item in data4.create_tuple_iterator(num_epochs=1, output_numpy=True):

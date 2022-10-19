@@ -293,7 +293,8 @@ def test_generator_8():
     data1 = data1.map(operations=(lambda x: x * 3), input_columns="col0", output_columns="out0",
                       num_parallel_workers=2)
     data1 = data1.map(operations=(lambda x: (x * 7, x)), input_columns="col1", output_columns=["out1", "out2"],
-                      num_parallel_workers=2, column_order=["out0", "out1", "out2"])
+                      num_parallel_workers=2)
+    data1 = data1.project(["out0", "out1", "out2"])
     data1 = data1.map(operations=(lambda x: x + 1), input_columns="out2", output_columns="out2",
                       num_parallel_workers=2)
 
@@ -325,8 +326,6 @@ def test_generator_9():
                       num_parallel_workers=4)
 
     # Expected column order is not changed.
-    # data1 = data[0] is "image" and data[1] is "label"
-    # data2 = data[0] is "label" and data[1] is "image"
     i = 0
     for data1, data2 in zip(data1, data2):  # each data is a dictionary
         golden = np.array([i])
@@ -352,7 +351,8 @@ def test_generator_10():
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
     data1 = data1.map(operations=(lambda x: (x, x * 5)), input_columns="col1", output_columns=["out1", "out2"],
-                      column_order=['col0', 'out1', 'out2'], num_parallel_workers=2)
+                      num_parallel_workers=2)
+    data1 = data1.project(['col0', 'out1', 'out2'])
 
     # Expected column order is |col0|out1|out2|
     i = 0
@@ -369,21 +369,21 @@ def test_generator_10():
 def test_generator_11():
     """
     Feature: GeneratorDataset
-    Description: Test map column order len(input_columns) != len(output_columns), column_order drops some columns
+    Description: Test .project drops some columns
     Expectation: The dataset is processed as expected
     """
-    logger.info("Test map column order when len(input_columns) != len(output_columns), "
-                "and column_order drops some columns.")
+    logger.info("Test .project drops some columns.")
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
     data1 = data1.map(operations=(lambda x: (x, x * 5)), input_columns="col1", output_columns=["out1", "out2"],
-                      column_order=['out1', 'out2'], num_parallel_workers=2)
+                      num_parallel_workers=2)
+    data1 = data1.project(["out1", "out2"])
 
     # Expected column order is |out1|out2|
     i = 0
     for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        # len should be 2 because col0 is dropped (not included in column_order)
+        # len should be 2 because col0 is dropped
         assert len(item) == 2
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
         np.testing.assert_array_equal(item[0], golden)
@@ -415,7 +415,8 @@ def test_generator_12():
         i = i + 1
 
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
-    data1 = data1.map(operations=(lambda x: (x * 5)), column_order=["col1", "col0"], num_parallel_workers=2)
+    data1 = data1.map(operations=(lambda x: (x * 5)), num_parallel_workers=2)
+    data1 = data1.project(["col1", "col0"])
 
     # Expected column order is |col0|col1|
     i = 0
@@ -451,7 +452,7 @@ def test_generator_13():
         i = i + 1
 
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
-        # len should be 2 because col0 is dropped (not included in column_order)
+        # len should be 2 because col0 is dropped
         assert len(item) == 2
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item["out0"], golden)
@@ -587,7 +588,7 @@ def test_generator_18():
         i = i + 1
 
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
-        # len should be 2 because col0 is dropped (not included in column_order)
+        # len should be 2 because col0 is dropped
         assert len(item) == 2
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item["out0"], golden)
@@ -601,7 +602,7 @@ def test_generator_19():
     Description: Test multiprocessing 2 different large columns
     Expectation: The dataset is processed as expected
     """
-    logger.info("Test map column order when input_columns is None.")
+    logger.info("Test map multiprocessing 2 different large columns.")
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(DatasetGeneratorLarge(), ["col0", "col1"], python_multiprocessing=True, shuffle=False)
@@ -711,24 +712,6 @@ def test_generator_error_2():
         for _ in data1:
             pass
     assert "Data type of 1th item of the input or its converted Numpy array is expected" in str(info.value)
-
-
-def test_generator_error_3():
-    """
-    Feature: GeneratorDataset
-    Description: Test GeneratorDataset when len(input_columns) != len(output_columns) and column_order is not specified
-    Expectation: Error is raised as expected
-    """
-    with pytest.raises(ValueError) as info:
-        # apply dataset operations
-        data1 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
-        data1 = data1.map(operations=(lambda x: (x, x * 5)), input_columns=["label"], output_columns=["out1", "out2"],
-                          num_parallel_workers=2)
-
-        for _ in data1:
-            pass
-    assert "When length of input_columns and output_columns are not equal, column_order must be specified." in \
-           str(info.value)
 
 
 def test_generator_error_4():

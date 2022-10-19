@@ -342,6 +342,28 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
     ds.config.set_enable_shared_mem(original_enable_shared_mem)
 
 
+def test_map_with_deprecated_parameter():
+    """
+    Feature: Map op
+    Description: map with deprecated parameter
+    Expectation: ValueError
+    """
+    data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data2 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data3 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data4 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+
+    label = [1, 2, 3, 4]
+
+    dataset = ds.NumpySlicesDataset(([data1, data2, data3, data4], label), ["data", "label"])
+    with pytest.raises(ValueError) as info:
+        dataset = dataset.map(operations=[(lambda x: (x + 1, x / 255))],
+                              input_columns=["data"],
+                              output_columns=["data2", "data3"],
+                              column_order=["data2", "data3"])
+    assert "The parameter 'column_order' had been deleted in map operation." in str(info.value)
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -351,3 +373,4 @@ if __name__ == '__main__':
     test_c_map_randomness_repeatability_with_shards()
     test_python_map_mp_repeatability(num_parallel_workers=4, num_samples=4)
     test_python_map_mp_seed_repeatability()
+    test_map_with_deprecated_parameter()

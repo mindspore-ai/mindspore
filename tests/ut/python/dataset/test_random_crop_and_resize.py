@@ -466,7 +466,7 @@ def test_random_crop_and_resize_07():
 
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
-                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+                    output_columns=["image", "image_copy"])
     random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
     decode_op = vision.Decode()
 

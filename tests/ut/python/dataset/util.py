@@ -429,20 +429,16 @@ def helper_perform_ops_bbox(data, test_op=None, edge_case=False):
                 operations=[lambda img, bboxes: (
                     img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op],
                 input_columns=["image", "bbox"],
-                output_columns=["image", "bbox"],
-                column_order=["image", "bbox"])
+                output_columns=["image", "bbox"])
         return data.map(
             operations=[lambda img, bboxes: (
                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))],
             input_columns=["image", "bbox"],
-            output_columns=["image", "bbox"],
-            column_order=["image", "bbox"])
+            output_columns=["image", "bbox"])
 
     if test_op:
         return data.map(operations=[test_op], input_columns=["image", "bbox"],
-                        output_columns=[
-                            "image", "bbox"],
-                        column_order=["image", "bbox"])
+                        output_columns=["image", "bbox"])
 
     return data
 
@@ -456,8 +452,7 @@ def helper_perform_ops_bbox_edgecase_float(data):
     return data.map(operations=lambda img, bbox: (img, np.array(
         [[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
                     input_columns=["image", "bbox"],
-                    output_columns=["image", "bbox"],
-                    column_order=["image", "bbox"])
+                    output_columns=["image", "bbox"])
 
 
 def helper_test_visual_bbox(plot_vis, data1, data2):
@@ -579,12 +574,10 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
         # map to use selected invalid bounding box type
         data = data.map(operations=lambda img, bboxes: add_bad_bbox(img, bboxes, invalid_bbox_type),
                         input_columns=["image", "bbox"],
-                        output_columns=["image", "bbox"],
-                        column_order=["image", "bbox"])
+                        output_columns=["image", "bbox"])
         # map to apply ops
         data = data.map(operations=[test_op], input_columns=["image", "bbox"],
-                        output_columns=["image", "bbox"],
-                        column_order=["image", "bbox"])  # Add column for "bbox"
+                        output_columns=["image", "bbox"])
         for _, _ in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
             break
     except RuntimeError as error:

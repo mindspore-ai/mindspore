@@ -35,7 +35,7 @@ def test_magphase_pipeline():
     dataset = ds.NumpySlicesDataset(data1, column_names=["col1"], shuffle=False)
     magphase_window = audio.Magphase(power=1.0)
     dataset = dataset.map(operations=magphase_window, input_columns=["col1"],
-                          output_columns=["mag", "phase"], column_order=["mag", "phase"])
+                          output_columns=["mag", "phase"])
     for data1, data2 in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert abs(data1[0] - expected[0]) < 0.00001
         assert abs(data1[1] - expected[1]) < 0.00001

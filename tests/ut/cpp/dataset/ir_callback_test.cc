@@ -323,14 +323,14 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   ASSERT_NE(ds, nullptr);
   ds->SetNumWorkers(1);
   // config mapOp
-  ds = ds->Map({std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt64)}, {"label"}, {}, {},
+  ds = ds->Map({std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt64)}, {"label"}, {},
                nullptr, {tst_cb});
   ds->SetNumWorkers(1);
   ASSERT_NE(ds, nullptr);
   ds = ds->Repeat(2);
   ASSERT_NE(ds, nullptr);
   int32_t num_epochs = 2;
-  auto itr = ds->CreateIterator({}, num_epochs);
+  auto itr = ds->CreateIterator(num_epochs);
   for (int ep_num = 0; ep_num < num_epochs; ++ep_num) {
     std::unordered_map<std::string, mindspore::MSTensor> row;
     ASSERT_OK(itr->GetNextRow(&row));
@@ -365,7 +365,7 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
   ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt32, {}));
   std::shared_ptr<Dataset> ds = RandomData(44, schema);
   ASSERT_NE(ds, nullptr);
-  ds = ds->Map({std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt64)}, {"label"}, {}, {},
+  ds = ds->Map({std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt64)}, {"label"}, {},
                nullptr, {cb1});
   ASSERT_NE(ds, nullptr);
   ds = ds->Repeat(2);

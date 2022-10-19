@@ -304,14 +304,13 @@ def create_yolo_dataset(mindrecord_dir, batch_size=32, repeat_num=10, device_num
         hwc_to_chw = C.HWC2CHW()
         ds = ds.map(operations=compose_map_func, input_columns=["image", "annotation"],
                     output_columns=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
-                    column_order=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
                     num_parallel_workers=num_parallel_workers)
+        ds = ds.project(["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"])
         ds = ds.map(operations=hwc_to_chw, input_columns=["image"], num_parallel_workers=num_parallel_workers)
         ds = ds.batch(batch_size, drop_remainder=True)
         ds = ds.repeat(repeat_num)
     else:
         ds = ds.map(operations=compose_map_func, input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "annotation"],
-                    column_order=["image", "image_shape", "annotation"],
                     num_parallel_workers=num_parallel_workers)
     return ds

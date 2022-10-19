@@ -168,17 +168,10 @@ TensorRow FuncPtrConverter(const std::function<MSTensorVec(MSTensorVec)> &func, 
 }
 
 // Function to create the iterator, which will build and launch the execution tree.
-std::shared_ptr<Iterator> Dataset::CreateIteratorCharIF(const std::vector<std::vector<char>> &columns,
-                                                        int32_t num_epochs) {
+std::shared_ptr<Iterator> Dataset::CreateIteratorCharIF(int32_t num_epochs) {
   std::shared_ptr<Iterator> iter;
   try {
     auto ds = shared_from_this();
-
-    // The specified columns will be selected from the dataset and passed down the pipeline
-    // in the order specified, other columns will be discarded.
-    if (!VectorCharToString(columns).empty()) {
-      ds = ds->Project(VectorCharToString(columns));
-    }
 
     iter = std::make_shared<Iterator>();
     Status rc = iter->BuildAndLaunchTree(ds, num_epochs);
@@ -195,15 +188,8 @@ std::shared_ptr<Iterator> Dataset::CreateIteratorCharIF(const std::vector<std::v
 }
 
 // Function to create the iterator, which will build and launch the execution tree.
-std::shared_ptr<PullIterator> Dataset::CreatePullBasedIterator(const std::vector<std::vector<char>> &columns) {
-  // The specified columns will be selected from the dataset and passed down the pipeline
-  // in the order specified, other columns will be discarded.
-  // This code is not in a try/catch block because there is no execution tree class that will be created.
+std::shared_ptr<PullIterator> Dataset::CreatePullBasedIterator() {
   auto ds = shared_from_this();
-  if (!VectorCharToString(columns).empty()) {
-    ds = ds->Project(VectorCharToString(columns));
-  }
-
   std::shared_ptr<PullIterator> iter = std::make_shared<PullIterator>();
   Status rc = iter->BuildAndLaunchTree(ds, 1);
   if (rc.IsError()) {
@@ -498,16 +484,13 @@ FilterDataset::FilterDataset(const std::shared_ptr<Dataset> &input,
 MapDataset::MapDataset(const std::shared_ptr<Dataset> &input,
                        const std::vector<std::shared_ptr<TensorOperation>> &operations,
                        const std::vector<std::vector<char>> &input_columns,
-                       const std::vector<std::vector<char>> &output_columns,
-                       const std::vector<std::vector<char>> &project_columns,
-                       const std::shared_ptr<DatasetCache> &cache,
+                       const std::vector<std::vector<char>> &output_columns, const std::shared_ptr<DatasetCache> &cache,
                        const std::vector<std::shared_ptr<DSCallback>> &callbacks) {
   if (input == nullptr) {
     ir_node_ = nullptr;
   } else {
     auto ds = std::make_shared<MapNode>(input->IRNode(), operations, VectorCharToString(input_columns),
-                                        VectorCharToString(output_columns), VectorCharToString(project_columns), cache,
-                                        callbacks);
+                                        VectorCharToString(output_columns), cache, callbacks);
 
     ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
   }

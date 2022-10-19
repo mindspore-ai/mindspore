@@ -133,8 +133,7 @@ def test_offload_multi_column():
 
     dataset = ds.ImageFolderDataset(DATA_DIR)
     dataset = dataset.map(operations=copy_column, input_columns=["image", "label"],
-                          output_columns=["image1", "image2", "label"],
-                          column_order=["image1", "image2", "label"])
+                          output_columns=["image1", "image2", "label"])
     dataset = dataset.map(operations=[C.Decode()], input_columns="image1")
     dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image1")
     dataset = dataset.map(operations=[C.Decode()], input_columns="image2")
@@ -143,8 +142,7 @@ def test_offload_multi_column():
 
     dataset_offload = ds.ImageFolderDataset(DATA_DIR)
     dataset_offload = dataset_offload.map(operations=copy_column, input_columns=["image", "label"],
-                                          output_columns=["image1", "image2", "label"],
-                                          column_order=["image1", "image2", "label"])
+                                          output_columns=["image1", "image2", "label"])
     dataset_offload = dataset_offload.map(operations=[C.Decode()], input_columns="image1")
     dataset_offload = dataset_offload.map(operations=[C.HWC2CHW()], input_columns="image1", offload=True)
     dataset_offload = dataset_offload.map(operations=[C.Decode()], input_columns="image2")
@@ -171,7 +169,7 @@ def test_offload_column_mapping():
 
     dataset = ds.ImageFolderDataset(DATA_DIR)
     dataset = dataset.map(operations=copy_column, input_columns=["image", "label"],
-                          output_columns=["image1", "image2", "label"], column_order=["image1", "image2", "label"])
+                          output_columns=["image1", "image2", "label"])
     dataset = dataset.map(operations=[C.Decode()], input_columns="image2")
     dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image2", offload=True)
 

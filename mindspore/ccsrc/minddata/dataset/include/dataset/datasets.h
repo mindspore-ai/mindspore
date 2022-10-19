@@ -140,7 +140,6 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<Dataset> SetNumWorkers(int32_t num_workers);
 
   /// \brief A Function to create an PullBasedIterator over the Dataset.
-  /// \param[in] columns List of columns to be used to specify the order of columns.
   /// \return Shared pointer to the Iterator.
   /// \par Example
   /// \code
@@ -149,10 +148,9 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::unordered_map<std::string, mindspore::MSTensor> row;
   ///      iter->GetNextRow(&row);
   /// \endcode
-  std::shared_ptr<PullIterator> CreatePullBasedIterator(const std::vector<std::vector<char>> &columns = {});
+  std::shared_ptr<PullIterator> CreatePullBasedIterator();
 
   /// \brief Function to create an Iterator over the Dataset pipeline.
-  /// \param[in] columns List of columns to be used to specify the order of columns.
   /// \param[in] num_epochs Number of epochs to run through the pipeline (default=-1, which means infinite epochs).
   ///     An empty row is returned at the end of each epoch.
   /// \return Shared pointer to the Iterator.
@@ -163,9 +161,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::unordered_map<std::string, mindspore::MSTensor> row;
   ///      iter->GetNextRow(&row);
   /// \endcode
-  std::shared_ptr<Iterator> CreateIterator(const std::vector<std::string> &columns = {}, int32_t num_epochs = -1) {
-    return CreateIteratorCharIF(VectorStringToChar(columns), num_epochs);
-  }
+  std::shared_ptr<Iterator> CreateIterator(int32_t num_epochs = -1) { return CreateIteratorCharIF(num_epochs); }
 
   /// \brief Function to transfer data through a device.
   /// \note If device is Ascend, features of data will be transferred one by one. The limitation
@@ -385,7 +381,6 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     The size of this list must match the number of output columns of the
   ///     last operation. The default output_columns will have the same
   ///     name as the input columns, i.e., the columns will be replaced.
-  /// \param[in] project_columns A list of column names to project.
   /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current Dataset.
@@ -397,21 +392,11 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///
   ///     /* 1) Simple map example */
   ///     // Apply decode_op on column "image". This column will be replaced by the outputted
-  ///     // column of decode_op. Since column_order is not provided, both columns "image"
-  ///     // and "label" will be propagated to the child node in their original order.
+  ///     // column of decode_op.
   ///     dataset = dataset->Map({decode_op}, {"image"});
   ///
   ///     // Decode and rename column "image" to "decoded_image".
   ///     dataset = dataset->Map({decode_op}, {"image"}, {"decoded_image"});
-  ///
-  ///     // Specify the order of the output columns.
-  ///     dataset = dataset->Map({decode_op}, {"image"}, {}, {"label", "image"});
-  ///
-  ///     // Rename column "image" to "decoded_image" and also specify the order of the output columns.
-  ///     dataset = dataset->Map({decode_op}, {"image"}, {"decoded_image"}, {"label", "decoded_image"});
-  ///
-  ///     // Rename column "image" to "decoded_image" and keep only this column.
-  ///     dataset = dataset->Map({decode_op}, {"image"}, {"decoded_image"}, {"decoded_image"});
   ///
   ///    /* 2) Map example with more than one operation */
   ///    // Create a dataset where the images are decoded, then randomly color jittered.
@@ -419,14 +404,12 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///    // outputted by decode_op is passed as input to random_jitter_op.
   ///    // random_jitter_op will output one column. Column "image" will be replaced by
   ///    // the column outputted by random_jitter_op (the very last operation). All other
-  ///    // columns are unchanged. Since column_order is not specified, the order of the
-  ///    // columns will remain the same.
+  ///    // columns are unchanged.
   ///    dataset = dataset->Map({decode_op, random_jitter_op}, {"image"})
   /// \endcode
   std::shared_ptr<MapDataset> Map(const std::vector<TensorTransform *> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
-                                  const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
                                   const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
@@ -434,8 +417,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
       operations.begin(), operations.end(), std::back_inserter(transform_ops),
       [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
     return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
-                                        VectorStringToChar(output_columns), VectorStringToChar(project_columns), cache,
-                                        callbacks);
+                                        VectorStringToChar(output_columns), cache, callbacks);
   }
 
   /// \brief Function to create a MapDataset.
@@ -451,14 +433,12 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     The size of this list must match the number of output columns of the
   ///     last operation. The default output_columns will have the same
   ///     name as the input columns, i.e., the columns will be replaced.
-  /// \param[in] project_columns A list of column names to project.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current Dataset.
   std::shared_ptr<MapDataset> Map(const std::vector<std::shared_ptr<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
-                                  const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
                                   const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
@@ -467,8 +447,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
                            return op != nullptr ? op->Parse() : nullptr;
                          });
     return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
-                                        VectorStringToChar(output_columns), VectorStringToChar(project_columns), cache,
-                                        callbacks);
+                                        VectorStringToChar(output_columns), cache, callbacks);
   }
 
   /// \brief Function to create a MapDataset.
@@ -484,22 +463,19 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     The size of this list must match the number of output columns of the
   ///     last operation. The default output_columns will have the same
   ///     name as the input columns, i.e., the columns will be replaced.
-  /// \param[in] project_columns A list of column names to project.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current Dataset.
   std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
-                                  const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
                                   const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
     (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
                          [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
     return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
-                                        VectorStringToChar(output_columns), VectorStringToChar(project_columns), cache,
-                                        callbacks);
+                                        VectorStringToChar(output_columns), cache, callbacks);
   }
 
   /// \brief Function to create a Project Dataset.
@@ -617,7 +593,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   std::vector<std::pair<std::vector<char>, std::vector<int32_t>>> GetClassIndexingCharIF();
 
   // Char interface(CharIF) of CreateIterator
-  std::shared_ptr<Iterator> CreateIteratorCharIF(const std::vector<std::vector<char>> &columns, int32_t num_epochs);
+  std::shared_ptr<Iterator> CreateIteratorCharIF(int32_t num_epochs);
 
   // Char interface(CharIF) of DeviceQueue
   bool DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type, int32_t device_id,
@@ -866,13 +842,11 @@ class DATASET_API MapDataset : public Dataset {
   ///     The size of this list must match the number of output columns of the
   ///     last operation. The default output_columns will have the same
   ///     name as the input columns, i.e., the columns will be replaced.
-  /// \param[in] project_columns A list of column names to project.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   MapDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::shared_ptr<TensorOperation>> &operations,
              const std::vector<std::vector<char>> &input_columns, const std::vector<std::vector<char>> &output_columns,
-             const std::vector<std::vector<char>> &project_columns, const std::shared_ptr<DatasetCache> &cache,
-             const std::vector<std::shared_ptr<DSCallback>> &callbacks);
+             const std::shared_ptr<DatasetCache> &cache, const std::vector<std::shared_ptr<DSCallback>> &callbacks);
 
   /// \brief Destructor of MapDataset.
   ~MapDataset() override = default;

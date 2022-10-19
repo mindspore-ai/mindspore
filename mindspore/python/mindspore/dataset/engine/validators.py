@@ -1368,6 +1368,20 @@ def check_map(method):
         [operations, input_columns, output_columns, column_order, num_parallel_workers, param_dict], _ = \
             parse_user_args(method, *args, **kwargs)
 
+        if column_order is not None:
+            raise ValueError("The parameter 'column_order' had been deleted in map operation. "
+                             "Please use '.project' operation instead.\n"
+                             ">> # Usage of old api:\n"
+                             ">> dataset = dataset.map(operations=PyFunc,\n"
+                             ">>                       input_columns=[\"column_a\"],\n"
+                             ">>                       output_columns=[\"column_b\", \"column_c\"],\n"
+                             ">>                       column_order=[\"column_b\", \"column_c\"])\n"
+                             ">> # Usage of new api:\n"
+                             ">> dataset = dataset.map(operations=PyFunc,\n"
+                             ">>                       input_columns=[\"column_a\"],\n"
+                             ">>                       output_columns=[\"column_b\", \"column_c\"])\n"
+                             ">> dataset = dataset.project([\"column_b\", \"column_c\"])")
+
         (python_multiprocessing, max_rowsize, cache, callbacks, offload) = get_map_kwargs_from_dict(param_dict)
 
         # check whether network computing operator exist in input operations(python function)
@@ -1394,10 +1408,8 @@ def check_map(method):
                 raise ValueError("Input operations should not contain network computing operator like in "
                                  "mindspore.nn or mindspore.ops, got operation: ", str(item))
 
-        nreq_param_columns = ['input_columns', 'output_columns', 'column_order']
+        nreq_param_columns = ['input_columns', 'output_columns']
 
-        if column_order is not None:
-            type_check(column_order, (list,), "column_order")
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
@@ -1413,7 +1425,7 @@ def check_map(method):
             else:
                 type_check(callbacks, (DSCallback,), "callbacks")
 
-        for param_name, param in zip(nreq_param_columns, [input_columns, output_columns, column_order]):
+        for param_name, param in zip(nreq_param_columns, [input_columns, output_columns]):
             if param is not None:
                 check_columns(param, param_name)
         if callbacks is not None:

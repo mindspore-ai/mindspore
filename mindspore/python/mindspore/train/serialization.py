@@ -1436,7 +1436,6 @@ def _save_dataset_to_mindir(model, dataset):
             model.preprocessor.op.add()
             model.preprocessor.op[-1].input_columns = json.dumps(op['input_columns'])
             model.preprocessor.op[-1].output_columns = json.dumps(op['output_columns'])
-            model.preprocessor.op[-1].project_columns = json.dumps(op['project_columns'])
             model.preprocessor.op[-1].op_type = json.dumps(op['op_type'])
             model.preprocessor.op[-1].operations = json.dumps(op['operations'])
             model.preprocessor.op[-1].offload = op['offload'] if 'offload' in op.keys() else False

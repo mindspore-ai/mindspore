@@ -94,8 +94,7 @@ TEST_F(MindDataTestPipeline, TestCMUArcticBasicWithPipeline) {
   auto op = transforms::PadEnd({1, 50000});;
   std::vector<std::string> input_columns = {"waveform"};
   std::vector<std::string> output_columns = {"waveform"};
-  std::vector<std::string> project_columns = {"transcript", "utterance_id", "waveform"};
-  ds = ds->Map({op}, input_columns, output_columns, project_columns);
+  ds = ds->Map({op}, input_columns, output_columns);
   EXPECT_NE(ds, nullptr);
   ds = ds->Repeat(10);
   EXPECT_NE(ds, nullptr);
