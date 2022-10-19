@@ -92,7 +92,8 @@ void TbeKernelReduceSelector::GetCheckInfo() {
 void TbeKernelReduceSelector::GetReduceSupport5HD(SupportFormat *support_format) const {
   MS_EXCEPTION_IF_NULL(support_format);
   // Note: if input and output size == 2, the last index only support 5hd(float16) --> default
-  if (!is_shape_4_dims_) {
+  // keep_dims = false , infer shape error, so not support
+  if (!keep_dims_ || !is_shape_4_dims_) {
     return;
   }
   auto support_output_format = is_reduce_c_channel_ ? kOpFormat_DEFAULT : kOpFormat_NC1HWC0;
@@ -102,7 +103,7 @@ void TbeKernelReduceSelector::GetReduceSupport5HD(SupportFormat *support_format)
 
 void TbeKernelReduceSelector::GetReduceSupportNDC1HWC0(SupportFormat *support_format) const {
   MS_EXCEPTION_IF_NULL(support_format);
-  if (!is_shape_5_dims_) {
+  if (!keep_dims_ || !is_shape_5_dims_) {
     return;
   }
   if (is_reduce_c_channel_) {
