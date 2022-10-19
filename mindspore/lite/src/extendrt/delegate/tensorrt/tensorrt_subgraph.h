@@ -165,6 +165,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
 
   std::shared_ptr<TensorRTSerializer> serializer_{nullptr};
+  std::set<std::string> filter_output_tensors_;
 
   std::string serialize_file_path_;
   cudaStream_t stream_{nullptr};
