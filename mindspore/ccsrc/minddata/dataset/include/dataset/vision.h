@@ -630,8 +630,8 @@ class DATASET_API Pad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] padding A vector representing the number of pixels to pad the image.
   ///    If the vector has one value, it pads all sides of the image with that value.
-  ///    If the vector has two values, it pads left and top with the first and
-  ///    right and bottom with the second value.
+  ///    If the vector has two values, it pads left and right with the first and
+  ///    top and bottom with the second value.
   ///    If the vector has four values, it pads left, top, right, and bottom with
   ///    those values respectively.
   /// \param[in] fill_value A vector representing the pixel intensity of the borders. Only valid if the
@@ -644,10 +644,6 @@ class DATASET_API Pad final : public TensorTransform {
   ///    - BorderType.kEdge, means it pads with the last value on the edge
   ///    - BorderType.kReflect, means it reflects the values on the edge omitting the last value of edge
   ///    - BorderType.kSymmetric, means it reflects the values on the edge repeating the last value of edge
-  /// \note The behavior when `padding` is a sequence of length 2 will change from padding left/top with
-  ///     the first value and right/bottom with the second, to padding left/right with the first one
-  ///     and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
-  ///     left, top, right and bottom respectively.
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -977,8 +973,8 @@ class DATASET_API RandomCrop final : public TensorTransform {
   ///     If the size has 2 values, it should be (height, width).
   /// \param[in] padding A vector representing the number of pixels to pad the image.
   ///    If the vector has one value, it pads all sides of the image with that value.
-  ///    If the vector has two values, it pads left and top with the first and
-  ///    right and bottom with the second value.
+  ///    If the vector has two values, it pads left and right with the first and
+  ///    top and bottom with the second value.
   ///    If the vector has four values, it pads left, top, right, and bottom with
   ///    those values respectively.
   /// \param[in] pad_if_needed A boolean indicating that whether to pad the image
@@ -993,10 +989,6 @@ class DATASET_API RandomCrop final : public TensorTransform {
   ///   - BorderType::kReflect, Reflect the values on the edge omitting the last value of edge.
   ///   - BorderType::kSymmetric, Reflect the values on the edge repeating the last value of edge.
   /// \note If the input image is more than one, then make sure that the image size is the same.
-  /// \note The behavior when `padding` is a sequence of length 2 will change from padding left/top with
-  ///     the first value and right/bottom with the second, to padding left/right with the first one
-  ///     and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
-  ///     left, top, right and bottom respectively.
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -1080,8 +1072,8 @@ class DATASET_API RandomCropWithBBox final : public TensorTransform {
   ///     If the size has 2 values, it should be (height, width).
   /// \param[in] padding A vector representing the number of pixels to pad the image
   ///    If the vector has one value, it pads all sides of the image with that value.
-  ///    If the vector has two values, it pads left and top with the first and
-  ///    right and bottom with the second value.
+  ///    If the vector has two values, it pads left and right with the first and
+  ///    top and bottom with the second value.
   ///    If the vector has four values, it pads left, top, right, and bottom with
   ///    those values respectively.
   /// \param[in] pad_if_needed A boolean indicating that whether to pad the image
@@ -1095,10 +1087,6 @@ class DATASET_API RandomCropWithBBox final : public TensorTransform {
   ///   - BorderType::kEdge, Fill the border with the last value on the edge.
   ///   - BorderType::kReflect, Reflect the values on the edge omitting the last value of edge.
   ///   - BorderType::kSymmetric, Reflect the values on the edge repeating the last value of edge.
-  /// \note The behavior when `padding` is a sequence of length 2 will change from padding left/top with
-  ///     the first value and right/bottom with the second, to padding left/right with the first one
-  ///     and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
-  ///     left, top, right and bottom respectively.
   /// \par Example
   /// \code
   ///     /* Define operations */

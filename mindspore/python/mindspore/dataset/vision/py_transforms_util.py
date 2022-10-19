@@ -935,8 +935,8 @@ def pad(img, padding, fill_value, padding_mode):
 
     elif isinstance(padding, (tuple, list)):
         if len(padding) == 2:
-            left = top = padding[0]
-            right = bottom = padding[1]
+            left = right = padding[0]
+            top = bottom = padding[1]
         elif len(padding) == 4:
             left = padding[0]
             top = padding[1]

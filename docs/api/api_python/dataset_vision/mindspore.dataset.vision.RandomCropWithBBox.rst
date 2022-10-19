@@ -12,7 +12,7 @@ mindspore.dataset.vision.RandomCropWithBBox
         - **padding** (Union[int, Sequence[int]], 可选) - 填充图像的像素数。填充值必须非负值，默认值：None。
           如果 `padding` 不为 None，则首先使用 `padding` 填充图像。
           如果 `padding` 是一个整数，代表为图像的所有方向填充该值大小的像素。
-          如果 `padding` 是一个包含2个值的元组或列表，第一个值会用于填充图像的左侧和上侧，第二个值会用于填充图像的右侧和下侧。
+          如果 `padding` 是一个包含2个值的元组或列表，第一个值会用于填充图像的左侧和右侧，第二个值会用于填充图像的上侧和下侧。
           如果 `padding` 是一个包含4个值的元组或列表，则分别填充图像的左侧、上侧、右侧和下侧。
         - **pad_if_needed** (bool, 可选) - 如果输入图像高度或者宽度小于 `size` 指定的输出图像尺寸大小，是否进行填充。默认值：False。
         - **fill_value** (Union[int, tuple[int]], 可选) - 边框的像素强度，仅当 `padding_mode` 为 Border.CONSTANT 时有效。
