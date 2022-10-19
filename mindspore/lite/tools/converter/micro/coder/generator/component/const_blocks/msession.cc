@@ -20,11 +20,19 @@ namespace mindspore::lite::micro {
 const char model_runtime_other_source[] = R"RAW(
 MSTensorHandleArray MSModelGetInputs(const MSModelHandle model) {
   MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    MSTensorHandleArray tmp = {0, NULL};
+    return tmp;
+  }
   return micro_model->inputs;
 }
 
 MSTensorHandleArray MSModelGetOutputs(const MSModelHandle model) {
   MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    MSTensorHandleArray tmp = {0, NULL};
+    return tmp;
+  }
   return micro_model->outputs;
 }
 
