@@ -296,7 +296,7 @@ class AscendDeviceInfo(DeviceInfo):
         inter_op_parallel_num: 0,
         thread_affinity_mode: 1,
         thread_affinity_core_list: [],
-        enable_parallel: False
+        enable_parallel: False,
         device_list: 3, 0, .
     """
 
