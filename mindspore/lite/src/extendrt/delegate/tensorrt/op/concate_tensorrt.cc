@@ -47,11 +47,7 @@ int ConcateTensorRT::CheckParams(TensorRTContext *ctx) {
   }
   int input_nbDims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
   if (axis_ == -1) {
-    if (type_ == ops::kNameStack) {
-      axis_ = input_nbDims;
-    } else {
-      axis_ = input_nbDims - 1;
-    }
+    axis_ = input_nbDims - (type_ == ops::kNameConcat);
   }
   if (axis_ < 0 || axis_ > input_nbDims || (axis_ == input_nbDims && type_ != ops::kNameStack)) {
     MS_LOG(ERROR) << "concate_op valid axis : " << axis_ << " , input dims : " << input_nbDims;

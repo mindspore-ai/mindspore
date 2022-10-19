@@ -73,12 +73,14 @@ int UnaryTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (type_ == ops::kNameExpFusion) {
     auto exp_op = AsOps<ops::ExpFusion>();
     CHECK_NULL_RETURN(exp_op);
-    float scale = exp_op->get_scale();
-    float shift = exp_op->get_shift();
-    float base = exp_op->get_base();
-    if (scale != 1.0f || shift != 0.0f || base != -1.0f) {
-      MS_LOG(ERROR) << op_name_ << " has fusion to calculate.";
-      return RET_ERROR;
+    if (exp_op->HasAttr(ops::kScale) && exp_op->HasAttr(ops::kShift) && exp_op->HasAttr(ops::kBase)) {
+      float scale = exp_op->get_scale();
+      float shift = exp_op->get_shift();
+      float base = exp_op->get_base();
+      if (scale != 1.0f || shift != 0.0f || base != -1.0f) {
+        MS_LOG(ERROR) << op_name_ << " has fusion to calculate.";
+        return RET_ERROR;
+      }
     }
   }
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);

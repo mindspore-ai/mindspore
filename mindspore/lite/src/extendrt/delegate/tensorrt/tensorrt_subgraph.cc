@@ -49,8 +49,7 @@ TensorRTSubGraph::TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vec
       runtime_(runtime),
       trt_profile_config_(trt_profile_config) {
   trt_specific_weight_handled_inner_ = {
-    ops::kNameTranspose,  ops::kNameReshape,    ops::kNameStridedSlice,
-    ops::kNameExpandDims, ops::kNameTopKFusion, ops::kNameBroadcastTo,
+    ops::kNameTranspose, ops::kNameReshape, ops::kNameExpandDims, ops::kNameTopKFusion, ops::kNameBroadcastTo,
   };
   if (!support_resize) {
     input_batchsize_index_ = -1;

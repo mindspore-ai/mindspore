@@ -37,6 +37,8 @@ class MatMulTensorRT : public TensorRTOp {
 
   bool IsWeightInputHanledInner() const override { return true; }
 
+  bool HasConst() const override;
+
  private:
   int PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
 

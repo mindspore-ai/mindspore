@@ -29,10 +29,6 @@
 namespace mindspore::lite {
 int ShuffleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    // return RET_ERROR;
-  }
   if (type_ == ops::kNameFlatten || type_ == ops::kNameUnsqueeze) {
     if (in_tensors.size() != 1) {
       MS_LOG(ERROR) << "Unsupported in_tensors size " << in_tensors.size() << " of " << type_;
@@ -63,7 +59,7 @@ int ShuffleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
     // if (in_tensors[0].Shape()[0] != out_tensors[0].Shape()[0]) {
     //   dynamic_shape_params_.support_dynamic_ = false;
     // }
-  } else if (type_ == ops::kNameTranspose || type_ == ops::kNameExpandDims || type_ == ops::kNameBroadcastTo) {
+  } else if (type_ == ops::kNameTranspose || type_ == ops::kNameExpandDims) {
     if (in_tensors.size() != INPUT_SIZE2) {
       MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
       return RET_ERROR;
@@ -169,6 +165,9 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
       if (new_shape[i] == 1) {
         new_shape.erase(new_shape.begin() + i);
       }
+    }
+    if (new_shape.empty()) {
+      new_shape = {1};
     }
   } else {
     for (int i = SizeToInt(param_axis_.size()) - 1; i >= 0; i--) {

@@ -81,7 +81,7 @@ class TensorRTOp {
 
   const BaseOperatorPtr &GetBaseOperator();
 
-  bool HasConst() const;
+  virtual bool HasConst() const;
 
   int ReadyInputsNumber(TensorRTContext *ctx) const;
 

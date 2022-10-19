@@ -43,7 +43,7 @@ int TopKTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vec
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
-  if (out_tensors.size() != 1 && in_tensors.size() != INPUT_SIZE2) {
+  if (out_tensors.size() != 1 && out_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }

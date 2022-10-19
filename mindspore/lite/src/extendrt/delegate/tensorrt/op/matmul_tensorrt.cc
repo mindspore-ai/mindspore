@@ -88,6 +88,8 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
+bool MatMulTensorRT::HasConst() const { return in_tensors_[0].IsConst() || in_tensors_[1].IsConst(); }
+
 int MatMulTensorRT::PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b) {
   if (!HasConst()) {
     *matmul_a = input(ctx, 0);
