@@ -105,13 +105,18 @@ bool TileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   launch_map_[kNumberTypeUInt32] = &TileCpuKernelMod::LaunchKernel<uint32_t>;
   launch_map_[kNumberTypeUInt64] = &TileCpuKernelMod::LaunchKernel<uint64_t>;
   launch_map_[kNumberTypeFloat32] = &TileCpuKernelMod::LaunchKernel<float>;
+  launch_map_[kNumberTypeFloat16] = &TileCpuKernelMod::LaunchKernel<float16>;
+  launch_map_[kNumberTypeFloat64] = &TileCpuKernelMod::LaunchKernel<double>;
+  launch_map_[kNumberTypeComplex64] = &TileCpuKernelMod::LaunchKernel<complex64>;
+  launch_map_[kNumberTypeComplex128] = &TileCpuKernelMod::LaunchKernel<complex128>;
   launch_map_[kNumberTypeBool] = &TileCpuKernelMod::LaunchKernel<bool>;
 
   auto iter = launch_map_.find(dtype_);
   if (iter != launch_map_.end()) {
     launch_func_ = iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be bool, int, float or uint, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input must be bool, int, float, uint or complex, but got "
                       << TypeIdToType(dtype_)->ToString();
     return false;
   }
