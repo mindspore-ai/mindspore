@@ -26,11 +26,6 @@ int SoftMaxTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
     axis_val_ = std::vector<int64_t>(axis.begin(), axis.end());
   }
 
-  auto logsoftmax_op = AsOps<ops::LogSoftmax>();
-  if (logsoftmax_op != nullptr) {
-    auto axis = logsoftmax_op->get_axis();
-    axis_val_ = std::vector<int64_t>(1, axis);
-  }
   if (axis_val_.size() != 1) {
     MS_LOG(ERROR) << "axis needs check";
     return RET_ERROR;
@@ -64,10 +59,6 @@ int SoftMaxTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "softmax output tensor create failed for TensorRT.";
     return RET_ERROR;
   }
-  auto logsoftmax_op = AsOps<ops::LogSoftmax>();
-  if (logsoftmax_op != nullptr) {
-    out_tensor = ctx->network()->addUnary(*out_tensor, nvinfer1::UnaryOperation::kLOG)->getOutput(0);
-  }
   ctx->RegisterTensor(ITensorHelper{out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
                       out_tensors_[0].Name());
   return RET_OK;
@@ -88,5 +79,4 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
   return current_layer_;
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameSoftmax, SoftMaxTensorRT)
-REGISTER_TENSORRT_CREATOR(ops::kNameLogSoftmax, SoftMaxTensorRT)
 }  // namespace mindspore::lite
