@@ -31,7 +31,7 @@ class MIND_API MapTensorGetGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(MapTensorGetGrad);
   /// \brief Constructor.
   MapTensorGetGrad() : BaseOperator(kNameMapTensorGetGrad) {
-    InitIOName({"map_tensor", "key_tensor", "default_value", "grad"}, {"output"});
+    InitIOName({"map_tensor", "key_tensor", "grad"}, {"output"});
   }
   /// \brief Init.
   void Init() const {}

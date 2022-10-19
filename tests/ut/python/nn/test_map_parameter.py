@@ -36,7 +36,7 @@ def test_basic_operations():
     assert t.shape == (3, 2)
     assert np.allclose(t.asnumpy(), 0)
 
-    t = m.get(Tensor([1, 2, 3], dtype=ms.int32), 0)
+    t = m.get(Tensor([1, 2, 3], dtype=ms.int32))
     assert t.dtype == ms.float32
     assert t.shape == (3, 2)
     assert np.allclose(t.asnumpy(), 0)
@@ -68,16 +68,14 @@ def test_simple_graph_compile():
 
         def construct(self, x):
             self.m.put(self.key, x)
-            value1 = self.m.get(self.key, 0.1)
-            value2 = self.m.get(self.key, 'zeros')
-            value3 = self.m.get(self.key)
-            value4 = self.m[self.key]
-            self.m[self.key] = value4
+            value1 = self.m.get(self.key)
+            value2 = self.m[self.key]
+            self.m[self.key] = value2
             self.m.erase(self.key)
             keys = self.m.get_keys()
             values = self.m.get_values()
             self.m.put(keys, values)
-            return self.p + value1 + value2 + value3 + value4
+            return self.p + value1 + value2
 
     context.set_context(mode=context.GRAPH_MODE)
     net = MyNet()
@@ -141,12 +139,11 @@ def test_grad_net():
     class MyNet(nn.Cell):
         def __init__(self):
             nn.Cell.__init__(self)
-            self.p = Parameter(initializer('ones', (2, 3), ms.float32))
             self.m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
             self.key = Tensor([1, 2], dtype=ms.int32)
 
         def construct(self, x):
-            a = self.m.get(self.key, 0.1)
+            a = self.m.get(self.key)
             self.m.erase(self.key)
             return x * a
 

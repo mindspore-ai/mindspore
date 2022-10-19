@@ -21,17 +21,16 @@ from mindspore.ops.primitive import Primitive, prim_attr_register
 
 class MapTensorGet(Primitive):
     """
-    Get or create value according the key tensor and default value.
+    Get or create value according the key tensor and default value in map tensor.
     """
     __mindspore_signature__ = (
         sig.make_sig('map_tensor'),
-        sig.make_sig('key_tensor'),
-        sig.make_sig('default_value'))
+        sig.make_sig('key_tensor'))
 
     @prim_attr_register
     def __init__(self):
         """Initialize MapTensorGet"""
-        self.init_prim_io_names(inputs=['map_tensor', 'key_tensor', 'default_value'], outputs=['output'])
+        self.init_prim_io_names(inputs=['map_tensor', 'key_tensor'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
 
 

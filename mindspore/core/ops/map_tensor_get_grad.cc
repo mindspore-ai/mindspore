@@ -28,7 +28,7 @@ AbstractBasePtr MapTensorGetGradInfer(const abstract::AnalysisEnginePtr &, const
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // Check number of arguments.
-  constexpr int64_t input_num = 4;
+  constexpr int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorGetGrad);
   // Check argument abstracts.
   auto abs_map_tensor =
