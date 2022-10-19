@@ -20,6 +20,7 @@
 #include "securec/include/securec.h"
 #include "ops/fusion/prelu_fusion.h"
 #include "ops/elu.h"
+#include "ops/gelu.h"
 #include "ops/fusion/activation.h"
 #include "nnacl/op_base.h"
 #include "ops/softplus.h"
@@ -47,6 +48,14 @@ PrimitiveCPtr OnnxLeakyReluParser::Parse(const onnx::GraphProto &onnx_graph, con
   }
 
   prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
+
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxGeluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Activation>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->set_activation_type(mindspore::ActivationType::GELU);
 
   return prim->GetPrim();
 }
@@ -163,5 +172,6 @@ OnnxNodeRegistrar g_onnxTanhParser("Tanh", new OnnxTanhParser());
 OnnxNodeRegistrar g_onnxSigmoidParser("Sigmoid", new OnnxSigmoidParser());
 OnnxNodeRegistrar g_onnxHardSigmoidParser("HardSigmoid", new OnnxHardSigmoidParser());
 OnnxNodeRegistrar g_onnxSoftPlusParser("Softplus", new OnnxSoftPlusParser());
+OnnxNodeRegistrar g_onnxGeluParser("Gelu", new OnnxGeluParser());
 }  // namespace lite
 }  // namespace mindspore
