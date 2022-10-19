@@ -20,9 +20,8 @@
 #include "ir/map_tensor.h"
 
 namespace mindspore {
-using tensor::Tensor;
-using tensor::TensorPtr;
-
+using MapTensor = tensor::MapTensor;
+using MapTensorPtr = std::shared_ptr<MapTensor>;
 class TestMapTensor : public UT::Common {
  public:
   TestMapTensor() = default;

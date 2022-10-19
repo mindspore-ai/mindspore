@@ -32,6 +32,8 @@
 #include "utils/trace_base.h"
 
 namespace mindspore {
+class MapTensor;
+using MapTensorPtr = std::shared_ptr<MapTensor>;
 namespace abstract {
 using mindspore::common::IsEqual;
 AbstractBase::TraceNodeProvider AbstractBase::trace_node_provider_ = nullptr;

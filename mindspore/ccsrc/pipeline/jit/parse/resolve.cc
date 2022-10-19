@@ -128,7 +128,8 @@ std::string GetPyObjId(const py::object &obj) {
   }
   return out.cast<std::string>();
 }
-
+using MapTensor = tensor::MapTensor;
+using MapTensorPtr = std::shared_ptr<MapTensor>;
 // Get parameter value from a python parameter object.
 // If it is a map parameter, return the map tensor value in it,
 // otherwise, return parameter itself as a meta tensor value.

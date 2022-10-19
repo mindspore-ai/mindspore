@@ -28,14 +28,15 @@
 #include "utils/shape_utils.h"
 
 namespace mindspore {
+namespace tensor {
+class MapTensor;
+// Smart pointer for MapTensor.
+using MapTensorPtr = std::shared_ptr<MapTensor>;
 ///
 /// \brief MapTensor is a dynamic tensor with map like index functions.
 ///
-class MS_CORE_API MapTensor final : public Value {
+class MS_CORE_API MapTensor final : public Tensor {
  public:
-  using Tensor = tensor::Tensor;
-  using TensorPtr = tensor::TensorPtr;
-
   struct ExportData {
     TensorPtr key_tensor;
     TensorPtr value_tensor;
@@ -59,7 +60,7 @@ class MS_CORE_API MapTensor final : public Value {
 
   ~MapTensor() override = default;
 
-  MS_DECLARE_PARENT(MapTensor, Value)
+  MS_DECLARE_PARENT(MapTensor, Tensor)
 
   std::size_t hash() const override;
 
@@ -152,8 +153,6 @@ class MS_CORE_API MapTensor final : public Value {
   // Parameter information.
   ParamInfoPtr param_info_;
 };
-
-// Smart pointer for MapTensor.
-using MapTensorPtr = std::shared_ptr<MapTensor>;
+}  // namespace tensor
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_MAP_TENSOR_H_

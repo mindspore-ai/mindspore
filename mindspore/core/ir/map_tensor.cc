@@ -21,6 +21,7 @@
 #include "utils/ms_utils_secure.h"
 
 namespace mindspore {
+namespace tensor {
 using tensor::Tensor;
 using tensor::TensorPtr;
 
@@ -51,7 +52,7 @@ std::string MapTensor::ToString() const {
   return "MapTensor(key_dtype=" + (key_dtype == nullptr ? "<null>" : key_dtype->ToString()) +
          ", value_dtype=" + (value_dtype == nullptr ? "<null>" : value_dtype->ToString()) +
          ", value_shape=" + tensor::ShapeToString(value_shape_) +
-         ", deault_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) + ")";
+         ", default_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) + ")";
 }
 
 TensorPtr MapTensor::Get(const TensorPtr &key_tensor, const ValuePtr &default_value) {
@@ -94,4 +95,5 @@ MapTensor::ExportData MapTensor::Export(bool full) {
   auto status_tensor = std::make_shared<Tensor>(kNumberTypeUInt8, key_shape);
   return {key_tensor, value_tensor, status_tensor};
 }
+}  // namespace tensor
 }  // namespace mindspore

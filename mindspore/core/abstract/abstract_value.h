@@ -1553,7 +1553,8 @@ class MS_CORE_API AbstractIOMonad final : public AbstractMonad {
   bool operator==(const AbstractBase &other) const override;
 };
 using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
-
+using MapTensor = tensor::MapTensor;
+using MapTensorPtr = std::shared_ptr<MapTensor>;
 /// \brief Class AbstractMapTensor describes a MapTensor's abstract value.
 class MS_CORE_API AbstractMapTensor final : public AbstractBase {
  public:
