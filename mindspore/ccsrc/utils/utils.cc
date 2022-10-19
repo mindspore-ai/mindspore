@@ -55,24 +55,6 @@ bool IsOneOfNoPaddingFormat(const std::string &format) {
   return iter != kNoPaddingFormatSet.end();
 }
 
-bool IsOneOfDynamicShapeConstInputToAttr(const std::string &name) {
-  const std::set<std::string> DynamicShapeConstInputToAttr = {
-    kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName,
-    kReduceMaxOpName, kReduceAllOpName,  kReduceAnyOpName,       kConcatOpName,    kTransposeOpName};
-
-  auto iter = DynamicShapeConstInputToAttr.find(name);
-  return iter != DynamicShapeConstInputToAttr.end();
-}
-
-bool IsOneOfDynamicShapeConstInputToAttrCPU(const std::string &name) {
-  const std::set<std::string> DynamicShapeConstInputToAttrCPU = {
-    kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName,
-    kReduceAllOpName, kReduceAnyOpName,  kConcatOpName,          kReduceSumOpName, kTransposeOpName};
-
-  auto iter = DynamicShapeConstInputToAttrCPU.find(name);
-  return iter != DynamicShapeConstInputToAttrCPU.end();
-}
-
 bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &name) {
   const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
     kCastOpName,      kExpandDimsOpName, kReshapeOpName,    kEmbeddingLookupOpName, kTransposeOpName,

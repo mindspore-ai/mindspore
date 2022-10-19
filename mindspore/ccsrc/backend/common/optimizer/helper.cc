@@ -795,8 +795,6 @@ AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
     if (IsOneOfDynamicShapeConstInputToAttrGPU(primitive->name())) {
       return input_abstract;
     }
-  } else if (IsOneOfDynamicShapeConstInputToAttr(primitive->name())) {
-    return input_abstract;
   }
   auto convert_input_list = reg.GetConstInputAttrInfo();
   auto input_names = primitive->GetAttr(kAttrInputNames);
