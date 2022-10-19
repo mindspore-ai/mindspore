@@ -36,6 +36,7 @@ class QuantParamParser {
                                             quant::ActivationQuantizedMethod *activation_quant_method);
   static int ParseFilter(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
   static int ParseBitNum(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
+  static int ParseEnableEncode(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
 };
 }  // namespace lite
 }  // namespace mindspore

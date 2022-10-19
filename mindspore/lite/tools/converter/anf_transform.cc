@@ -563,7 +563,7 @@ STATUS AnfTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph,
   }
   auto transform_uint8_pass = quant::TransformUint8Pass(func_graph);
   ret = transform_uint8_pass.Transform();
-  if (ret != RET_OK) {
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "Run dtype transform pass failed.";
     return ret;
   }

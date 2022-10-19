@@ -93,6 +93,7 @@ struct CommonQuantParam {
   DebugMode debug_mode = DETAIL;
   std::set<std::string> skip_quant_node;
   int thread_num = 4;
+  bool enable_encode = true;
 };
 
 struct MixedBitWeightQuantParam {

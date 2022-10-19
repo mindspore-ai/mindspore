@@ -84,6 +84,23 @@ int QuantParamParser::ParseBitNum(const CommonQuantString &common_quant_string, 
   return RET_OK;
 }
 
+int QuantParamParser::ParseEnableEncode(const CommonQuantString &common_quant_string,
+                                        quant::CommonQuantParam *common_quant) {
+  if (!common_quant_string.enable_encode.empty() &&
+      !ConvertBool(common_quant_string.enable_encode, &common_quant->enable_encode)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: enable_encode should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (common_quant->quant_type == schema::QuantType_QUANT_WEIGHT &&
+      (common_quant->bit_num != kQuantBitNumInt8 && common_quant->bit_num != kQuantBitNumInt16)) {
+    if (!common_quant->enable_encode) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: enable_encode should be true when parameter bit_num belongs to [0,7] or [9,15].";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
 int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_string,
                                        quant::CommonQuantParam *common_quant) {
   MS_ASSERT(common_quant != nullptr);
@@ -98,6 +115,12 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
   auto ret = ParseBitNum(common_quant_string, common_quant);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse bit num failed.";
+    return ret;
+  }
+
+  ret = ParseEnableEncode(common_quant_string, common_quant);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse enable encode failed.";
     return ret;
   }
 

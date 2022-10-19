@@ -207,3 +207,4 @@ mindspore/mindspore/lite/src/litert/kernel/cpu/control/tensorlist_setitem.cc:min
 mindspore/mindspore/python/mindspore/ops/_utils/utils.py:get_broadcast_shape
 mindspore/mindspore/ccsrc/pybind_api/ir/dtype_py.cc:mindspore::RegTyping
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::RegMetaTensor
+mindspore/mindspore/lite/tools/converter/quantizer/weight_quantizer.cc:mindspore::lite::quant::WeightQuantizer::LinearQuant

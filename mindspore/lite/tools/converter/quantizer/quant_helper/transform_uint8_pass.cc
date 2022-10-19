@@ -35,7 +35,9 @@ int TransformUint8Pass::Transform() {
       continue;
     }
     auto status = DoNodeDTypeTrans(cnode);
-    if (status != RET_OK) {
+    if (status == RET_NO_CHANGE) {
+      return status;
+    } else if (status != RET_OK) {
       MS_LOG(ERROR) << "DoNodeDTypeTrans failed, cnode name: " << cnode->fullname_with_scope();
       return status;
     }
@@ -153,8 +155,8 @@ int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(curr_quant_param_holder);
   TypeId cnode_dtype = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(cnode, &cnode_dtype) != RET_OK) {
-    MS_LOG(ERROR) << "Get data type failed, cnode name: " << cnode->fullname_with_scope();
-    return RET_ERROR;
+    MS_LOG(INFO) << "Get data type failed, cnode name: " << cnode->fullname_with_scope();
+    return RET_NO_CHANGE;
   }
   if (cnode_dtype == kNumberTypeUInt8) {
     MS_LOG(INFO) << "cnode dtype kNumberTypeUInt8, cnode name: " << cnode->fullname_with_scope();
@@ -169,8 +171,8 @@ int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
     }
     // update output quant param zp
     if (curr_quant_param_holder->get_output_quant_params().empty()) {
-      MS_LOG(ERROR) << "output quant params empty.";
-      return RET_ERROR;
+      MS_LOG(INFO) << "output quant params empty.";
+      return RET_NO_CHANGE;
     }
     auto out_quant_params = curr_quant_param_holder->get_output_quant_params()[0];
     for (auto &quant_param : out_quant_params) {
@@ -240,6 +242,10 @@ bool TransformUint8Pass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
     opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast) || CheckNodeInSet(cnode, kUint8toFP32Operator);
   if (cnode_dtype != kNumberTypeUInt8 && !is_fp32_output) {
     MS_LOG(DEBUG) << "dtype not kNumberTypeUInt8, cnode name: " << cnode->fullname_with_scope();
+    return false;
+  }
+  auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
+  if (curr_quant_param_holder->get_output_quant_params().empty()) {
     return false;
   }
   return true;
