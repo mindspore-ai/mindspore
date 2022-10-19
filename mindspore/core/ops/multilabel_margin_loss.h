@@ -35,6 +35,8 @@ class MIND_API MultilabelMarginLoss : public BaseOperator {
   MIND_API_BASE_MEMBER(MultilabelMarginLoss);
   /// \brief Constructor.
   MultilabelMarginLoss() : BaseOperator(kNameMultilabelMarginLoss) { InitIOName({"x", "target"}, {"y", "is_target"}); }
+  /// \brief Get reduction.
+  int64_t get_reduction() const;
 };
 
 abstract::AbstractBasePtr MultilabelMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

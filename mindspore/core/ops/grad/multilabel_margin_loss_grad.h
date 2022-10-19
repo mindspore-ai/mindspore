@@ -36,6 +36,7 @@ class MIND_API MultilabelMarginLossGrad : public BaseOperator {
   MultilabelMarginLossGrad() : BaseOperator(kNameMultilabelMarginLossGrad) {
     InitIOName({"y_grad", "x", "target", "is_target"}, {"x_grad"});
   }
+  int64_t get_reduction() const;
 };
 
 abstract::AbstractBasePtr MultilabelMarginLossGradInfer(const abstract::AnalysisEnginePtr &,

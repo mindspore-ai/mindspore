@@ -44,7 +44,7 @@ abstract::ShapePtr MultilabelMarginLossGradInferShape(const PrimitivePtr &primit
 TypePtr MultilabelMarginLossGradInferType(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  const std::set<TypePtr> valid_types1 = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types1 = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types2 = {kInt32};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("y_grad", input_args[kInputIndex0]->BuildType());
@@ -66,6 +66,14 @@ AbstractBasePtr MultilabelMarginLossGradInfer(const abstract::AnalysisEnginePtr 
   auto infer_shape = MultilabelMarginLossGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+int64_t MultilabelMarginLossGrad::get_reduction() const {
+  static std::map<std::string, int64_t> kReductionModeMap{{"none", 0}, {"mean", 1}, {"sum", 2}};
+  string reduc_str = GetValue<string>(GetAttr(kReduction));
+  int64_t res = kReductionModeMap[reduc_str];
+  return res;
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(MultilabelMarginLossGrad, prim::kPrimMultilabelMarginLossGrad,
                              MultilabelMarginLossGradInfer, nullptr, true);
 }  // namespace ops
