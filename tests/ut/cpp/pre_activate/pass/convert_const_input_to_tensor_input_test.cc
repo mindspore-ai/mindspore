@@ -64,6 +64,30 @@ TEST_F(TestHWConstInputToTensorInput, test_onehot_fg) {
   EXPECT_TRUE(IsValueNode<tensor::Tensor>(cnode->input(2)));
 }
 
+/// Feature: Const input to tensor input.
+/// Description: Test if can change const input to tensor input successfully.
+/// Expectation: Success.
+TEST_F(TestHWConstInputToTensorInput, onehot_kg_case) {
+  FuncGraphPtr g = getPyFun_.CallAndParseRet("convert_onehot_input_to_tensor2", "before");
+  ASSERT_TRUE(g != nullptr);
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("convert_onehot_input_to_tensor2", "after_kernel_graph");
+  ASSERT_TRUE(g_after != nullptr);
+  EXPECT_FALSE(CheckEqualGraph(g, g_after));
+  std::vector<int64_t> shp_x{16};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, shp_x);
+  AbstractBasePtrList args_spec_list{x_abstract};
+  auto func_graph = GetKernelGraph(g, args_spec_list);
+  ASSERT_TRUE(func_graph != nullptr);
+
+  auto ret = func_graph->get_return();
+  ASSERT_TRUE(ret != nullptr);
+  EXPECT_NE(ret->input(1), nullptr);
+  EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
+  auto cnode = ret->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+  EXPECT_TRUE(common::AnfAlgo::HasNodeAttr("depth", cnode));
+  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
+}
+
 TEST_F(TestHWConstInputToTensorInput, test_value_tuple_tensor_input) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_convert_dropout_gen_mask_tuple_input_to_tensor", "before");
   ASSERT_TRUE(g != nullptr);
