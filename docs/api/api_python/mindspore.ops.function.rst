@@ -117,6 +117,7 @@ mindspore.ops.function
     mindspore.ops.cholesky_inverse
     mindspore.ops.conj
     mindspore.ops.cross
+    mindspore.ops.cumprod
     mindspore.ops.erfinv
     mindspore.ops.less_equal
 

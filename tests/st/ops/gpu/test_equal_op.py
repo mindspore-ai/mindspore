@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,45 +21,47 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.common import dtype as mstype
 
 
 class NetEqual(Cell):
     def __init__(self):
         super(NetEqual, self).__init__()
-        self.Equal = P.Equal()
+        self.equal = P.Equal()
 
     def construct(self, x, y):
-        return self.Equal(x, y)
+        return self.equal(x, y)
 
 
 class NetEqualDynamic(Cell):
     def __init__(self):
         super(NetEqualDynamic, self).__init__()
         self.conv = inner.GpuConvertToDynamicShape()
-        self.Equal = P.Equal()
+        self.equal = P.Equal()
 
     def construct(self, x, y):
         x_conv = self.conv(x)
         y_conv = self.conv(y)
-        return self.Equal(x_conv, y_conv)
+        return self.equal(x_conv, y_conv)
 
 
 class NetNotEqual(Cell):
     def __init__(self):
         super(NetNotEqual, self).__init__()
-        self.NotEqual = P.NotEqual()
+        self.not_equal = P.NotEqual()
 
     def construct(self, x, y):
-        return self.NotEqual(x, y)
+        return self.not_equal(x, y)
 
 
 class NetGreaterEqual(Cell):
     def __init__(self):
         super(NetGreaterEqual, self).__init__()
-        self.GreaterEqual = P.GreaterEqual()
+        self.greater_equal = P.GreaterEqual()
 
     def construct(self, x, y):
-        return self.GreaterEqual(x, y)
+        return self.greater_equal(x, y)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -136,6 +138,7 @@ def test_equal():
         assert output.shape == expect[i].shape
         print('test [%d/%d] passed!' % (i, len(x)))
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -181,6 +184,7 @@ def test_notequal():
         assert np.all(output.asnumpy() == expect[i])
         assert output.shape == expect[i].shape
         print('test [%d/%d] passed!' % (i, len(x)))
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -248,3 +252,31 @@ def test_equal_dynamic_shape():
     output0 = equal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
     assert output0.shape == expect0.shape
+
+
+def test_equal_tensor_api():
+    """
+    Feature: test equal tensor API.
+    Description: testcase for equal tensor API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([1, 2, 3]), mstype.int32)
+    y = Tensor(np.array([1, 2, 4]), mstype.int32)
+    output = x.equal(y)
+    expected = np.array([True, True, False])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_equal_tensor_modes():
+    """
+    Feature: test equal tensor API in PyNative and Graph modes.
+    Description: test case for equal tensor API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_equal_tensor_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_equal_tensor_api()

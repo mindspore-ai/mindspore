@@ -49,7 +49,11 @@ mindspore.Tensor
     mindspore.Tensor.bmm
     mindspore.Tensor.conj
     mindspore.Tensor.cross
-    mindspore.Tensor.erfinv
+    mindspore.Tensor.cumprod
+    mindspore.Tensor.div
+    mindspore.Tensor.erfinv    
+    mindspore.Tensor.equal
+    mindspore.Tensor.expm1
     mindspore.Tensor.less_equal
 
 逐元素运算
@@ -191,6 +195,7 @@ Array操作
     mindspore.Tensor.diag
     mindspore.Tensor.diagonal
     mindspore.Tensor.dtype
+    mindspore.Tensor.expand
     mindspore.Tensor.expand_as
     mindspore.Tensor.expand_dims
     mindspore.Tensor.fold

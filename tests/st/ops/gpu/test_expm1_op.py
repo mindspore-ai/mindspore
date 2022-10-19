@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ from mindspore import dtype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
+
 class NetExpm1(nn.Cell):
     def __init__(self):
         super(NetExpm1, self).__init__()
@@ -44,6 +45,7 @@ def test_expm1_fp32():
     tol = 1e-6
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -54,3 +56,30 @@ def test_expm1_fp16():
     expect = np.expm1(x)
     tol = 1e-3
     assert (np.abs(output.asnumpy() - expect) < tol).all()
+
+
+def test_expm1_tensor_api():
+    """
+    Feature: test expm1 tensor API.
+    Description: testcase for expm1 tensor API.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), dtype.float32)
+    output = x.expm1()
+    expected = np.array([0., 1.718282, 6.389056, 53.598152])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_expm1_tensor_modes():
+    """
+    Feature: test expm1 tensor API in PyNative and Graph modes.
+    Description: test case for expm1 tensor API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_expm1_tensor_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_expm1_tensor_api()

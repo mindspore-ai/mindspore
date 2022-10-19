@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 import numpy as np
 import pytest
 
-import mindspore as ms
-import mindspore.context as context
 import mindspore.nn as nn
+from mindspore import dtype
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+import mindspore.context as context
+from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.common.api import ms_function
 
 
 def cum_prod(nptype):
@@ -74,13 +75,14 @@ def cum_prod(nptype):
 
         @ms_function
         def construct(self):
-            return (P.CumProd()(self.x0, self.axis0),
-                    P.CumProd()(self.x1, self.axis1),
-                    P.CumProd()(self.x2, self.axis2),
-                    P.CumProd()(self.x3, self.axis3),
-                    P.CumProd()(self.x4, self.axis4),
-                    P.CumProd()(self.x5, self.axis5),
-                    P.CumProd()(self.x6, self.axis6))
+            output = (P.CumProd()(self.x0, self.axis0),
+                      P.CumProd()(self.x1, self.axis1),
+                      P.CumProd()(self.x2, self.axis2),
+                      P.CumProd()(self.x3, self.axis3),
+                      P.CumProd()(self.x4, self.axis4),
+                      P.CumProd()(self.x5, self.axis5),
+                      P.CumProd()(self.x6, self.axis6))
+            return output
 
     cumprod = CumProd(nptype)
     output = cumprod()
@@ -182,9 +184,54 @@ def test_cumprod_dshape():
     Expectation: Success.
     """
     net = Net()
-    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    input_x_dyn = Tensor(shape=[3, None], dtype=dtype.float32)
     net.set_inputs(input_x_dyn)
-    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=dtype.float32)
     output = net(input_x)
     expect_shape = (3, 10)
     assert output.asnumpy().shape == expect_shape
+
+
+def test_cumprod_functional_api():
+    """
+    Feature: test cumprod functional API.
+    Description: testcase for cumprod functional API.
+    Expectation: the result match with expected result.
+    """
+    dtype_op = P.DType()
+    x = Tensor(np.array([1, 2, 3]), dtype.float32)
+    output = F.cumprod(x, 0, dtype.int32)
+    expected = np.array([1, 2, 6], np.int32)
+    assert dtype_op(output) == dtype.int32
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+def test_cumprod_tensor_api():
+    """
+    Feature: test cumprod tensor API.
+    Description: testcase for cumprod tensor API.
+    Expectation: the result match with expected result.
+    """
+    dtype_op = P.DType()
+    x = Tensor(np.array([1, 2, 3]), dtype.float32)
+    output = x.cumprod(0, dtype.int32)
+    expected = np.array([1, 2, 6], np.int32)
+    assert dtype_op(output) == dtype.int32
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cumprod_functional_tensor_modes():
+    """
+    Feature: test cumprod functional and tensor APIs in PyNative and Graph modes.
+    Description: test case for cumprod functional and tensor APIs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_cumprod_functional_api()
+    test_cumprod_tensor_api()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_cumprod_functional_api()
+    test_cumprod_tensor_api()

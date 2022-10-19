@@ -332,6 +332,11 @@ BuiltInTypeMap &GetMethodMap() {
        {"less_equal", std::string("less_equal")},                          // less_equal()
        {"fold", std::string("fold")},                                      // fold()
        {"unfold", std::string("unfold")},                                  // unfold()
+       {"expand", std::string("expand")},                                  // expand()
+       {"cumprod", std::string("cumprod")},                                // cumprod()
+       {"div", std::string("div")},                                        // div()
+       {"equal", std::string("equal")},                                    // equal()
+       {"expm1", std::string("expm1")},                                    // expm1()
      }},
     {kObjectTypeRowTensorType,
      {

@@ -284,6 +284,7 @@ from .math_func import (
     cross,
     erfinv,
     less_equal,
+    cumprod,
 )
 from .nn_func import (
     adaptive_avg_pool1d,
