@@ -128,6 +128,10 @@ int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::KernelExec *> &
       }
     }
   }
+  if (output_data_.empty()) {
+    MS_LOG(ERROR) << "output_data_ can not be empty.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
