@@ -133,6 +133,7 @@ int TileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   y_shape_ = outputs[kIndex0]->GetShapeVector();
   if (input_num == kTileDynamicInputsNum) {
     multiple_shape = inputs[kIndex1]->GetShapeVector();
+    multiple_dtype_ = inputs[kIndex1]->GetDtype();
   }
   return KRET_OK;
 }
@@ -156,13 +157,21 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
     TileMultipleCompute();
   }
   if (input_num == kTileDynamicInputsNum) {
-    auto multiples_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+    multiples_.clear();
     int64_t multiple_nums = 1;
     for (size_t i = 0; i < multiple_shape.size(); ++i) {
       multiple_nums *= multiple_shape[i];
     }
-    for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
-      (void)multiples_.emplace_back(multiples_addr[i]);
+    if (multiple_dtype_ == kNumberTypeInt32) {
+      auto multiples_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+      for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
+        (void)multiples_.emplace_back(multiples_addr[i]);
+      }
+    } else {
+      auto multiples_addr = reinterpret_cast<int64_t *>(inputs[1]->addr);
+      for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
+        (void)multiples_.emplace_back(multiples_addr[i]);
+      }
     }
     TileMultipleCompute();
   }
