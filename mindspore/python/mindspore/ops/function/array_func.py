@@ -3439,25 +3439,28 @@ def affine_grid(theta, output_size, align_corners=False):
 def broadcast_to(x, shape):
     """
     Broadcasts input tensor to a given shape. The dim of input shape must be smaller
-    than or equal to that of target shape, suppose input shape :math:`(x1, x2, ..., xm)`,
-    target shape :math:`(*, y_1, y_2, ..., y_m)`. The broadcast rules are as follows:
+    than or equal to that of target shape. Suppose input shape is :math:`(x1, x2, ..., xm)`,
+    target shape is :math:`(*, y_1, y_2, ..., y_m)`, where :math:`*` means any additional dimension.
+    The broadcast rules are as follows:
 
     Compare the value of `x_m` and `y_m`, `x_{m-1}` and `y_{m-1}`, ..., `x_1` and `y_1` consecutively and
     decide whether these shapes are broadcastable and what the broadcast result is.
 
     If the value pairs at a specific dim are equal, then that value goes right into that dim of output shape.
-    With an input shape :math:`(2, 3)`, target shape :math:`(2, 3)` , the inferred outpyt shape is :math:`(2, 3)`.
+    With an input shape :math:`(2, 3)`, target shape :math:`(2, 3)` , the inferred output shape is :math:`(2, 3)`.
 
     If the value pairs are unequal, there are three cases:
 
-    Case 1: Value of target shape is -1, then the value of the output shape is that of the input shape's.
-    With an input shape :math:`(3, 3)`, target shape :math:`(-1, 3)`, the output shape is :math:`(3, 3)`.
+    Case 1: If the value of the target shape in the dimension is -1, the value of the
+    output shape in the dimension is the value of the corresponding input shape in the dimension.
 
-    Case 2: Value of target shape is not -1 but the value ot the input shape is 1, then the value of the output shape
-    is that of the target shape's. With an input shape :math:`(1, 3)`, target
+    Case 2: If the value of target shape in the dimension is not -1, but the corresponding
+    value in the input shape is 1, then the corresponding value of the output shape
+    is that of the target shape. With an input shape :math:`(1, 3)`, target
     shape :math:`(8, 3)`, the output shape is :math:`(8, 3)`.
 
-    Case 3: All other cases mean that the two shapes are not broadcastable.
+    Case 3: If the corresponding values of the two shapes do not satisfy the above cases,
+    it means that broadcasting from the input shape to the target shape is not supported.
 
     So far we got the last m dims of the outshape, now focus on the first :math:`*` dims, there are
     two cases:
