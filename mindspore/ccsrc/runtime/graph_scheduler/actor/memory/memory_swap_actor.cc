@@ -79,9 +79,9 @@ void MemorySwapOutActor::Run(OpContext<DeviceTensor> *context) {
   }
   for (const auto &device_tensor : device_tensors_to_free_) {
     MS_EXCEPTION_IF_NULL(device_tensor);
+    // Offload DeviceTensor with max original_ref_count which will not be used anymore in current sub graph.
+    // DeviceTensor without max original_ref_count will be free in MemoryManagerActor::FreeMemoryByRefCount.
     if (device_tensor->mem_offloaded() || device_tensor->GetPtr() == nullptr ||
-        // Offload DeviceTensor with max original_ref_count which will not be used anymore in current sub graph.
-        // DeviceTensor without max original_ref_count will be free in MemoryManagerActor::FreeMemoryByRefCount.
         device_tensor->original_ref_count() != SIZE_MAX) {
       continue;
     }

@@ -180,7 +180,7 @@ uint32_t GetGotoLabelId(const CNodePtr &node) {
   return common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
 }
 
-void AssignStreamForPynativeGraph(const KernelGraphPtr &graph) {
+void AssignStreamWithDefaultStream(const KernelGraphPtr &graph) {
   auto nodes = graph->execution_order();
   for (auto &node : nodes) {
     AnfAlgo::SetStreamId(kDefaultStreamIndex, node.get());
@@ -483,8 +483,12 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
   MS_EXCEPTION_IF_NULL(default_stream);
   const auto comm_stream = AscendStreamMng::GetInstance().GetStream(kWorldGroupStreamIndex);
   MS_EXCEPTION_IF_NULL(comm_stream);
-  if (graph_ptr->has_flag(kFlagPyNativeRunInGraph) && !graph_ptr->is_graph_run_mode()) {
-    AssignStreamForPynativeGraph(graph_ptr.get());
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  const bool enable_mem_offload =
+    ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD) && !graph_ptr->is_dynamic_shape();
+  if (enable_mem_offload || (graph_ptr->has_flag(kFlagPyNativeRunInGraph) && !graph_ptr->is_graph_run_mode())) {
+    AssignStreamWithDefaultStream(graph_ptr.get());
     return;
   }
   if (graph_ptr->is_dynamic_shape()) {

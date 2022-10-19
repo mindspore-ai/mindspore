@@ -119,6 +119,13 @@ void GPUDeviceResManager::Initialize() {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->Initialize();
 
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
+    auto_mem_offload_ = std::make_shared<MindRTAutoOffloadAdapter>(&GPUMemoryAllocator::GetInstance(),
+                                                                   GPUDeviceManager::GetInstance().default_stream_id());
+  }
+
   // Initialize NCCL.
   if (CollectiveInitializer::instance().collective_inited()) {
     auto collective_handle = CollectiveInitializer::instance().collective_handle();
@@ -231,6 +238,9 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
+  if (auto_mem_offload_ != nullptr) {
+    return auto_mem_offload_->Malloc(address);
+  }
   auto device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
   if (!device_ptr) {
     return false;
@@ -245,6 +255,9 @@ std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vec
   if (!BindDeviceToCurrentThread()) {
     std::vector<void *> ptr_list;
     return ptr_list;
+  }
+  if (auto_mem_offload_ != nullptr) {
+    return auto_mem_offload_->MallocContinuousMem(size_list);
   }
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }

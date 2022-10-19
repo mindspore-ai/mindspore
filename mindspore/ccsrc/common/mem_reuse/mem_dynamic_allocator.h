@@ -58,7 +58,7 @@ struct AllocatorDebugInfo {
   int output_index_{-1};
 };
 
-// The AllocatorDebugInfo warpper which is the local thread for the dynamic memory pool.
+// The AllocatorDebugInfo wrapper which is the local thread for the dynamic memory pool.
 class DynamicMemAllocatorDebugInfo {
  public:
   static AllocatorDebugInfo &GetDebugInfo() noexcept { return debug_info_; }

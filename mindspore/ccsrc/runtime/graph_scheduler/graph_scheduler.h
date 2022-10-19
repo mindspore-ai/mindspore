@@ -28,6 +28,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "runtime/graph_scheduler/control_node_scheduler.h"
+#include "runtime/graph_scheduler/memory_swap_node_scheduler.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/graph_scheduler/actor/actor_dump.h"
@@ -171,10 +172,12 @@ class BACKEND_EXPORT GraphScheduler {
                               const GraphCompilerInfo &graph_compiler_info);
   void LinkDataArrowForCustomActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
   void LinkControlArrowForCustomActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
-  void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph) const;
+  void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
+                                        const GraphCompilerInfo &graph_compiler_info) const;
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
   void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
-                                           const std::vector<KernelGraphPtr> &graphs) const;
+                                           const std::vector<KernelGraphPtr> &graphs,
+                                           const GraphCompilerInfo &graph_compiler_info) const;
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<AbstractActor *> &auto_monad_actors);
   void LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor, const ActorSet *actor_set,
                                            const ControlNodeParserPtr &parser) const;
@@ -209,6 +212,9 @@ class BACKEND_EXPORT GraphScheduler {
 
   // In the control flow, used to build and link control actor.
   ControlNodeScheduler control_node_scheduler_;
+
+  // Build and link swap actor when memory offload is enabled.
+  MemorySwapNodeScheduler swap_node_scheduler_;
 
 #ifdef ENABLE_RPC_ACTOR
   // Return whether the actor set has rpc actors.

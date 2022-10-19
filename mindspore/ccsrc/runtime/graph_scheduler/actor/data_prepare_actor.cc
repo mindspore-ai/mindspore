@@ -22,6 +22,7 @@
 #include "runtime/graph_scheduler/actor/loop_count_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "runtime/device/auto_mem_offload.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
@@ -34,6 +35,15 @@ namespace mindspore {
 namespace runtime {
 using distributed::recovery::RecoveryContext;
 namespace {
+bool IsDataTakenOverByMemOffload(const DeviceContext *device_context) {
+  if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
+    return false;
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
+}
+
 void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor, const AnfNodePtr &node,
                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context,
                     GraphExecutionStrategy strategy) {
@@ -42,7 +52,10 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
-
+  if (IsDataTakenOverByMemOffload(device_context)) {
+    device_tensor->SetOffloadPtr(host_tensor->data_c());
+    return;
+  }
   auto allocator_type = node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), allocator_type, 0);
   if ((device_tensor->GetPtr() == nullptr) &&
@@ -237,7 +250,7 @@ void DataPrepareActor::Init() {
     std::vector<size_t> size_list;
     std::vector<DeviceTensorPtr> addr_list;
     // Inputs need continuous memory.
-    if (iter.second.first == true) {
+    if (iter.second.first) {
       FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, true);
       (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
       (void)size_list_list_.emplace_back(size_list);
@@ -246,7 +259,7 @@ void DataPrepareActor::Init() {
     }
 
     // Outputs need continuous memory.
-    if (iter.second.second == true) {
+    if (iter.second.second) {
       FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, false);
       (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
       (void)size_list_list_.emplace_back(size_list);
@@ -538,7 +551,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
-    if (device_tensor->GetPtr() != nullptr) {
+    if (device_tensor->IsPtrValid()) {
       return;
     }
     MS_LOG(INFO) << "Prepare device data for value node: " << node->fullname_with_scope() << ", output index: " << i;
@@ -754,7 +767,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   MS_EXCEPTION_IF_NULL(host_tensor_address);
-  if (is_need_sync || (host_tensor_address->GetPtr() == nullptr)) {
+  if (is_need_sync || (!host_tensor_address->IsPtrValid())) {
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->DebugString()
                  << ", device type:" << host_tensor_address->GetDeviceType();
     SyncTensorData(tensor, host_tensor_address, backend_node, device_context, context, real_strategy_);
@@ -802,7 +815,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
     }
     MS_EXCEPTION_IF_NULL(device_tensors[0]);
     auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
-    if ((device_tensors[0] == host_tensor_address) || (device_tensors[0]->GetPtr() != nullptr)) {
+    if ((device_tensors[0] == host_tensor_address) || (device_tensors[0]->IsPtrValid())) {
       continue;
     }
 

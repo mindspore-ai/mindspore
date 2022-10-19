@@ -39,7 +39,7 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
 
   for (auto &device_tensor : *alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    if (device_tensor->GetPtr() != nullptr) {
+    if (device_tensor->IsPtrValid()) {
       continue;
     }
     try {
