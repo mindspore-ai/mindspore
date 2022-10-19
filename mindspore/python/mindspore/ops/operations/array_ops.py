@@ -5829,7 +5829,7 @@ class EditDistance(Primitive):
         TypeError: If `normalize` is not a bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
