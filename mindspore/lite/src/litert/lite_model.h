@@ -324,6 +324,8 @@ class LiteModel : public Model {
 
   int NodeVerify() const;
 
+  int GraphInOutVerify() const;
+
   int SubGraphVerify() const;
 
   int SubGraphInOutVerify(const LiteGraph::SubGraph *graph) const;
