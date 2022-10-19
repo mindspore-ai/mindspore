@@ -24,13 +24,10 @@ class StridedSliceGradNet(nn.Cell):
     def __init__(self):
         super(StridedSliceGradNet, self).__init__()
         self.op = G.StridedSliceGrad()
-        self.shape_op = ops.Shape()
-        self.dyn_shape_op = ops.TensorShape()
+        self.shape_op = ops.TensorShape()
 
     def construct(self, dy, x, begin, end, strides):
         x_shape = self.shape_op(x)
-        if -1 in x_shape or -2 in x_shape:
-            x_shape = self.dyn_shape_op(x)
         return self.op(dy, x_shape, begin, end, strides)
 
 
