@@ -58,7 +58,8 @@ struct FrontendOpRunInfo {
   bool run_in_vm = false;
   bool output_get_by_infer_value = false;
   int mix_type{0};
-  PrimitivePyPtr op_prim;
+  PrimitivePyPtr op_prim{nullptr};
+  ValuePtr out_value{nullptr};
   std::string op_info;
   // Tensor input and with its value
   std::vector<std::pair<size_t, ValuePtr>> index_with_value;

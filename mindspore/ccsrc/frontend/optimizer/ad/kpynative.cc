@@ -466,7 +466,6 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
   }
   MS_EXCEPTION_IF_NULL(bprop_fg);
   (void)BuildAdjoint(cnode, op_args, out, bprop_fg);
-
   return true;
 }
 
@@ -740,9 +739,8 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
   }
 
   BuildAdjointForInput(cnode, op_args);
-
+  MS_LOG(DEBUG) << "Build Adjoint for CNode: " << cnode->DebugString();
   (void)anfnode_to_adjoin_.insert(std::make_pair(cnode, cnode_adjoint));
-
   return true;
 }
 
