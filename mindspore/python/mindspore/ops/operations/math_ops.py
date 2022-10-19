@@ -7000,6 +7000,51 @@ class TrilIndices(Primitive):
         validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
+class MatrixTriangularSolve(Primitive):
+    r"""
+    Returns a new tensor with the solotion of a linear equation system with an upper or lower triangular matrix.
+
+    Args:
+        lower (bool): If true, the innermost matrices in `matrix` is are lower triangular. Default: True.
+        adjoint (bool): If true, solve with the adjoint of `matrix`. Default: False.
+
+    Inputs:
+        - **matrix** (Tensor) - Tensor of shape :math:`(*, M, M)`,
+          with float32, float64, complex64 and complex128 data type.
+        - **rhs** (Tensor) - Tensor of shape :math:`(*, M, N)`,
+          with float32, float64, complex64 and complex128 data type.
+
+    Outputs:
+        Tensor, has the shape of math:`(*, M, N)` and the same data type as `matrix`.
+
+    Raises:
+        TypeError: If `matrix` or `rhs` is not a Tensor.
+        TypeError: If `lower` or `adjoint` is not bool.
+        ValueError: If the batch sizes of `matrix`and `rhs` are not equal.
+        ValueError: If the inner-most 2 dimensions of `matrix` are not equal.
+        ValueError: If the second-last dimensions of `matrix`and `rhs` are not equal.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> matrix_triangular_solve = ops.MatrixTriangularSolve(lower=True, adjoint=False)
+        >>> a = np.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]])
+        >>> b = np.array([[1, 0],[2, 2],[1, 5],[0, 3]])
+        >>> output = matrix_triangular_solve(Tensor(a, mindspore.float32), Tensor(b, mindspore.float32))
+        >>> print(output)
+        [[ 0.33333334  0.        ]
+         [ 1.3333333   2.        ]
+         [ 0.6666666   5.        ]
+         [-2.3333333  -4.        ]]
+    """
+    @prim_attr_register
+    def __init__(self, lower=True, adjoint=False):
+        """Initialize MatrixTriangularSolve"""
+        validator.check_value_type('adjoint', adjoint, [bool], self.name)
+        validator.check_value_type('lower', lower, [bool], self.name)
+
+
 class CompareAndBitpack(Primitive):
     """
     Compare values of `x` to `threshold` and pack resulting bits into a `uint8`.

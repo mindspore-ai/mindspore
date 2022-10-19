@@ -48,6 +48,7 @@ from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import Median
+from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
@@ -63,6 +64,7 @@ from mindspore.ops._utils.utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element, dyn_rank
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_fill, sum_grad_reduce_axis
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
+from mindspore.ops.operations.array_ops import MatrixBandPart
 
 transpose = P.Transpose()
 dyn_shape_op = P.TensorShape()
@@ -454,6 +456,61 @@ def get_brop_cumulative_logsumexp(self):
             output_neg = F.cast(output_neg, mstype.float64)
             x = F.cast(x, mstype.float64)
         return (output_pos - output_neg, zeros_like(x))
+
+    return bprop
+
+
+@bprop_getters.register(MatrixTriangularSolve)
+def get_bprop_matrix_triangular_solve(self):
+    """Grad definition for 'MatrixTriangularSolve' operation"""
+    adjoint_a = self.adjoint
+    lower_a = self.lower
+    matrix_triangular_solve_op = P.MatrixTriangularSolve(lower=lower_a, adjoint=not adjoint_a)
+    mat_mul_2d_op = P.MatMul()
+    mat_mul_op = P.BatchMatMul()
+    real_op = P.Real()
+    imag_op = P.Imag()
+    neg_op = P.Neg()
+    complex_op = P.Complex()
+    matrix_band_part_op = MatrixBandPart()
+
+    def bprop(matrix, rhs, out, dout):
+        grad_rhs = matrix_triangular_solve_op(matrix, dout)
+        if matrix.dtype == mstype.complex64 or matrix.dtype == mstype.complex128:
+            grad_rhs_temp = _adjoint(grad_rhs)
+            out_temp = _adjoint(out)
+        else:
+            grad_rhs_temp = cholesky_transpose(grad_rhs)
+            out_temp = cholesky_transpose(out)
+        if adjoint_a:
+            if len(matrix.shape) == 2:
+                grad_matrix = mat_mul_2d_op(out, grad_rhs_temp)
+                grad_matrix = neg_op(grad_matrix)
+            else:
+                grad_matrix = mat_mul_op(out, grad_rhs_temp)
+                grad_matrix = neg_op(grad_matrix)
+        else:
+            if len(matrix.shape) == 2:
+                grad_matrix = mat_mul_2d_op(grad_rhs, out_temp)
+                grad_matrix = neg_op(grad_matrix)
+            else:
+                grad_matrix = mat_mul_op(grad_rhs, out_temp)
+                grad_matrix = neg_op(grad_matrix)
+        if lower_a:
+            if grad_matrix.dtype == mstype.complex64 or grad_matrix.dtype == mstype.complex128:
+                grad_matrix_real = matrix_band_part_op(real_op(grad_matrix), -1, 0)
+                grad_matrix_imag = matrix_band_part_op(imag_op(grad_matrix), -1, 0)
+                grad_matrix = complex_op(grad_matrix_real, grad_matrix_imag)
+            else:
+                grad_matrix = matrix_band_part_op(grad_matrix, -1, 0)
+        else:
+            if grad_matrix.dtype == mstype.complex64 or grad_matrix.dtype == mstype.complex128:
+                grad_matrix_real = matrix_band_part_op(real_op(grad_matrix), 0, -1)
+                grad_matrix_imag = matrix_band_part_op(imag_op(grad_matrix), 0, -1)
+                grad_matrix = complex_op(grad_matrix_real, grad_matrix_imag)
+            else:
+                grad_matrix = matrix_band_part_op(grad_matrix, 0, -1)
+        return (grad_matrix, grad_rhs)
 
     return bprop
 

@@ -29,6 +29,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations._grad_ops import IgammaGradA
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
+from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
 from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
 
@@ -894,6 +895,11 @@ raise_set = [
         'block': P.Trunc(),
         'desc_inputs': [Tensor(np.array([[1.1, 2.2, -4.1]], np.float32))],
         'skip': ['backward']}),
+    ('MatrixTriangularSolve', {
+        'block': MatrixTriangularSolve(adjoint=False, lower=True),
+        'desc_inputs': [Tensor(np.array([4, 4, 4]).astype(np.float32)),
+                        Tensor(np.array([4, 4, 4]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([4, 4, 4]).astype(np.float32))]}),
     ('Gcd', {
         'block': GcdFunc(),
         'desc_inputs': [Tensor(np.array([2, 5, 8]).astype(np.int32)),
