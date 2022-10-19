@@ -33,6 +33,40 @@ class MIND_API ExtractGlimpse : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ExtractGlimpse);
   ExtractGlimpse() : BaseOperator(kNameExtractGlimpse) { InitIOName({"input", "size", "offsets"}, {"output"}); }
+
+  void Init(const bool &centered, const bool &normalized, const bool &uniform_noise, const std::string &noise);
+
+  /// \brief Set centered.
+  void set_centered(const bool &centered);
+
+  /// \brief Set normalized.
+  void set_normalized(const bool &normalized);
+
+  /// \brief Set uniform_noise.
+  void set_uniform_noise(const bool &uniform_noise);
+
+  /// \brief Set noise.
+  void set_noise(const std::string &noise);
+
+  /// \brief Get centered.
+  ///
+  /// \return centered.
+  bool get_centered() const;
+
+  /// \brief Get normalized.
+  ///
+  /// \return normalized.
+  bool get_normalized() const;
+
+  /// \brief Get uniform_noise.
+  ///
+  /// \return uniform_noise.
+  bool get_uniform_noise() const;
+
+  /// \brief Get noise.
+  ///
+  /// \return noise.
+  std::string get_noise() const;
 };
 abstract::AbstractBasePtr ExtractGlimpseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args);

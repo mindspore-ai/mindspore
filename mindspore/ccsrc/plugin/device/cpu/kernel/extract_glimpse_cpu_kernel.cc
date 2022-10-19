@@ -25,6 +25,7 @@
 #include <type_traits>
 #include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/extract_glimpse.h"
 
 namespace {
 const size_t kDataSizeThreshold = 4 * 1024;
@@ -39,18 +40,41 @@ std::normal_distribution<float> dis_normal(kNumber10, kNumber11);
 
 namespace mindspore {
 namespace kernel {
-void ExtractGlimpseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  const size_t kInputIndex2 = 2;
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  offsets_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  centered_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "centered");
-  normalized_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "normalized");
-  noise_ = common::AnfAlgo::GetNodeAttr<string>(kernel_node, "noise");
-  uniform_noise_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "uniform_noise");
+bool ExtractGlimpseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  constexpr size_t input_num = 3;
+  constexpr size_t output_num = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractGlimpse>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  centered_ = kernel_ptr->get_centered();
+  normalized_ = kernel_ptr->get_normalized();
+  uniform_noise_ = kernel_ptr->get_uniform_noise();
+  noise_ = kernel_ptr->get_noise();
+  return true;
+}
+
+int ExtractGlimpseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_dtype_ = inputs[kIndex0]->GetDtype();
+  size_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  offsets_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 bool ExtractGlimpseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
