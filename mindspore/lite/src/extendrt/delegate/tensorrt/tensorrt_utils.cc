@@ -109,10 +109,10 @@ std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor) {
     for (int64_t i = 0; i < size; i++) {
       vals.push_back(int_data[i]);
     }
-  } else if (static_cast<TypeId>(ms_dtype) == TypeId::kMetaTypeTypeType) {
-    auto int_data = reinterpret_cast<const int32_t *>(data);
+  } else if (ms_dtype == DataType::kNumberTypeInt64) {
+    auto int_data = reinterpret_cast<const int64_t *>(data);
     for (int64_t i = 0; i < size; i++) {
-      vals.push_back(int_data[i]);
+      vals.push_back((int32_t)int_data[i]);
     }
   } else {
     MS_LOG(ERROR) << "invalid DataType: " << ms_dtype;
@@ -236,6 +236,20 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const TensorInfo 
     return nullptr;
   }
   nvinfer1::Weights weights{data_type, ms_tensor.Data(), ms_tensor.ElementNum()};
+  if (data_type == nvinfer1::DataType::kBOOL) {
+    weights.type = nvinfer1::DataType::kINT32;
+    void *data_int32 = malloc(ms_tensor.ElementNum() * sizeof(int32_t));
+    if (data_int32 == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return nullptr;
+    }
+    auto src = static_cast<const bool *>(ms_tensor.Data());
+    auto dst = static_cast<int32_t *>(data_int32);
+    for (int i = 0; i < ms_tensor.ElementNum(); i++) {
+      dst[i] = (int32_t)src[i];
+    }
+    weights.values = data_int32;
+  }
   nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -650,6 +664,10 @@ std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(R
 }
 int PreprocessInputs2SameDim(TensorRTContext *ctx, ITensorHelper input_tensor_helper,
                              ITensorHelper *out_tensor_helper) {
+  if (input_tensor_helper.trt_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "input trt tensor is nullptr";
+    return RET_ERROR;
+  }
   out_tensor_helper->trt_tensor_ = input_tensor_helper.trt_tensor_;
   out_tensor_helper->format_ = input_tensor_helper.format_;
   out_tensor_helper->same_format_ = true;

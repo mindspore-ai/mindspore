@@ -44,6 +44,25 @@ int UnaryTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
+  if (type_ == ops::kNameNeg && input(ctx, 0).trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
+    auto trt_in_tensor = input(ctx, 0).trt_tensor_;
+    size_t dims_size = mindspore::IntToSize(trt_in_tensor->getDimensions().nbDims);
+    static const float neg1_const = -1;
+    auto prod_input1 =
+      ConvertScalarToITensor(ctx, dims_size, &neg1_const, DataType::kNumberTypeInt32, op_name_ + "_neg1");
+    CHECK_NULL_RETURN(prod_input1);
+    auto prod_layer =
+      ctx->network()->addElementWise(*trt_in_tensor, *prod_input1, nvinfer1::ElementWiseOperation::kPROD);
+    CHECK_NULL_RETURN(prod_layer);
+    auto out_tensor = prod_layer->getOutput(0);
+    CHECK_NULL_RETURN(out_tensor);
+    ctx->RegisterTensor(ITensorHelper{out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                        out_tensors_[0].Name());
+    prod_layer->setName(op_name_.c_str());
+    this->layer_ = prod_layer;
+    ctx->RegisterLayer(prod_layer, op_name_);
+    return RET_OK;
+  }
   nvinfer1::IUnaryLayer *cal_layer = ctx->network()->addUnary(*input(ctx, 0).trt_tensor_, unary_op_);
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addUnary failed for: " << op_name_;

@@ -104,6 +104,15 @@ int MatMulTensorRT::PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *
       out_format_ = Format::NCHW;
     }
   } else {
+    for (size_t i = 0; i < in_tensors_.size(); i++) {
+      auto in_tensor = input(ctx, i);
+      if (in_tensors_[i].IsConst() || in_tensor.trt_tensor_ == nullptr) {
+        in_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx, in_tensors_[i], op_name_);
+        in_tensor.format_ = Format::NCHW;
+        ctx->RegisterTensor(in_tensor, in_tensors_[i].Name());
+      }
+    }
+
     auto weight = ProcessWeightTensor(ctx);
     *matmul_a = input(ctx, 0);
     *matmul_b = input(ctx, 1);

@@ -181,6 +181,13 @@ nvinfer1::ILayer *StrideSliceTensorRT::MakeLayer(TensorRTContext *ctx, const ITe
 
 int StrideSliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   ITensorHelper slice_input;
+  auto in_tensor = input(ctx, 0);
+  if (in_tensors_[0].IsConst() && in_tensor.trt_tensor_ == nullptr) {
+    in_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx, in_tensors_[0], op_name_);
+    in_tensor.format_ = Format::NCHW;
+    ctx->RegisterTensor(in_tensor, in_tensors_[0].Name());
+  }
+
   int ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &slice_input);
   if (ret != RET_OK || slice_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
