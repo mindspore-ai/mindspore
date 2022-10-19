@@ -2,6 +2,28 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 1.9.0 Release Notes
+
+### 主要特性和增强
+
+#### FrontEnd
+
+- [STABLE] 新增面向对象+函数式融合编程范式，提供 `mindspore.amp.LossScaler` 、 `mindspore.amp.DynamicLossScaler` 、 `mindspore.amp.StaticLossScaler` 、 `mindspore.amp.auto_mixed_precision` 、 `mindspore.amp.all_finite` 等融合编程范式下的混合精度接口。
+
+### Bug fixes
+
+- [BUGFIX] 修改混合精度O2 level的判断逻辑，在原来屏蔽 `BatchNorm1d` 、 `BatchNorm2d` 算子的基础上，添加另外两个屏蔽算子`BatchNorm3d`和`LayerNorm`，这4个算子依然用float32数据类型计算。
+
+- [BUGFIX] Dataset处理字符串类型数据时，若调用`create_dict_iterator`或`create_tuple_iterator`接口时指定了`output_numpy=True`，获取到的数据会是`numpy.bytes_`类型。修复此问题后接口会直接返回`numpy.str_`类型数据，用户无需再对其进行字符串解码操作。同样，在使用自定义数据处理函数时，接收到的数据也将直接是`numpy.str_`类型，与原始数据类型相匹配。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, hesham, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jiabin Liu, jianghui58, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, liuyongqi, laiyongqiang, leonwanghui, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, liyanliu, lizhenyu, lvchangquan, lvliang, lz, maning202007, Margaret_wangrui, mengyuanli, Ming_blue, ms_yan, panfengfeng, panyifeng, Payne, peixu_ren, Pengyongrong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, Wan, wandongdong, wangdongxu, wangmin,  wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xuyongfei, yanghaitao, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang,  zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanyuan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking, shu-kun-zhang.
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 1.8.1 Release Notes
 
 ### API变更

@@ -2,6 +2,28 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 1.9.0 Release Notes
+
+### Major Features and Improvements
+
+#### FrontEnd
+
+- [STABLE] Add the object-oriented and functional combination programming paradigm, add mixed-precision APIs for combination programming paradigms such as `mindspore.amp.LossScaler`, `mindspore.amp.DynamicLossScaler`, `mindspore.amp.StaticLossScaler`, `mindspore.amp.auto_mixed_precision` and `mindspore.amp.all_finite`.
+
+### Bug fixes
+
+- [BUGFIX] The logic of the auto mixed precision (amp) O2 level is revised. In addition to the `BatchNorm1d` and `BatchNorm2d` operators, the other two operators `BatchNorm3d` and `LayerNorm` are added. The four operators still use the float32 data type when calculating.
+
+- [BUGFIX] Fix the problem that when processing string type data, if `output_numpy=True` is specified when calling the `create_dict_iterator` or `create_tuple_iterator` interface, the obtained data will be of type `numpy.bytes_`. After this fixing, these interfaces will directly return `numpy.str_` type data, and users do not need to perform string decoding operations on it. Likewise, when performing user defined processing functions, the received data will also be of type `numpy.str_` directly, matching the original source data type.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, hesham, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jiabin Liu, jianghui58, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, liuyongqi, laiyongqiang, leonwanghui, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, liyanliu, lizhenyu, lvchangquan, lvliang, lz, maning202007, Margaret_wangrui, mengyuanli, Ming_blue, ms_yan, panfengfeng, panyifeng, Payne, peixu_ren, Pengyongrong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, Wan, wandongdong, wangdongxu, wangmin,  wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xuyongfei, yanghaitao, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang,  zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanyuan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking, shu-kun-zhang.
+
+Contributions of any kind are welcome!
+
 ## MindSpore 1.8.1 Release Notes
 
 ### API Change
