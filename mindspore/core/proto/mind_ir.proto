@@ -38,9 +38,9 @@ message AttributeProto {
     FUNCGRAPHCLOSURE = 27;
     PARTIALCLOSURE = 28;
     UNIONFUNCCLOSURE = 29;
-    CSR_TENSOR= 30;
-    COO_TENSOR= 31;
-    ROW_TENSOR= 32;
+    CSR_TENSOR = 30;
+    COO_TENSOR = 31;
+    ROW_TENSOR = 32;
   }
   optional string name = 1;
   optional float f = 2;
@@ -148,12 +148,25 @@ message TensorProto {
     BFLOAT16 = 16;
     FLOAT64 = 17;
   }
+  enum CompressionType {
+    NO_COMPRESSION = 0;
+    INDEXING = 1;
+    SPARSE = 2;
+    FSE = 3;
+    BIT_PACKING = 4;
+    FSE_INT = 5;
+    FSE_INFER = 6;
+  }
   message ExternalDataProto {
-  //POSIX filesystem path relative to the directory where the MindIR model was stored.
+    //POSIX filesystem path relative to the directory where the MindIR model was stored.
     optional string location = 1;
     optional int64 offset = 2;
     optional int64 length = 3;
-    optional string checksum= 4;
+    optional string checksum = 4;
+  }
+  message QuantParamProto {
+    required string quant_algo_name = 1;
+    repeated AttributeProto attrs = 2;
   }
   repeated int64 dims = 1;
   optional int32 data_type = 2;
@@ -170,6 +183,8 @@ message TensorProto {
   optional string ref_key = 13;
   repeated int64 min_dims = 14;
   repeated int64 max_dims = 15;
+  optional CompressionType compression_type = 16;
+  repeated QuantParamProto quant_param = 17;
 }
 
 message ParallelProto {
