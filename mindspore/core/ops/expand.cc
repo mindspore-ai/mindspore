@@ -73,17 +73,22 @@ std::vector<int64_t> ExpandInferOutShape(std::vector<int64_t> output_shape, std:
 
 abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  const int64_t shape_dim = 1;
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape) || IsDynamicRank(shape_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   auto shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(shape);
   auto shape_value_ptr = shape->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_value_ptr);
   auto shape_tensor = shape_value_ptr->cast<tensor::TensorPtr>();
-  auto shape_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape]);
+  auto shape_ptr = std::make_shared<abstract::Shape>(shape_shape);
   auto shape_v = shape_ptr->shape();
+
+  const int64_t shape_dim = 1;
   if (shape_v.size() != shape_dim) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input tensor 'shape' must be a 1-D tensor.";
   }
