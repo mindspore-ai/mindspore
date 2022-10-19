@@ -273,22 +273,20 @@ bool LaunchAdjustHueKernelHalf(const std::vector<kernel::AddressPtr> &inputs,
 }
 }  // namespace detail
 
-void AdjustHueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<int64_t> image_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int64_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({image_shape, output_shape})) {
-    return;
+bool AdjustHueCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdjustHueInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdjustHueOutputNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (image_shape != output_shape) {
-    MS_LOG(EXCEPTION) << "For AdjustHue, the data type of the input " << image_shape
-                      << "need be the same as the output " << output_shape << ".";
-  }
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kAdjustHueInputNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kAdjustHueOutputNum, kernel_name_);
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
 }
 
 bool AdjustHueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
