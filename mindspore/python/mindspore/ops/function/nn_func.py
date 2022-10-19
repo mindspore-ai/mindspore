@@ -2383,6 +2383,14 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
     return _grid_sampler_3d(input_x, grid)
 
 
+@constexpr
+def _check_ctc_loss_inputs(blank, reduction, zero_infinity, prim_name):
+    validator.check_value_type("blank", blank, [int], prim_name)
+    validator.check_value_type('reduction', reduction, [str], prim_name)
+    validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', prim_name)
+    validator.check_value_type("zero_infinity", zero_infinity, [bool], prim_name)
+
+
 def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reduction="mean", zero_infinity=False):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
@@ -2401,25 +2409,26 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
 
     Returns:
-        neg_log_likelihood (Tensor), A loss value which is differentiable with respect to each input node.
+        neg_log_likelihood (Tensor), A loss value with shape (N), which is differentiable with respect to
+        each input node.
 
-        log_alpha (Tensor), The probability of possible trace of input to target.
+        log_alpha (Tensor), The probability of possible trace of input to target with shape (N, T, 2 * S + 1).
 
     Raises:
         TypeError: If `zero_infinity` is not a bool, reduction is not string.
         TypeError: If the dtype of `log_probs` or `grad_out` is not float or double.
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
-        RuntimeError: If the rank of `log_probs` is not 3.
-        RuntimeError: If the rank of `targets` is not 2.
-        RuntimeError: If the shape of `input_lengths` does not match {batch_size|N}.
-        RuntimeError: If the shape of `target_lengths` does not match {batch_size|N}.
-        RuntimeError: If the types of `targets`, `input_lengths`, `grad_out` or `target_lengths` are different.
-        RuntimeError: If the value of `blank` is not in range [0, num_labels|C).
-        RuntimeError: If any value of `input_lengths` is larger than (time_series|T).
+        ValueError: If the rank of `log_probs` is not 3.
+        ValueError: If the rank of `targets` is not 2.
+        ValueError: If the shape of `input_lengths` does not match {batch_size|N}.
+        ValueError: If the shape of `target_lengths` does not match {batch_size|N}.
+        TypeError: If the types of `targets`, `input_lengths`, `grad_out` or `target_lengths` are different.
+        ValueError: If the value of `blank` is not in range [0, num_labels|C).
+        RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> log_probs = Tensor(np.array([[[0.3, 0.6, 0.6]],
@@ -2435,6 +2444,7 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         [[[0.3       0.3            -inf      -inf      -inf]
           [1.2       1.8931472 1.2            -inf      -inf]]]
     """
+    _check_ctc_loss_inputs(blank, reduction, zero_infinity, 'ctc_loss')
     ctc_loss_op = NN_OPS.CTCLossV2(blank=blank, reduction="none", zero_infinity=zero_infinity)
     loss, log_alpha = ctc_loss_op(log_probs, targets, input_lengths, target_lengths)
     if reduction == 'sum':

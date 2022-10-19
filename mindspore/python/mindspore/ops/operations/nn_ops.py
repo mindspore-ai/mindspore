@@ -8191,17 +8191,17 @@ class CTCLossV2(Primitive):
         TypeError: If `zero_infinity` is not a bool, reduction is not string.
         TypeError: If the dtype of `log_probs` is not float or double.
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
-        RuntimeError: If the rank of `log_probs` is not 3.
-        RuntimeError: If the rank of `targets` is not 2.
-        RuntimeError: If the shape of `input_lengths` does not match {batch_size|N}.
-        RuntimeError: If the shape of `target_lengths` does not match {batch_size|N}.
-        RuntimeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
-        RuntimeError: If the value of `blank` is not in range [0, num_labels|C).
-        RuntimeError: If any value of `input_lengths` is larger than (time_series|T).
+        ValueError: If the rank of `log_probs` is not 3.
+        ValueError: If the rank of `targets` is not 2.
+        ValueError: If the shape of `input_lengths` does not match {batch_size|N}.
+        ValueError: If the shape of `target_lengths` does not match {batch_size|N}.
+        TypeError: If the types of `targets`, `input_lengths`, `grad_out` or `target_lengths` are different.
+        ValueError: If the value of `blank` is not in range [0, num_labels|C).
+        RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> log_probs = Tensor(np.array([[[0.3, 0.6, 0.6]],

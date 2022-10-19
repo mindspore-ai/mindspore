@@ -91,10 +91,33 @@ __device__ __forceinline__ void Revert3DIndex(dim3 dims, size_t index, size_t *x
   *z = yz_index % z_offset;
 }
 
+template <typename T>
+__global__ void CTCLossV2ShapeCheckKernel(const T *input_len_p, const T *target_len_p, int64_t max_target_length,
+                                          int64_t time_series, int64_t batch_size) {
+  for (int b = blockIdx.x * blockDim.x + threadIdx.x; b < batch_size; b += blockDim.x * gridDim.x) {
+    int64_t input_length = input_len_p[b];
+    int64_t target_length = target_len_p[b];
+    CUDA_KERNEL_ASSERT(input_length >= 0 && "For 'CTCLossV2', input_length should be non-negative.")
+    CUDA_KERNEL_ASSERT(target_length >= 0 && "For 'CTCLossV2', target_length should be non-negative.")
+    CUDA_KERNEL_ASSERT(target_length <= max_target_length &&
+                       "For 'CTCLossV2', target_length should be less equal to targets.shape[1].")
+    CUDA_KERNEL_ASSERT(input_length >= target_length &&
+                       "For 'CTCLossV2', input_length should be greater equal to target_length.")
+    CUDA_KERNEL_ASSERT(input_length <= time_series &&
+                       "For 'CTCLossV2', input_length should be less equal to probs.shape[0].")
+  }
+}
+
 template <typename S, typename T>
-__device__ __forceinline__ void LossCompute(const S *log_probs_p, const T *target_p, int64_t input_length,
-                                            int64_t target_length, int64_t max_target_length, int64_t batch, T blank,
-                                            dim3 log_probs_shape, dim3 log_alpha_shape, S *log_alpha_p) {
+__global__ void CTCLossV2Kernel(const S *log_probs_p, const T *target_p, const T *input_len_p, const T *target_len_p,
+                                int64_t max_target_length, int64_t batch_size, T blank, dim3 log_probs_shape,
+                                dim3 log_alpha_shape, S *log_alpha_p) {
+  int64_t batch = threadIdx.x + blockIdx.x * blockDim.x;
+  if (batch >= batch_size) {
+    return;
+  }
+  int64_t input_length = input_len_p[batch];
+  int64_t target_length = target_len_p[batch];
   constexpr S neg_inf = -std::numeric_limits<S>::infinity();
   const int64_t offset = max_target_length * batch;
   const int64_t padded_max_target_length = 2 * max_target_length + 1;
@@ -152,28 +175,6 @@ __device__ __forceinline__ void LossCompute(const S *log_probs_p, const T *targe
 }
 
 template <typename S, typename T>
-__global__ void CTCLossV2Kernel(const S *log_probs_p, const T *target_p, const T *input_len_p, const T *target_len_p,
-                                int64_t max_target_length, int64_t time_series, int64_t batch_size, T blank,
-                                dim3 log_probs_shape, dim3 log_alpha_shape, S *log_alpha_p) {
-  int64_t b = threadIdx.x + blockIdx.x * blockDim.x;
-  if (b >= batch_size) {
-    return;
-  }
-  int64_t input_length = input_len_p[b];
-  int64_t target_length = target_len_p[b];
-  CUDA_KERNEL_ASSERT(input_length >= 0 && "For 'CTCLossV2', input_length should be non-negative.")
-  CUDA_KERNEL_ASSERT(target_length >= 0 && "For 'CTCLossV2', target_length should be non-negative.")
-  CUDA_KERNEL_ASSERT(target_length <= max_target_length &&
-                     "For 'CTCLossV2', target_length should be less equal to targets.shape[1].")
-  CUDA_KERNEL_ASSERT(input_length >= target_length &&
-                     "For 'CTCLossV2', input_length should be greater equal to target_length.")
-  CUDA_KERNEL_ASSERT(input_length <= time_series &&
-                     "For 'CTCLossV2', input_length should be less equal to probs.shape[0].")
-  LossCompute<S, T>(log_probs_p, target_p, input_length, target_length, max_target_length, b, blank, log_probs_shape,
-                    log_alpha_shape, log_alpha_p);
-}
-
-template <typename S, typename T>
 __global__ void LogLikelihoodKernel(const S *log_alpha_p, const T *input_length_p, const T *target_length_p,
                                     int64_t batch_size, dim3 log_alpha_shape, S *neg_log_p) {
   constexpr S neg_inf = -std::numeric_limits<S>::infinity();
@@ -211,9 +212,12 @@ void CalCTCLossV2(const S *log_probs_p, const T *target_p, const T *input_len_p,
   dim3 blocks((batch_size + batches_per_block - 1) / batches_per_block);
   dim3 threads(batches_per_block, threads_per_batch);
 
+  CTCLossV2ShapeCheckKernel<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input_len_p, target_len_p, max_target_length, time_series, batch_size);
+
   CTCLossV2Kernel<<<blocks, threads, 0, cuda_stream>>>(log_probs_p, target_p, input_len_p, target_len_p,
-                                                       max_target_length, time_series, batch_size, blank,
-                                                       log_probs_shape, log_alpha_shape, log_alpha_p);
+                                                       max_target_length, batch_size, blank, log_probs_shape,
+                                                       log_alpha_shape, log_alpha_p);
   LogLikelihoodKernel<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     log_alpha_p, input_len_p, target_len_p, batch_size, log_alpha_shape, neg_log_p);
 }

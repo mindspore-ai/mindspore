@@ -37,27 +37,37 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto log_probs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto targets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-  auto log_probs_shape = log_probs_shape_map[kShape];
-  auto targets_shape = targets_shape_map[kShape];
+  auto log_probs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape())[kShape];
+  auto targets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape())[kShape];
+  auto input_lengths_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex2]->BuildShape())[kShape];
+  auto target_lengths_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex3]->BuildShape())[kShape];
+
   if (IsDynamicRank(log_probs_shape) || IsDynamicRank(targets_shape)) {
     std::vector<int64_t> dyn_shape = {abstract::Shape::kShapeRankAny};
     abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(dyn_shape);
     abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(dyn_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{neg_log_shape, log_alpha_shape});
   }
-  if (log_probs_shape.size() != kLenLogProbs) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', input log_probs's dim must be 3, but got: " << log_probs_shape.size() << ".";
-  }
-  if (targets_shape.size() != kLenTarget) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', input targets's dims must be 2, but got: " << targets_shape.size()
-                      << ".";
-  }
-  int64_t T = log_probs_shape[0];
-  int64_t N = log_probs_shape[1];
-  int64_t S = targets_shape[1];
+
+  (void)CheckAndConvertUtils::CheckValue("dim of log_probs", log_probs_shape.size(), kEqual, kLenLogProbs, prim_name);
+  (void)CheckAndConvertUtils::CheckValue("dim of targets", targets_shape.size(), kEqual, kLenTarget, prim_name);
+
+  int64_t T = log_probs_shape[kIndex0];
+  int64_t N = log_probs_shape[kIndex1];
+  int64_t C = log_probs_shape[kIndex2];
+  int64_t S = targets_shape[kIndex1];
+
+  (void)CheckAndConvertUtils::CheckValue<size_t>("dim of input_lengths", input_lengths_shape.size(), kEqual, kDim1,
+                                                 prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("dim of target_lengths", target_lengths_shape.size(), kEqual, kDim1,
+                                                 prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("input_lengths[0]", input_lengths_shape[0], kEqual, N, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("target_lengths[0]", target_lengths_shape[0], kEqual, N, prim_name);
+
+  // check blank
+  auto blank = GetValue<int64_t>(primitive->GetAttr(kAttrBlank));
+  CheckAndConvertUtils::CheckInRange(kAttrBlank, blank, kIncludeLeft, {0, C}, prim_name);
 
   std::vector<int64_t> out_dim0 = {N};
   std::vector<int64_t> out_dim1 = {N, T, kMulti * S + 1};
