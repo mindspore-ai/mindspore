@@ -406,14 +406,19 @@ class Primitive(Primitive_):
         which will be launched on different processes, users can launch a distributed training job.
 
         Note:
-            - 'role' only supports the value 'MS_WORKER' for now.
             - This method is effective only after
               "mindspore.communication.init()" is called for dynamic cluster building.
-            - The rank is unique in processes with the same role.
 
         Args:
-            role (string): The role of the process on which this operator will be launched.
+            role (str): The role of the process on which this operator will be launched.
+                        Only 'MS_WORKER' is supported for now.
             rank_id (int): The rank id of the process on which this operator will be launched.
+                           The rank_id is unique in processes with the same role.
+
+        Examples:
+            >>> import mindspore.ops as ops
+            >>> matmul = ops.MatMul()
+            >>> matmul.place('MS_WORKER', 0)
         """
         if _is_role_sched():
             return
