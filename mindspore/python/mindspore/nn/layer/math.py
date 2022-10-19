@@ -624,7 +624,6 @@ class IGamma(Cell):
         self.shape = P.Shape()
         self.dtype = P.DType()
         self.lgamma = LGamma()
-        self.const = P.ScalarToArray()
         self.cast = P.Cast()
 
     def construct(self, a, x):

@@ -144,7 +144,7 @@ def tensor_grad_scale(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:
         return grad
-    return grad * F.scalar_to_array(scale)
+    return grad * F.scalar_to_tensor(scale)
 
 
 class MapPartialNet(nn.Cell):

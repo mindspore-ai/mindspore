@@ -81,15 +81,15 @@ class DataGenerator():
         data = (self.generate_data(shape) * 0.1).astype(np.float32)
         stra = [1] * len(shape)
         stra[0] = device_num
-        datas = self.get_parallel_blocks(data, stra)
-        return Tensor(data), Tensor(datas[rank_id])
+        data_list = self.get_parallel_blocks(data, stra)
+        return Tensor(data), Tensor(data_list[rank_id])
 
     def label_data(self, shape, embed_):
         data = (self.generate_data(shape) * (embed_ - 1)).astype(np.int32)
         stra = [1] * len(shape)
         stra[0] = device_num
-        datas = self.get_parallel_blocks(data, stra)
-        return Tensor(data), Tensor(datas[rank_id])
+        data_list = self.get_parallel_blocks(data, stra)
+        return Tensor(data), Tensor(data_list[rank_id])
 
 
 class Dataset():
@@ -164,7 +164,7 @@ class SoftmaxCrossEntropyExpand(Cell):
             label = self.onehot(label, F.shape(logit)[1], self.on_value, self.off_value)
         softmax_result_log = self.log(softmax_result)
         loss = self.sum_cross_entropy((self.mul(softmax_result_log, label)), -1)
-        loss = self.mul2(F.scalar_to_array(-1.0), loss)
+        loss = self.mul2(F.scalar_to_tensor(-1.0), loss)
         loss = self.reduce_mean(loss, -1)
         return loss
 

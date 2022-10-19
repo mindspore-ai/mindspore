@@ -168,7 +168,7 @@ class Uniform(Distribution):
         self.log = log_generic
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
-        self.const = P.ScalarToArray()
+        self.const = P.ScalarToTensor()
         self.dtypeop = P.DType()
         self.fill = P.Fill()
         self.less = P.Less()
@@ -365,8 +365,8 @@ class Uniform(Distribution):
             sample_shape = (1,)
         else:
             sample_shape = origin_shape
-        l_zero = self.const(0.0)
-        h_one = self.const(1.0)
+        l_zero = self.const(0.0, mstype.float32)
+        h_one = self.const(1.0, mstype.float32)
         sample_uniform = self.uniform(sample_shape, l_zero, h_one, self.seed)
         sample = (high - low) * sample_uniform + low
         value = self.cast(sample, self.dtype)

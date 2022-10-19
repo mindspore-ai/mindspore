@@ -22,6 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor, ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.common import dtype as mstype
 
 from ...cell import Cell
 from ...layer.basic import Dense, Flatten, Dropout
@@ -337,7 +338,7 @@ class AleatoricLoss(Cell):
             self.sum = P.ReduceSum()
             self.exp = P.Exp()
             self.normal = C.normal
-            self.to_tensor = P.ScalarToArray()
+            self.to_tensor = P.ScalarToTensor()
             self.entropy = SoftmaxCrossEntropyWithLogits(
                 sparse=True, reduction="mean")
         else:
@@ -349,8 +350,8 @@ class AleatoricLoss(Cell):
         y_pred, var = data_pred
         if self.task == 'classification':
             sample_times = 10
-            epsilon = self.normal((1, sample_times), self.to_tensor(
-                0.0), self.to_tensor(1.0), 0)
+            epsilon = self.normal((1, sample_times), self.to_tensor(0.0, mstype.float32),
+                                  self.to_tensor(1.0, mstype.float32), 0)
             total_loss = 0
             for i in range(sample_times):
                 y_pred_i = y_pred + epsilon[0][i] * var

@@ -508,7 +508,7 @@ class LeakyReLU(Cell):
             self.select_op = P.Minimum()
 
     def construct(self, x):
-        alpha_array = P.Cast()(F.scalar_to_array(self.alpha), P.DType()(x))
+        alpha_array = P.Cast()(F.scalar_to_tensor(self.alpha), P.DType()(x))
         out = self.select_op(alpha_array * x, x)
         return out
 

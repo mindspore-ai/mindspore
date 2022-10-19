@@ -145,7 +145,6 @@ TEST_F(TestPrim, test_typeof) {
   ASSERT_TRUE(*res_value == Int(64));
 }
 
-
 TEST_F(TestPrim, test_list_reduce) {
   AbstractBasePtrList args_spec_list;
   int64_t v1 = 1;
@@ -167,23 +166,6 @@ TEST_F(TestPrim, test_list_reduce) {
   TypePtr res_type = res->GetTypeTrack();
   res_type->dump();
   ASSERT_TRUE(*res_type == Int(64));
-}
-
-TEST_F(TestPrim, test_scalar_to_array) {
-  AbstractBasePtrList args_spec_list;
-  int64_t v1 = 1;
-
-  AbstractBasePtr abstract_v1 = FromValue(v1, false);
-
-  args_spec_list.push_back(abstract_v1);
-
-  auto prim_scalar_to_array = std::make_shared<Primitive>("scalar_to_array");
-  FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_to_array, 1);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
-  res->dump();
-  TypePtr res_type = res->BuildType();
-  res_type->dump();
-  ASSERT_TRUE(*res_type == TensorType(std::make_shared<Int>(64)));
 }
 
 TEST_F(TestPrim, test_array_to_scalar) {
