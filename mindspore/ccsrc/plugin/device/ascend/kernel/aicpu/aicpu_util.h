@@ -118,6 +118,7 @@ constexpr auto kReLUV3 = "ReLUV3";
 constexpr auto kNonZero = "NonZero";
 constexpr auto kMaxPoolV1 = "MaxPoolV1";
 constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
+constexpr auto kAdaptiveMaxPool2DGrad = "AdaptiveMaxPool2DGrad";
 constexpr auto kAvgPoolV1 = "AvgPoolV1";
 constexpr auto kAvgPoolGradV1 = "AvgPoolGradV1";
 constexpr auto kAdaptiveAvgPool2DV1 = "AdaptiveAvgPool2DV1";
@@ -305,6 +306,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kAvgPoolV1, "AvgPool"},
   {kNonZero, "Where"},
   {kAvgPoolGradV1, "AvgPoolGrad"},
+  {kAdaptiveMaxPool2DGrad, "AdaptiveMaxPool2dGrad"},
   {kConcatOffsetV1, "ConcatOffset"},
   {kAdaptiveAvgPool2DV1, "AdaptiveAvgPool2d"},
   {kAdaptiveAvgPool2DGradV1, "AdaptiveAvgPool2dGrad"},
