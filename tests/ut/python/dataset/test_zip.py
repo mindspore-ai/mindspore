@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from util import save_and_check_dict, save_and_check_md5
+from util import save_and_check_dict, save_and_check_md5, config_get_set_seed
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -40,13 +40,14 @@ def test_zip_01():
     Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_01")
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(DATA_DIR_2, SCHEMA_DIR_2)
     data2 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
     dataz = ds.zip((data1, data2))
     # Note: zipped dataset has 5 rows and 7 columns
     filename = "zip_01_result.npz"
     save_and_check_dict(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    ds.config.set_seed(original_seed)
 
 
 def test_zip_02():
@@ -56,13 +57,14 @@ def test_zip_02():
     Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_02")
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(DATA_DIR_3, SCHEMA_DIR_3)
     data2 = ds.TFRecordDataset(DATA_DIR_2, SCHEMA_DIR_2)
     dataz = ds.zip((data1, data2))
     # Note: zipped dataset has 3 rows and 4 columns
     filename = "zip_02_result.npz"
     save_and_check_md5(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    ds.config.set_seed(original_seed)
 
 
 def test_zip_03():
@@ -72,13 +74,14 @@ def test_zip_03():
     Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_03")
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
     data2 = ds.TFRecordDataset(DATA_DIR_3, SCHEMA_DIR_3)
     dataz = ds.zip((data1, data2))
     # Note: zipped dataset has 3 rows and 7 columns
     filename = "zip_03_result.npz"
     save_and_check_md5(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    ds.config.set_seed(original_seed)
 
 
 def test_zip_04():
@@ -88,7 +91,7 @@ def test_zip_04():
     Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_04")
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
     data2 = ds.TFRecordDataset(DATA_DIR_2, SCHEMA_DIR_2)
     data3 = ds.TFRecordDataset(DATA_DIR_3, SCHEMA_DIR_3)
@@ -96,6 +99,7 @@ def test_zip_04():
     # Note: zipped dataset has 3 rows and 9 columns
     filename = "zip_04_result.npz"
     save_and_check_md5(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    ds.config.set_seed(original_seed)
 
 
 def test_zip_05():
@@ -105,7 +109,7 @@ def test_zip_05():
     Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_05")
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(DATA_DIR_4, SCHEMA_DIR_4, shuffle=True)
     data2 = ds.TFRecordDataset(DATA_DIR_2, SCHEMA_DIR_2, shuffle=True)
 
@@ -116,6 +120,7 @@ def test_zip_05():
     # Note: zipped dataset has 5 rows and 9 columns
     filename = "zip_05_result.npz"
     save_and_check_dict(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    ds.config.set_seed(original_seed)
 
 
 def test_zip_06():
@@ -125,7 +130,7 @@ def test_zip_06():
     Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_06")
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(DATA_DIR_4, SCHEMA_DIR_4, shuffle=False)
     data2 = ds.TFRecordDataset(DATA_DIR_2, SCHEMA_DIR_2, shuffle=False)
 
@@ -137,6 +142,7 @@ def test_zip_06():
     # Note: resultant dataset has 10 rows and 9 columns
     filename = "zip_06_result.npz"
     save_and_check_dict(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    ds.config.set_seed(original_seed)
 
 
 def test_zip_exception_01():

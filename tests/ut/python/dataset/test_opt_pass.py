@@ -15,6 +15,7 @@
 import numpy as np
 
 import mindspore.dataset as ds
+from util import config_get_set_seed
 
 
 # tests the construction of multiple ops from a single dataset.
@@ -80,7 +81,7 @@ def test_shuffle():
     FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
     SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.GLOBAL)
     data2 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
@@ -111,6 +112,8 @@ def test_shuffle():
                       data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1, t2)
+
+    ds.config.set_seed(original_seed)
 
 
 if __name__ == "__main__":

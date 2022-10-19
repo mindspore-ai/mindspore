@@ -14,7 +14,7 @@
 # ==============================================================================
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check_dict
+from util import save_and_check_dict, config_get_set_seed
 
 DATA_DIR = ["../data/dataset/testTFTestAllTypes/test.data"]
 SCHEMA_DIR = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
@@ -36,11 +36,13 @@ def test_2ops_repeat_shuffle():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     data1 = data1.repeat(repeat_count)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "test_2ops_repeat_shuffle.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_2ops_shuffle_repeat():
@@ -57,12 +59,14 @@ def test_2ops_shuffle_repeat():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
     data1 = data1.repeat(repeat_count)
 
     filename = "test_2ops_shuffle_repeat.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_2ops_repeat_batch():
@@ -120,11 +124,13 @@ def test_2ops_batch_shuffle():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     data1 = data1.batch(batch_size, drop_remainder=True)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "test_2ops_batch_shuffle.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_2ops_shuffle_batch():
@@ -141,12 +147,14 @@ def test_2ops_shuffle_batch():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
     data1 = data1.batch(batch_size, drop_remainder=True)
 
     filename = "test_2ops_shuffle_batch.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 if __name__ == '__main__':

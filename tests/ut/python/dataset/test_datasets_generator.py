@@ -23,6 +23,7 @@ import mindspore.dataset.engine.iterators as it
 from mindspore import log as logger
 from mindspore import Tensor
 import mindspore.ops as ops
+from util import config_get_set_seed, save_and_check_dict
 
 
 # Generate 1d int numpy array from 0 - 63
@@ -1472,6 +1473,92 @@ def test_generator_single_input_6():
     assert_generator_single_input_6(SequentialAccessDatasetInner())
 
 
+def test_generator_with_seed_5489_when_dist():
+    """
+    Feature: With default seed (5489) when distributed
+    Description: Default seed is 5489
+    Expectation: Shuffle by seed 5489 and shard
+    """
+
+    data1 = np.array([1, 2, 3, 4], dtype=np.uint8)
+    data2 = np.array([5, 6, 7, 8], dtype=np.uint8)
+    data3 = np.array([9, 10, 11, 12], dtype=np.uint8)
+    data4 = np.array([13, 14, 15, 16], dtype=np.uint8)
+    data5 = np.array([17, 18, 19, 20], dtype=np.uint8)
+    data6 = np.array([21, 22, 23, 24], dtype=np.uint8)
+    data7 = np.array([25, 26, 27, 28], dtype=np.uint8)
+    data8 = np.array([29, 30, 31, 32], dtype=np.uint8)
+    data9 = np.array([33, 34, 35, 36], dtype=np.uint8)
+    data10 = np.array([37, 38, 39, 40], dtype=np.uint8)
+    data11 = np.array([41, 42, 43, 44], dtype=np.uint8)
+    data12 = np.array([45, 46, 47, 48], dtype=np.uint8)
+    data13 = np.array([49, 50, 51, 52], dtype=np.uint8)
+    data14 = np.array([53, 54, 55, 56], dtype=np.uint8)
+    data15 = np.array([57, 58, 59, 60], dtype=np.uint8)
+    data16 = np.array([61, 62, 63, 64], dtype=np.uint8)
+    data17 = np.array([65, 66, 67, 68], dtype=np.uint8)
+    data18 = np.array([69, 70, 71, 72], dtype=np.uint8)
+    data19 = np.array([73, 74, 75, 76], dtype=np.uint8)
+    data20 = np.array([77, 78, 79, 80], dtype=np.uint8)
+
+    data = [data1, data2, data3, data4, data5, data6, data7, data8, data9, data10,
+            data11, data12, data13, data14, data15, data16, data17, data18, data19, data20]
+
+    label = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+
+    assert ds.config.get_seed() == 5489
+
+    dataset = ds.NumpySlicesDataset((data, label), ["data", "label"], num_shards=4, shard_id=2)
+    dataset = dataset.batch(batch_size=2)
+
+    save_and_check_dict(dataset, "test_seed_when_distributed_01.npz", False)
+
+
+def test_generator_with_set_seed_when_dist():
+    """
+    Feature: Test GeneratorDataset with ds.config.set_seed(4321) when distributed
+    Description: Support ds.config.set_seed when user use ds.config.set_seed(4321)
+    Expectation: Shuffle by seed 4321 and shard
+    """
+
+    data1 = np.array([1, 2, 3, 4], dtype=np.uint8)
+    data2 = np.array([5, 6, 7, 8], dtype=np.uint8)
+    data3 = np.array([9, 10, 11, 12], dtype=np.uint8)
+    data4 = np.array([13, 14, 15, 16], dtype=np.uint8)
+    data5 = np.array([17, 18, 19, 20], dtype=np.uint8)
+    data6 = np.array([21, 22, 23, 24], dtype=np.uint8)
+    data7 = np.array([25, 26, 27, 28], dtype=np.uint8)
+    data8 = np.array([29, 30, 31, 32], dtype=np.uint8)
+    data9 = np.array([33, 34, 35, 36], dtype=np.uint8)
+    data10 = np.array([37, 38, 39, 40], dtype=np.uint8)
+    data11 = np.array([41, 42, 43, 44], dtype=np.uint8)
+    data12 = np.array([45, 46, 47, 48], dtype=np.uint8)
+    data13 = np.array([49, 50, 51, 52], dtype=np.uint8)
+    data14 = np.array([53, 54, 55, 56], dtype=np.uint8)
+    data15 = np.array([57, 58, 59, 60], dtype=np.uint8)
+    data16 = np.array([61, 62, 63, 64], dtype=np.uint8)
+    data17 = np.array([65, 66, 67, 68], dtype=np.uint8)
+    data18 = np.array([69, 70, 71, 72], dtype=np.uint8)
+    data19 = np.array([73, 74, 75, 76], dtype=np.uint8)
+    data20 = np.array([77, 78, 79, 80], dtype=np.uint8)
+
+    data = [data1, data2, data3, data4, data5, data6, data7, data8, data9, data10,
+            data11, data12, data13, data14, data15, data16, data17, data18, data19, data20]
+
+    label = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+
+    original_seed = config_get_set_seed(4321)
+    assert ds.config.get_seed() == 4321
+
+    dataset = ds.NumpySlicesDataset((data, label), ["data", "label"], num_shards=4, shard_id=2)
+    dataset = dataset.batch(batch_size=2)
+
+    save_and_check_dict(dataset, "test_seed_when_distributed_02.npz", False)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+
+
 def test_generator_with_single_numpy():
     """
     Feature: Test GeneratorDataset with single numpy and multi columns when use __getitem__
@@ -2172,3 +2259,5 @@ if __name__ == "__main__":
     test_generator_with_single_numpy()
     test_generator_with_single_numpy_with_next()
     test_generator_with_single_numpy_with_yield()
+    test_generator_with_seed_5489_when_dist()
+    test_generator_with_set_seed_when_dist()

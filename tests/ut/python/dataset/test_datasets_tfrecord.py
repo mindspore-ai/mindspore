@@ -21,7 +21,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check_dict
+from util import save_and_check_dict, config_get_set_seed
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
@@ -227,7 +227,7 @@ def test_tfrecord_shuffle():
     Expectation: The dataset is processed as expected
     """
     logger.info("test_tfrecord_shuffle")
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     data1 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.GLOBAL)
     data2 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
@@ -235,6 +235,8 @@ def test_tfrecord_shuffle():
     for d1, d2 in zip(data1, data2):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1.asnumpy(), t2.asnumpy())
+
+    ds.config.set_seed(original_seed)
 
 
 def test_tfrecord_shard():

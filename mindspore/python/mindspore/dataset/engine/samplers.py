@@ -378,7 +378,10 @@ class DistributedSampler(BuiltinSampler):
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.shuffle = shuffle
-        self.seed = 0
+        # get seed in distributed scenario
+        # Example 1. if user set seeds by ds.config.set_seed(4321), then seed 4321 is used
+        # Example 2. if user does not set the seed, then existing or default seed (like 5489) is used
+        self.seed = ds.config.get_seed()
         self.offset = offset
         super().__init__(num_samples)
 

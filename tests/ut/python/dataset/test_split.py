@@ -14,7 +14,7 @@
 # ==============================================================================
 import pytest
 import mindspore.dataset as ds
-from util import config_get_set_num_parallel_workers
+from util import config_get_set_num_parallel_workers, config_get_set_seed
 
 
 # test5trainimgs.json contains 5 images whose un-decoded shape is [83554, 54214, 65512, 54214, 64631]
@@ -153,7 +153,7 @@ def test_unmappable_randomize_deterministic():
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
 
     # the labels outputted by ShuffleOp for seed 53 is [0, 2, 1, 4, 3]
-    ds.config.set_seed(53)
+    original_seed = config_get_set_seed(53)
 
     d = ds.TextFileDataset(text_file_dataset_path, shuffle=False)
     s1, s2 = d.split([0.8, 0.2])
@@ -173,6 +173,7 @@ def test_unmappable_randomize_deterministic():
 
     # Restore configuration num_parallel_workers
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
 
 
 def test_unmappable_randomize_repeatable():
@@ -184,7 +185,7 @@ def test_unmappable_randomize_repeatable():
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
 
     # the labels outputted by ShuffleOp for seed 53 is [0, 2, 1, 4, 3]
-    ds.config.set_seed(53)
+    original_seed = config_get_set_seed(53)
 
     d = ds.TextFileDataset(text_file_dataset_path, shuffle=False)
     s1, s2 = d.split([0.8, 0.2])
@@ -207,6 +208,7 @@ def test_unmappable_randomize_repeatable():
 
     # Restore configuration num_parallel_workers
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
 
 
 def test_unmappable_get_dataset_size():
@@ -233,7 +235,7 @@ def test_unmappable_multi_split():
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
 
     # the labels outputted by ShuffleOp for seed 53 is [0, 2, 1, 4, 3]
-    ds.config.set_seed(53)
+    original_seed = config_get_set_seed(53)
 
     d = ds.TextFileDataset(text_file_dataset_path, shuffle=False)
     s1, s2 = d.split([4, 1])
@@ -298,6 +300,7 @@ def test_unmappable_multi_split():
 
     # Restore configuration num_parallel_workers
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
 
 
 def test_mappable_invalid_input():
@@ -428,7 +431,7 @@ def test_mappable_randomize_deterministic():
     Expectation: Output is equal to the expected output
     """
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
-    ds.config.set_seed(53)
+    original_seed = config_get_set_seed(53)
 
     d = ds.ManifestDataset(manifest_file, shuffle=False)
     s1, s2 = d.split([0.8, 0.2])
@@ -446,6 +449,8 @@ def test_mappable_randomize_deterministic():
         assert s1_output == [0, 1, 3, 4]
         assert s2_output == [2]
 
+    ds.config.set_seed(original_seed)
+
 
 def test_mappable_randomize_repeatable():
     """
@@ -454,7 +459,7 @@ def test_mappable_randomize_repeatable():
     Expectation: Output is equal to the expected output
     """
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
-    ds.config.set_seed(53)
+    original_seed = config_get_set_seed(53)
 
     d = ds.ManifestDataset(manifest_file, shuffle=False)
     s1, s2 = d.split([0.8, 0.2])
@@ -475,6 +480,8 @@ def test_mappable_randomize_repeatable():
     assert s1_output == [0, 1, 3, 4] * num_epochs
     assert s2_output == [2] * num_epochs
 
+    ds.config.set_seed(original_seed)
+
 
 def test_mappable_sharding():
     """
@@ -484,7 +491,7 @@ def test_mappable_sharding():
     """
     # set arbitrary seed for repeatability for shard after split
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
-    ds.config.set_seed(53)
+    original_seed = config_get_set_seed(53)
 
     num_epochs = 5
     first_split_num_rows = 4
@@ -544,6 +551,8 @@ def test_mappable_sharding():
     assert s2_output == [2]
     assert d2s2_output == [2]
 
+    ds.config.set_seed(original_seed)
+
 
 def test_mappable_get_dataset_size():
     """
@@ -567,7 +576,7 @@ def test_mappable_multi_split():
     Expectation: Output is equal to the expected output
     """
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
-    ds.config.set_seed(53)
+    original_seed = config_get_set_seed(53)
 
     d = ds.ManifestDataset(manifest_file, shuffle=False)
     s1, s2 = d.split([4, 1])
@@ -629,6 +638,8 @@ def test_mappable_multi_split():
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
         s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
     assert s2_output == [2]
+
+    ds.config.set_seed(original_seed)
 
 
 def test_rounding():

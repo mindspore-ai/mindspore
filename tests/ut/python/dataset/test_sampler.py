@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import dataset_equal
+from util import dataset_equal, config_get_set_seed
 
 
 # test5trainimgs.json contains 5 images whose un-decoded shape is [83554, 54214, 65512, 54214, 64631]
@@ -58,7 +58,7 @@ def test_random_sampler(print_res=False):
     Description: Test RandomSampler with various replacement, num_samples, and num_repeats args combinations
     Expectation: Output is equal to the expected output
     """
-    ds.config.set_seed(1234)
+    original_seed = config_get_set_seed(1234)
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
@@ -79,6 +79,8 @@ def test_random_sampler(print_res=False):
     ordered_res = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]
     assert sorted(test_config(replacement=False, num_samples=None, num_repeats=4)) == ordered_res
     assert sorted(test_config(replacement=True, num_samples=None, num_repeats=4)) != ordered_res
+
+    ds.config.set_seed(original_seed)
 
 
 def test_random_sampler_multi_iter(print_res=False):

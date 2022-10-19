@@ -18,6 +18,7 @@ Test Omniglot dataset operations
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
+from util import config_get_set_seed
 
 DATA_DIR = "../data/dataset/testOmniglot"
 
@@ -108,6 +109,8 @@ def test_omniglot_num_shards():
     # define parameters.
     repeat_count = 1
 
+    original_seed = config_get_set_seed(0)
+
     # apply dataset operations.
     data1 = ds.OmniglotDataset(DATA_DIR, num_shards=4, shard_id=2)
     data1 = data1.repeat(repeat_count)
@@ -122,6 +125,8 @@ def test_omniglot_num_shards():
     logger.info("Number of data in data1: {}".format(num_iter))
     assert num_iter == 1
 
+    ds.config.set_seed(original_seed)
+
 
 def test_omniglot_shard_id():
     """
@@ -132,6 +137,8 @@ def test_omniglot_shard_id():
     logger.info("Test Case withShardID")
     # define parameters.
     repeat_count = 1
+
+    original_seed = config_get_set_seed(0)
 
     # apply dataset operations.
     data1 = ds.OmniglotDataset(DATA_DIR, num_shards=4, shard_id=1)
@@ -146,6 +153,8 @@ def test_omniglot_shard_id():
         num_iter += 1
     logger.info("Number of data in data1: {}".format(num_iter))
     assert num_iter == 1
+
+    ds.config.set_seed(original_seed)
 
 
 def test_omniglot_no_shuffle():
@@ -299,6 +308,8 @@ def test_distributed_sampler():
     # define parameters.
     repeat_count = 1
 
+    original_seed = config_get_set_seed(0)
+
     # apply dataset operations.
     sampler = ds.DistributedSampler(4, 1)
     data1 = ds.OmniglotDataset(DATA_DIR, sampler=sampler)
@@ -313,6 +324,8 @@ def test_distributed_sampler():
         num_iter += 1
     logger.info("Number of data in data1: {}".format(num_iter))
     assert num_iter == 1
+
+    ds.config.set_seed(original_seed)
 
 
 def test_pk_sampler():
