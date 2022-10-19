@@ -8,7 +8,6 @@ mindspore.ops.expm1
     .. math::
         out_i = e^{x_i} - 1
 
-
     参数：
         - **x** (Tensor) - 数据类型为float16或float32的Tensor，其秩必须在[0, 7]中。
 
