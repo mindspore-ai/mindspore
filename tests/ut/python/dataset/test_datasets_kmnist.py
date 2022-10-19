@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test KMnist dataset operators
+Test KMnist dataset operations
 """
 
 import os

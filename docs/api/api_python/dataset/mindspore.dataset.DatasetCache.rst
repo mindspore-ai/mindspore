@@ -14,7 +14,7 @@ mindspore.dataset.DatasetCache
         - **hostname** (str, 可选) - 数据缓存服务客户端的主机IP。默认值：None，表示使用默认主机IP 127.0.0.1。
         - **port** (int, 可选) - 指定连接到数据缓存服务端的端口号。默认值：None，表示端口为50052。
         - **num_connections** (int, 可选) - TCP/IP连接数量。默认值：None，表示连接数量为12。
-        - **prefetch_size** (int, 可选) - 指定缓存队列大小，使用缓存功能算子时，将直接从缓存队列中获取数据。默认值：None，表示缓存队列大小为20。
+        - **prefetch_size** (int, 可选) - 指定缓存队列大小，使用缓存功能时，将直接从缓存队列中获取数据。默认值：None，表示缓存队列大小为20。
 
     .. py:method:: get_stat()
 

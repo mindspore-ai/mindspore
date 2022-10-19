@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Flowers102 dataset operators
+Test Flowers102 dataset operations
 """
 import os
 

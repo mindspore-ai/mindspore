@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing cache operator with mappable datasets
+Testing cache operation with mappable datasets
 """
 import os
 import pytest

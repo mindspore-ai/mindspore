@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test OBSMindDataset operator
+Test OBSMindDataset operations
 """
 import pytest
 

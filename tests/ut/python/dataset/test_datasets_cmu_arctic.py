@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test CMUArctic dataset operators
+Test CMUArctic dataset operations
 """
 import numpy as np
 import pytest

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing cache operator with non-mappable datasets
+Testing cache operation with non-mappable datasets
 """
 import os
 import itertools
@@ -221,7 +221,7 @@ def test_cache_nomap_basic5():
     Feature: DatasetCache op
     Description: Test a TFReaderDataset (a non mappable dataset) with a Cache over it just after the leaf.
         Same as test 3, but this one does not have Shuffle arg, causing TF to default to global
-        shuffle which attempts to inject a Shuffle operator. However, since there is a Cache
+        shuffle which attempts to inject a Shuffle operation. However, since there is a Cache
         we do not need global shuffle, so the shuffle will not be built. It ends up being
         identical to test basic 3, however we arrive at the same tree in different codepaths
         (if there was no Cache, then the Shuffle is built)

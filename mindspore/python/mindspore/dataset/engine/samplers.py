@@ -778,7 +778,7 @@ class IterSampler(Sampler):
     User provided an iterable object without inheriting from our Sampler class.
 
     Note:
-        This class exists to allow handshake logic between dataset operators and user defined samplers.
+        This class exists to allow handshake logic between dataset operations and user defined samplers.
         By constructing this object we avoid the user having to inherit from our Sampler class.
 
     Args:

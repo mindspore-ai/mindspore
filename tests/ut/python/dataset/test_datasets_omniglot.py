@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Omniglot dataset operators
+Test Omniglot dataset operations
 """
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision

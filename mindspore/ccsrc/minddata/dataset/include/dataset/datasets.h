@@ -129,7 +129,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to set runtime number of workers.
-  /// \param[in] num_workers The number of threads in this operator.
+  /// \param[in] num_workers The number of threads in this operation.
   /// \return Shared pointer to the original object.
   /// \par Example
   /// \code
@@ -186,8 +186,8 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \note Usage restrictions:
   ///     1. Supported dataset formats: 'mindrecord' only.
   ///     2. To save the samples in order, set dataset's shuffle to false and num_files to 1.
-  ///     3. Before calling the function, do not use batch operator, repeat operator or data augmentation operators
-  ///        with random attribute in map operator.
+  ///     3. Before calling the function, do not use batch operation, repeat operation or data augmentation operations
+  ///        with random attribute in map operation.
   ///     4. Mindrecord does not support bool, uint64, multi-dimensional uint8(drop dimension) nor
   ///        multi-dimensional string.
   /// \param[in] dataset_path Path to dataset file.
@@ -374,7 +374,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     are applied in the order they appear in this list.
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
   ///     operation as input. The size of this list must match the number of
-  ///     input columns expected by the first operator. The default input_columns
+  ///     input columns expected by the first operation. The default input_columns
   ///     is the first column.
   /// \param[in] output_columns Vector of names assigned to the columns outputted by the last operation.
   ///     This parameter is mandatory if len(input_columns) != len(output_columns).
@@ -426,7 +426,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     Operations are applied in the order they appear in this list.
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
   ///     operation as input. The size of this list must match the number of
-  ///     input columns expected by the first operator. The default input_columns
+  ///     input columns expected by the first operation. The default input_columns
   ///     is the first column.
   /// \param[in] output_columns Vector of names assigned to the columns outputted by the last operation.
   ///     This parameter is mandatory if len(input_columns) != len(output_columns).
@@ -456,7 +456,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     the order they appear in this list.
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
   ///     operation as input. The size of this list must match the number of
-  ///     input columns expected by the first operator. The default input_columns
+  ///     input columns expected by the first operation. The default input_columns
   ///     is the first column.
   /// \param[in] output_columns Vector of names assigned to the columns outputted by the last operation.
   ///     This parameter is mandatory if len(input_columns) != len(output_columns).
@@ -737,7 +737,7 @@ class DATASET_API SchemaObj {
 };
 
 /// \class BatchDataset
-/// \brief The result of applying Batch operator to the input dataset.
+/// \brief The result of applying Batch operation to the input dataset.
 class DATASET_API BatchDataset : public Dataset {
  public:
   /// \brief Constructor of BatchDataset.
@@ -755,7 +755,7 @@ class DATASET_API BatchDataset : public Dataset {
 };
 
 /// \class BucketBatchByLengthDataset
-/// \brief The result of applying BucketBatchByLength operator to the input dataset.
+/// \brief The result of applying BucketBatchByLength operation to the input dataset.
 class DATASET_API BucketBatchByLengthDataset : public Dataset {
  public:
   /// \brief Constructor of BucketBatchByLengthDataset.
@@ -796,7 +796,7 @@ class DATASET_API BucketBatchByLengthDataset : public Dataset {
 };
 
 /// \class ConcatDataset
-/// \brief The result of applying concat dataset operator to the input Dataset.
+/// \brief The result of applying Concat operation to the input Dataset.
 class DATASET_API ConcatDataset : public Dataset {
  public:
   /// \brief Constructor of ConcatDataset.
@@ -825,7 +825,7 @@ class DATASET_API FilterDataset : public Dataset {
 };
 
 /// \class MapDataset
-/// \brief The result of applying the Map operator to the input Dataset.
+/// \brief The result of applying the Map operation to the input Dataset.
 class DATASET_API MapDataset : public Dataset {
  public:
   /// \brief Constructor of MapDataset.
@@ -835,7 +835,7 @@ class DATASET_API MapDataset : public Dataset {
   ///     are applied in the order they appear in this list.
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
   ///     operation as input. The size of this list must match the number of
-  ///     input columns expected by the first operator. The default input_columns
+  ///     input columns expected by the first operation. The default input_columns
   ///     is the first column.
   /// \param[in] output_columns Vector of names assigned to the columns outputted by the last operation.
   ///     This parameter is mandatory if len(input_columns) != len(output_columns).
@@ -853,7 +853,7 @@ class DATASET_API MapDataset : public Dataset {
 };
 
 /// \class ProjectDataset
-/// \brief The result of applying the Project operator to the input Dataset.
+/// \brief The result of applying the Project operation to the input Dataset.
 class DATASET_API ProjectDataset : public Dataset {
  public:
   /// \brief Constructor of ProjectDataset.
@@ -867,7 +867,7 @@ class DATASET_API ProjectDataset : public Dataset {
 };
 
 /// \class RenameDataset
-/// \brief The result of applying the Rename operator to the input Dataset.
+/// \brief The result of applying the Rename operation to the input Dataset.
 class DATASET_API RenameDataset : public Dataset {
  public:
   /// \brief Constructor of RenameDataset.
@@ -883,7 +883,7 @@ class DATASET_API RenameDataset : public Dataset {
 };
 
 /// \class RepeatDataset
-/// \brief The result of applying the Repeat operator to the input Dataset.
+/// \brief The result of applying the Repeat operation to the input Dataset.
 class DATASET_API RepeatDataset : public Dataset {
  public:
   /// \brief Constructor of RepeatDataset.
@@ -897,7 +897,7 @@ class DATASET_API RepeatDataset : public Dataset {
 };
 
 /// \class ShuffleDataset
-/// \brief The result of applying the Shuffle operator to the input Dataset.
+/// \brief The result of applying the Shuffle operation to the input Dataset.
 class DATASET_API ShuffleDataset : public Dataset {
  public:
   /// \brief Constructor of ShuffleDataset.
@@ -911,7 +911,7 @@ class DATASET_API ShuffleDataset : public Dataset {
 };
 
 /// \class SkipDataset
-/// \brief The result of applying the Skip operator to the input Dataset.
+/// \brief The result of applying the Skip operation to the input Dataset.
 class DATASET_API SkipDataset : public Dataset {
  public:
   /// \brief Constructor of SkipDataset.
@@ -925,7 +925,7 @@ class DATASET_API SkipDataset : public Dataset {
 };
 
 /// \class TakeDataset
-/// \brief The result of applying the Take operator to the input Dataset.
+/// \brief The result of applying the Take operation to the input Dataset.
 class DATASET_API TakeDataset : public Dataset {
  public:
   /// \brief Constructor of TakeDataset.
@@ -939,7 +939,7 @@ class DATASET_API TakeDataset : public Dataset {
 };
 
 /// \class ZipDataset
-/// \brief The result of applying the Zip operator to the input Dataset.
+/// \brief The result of applying the Zip operation to the input Dataset.
 class DATASET_API ZipDataset : public Dataset {
  public:
   /// \brief Constructor of ZipDataset.

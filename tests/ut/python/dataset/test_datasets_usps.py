@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test USPS dataset operators
+Test USPS dataset operations
 """
 import os
 from typing import cast

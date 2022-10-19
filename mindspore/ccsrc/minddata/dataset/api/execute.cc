@@ -235,7 +235,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     }
     *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
   } else if (device_type_ ==
-             MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operators
+             MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operations
 #if defined(WITH_BACKEND) || defined(ENABLE_ACL)
     CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310.");
     // Sink data from host into device
@@ -243,7 +243,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     RETURN_IF_NOT_OK(device_resource_->Sink(input, &device_input));
 
     for (auto &t : transforms_rt_) {
-      // Initialize AscendResource for each operators
+      // Initialize AscendResource for each operations
       std::shared_ptr<DeviceTensor> device_output;
       RETURN_IF_NOT_OK(t->SetAscendResource(device_resource_));
 
@@ -313,7 +313,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     }
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor is not valid.");
   } else if (device_type_ ==
-             MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operators
+             MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operations
     CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310.");
     for (auto &input_tensor : input_tensor_list) {
       // Sink each data from host into device
@@ -428,9 +428,9 @@ std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, c
     return aipp_size;
   }
 
-  if (resize_para.empty()) {  // If only Crop operator exists
+  if (resize_para.empty()) {  // If only Crop operation exists
     aipp_size = crop_para;
-  } else if (crop_para.empty()) {  // If only Resize operator with 2 parameters exists
+  } else if (crop_para.empty()) {  // If only Resize operation with 2 parameters exists
     aipp_size = resize_para;
   } else {  // If both of them exist
     if (resize_para.size() == 1) {
@@ -450,7 +450,7 @@ std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, c
 
 std::vector<uint32_t> AippMeanFilter(const std::vector<uint32_t> &normalize_para) {
   std::vector<uint32_t> aipp_mean;
-  if (normalize_para.size() == 6) {  // If Normalize operator exist
+  if (normalize_para.size() == 6) {  // If Normalize operation exist
     std::transform(normalize_para.begin(), normalize_para.begin() + 3, std::back_inserter(aipp_mean),
                    [](uint32_t i) { return static_cast<uint32_t>(i / 10000); });
   } else {
@@ -461,7 +461,7 @@ std::vector<uint32_t> AippMeanFilter(const std::vector<uint32_t> &normalize_para
 
 std::vector<float> AippStdFilter(const std::vector<uint32_t> &normalize_para) {
   std::vector<float> aipp_std;
-  if (normalize_para.size() == 6) {  // If Normalize operator exist
+  if (normalize_para.size() == 6) {  // If Normalize operation exist
     auto zeros = std::find(std::begin(normalize_para), std::end(normalize_para), 0);
     if (zeros == std::end(normalize_para)) {
       if (std::any_of(normalize_para.begin() + 3, normalize_para.end(), [](uint32_t i) { return i == 0; })) {
@@ -538,23 +538,23 @@ std::string Execute::AippCfgGenerator() {
     RETURN_SECOND_IF_ERROR(rc, "");
     info_->init_with_shared_ptr_ = false;
   }
-  std::vector<uint32_t> paras;  // Record the parameters value of each Ascend operators
+  std::vector<uint32_t> paras;  // Record the parameters value of each Ascend operations
   for (int32_t i = 0; i < ops_.size(); i++) {
-    // Validate operator ir
+    // Validate operation ir
     json ir_info;
     if (ops_[i] == nullptr) {
       MS_LOG(ERROR) << "Input TensorOperation[" + std::to_string(i) + "] is null.";
       return "";
     }
 
-    // Define map between operator name and parameter name
+    // Define map between operation name and parameter name
     auto rc = ops_[i]->to_json(&ir_info);
     if (rc.IsError()) {
       MS_LOG(ERROR) << "IR information serialize to json failed, error msg is " << rc;
       return "";
     }
 
-    // Collect the information of operators
+    // Collect the information of operations
     for (auto pos = info_->op2para_map_.equal_range(ops_[i]->Name()); pos.first != pos.second; ++pos.first) {
       auto paras_key_word = pos.first->second;
       paras = ir_info[paras_key_word].get<std::vector<uint32_t>>();

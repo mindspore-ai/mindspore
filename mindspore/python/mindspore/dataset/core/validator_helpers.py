@@ -781,19 +781,19 @@ def check_dataset_num_shards_shard_id(num_shards, shard_id):
 
 
 def deprecator_factory(version, old_module, new_module, substitute_name=None, substitute_module=None):
-    """Decorator factory function for deprecated operator to log deprecation warning message.
+    """Decorator factory function for deprecated operation to log deprecation warning message.
 
     Args:
-        version (str): Version that the operator is deprecated.
-        old_module (str): Old module for deprecated operator.
-        new_module (str): New module for deprecated operator.
-        substitute_name (str, optional): The substitute name for deprecated operator.
-        substitute_module (str, optional): The substitute module for deprecated operator.
+        version (str): Version that the operation is deprecated.
+        old_module (str): Old module for deprecated operation.
+        new_module (str): New module for deprecated operation.
+        substitute_name (str, optional): The substitute name for deprecated operation.
+        substitute_module (str, optional): The substitute module for deprecated operation.
     """
 
     def decorator(op):
         def wrapper(*args, **kwargs):
-            # Get operator class name for operator class which applies decorator to __init__()
+            # Get operation class name for operation class which applies decorator to __init__()
             name = str(op).split()[1].split(".")[0]
             # Build message
             message = f"'{name}' from " + f"{old_module}" + f" is deprecated from version " f"{version}" + \

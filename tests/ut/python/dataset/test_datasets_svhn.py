@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test SVHN dataset operators
+Test SVHN dataset operations
 """
 import os
 

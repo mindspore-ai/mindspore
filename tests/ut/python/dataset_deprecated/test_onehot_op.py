@@ -61,7 +61,7 @@ def test_one_hot():
 def test_one_hot_post_aug():
     """
     Feature: OneHot Op
-    Description: Test C++ op with One Hot Encoding after Multiple Data Augmentation Operators
+    Description: Test C++ op with One Hot Encoding after Multiple Data Augmentation Operations
     Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("test_one_hot_post_aug")

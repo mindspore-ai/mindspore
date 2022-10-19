@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test LJSpeech dataset operators
+Test LJSpeech dataset operations
 """
 import numpy as np
 import pytest

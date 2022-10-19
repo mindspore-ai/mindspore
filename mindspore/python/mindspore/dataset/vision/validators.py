@@ -1380,22 +1380,22 @@ def check_to_tensor(method):
 
 
 def deprecated_c_vision(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.c_transforms operator.
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.c_transforms operation.
 
     Args:
-        substitute_name (str, optional): The substitute name for deprecated operator.
-        substitute_module (str, optional): The substitute module for deprecated operator.
+        substitute_name (str, optional): The substitute name for deprecated operation.
+        substitute_module (str, optional): The substitute module for deprecated operation.
     """
     return deprecator_factory("1.8", "mindspore.dataset.vision.c_transforms", "mindspore.dataset.vision",
                               substitute_name, substitute_module)
 
 
 def deprecated_py_vision(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.py_transforms operator.
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.py_transforms operation.
 
     Args:
-        substitute_name (str, optional): The substitute name for deprecated operator.
-        substitute_module (str, optional): The substitute module for deprecated operator.
+        substitute_name (str, optional): The substitute name for deprecated operation.
+        substitute_module (str, optional): The substitute module for deprecated operation.
     """
     return deprecator_factory("1.8", "mindspore.dataset.vision.py_transforms", "mindspore.dataset.vision",
                               substitute_name, substitute_module)

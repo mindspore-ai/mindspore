@@ -452,7 +452,7 @@ class AutoAugment(ImageTensorOperation):
 
             - AutoAugmentPolicy.SVHN, means to apply AutoAugment learned on SVHN dataset.
 
-        interpolation (Inter, optional): Image interpolation mode for Resize operator (default=Inter.NEAREST).
+        interpolation (Inter, optional): Image interpolation mode for Resize operation (default=Inter.NEAREST).
             It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA].
 
             - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
@@ -504,7 +504,7 @@ class AutoAugment(ImageTensorOperation):
 
 class AutoContrast(ImageTensorOperation, PyTensorOperation):
     """
-    Apply automatic contrast on input image. This operator calculates histogram of image, reassign cutoff percent
+    Apply automatic contrast on input image. This operation calculates histogram of image, reassign cutoff percent
     of the lightest pixels from histogram to 255, and reassign cutoff percent of the darkest pixels from histogram to 0.
 
     Args:
@@ -775,7 +775,7 @@ class Crop(ImageTensorOperation):
 class CutMixBatch(ImageTensorOperation):
     """
     Apply CutMix transformation on input batch of images and labels.
-    Note that you need to make labels into one-hot format and batched before calling this operator.
+    Note that you need to make labels into one-hot format and batched before calling this operation.
 
     Args:
         image_batch_format (ImageBatchFormat): The method of padding. Can be any of
@@ -1256,7 +1256,7 @@ class HWC2CHW(ImageTensorOperation):
 
 class Invert(ImageTensorOperation, PyTensorOperation):
     """
-    Apply invert on input image in RGB mode. This operator will reassign every pixel to (255 - pixel).
+    Apply invert on input image in RGB mode. This operation will reassign every pixel to (255 - pixel).
 
     Raises:
         RuntimeError: If given tensor shape is not <H, W, C>.
@@ -1429,7 +1429,7 @@ class MixUpBatch(ImageTensorOperation):
     The lambda is generated based on the specified alpha value. Two coefficients x1, x2 are randomly generated
     in the range [alpha, 1], and lambda = (x1 / (x1 + x2)).
 
-    Note that you need to make labels into one-hot format and batched before calling this operator.
+    Note that you need to make labels into one-hot format and batched before calling this operation.
 
     Args:
         alpha (float, optional): Hyperparameter of beta distribution. The value must be positive (default = 1.0).
@@ -1464,7 +1464,7 @@ class MixUpBatch(ImageTensorOperation):
 
 class Normalize(ImageTensorOperation):
     """
-    Normalize the input image with respect to mean and standard deviation. This operator will normalize
+    Normalize the input image with respect to mean and standard deviation. This operation will normalize
     the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
 
     Note:
@@ -1803,7 +1803,7 @@ class RandAugment(ImageTensorOperation):
             of num_magnitude_bins. Default: 9.
         num_magnitude_bins (int, optional): The number of different magnitude values. The number of different magnitude
             values, must be greater than or equal to 2. Default: 31.
-        interpolation (Inter, optional): Image interpolation mode for Resize operator.
+        interpolation (Inter, optional): Image interpolation mode for Resize operation.
             It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA]. Default: Inter.NEAREST.
 
             - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
@@ -2311,7 +2311,7 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
 
 class RandomCropDecodeResize(ImageTensorOperation):
     """
-    A combination of `Crop`, `Decode` and `Resize`. It will get better performance for JPEG images. This operator
+    A combination of `Crop`, `Decode` and `Resize`. It will get better performance for JPEG images. This operation
     will crop the input image at a random location, decode the cropped image in RGB mode, and resize the decoded image.
 
     Args:
@@ -2322,7 +2322,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
             original size to be cropped, which must be non-negative (default=(0.08, 1.0)).
         ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter, optional): Image interpolation mode for resize operator(default=Inter.BILINEAR).
+        interpolation (Inter, optional): Image interpolation mode for resize operation (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
@@ -2889,7 +2889,7 @@ class RandomPosterize(ImageTensorOperation):
 
 class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
     """
-    This operator will crop the input image randomly,
+    This operation will crop the input image randomly,
     and resize the cropped image using a selected interpolation mode :class:`mindspore.dataset.vision.Inter`.
 
     Note:
@@ -3440,7 +3440,7 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
 
 class Rescale(ImageTensorOperation):
     """
-    Rescale the input image with the given rescale and shift. This operator will rescale the input image
+    Rescale the input image with the given rescale and shift. This operation will rescale the input image
     with: output = image * rescale + shift.
 
     Note:
@@ -4089,7 +4089,7 @@ class TrivialAugmentWide(ImageTensorOperation):
     Args:
         num_magnitude_bins (int, optional): The number of different magnitude values,
             must be greater than or equal to 2. Default: 31.
-        interpolation (Inter, optional): Image interpolation mode for Resize operator. Default: Inter.NEAREST.
+        interpolation (Inter, optional): Image interpolation mode for Resize operation. Default: Inter.NEAREST.
             It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA].
 
             - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test EMnist dataset operators
+Test EMnist dataset operations
 """
 
 import os

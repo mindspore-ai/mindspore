@@ -41,7 +41,7 @@ TEST_F(MindDataTestMemoryPool, DumpPoolInfo) {
 }
 
 /// Feature: MemoryPool
-/// Description: Test delete operator on heap
+/// Description: Test delete operation on heap
 /// Expectation: Runs successfully
 TEST_F(MindDataTestMemoryPool, TestOperator1) {
   Status rc;
@@ -52,7 +52,7 @@ TEST_F(MindDataTestMemoryPool, TestOperator1) {
 }
 
 /// Feature: MemoryPool
-/// Description: Test assignment operator on heap
+/// Description: Test assignment operation on heap
 /// Expectation: Runs successfully
 TEST_F(MindDataTestMemoryPool, TestOperator3) {
   Status rc;

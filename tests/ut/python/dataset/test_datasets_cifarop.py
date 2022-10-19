@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Cifar10 and Cifar100 dataset operators
+Test Cifar10 and Cifar100 dataset operations
 """
 import os
 import pytest

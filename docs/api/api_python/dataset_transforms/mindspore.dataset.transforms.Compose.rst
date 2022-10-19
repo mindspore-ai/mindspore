@@ -3,10 +3,10 @@ mindspore.dataset.transforms.Compose
 
 .. py:class:: mindspore.dataset.transforms.Compose(transforms)
 
-    将多个数据增强算子组合使用。
+    将多个数据增强操作组合使用。
 
     .. note::
-        Compose可以将 `mindspore.dataset.transforms` / `mindspore.dataset.vision` 等模块中的数据增强算子以及用户自定义的Python可调用对象
+        Compose可以将 `mindspore.dataset.transforms` / `mindspore.dataset.vision` 等模块中的数据增强操作以及用户自定义的Python可调用对象
         合并成单个数据增强。对于用户定义的Python可调用对象，要求其返回值是numpy.ndarray类型。
 
     参数：

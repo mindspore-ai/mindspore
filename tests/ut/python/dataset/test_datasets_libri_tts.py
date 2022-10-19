@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test LibriTTS dataset operators
+Test LibriTTS dataset operations
 """
 import numpy as np
 import pytest

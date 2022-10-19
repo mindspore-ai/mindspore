@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Caltech256 dataset operators
+Test Caltech256 dataset operations
 """
 import numpy as np
 import pytest

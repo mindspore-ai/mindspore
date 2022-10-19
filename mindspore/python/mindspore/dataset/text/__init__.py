@@ -24,12 +24,15 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset as ds
     import mindspore.dataset.text as text
 
+See `Text Transforms
+<https://www.mindspore.cn/tutorials/en/master/beginner/transforms.html#text-transforms>`_ tutorial for more details.
+
 Descriptions of common data processing terms are as follows:
 
 - TensorOperation, the base class of all data processing operations implemented in C++.
 - TextTensorOperation, the base class of all text processing operations. It is a derived class of TensorOperation.
 
-The data transform operator can be executed in the data processing pipeline or in the eager mode:
+The data transform operation can be executed in the data processing pipeline or in the eager mode:
 
 - Pipeline mode is generally used to process datasets. For examples, please refer to
   `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/

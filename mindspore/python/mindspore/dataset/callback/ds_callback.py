@@ -134,7 +134,7 @@ class WaitedDSCallback(Callback, DSCallback):
     <https://www.mindspore.cn/docs/en/master/api_python/train/mindspore.train.Callback.html#mindspore.train.Callback>`_.
 
     It can be used to execute a custom callback method before a step or an epoch, such as
-    updating the parameters of operators according to the loss of the previous training epoch in auto augmentation.
+    updating the parameters of operations according to the loss of the previous training epoch in auto augmentation.
 
     Users can obtain the network training context through `train_run_context`, such as
     `network`, `train_network`, `epoch_num`, `batch_num`, `loss_fn`, `optimizer`, `parallel_mode`,
