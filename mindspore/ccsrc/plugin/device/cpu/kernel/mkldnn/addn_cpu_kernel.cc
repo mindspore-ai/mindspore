@@ -48,21 +48,37 @@ void AddT(const T *in0, const T *in1, T *out, int start, int end) {
 }
 }  // namespace
 
-void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
+bool AddNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  input_num_ = inputs.size();
   if (input_num_ < kAddNInputsMinNum) {
-    MS_LOG(EXCEPTION) << "Input numbers can not less " << kAddNInputsMinNum << ", but got " << input_num_;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input numbers can not less " << kAddNInputsMinNum << ", but got "
+                  << input_num_;
+    return false;
   }
-  CheckParam(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  std::vector<int64_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int64_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<int64_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({src0_shape, src1_shape, dst_shape})) {
-    return;
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddNOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  kernel_func_ = func_list_[index].second;
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
+}
+
+int AddNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto src0_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto src1_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto dst_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
   dnnl::memory::desc src0_mem_desc = GetDefaultMemDesc(src0_shape);
   dnnl::memory::desc src1_mem_desc = GetDefaultMemDesc(src1_shape);
   dnnl::memory::desc dst_mem_desc = GetDefaultMemDesc(dst_shape);
@@ -72,13 +88,7 @@ void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_SRC_0, src0_mem_desc);
   AddArgument(DNNL_ARG_SRC_1, src1_mem_desc);
   AddArgument(DNNL_ARG_DST, dst_mem_desc);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "AddN does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
@@ -124,26 +134,6 @@ bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
     }
   }
   return true;
-}
-
-void AddNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
-  auto src0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({src0_shape, dst_shape})) {
-    return;
-  }
-  if (src0_shape != dst_shape) {
-    MS_LOG(EXCEPTION) << "AddN output shape must be equal to input shape.";
-  }
-  for (size_t index = 1; index < input_num_; ++index) {
-    auto src_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
-    if (IsDynamic(src_shape)) {
-      return;
-    }
-    if (src0_shape != src_shape) {
-      MS_LOG(EXCEPTION) << "AddN input shapes must be equal.";
-    }
-  }
 }
 
 std::vector<std::pair<KernelAttr, AddNCpuKernelMod::AddNFunc>> AddNCpuKernelMod::func_list_ = {

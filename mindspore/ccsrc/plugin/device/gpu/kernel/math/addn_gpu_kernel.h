@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ADDN_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ADDN_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_ADDN_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_ADDN_GPU_KERNEL_H_
 
 #include <memory>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/math/broadcast_gpu_kernel.h"
@@ -31,99 +33,38 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
-template <typename T>
-class AddNFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<AddNFwdGpuKernelMod> {
  public:
-  AddNFwdGpuKernelMod() : input_size_(0), output_size_(0), workspace_size_(0), is_null_input_(false), num_input_(0) {}
-  ~AddNFwdGpuKernelMod() override {}
+  AddNFwdGpuKernelMod() = default;
+  ~AddNFwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    auto work_addr = output_addr;
-    for (size_t i = 0; i < num_input_; i++) {
-      if (output_addr == GetDeviceAddress<T>(inputs, i)) {
-        work_addr = GetDeviceAddress<T>(workspace, 0);
-        break;
-      }
-    }
-    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    for (size_t i = 0; i < num_input_; i++) {
-      T *input_addr = GetDeviceAddress<T>(inputs, i);
-      if constexpr (std::is_same<T, Complex<float>>::value || std::is_same<T, Complex<double>>::value) {
-        ElewiseComplexArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
-      } else {
-        ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
-      }
-    }
-    if (work_addr != output_addr) {
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(output_addr, work_addr, outputs[0]->size, cudaMemcpyDeviceToDevice,
-                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "Addn cudaMemcpyAsync outputs failed");
-    }
-    return true;
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    stream_ptr_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    num_input_ = GetAttr<int64_t>(kernel_node, "n");
-    if (num_input_ != input_num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be  " << num_input_ << ", but got "
-                        << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-    }
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = sizeof(T);
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= static_cast<size_t>(input_shape[i]);
-    }
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void ResetResource() noexcept override {
-    ResetSizeLists();
-    input_size_ = 0;
-    output_size_ = 0;
-    workspace_size_ = 0;
-    is_null_input_ = false;
-    num_input_ = 0;
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
-  void InitSizeLists() override {
-    for (size_t i = 0; i < num_input_; i++) {
-      input_size_list_.push_back(input_size_);
-    }
-    output_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
  private:
-  size_t input_size_;
-  size_t output_size_;
-  size_t workspace_size_;
-  bool is_null_input_;
-  size_t num_input_;
+  size_t num_input_{0};
+  cudaStream_t stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ADDN_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_ADDN_GPU_KERNEL_H_
