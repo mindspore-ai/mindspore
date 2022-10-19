@@ -132,8 +132,8 @@ def data_sink(fn, dataset, steps, sink_size=1, jit_config=None, input_signature=
             :class:`mindspore.dataset`, such as :class:`mindspore.dataset.ImageFolderDataset`.
         steps (int): The total running steps. `steps` must be positive integer.
         sink_size (int): Control the amount of data in each sink. `sink_size` must be positive integer. Default: 1.
-        jit_config (bool): Controls the execution mode(Graph mode/PyNative mode) of the generated function, and Jit
-            config for compile. Default: None. Default: False, means running in PyNative mode.
+        jit_config (JitConfig): Controls the execution mode(Graph mode/PyNative mode) of the generated function, and Jit
+            config for compile. Default: None, means running in PyNative mode.
         input_signature (Union[Tensor, List or Tuple of Tensors]): The Tensor which describes the input arguments.
             The shape and dtype of the Tensor will be supplied to this function. If input_signature is specified,
             each input to `fn` must be a `Tensor`. And the input parameters of `fn` cannot accept `**kwargs`. The shape
