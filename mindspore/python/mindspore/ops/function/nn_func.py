@@ -3172,7 +3172,7 @@ def glu(x, axis=-1):
          [0.33409387 0.41398472]]
     """
     if not isinstance(x, Tensor) or x.size == 0:
-        raise RuntimeError("glu does not support scalars because halving size must be even")
+        raise TypeError("glu does not support scalars because halving size must be even")
 
     spilt = _get_cache_prim(P.Split)(axis=axis, output_num=2)
     x, y = spilt(x)
