@@ -5457,6 +5457,41 @@ class LogMatrixDeterminant(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['sign', 'y'])
 
 
+class MatrixLogarithm(Primitive):
+    """
+    Return the matrix logarithm of one or more square matrices.
+
+    Inputs:
+        - **x** (Tensor) - x is a tensor. The shape of tensor is :math:`[..., M, M]`.
+          Must be one of the following types:complex64, complex128. And shape is 2D-7D.
+
+    Outputs:
+        - **y** (Tensor), has the same shape and type as input.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not one of: complex64, complex128.
+        ValueError: If the dimension of `x` is less to 2.
+        ValueError: If the inner two dimension is not equal.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[1 + 2j, 2 + 1j], [4 + 1j, 5 + 2j]])
+        >>> matrix_logarithm = MatrixLogarithm()
+        >>> y = matrix_logarithm(x)
+        >>> print(y)
+        [[0.69155775+1.71618359j 0.64665196-0.34928196j]
+         [1.02426074-0.88736831j 1.44677531+0.6400109j ]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MatrixLogarithm"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
 class IndexAdd(Primitive):
     """
     Adds tensor `y` to specified axis and indices of tensor `x`. The axis should be in [0,  len(x.dim) - 1],

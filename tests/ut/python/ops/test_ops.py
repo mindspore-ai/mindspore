@@ -48,6 +48,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import MatrixExp
 from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import MatrixSolve
+from mindspore.ops.operations.math_ops import MatrixLogarithm
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import NextAfter
 from mindspore.ops.operations.math_ops import ComplexAbs
@@ -2456,6 +2457,10 @@ test_case_math_ops = [
     ('Real', {
         'block': P.Real(),
         'desc_inputs': [[2, 2]],
+        'skip': ['backward']}),
+    ('MatrixLogarithm', {
+        'block': MatrixLogarithm(),
+        'desc_inputs': [Tensor(np.array([[1 + 2j, 2 + 1j], [4 + 1j, 5 + 2j]]).astype(np.complex64))],
         'skip': ['backward']}),
     ('Imag', {
         'block': P.Imag(),
