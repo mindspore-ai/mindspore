@@ -223,7 +223,9 @@ class ClassDefParser(Parser):
                 body_index_to_be_deleted.append(body_index)
                 continue
             if not isinstance(target.value, ast.Name):
-                raise RuntimeError("Only support target.value in ast.Name now!")
+                logger.info(f"Ignoring {astunparse.unparse(target)} in __init__ function.")
+                body_index_to_be_deleted.append(body_index)
+                continue
             target_value: ast.Name = target.value
             if target_value.id != "self":
                 body_index_to_be_deleted.append(body_index)
