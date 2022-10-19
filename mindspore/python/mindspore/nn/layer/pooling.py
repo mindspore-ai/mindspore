@@ -1253,7 +1253,7 @@ class FractionalMaxPool3d(Cell):
             Supported shape :math:`(N, C, 3)`
 
     Inputs:
-        - **imput_x** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
+        - **input_x** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
           Tensor of data type : float16, float32, double, int32, int64.
           Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` .
 

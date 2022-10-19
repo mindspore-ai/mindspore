@@ -138,7 +138,7 @@ mindspore.rewrite
         返回：
             当前SymbolTree中节点的生成器。
 
-     .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate()
+    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate()
 
         打印当前SymbolTree的节点信息表格。
 
