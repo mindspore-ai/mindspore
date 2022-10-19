@@ -65,12 +65,27 @@ ConverterPlugin &ConverterPlugin::Instance() {
 ConverterFunc ConverterPlugin::GetConverterFunc() {
 #ifndef _WIN32
   if (converter_func_ == nullptr) {
+    Dl_info dl_info;
+    dladdr(reinterpret_cast<void *>(this), &dl_info);
+    std::string cur_so_path = dl_info.dli_fname;
+    auto pos = cur_so_path.find("libmindspore-lite.so");
+    if (pos == std::string::npos) {
+      MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
+      auto c_lite_pos = cur_so_path.find("_c_lite");
+      if (c_lite_pos == std::string::npos) {
+        MS_LOG(WARNING) << "Could not find mindspore lite so, cur so path: " << cur_so_path;
+        return nullptr;
+      }
+      pos = c_lite_pos;
+    }
+    std::string parent_dir = cur_so_path.substr(0, pos);
     std::string plugin_path;
-    auto ret = DLSoPath("libmindspore-lite.so", "libruntime_convert_plugin.so", &plugin_path);
+    auto ret = FindSoPath(parent_dir, "libruntime_convert_plugin.so", &plugin_path);
     if (ret != kSuccess) {
-      MS_LOG(ERROR) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
+      MS_LOG(WARNING) << "Get real path of libruntime_convert_plugin.so failed.";
       return nullptr;
     }
+    MS_LOG(INFO) << "Find libruntime_convert_plugin.so success, path = " << plugin_path;
     void *function = nullptr;
     ret = DLSoOpen(plugin_path, "RuntimeConvert", &handle_, &function, true);
     if (ret != kSuccess) {
