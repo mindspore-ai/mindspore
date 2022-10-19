@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,23 +29,14 @@ abstract::ShapePtr CholeskyInverseInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = x_shape_map[kShape];
-  // support dynamic rank
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  if (x_shape.size() != kDimNum) {
+  if (x_shape.size() != kDimNum && !IsDynamic(x_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', The dimension of x must be equal to 2, but got: " << x_shape.size() << ".";
   }
-  // support dynamic shape
-  if (IsDynamic(x_shape)) {
-    ShapeVector shape_out;
-    for (size_t i = 0; i < x_shape.size(); ++i) {
-      shape_out.push_back(abstract::Shape::kShapeDimAny);
-    }
-    return std::make_shared<abstract::Shape>(shape_out);
-  }
-  if (x_shape[x_shape.size() - 1] != x_shape[x_shape.size() - kDimNum]) {
+  if (!IsDynamic(x_shape) && x_shape[x_shape.size() - 1] != x_shape[x_shape.size() - kDimNum]) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', input must be square matrix, "
                              << "while row is " << x_shape[x_shape.size() - kDimNum] << ", col is "
                              << x_shape[x_shape.size() - 1];
@@ -64,13 +55,13 @@ TypePtr CholeskyInverseInferType(const PrimitivePtr &prim, const std::vector<Abs
 }
 }  // namespace
 
-void CholeskyInverse::set_upper(const bool upper) { (void)this->AddAttr("upper", api::MakeValue(upper)); }
-
-bool CholeskyInverse::get_upper() const { return GetValue<bool>(GetAttr("upper")); }
-
+MIND_API_OPERATOR_IMPL(CholeskyInverse, BaseOperator);
 void CholeskyInverse::Init(const bool upper) { set_upper(upper); }
 
-MIND_API_OPERATOR_IMPL(CholeskyInverse, BaseOperator);
+void CholeskyInverse::set_upper(const bool upper) { (void)this->AddAttr(kUpper, api::MakeValue(upper)); }
+
+bool CholeskyInverse::get_upper() const { return GetValue<bool>(GetAttr(kUpper)); }
+
 AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
