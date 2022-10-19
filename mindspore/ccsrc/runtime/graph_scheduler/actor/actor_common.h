@@ -286,6 +286,9 @@ bool IsControlFlowActor(KernelTransformType actor_type);
 
 bool IsMemoryActor(KernelTransformType actor_type);
 
+// Judge whether skip the launch by the env MS_KERNEL_LAUNCH_SKIP.
+bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph);
+
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
 

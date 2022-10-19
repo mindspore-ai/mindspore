@@ -27,6 +27,8 @@ bool ActorDispatcher::is_multi_thread_execution_ = true;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
 
+constexpr char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
+
 bool IsRunningFailed(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   return (context->error_info_ != "");
@@ -185,6 +187,33 @@ bool IsControlFlowActor(KernelTransformType actor_type) {
 bool IsMemoryActor(KernelTransformType actor_type) {
   return ((actor_type == KernelTransformType::kMemoryAllocActor) ||
           (actor_type == KernelTransformType::kMemoryFreeActor));
+}
+
+bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph) {
+  auto launch_skipped = common::GetEnv(kLaunchSkippedEnv);
+  if (launch_skipped.empty()) {
+    return false;
+  }
+
+  std::string launch_name = "";
+  std::string full_name = "";
+  if (kernel != nullptr) {
+    launch_name = common::AnfAlgo::GetCNodeName(kernel);
+    full_name = kernel->fullname_with_scope();
+  } else if (kernel_graph != nullptr) {
+    launch_name = kernel_graph->ToString();
+    full_name = kernel_graph->ToString();
+  } else {
+    MS_LOG(ERROR) << "The luanch kernel or graph is nullptr";
+    return false;
+  }
+
+  if ((launch_skipped == "ALL") || (launch_skipped == "all") || (launch_skipped == launch_name)) {
+    MS_LOG(DEBUG) << "Skip the launch of " << full_name;
+    return true;
+  }
+
+  return false;
 }
 
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {

@@ -20,8 +20,6 @@
 
 namespace mindspore {
 namespace runtime {
-constexpr char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
-
 void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
@@ -237,21 +235,6 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
-}
-
-bool AbstractActor::IsSkippedLaunch() {
-  auto launch_skipped = common::GetEnv(kLaunchSkippedEnv);
-  if (launch_skipped.empty()) {
-    return false;
-  }
-
-  if ((launch_skipped == "ALL") || (launch_skipped == "all") ||
-      (GetAID().Name().find(launch_skipped) != std::string::npos)) {
-    MS_LOG(DEBUG) << "Skip the launch of actor " << GetAID().Name();
-    return true;
-  }
-
-  return false;
 }
 
 AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_actor_name) const {
