@@ -220,6 +220,7 @@ Array Methods
     mindspore.Tensor.repeat
     mindspore.Tensor.reshape
     mindspore.Tensor.resize
+    mindspore.Tensor.reverse_sequence
     mindspore.Tensor.scatter_add
     mindspore.Tensor.scatter_div
     mindspore.Tensor.scatter_max
