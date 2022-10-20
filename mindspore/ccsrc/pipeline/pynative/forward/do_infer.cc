@@ -375,6 +375,7 @@ void InferOperation::SaveSpecifiedOutputToCache(const std::string &op_name, cons
 }
 
 void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
+  SetAnyValue(abs);
   node_abs_cache_[id] = abs;
 }
 
