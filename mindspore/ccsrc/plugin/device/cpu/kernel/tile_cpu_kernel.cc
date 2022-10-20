@@ -163,12 +163,12 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
       multiple_nums *= multiple_shape[i];
     }
     if (multiple_dtype_ == kNumberTypeInt32) {
-      auto multiples_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+      auto multiples_addr = GetDeviceAddress<int32_t>(inputs, 1);
       for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
         (void)multiples_.emplace_back(multiples_addr[i]);
       }
     } else {
-      auto multiples_addr = reinterpret_cast<int64_t *>(inputs[1]->addr);
+      auto multiples_addr = GetDeviceAddress<int64_t>(inputs, 1);
       for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
         (void)multiples_.emplace_back(multiples_addr[i]);
       }
