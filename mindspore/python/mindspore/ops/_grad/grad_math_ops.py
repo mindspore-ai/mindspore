@@ -184,7 +184,8 @@ def _dyn_reduced_shape(input_shape, axis, x):
     input_rank = P.Cast()(input_rank, ms.int32)
 
     if isinstance(axis, (tuple, list)) and axis == ():
-        return (1,) * input_rank
+        res_shape = P.ExpandDims()(input_rank, 0)
+        return dyn_ones(res_shape, res_shape.dtype)
 
     if isinstance(axis, int):
         axis = (axis,)
