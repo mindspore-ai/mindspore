@@ -119,7 +119,46 @@ TypePtr ExtractGlimpseInferType(const PrimitivePtr &primitive, const std::vector
   return res;
 }
 }  // namespace
-MIND_API_BASE_IMPL(ExtractGlimpse, PrimitiveC, BaseOperator);
+
+void ExtractGlimpse::Init(const bool &centered, const bool &normalized, const bool &uniform_noise,
+                          const std::string &noise) {
+  set_centered(centered);
+  set_normalized(normalized);
+  set_uniform_noise(uniform_noise);
+  set_noise(noise);
+}
+
+void ExtractGlimpse::set_centered(const bool &centered) { (void)AddAttr("centered", api::MakeValue(centered)); }
+
+bool ExtractGlimpse::get_centered() const {
+  auto value_ptr = GetAttr("centered");
+  return GetValue<bool>(value_ptr);
+}
+
+void ExtractGlimpse::set_normalized(const bool &normalized) { (void)AddAttr("normalized", api::MakeValue(normalized)); }
+
+bool ExtractGlimpse::get_normalized() const {
+  auto value_ptr = GetAttr("normalized");
+  return GetValue<bool>(value_ptr);
+}
+
+void ExtractGlimpse::set_uniform_noise(const bool &uniform_noise) {
+  (void)AddAttr("uniform_noise", api::MakeValue(uniform_noise));
+}
+
+bool ExtractGlimpse::get_uniform_noise() const {
+  auto value_ptr = GetAttr("uniform_noise");
+  return GetValue<bool>(value_ptr);
+}
+
+void ExtractGlimpse::set_noise(const std::string &noise) { (void)AddAttr("noise", api::MakeValue(noise)); }
+
+std::string ExtractGlimpse::get_noise() const {
+  auto value_ptr = GetAttr("noise");
+  return GetValue<std::string>(value_ptr);
+}
+
+MIND_API_OPERATOR_IMPL(ExtractGlimpse, BaseOperator);
 AbstractBasePtr ExtractGlimpseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
