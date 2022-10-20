@@ -23,14 +23,14 @@ using mindspore::schema::PrimitiveType_InstanceNorm;
 namespace mindspore::lite::micro::nnacl {
 int InstanceNormFP32Coder::Prepare(CoderContext *const context) {
   param_ = reinterpret_cast<InstanceNormParameter *>(parameter_);
-  param_->batch_ = input_tensor_->Batch();
-  param_->inner_size_ = input_tensor_->Height() * input_tensor_->Width();
-  param_->channel_ = input_tensor_->Channel();
   if (support_parallel_) {
     param_->op_parameter_.thread_num_ = 1;
   }
   param_->op_parameter_.thread_num_ = MSMIN(UP_DIV(param_->channel_, C8NUM), param_->op_parameter_.thread_num_);
   if (input_tensors_[0]->format() == NHWC) {
+    param_->batch_ = input_tensor_->Batch();
+    param_->inner_size_ = input_tensor_->Height() * input_tensor_->Width();
+    param_->channel_ = input_tensor_->Channel();
     tmp_src_data_ =
       reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, input_tensors_[0]->Size(), kWorkspace));
   }
