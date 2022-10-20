@@ -371,4 +371,5 @@ Tools
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.ChannelShuffle
     mindspore.nn.Flatten

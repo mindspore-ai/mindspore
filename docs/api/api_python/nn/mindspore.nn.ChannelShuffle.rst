@@ -1,0 +1,21 @@
+mindspore.nn.ChannelShuffle
+============================
+
+.. py:class:: mindspore.nn.ChannelShuffle()
+
+    将shape的为 :math`(*, C, H, W)` 的Tensor的通道划分成 :math`g` 组，并将其以 :math`(*, C \frac g, g, H, W)` 的shape重新排列, 同时保持Tensor原有的shape。
+
+    参数：
+        - **groups** (int) - 划分通道的组数。取值范围是 :math`(0, \inf)` 。在上述公式中表示为 :math`g` 。
+
+    输入：
+        - **x** (Tensor) - Tensor的shape :math:`(*, C_{in}, H_{in}, W_{in})` 。
+
+    输出：
+        Tensor，数据类型和shape与 `x` 相同。
+
+    异常：
+        - **TypeError** - `groups` 非整数。
+        - **ValueError** - `groups` 小于1。
+        - **ValueError** - `x` 的维度小于3。
+        - **ValueError** - Tensor的通道数不能被 `groups` 整除。
