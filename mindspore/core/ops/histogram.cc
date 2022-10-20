@@ -58,6 +58,15 @@ TypePtr HistogramInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }
 }  // namespace
 
+void Histogram::set_bins(const int64_t bins) { (void)this->AddAttr(kBins, api::MakeValue(bins)); }
+int64_t Histogram::get_bins() const { return GetValue<int64_t>(GetAttr(kBins)); }
+
+void Histogram::set_min(const float min) { (void)this->AddAttr(kMin, api::MakeValue(min)); }
+float Histogram::get_min() const { return GetValue<float>(GetAttr(kMin)); }
+
+void Histogram::set_max(const float max) { (void)this->AddAttr(kMax, api::MakeValue(max)); }
+float Histogram::get_max() const { return GetValue<float>(GetAttr(kMax)); }
+
 AbstractBasePtr HistogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

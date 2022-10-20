@@ -25,11 +25,12 @@
 
 namespace mindspore {
 namespace kernel {
-class HammingWindowCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class HammingWindowCpuKernelMod : public NativeCpuKernelMod {
  public:
   HammingWindowCpuKernelMod() = default;
   ~HammingWindowCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs);
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
