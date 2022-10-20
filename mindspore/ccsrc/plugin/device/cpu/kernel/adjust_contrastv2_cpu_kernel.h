@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADJUST_CONTRASTV2_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADJUST_CONTRASTV2_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ADJUST_CONTRASTV2_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ADJUST_CONTRASTV2_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -25,11 +27,17 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t MIN_DIM = 3;
 
-class AdjustContrastv2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdjustContrastv2CpuKernelMod : public NativeCpuKernelMod {
  public:
   AdjustContrastv2CpuKernelMod() = default;
   ~AdjustContrastv2CpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &Kernel_node);
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs);
 
@@ -38,10 +46,11 @@ class AdjustContrastv2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchAdjustContrastv2Kernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  std::vector<int64_t> images_shape;
+
+  std::vector<int64_t> images_shape_;
   TypeId input_type_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADJUST_CONTRASTV2_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ADJUST_CONTRASTV2_CPU_KERNEL_H_

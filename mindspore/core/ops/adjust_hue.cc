@@ -29,6 +29,11 @@ namespace {
 abstract::ShapePtr AdjustHueInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto input_shape_images = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  // support dynamic rank and dynamic shape.
+  if (IsDynamic(input_shape_images)) {
+    return std::make_shared<abstract::Shape>(input_shape_images);
+  }
+
   const int64_t min_dim = 3;
   (void)CheckAndConvertUtils::CheckInteger("dimension of image", SizeToLong(input_shape_images.size()), kGreaterEqual,
                                            min_dim, prim_name);

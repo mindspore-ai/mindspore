@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADJUST_SATURATION_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADJUST_SATURATION_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DECIVE_CPU_ADJUST_SATURATION_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DECIVE_CPU_ADJUST_SATURATION_CPU_KERNEL_H_
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class AdjustSaturationCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdjustSaturationCpuKernelMod : public NativeCpuKernelMod {
  public:
   AdjustSaturationCpuKernelMod() = default;
   ~AdjustSaturationCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs);
@@ -40,4 +41,4 @@ class AdjustSaturationCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADJUST_SATURATION_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DECIVE_CPU_ADJUST_SATURATION_CPU_KERNEL_H_

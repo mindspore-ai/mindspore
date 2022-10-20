@@ -62,7 +62,7 @@ bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vecto
   T *input{static_cast<T *>(inputs[0]->addr)};
   std::float_t *contrast_factor{static_cast<std::float_t *>(inputs[1]->addr)};
   T *output{static_cast<T *>(outputs[0]->addr)};
-  std::vector<int64_t> x_dim_sizes = images_shape;
+  std::vector<int64_t> x_dim_sizes = images_shape_;
   std::size_t n{x_dim_sizes.size()};
   std::size_t per_batch_elements{LongToSize(x_dim_sizes[n - 1] * x_dim_sizes[n - 2] * x_dim_sizes[n - 3])};
   MS_EXCEPTION_IF_ZERO("per_batch_elements", per_batch_elements);
@@ -78,22 +78,32 @@ bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vecto
   });
 }
 
-void AdjustContrastv2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<int64_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  images_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({output_shape, images_shape})) {
-    return;
+bool AdjustContrastv2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdjustContrastv2InputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdjustContrastv2OutputNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  if (images_shape != output_shape) {
-    MS_LOG(EXCEPTION) << "For AdjustContrastv2, the data type of the input " << images_shape
-                      << "need be the same as the output " << output_shape << ".";
+  input_type_ = inputs[kIndex0]->GetDtype();
+  return true;
+}
+
+int AdjustContrastv2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kAdjustContrastv2InputNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kAdjustContrastv2OutputNum, kernel_name_);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  images_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 bool AdjustContrastv2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

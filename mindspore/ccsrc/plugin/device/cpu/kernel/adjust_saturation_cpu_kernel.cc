@@ -151,14 +151,21 @@ bool LaunchAdjustSaturationKernel(const std::vector<AddressPtr> &inputs, const s
 }
 }  // namespace detail
 
-void AdjustSaturationCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kAdjustSaturationTwo, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kAdjustSaturationOne, kernel_name_);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool AdjustSaturationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdjustSaturationTwo, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdjustSaturationOne, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  input_type_ = inputs[kIndex0]->GetDtype();
+  return true;
 }
 
 bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

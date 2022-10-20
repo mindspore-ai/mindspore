@@ -31,6 +31,10 @@ abstract::ShapePtr AdjustSaturationInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto input_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  // support dynamic rank and dynamic shape.
+  if (IsDynamic(input_image_shape)) {
+    return std::make_shared<abstract::Shape>(input_image_shape);
+  }
   auto input_scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   const int64_t min_image_dim = 3;
   const int64_t scale_dim = 0;
