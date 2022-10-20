@@ -37,11 +37,11 @@ mindspore.dataset
   `GeneratorDataset` 实现Python层自定义数据集的加载，同时加载类方法可以使用多种Sampler、数据分片、数据shuffle等功能；
 - 数据集操作（filter/ skip）：用户通过数据集对象方法 `.shuffle` / `.filter` / `.skip` / `.split` /
   `.take` / … 来实现数据集的进一步混洗、过滤、跳过、最多获取条数等操作；
-- 数据集样本增强操作（map）：用户可以将数据增强算子
+- 数据集样本增强操作（map）：用户可以将数据增强操作
   （`vision类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.vision.html>`_，
   `nlp类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.text.html>`_，
   `audio类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.audio.html>`_）
-  添加到map操作来执行，数据预处理过程中可以定义多个map操作，用于执行不同增强操作，数据增强算子也可以是
+  添加到map操作中执行，数据预处理过程中可以定义多个map操作，用于执行不同增强操作，数据增强操作也可以是
   用户自定义增强的 `PyFunc`；
 - 批（batch）：用户在样本完成增强后，使用 `.batch` 操作将多个样本组织成batch，也可以通过batch的参数 `per_batch_map`
   来自定义batch逻辑；

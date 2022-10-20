@@ -15,7 +15,7 @@ mindspore.dataset.vision.AutoAugment
           - **AutoAugmentPolicy.CIFAR10**：表示应用在Cifar10数据集上学习的AutoAugment。
           - **AutoAugmentPolicy.SVHN**：表示应用在SVHN数据集上学习的AutoAugment。
 
-        - **interpolation** (Inter, 可选) - 调整大小算子的图像插值模式，默认值：Inter.NEAREST。
+        - **interpolation** (Inter, 可选) - 图像插值方式，默认值：Inter.NEAREST。
 
           可以是[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA]中的任何一个。
 

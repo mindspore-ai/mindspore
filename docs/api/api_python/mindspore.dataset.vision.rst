@@ -19,14 +19,14 @@ API样例中常用的导入模块如下：
     import mindspore.dataset.vision.py_transforms as py_vision
     from mindspore.dataset.transforms import c_transforms
 
-更多详情请参考 `图像数据加载与增强 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/augment_image_data.html>`_。
+更多详情请参考 `视觉数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#vision-transforms>`_。
 
 常用数据处理术语说明如下：
 
 - TensorOperation，所有C++实现的数据处理操作的基类。
 - PyTensorOperation，所有Python实现的数据处理操作的基类。
 
-数据增强算子可以放入数据处理Pipeline中执行，也可以Eager模式执行：
+数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
 - Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_。
 - Eager模式一般用于零散样本，图像预处理举例如下：

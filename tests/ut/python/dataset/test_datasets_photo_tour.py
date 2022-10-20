@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test PhotoTour dataset operator
+Test PhotoTour dataset operations
 """
 import os
 

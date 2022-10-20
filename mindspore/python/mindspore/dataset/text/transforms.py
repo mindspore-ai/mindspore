@@ -31,7 +31,7 @@ Examples:
     >>> tokenizer = text.UnicodeCharTokenizer()
     >>> # Load vocabulary from list
     >>> vocab = text.Vocab.from_list(word_list=['深', '圳', '欢', '迎', '您'])
-    >>> # Use Lookup operator to map tokens to ids
+    >>> # Use Lookup operation to map tokens to ids
     >>> lookup = text.Lookup(vocab=vocab)
     >>> text_file_dataset = text_file_dataset.map(operations=[tokenizer, lookup])
     >>> # if text line in dataset_file is:
@@ -294,7 +294,7 @@ class Lookup(TextTensorOperation):
     Examples:
         >>> # Load vocabulary from list
         >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
-        >>> # Use Lookup operator to map tokens to ids
+        >>> # Use Lookup operation to map tokens to ids
         >>> lookup = text.Lookup(vocab)
         >>> text_file_dataset = text_file_dataset.map(operations=[lookup])
     """
@@ -551,7 +551,7 @@ class ToVectors(TextTensorOperation):
     Examples:
         >>> # Load vectors from file
         >>> vectors = text.Vectors.from_file("/path/to/vectors/file")
-        >>> # Use ToVectors operator to map tokens to vectors
+        >>> # Use ToVectors operation to map tokens to vectors
         >>> to_vectors = text.ToVectors(vectors)
         >>> text_file_dataset = text_file_dataset.map(operations=[to_vectors])
     """

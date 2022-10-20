@@ -205,7 +205,7 @@ def set_num_parallel_workers(num):
 
     Examples:
         >>> # Set a new global configuration value for the number of parallel workers.
-        >>> # Now parallel dataset operators will run with 8 workers.
+        >>> # Now parallel dataset operations will run with 8 workers.
         >>> ds.config.set_num_parallel_workers(8)
     """
     if not isinstance(num, int) or isinstance(num, bool):
@@ -244,7 +244,7 @@ def set_numa_enable(numa_enable):
 
     Examples:
         >>> # Set a new global configuration value for the state of numa enabled.
-        >>> # Now parallel dataset operators will run with numa bind function
+        >>> # Now parallel dataset operations will run with numa bind function
         >>> ds.config.set_numa_enable(True)
     """
     if not isinstance(numa_enable, bool):
@@ -613,13 +613,13 @@ def get_enable_shared_mem():
 def set_enable_shared_mem(enable):
     """
     Set the default state of shared memory flag. If shared_mem_enable is True, will use shared memory queues
-    to pass data to processes that are created for operators that set python_multiprocessing=True.
+    to pass data to processes that are created for operations that set python_multiprocessing=True.
 
     Note:
         `set_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
 
     Args:
-        enable (bool): Whether to use shared memory in operators when python_multiprocessing=True.
+        enable (bool): Whether to use shared memory in operations when python_multiprocessing=True.
 
     Raises:
         TypeError: If `enable` is not a boolean data type.

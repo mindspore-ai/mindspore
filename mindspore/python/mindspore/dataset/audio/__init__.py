@@ -37,7 +37,7 @@ Descriptions of common data processing terms are as follows:
 - TensorOperation, the base class of all data processing operations implemented in C++.
 - AudioTensorOperation, the base class of all audio processing operations. It is a derived class of TensorOperation.
 
-The data transform operator can be executed in the data processing pipeline or in the eager mode:
+The data transform operation can be executed in the data processing pipeline or in the eager mode:
 
 - Pipeline mode is generally used to process datasets. For examples, please refer to
   `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/

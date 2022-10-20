@@ -228,7 +228,7 @@ def _get_operator_process():
     Inner implemented method, mainly for passing sub-process id in C layer
 
     Returns:
-         dict, mapping dict of operator id and corresponding process id.
+         dict, mapping dict of operation id and corresponding process id.
     """
     global _OP_PROCESS
     process_info = _OP_PROCESS
@@ -284,20 +284,20 @@ class Dataset:
                                                                      |
                                                               MappableDataset
 
-    DatasetOperator: MapDataset(UnionBaseDataset)
-                     BatchDataset(UnionBaseDataset)
-                     PaddedBatchDataset(UnionBaseDataset)
-                     BucketBatchByLengthDataset(UnionBaseDataset)
-                     ShuffleDataset(UnionBaseDataset)
-                     FilterDataset(UnionBaseDataset)
-                     RepeatDataset(UnionBaseDataset)
-                     SkipDataset(UnionBaseDataset)
-                     TakeDataset(UnionBaseDataset)
-                     ZipDataset(UnionBaseDataset)
-                     ConcatDataset(UnionBaseDataset)
-                     RenameDataset(UnionBaseDataset)
-                     ProjectDataset(UnionBaseDataset)
-                     SyncWaitDataset(UnionBaseDataset)
+    DatasetOperation: MapDataset(UnionBaseDataset)
+                      BatchDataset(UnionBaseDataset)
+                      PaddedBatchDataset(UnionBaseDataset)
+                      BucketBatchByLengthDataset(UnionBaseDataset)
+                      ShuffleDataset(UnionBaseDataset)
+                      FilterDataset(UnionBaseDataset)
+                      RepeatDataset(UnionBaseDataset)
+                      SkipDataset(UnionBaseDataset)
+                      TakeDataset(UnionBaseDataset)
+                      ZipDataset(UnionBaseDataset)
+                      ConcatDataset(UnionBaseDataset)
+                      RenameDataset(UnionBaseDataset)
+                      ProjectDataset(UnionBaseDataset)
+                      SyncWaitDataset(UnionBaseDataset)
 
     Impl Dataset - vision:       ImageFolderDataset(MappableDataset, VisionBaseDataset)
                                  USPSDataset(SourceDataset, VisionBaseDataset)
@@ -349,7 +349,7 @@ class Dataset:
     @staticmethod
     def _get_operator_id(dataset):
         """
-        Internal method to iterate the tree and obtain op_id of each operator.
+        Internal method to iterate the tree and obtain op_id of each operation.
 
         Returns:
             Dataset, the root dataset of the tree.
@@ -733,7 +733,7 @@ class Dataset:
             Dataset, dataset shuffled.
 
         Raises:
-            RuntimeError: If exist sync operators before shuffle.
+            RuntimeError: If exist sync operations before shuffle.
 
         Examples:
             >>> # dataset is an instance object of Dataset
@@ -808,7 +808,7 @@ class Dataset:
 
         Each operation will be passed one or more columns from the dataset as input, and one or
         more columns will be outputted. The first operation will be passed the columns specified
-        in input_columns as input. If there is more than one operator in operations, the outputted
+        in input_columns as input. If there is more than one operation in operations, the outputted
         columns of the previous operation are used as the input columns for the next operation.
 
         The columns outputted by the very last operation will be assigned names specified by
@@ -831,7 +831,7 @@ class Dataset:
                 applied on the dataset. Operations are applied in the order they appear in this list.
             input_columns (Union[str, list[str]], optional): List of the names of the columns that will be passed to
                 the first operation as input. The size of this list must match the number of
-                input columns expected by the first operator. (default=None, the first
+                input columns expected by the first operation. (default=None, the first
                 operation will be passed however many columns that are required, starting from
                 the first column).
             output_columns (Union[str, list[str]], optional): List of names assigned to the columns outputted by
@@ -980,7 +980,7 @@ class Dataset:
             >>> dataset = dataset.repeat(50)
             >>>
             >>> # Create a dataset where the dataset is first repeated for
-            >>> # 50 epochs before shuffling. The shuffle operator will treat
+            >>> # 50 epochs before shuffling. The shuffle operation will treat
             >>> # the entire 50 epochs as one big dataset.
             >>> dataset = dataset.repeat(50)
             >>> dataset = dataset.shuffle(10)
@@ -1374,8 +1374,8 @@ class Dataset:
 
         Note:
             1. To save the samples in order, set dataset's shuffle to False and num_files to 1.
-            2. Before calling the function, do not use batch operator, repeat operator or data augmentation operators
-               with random attribute in map operator.
+            2. Before calling the function, do not use batch operation, repeat operation or data augmentation operations
+               with random attribute in map operation.
             3. When array dimension is variable, one-dimensional arrays or
                multi-dimensional arrays with variable dimension 0 are supported.
             4. Mindrecord does not support uint64, multi-dimensional uint8(drop dimension) nor
@@ -1819,7 +1819,7 @@ class Dataset:
             condition_name (str): The condition name that is used to toggle sending next row.
             num_batch (Union[int, None]): The number of batches (rows) that are released.
                 When num_batch is None, it will default to the number specified by the
-                sync_wait operator (default=None).
+                sync_wait operation (default=None).
             data (Any): The data passed to the callback, user defined (default=None).
         """
         if (not isinstance(num_batch, int) and num_batch is not None) or \
@@ -2339,7 +2339,7 @@ class MappableDataset(SourceDataset):
 
 class BucketBatchByLengthDataset(UnionBaseDataset):
     """
-    The result of applying BucketBatchByLength operator to the input dataset.
+    The result of applying BucketBatchByLength operation to the input dataset.
     """
 
     def __init__(self, input_dataset, column_names, bucket_boundaries, bucket_batch_sizes, element_length_function,
@@ -2390,7 +2390,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
 
 class BatchDataset(UnionBaseDataset):
     """
-    The result of applying Batch operator to the input dataset.
+    The result of applying Batch operation to the input dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be batched.
@@ -2515,7 +2515,7 @@ class BatchDataset(UnionBaseDataset):
 
 class BatchInfo(cde.CBatchInfo):
     """
-    Only the batch size function and per_batch_map of the batch operator can dynamically adjust parameters
+    Only the batch size function and per_batch_map of the batch operation can dynamically adjust parameters
     based on the number of batches and epochs during training.
     """
 
@@ -2603,7 +2603,7 @@ class BlockReleasePair:
 
 class PaddedBatchDataset(UnionBaseDataset):
     """
-    The result of applying Batch operator to the input dataset.
+    The result of applying Batch operation to the input dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be batched.
@@ -2746,14 +2746,14 @@ class SyncWaitDataset(UnionBaseDataset):
 
 class ShuffleDataset(UnionBaseDataset):
     """
-    The result of applying Shuffle operator to the input Dataset.
+    The result of applying Shuffle operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be shuffled.
         buffer_size (int): Size of the buffer.
 
     Raises:
-        RuntimeError: If exist sync operators before shuffle.
+        RuntimeError: If exist sync operations before shuffle.
     """
 
     def __init__(self, input_dataset, buffer_size):
@@ -3280,7 +3280,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
 class MapDataset(UnionBaseDataset):
     """
-    The result of applying the Map operator to the input Dataset.
+    The result of applying the Map operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
@@ -3288,9 +3288,9 @@ class MapDataset(UnionBaseDataset):
             to another nested structure of tensor (default=None).
         input_columns (Union[str, list[str]]): List of names of the input columns
             (default=None, the operations will be applied on the first columns in the dataset).
-            The size of the list should match the number of inputs of the first operator.
+            The size of the list should match the number of inputs of the first operation.
         output_columns (Union[str, list[str]], optional): List of names of the output columns.
-            The size of the list should match the number of outputs of the last operator
+            The size of the list should match the number of outputs of the last operation
             (default=None, output columns will be the input columns, i.e., the columns will
             be replaced).
         num_parallel_workers (int, optional): Number of workers to process the dataset
@@ -3505,7 +3505,7 @@ class FilterDataset(UnionBaseDataset):
 
 class RepeatDataset(UnionBaseDataset):
     """
-    The result of applying Repeat operator to the input Dataset.
+    The result of applying Repeat operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be repeated.
@@ -3522,7 +3522,7 @@ class RepeatDataset(UnionBaseDataset):
 
 class SkipDataset(UnionBaseDataset):
     """
-    The result of applying Skip operator to the input Dataset.
+    The result of applying Skip operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input dataset to have elements skipped.
@@ -3539,7 +3539,7 @@ class SkipDataset(UnionBaseDataset):
 
 class TakeDataset(UnionBaseDataset):
     """
-    The result of applying Take operator to the input Dataset.
+    The result of applying Take operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to have elements taken from.
@@ -3556,7 +3556,7 @@ class TakeDataset(UnionBaseDataset):
 
 class ZipDataset(UnionBaseDataset):
     """
-    The result of applying Zip operator to the input Dataset.
+    The result of applying Zip operation to the input Dataset.
 
     Args:
         datasets (tuple): A tuple of datasets to be zipped together.
@@ -3577,7 +3577,7 @@ class ZipDataset(UnionBaseDataset):
 
 class ConcatDataset(UnionBaseDataset):
     """
-    The result of applying concat dataset operator to the input Dataset.
+    The result of applying Concat operation to the input Dataset.
 
     Args:
         datasets (list): A list of datasets to be concatenated together.
@@ -3688,7 +3688,7 @@ class ConcatDataset(UnionBaseDataset):
 
 class RenameDataset(UnionBaseDataset):
     """
-    The result of applying Rename operator to the input Dataset.
+    The result of applying Rename operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be Renamed.
@@ -3717,7 +3717,7 @@ def to_list(items):
 
 class ProjectDataset(UnionBaseDataset):
     """
-    The result of applying Project operator to the input Dataset.
+    The result of applying Project operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be Projected.
@@ -3796,7 +3796,7 @@ class _ToDevice:
 
 class TransferDataset(Dataset):
     """
-    The result of applying TDT operator to the input Dataset.
+    The result of applying TDT operation to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be transferred.

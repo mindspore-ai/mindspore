@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test QMnistDataset operator
+Test QMnistDataset operations
 """
 import os
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Gtzan dataset operators.
+Test Gtzan dataset operations.
 """
 import numpy as np
 import pytest

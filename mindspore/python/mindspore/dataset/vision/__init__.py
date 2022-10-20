@@ -31,8 +31,8 @@ Note: Legacy c_transforms and py_transforms are deprecated but can still be impo
     import mindspore.dataset.vision.c_transforms as c_vision
     import mindspore.dataset.vision.py_transforms as py_vision
 
-See `Image Data Processing and Augmentation
-<https://www.mindspore.cn/tutorials/en/master/advanced/dataset/augment_image_data.html>`_ tutorial for more details.
+See `Vision Transforms
+<https://www.mindspore.cn/tutorials/en/master/beginner/transforms.html#vision-transforms>`_ tutorial for more details.
 
 Descriptions of common data processing terms are as follows:
 
@@ -40,7 +40,7 @@ Descriptions of common data processing terms are as follows:
 - ImageTensorOperation, the base class of all image processing operations. It is a derived class of TensorOperation.
 - PyTensorOperation, the base class of all data processing operations implemented in Python.
 
-The data transform operator can be executed in the data processing pipeline or in the eager mode:
+The data transform operation can be executed in the data processing pipeline or in the eager mode:
 
 - Pipeline mode is generally used to process datasets. For examples, please refer to
   `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/

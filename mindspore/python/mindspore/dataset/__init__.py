@@ -54,12 +54,12 @@ The specific steps are as follows:
   accept a variety of parameters such as sampler, data slicing, and data shuffle;
 - Dataset operation: The user uses the dataset object method `.shuffle` / `.filter` / `.skip` / `.split` /
   `.take` / ... to further shuffle, filter, skip, and obtain the maximum number of samples of datasets;
-- Dataset sample transform operation: The user can add data transform operators
+- Dataset sample transform operation: The user can add data transform operations
   (`vision transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_,
   `NLP transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_,
   `audio transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_) to the map
   operation to perform transformations. During data preprocessing, multiple map operations can be defined to
-  perform different transform operations to different fields. The data transform operator can also be a
+  perform different transform operations to different fields. The data transform operation can also be a
   user-defined transform `pyfunc` (Python function);
 - Batch: After the transformation of the samples, the user can use the batch operation to organize multiple samples
   into batches, or use self-defined batch logic with the parameter `per_batch_map` applied;

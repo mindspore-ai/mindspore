@@ -75,7 +75,7 @@ int32_t DATASET_API get_prefetch_size();
 /// \par Example
 /// \code
 ///     // Set a new global configuration value for the number of parallel workers.
-///     // Now parallel dataset operators will run with 16 workers.
+///     // Now parallel dataset operations will run with 16 workers.
 ///     bool rc = config::set_num_parallel_workers(16);
 /// \endcode
 bool DATASET_API set_num_parallel_workers(int32_t num_parallel_workers);

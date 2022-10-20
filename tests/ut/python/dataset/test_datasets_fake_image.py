@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test FakeImage dataset operators
+Test FakeImage dataset operations
 """
 
 import matplotlib.pyplot as plt

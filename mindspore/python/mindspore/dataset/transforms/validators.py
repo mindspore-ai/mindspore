@@ -245,7 +245,7 @@ def check_random_transform_ops(method):
 
 
 def check_transform_op_type(ind, op):
-    """Check the operator."""
+    """Check the operation."""
     # c_vision.HWC2CHW error
     # py_vision.HWC2CHW error
     if type(op) == type:  # pylint: disable=unidiomatic-typecheck
@@ -389,22 +389,22 @@ def check_type_cast(method):
 
 
 def deprecated_c_transforms(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.c_transforms operator.
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.c_transforms operation.
 
     Args:
-        substitute_name (str, optional): The substitute name for deprecated operator.
-        substitute_module (str, optional): The substitute module for deprecated operator.
+        substitute_name (str, optional): The substitute name for deprecated operation.
+        substitute_module (str, optional): The substitute module for deprecated operation.
     """
     return deprecator_factory("1.8", "mindspore.dataset.transforms.c_transforms", "mindspore.dataset.transforms",
                               substitute_name, substitute_module)
 
 
 def deprecated_py_transforms(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.py_transforms operator.
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.py_transforms operation.
 
     Args:
-        substitute_name (str, optional): The substitute name for deprecated operator.
-        substitute_module (str, optional): The substitute module for deprecated operator.
+        substitute_name (str, optional): The substitute name for deprecated operation.
+        substitute_module (str, optional): The substitute module for deprecated operation.
     """
     return deprecator_factory("1.8", "mindspore.dataset.transforms.py_transforms", "mindspore.dataset.transforms",
                               substitute_name, substitute_module)

@@ -935,7 +935,7 @@ def check_lfw_dataset(method):
 
 
 def check_save(method):
-    """A wrapper that wraps a parameter checker around the saved operator."""
+    """A wrapper that wraps a parameter checker around the saved operation."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -3021,8 +3021,8 @@ def deprecated(version, substitute=None):
     """deprecated warning
 
     Args:
-        version (str): version that the operator or function is deprecated.
-        substitute (str): the substitute name for deprecated operator or function.
+        version (str): version that the operation or function is deprecated.
+        substitute (str): the substitute name for deprecated operation or function.
     """
 
     def decorate(func):

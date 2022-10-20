@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Caltech101 dataset operators
+Test Caltech101 dataset operations
 """
 import os
 

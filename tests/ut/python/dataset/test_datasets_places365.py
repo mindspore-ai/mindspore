@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Places365 dataset operators
+Test Places365 dataset operations
 """
 import os
 

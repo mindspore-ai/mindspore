@@ -17,7 +17,7 @@ mindspore.dataset.transforms
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
-更多详情请参考 `通用数据处理与增强 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/augment_common_data.html>`_ 。
+更多详情请参考 `通用数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#common-transforms>`_ 。
 
 常用数据处理术语说明如下：
 

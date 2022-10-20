@@ -2559,7 +2559,7 @@ TEST_F(MindDataTestPipeline, TestPosterizeParamCheck) {
 }
 
 /// Feature：AdjustHue op
-/// Description: Test function of operator when hue_factor is 0.2
+/// Description: Test function of operation when hue_factor is 0.2
 /// Expectation: Create an ImageFolder dataset then do auto AjustHue on it
 TEST_F(MindDataTestPipeline, TestAdjustHue) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustHue.";

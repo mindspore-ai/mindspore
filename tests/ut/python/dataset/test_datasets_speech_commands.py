@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test SpeechCommands dataset operators
+Test SpeechCommands dataset operations
 """
 import pytest
 import numpy as np

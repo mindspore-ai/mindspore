@@ -14,12 +14,14 @@ mindspore.dataset.text
     import mindspore.dataset as ds
     from mindspore.dataset import text
 
+更多详情请参考 `文本数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#text-transforms>`_。
+
 常用数据处理术语说明如下：
 
 - TensorOperation，所有C++实现的数据处理操作的基类。
 - TextTensorOperation，所有文本数据处理操作的基类，派生自TensorOperation。
 
-数据增强算子可以放入数据处理Pipeline中执行，也可以Eager模式执行：
+数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
 - Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_。
 - Eager模式一般用于零散样本，文本预处理举例如下：

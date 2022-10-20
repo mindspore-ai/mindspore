@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test FashionMnist dataset operators
+Test FashionMnist dataset operations
 """
 
 import os

@@ -68,7 +68,7 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree1) {
   ASSERT_NE(root_op, nullptr);
 
   // At this point, since move semantic was used,
-  // I don't have any operator access myself now.
+  // I don't have any operation access myself now.
   // Ownership is fully transferred into the tree.
 
   // explicitly drive tree destruction rather than

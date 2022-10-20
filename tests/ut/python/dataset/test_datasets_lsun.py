@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test LSUN dataset operators
+Test LSUN dataset operations
 """
 import pytest
 

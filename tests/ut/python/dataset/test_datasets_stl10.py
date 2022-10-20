@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test STL10 dataset operators
+Test STL10 dataset operations
 """
 import os
 

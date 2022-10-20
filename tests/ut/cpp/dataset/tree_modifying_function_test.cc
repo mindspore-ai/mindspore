@@ -439,8 +439,8 @@ TEST_F(MindDataTestTreeModifying, Drop03) {
    *    ds7  ds3  ds2
    *
    *
-   *   ds4->Drop() will raise an error because we cannot add the children of an n-ary operator (ds4) to a unary operator
-   *   (ds6).
+   *   ds4->Drop() will raise an error because we cannot add the children of an n-ary operation (ds4) to a unary
+   *   operation (ds6).
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";

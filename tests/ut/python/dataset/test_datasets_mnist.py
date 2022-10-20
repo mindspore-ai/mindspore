@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Test Mnist dataset operators
+Test Mnist dataset operations
 """
 import os
 import pytest

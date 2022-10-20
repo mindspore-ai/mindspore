@@ -43,7 +43,7 @@ def test_fade_linear():
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["audio"]
-    # The result of the reference operator
+    # The result of the reference operation
     expected_output = np.array([[0.0000000000000000000, 6.781666797905927e-06, 1.356333359581185e-05,
                                  2.034499993897043e-05, 5.425333438324742e-05, 6.781666888855398e-05,
                                  6.103533087298274e-05, 7.120789086911827e-05, 8.138045086525380e-05,
@@ -72,7 +72,7 @@ def test_fade_exponential():
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["audio"]
-    # The result of the reference operator
+    # The result of the reference operation
     expected_output = np.array([[0.0000, 0.2071, 0.4823, 0.6657, 0.5743, 0.0000],
                                 [0.0000, 0.7247, 0.4823, 12.9820, 0.9190, 0.0000]], dtype=np.float32)
     assert np.mean(out_put - expected_output) < 0.0001
@@ -96,7 +96,7 @@ def test_fade_logarithmic():
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["audio"]
-    # The result of the reference operator
+    # The result of the reference operation
     expected_output = np.array([[0.0000e+00, 9.4048e-03, 4.4193e-02,
                                  -2.0599e-02, -3.5647e-02, 1.5389e-09]],
                                dtype=np.float32)
@@ -122,7 +122,7 @@ def test_fade_quarter_sine():
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["audio"]
-    # The result of the reference operator
+    # The result of the reference operation
     expected_output = np.array([[0.0000, 0.5878, 1.4266, 1.9021, 1.4695, 0.0000],
                                 [0.0000, 2.0572, 1.4266, 37.091, 2.3511, 0.0000],
                                 [0.0000, 0.5878, 1.4266, 1.9021, 1.4695, 0.0000]], dtype=np.float64)
@@ -149,7 +149,7 @@ def test_fade_half_sine():
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["audio"]
-    # The result of the reference operator
+    # The result of the reference operation
     expected_output = np.array([[0.0000, 0.0068, -0.0119, -0.0206, -0.0052, 0.0000],
                                 [0.0000, 0.0303, 0.0500, 0.0131, -0.0098, -0.0000]], dtype=np.float32)
     assert np.mean(out_put - expected_output) < 0.0001
