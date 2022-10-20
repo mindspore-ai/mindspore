@@ -144,6 +144,7 @@ constexpr auto kTriuIndices = "TriuIndices";
 constexpr auto kTrilIndices = "TrilIndices";
 constexpr auto kTrace = "Trace";
 constexpr auto kTraceGrad = "TraceGrad";
+constexpr auto kMatrixLogarithm = "MatrixLogarithm";
 
 // Arrays
 constexpr auto kLeftShift = "LeftShift";
@@ -1286,6 +1287,7 @@ GVAR_DEF(PrimitivePtr, kPrimTriuIndices, std::make_shared<Primitive>("TriuIndice
 GVAR_DEF(PrimitivePtr, kPrimTrilIndices, std::make_shared<Primitive>("TrilIndices"));
 GVAR_DEF(PrimitivePtr, kPrimEig, std::make_shared<Primitive>("Eig"));
 GVAR_DEF(PrimitivePtr, kPrimQr, std::make_shared<Primitive>("Qr"));
+GVAR_DEF(PrimitivePtr, kPrimMatrixLogarithm, std::make_shared<Primitive>(kMatrixLogarithm));
 
 // linalg
 GVAR_DEF(PrimitivePtr, kPrimGeqrf, std::make_shared<Primitive>("Geqrf"));
