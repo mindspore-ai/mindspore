@@ -19,18 +19,23 @@
 
 #include <vector>
 #include <memory>
-
+#include <map>
+#include "ops/tril.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class TrilCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class TrilCpuKernelMod : public NativeCpuKernelMod {
  public:
   TrilCpuKernelMod() = default;
   ~TrilCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -42,7 +47,7 @@ class TrilCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   int64_t diagonal_{0};
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   size_t input_dims_{0};
   TypeId dtype_{kTypeUnknown};
 };

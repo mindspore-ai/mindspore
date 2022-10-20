@@ -27,21 +27,30 @@ constexpr size_t kTriuOutputsNum = 1;
 constexpr size_t kDim = 2;
 }  // namespace
 
-void TriuCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool TriuCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  input_dtype_ = inputs.at(kIndex0)->GetDtype();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Triu>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  diagonal_ = kernel_ptr->get_diagonal();
+  return true;
+}
 
+int TriuCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   input_dims_ = input_shape_.size();
   if (input_dims_ < kDim) {
     MS_LOG(EXCEPTION)
       << "For Triu, the input tensor's rank must be at least 2 for 'Triu' Op, but input tensor's rank is "
       << input_dims_ << ".";
   }
-  if (common::AnfAlgo::HasNodeAttr("diagonal", kernel_node)) {
-    diagonal_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "diagonal");
-  }
+  return KRET_OK;
 }
 
 template <typename T>

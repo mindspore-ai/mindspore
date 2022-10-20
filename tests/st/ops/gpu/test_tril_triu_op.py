@@ -17,12 +17,14 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 
 
 class TrilNet(nn.Cell):
+
     def __init__(self, nptype, diagonal):
         super(TrilNet, self).__init__()
         self.tril = P.Tril(diagonal=diagonal)
@@ -34,7 +36,28 @@ class TrilNet(nn.Cell):
         return self.tril(self.x_ms)
 
 
+class TrilDynNet(nn.Cell):
+
+    def __init__(self, diagonal=0):
+        super(TrilDynNet, self).__init__()
+        self.op = P.Tril(diagonal=diagonal)
+
+    def construct(self, x):
+        return self.op(x)
+
+
+class TriuDynNet(nn.Cell):
+
+    def __init__(self, diagonal=0):
+        super(TriuDynNet, self).__init__()
+        self.op = P.Triu(diagonal=diagonal)
+
+    def construct(self, x):
+        return self.op(x)
+
+
 class TriuNet(nn.Cell):
+
     def __init__(self, nptype, diagonal):
         super(TriuNet, self).__init__()
         self.triu = P.Triu(diagonal=diagonal)
@@ -68,6 +91,54 @@ def tril_triu_pynative(nptype, diagonal):
     triu_expect = np.triu(triu_.x_np, diagonal).astype(nptype)
     assert (tril_output.asnumpy() == tril_expect).all()
     assert (triu_output.asnumpy() == triu_expect).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_tril_dyn():
+    """
+    Feature: test Tril op in gpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    for i in range(-1, 2, 1):
+        net = TrilDynNet(diagonal=i)
+        x_dyn = Tensor(shape=[None, None], dtype=ms.float32)
+        net.set_inputs(x_dyn)
+
+        x = Tensor(
+            [[1, 2, 3, 4], [5, 6, 7, 8], [10, 11, 12, 13], [14, 15, 16, 17]],
+            dtype=ms.float32)
+        out = net(x)
+
+        expect_shape = (4, 4)
+        assert out.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_triu_dyn():
+    """
+    Feature: test Triu op in gpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    for i in range(-1, 2, 1):
+        net = TriuDynNet(diagonal=i)
+        x_dyn = Tensor(shape=[None, None], dtype=ms.float32)
+        net.set_inputs(x_dyn)
+
+        x = Tensor(
+            [[1, 2, 3, 4], [5, 6, 7, 8], [10, 11, 12, 13], [14, 15, 16, 17]],
+            dtype=ms.float32)
+        out = net(x)
+
+        expect_shape = (4, 4)
+        assert out.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level1

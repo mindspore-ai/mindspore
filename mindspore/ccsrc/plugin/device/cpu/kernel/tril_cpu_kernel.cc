@@ -29,20 +29,29 @@ constexpr size_t kTrilOutputsNum = 1;
 constexpr size_t kDim = 2;
 }  // namespace
 
-void TrilCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool TrilCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs.at(kIndex0)->GetDtype();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Tril>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  diagonal_ = kernel_ptr->get_diagonal();
+  return true;
+}
 
+int TrilCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
   input_dims_ = input_shape_.size();
   if (input_dims_ < kDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be at least 1-D, but got "
                       << input_dims_ << "-D.";
   }
-  if (common::AnfAlgo::HasNodeAttr("diagonal", kernel_node)) {
-    diagonal_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "diagonal");
-  }
+  return KRET_OK;
 }
 
 bool TrilCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
