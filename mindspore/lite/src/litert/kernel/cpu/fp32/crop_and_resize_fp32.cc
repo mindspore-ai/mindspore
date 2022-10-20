@@ -42,6 +42,7 @@ int CropAndResizeCPUKernel::Prepare() {
                   [](const auto &in_tensor) { return in_tensor == nullptr; })) {
     return RET_NULL_PTR;
   }
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -138,13 +139,10 @@ int CropAndResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale
 
 int CropAndResizeCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
-  CHECK_NOT_EQUAL_RETURN(input->data_type(), kNumberTypeFloat32);
   auto input_data = reinterpret_cast<float *>(input->data());
   CHECK_NULL_RETURN(input_data);
-  CHECK_NOT_EQUAL_RETURN(in_tensors_.at(kBoxIndex)->data_type(), kNumberTypeFloat32);
   auto boxes = reinterpret_cast<float *>(in_tensors_.at(kBoxIndex)->data());
   CHECK_NULL_RETURN(boxes);
-  CHECK_NOT_EQUAL_RETURN(in_tensors_.at(kBoxIdIndex)->data_type(), kNumberTypeInt32);
   auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(kBoxIdIndex)->data());
   CHECK_NULL_RETURN(box_idx);
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
@@ -167,6 +165,11 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
 }
 
 int CropAndResizeCPUKernel::Run() {
+  // In Prepare() stage, in_tensor[0] may be of fp16 data type in fp16 mode, so move type checks here.
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.at(FIRST_INPUT)->data_type(), kNumberTypeFloat32);
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.at(kBoxIndex)->data_type(), kNumberTypeFloat32);
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.at(kBoxIdIndex)->data_type(), kNumberTypeInt32);
+
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     FreeTmpBuffer();

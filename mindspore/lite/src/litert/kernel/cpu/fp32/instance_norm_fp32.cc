@@ -30,6 +30,14 @@ namespace mindspore::kernel {
 int InstanceNormCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+
+  const auto &input_tensor = in_tensors_[FIRST_INPUT];
+  const auto &gamma_tensor = in_tensors_[SECOND_INPUT];
+  const auto &beta_tensor = in_tensors_[THIRD_INPUT];
+  CHECK_NOT_EQUAL_RETURN(input_tensor->data_type(), kNumberTypeFloat32);
+  CHECK_NOT_EQUAL_RETURN(gamma_tensor->data_type(), kNumberTypeFloat32);
+  CHECK_NOT_EQUAL_RETURN(beta_tensor->data_type(), kNumberTypeFloat32);
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -37,7 +45,13 @@ int InstanceNormCPUKernel::Prepare() {
 }
 
 int InstanceNormCPUKernel::ReSize() {
-  auto in_tensor = in_tensors_.front();
+  const auto &in_tensor = in_tensors_[FIRST_INPUT];
+  const auto &gamma_tensor = in_tensors_[SECOND_INPUT];
+  const auto &beta_tensor = in_tensors_[THIRD_INPUT];
+  auto channel = in_tensor->Channel();
+  CHECK_NOT_EQUAL_RETURN(gamma_tensor->ElementsNum(), channel);
+  CHECK_NOT_EQUAL_RETURN(beta_tensor->ElementsNum(), channel);
+
   param_->batch_ = in_tensor->Batch();
   MS_CHECK_INT_MUL_NOT_OVERFLOW(in_tensor->Height(), in_tensor->Width(), RET_ERROR);
   param_->inner_size_ = in_tensor->Height() * in_tensor->Width();
