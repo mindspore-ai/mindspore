@@ -43,7 +43,8 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   auto target_lengths_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex3]->BuildShape())[kShape];
 
-  if (IsDynamicRank(log_probs_shape) || IsDynamicRank(targets_shape)) {
+  if (IsDynamicRank(log_probs_shape) || IsDynamicRank(targets_shape) || IsDynamicRank(input_lengths_shape) ||
+      IsDynamicRank(target_lengths_shape)) {
     std::vector<int64_t> dyn_shape = {abstract::Shape::kShapeRankAny};
     abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(dyn_shape);
     abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(dyn_shape);
@@ -58,6 +59,15 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   int64_t C = log_probs_shape[kIndex2];
   int64_t S = targets_shape[kIndex1];
 
+  int64_t padded_S = (S == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (kMulti * S + 1);
+  abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{N});
+  abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{N, T, padded_S});
+
+  if (IsDynamicShape(log_probs_shape) || IsDynamicShape(targets_shape) || IsDynamicShape(input_lengths_shape) ||
+      IsDynamicShape(target_lengths_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{neg_log_shape, log_alpha_shape});
+  }
+
   (void)CheckAndConvertUtils::CheckValue<size_t>("dim of input_lengths", input_lengths_shape.size(), kEqual, kDim1,
                                                  prim_name);
   (void)CheckAndConvertUtils::CheckValue<size_t>("dim of target_lengths", target_lengths_shape.size(), kEqual, kDim1,
@@ -69,10 +79,6 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   auto blank = GetValue<int64_t>(primitive->GetAttr(kAttrBlank));
   CheckAndConvertUtils::CheckInRange(kAttrBlank, blank, kIncludeLeft, {0, C}, prim_name);
 
-  std::vector<int64_t> out_dim0 = {N};
-  std::vector<int64_t> out_dim1 = {N, T, kMulti * S + 1};
-  abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(out_dim0);
-  abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(out_dim1);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{neg_log_shape, log_alpha_shape});
 }
 
