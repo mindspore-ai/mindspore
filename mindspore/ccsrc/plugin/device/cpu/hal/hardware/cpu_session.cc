@@ -392,6 +392,8 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) const {
       auto kernel_attrs = cpu_kernel_mod->GetOpSupport();
       SetCpuRefMapToKernelInfo(kernel_node, kernel_attrs);
       auto args = kernel::AbstractArgsFromCNode(kernel_node);
+      // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
+      // we will put this tensor in args.inputs.data_.
       auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
       kernel::SetInputsByConstInputs(kernel_node, &inputs_tensor_map);
       kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, kernel::KernelModType::NativeCpuKernelMod);

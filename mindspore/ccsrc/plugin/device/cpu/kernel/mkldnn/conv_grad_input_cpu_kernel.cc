@@ -130,8 +130,7 @@ std::vector<KernelAttr> ConvGradInputCpuKernelMod::GetOpSupport() {
         .AddInputAttr(kNumberTypeInt64)
         .AddOutputAttr(kNumberTypeFloat32)}},
     {kConv3DBackpropInput,
-     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr()
+     {KernelAttr()
         .AddInputAttr(kNumberTypeFloat32)
         .AddInputAttr(kNumberTypeFloat32)
         .AddInputAttr(kNumberTypeInt64)

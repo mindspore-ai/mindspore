@@ -23,9 +23,11 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kOneHotInputsNum = 3;
-constexpr size_t kOneHotDynamicInputsNum = 4;
+constexpr size_t kOneHotInputsNum = 4;
 constexpr size_t kOneHotOutputsNum = 1;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
 #define INPUT_COMPUTE_CASE(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)             \
   case (DTYPE): {                                                            \
     switch (ODTYPE) {                                                        \
@@ -64,9 +66,9 @@ constexpr size_t kOneHotOutputsNum = 1;
 }  // namespace
 
 inline void check_input_num(size_t input_num, const std::string &kernel_name) {
-  if (input_num != kOneHotInputsNum && input_num != kOneHotDynamicInputsNum) {
-    MS_LOG_EXCEPTION << "For " << kernel_name << ", input num must be " << kOneHotInputsNum << " or "
-                     << kOneHotDynamicInputsNum << ", but got " << input_num;
+  if (input_num != kOneHotInputsNum) {
+    MS_LOG_EXCEPTION << "For " << kernel_name << ", input num must be " << kOneHotInputsNum << ", but got "
+                     << input_num;
   }
 }
 
@@ -77,7 +79,6 @@ bool OneHotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   auto input_size = inputs.size();
   check_input_num(input_size, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  SetOnValueInputIndex(input_size);
 
   input_dtype_ = inputs[kIndex0]->GetDtype();
   output_dtype_ = outputs[kIndex0]->GetDtype();
@@ -135,18 +136,11 @@ bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   return true;
 }
 
-void OneHotCpuKernelMod::SetOnValueInputIndex(size_t input_num) {
-  constexpr size_t kDynamicOnValueInputIndex = 2;
-  if (input_num == kOneHotDynamicInputsNum) {
-    on_value_input_index_ = kDynamicOnValueInputIndex;
-  }
-}
-
 template <typename ID, typename OD>
 void OneHotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   const auto *indices = reinterpret_cast<ID *>(inputs[0]->addr);
-  auto on_value = reinterpret_cast<OD *>(inputs[on_value_input_index_]->addr)[0];
-  auto off_value = reinterpret_cast<OD *>(inputs[on_value_input_index_ + 1]->addr)[0];
+  auto on_value = reinterpret_cast<OD *>(inputs[kIndex2]->addr)[0];
+  auto off_value = reinterpret_cast<OD *>(inputs[kIndex3]->addr)[0];
   auto *output = reinterpret_cast<OD *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(ID);
   auto task = [this, &indices, &on_value, &off_value, &output](size_t start, size_t end) {

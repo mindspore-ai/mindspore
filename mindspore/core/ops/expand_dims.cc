@@ -92,22 +92,6 @@ TypePtr ExpandDimsInferType(const PrimitivePtr &prim, const std::vector<Abstract
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
 
-  constexpr auto kExpandDimsInputsNum = 2;
-  ValuePtr num_value = nullptr;
-  if (input_args.size() == kExpandDimsInputsNum) {
-    num_value = input_args[kInputIndex1]->BuildValue();
-  } else if (input_args.size() == 1) {
-    num_value = prim->GetAttr("axis");
-  } else {
-    MS_LOG(EXCEPTION) << " The num of ExpandDims must be 1 or 2, but got " << input_args.size();
-  }
-
-  MS_EXCEPTION_IF_NULL(num_value);
-  if (!num_value->isa<Int64Imm>()) {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the 'axis' must be a Int, but got "
-                            << num_value->ToString();
-  }
-
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
@@ -127,6 +111,7 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto infer_shape = ExpandDimsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+REGISTER_HOST_DEPENDS(kNameExpandDims, {1});
 REGISTER_PRIMITIVE_EVAL_IMPL(ExpandDims, prim::kPrimExpandDims, ExpandDimsInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

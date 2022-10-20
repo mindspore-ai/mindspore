@@ -28,7 +28,7 @@ namespace kernel {
 namespace {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
-constexpr size_t kGatherInputsNum = 2;
+constexpr size_t kGatherInputsNum = 3;
 constexpr size_t kGatherOutputsNum = 1;
 constexpr size_t kGatherInputParamsMaxDim = 7;
 }  // namespace
@@ -36,13 +36,7 @@ bool GatherCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
                               const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   size_t input_num = inputs.size();
-  if (input_num == kGatherInputsNum + 1) {
-    is_dynamic_shape_ = true;
-    MS_LOG(DEBUG) << " GatherCPUKernel running in Dynamic Mode.";
-  } else if (input_num == kGatherInputsNum) {
-    axis_ = GetValue<int64_t>(base_operator->GetAttr("axis"));
-    MS_LOG(DEBUG) << " GatherCPUKernel running in Normal Mode.";
-  } else {
+  if (input_num != kGatherInputsNum) {
     MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherCPUKernel needs 2.";
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -54,9 +48,7 @@ bool GatherCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   kernel_func_ = func_list_[index].second;
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
   indices_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
-  if (is_dynamic_shape_) {
-    axis_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
-  }
+  axis_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
   return true;
 }
 
@@ -83,17 +75,15 @@ int GatherCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
-template <typename T>
+template <typename T, typename S>
 bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherOutputsNum, kernel_name_);
   const auto *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
   const auto *indices_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
   auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-
-  if (inputs.size() == kGatherInputsNum + 1) {
-    axis_ = static_cast<int64_t *>(inputs[kIndex2]->addr)[0];
-  }
+  S axis_temp = static_cast<S *>(inputs[kIndex2]->addr)[0];
+  axis_ = static_cast<int64_t>(axis_temp);
 
   int dims = SizeToInt(input_shape_.size());
   if (axis_ < -dims || axis_ >= dims) {
@@ -132,120 +122,39 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
+#define GATHER_CPU_REG(MS_T, MS_S, MS_G, T, S)                                               \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddInputAttr(MS_G).AddOutputAttr(MS_T), \
+    &GatherCpuKernelMod::LaunchKernel<T, S>
+
 std::vector<std::pair<KernelAttr, GatherCpuKernelMod::GatherFunc>> GatherCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-   &GatherCpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-   &GatherCpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
-   &GatherCpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-   &GatherCpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-   &GatherCpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-   &GatherCpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &GatherCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-   &GatherCpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-   &GatherCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-   &GatherCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-   &GatherCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-   &GatherCpuKernelMod::LaunchKernel<bool>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
-   &GatherCpuKernelMod::LaunchKernel<complex64>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
-   &GatherCpuKernelMod::LaunchKernel<complex128>},
-  // dynamic shape ends
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt8),
-   &GatherCpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt16),
-   &GatherCpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &GatherCpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt64),
-   &GatherCpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt8),
-   &GatherCpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt16),
-   &GatherCpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt32),
-   &GatherCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt64),
-   &GatherCpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &GatherCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &GatherCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &GatherCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeBool)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeBool),
-   &GatherCpuKernelMod::LaunchKernel<bool>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &GatherCpuKernelMod::LaunchKernel<complex64>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &GatherCpuKernelMod::LaunchKernel<complex128>}};
+  {GATHER_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, uint8_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, uint8_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt32, uint16_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, uint16_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt32, uint32_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, uint32_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, uint64_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, uint64_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt32, int8_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, int8_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, int16_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, int16_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, float16, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, float16, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, float, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, float, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, double, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, double, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, bool, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, bool, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt32, complex64, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt64, complex64, int64_t)},
+  {GATHER_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt32, complex128, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt64, complex128, int64_t)}};
 
 std::vector<KernelAttr> GatherCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

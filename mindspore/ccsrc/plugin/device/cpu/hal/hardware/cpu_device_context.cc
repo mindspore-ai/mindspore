@@ -327,6 +327,8 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       auto thread_pool = kernel::GetActorMgrInnerThreadPool();
       cpu_kernel->SetThreadPool(thread_pool);
       auto args = kernel::AbstractArgsFromCNode(node);
+      // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
+      // we will put this tensor in args.inputs.data_.
       auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
       kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
       kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, kernel::KernelModType::NativeCpuKernelMod);
