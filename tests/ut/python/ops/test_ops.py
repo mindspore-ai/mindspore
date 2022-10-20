@@ -153,6 +153,7 @@ from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 from mindspore.ops.operations.sparse_ops import SparseSoftmax
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
+from mindspore.ops.operations.sparse_ops import SparseMatrixMatMul
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseAdd
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
@@ -4565,6 +4566,19 @@ test_case_other_ops = [
                         Tensor(np.random.randint(0, 2, size=(2)).astype(np.int32)),
                         Tensor(np.array([2, 10, 10, 2]).astype(np.int32))
                         ],
+        'skip': ['backward']}),
+    ('SparseMatrixMatMul', {
+        'block': SparseMatrixMatMul(),
+        'desc_inputs': [Tensor(np.array([4, 5]).astype(np.int32)),
+                        Tensor(np.array([0, 4]).astype(np.int32)),
+                        Tensor(np.array([0, 1, 1, 3, 4]).astype(np.int32)),
+                        Tensor(np.array([0, 3, 4, 0]).astype(np.int32)),
+                        Tensor(np.array([1.0, 5.0, -1.0, -2.0]).astype(np.float32)),
+                        Tensor(np.array([[2.0, 0.8, 1.0],
+                                         [2.9, 3.2, 0.0],
+                                         [7.0, 4.6, 0.2],
+                                         [3.5, 4.9, 1.4],
+                                         [4.0, 3.7, 6.9]]).astype(np.float32))],
         'skip': ['backward']}),
 ]
 

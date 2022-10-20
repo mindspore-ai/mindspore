@@ -105,12 +105,6 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
   auto adjoint_x1 = GetValue<bool>(primitive->GetAttr("adjoint_x1"));
   auto adjoint_x2 = GetValue<bool>(primitive->GetAttr("adjoint_x2"));
   auto transpose_output = GetValue<bool>(primitive->GetAttr("transpose_output"));
-  auto conjugate_output = GetValue<bool>(primitive->GetAttr("conjugate_output"));
-  if (transpose_output && conjugate_output) {
-    MS_EXCEPTION(ValueError) << "For SparseMatrixMatMul, only one of transpose_output and conjugate_output may be "
-                                "true, but got transpose_output = "
-                             << transpose_output << ", and conjugate_output = " << conjugate_output << ".";
-  }
 
   // row and col of B
   int64_t row_x2 = rank_x2 == 2 ? x2_dense_shape[0] : x2_dense_shape[1];
@@ -121,6 +115,11 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
       << adjoint_x2 << ", and transpose_x2 = " << transpose_x2 << ".";
   }
   col_x2 = (adjoint_x2 || transpose_x2) ? row_x2 : col_x2;
+  if (adjoint_x1 && transpose_x1) {
+    MS_EXCEPTION(ValueError)
+      << "For SparseMatrixMatMul, only one of adjoint_x1 and transpose_x1 may be true, but got adjoint_x1 = "
+      << adjoint_x1 << ", and transpose_x1 = " << transpose_x1 << ".";
+  }
 
   // row and col of A
   const int kInputWithBatch = 3;
@@ -135,11 +134,6 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
     auto row_x1 = static_cast<int64_t>(*(dense_shape_value_ptr_tensor.end() - 2));
     auto col_x1 = static_cast<int64_t>(*(dense_shape_value_ptr_tensor.end() - 1));
 
-    if (adjoint_x1 && transpose_x1) {
-      MS_EXCEPTION(ValueError)
-        << "For SparseMatrixMatMul, only one of adjoint_x1 and transpose_x1 may be true, but got adjoint_x2 = "
-        << adjoint_x1 << ", and transpose_x1 = " << transpose_x1 << ".";
-    }
     row_x1 = (adjoint_x1 || transpose_x1) ? col_x1 : row_x1;
 
     int64_t row_y = row_x1;
