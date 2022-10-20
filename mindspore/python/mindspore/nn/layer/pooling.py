@@ -122,7 +122,7 @@ class MaxPool3d(Cell):
         the max values are generated.
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` or
-        :math:`(C_{out}, D_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
+          :math:`(C_{out}, D_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
     Raises:
@@ -385,7 +385,7 @@ class AvgPool3d(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or
-        :math:`(C, D_{in}, H_{in}, W_{in})`.
+          :math:`(C, D_{in}, H_{in}, W_{in})`.
           Currently support float16 and float32 data type.
 
     Outputs:
@@ -1111,7 +1111,7 @@ class FractionalMaxPool2d(Cell):
             `output_size` can be a tuple, or a single H for H x H.
             specifying the size (H, W) of the output tensor.
             Default: None.
-        output_ratio (Union[float, tuple]): The target `output_ratio` is H x W.
+        output_ratio (Union[float, tuple[float]]): The target `output_ratio` is H x W.
             `output_ratio` can be a tuple, or a single H for H x H.
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).
@@ -1234,14 +1234,14 @@ class FractionalMaxPool3d(Cell):
     D the feature depth, H is the feature height, and W is the feature width.
 
     Args:
-        kernel_size (Union[float, tuple]): The target `kernel_size` is D x H x W.
+        kernel_size (Union[int, tuple[int]]): The target `kernel_size` is D x H x W.
             `kernel_size` can be a tuple, or a single K for K x K x K.
             specifying the window size (D, H, W) of the input tensor.
-        output_size (Union[int, tuple]): The target `output_size` is D x H x W.
+        output_size (Union[int, tuple[int]]): The target `output_size` is D x H x W.
             `output_size` can be a tuple, or a single H for H x H x H.
             Specifying the size (D, H, W) of the output tensor.
             Default: None.
-        output_ratio (Union[float, tuple]): The target `output_ratio` is D x H x W.
+        output_ratio (Union[float, tuple[float]]): The target `output_ratio` is D x H x W.
             `output_ratio` can be a tuple, or a single H for H x H x H.
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).

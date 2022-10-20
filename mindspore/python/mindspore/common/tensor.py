@@ -6416,11 +6416,14 @@ class Tensor(Tensor_):
             other (Union[Tensor, Number, bool]): The second input is a number or a bool when the first input is a tensor
                 or a tensor whose data type is number or bool.
             rounding_mode (string, optional): Type of rounding applied to the result. Three types are defined as,
-                None: Default behavior. Equivalent to true division in Python or `true_divide` in NumPy.
-                `floor`: Rounds the results of the division down. Equivalent to floor division in Python
-                    or `floor_divide` in NumPy.
-                `trunc`: Rounds the results of the division towards zero. Equivalent to C-style integer division.
-                Default: None.
+
+                - None: Default behavior. Equivalent to true division in Python or `true_divide` in NumPy.
+
+                - floor: Rounds the results of the division down. Equivalent to floor division in Python
+                  or `floor_divide` in NumPy.
+
+                - trunc: Rounds the results of the division towards zero. Equivalent to C-style integer division.
+                  Default: None.
 
         Returns:
             Tensor, the shape is the same as the one after broadcasting, and the data type is the one with higher
