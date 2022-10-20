@@ -23,7 +23,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kScatterNdInputSize = 2;
 constexpr size_t kScatterNdOutputSize = 1;
 constexpr size_t kMinIndiceRank = 2;
 constexpr char kKernelName[] = "ScatterNd";
@@ -75,15 +74,15 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
 
 bool ScatterNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
-  constexpr size_t input_num = 2;
-  constexpr size_t output_num = 1;
   constexpr size_t kDynamicInputNum = 3;
   kernel_name_ = base_operator->GetPrim()->name();
-  if (inputs.size() != input_num && inputs.size() != kDynamicInputNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << inputs.size()
+  if (inputs.size() != kDynamicInputNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                   << " input(s).";
     return false;
   }
+
+  constexpr size_t output_num = 1;
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -195,29 +194,19 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     DTYPE_REGISTER_(kNumberTypeInt64, UPDATES, SHAPE, OUTPUT, int64_t, T)      \
   }
 
-#define DTYPE_REGISTER_ATTR_(DT1, UPDATES, OUTPUT, DT2, T)                    \
-  KernelAttr().AddInputAttr(DT1).AddInputAttr(UPDATES).AddOutputAttr(OUTPUT), \
-    &ScatterNdCpuKernelMod::LaunchKernel<DT2, T>
-
-#define DTYPE_REGISTER_ATTR(UPDATES, OUTPUT, T)                              \
-  {DTYPE_REGISTER_ATTR_(kNumberTypeInt16, UPDATES, OUTPUT, int16_t, T)},     \
-    {DTYPE_REGISTER_ATTR_(kNumberTypeInt32, UPDATES, OUTPUT, int32_t, T)}, { \
-    DTYPE_REGISTER_ATTR_(kNumberTypeInt64, UPDATES, OUTPUT, int64_t, T)      \
-  }
-
 std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> ScatterNdCpuKernelMod::func_list_ = {
-  DTYPE_REGISTER_ATTR(kNumberTypeFloat64, kNumberTypeFloat64, double),
-  DTYPE_REGISTER_ATTR(kNumberTypeFloat32, kNumberTypeFloat32, float),
-  DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt64, int64_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt32, int32_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt16, int16_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeInt8, kNumberTypeInt8, int8_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeUInt64, kNumberTypeUInt64, uint64_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeUInt32, kNumberTypeUInt32, uint32_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeUInt16, kNumberTypeUInt16, uint16_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
-  DTYPE_REGISTER_ATTR(kNumberTypeComplex128, kNumberTypeComplex128, complex128),
-  DTYPE_REGISTER_ATTR(kNumberTypeComplex64, kNumberTypeComplex64, complex64),
+  DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, double),
+  DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, float),
+  DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t),
+  DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
+  DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt16, int16_t),
+  DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, int8_t),
+  DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeUInt64, uint64_t),
+  DTYPE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeUInt32, uint32_t),
+  DTYPE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeUInt16, uint16_t),
+  DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, uint8_t),
+  DTYPE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeComplex128, complex128),
+  DTYPE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeComplex64, complex64),
   DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double),
   DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float),
   DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),

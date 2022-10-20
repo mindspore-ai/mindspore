@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@
 
 namespace mindspore {
 namespace ops {
-constexpr int64_t kScatterNdInputNum = 2LL;
+constexpr int64_t kScatterNdInputNum = 3LL;
+constexpr size_t kScatterNdInputsNum = 3;
 void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, const ShapeVector &out_shape) {
   auto indices_shape_ptr = inputs[kInputIndex0]->BuildShape();
   ShapeVector indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
@@ -100,15 +101,12 @@ TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 abstract::ShapePtr ExtractScatterNdShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, bool *is_dyn) {
   ShapeVector out_shape;
   *is_dyn = false;
-  if (inputs.size() > static_cast<size_t>(kScatterNdInputNum)) {
-    auto shape = inputs[kInputIndex2];
-    out_shape = GetShapeValue(prim, shape);
-    *is_dyn = IsDynamic(out_shape);
-  } else {
-    auto shape_attr = prim->GetAttr("shape");
-    MS_EXCEPTION_IF_NULL(shape_attr);
-    out_shape = GetValue<ShapeVector>(shape_attr);
+  if (inputs.size() != kScatterNdInputsNum) {
+    MS_LOG(EXCEPTION) << "ScatterNd's input num should be " << kScatterNdInputsNum << ", but got " << inputs.size();
   }
+  auto shape = inputs[kInputIndex2];
+  out_shape = GetShapeValue(prim, shape);
+  *is_dyn = IsDynamic(out_shape);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
@@ -130,6 +128,7 @@ abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::
   if (!is_dyn_output) {
     ScatterNdCheckShape(prim, input_args, out_shape);
   }
+
   return shape;
 }
 
@@ -138,13 +137,11 @@ AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
   const std::set<TypePtr> valid_indices_types = {kInt16, kInt32, kInt64};
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kScatterNdInputNum, name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kScatterNdInputsNum, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), valid_indices_types, name);
-  if (input_args.size() > static_cast<size_t>(kScatterNdInputNum)) {
-    auto shape_type = input_args[kInputIndex2]->BuildType();
-    if (!shape_type->isa<TensorType>()) {
-      (void)CheckAndConvertUtils::CheckTypeValid("shape", shape_type, {kTuple}, name);
-    }
+  auto shape_type = input_args[kInputIndex2]->BuildType();
+  if (!shape_type->isa<TensorType>()) {
+    (void)CheckAndConvertUtils::CheckTypeValid("shape", shape_type, {kTuple}, name);
   }
 
   auto infer_type = ScatterNdInferType(primitive, input_args);

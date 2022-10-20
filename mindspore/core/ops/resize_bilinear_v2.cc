@@ -87,6 +87,13 @@ abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  auto input_num = input_args.size();
+  constexpr auto kInputNum = 2;
+  if (input_num != kInputNum) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the number of inputs must be "
+                             << " 1 or 2, but got " << input_num;
+  }
+
   auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   auto x_shape = x_shape_ptr->shape();
   const int64_t shape_size = 4;
@@ -98,19 +105,9 @@ abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> size_value;
   std::vector<int64_t> min_size;
   std::vector<int64_t> max_size;
-  auto input_num = input_args.size();
-  constexpr auto kInputNum = 2;
-  constexpr auto kConstSizeInputNum = 1;
-  if (input_num == kInputNum) {
-    auto size = input_args[1];
-    GetSizeValue(size, &size_value, &min_size, &max_size);
-  } else if (input_num == kConstSizeInputNum) {
-    // const size to attr by the convert_const_input_to_attr pass
-    size_value = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSize));
-  } else {
-    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the number of inputs must be "
-                             << " 1 or 2, but got " << input_num;
-  }
+
+  GetSizeValue(input_args[1], &size_value, &min_size, &max_size);
+
   (void)CheckAndConvertUtils::CheckInteger("the dimension of size", SizeToLong(size_value.size()), kEqual, size_size,
                                            prim_name);
   std::vector<int64_t> output_shape;

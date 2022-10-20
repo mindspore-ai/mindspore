@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,20 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr auto kResizeNearestNeighborGradInputNum = 2;
+constexpr auto kResizeIdx = 1;
+
 abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  if (input_args.size() != kResizeNearestNeighborGradInputNum) {
+    MS_LOG(EXCEPTION) << "ResizeNearsetNeighborGrad's input num should be " << kResizeNearestNeighborGradInputNum
+                      << ", but got " << input_args.size();
+  }
   auto grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   auto grad_shape = grad_shape_ptr->shape();
-  auto size_ptr = input_args[1]->BuildValue();
+  auto size_ptr = input_args[kResizeIdx]->BuildValue();
   MS_EXCEPTION_IF_NULL(size_ptr);
 
   std::vector<int64_t> size_v;
