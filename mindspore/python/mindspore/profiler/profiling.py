@@ -84,8 +84,7 @@ class Profiler:
               etc.
             - 2: Memory contains ub_read/write_bw, l1_read/write_bw, l2_read/write_bw, main_mem_read/write_bw etc.
             - 3: MemoryL0 contains l0a_read/write_bw, l0b_read/write_bw, l0c_read/write_bw etc.
-            - 4: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio, mte1/mte2/mte3_iq_full_ratio,
-              cube/vec_full_ratio ect.
+            - 4: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio etc.
             - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub_/write_bw_scalar etc.
 
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True. Default: False.
@@ -620,7 +619,7 @@ class Profiler:
             raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_memory must be bool, "
                             f"but got type '{type(self._profile_memory)}'")
         if kwargs:
-            logger.warning("There are invalid params which don't work.")
+            logger.warning("%s are invalid params which don't work.", kwargs)
 
         task_sink = os.getenv("GRAPH_OP_RUN")
         if task_sink and task_sink == "1":
@@ -1249,13 +1248,17 @@ class Profiler:
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""
         self._aicore_metrics_id = kwargs.pop("aicore_metrics", 0)
-        if not isinstance(self._aicore_metrics_id, int) or self._aicore_metrics_id not in self._aicore_metrics_dict:
-            logger.warning("aicore_metrics is an invalid value, it will be set to 0.")
-            self._aicore_metrics_id = 0
+        if not isinstance(self._aicore_metrics_id, int):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be int, "
+                            f"but got type {type(self._aicore_metrics_id)}")
+        if self._aicore_metrics_id not in self._aicore_metrics_dict:
+            raise ValueError(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be in "
+                             f"[-1, 0, 1, 2, 3, 4, 5], but got {self._aicore_metrics_id}")
 
         l2_cache_enable = kwargs.pop("l2_cache", False)
         if not isinstance(l2_cache_enable, bool):
-            logger.warning("l2_cache is an invalid value, it will be set to False.")
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter l2_cache must be bool, "
+                            f"but got type {type(l2_cache_enable)}")
 
         if l2_cache_enable:
             self._l2_cache = "on"
