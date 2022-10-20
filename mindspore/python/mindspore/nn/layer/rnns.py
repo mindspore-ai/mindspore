@@ -60,7 +60,7 @@ def _check_input_dtype_same_and_valid(args_name, args_value, valid_values, cls_n
     validator.check_types_same_and_valid(args, valid_values, cls_name)
 
 
-@constexpr
+@constexpr(check=False)
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.tensor_type):

@@ -38,7 +38,7 @@ def check_dense_inputs_same_shape(input1, input2, prim_name=None):
                          f"{input1} of 'input1' and {input2} of 'input2'")
 
 
-@constexpr
+@constexpr(check=False)
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.tensor_type):
