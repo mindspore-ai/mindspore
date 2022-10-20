@@ -24,7 +24,10 @@
 namespace mindspore {
 namespace opt {
 bool StridedSliceChecker::CheckCommonInfo(const CNodePtr &strided_slice) {
-  if (strided_slice == nullptr) {
+  if (strided_slice == nullptr || strided_slice->size() > kInputSizeFive) {
+    return false;
+  }
+  if (IsMarkedTrainOp(strided_slice)) {
     return false;
   }
   auto prim = GetCNodePrimitive(strided_slice);
