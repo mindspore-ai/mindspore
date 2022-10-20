@@ -334,6 +334,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"div", std::string("div")},                                        // div()
        {"equal", std::string("equal")},                                    // equal()
        {"expm1", std::string("expm1")},                                    // expm1()
+       {"dim", prim::kPrimRank},                                           // P.Rank()
      }},
     {kObjectTypeRowTensorType,
      {

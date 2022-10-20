@@ -34,7 +34,7 @@ class JitConfig:
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
 
     Examples:
-        >>> from mindspore.common.jit_config import JitConfig
+        >>> from mindspore import JitConfig
         >>>
         >>> jitconfig = JitConfig(jit_level="O1")
         >>> net = LeNet5()

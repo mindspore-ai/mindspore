@@ -37,6 +37,13 @@
         返回：
             Parameter，返回克隆的新参数。
 
+    .. py:method:: copy
+
+        拷贝参数。
+
+        返回：
+            Parameter，返回拷贝的新参数。
+
     .. py:method:: comm_fusion
         :property:
 

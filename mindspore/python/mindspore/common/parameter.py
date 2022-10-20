@@ -331,6 +331,15 @@ class Parameter(Tensor_):
         self.init_in_server = init_in_server
         self.param_info.init_in_server = init_in_server
 
+    def copy(self):
+        """
+        Copy the parameter.
+
+        Returns:
+            Parameter, a new parameter.
+        """
+        return self.clone(init='same')
+
     def set_param_fl(self, push_to_server=False, pull_from_server=False, requires_aggr=True):
         """
         Set the way of parameter and server interaction.
