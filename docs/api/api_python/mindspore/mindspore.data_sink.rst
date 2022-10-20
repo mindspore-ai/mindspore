@@ -13,7 +13,7 @@ mindspore.data_sink
         - **steps** (int) - 总的运行次数。 `steps` 必须为正整数。
         - **sink_size** (int) - 控制每次下沉的数据执行次数。 `sink_size` 必须为正整数。默认值：1。
         - **jit_config** (JitConfig) - 编译时所使用的JitConfig配置项，详细可参考 :class:`mindspore.JitConfig` 。默认值：None，表示以PyNative模式运行。
-        - **input_signature** (Tensor) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。默认值：None。
+        - **input_signature** (Union[Tensor, List or Tuple of Tensors]) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。默认值：None。
 
     返回：
         函数，该生成的函数会以数据下沉模式执行。

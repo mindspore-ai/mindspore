@@ -1,7 +1,7 @@
 mindspore.ops.scalar_cast
 ==========================
 
-.. py:function:: mindspore.ops.mindspore.ops.scalar_cast(input_x, input_y)
+.. py:function:: mindspore.ops.scalar_cast(input_x, input_y)
 
     将输入Scalar转换为其他类型。
 

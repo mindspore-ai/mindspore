@@ -3503,12 +3503,12 @@ def broadcast_to(x, shape):
 
     If the first :math:`*` dims of output shape does not have -1 in it, then fill the input
     shape with ones until their length are the same, and then refer to
-    Case 2 mentioned above to calculate the output shape. With target shape :math:` (3, 1, 4, 1, 5, 9)`,
+    Case 2 mentioned above to calculate the output shape. With target shape :math:`(3, 1, 4, 1, 5, 9)`,
     input shape :math:`(1, 5, 9)`, the filled input shape will be :math:`(1, 1, 1, 1, 5, 9)` and thus the
-    output shape is :math:` (3, 1, 4, 1, 5, 9)`.
+    output shape is :math:`(3, 1, 4, 1, 5, 9)`.
 
     If the first :math:`*` dims of output shape have -1 in it, it implies this -1 is conrresponding to
-    a non-existing dim so they're not broadcastable. With target shape :math:` (3, -1, 4, 1, 5, 9)`,
+    a non-existing dim so they're not broadcastable. With target shape :math:`(3, -1, 4, 1, 5, 9)`,
     input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
 
     Args:

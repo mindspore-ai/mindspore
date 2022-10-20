@@ -11,11 +11,11 @@ mindspore.ops.broadcast_to
 
     - 如果不相等，分以下三种情况：
 
-        - 情况一：如果目标shape该维的值为-1，则输出shape该维的值为对应输入shape该维的值。比如说输入shape为 :math:`(3, 3)` ，目标shape为 :math:`(-1, 3)` ，则输出shape为 :math:`(3, 3)` ；
+      - 情况一：如果目标shape该维的值为-1，则输出shape该维的值为对应输入shape该维的值。比如说输入shape为 :math:`(3, 3)` ，目标shape为 :math:`(-1, 3)` ，则输出shape为 :math:`(3, 3)` ；
 
-        - 情况二：如果目标shape该维的值不为-1，但是输入shape该维的值为1，则输出shape该维的值为目标shape该维的值。比如说输入shape为 :math:`(1, 3)` ，目标shape为 :math:`(8, 3)` ，则输出shape为 :math:`(8, 3)` ；
+      - 情况二：如果目标shape该维的值不为-1，但是输入shape该维的值为1，则输出shape该维的值为目标shape该维的值。比如说输入shape为 :math:`(1, 3)` ，目标shape为 :math:`(8, 3)` ，则输出shape为 :math:`(8, 3)` ；
 
-        - 情况三：如果两个shape对应值不满足以上情况则说明不支持由输入shape广播到目标shape。
+      - 情况三：如果两个shape对应值不满足以上情况则说明不支持由输入shape广播到目标shape。
 
     至此输出shape后面m维就确定好了，现在看一下前面 :math:`*` 维，有以下两种情况：
 
