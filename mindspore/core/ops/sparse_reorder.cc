@@ -39,14 +39,18 @@ abstract::TupleShapePtr SparseReorderInferShape(const PrimitivePtr &primitive,
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   // Indices  must be 2D
   const int64_t indices_dims = 2;
-  (void)CheckAndConvertUtils::CheckInteger("indices dim", SizeToLong(indices_shape.size()), kEqual, indices_dims,
-                                           prim_name);
+  std::vector<ShapeVector> all_shapes = {indices_shape, values_shape, shape_shape};
+  auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
+  if (!is_dynamic) {
+    (void)CheckAndConvertUtils::CheckInteger("indices dim", SizeToLong(indices_shape.size()), kEqual, indices_dims,
+                                             prim_name);
+    // Indices shape must be equal to the first dimension of var
+    CheckAndConvertUtils::CheckInteger("size of values", values_shape[0], kEqual, indices_shape[0], prim_name);
+    CheckAndConvertUtils::CheckInteger("size of shape", shape_shape[0], kEqual, indices_shape[1], prim_name);
+  }
   // Args shape and values must be 1D
   (void)CheckAndConvertUtils::CheckInteger("values dim", SizeToLong(values_shape.size()), kEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("size dim", SizeToLong(shape_shape.size()), kEqual, 1, prim_name);
-  // Indices shape must be equal to the first dimension of var
-  CheckAndConvertUtils::CheckInteger("size of values", values_shape[0], kEqual, indices_shape[0], prim_name);
-  CheckAndConvertUtils::CheckInteger("size of shape", shape_shape[0], kEqual, indices_shape[1], prim_name);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{indices_shape_ptr, values_shape_ptr});
 }
