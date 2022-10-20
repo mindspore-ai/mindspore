@@ -133,6 +133,7 @@ constexpr auto kBernoulli = "Bernoulli";
 constexpr auto kLinearSumAssignment = "LinearSumAssignment";
 
 // Math
+constexpr auto kCauchy = "Cauchy";
 constexpr auto kCross = "Cross";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kNextAfter = "NextAfter";
@@ -1128,6 +1129,7 @@ GVAR_DEF(PrimitivePtr, kPrimTensorListStack, std::make_shared<Primitive>("Tensor
 GVAR_DEF(PrimitivePtr, kPrimTensorListSetItem, std::make_shared<Primitive>("TensorListSetItem"));
 
 // Maths
+GVAR_DEF(PrimitivePtr, kPrimCauchy, std::make_shared<Primitive>(kCauchy));
 GVAR_DEF(PrimitivePtr, kPrimNextAfter, std::make_shared<Primitive>(kNextAfter));
 GVAR_DEF(PrimitivePtr, kPrimCross, std::make_shared<Primitive>(kCross));
 GVAR_DEF(PrimitivePtr, kPrimEditDistance, std::make_shared<Primitive>(kEditDistance));

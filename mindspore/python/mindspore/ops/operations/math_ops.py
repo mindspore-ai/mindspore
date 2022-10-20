@@ -7199,3 +7199,47 @@ class Qr(Primitive):
     def __init__(self, full_matrices=False):
         """Initialize Qr"""
         validator.check_value_type('full_matrices', full_matrices, [bool], self.name)
+
+
+class Cauchy(Primitive):
+    r"""
+    Create a tensor of shape `size` with random numbers drawn from Cauchy distribution
+
+    .. math::
+        \f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
+
+    Args:
+        size (list(int)): The size of tensor.
+        sigma (float): the location parameter, specifying the location
+            of the peak of the distribution. Default: 1.0.
+        median (float): the scale parameter which specifies the half-width
+            at half-maximum. Default: 0.0.
+
+    Outputs:
+        - **y** (Tensor) - Tensor with cauchy distribution data. Tensor shape is size, and data type is float32.
+
+    Raises:
+        TypeError: If `sigma` is not a float.
+        TypeError: If `median` is not a float.
+        TypeError: If `size` is not a list.
+        ValueError: If `size` list is empty.
+        ValueError: If data of `size` is not a positive integer.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> size = [1]
+        >>> net = ops.Cauchy(size)
+        >>> y = net()
+        >>> print(y)
+        [0.03128606]
+    """
+
+    @prim_attr_register
+    def __init__(self, size, median=0.0, sigma=1.0):
+        validator.check_value_type('median', median, [float], self.name)
+        validator.check_value_type('sigma', sigma, [float], self.name)
+        validator.check_value_type('size', size, (list), self.name)
+        for index, size_ in enumerate(size):
+            validator.check_positive_int(size_, 'size[%d]' % index, self.name)

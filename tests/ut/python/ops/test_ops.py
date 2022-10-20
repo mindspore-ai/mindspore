@@ -57,6 +57,7 @@ from mindspore.ops.operations.math_ops import CompareAndBitpack
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import Qr
+from mindspore.ops.operations.math_ops import Cauchy
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import FillDiagonal
 from mindspore.ops.operations.array_ops import Im2Col
@@ -1434,6 +1435,10 @@ class BincountNet(nn.Cell):
 
 
 test_case_math_ops = [
+    ('Cauchy', {
+        'block': Cauchy(size=[2, 3]),
+        'desc_inputs': [],
+        'skip': ['backward']}),
     ('Betainc', {
         'block': Betainc(),
         'desc_inputs': [Tensor([1, 1, 1, 1], mstype.float32),
