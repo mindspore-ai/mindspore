@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ from mindspore.nn.wrap.loss_scale import TrainOneStepWithLossScaleCell
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(Cell):
@@ -62,10 +62,16 @@ class MSELoss(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_momentum_loss():
+    """
+    Feature: Auto monad feature.
+    Description: Verify momentum loss.
+    Expectation: No exception.
+    """
     inputs = Tensor(np.ones([15, 1]).astype(np.float32))
     label = Tensor(np.zeros([15, 1]).astype(np.float32))
     net = Net(1, 1)
@@ -76,4 +82,6 @@ def test_momentum_loss():
                                                   scale_sense=Tensor(np.full((1), 1.0), dtype=mstype.float32))
     train_network.set_train()
     output = train_network(inputs, label)
-    print("the result is ", output)
+    assert output[0].asnumpy() == 4
+    assert str(output[1].asnumpy()) == "False"
+    assert output[2].asnumpy() == 1

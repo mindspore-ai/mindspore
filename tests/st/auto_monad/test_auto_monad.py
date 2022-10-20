@@ -30,7 +30,7 @@ from mindspore.ops.primitive import constexpr
 from capture import Capture, capture, check_output
 from tests.security_utils import security_off_wrap
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.fixture(name="pynative_save_graphs")
@@ -41,16 +41,18 @@ def _pynative_save_graphs():
     clean_all_ir_files('./')
 
 
-@pytest.fixture(name="with_save_graphs")
-def _with_save_graphs():
-    context.set_context(save_graphs=True)
-    yield
-    context.set_context(save_graphs=False)
-    clean_all_ir_files('./')
-
-
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print.
+    Expectation: No exception.
+    """
     class Print(Cell):
         def __init__(self):
             super().__init__()
@@ -65,7 +67,8 @@ def test_print():
         input_x = Tensor(3, dtype=ms.int32)
         input_y = Tensor(4, dtype=ms.int32)
         net = Print()
-        net(input_x, input_y)
+        out = net(input_x, input_y)
+        np.testing.assert_array_equal(out.asnumpy(), input_x.asnumpy())
         time.sleep(0.1)
 
     patterns = {'input_x:\nTensor(shape=[], dtype=Int32, value=3)\n'
@@ -74,7 +77,17 @@ def test_print():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_add():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print.
+    Expectation: No exception.
+    """
     class Print_Add(Cell):
         def __init__(self):
             super().__init__()
@@ -102,7 +115,17 @@ def test_print_add():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_assign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print and assign.
+    Expectation: No exception.
+    """
     class Print_Assign(Cell):
         def __init__(self):
             super().__init__()
@@ -130,7 +153,17 @@ def test_print_assign():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_assign_add():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print.
+    Expectation: No exception.
+    """
     class Print_Assign_Add(Cell):
         def __init__(self):
             super().__init__()
@@ -161,7 +194,17 @@ def test_print_assign_add():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_while():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print in control flow.
+    Expectation: No exception.
+    """
     class Print_While(Cell):
         def __init__(self):
             super().__init__()
@@ -196,7 +239,17 @@ def test_print_while():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print in control flow.
+    Expectation: No exception.
+    """
     class Print_If(Cell):
         def __init__(self):
             super().__init__()
@@ -227,7 +280,17 @@ def test_print_if():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_assign_while():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print and assign in control flow.
+    Expectation: No exception.
+    """
     class Print_Assign_While(Cell):
         def __init__(self):
             super().__init__()
@@ -271,7 +334,17 @@ def test_print_assign_while():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_assign_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print and assign in control flow.
+    Expectation: No exception.
+    """
     class Print_Assign_If(Cell):
         def __init__(self):
             super().__init__()
@@ -309,10 +382,16 @@ def test_print_assign_if():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator assign.
+    Expectation: No exception.
+    """
     class Assign(Cell):
         def __init__(self):
             super().__init__()
@@ -330,10 +409,16 @@ def test_assign():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_implicit():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator assign.
+    Expectation: No exception.
+    """
     class Assign_Implicit(Cell):
         def __init__(self):
             super(Assign_Implicit, self).__init__()
@@ -351,10 +436,16 @@ def test_assign_implicit():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_write_after_read():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator assign.
+    Expectation: No exception.
+    """
     class Assign_WAR(Cell):
         def __init__(self):
             super(Assign_WAR, self).__init__()
@@ -380,10 +471,16 @@ def test_assign_write_after_read():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_read_after_write():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator assign_add.
+    Expectation: No exception.
+    """
     class Assign_RAW(Cell):
         def __init__(self):
             super(Assign_RAW, self).__init__()
@@ -409,10 +506,16 @@ def test_assign_read_after_write():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator assign in control flow.
+    Expectation: No exception.
+    """
     class Assign_If(Cell):
         def __init__(self):
             super().__init__()
@@ -434,10 +537,16 @@ def test_assign_if():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator assign in control flow.
+    Expectation: No exception.
+    """
     class If(Cell):
         def __init__(self):
             super().__init__()
@@ -460,10 +569,16 @@ def test_if():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect with control flow.
+    Expectation: No exception.
+    """
     class While(Cell):
         def construct(self, x, y):
             y = y + 4
@@ -481,10 +596,16 @@ def test_while():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_while():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect with control flow.
+    Expectation: No exception.
+    """
     class Assign_While(Cell):
         def __init__(self):
             super().__init__()
@@ -507,10 +628,16 @@ def test_assign_while():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_for():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect with control flow.
+    Expectation: No exception.
+    """
     class For(Cell):
         def construct(self, x, y):
             y = x + y
@@ -527,7 +654,17 @@ def test_for():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_for():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print in control flow.
+    Expectation: No exception.
+    """
     class Print_For(Cell):
         def __init__(self):
             super().__init__()
@@ -564,7 +701,17 @@ def test_print_for():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_assign_for():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print and assign in control flow.
+    Expectation: No exception.
+    """
     class Print_Assign_For(Cell):
         def __init__(self):
             super().__init__()
@@ -609,10 +756,16 @@ def test_print_assign_for():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_for():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the side effect operator print and assign in control flow.
+    Expectation: No exception.
+    """
     class Assign_For(Cell):
         def __init__(self):
             super().__init__()
@@ -640,10 +793,16 @@ def _check_shape(shape):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_constexpr_check():
+    """
+    Feature: Verify shape operation.
+    Description: Verify shape operation.
+    Expectation: No exception.
+    """
     class ConstexprCheck(Cell):
         def __init__(self):
             super(ConstexprCheck, self).__init__()
@@ -670,10 +829,16 @@ def test_constexpr_check():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_lambda():
+    """
+    Feature: Auto monad feature.
+    Description: Verify lambda in control flow.
+    Expectation: No exception.
+    """
     class If_Lambda(Cell):
         def __init__(self):
             super().__init__()
@@ -696,10 +861,16 @@ def test_if_lambda():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_multi_assign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify multi assign.
+    Expectation: No exception.
+    """
     class Multi_Assign(Cell):
         def __init__(self):
             super().__init__()
@@ -724,10 +895,16 @@ def test_multi_assign():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_multi_assign_addn():
+    """
+    Feature: Auto monad feature.
+    Description: Verify multi assign.
+    Expectation: No exception.
+    """
     class Multi_Assign_Addn(Cell):
         def __init__(self):
             super().__init__()
@@ -751,16 +928,25 @@ def test_multi_assign_addn():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_multi_assign_print():
+    """
+    Feature: Auto monad feature.
+    Description: Verify multi assign and print.
+    Expectation: No exception.
+    """
     class Multi_Assign_Print(Cell):
         def __init__(self):
             super().__init__()
             self.pow = P.Pow()
             self.print = P.Print()
             self.assign = P.Assign()
-            self.exponent = Tensor([2.0], ms.float32)
-            self.para1 = Parameter(Tensor(1.0, dtype=ms.float32), name='para1')
-            self.para2 = Parameter(Tensor(3.0, dtype=ms.float32), name='para2')
+            self.exponent = Tensor([2], ms.int32)
+            self.para1 = Parameter(Tensor(1, dtype=ms.int32), name='para1')
+            self.para2 = Parameter(Tensor(3, dtype=ms.int32), name='para2')
 
         def construct(self, inputs):
             self.assign(self.para1, inputs)
@@ -770,24 +956,37 @@ def test_multi_assign_print():
             self.print(self.para2)
             return inputs
 
-    x = Tensor(9.0, dtype=ms.float32)
-    expect = Tensor(9.0, dtype=ms.float32)
-    expect_para1 = Tensor(9.0, dtype=ms.float32)
-    expect_para2 = Tensor(81.00001, dtype=ms.float32)
-    net = Multi_Assign_Print()
-    out = net(x)
-    np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
-    np.testing.assert_almost_equal(
-        net.para1.data.asnumpy(), expect_para1.asnumpy())
-    np.testing.assert_almost_equal(
-        net.para2.data.asnumpy(), expect_para2.asnumpy())
+    cap = Capture()
+    with capture(cap):
+        x = Tensor(9, dtype=ms.int32)
+        expect = Tensor(9, dtype=ms.int32)
+        expect_para1 = Tensor(9, dtype=ms.int32)
+        expect_para2 = Tensor(81, dtype=ms.int32)
+        net = Multi_Assign_Print()
+        out = net(x)
+        np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
+        np.testing.assert_almost_equal(
+            net.para1.data.asnumpy(), expect_para1.asnumpy())
+        np.testing.assert_almost_equal(
+            net.para2.data.asnumpy(), expect_para2.asnumpy())
+
+    patterns = {'Tensor(shape=[], dtype=Int32, value=9)\n\n'
+                'Tensor(shape=[], dtype=Int32, value=9)\n\n'
+                'Tensor(shape=[], dtype=Int32, value=81)\n\n'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_matmul_assign_biasadd():
+    """
+    Feature: Auto monad feature.
+    Description: Verify multi assign.
+    Expectation: No exception.
+    """
     class Matmul_Assign_Biasadd(Cell):
         def __init__(self):
             super().__init__()
@@ -821,10 +1020,16 @@ def test_matmul_assign_biasadd():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_while_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign and assign_sub in control flow.
+    Expectation: No exception.
+    """
     class Assign_While_If(Cell):
         def __init__(self):
             super().__init__()
@@ -855,10 +1060,16 @@ def test_assign_while_if():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_isolate_call():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign and assign_sub in control flow.
+    Expectation: No exception.
+    """
     class Net(Cell):
         def __init__(self):
             super().__init__()
@@ -887,10 +1098,16 @@ def test_isolate_call():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_assign_return_true():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign in control flow.
+    Expectation: No exception.
+    """
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -921,10 +1138,16 @@ def test_assign_return_true():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_unpack_call():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign in unpack call.
+    Expectation: No exception.
+    """
     class SetPara(Cell):
         def __init__(self, para):
             super(SetPara, self).__init__()
@@ -958,10 +1181,16 @@ def test_unpack_call():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_tuple_of_tuple():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign tuple in unpack call.
+    Expectation: No exception.
+    """
     class SetPara(Cell):
         def __init__(self, para):
             super(SetPara, self).__init__()
@@ -997,10 +1226,16 @@ def test_tuple_of_tuple():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_write_read_write():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign.
+    Expectation: No exception.
+    """
     class MyNet(Cell):
         def __init__(self):
             super(MyNet, self).__init__()
@@ -1026,10 +1261,16 @@ def test_write_read_write():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_variable_from_outer_graph():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign in control flow.
+    Expectation: No exception.
+    """
     class MyNet(Cell):
         def __init__(self):
             super(MyNet, self).__init__()
@@ -1055,16 +1296,21 @@ def test_variable_from_outer_graph():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support")
 def test_ctrl_while_by_while_and_if_in_first_while():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign in control flow.
+    Expectation: No exception.
+    """
     class Net(Cell):
         def __init__(self):
             super().__init__()
             self.relu = P.ReLU()
-            self.sigmoid = P.Sigmoid()
-            self.tanh = P.Tanh()
             self.add = P.Add()
             a = np.full((1,), 5, dtype=np.float32)
             self.a = Parameter(Tensor(a), name="a")
@@ -1088,20 +1334,30 @@ def test_ctrl_while_by_while_and_if_in_first_while():
     input_np_a = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me_a = Tensor(input_np_a)
     net = Net()
-    net(input_me_a)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net(input_me_a)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net(input_me_a)
+    assert graph_out == pynative_out
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support")
 def test_ctrl_if_by_while_and_while_in_first_if():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign in control flow.
+    Expectation: No exception.
+    """
     class Net(Cell):
         def __init__(self):
             super().__init__()
             self.relu = P.ReLU()
-            self.sigmoid = P.Sigmoid()
-            self.tanh = P.Tanh()
             self.add = P.Add()
             a = np.full((1,), 5, dtype=np.float32)
             self.a = Parameter(Tensor(a), name="a")
@@ -1116,30 +1372,38 @@ def test_ctrl_if_by_while_and_while_in_first_if():
                 out = self.relu(x)
                 while self.a < 7:
                     self.a += 1
-
             while self.c > 5:
                 out = self.add(out, out)
                 self.c -= 1
             return out
 
-    context.set_context(mode=context.GRAPH_MODE)
     input_np_a = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me_a = Tensor(input_np_a)
     net = Net()
-    net(input_me_a)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net(input_me_a)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net(input_me_a)
+    assert graph_out == pynative_out
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support")
 def test_ctrl_while_by_while_and_while_in_first_while():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign in control flow.
+    Expectation: No exception.
+    """
     class Net(Cell):
         def __init__(self):
             super().__init__()
             self.relu = P.ReLU()
-            self.sigmoid = P.Sigmoid()
-            self.tanh = P.Tanh()
             self.add = P.Add()
             a = np.full((1,), 5, dtype=np.float32)
             self.a = Parameter(Tensor(a), name="a")
@@ -1155,58 +1419,20 @@ def test_ctrl_while_by_while_and_while_in_first_while():
                 while self.b > 1:
                     self.b -= 1
                 self.a += 1
-
             while self.c > 5:
                 out = self.add(out, out)
                 self.c -= 1
             return out
 
-    context.set_context(mode=context.GRAPH_MODE)
     input_np_a = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me_a = Tensor(input_np_a)
     net = Net()
-    net(input_me_a)
-
-
-def clear_json_info():
-    os.system("rm -rf ./kernel_meta/*.json")
-    os.system("rm -rf ./kernel_meta/*.info")
-
-
-def find_json_info(file):
-    result = os.system("ls -al ./kernel_meta/%s" % (file))
-    return result
-
-
-class MultiOutReluBywaySqrt(Cell):
-    def __init__(self):
-        super().__init__()
-        self.relu = nn.ReLU()
-        self.sqrt = P.Sqrt()
-
-    def construct(self, x):
-        x = self.relu(x)
-        x = self.relu(x)
-        x1 = self.relu(x)
-        x = self.relu(x1)
-        y = self.sqrt(x1)
-        return x, y
-
-
-class MultiOutReluSqrtBywaySqrt(Cell):
-    def __init__(self):
-        super().__init__()
-        self.relu = nn.ReLU()
-        self.sqrt = P.Sqrt()
-        self.sin = P.Sin()
-
-    def construct(self, x):
-        x = self.relu(x)
-        x = self.sqrt(x)
-        x1 = self.relu(x)
-        x = self.sin(x1)
-        y = self.sqrt(x1)
-        return x, y
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net(input_me_a)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net(input_me_a)
+    assert graph_out == pynative_out
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 def clean_all_ir_files(folder_path):
@@ -1282,7 +1508,17 @@ class AssignNet(Cell):
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_auto_mixed_precision_train_1(pynative_save_graphs):
+    """
+    Feature: Auto monad feature.
+    Description: Verify mixed precision.
+    Expectation: No exception.
+    """
     net = AssignNet()
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
     label32 = Tensor(np.zeros([1, 3]).astype(np.float32))
@@ -1290,7 +1526,17 @@ def test_auto_mixed_precision_train_1(pynative_save_graphs):
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_auto_mixed_precision_train_2(pynative_save_graphs):
+    """
+    Feature: Auto monad feature.
+    Description: Verify mixed precision.
+    Expectation: No exception.
+    """
     net = AssignNet()
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
     label32 = Tensor(np.zeros([1, 3]).astype(np.float32))
@@ -1368,7 +1614,17 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
+    """
+    Feature: Auto monad feature.
+    Description: Verify mixed precision in control flow.
+    Expectation: No exception.
+    """
     net = MixControlNet(3, 5)
     input_x = Tensor(
         np.random.randint(2, size=(1, 3, 2, 2)).astype((np.float32)))
@@ -1384,10 +1640,16 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
 # op_cast should be located in order_list after abstract_specialize.
 # Besides Ascend, it can work on CPU.
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_cast():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     class Net(nn.Cell):
         def __init__(self, cond1):
             super().__init__()
@@ -1414,10 +1676,16 @@ def test_if_cast():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_forward():
+    """
+    Feature: Auto monad feature.
+    Description: Verify control flow.
+    Expectation: No exception.
+    """
     class MyWhileNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -1441,10 +1709,16 @@ def test_while_forward():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_multi_add_assign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign.
+    Expectation: No exception.
+    """
     class Net(Cell):
         def __init__(self, i1):
             super(Net, self).__init__()
@@ -1481,10 +1755,16 @@ def test_multi_add_assign():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_multi_abs_add_assign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify assign.
+    Expectation: No exception.
+    """
     class Net(Cell):
         def __init__(self, para):
             super(Net, self).__init__()
@@ -1524,6 +1804,10 @@ def test_multi_abs_add_assign():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_print_assign_print():
     """
     Feature: Auto Monad

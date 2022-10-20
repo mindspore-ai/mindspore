@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class AdamNet(nn.Cell):
@@ -38,10 +38,16 @@ class AdamNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_adam():
+    """
+    Feature: Auto monad feature.
+    Description: Verify Adam operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.ones([3, 3, 3]).astype(np.float32))
     m = Tensor(np.ones([3, 3, 3]).astype(np.float32))
     v = Tensor(np.ones([3, 3, 3]).astype(np.float32))
@@ -75,10 +81,16 @@ class ApplyAdaMaxNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_ada_max():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyAdaMax operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     m = Tensor(np.random.rand(3, 3).astype(np.float32))
     v = Tensor(np.random.rand(3, 3).astype(np.float32))
@@ -110,10 +122,16 @@ class ApplyAdadeltaNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_adadelta():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyAdadelta operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum_update = Tensor(np.random.rand(3, 3).astype(np.float32))
@@ -141,10 +159,16 @@ class ApplyAdagrad(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_adagrad():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyAdagrad operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyAdagrad(var, accum)
@@ -169,10 +193,16 @@ class ApplyAdagradV2Net(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_adagrad_v2():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyAdagradV2 operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyAdagradV2Net(var, accum)
@@ -198,10 +228,16 @@ class ApplyAddSignNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_add_sign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyAddSign operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     m = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyAddSignNet(var, m)
@@ -229,10 +265,16 @@ class ApplyCenteredRMSPropNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_centered_rms_prop():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyCenteredRMSProp operator.
+    Expectation: No exception.
+    """
     var = Tensor(
         np.arange(-6, 6).astype(np.float32).reshape(2, 3, 2), mstype.float32)
     net = ApplyCenteredRMSPropNet(var)
@@ -265,10 +307,16 @@ class ApplyFtrlNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_ftrl():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyFtrl operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     linear = Tensor(np.random.rand(3, 3).astype(np.float32))
@@ -296,10 +344,16 @@ class ApplyGradientDescentNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_gradient_descent():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyGradientDescent operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyGradientDescentNet(var)
 
@@ -322,10 +376,16 @@ class ApplyMomentumNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_momentum():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyMomentum operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.normal(size=(2, 3, 3, 4)).astype(np.float32))
     accum = Tensor(np.random.normal(size=(2, 3, 3, 4)).astype(np.float32))
     net = ApplyMomentumNet(var, accum)
@@ -352,10 +412,16 @@ class ApplyPowerSignNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_power_sign():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyPowerSign operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     m = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyPowerSignNet(var, m)
@@ -387,6 +453,11 @@ class ApplyProximalAdagradNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_proximal_adagrad():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyProximalAdagrad operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyProximalAdagradNet(var, accum)
@@ -412,10 +483,16 @@ class ApplyProximalGradientDescentNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_proximal_gradient_descent():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyProximalGradientDescent operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyProximalGradientDescentNet(var)
 
@@ -444,6 +521,11 @@ class ApplyRMSPropNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_apply_rms_prop():
+    """
+    Feature: Auto monad feature.
+    Description: Verify ApplyRMSProp operator.
+    Expectation: No exception.
+    """
     var = Tensor(1., mstype.float32)
     net = ApplyRMSPropNet(var)
 
@@ -474,6 +556,11 @@ class FusedSparseAdamNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_adam():
+    """
+    Feature: Auto monad feature.
+    Description: Verify FusedSparseAdam operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.ones([3, 1, 2]).astype(np.float32))
     m = Tensor(np.ones([3, 1, 2]).astype(np.float32))
     v = Tensor(np.ones([3, 1, 2]).astype(np.float32))
@@ -513,6 +600,11 @@ class FusedSparseFtrlNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_ftrl():
+    """
+    Feature: Auto monad feature.
+    Description: Verify FusedSparseFtrl operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 1, 2).astype(np.float32))
     accum = Tensor(np.random.rand(3, 1, 2).astype(np.float32))
     linear = Tensor(np.random.rand(3, 1, 2).astype(np.float32))
@@ -544,6 +636,11 @@ class FusedSparseLazyAdamNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_lazyadam():
+    """
+    Feature: Auto monad feature.
+    Description: Verify FusedSparseLazyAdam operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.ones([3, 1, 2]).astype(np.float32))
     m = Tensor(np.ones([3, 1, 2]).astype(np.float32))
     v = Tensor(np.ones([3, 1, 2]).astype(np.float32))
@@ -581,6 +678,11 @@ class FusedSparseProximalAdagradNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_proximal_adagrad():
+    """
+    Feature: Auto monad feature.
+    Description: Verify FusedSparseProximalAdagrad operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 1, 2).astype(np.float32))
     accum = Tensor(np.random.rand(3, 1, 2).astype(np.float32))
     net = FusedSparseProximalAdagradNet(var, accum)
@@ -612,6 +714,11 @@ class SparseApplyAdagradNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sparse_apply_adagrad():
+    """
+    Feature: Auto monad feature.
+    Description: Verify SparseApplyAdagrad operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = SparseApplyAdagradNet(var, accum)
@@ -637,10 +744,16 @@ class SparseApplyAdagradV2Net(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sparse_apply_adagrad_v2():
+    """
+    Feature: Auto monad feature.
+    Description: Verify SparseApplyAdagradV2 operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = SparseApplyAdagradV2Net(var, accum)
@@ -668,10 +781,16 @@ class SparseApplyFtrlNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sparse_apply_ftrl():
+    """
+    Feature: Auto monad feature.
+    Description: Verify SparseApplyFtrl operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     linear = Tensor(np.random.rand(3, 3).astype(np.float32))
@@ -704,6 +823,11 @@ class SparseApplyFtrlV2Net(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sparse_apply_ftrl_v2():
+    """
+    Feature: Auto monad feature.
+    Description: Verify SparseApplyFtrlV2 operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     linear = Tensor(np.random.rand(3, 3).astype(np.float32))
@@ -730,10 +854,16 @@ class SparseApplyProximalAdagradNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sparse_apply_proximal_adagrad():
+    """
+    Feature: Auto monad feature.
+    Description: Verify SparseApplyProximalAdagrad operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = SparseApplyProximalAdagradNet(var, accum)
@@ -760,10 +890,16 @@ class SGDNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sgd():
+    """
+    Feature: Auto monad feature.
+    Description: Verify SGD operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.array([2, -0.5, 1.7, 4]), mstype.float32)
     net = SGDNet(var)
 
@@ -791,10 +927,16 @@ class ApplyProximalAdagradConstantNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sparse_apply_proximal_adagrad_constant():
+    """
+    Feature: Auto monad feature.
+    Description: Verify SparseApplyProximalAdagrad operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3).astype(np.float32))
     accum = Tensor(np.random.rand(3, 3).astype(np.float32))
     net = ApplyProximalAdagradConstantNet(var, accum)
@@ -822,10 +964,16 @@ class MulSGDNet(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_mul_sgd():
+    """
+    Feature: Auto monad feature.
+    Description: Verify sgd operator.
+    Expectation: No exception.
+    """
     var = Tensor(np.array([2, -0.5, 1.7, 4]), mstype.float32)
     net = MulSGDNet(var)
     gradient = Tensor(np.array([1, -1, 0.5, 2]), mstype.float32)

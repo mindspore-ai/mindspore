@@ -61,10 +61,16 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_auto_monad_addn_adam():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the optimizer operator adam.
+    Expectation: No exception.
+    """
     var = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
     m = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
     v = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
@@ -116,10 +122,16 @@ class AutoMonadTwoAssignTwoAddnDependencyBenchmarkNet(Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_auto_monad_read_dependency_two_assign_two_addn():
+    """
+    Feature: Auto monad feature.
+    Description: Verify the effect operator assign.
+    Expectation: No exception.
+    """
     net = AutoMonadTwoAssignTwoAddnDependencyNet()
     benchmarknet = AutoMonadTwoAssignTwoAddnDependencyBenchmarkNet()
     out1 = net(Tensor([9.0], ms.float32))
@@ -154,6 +166,7 @@ class BackwardNet(Cell):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -187,6 +200,7 @@ class ForwardNet2(Cell):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -202,6 +216,7 @@ def test_load_convert_tensormove_2():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -232,6 +247,7 @@ def test_load_eliminate():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -393,6 +409,7 @@ def test_parameter_tuple_assign_addn_inner_net_control_flow():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_parameter_value_control_flow_ascend():
     """
@@ -410,8 +427,8 @@ def test_parameter_value_control_flow_ascend():
 
         def construct(self, x):
             if x > 0:
-                return self.param1.value(), self.tensor1.value()
-            return self.param2.value(), self.tensor2.value()
+                return self.param1.value(), self.tensor1
+            return self.param2.value(), self.tensor2
 
     class Net(Cell):
         def __init__(self):
