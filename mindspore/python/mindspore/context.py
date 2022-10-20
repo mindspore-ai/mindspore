@@ -787,6 +787,8 @@ def set_context(**kwargs):
     |                         |  disable_format_transform    |  GPU                       |
     |                         +------------------------------+----------------------------+
     |                         |  support_binary              |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  memory_optimize_level       |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -931,6 +933,11 @@ def set_context(**kwargs):
             in graph mode, coulde set 'support_binary' to be True, and run once .py file. It would save the source
             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
+        memory_optimize_level (str): The memory optimize level.
+            Default: O0. The value must be in ['O0', 'O1'].
+
+            - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver).
+            - O1: priority memory option, enable SOMAS.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -960,6 +967,7 @@ def set_context(**kwargs):
         >>> ms.set_context(runtime_num_threads=10)
         >>> ms.set_context(inter_op_parallel_num=4)
         >>> ms.set_context(disable_format_transform=True)
+        >>> ms.set_context(memory_optimize_level='O0')
     """
     ctx = _context()
     # set device target first
