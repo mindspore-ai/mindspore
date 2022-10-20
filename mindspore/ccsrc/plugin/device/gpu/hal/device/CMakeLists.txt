@@ -36,12 +36,19 @@ if(ENABLE_GPU)
         target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
     endif()
 
-    file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc" "*.cu")
+    file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "*.cu")
+    set_property(SOURCE ${CUDA_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND ${CUDA_VERSION} VERSION_GREATER "11.0")
+        string(REPLACE "-arch=sm_53;" "" CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+        list(APPEND CUDA_NVCC_FLAGS -std=c++17)
+        cuda_add_library(gpu_hash_table STATIC ${CUDA_SRC_LIST})
+    endif()
+
     set(GPU_COLLECTIVE_SRCS "distribution/collective_wrapper.cc"
                             "distribution/mpi_wrapper.cc"
                             "distribution/nccl_wrapper.cc")
 
-    list(REMOVE_ITEM CUDA_SRC_LIST "mpi/mpi_initializer.cc" ${GPU_COLLECTIVE_SRCS})
 
     if(ENABLE_MPI)
         include(ExternalProject)
