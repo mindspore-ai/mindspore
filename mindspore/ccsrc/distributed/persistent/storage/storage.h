@@ -41,9 +41,6 @@ class StorageBase {
   StorageBase() = default;
   virtual ~StorageBase() = default;
 
-  virtual void Initialize() {}
-
-  virtual void Finalize() {}
   // Write input tensor to storage medium or memory buffer.
   // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage,
   // for example, some rows of embedding table need to be rewritten to storage, the dirty_info should contain these row
@@ -55,17 +52,11 @@ class StorageBase {
   // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage.
   virtual void Write(const std::vector<InputData> &input, const DirtyInfo &dirty_info) {}
 
-  // Write data of ids to block files.
-  virtual void Write(const void *input, size_t ids_num, const int32_t *ids) {}
-
   // Read data from the storage medium or memory buffer and merge them into contiguous memory.
   virtual void Read(const OutputData &output) {}
 
   // Read data from the storage medium or memory buffer and merge them into contiguous memory for multiple tensors.
   virtual void Read(const std::vector<OutputData> &outputs) {}
-
-  // Read ids from block files.
-  virtual void Read(size_t ids_num, const int32_t *ids, void *output, size_t *miss_num, size_t *miss_indices) {}
 };
 }  // namespace storage
 }  // namespace distributed

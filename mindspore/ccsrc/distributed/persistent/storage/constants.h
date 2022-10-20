@@ -34,7 +34,6 @@ constexpr char kBlockFilePrefix[] = "block_";
 constexpr char kBlockMetaFilePrefix[] = "block_meta_";
 constexpr char kJsonSuffix[] = ".json";
 constexpr size_t JSON_SUFFIX_LENS = 5;
-constexpr size_t kBlockFileNameLens = 12;
 
 // Storage config related.
 constexpr char kFileStoragePath[] = "file_storage_path";

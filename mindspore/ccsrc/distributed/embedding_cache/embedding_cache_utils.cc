@@ -209,28 +209,5 @@ void EmbeddingCacheTableManager::DumpHashTables() const {
                  << ", host cache address:" << reinterpret_cast<void *>(item.second.host_address.get());
   }
 }
-
-size_t GetEmbeddingRemoteCacheSize() {
-  std::string cache_size_str = common::GetEnv(kEnvEmbeddingRemoteCacheMemorySize);
-  if (cache_size_str.empty()) {
-    return kDefaultEmbeddingRemoteCacheMemorySize;
-  }
-
-  return LongToSize(std::stoull(cache_size_str, nullptr, kNumberBase) << kOneGBBitNum);
-}
-
-size_t GetEmbeddingLocalCacheSize() {
-  std::string cache_size_str = common::GetEnv(kEnvEmbeddingLocalCacheMemorySize);
-  if (cache_size_str.empty()) {
-    return kDefaultEmbeddingLocalCacheMemorySize;
-  }
-
-  return LongToSize(std::stoull(cache_size_str, nullptr, kNumberBase) << kOneGBBitNum);
-}
-
-EmbeddingStoreManager &EmbeddingStoreManager::GetInstance() {
-  static EmbeddingStoreManager instance{};
-  return instance;
-}
 }  // namespace distributed
 }  // namespace mindspore

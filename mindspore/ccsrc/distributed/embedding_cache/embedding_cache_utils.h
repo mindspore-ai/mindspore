@@ -21,7 +21,6 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include "utils/hash_map.h"
 #include "kernel/kernel.h"
 #include "distributed/embedding_cache/embedding_hash_map.h"
 #include "distributed/embedding_cache/embedding_store.h"
@@ -40,20 +39,6 @@ static constexpr size_t kHostCacheScaleFactor = 10;
 static constexpr size_t kMaxThreadNum = 16;
 // Maximum number of feature ids processed per thread.
 static constexpr size_t kMaxIdsPerThread = 10000;
-
-static constexpr size_t kNumberBase = 10;
-
-static constexpr size_t kOneGBBitNum = 30;
-
-// The default cache size of one embedding parameter on role of server: 1TB.
-static constexpr size_t kDefaultEmbeddingRemoteCacheMemorySize = size_t(1) << 40;
-
-// The default cache size of one embedding parameter on role of worker: 10GB.
-static constexpr size_t kDefaultEmbeddingLocalCacheMemorySize = size_t(10) << 30;
-
-static constexpr auto kEnvEmbeddingRemoteCacheMemorySize = "MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE";
-
-static constexpr auto kEnvEmbeddingLocalCacheMemorySize = "MS_EMBEDDING_LOCAL_CACHE_MEMORY_SIZE";
 
 using mindspore::kernel::Address;
 
@@ -270,30 +255,22 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
 
   friend class mindspore::runtime::EmbeddingCachePrefetchActor;
 };
-
-// The EmbeddingStoreManager class is used to save all enabling store for all embedding table.
 class BACKEND_EXPORT EmbeddingStoreManager {
  public:
-  static EmbeddingStoreManager &GetInstance();
-
-  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<int32_t, float>> emb_store) {
-    embedding_stores_[name] = emb_store;
+  static EmbeddingStoreManager &GetInstance() {
+    static EmbeddingStoreManager instance{};
+    return instance;
   }
-  std::shared_ptr<EmbeddingStore<int32_t, float>> Get(const std::string &name) { return embedding_stores_[name]; }
+  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<int32_t, float>> emb_store) {}
+  std::shared_ptr<EmbeddingStore<int32_t, float>> Get(const std::string &name) { return nullptr; }
 
-  bool IsExists(const std::string &name) const { return embedding_stores_.find(name) != embedding_stores_.end(); }
+  bool IsExists(const std::string &name) const { return false; }
 
  private:
   EmbeddingStoreManager() = default;
   ~EmbeddingStoreManager() = default;
   DISABLE_COPY_AND_ASSIGN(EmbeddingStoreManager);
-
-  mindspore::HashMap<std::string, std::shared_ptr<EmbeddingStore<int32_t, float>>> embedding_stores_;
 };
-
-size_t GetEmbeddingRemoteCacheSize();
-
-size_t GetEmbeddingLocalCacheSize();
 }  // namespace distributed
 static distributed::EmbeddingCacheTableManager &embedding_cache_table_manager =
   distributed::EmbeddingCacheTableManager::GetInstance();

@@ -58,8 +58,6 @@ class ScatterArithmeticCpuKernelMod : public NativeCpuKernelMod,
   size_t inner_size_{0};
   size_t indices_size_{0};
   int first_dim_size_{0};
-  bool use_embedding_cache_;
-  int64_t parameter_key_{-1};
 };
 }  // namespace kernel
 }  // namespace mindspore
