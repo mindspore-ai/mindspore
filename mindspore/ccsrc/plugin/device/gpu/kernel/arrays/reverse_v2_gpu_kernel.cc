@@ -131,8 +131,17 @@ std::vector<std::pair<KernelAttr, ReverseV2GpuKernelMod::ReverseV2LaunchFunc>> R
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &ReverseV2GpuKernelMod::LaunchKernel<float>},
 
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &ReverseV2GpuKernelMod::LaunchKernel<double>},
+
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
    &ReverseV2GpuKernelMod::LaunchKernel<uint8_t>},
+
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &ReverseV2GpuKernelMod::LaunchKernel<uint16_t>},
+
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &ReverseV2GpuKernelMod::LaunchKernel<int8_t>},
 
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
    &ReverseV2GpuKernelMod::LaunchKernel<int16_t>},
