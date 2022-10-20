@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER(kMatMulOpName).SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
-  auto ta = builder->GetAttr<bool>("transpose_a");
-  auto tb = builder->GetAttr<bool>("transpose_b");
-  auto x = builder->GetInput(kIndex0);
-  auto w = builder->GetInput(kIndex1);
-  auto dout = builder->GetInput(kIndex3);
-  NodePtr dx;
-  NodePtr dw;
-  if (ta) {
-    dx = builder->MatMul(w, dout, (ta && tb), (ta || (!tb)));
-  } else {
-    dx = builder->MatMul(dout, w, (ta && tb), (ta || (!tb)));
-  }
-  if (tb) {
-    dw = builder->MatMul(dout, x, ((!ta) || tb), (ta && tb));
-  } else {
-    dw = builder->MatMul(x, dout, ((!ta) || tb), (ta && tb));
-  }
-  return {dx, dw};
+REG_BPROP_BUILDER("Flatten").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Reshape(dout, ib->GetShape(x));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Reshape").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto shp = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto shapex = ib->GetShape(x);
+  return {ib->Reshape(dout, shapex), ib->ZerosLike(shp)};
 });
 }  // namespace mindspore::expander::bprop

@@ -56,7 +56,7 @@ class Emitter {
   NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kRealDiv, {lhs, rhs}); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
 
-  NodePtr ZerosLike(const NodePtr &node) const { return Emit(prim::kZerosLike, {node}); }
+  NodePtr ZerosLike(const NodePtr &node) const;
 
   /// \brief Emit a scalar node
   template <typename T>

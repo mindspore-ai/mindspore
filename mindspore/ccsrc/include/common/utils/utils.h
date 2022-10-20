@@ -90,6 +90,7 @@ constexpr auto kBatchNormWithActivation = "BatchNormWithActivation";
 constexpr auto kBatchNormWithAddAndActivation = "BatchNormWithAddAndActivation";
 constexpr auto kBatchToSpaceOpName = "BatchToSpace";
 constexpr auto kBiasAddOpName = "BiasAdd";
+constexpr auto kBiasAddGradOpName = "BiasAddGrad";
 constexpr auto kBN2AddReluOpName = "BN2AddRelu";
 constexpr auto kBN2OpName = "BN2";
 constexpr auto kBN2ReLUOpName = "BN2Relu";

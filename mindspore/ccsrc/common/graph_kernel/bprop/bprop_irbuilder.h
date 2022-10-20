@@ -39,15 +39,22 @@ class BpropIRBuilder : public Emitter {
   bool Run(const NodePtrList &inputs, const DAttr &attrs, std::vector<CNodePtr> *outputs, DoutUser *dout_user);
 
   ValuePtr GetAttr(const std::string &attr) const;
+  template <typename S>
+  S GetAttr(const std::string &attr) const {
+    return GetValue<S>(GetAttr(attr));
+  }
   const DAttr &GetAttrs() const { return *attrs_ptr_; }
   NodePtr GetInput(size_t i) const;
   const NodePtrList &GetInputs() const { return *inputs_ptr_; }
 
   ShapeVector GetShape(const NodePtr &node) const;
   TypePtr GetDtype(const NodePtr &node) const;
+  TypeId GetDtypeId(const NodePtr &node) const { return GetDtype(node)->type_id(); }
   ValuePtr GetAttr(const NodePtr &node, const std::string &attr) const;
 
   std::string name() const { return name_; }
+
+  void DumpResult(const std::vector<CNodePtr> &outputs, const DoutUser &dout_user) const;
 
  protected:
   void FindDoutUsers(const std::vector<CNodePtr> &outputs, DoutUser *dout_user) const;
