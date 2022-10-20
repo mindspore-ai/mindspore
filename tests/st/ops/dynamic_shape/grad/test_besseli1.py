@@ -35,7 +35,7 @@ def grad_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net(Tensor(x_np), is_dynamic_rank)
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -49,7 +49,7 @@ def test_grad_dynamic_shape():
     grad_dyn_case(False)
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -63,29 +63,29 @@ def test_grad_dynamic_rank():
     grad_dyn_case(True)
 
 
-@pytest.mark.skip(reason="For 'BroadcastTo', input args must be tensor or tuple")
-@pytest.mark.level2
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_grad_dynamic_shape_2():
     """
-    Feature: test BesselI1 grad dynamic shape on GPU.
+    Feature: test BesselI1 grad dynamic shape.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     grad_dyn_case(False)
 
 
-@pytest.mark.skip(reason="For 'BroadcastTo', input args must be tensor or tuple")
-@pytest.mark.level2
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_grad_dynamic_rank_2():
     """
-    Feature: test BesselI1 grad dynamic shape on GPU.
+    Feature: test BesselI1 grad dynamic rank.
     Description: input is dynamic shape.
     Expectation: the result match with static shape
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     grad_dyn_case(True)
