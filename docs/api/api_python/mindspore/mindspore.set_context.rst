@@ -74,6 +74,8 @@ mindspore.set_context
     |                         |  support_binary              |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  memory_optimize_level       |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  memory_offload              |  GPU/Ascend                |
     +-------------------------+------------------------------+----------------------------+
 
     参数：
@@ -146,6 +148,10 @@ mindspore.set_context
 
           - O0: 执行性能优先，关闭 SOMAS (Safe Optimized Memory Allocation Solver)。
           - O1: 内存性能优先，使能 SOMAS。
+        - **memory_offload** (str) - 是否开启Offload功能，在内存不足场景下将空闲数据临时拷贝至Host侧内存。其值必须在['ON', 'OFF']范围中，默认值为'OFF'。
+
+          - ON：开启memory offload功能。在Ascend硬件平台，未设置环境变量“GRAPH_OP_RUN=1”时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
+          - OFF：关闭memory offload功能。
 
     异常：
         - **ValueError** - 输入key不是上下文中的属性。
