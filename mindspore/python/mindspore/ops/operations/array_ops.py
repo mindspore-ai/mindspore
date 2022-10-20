@@ -130,7 +130,7 @@ class _ScatterOpDynamic(PrimitiveWithCheck):
             raise ValueError(f"For '{prim_name}', the 'input_x' does not support dynamic shape, "
                              f"but got the shape of 'input_x' is {x_shape}.")
         # support indices and updates dynamic
-        if np.any(np.array(indices_shape) == -1) or np.any(np.array(updates_shape) == -1):
+        if is_shape_unknown(indices_shape) or is_shape_unknown(updates_shape):
             pass
         elif indices_shape != [-1] and updates_shape and updates_shape != indices_shape + x_shape[1:]:
             raise ValueError(f"For '{prim_name}', "
