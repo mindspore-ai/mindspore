@@ -1058,6 +1058,13 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
     front_node = front_node_with_index.first;
   }
   MS_EXCEPTION_IF_NULL(front_node);
+  const auto &real_front_node = common::AnfAlgo::VisitKernelWithReturnType(front_node, 0).first;
+  if (real_front_node != nullptr && real_front_node->isa<ValueNode>()) {
+    MS_LOG(DEBUG) << "Front node:" << real_front_node->DebugString()
+                  << " of backend node:" << backend_node->DebugString() << " is a valuenode.";
+    return false;
+  }
+
   // If parameter is a weight node in root funcgraph, it should be set to kernel actor directly.
   if (IsRootGraphPersistentDeviceTensor(front_node)) {
     MS_LOG(DEBUG) << "backend node:" << backend_node->DebugString()
