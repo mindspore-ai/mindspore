@@ -87,6 +87,14 @@ void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t>
   MS_EXCEPTION_IF_NULL(axis);
   int64_t dim_ = static_cast<int64_t>(dim);
   for (size_t i = 0; i < axis->size(); i++) {
+    if (dim == 0) {
+      if ((axis->at(i) != -1 && axis->at(i) != 0)) {
+        MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'axis' must be 0. But got 'axis' = " << axis->at(i)
+                                 << ".";
+      }
+      axis->at(i) = 0;
+      continue;
+    }
     if (axis->at(i) < -dim_ || axis->at(i) >= dim_) {
       MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
                                << "). But got 'axis' = " << axis->at(i) << ".";
@@ -117,7 +125,7 @@ ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const Sha
     }
     return out_shape;
   }
-  if (axis.size() == 0) {
+  if (axis.size() == 0 || x_shape.size() == 0) {
     return {};
   }
   std::vector<int64_t>::reverse_iterator it_re;
@@ -206,7 +214,14 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   bool axis_is_dynamic = CheckAndGetAxisValue(input_args, &axis_value, &axis_shape, primitive);
   ShapeVector out_shape = {};
   constexpr int dynamic_rank_value = -2;
-  if (IsDynamicRank(x_shape) || (axis_shape == -1 && !keep_dims)) {
+  if (IsDynamicRank(x_shape)) {
+    if (axis_shape == 0 && !keep_dims) {
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+    out_shape.push_back(dynamic_rank_value);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  if (axis_shape == -1 && !keep_dims) {
     out_shape.push_back(dynamic_rank_value);
     return std::make_shared<abstract::Shape>(out_shape);
   }

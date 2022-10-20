@@ -404,7 +404,7 @@ def _tensor_index_by_integer(data, int_index):
     shrink_axis_mask = 1
     begin_mask = 0
     end_mask = 0
-    for i in range(1, len(data_shape)):
+    for i in range(2, 8):
         begin_mask += 2 ** i
         end_mask += 2 ** i
     return strided_slice(data, begin_strides, end_strides, step_strides, begin_mask, end_mask, 0, 0, shrink_axis_mask)
