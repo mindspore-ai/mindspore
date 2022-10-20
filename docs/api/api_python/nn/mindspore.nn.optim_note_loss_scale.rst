@@ -2,4 +2,4 @@
 
 由于此优化器没有 `loss_scale` 的参数，因此需要通过其他方式处理 `loss_scale` 。
 
-如何正确处理 `loss_scale` 详见 `LossScale <https://www.mindspore.cn/tutorials/experts/zh-CN/master/others/mixed_precision.html>`_。
+如何正确处理 `loss_scale` 详见 `LossScale <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html>`_。
