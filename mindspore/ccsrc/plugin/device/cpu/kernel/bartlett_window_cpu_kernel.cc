@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "plugin/device/cpu/kernel/bartlett_window_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/bartlett_window.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,36 +28,30 @@ constexpr size_t kBartlettWindowInputsNum = 1;
 constexpr size_t kBartlettWindowOutputsNum = 1;
 }  // namespace
 
-void BartlettWindowCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  periodic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "periodic");
-  input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (input_shape.size() > 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dim of window_length should be 0, but got "
-                             << input_shape.size();
-  }
-  node_wpt_ = kernel_node;
-  cnode_ptr_ = kernel_node;
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool BartlettWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBartlettWindowInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBartlettWindowOutputsNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BartlettWindow>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  periodic_ = kernel_ptr->get_periodic();
+  return true;
 }
 
 template <typename T1, typename T2>
 bool BartlettWindowCpuKernelMod::BartlettWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
                                                           const std::vector<kernel::AddressPtr> &,
                                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto node_ = cnode_ptr_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_ is expired.";
-  }
-
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBartlettWindowInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBartlettWindowOutputsNum, kernel_name_);
   auto input = reinterpret_cast<T1 *>(inputs[0]->addr);
   auto output = reinterpret_cast<T2 *>(outputs[0]->addr);
 
@@ -67,9 +62,6 @@ bool BartlettWindowCpuKernelMod::BartlettWindowKernelFunc(const std::vector<kern
   auto window_length = static_cast<int64_t>(*input);
   double pre_window_length = static_cast<double>(window_length);
   const size_t OUTPUTISONE = 1;
-
-  ShapeVector out_shape = {window_length};
-  std::vector<TypeId> dtypes = {AnfAlgo::GetOutputDeviceDataType(node_, 0)};
 
   if (*input == 1) {
     *output = static_cast<T2>(OUTPUTISONE);
@@ -88,8 +80,6 @@ bool BartlettWindowCpuKernelMod::BartlettWindowKernelFunc(const std::vector<kern
       *(output + i) = value;
     }
   }
-
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
   return true;
 }
 
