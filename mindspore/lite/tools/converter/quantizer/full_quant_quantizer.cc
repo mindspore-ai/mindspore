@@ -695,12 +695,19 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   if (init_param_.activation_target_data_type_ == kNumberTypeInt8 ||
       init_param_.activation_target_data_type_ == kNumberTypeUInt8) {
     // add quant_cast
-    quant::InsertQuantNodeManager inset_quant_node_pass;
-    status = inset_quant_node_pass.InsertQuantDtypeCastNode(func_graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "add QuantCast error";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return RET_ERROR;
+    for (auto &cnode : func_graph->GetOrderedCnodes()) {
+      schema::QuantType curr_quant_type;
+      if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
+        MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
+        return RET_ERROR;
+      }
+      quant::InsertQuantNodeManager insert_node_manager;
+      status = insert_node_manager.InsertCastNodeForFullQuant(func_graph, cnode, kNumberTypeFloat32, curr_quant_type);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "InsertForwardCastNode failed, cnode name: " << cnode->fullname_with_scope();
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+        return status;
+      }
     }
   }
 

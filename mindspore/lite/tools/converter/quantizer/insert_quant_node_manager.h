@@ -33,8 +33,6 @@ class InsertQuantNodeManager {
 
   ~InsertQuantNodeManager() = default;
 
-  int InsertQuantDtypeCastNode(const FuncGraphPtr &graph, TypeId cast_dtype = kNumberTypeFloat32);
-
   int InsertDynamicQuantNode(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops,
                              const std::set<std::string> &skip_quant_node);
 
@@ -43,12 +41,13 @@ class InsertQuantNodeManager {
   int InsertForwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
                             schema::QuantType curr_quant_type);
 
+  int InsertCastNodeForFullQuant(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
+                                 schema::QuantType curr_quant_type);
+
   int InsertBackwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
                              schema::QuantType curr_quant_type);
 
  private:
-  int InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t input_index, bool is_graph_input);
-
   int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 
   int NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode);
@@ -59,7 +58,8 @@ class InsertQuantNodeManager {
 
   int SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node, const CNodePtr &cast_cnode);
 
-  int InsertForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index);
+  int InsertForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
+                                 CastNodeType cast_node_type);
 
   int InsertBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
                                     const AnfNodePtr &output_node);
