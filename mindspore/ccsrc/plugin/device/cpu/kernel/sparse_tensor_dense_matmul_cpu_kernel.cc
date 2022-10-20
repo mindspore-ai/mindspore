@@ -32,17 +32,37 @@ constexpr size_t kIndicesSizeNum = 2;
 constexpr size_t kIndices2rdDimNum = 2;
 }  // namespace
 
-void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  adj_st_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
-  adj_dt_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, static_cast<size_t>(DENSE));
-  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape, output_shape, b_shape})) {
-    return;
+bool SparseTensorDenseMatmulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                               const std::vector<KernelTensorPtr> &inputs,
+                                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  adj_st_ = GetValue<bool>(prim->GetAttr(ADJ_ST));
+  adj_dt_ = GetValue<bool>(prim->GetAttr(ADJ_dT));
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int SparseTensorDenseMatmulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                const std::vector<KernelTensorPtr> &inputs,
+                                                const std::vector<KernelTensorPtr> &outputs,
+                                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto indices_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto values_shape = inputs.at(kIndex1)->GetShapeVector();
+  auto b_shape = inputs.at(kIndex3)->GetShapeVector();
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<std::vector<int64_t>> all_shapes = {indices_shape, values_shape, b_shape, output_shape};
+  bool is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
+  if (is_dynamic) {
+    return KRET_OK;
   }
   if (indices_shape.size() != kIndicesSizeNum && indices_shape[1] != kIndices2rdDimNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -67,13 +87,7 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
                       << kSparseTensorDenseMatmulOutputShapeSize << "-D, but got " << output_shape_.size() << "-D";
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename I, typename T>

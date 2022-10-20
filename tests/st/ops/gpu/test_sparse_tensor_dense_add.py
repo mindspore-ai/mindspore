@@ -16,15 +16,27 @@
 
 import numpy as np
 import pytest
-from mindspore import Tensor, context
+import mindspore as ms
+from mindspore import Tensor, context, nn
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
+
+
+class Net(nn.Cell):
+
+    def __init__(self) -> None:
+        super(Net, self).__init__()
+        self.op = SparseTensorDenseAdd()
+
+    def construct(self, x1_indices, x1_values, x1_shape, x2):
+        return self.op(x1_indices, x1_values, x1_shape, x2)
 
 
 def generate_data(datatype="float32", indicetype="int32"):
     x1_indices = Tensor(np.array([[0, 1], [1, 2]]).astype(indicetype))
     x1_values = Tensor(np.array([1, 2]).astype(datatype))
     x1_shape = Tensor(np.array([3, 4]).astype(indicetype))
-    x2 = Tensor(np.array([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]).astype(datatype))
+    x2 = Tensor(
+        np.array([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]).astype(datatype))
     data = x1_indices, x1_values, x1_shape, x2
     return data
 
@@ -60,6 +72,33 @@ def test_sparse_tensor_dense_add(indicetype, datatype):
     data = generate_data(datatype=datatype, indicetype=indicetype)
     net = SparseTensorDenseAdd()
     out = net(data[0], data[1], data[2], data[3]).asnumpy()
-    expected = np.array([[1, 2, 1, 1], [1, 1, 3, 1], [1, 1, 1, 1]]).astype(datatype)
-    eps = 1e-6*np.array(np.ones_like(out))
+    expected = np.array([[1, 2, 1, 1], [1, 1, 3, 1], [1, 1, 1,
+                                                      1]]).astype(datatype)
+    eps = 1e-6 * np.array(np.ones_like(out))
     assert np.all(expected - out < eps)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_sparse_tensor_dense_add_dyn():
+    """
+    Feature: test SparseTensorDenseAdd op in gpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net()
+
+    x1_indices_dyn = Tensor(shape=[None, 2], dtype=ms.int64)
+    x1_values_dyn = Tensor(shape=[None], dtype=ms.float32)
+    x1_shape = Tensor([3, 3], dtype=ms.int64)
+    x2 = Tensor([[1, 1, 1], [1, 1, 1], [1, 1, 1]], dtype=ms.float32)
+    net.set_inputs(x1_indices_dyn, x1_values_dyn, x1_shape, x2)
+
+    x1_indices = Tensor([[0, 0], [0, 1]], dtype=ms.int64)
+    x1_values = Tensor([1, 1], dtype=ms.float32)
+    out = net(x1_indices, x1_values, x1_shape, x2)
+
+    expect_out_shape = (3, 3)
+    assert out.asnumpy().shape == expect_out_shape

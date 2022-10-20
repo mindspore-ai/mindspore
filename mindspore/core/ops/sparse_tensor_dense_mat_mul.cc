@@ -28,6 +28,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const int kDimensionOne = 1;
+const int kDimensionTwo = 2;
 void CheckShapeRank(const size_t cur_rank, const size_t expected_rank, const std::string &op_name,
                     const std::string &arg_name) {
   if (cur_rank != expected_rank) {
@@ -47,6 +49,7 @@ bool checkType(std::string name, TypePtr dtype, std::set<TypePtr> vtypes, const 
   }
   return true;
 }
+
 bool checkContainer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args, std::string *info) {
   const int kTwo = 2;
   const int kOne = 1;
@@ -70,92 +73,116 @@ bool checkContainer(const PrimitivePtr &primitive, const std::vector<AbstractBas
   }
   return true;
 }
+
+void SparseTensorDenseMatmulCheckShape(const std::string &prim_name, const bool &is_dynamic_rank,
+                                       const bool &is_dynamic, const ShapeVector &indices_shape,
+                                       const ShapeVector &values_shape, const ShapeVector &shape_shape,
+                                       const ShapeVector &x2_shape) {
+  if (!is_dynamic_rank) {
+    CheckShapeRank(indices_shape.size(), kDimensionTwo, prim_name, "indices");
+    CheckShapeRank(values_shape.size(), kDimensionOne, prim_name, "values");
+    CheckShapeRank(shape_shape.size(), kDimensionOne, prim_name, "sparse_shape");
+    CheckShapeRank(x2_shape.size(), kDimensionTwo, prim_name, "the shape of input dense");
+  }
+  if (!is_dynamic) {
+    if (indices_shape[1] != kDimensionTwo) {
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', the 2nd dimension of indices "
+                        << "should be 2, but got " << indices_shape[1] << ".";
+    }
+    if (values_shape[0] != indices_shape[0]) {
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input values' length "
+                        << "is different from indices' first dimension";
+    }
+    if (shape_shape[0] != kDimensionTwo) {
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', the 1st dimension of sparse_shape "
+                        << "should be 2, but got " << shape_shape[0] << ".";
+    }
+  }
+}
+
+void SparseTensorDenseMatmulCheckShapeSetShape(const std::string &prim_name, int64_t *shape_ptr,
+                                               const ShapeVector &shape_shape, const AbstractBasePtr &x1_shape) {
+  if (x1_shape->isa<abstract::AbstractTensor>() && x1_shape->BuildValue()->isa<tensor::Tensor>()) {
+    auto a_shape = x1_shape->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(a_shape);
+    auto a_shape_value = a_shape->BuildValue();
+    MS_EXCEPTION_IF_NULL(a_shape_value);
+    auto a_shape_tensor = a_shape_value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(a_shape_tensor);
+    auto a_shape_size = a_shape_tensor->DataSize();
+    auto expect_size = std::accumulate(shape_shape.begin(), shape_shape.end(), 1, std::multiplies{});
+    MS_EXCEPTION_IF_CHECK_FAIL(a_shape_size == LongToSize(expect_size),
+                               "For '" + prim_name + "', something unexpected happened.");
+    auto a_shape_ptr = a_shape_tensor->data_c();
+    for (size_t i = 0; i < kDimensionTwo; ++i) {
+      if (a_shape_tensor->Dtype() == kInt32) {
+        shape_ptr[i] = IntToLong(*(reinterpret_cast<int *>(a_shape_ptr) + i));
+      } else {
+        shape_ptr[i] = *(reinterpret_cast<int64_t *>(a_shape_ptr) + i);
+      }
+    }
+  } else if (IsIdentidityOrSubclass(x1_shape->BuildType(), kTuple)) {
+    auto value_tuple = GetValue<std::vector<int64_t>>(x1_shape->BuildValue());
+    for (size_t i = 0; i < kDimensionTwo; ++i) {
+      shape_ptr[i] = value_tuple[i];
+    }
+  }
+}
+
 abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
-  const int kDimensionTwo = 2;
-  const int kDimensionOne = 1;
   auto x1_shape = input_args[2];
   auto x1_shape_value = x1_shape->BuildValue();
   std::string info;
   if (!checkContainer(primitive, input_args, &info)) {
-    MS_EXCEPTION(TypeError) << "For " << primitive->name() << info;
+    MS_EXCEPTION(TypeError) << "For " << prim_name << info;
   }
   if (x1_shape->isa<abstract::AbstractTuple>()) {
     int64_t shape_len = static_cast<int64_t>(GetValue<std::vector<int64_t>>(x1_shape_value).size());
     shape_shape = std::vector<int64_t>{shape_len};
   }
-
   std::vector<std::vector<int64_t>> all_shapes = {indices_shape, values_shape, shape_shape, x2_shape};
   bool is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
   bool is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
-  if (!is_dynamic_rank) {
-    CheckShapeRank(indices_shape.size(), kDimensionTwo, primitive->name(), "indices");
-    CheckShapeRank(values_shape.size(), kDimensionOne, primitive->name(), "values");
-    CheckShapeRank(shape_shape.size(), kDimensionOne, primitive->name(), "sparse_shape");
-    CheckShapeRank(x2_shape.size(), kDimensionTwo, primitive->name(), "the shape of input dense");
-  }
-
+  SparseTensorDenseMatmulCheckShape(prim_name, is_dynamic_rank, is_dynamic, indices_shape, values_shape, shape_shape,
+                                    x2_shape);
   if (!is_dynamic) {
-    if (indices_shape[1] != kDimensionTwo) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the 2nd dimension of indices "
-                        << "should be 2, but got " << indices_shape[1] << ".";
-    }
-    if (values_shape[0] != indices_shape[0]) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the input values' length "
-                        << "is different from indices' first dimension";
-    }
-    if (shape_shape[0] != kDimensionTwo) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the 1st dimension of sparse_shape "
-                        << "should be 2, but got " << shape_shape[0] << ".";
-    }
     if (x1_shape_value->isa<AnyValue>() || x1_shape_value->isa<None>()) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the input sparse_shape "
                         << "should be constant.";
     }
   }
-
   auto adjoint_a = primitive->GetAttr("adjoint_st");
   auto adjoint_b = primitive->GetAttr("adjoint_dt");
   bool adjoint_av = GetValue<bool>(adjoint_a);
   bool adjoint_bv = GetValue<bool>(adjoint_b);
   int64_t x1_row = -1, x1_col = -1;
   int64_t x2_row = -1, x2_col = -1;
-
+  if (is_dynamic_rank) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{x1_row, x2_col});
+  }
+  ShapeVector shape{-1, -1};
+  SparseTensorDenseMatmulCheckShapeSetShape(prim_name, shape.data(), shape_shape, x1_shape);
+  if (shape.size() == kDimensionTwo) {
+    x1_row = shape[0];
+    x1_col = shape[1];
+  }
   if (x2_shape.size() == kDimensionTwo) {
     x2_row = x2_shape[0];
     x2_col = x2_shape[1];
   }
-  if (x1_shape->isa<abstract::AbstractTuple>()) {
-    auto temp = GetValue<std::vector<int64_t>>(x1_shape_value);
-    if (temp.size() == kDimensionTwo) {
-      x1_row = temp[0];
-      x1_col = temp[1];
-    }
-    if (adjoint_av) std::swap(x1_row, x1_col);
-    if (adjoint_bv) std::swap(x2_row, x2_col);
-    int64_t y_row = x1_row, y_col = x2_col;
-    std::vector<int64_t> y_shape{y_row, y_col};
-    return std::make_shared<abstract::Shape>(y_shape);
-  }
-
-  if (x1_shape_value->isa<tensor::Tensor>()) {
-    auto shape = CheckAndConvertUtils::CheckTensorIntValue("x1_shape", x1_shape_value, primitive->name());
-    if (shape.size() == kDimensionTwo) {
-      x1_row = shape[0];
-      x1_col = shape[1];
-    }
-  }
-
   if (adjoint_av) std::swap(x1_row, x1_col);
   if (adjoint_bv) std::swap(x2_row, x2_col);
   int64_t y_row = x1_row, y_col = x2_col;
   std::vector<int64_t> y_shape{y_row, y_col};
   return std::make_shared<abstract::Shape>(y_shape);
 }
+
 TypePtr SparseTensorDenseMatmulInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
