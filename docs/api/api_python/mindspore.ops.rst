@@ -31,7 +31,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 
     mindspore.ops.constexpr
     mindspore.ops.custom_info_register
-    mindspore.ops.ms_kernel
+    mindspore.ops.kernel
     mindspore.ops.op_info_register
     mindspore.ops.prim_attr_register
 
