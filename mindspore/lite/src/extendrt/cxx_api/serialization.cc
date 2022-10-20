@@ -194,7 +194,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     std::vector<std::string> preprocessor = mindir_loader.LoadPreprocess(file_path);
     if (!preprocessor.empty()) {
       std::string dataengine_so_path;
-      Status dlret = DLSoPath("libmindspore.so", "_c_dataengine", &dataengine_so_path);
+      Status dlret = DLSoPath({"libmindspore.so"}, "_c_dataengine", &dataengine_so_path);
       CHECK_FAIL_AND_RELEASE(dlret, nullptr, "Parse dataengine_so failed: " + dlret.GetErrDescription());
 
       void *handle = nullptr;
@@ -275,7 +275,7 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
 #if !defined(_WIN32) && !defined(_WIN64)
     // Dataset so loading
     std::string dataengine_so_path;
-    Status dlret = DLSoPath("libmindspore.so", "_c_dataengine", &dataengine_so_path);
+    Status dlret = DLSoPath({"libmindspore.so"}, "_c_dataengine", &dataengine_so_path);
     CHECK_FAIL_AND_RELEASE(dlret, nullptr, "Parse dataengine_so failed: " + dlret.GetErrDescription());
 
     void *handle = nullptr;

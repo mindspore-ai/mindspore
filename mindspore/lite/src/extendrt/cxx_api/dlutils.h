@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_
 #include <string>
+#include <vector>
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <dlfcn.h>
 #include <dirent.h>
@@ -59,16 +60,23 @@ inline Status FindSoPath(const std::string &parent_dir, const std::string &targe
   return kSuccess;
 }
 
-inline Status DLSoPath(const std::string &benchmark_so, const std::string &target_so, std::string *target_so_path) {
+inline Status DLSoPath(const std::vector<std::string> &so_names, const std::string &target_so,
+                       std::string *target_so_path) {
   if (target_so_path == nullptr) {
     return Status(kMEFailed, "Input so_path can not be nullptr.");
   }
   Dl_info dl_info;
   dladdr(reinterpret_cast<void *>(DLSoPath), &dl_info);
   std::string cur_so_path = dl_info.dli_fname;
-  auto pos = cur_so_path.find(benchmark_so);
+  std::string::size_type pos = std::string::npos;
+  for (auto &item : so_names) {
+    pos = cur_so_path.find(item);
+    if (pos != std::string::npos) {
+      break;
+    }
+  }
   if (pos == std::string::npos) {
-    return Status(kMEFailed, "Could not find benchmark so " + benchmark_so + " check path " + cur_so_path);
+    return Status(kMEFailed, "Could not find target so " + target_so + " in check path " + cur_so_path);
   }
   std::string parent_dir = cur_so_path.substr(0, pos);
   return FindSoPath(parent_dir, target_so, target_so_path);

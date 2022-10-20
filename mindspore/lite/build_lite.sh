@@ -183,6 +183,10 @@ build_python_wheel_package() {
     fi
     mkdir -pv package/mindspore_lite/lib/
     cp ../python/api/* package/mindspore_lite/
+    local pkg_name=mindspore-lite-${VERSION_STR}-linux-$1
+    if [[ "$1" == "x86_64" ]]; then
+      local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
+    fi
     if [[ "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on" ]]; then
       cp src/extendrt/*.so package/mindspore_lite/lib/
       find src/extendrt/delegate/graph_executor/litert/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;
@@ -190,12 +194,14 @@ build_python_wheel_package() {
       if [[ "${MSLITE_ENABLE_ACL}" ]]; then
         cp src/extendrt/kernel/ascend/*.so package/mindspore_lite/lib/
       fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtransformer-shared.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtransformer-shared.so package/mindspore_lite/lib/
+      fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtensorrt_plugin.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtensorrt_plugin.so package/mindspore_lite/lib/
+      fi
     else
       cp src/*.so package/mindspore_lite/lib/
-    fi
-    local pkg_name=mindspore-lite-${VERSION_STR}-linux-$1
-    if [[ "$1" == "x86_64" ]]; then
-      local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
     fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog/*.so* package/mindspore_lite/lib/
