@@ -6399,17 +6399,17 @@ def conj(input):
 
     The complex conjugate returned by this operation is of the form a - bj.
 
-    If input is real, it is returned unchanged.
+    If `input` is real, it is returned unchanged.
 
     Args:
         input (Tensor): The input tensor to compute to. Must have numeric type.
 
     Returns:
-        Tensor, has the same dtype as the input.
+        Tensor, has the same dtype as the `input`.
 
     Raises:
-        TypeError: If the dtype of input is not a numeric type.
-        TypeError: If the input is not a Tensor.
+        TypeError: If the dtype of `input` is not a numeric type.
+        TypeError: If the `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
