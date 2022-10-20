@@ -22,7 +22,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
-from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
+from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask, RandpermV2
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops._utils import get_broadcast_shape
 
@@ -569,6 +569,47 @@ def choice_with_mask(input_x, count=256, seed=0, seed2=0):
     choice_with_mask_ = _get_cache_prim(RandomChoiceWithMask)(count=count, seed=seed, seed2=seed2)
     output = choice_with_mask_(input_x)
     return output
+
+
+def randperm(n, seed=0, offset=0, dtype=mstype.int64):
+    r"""
+    Generates random permutation of integers from 0 to n-1.
+
+    Returns the tensor with the determined shape inferred by n, the random numbers in it drawn from the data range
+    that a given type can represent.
+
+    Note:
+        The value of "n" must be greater than zero.
+
+    Args:
+        n (Union[Tensor, int]): The input n Tensor with shape: () or (1,) and with data type of int64.
+        seed (int): Random seed. Default: 0. When seed is -1(only negative value), offset is 0, it's determined by time.
+        offset (int): Priority is higher than random seed. Default: 0. It must be non-negative.
+        dtype (mindspore.dtype): The type of output. Its value must be one of the following types: int32, int16, int8,
+        uint8, int64, float64, float32, float16. Default: int64.
+
+    Returns:
+        Tensor. Its shape is spcified by the required args `n`. Its type is spcified by `dtype`. Otherwise is default.
+
+    Raises:
+        TypeError: If `dtype` is not allowed.
+        ValueError: If `n` is a negative or 0 element.
+        ValueError: If `seed` is a negative element.
+        ValueError: If `n` is larger than the maximal data of the set dtype.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> n = Tensor([4], mstype.int64)
+        >>> seed = 0
+        >>> offset = 0
+        >>> output = ops.randperm(n, seed, offset, dtype=mstype.int64)
+        >>> print(output)
+        [1 0 2 3]
+    """
+    randperm_ = _get_cache_prim(RandpermV2)(dtype=dtype)
+    return randperm_(n, seed, offset)
 
 
 __all__ = [
