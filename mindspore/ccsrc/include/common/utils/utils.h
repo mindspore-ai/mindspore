@@ -828,8 +828,6 @@ COMMON_EXPORT bool IsOneOfCacheBlackList(const std::string &name);
 COMMON_EXPORT bool IsOneOfNotSupportMultiThreadExec(const std::string &name);
 COMMON_EXPORT bool IsOneOf3DFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfNoPaddingFormat(const std::string &format);
-COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttr(const std::string &name);
-COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttrCPU(const std::string &name);
 COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &name);
 COMMON_EXPORT bool IsOneOfComputeDepend(const std::string &name);
 COMMON_EXPORT bool IsOneOfHWSpecialFormat(const std::string &format);
