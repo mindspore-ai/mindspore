@@ -162,7 +162,7 @@ void DumpDeviceAddressInGraph(const session::KernelGraph &graph) {
   std::map<std::string, TaskPtr> op_name_to_task;
   std::transform(tasks.begin(), tasks.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
                  [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
-
+  MS_LOG(WARNING) << "Start dump device address for graph:" << graph.ToString();
   auto nodes = graph.execution_order();
   for (const auto &node : nodes) {
     if (NeedSkipZeroCopy(node)) {
@@ -477,6 +477,7 @@ bool RtModelZeroCopy::GenerateZeroCopyTaskForSubGraphSink(const session::KernelG
     GenerateZeroCopyTaskForInput(node, task, graph, &zero_copy_tasks, &node_to_offset);
     GenerateZeroCopyTaskForOutput(node, task, graph, &zero_copy_tasks, &node_to_offset, &zero_copy_ref_nodes);
   }
+  MS_LOG(INFO) << "Generate zero copy task num:" << zero_copy_tasks.size() << " for graph:" << graph.ToString();
   CheckZeroCopyTaskValid(graph, node_to_offset);
   auto iter = graph_zero_copy_tasks_.try_emplace(graph.graph_id(), zero_copy_tasks);
   if (!iter.second) {

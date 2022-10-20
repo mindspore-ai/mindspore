@@ -70,6 +70,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) const;
   GraphId GraphSum() const { return graph_sum_; }
+  void ClearPartialParameterMap() { partial_parameters_map_.clear(); }
 
  private:
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
