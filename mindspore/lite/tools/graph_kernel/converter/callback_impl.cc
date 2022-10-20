@@ -29,7 +29,9 @@
 
 namespace mindspore::graphkernel {
 // register the callback object
+#ifndef ENABLE_CLOUD_FUSION_INFERENCE
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
+#endif
 
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) { return GetInputInferShape(node, i); }
 
