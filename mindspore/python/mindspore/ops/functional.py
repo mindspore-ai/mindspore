@@ -527,5 +527,10 @@ tensor_operator_registry.register('maximum', maximum)
 tensor_operator_registry.register('mul', mul)
 tensor_operator_registry.register('neg', neg)
 tensor_operator_registry.register('ne', ne)
+tensor_operator_registry.register('sinh', sinh)
+tensor_operator_registry.register('sort', P.Sort)
+tensor_operator_registry.register('trunc', trunc)
+tensor_operator_registry.register('imag', imag)
+
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

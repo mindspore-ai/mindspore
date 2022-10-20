@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,53 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-import numpy as np
 import pytest
-
-import mindspore.nn as nn
+import numpy as np
 from mindspore import Tensor
-from mindspore import context
-from mindspore.ops import operations as P
+import mindspore.context as context
+from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
-
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-
-class NetSinh(nn.Cell):
-    def __init__(self):
-        super(NetSinh, self).__init__()
-        self.sinh = P.Sinh()
-
-    def construct(self, x):
-        return self.sinh(x)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_sinh():
-    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float32')
-    input_x = Tensor(np_array)
-    net = NetSinh()
-    output = net(input_x)
-    print(output)
-    expect = np.sinh(np_array)
-    assert np.allclose(output.asnumpy(), expect)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_sinh_tensor_api_modes(mode):
+def test_imag_functional_api_modes(mode):
     """
-    Feature: Test sinh tensor api.
-    Description: Test sinh tensor api for Graph and PyNative modes.
+    Feature: Test imag functional api.
+    Description: Test imag functional api for Graph and PyNative modes.
     Expectation: The result match to the expect value.
     """
     context.set_context(mode=mode, device_target="CPU")
-    x = Tensor([0.62, 0.28, 0.43, 0.62], mstype.float32)
-    output = x.sinh()
-    expected = np.array([0.6604918, 0.28367308, 0.44337422, 0.6604918], np.float32)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+    x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mstype.complex64)
+    output = F.imag(x)
+    expected = np.array(0.4, np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_imag_tensor_api_modes(mode):
+    """
+    Feature: Test imag tensor api.
+    Description: Test imag tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mstype.complex64)
+    output = x.imag()
+    expected = np.array(0.4, np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)

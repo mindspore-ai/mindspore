@@ -364,6 +364,10 @@ BuiltInTypeMap &GetMethodMap() {
        {"mul", std::string("mul")},                                        // mul()
        {"neg", std::string("neg")},                                        // neg()
        {"ne", std::string("ne")},                                          // ne()
+       {"sinh", std::string("sinh")},                                      // sinh()
+       {"sort", std::string("sort")},                                      // sort()
+       {"trunc", std::string("trunc")},                                    // trunc()
+       {"imag", std::string("imag")},                                      // imag()
      }},
     {kObjectTypeRowTensorType,
      {

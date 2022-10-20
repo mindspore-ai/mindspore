@@ -4159,6 +4159,109 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('ne')(self, other)
 
 
+    def sinh(self):
+        r"""
+        Computes hyperbolic sine of the input element-wise.
+
+        .. math::
+
+            out_i = \sinh(x_i)
+
+        Returns:
+            Tensor, has the same shape as input tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+            >>> output = x.sinh()
+            >>> print(output)
+            [0.6604918 0.28367308 0.44337422 0.6604918]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sinh')(self)
+
+
+    def sort(self, dim=-1, descending=False):
+        r"""
+        Sorts the elements of the input tensor along a given dimension in ascending order by value.
+
+        Args:
+            dim (int, optional): The dimension to sort along. Default: -1.
+            descending (bool, optional): Controls the sorting order. If descending is True, then the elements
+                are sorted in descending order by value. Default: False.
+
+        Returns:
+            y1 (Tensor): A tensor whose values are the sorted values, with the same shape and dtype as input.
+            y2 (Tensor): The indices of the elements in the original input tensor. Tensor dtype is int32.
+
+        Raises:
+            TypeError: If dtype of `dim` is not int.
+            TypeError: If dtype of `descending` is not bool.
+            TypeError: If dtype of input tensor is neither float16 nor float32.
+            ValueError: If `dim` is not in range of [-len(x.shape), len(x.shape)).
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
+            >>> output = x.sort()
+            >>> print(output)
+            (Tensor(shape=[3, 3], dtype=Float16, value=
+            [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
+             [ 3.0000e+00,  5.0000e+00,  9.0000e+00],
+             [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int32, value=
+            [[2, 1, 0],
+             [2, 0, 1],
+             [0, 1, 2]]))
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sort')(axis=dim, descending=descending)(self)
+
+
+    def trunc(self):
+        r"""
+        Returns a new tensor with the truncated integer values of the elements of input.
+
+        Returns:
+            Tensor, the same shape and dtype as the input.
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
+            >>> output = x.trunc()
+            >>> print(output)
+            [3. 0. 0. -3.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('trunc')(self)
+
+
+    def imag(self):
+        r"""
+        Returns a new tensor containing imaginary value of the input tensor.
+        If input tensor is real, it will return zeros.
+
+        Returns:
+            Tensor, the shape is the same as the input tensor.
+
+        Supported Platforms:
+            ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)
+            >>> output = x.imag()
+            >>> print(output)
+            0.4
+        """
+        self._init_check()
+        return tensor_operator_registry.get('imag')(self)
+
+
 class MapTensor(MapTensor_):
     """
     MapTensor is a tensor that stores a map like data structure.
