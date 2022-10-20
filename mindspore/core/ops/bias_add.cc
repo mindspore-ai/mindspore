@@ -29,21 +29,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t check_attr_value_str(const std::string &attr_value_str, const std::string &prim_name) {
-  int64_t data_format = Format::NCHW;
-  if (attr_value_str == "NCHW") {
-    data_format = Format::NCHW;
-  } else if (attr_value_str == "NHWC") {
-    data_format = Format::NHWC;
-  } else if (attr_value_str == "NCDHW") {
-    data_format = Format::NCDHW;
-  } else {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', the data_format must be NCHW, NHWC or NCDHW, but got: " << attr_value_str << ".";
-  }
-  return data_format;
-}
-
 abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -66,11 +51,12 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   const int64_t x_size = 2;
   (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(input_shape.size()), kGreaterEqual, x_size, prim_name);
   auto data_format_ptr = primitive->GetAttr("format");
+  int64_t data_format = Format::NCHW;
+  if (data_format_ptr != nullptr) {
+    data_format = CheckAndConvertUtils::GetAndCheckFormat(data_format_ptr);
+  }
+  auto attr_value_str = FormatEnumToString(Format(data_format));
   primitive->AddAttr("data_format", data_format_ptr);
-
-  auto attr_value_str = GetValue<std::string>(data_format_ptr);
-
-  int64_t data_format = check_attr_value_str(attr_value_str, prim_name);
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
