@@ -20,6 +20,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
 from mindspore.ops._grad.grad_base import bprops
+from mindspore.common import dtype as mstype
 
 get_dtype = P.DType()
 # Unused parameters are placeholders.
@@ -115,16 +116,14 @@ def bprop_identity(x, out, dout):
     return (dout,)
 
 
-@bprops.register("scalar_to_array")
-def bprop_scalar_to_array(x, out, dout):
-    """Backpropagator for primitive `scalar_to_array`."""
-    return (F.array_to_scalar(dout),)
-
-
 @bprops.register("array_to_scalar")
 def bprop_array_to_scalar(x, out, dout):
     """Backpropagator for primitive `array_to_scalar`."""
-    return (F.scalar_to_array(dout),)
+    if isinstance(dout, int):
+        ret = F.scalar_to_tensor(dout, mstype.int32)
+    else:
+        ret = F.scalar_to_tensor(dout)
+    return (ret,)
 
 
 @bprops.register("reshape")

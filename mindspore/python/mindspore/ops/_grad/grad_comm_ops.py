@@ -475,13 +475,13 @@ def get_bprop_mirror_operator(self):
                 dx = all_reduce(dout)
                 float_one = F.scalar_cast(1.0, F.dtype(dx))
                 num = F.scalar_cast(dev_num, F.dtype(dx))
-                dx = mul(dx, cast(F.scalar_to_array(float_one/num), F.dtype(dx)))
+                dx = mul(dx, cast(F.scalar_to_tensor(float_one/num), F.dtype(dx)))
             else:
                 indices = all_gather(dout.indices)
                 grad = all_gather(dout.values)
                 float_one = F.scalar_cast(1.0, F.dtype(grad))
                 num = F.scalar_cast(dev_num, F.dtype(grad))
-                grad = mul(grad, cast(F.scalar_to_array(float_one/num), F.dtype(grad)))
+                grad = mul(grad, cast(F.scalar_to_tensor(float_one/num), F.dtype(grad)))
                 dx = RowTensor(indices, grad, dout.dense_shape)
         else:
             if F.issubclass_(F.typeof(dout), mstype.tensor):
@@ -531,7 +531,7 @@ def get_bprop_mirror_mini_step_operator(self):
                     dx = dout
                 float_one = F.scalar_cast(1.0, F.dtype(dx))
                 num = F.scalar_cast(dev_num, F.dtype(dx))
-                dx = mul(dx, cast(F.scalar_to_array(float_one/num), F.dtype(dx)))
+                dx = mul(dx, cast(F.scalar_to_tensor(float_one/num), F.dtype(dx)))
             else:
                 dx = zeros_like(x)  # The grad accumulation do not support row tensor now
         else:
@@ -562,21 +562,21 @@ def get_bprop_virtual_div_operator(self):
             if F.issubclass_(F.dtype(dout), mstype.bool_) or F.issubclass_(F.dtype(dout), mstype.int32) \
                                      or F.issubclass_(F.dtype(dout), mstype.int16):
                 return (dout,)
-            dx = op(dout, cast(F.scalar_to_array(divisor), dtype(dout)))
+            dx = op(dout, cast(F.scalar_to_tensor(divisor), dtype(dout)))
             return (dx,)
 
         if F.issubclass_(F.typeof(dout), mstype.tuple_):
             dx = ()
             input_nums = F.tuple_len(dout)
             for i in range(input_nums):
-                ele_grad = op(dout[i], cast(F.scalar_to_array(divisor), dtype(dout[i])))
+                ele_grad = op(dout[i], cast(F.scalar_to_tensor(divisor), dtype(dout[i])))
                 dx = dx + (ele_grad,)
             return (dx,)
 
         dx = []
         input_nums = F.list_len(dout)
         for i in range(input_nums):
-            ele_grad = op(dout[i], cast(F.scalar_to_array(divisor), dtype(dout[i])))
+            ele_grad = op(dout[i], cast(F.scalar_to_tensor(divisor), dtype(dout[i])))
             dx.append(ele_grad)
         return (dx,)
     return bprop
