@@ -1133,7 +1133,7 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
   return RET_OK;
 }
 
-bool IsQuantParameterNode(const PrimitiveCPtr &prim) {
+bool IsQuantParameterNode(const PrimitivePtr &prim) {
   MS_CHECK_TRUE_RET(prim != nullptr, false);
   auto quant_attr = prim->GetAttr("quant_params");
   if (quant_attr != nullptr) {

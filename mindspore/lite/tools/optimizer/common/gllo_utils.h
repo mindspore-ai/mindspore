@@ -143,7 +143,7 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
 
 size_t GetOutputSize(const AnfNodePtr &anf_node);
 
-bool IsQuantParameterNode(const PrimitiveCPtr &prim);
+bool IsQuantParameterNode(const PrimitivePtr &prim);
 
 void UpdateManager(const FuncGraphPtr &func_graph);
 
