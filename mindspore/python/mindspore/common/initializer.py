@@ -258,6 +258,40 @@ def _calculate_in_and_out(arr):
     return n_in, n_out
 
 
+@_register('xavier_normal')
+class XavierNormal(Initializer):
+    r"""
+    Generates an array with values sampled from Xavier normal distribution
+    :math::math:`\mathcal{N}(0, \text{sigma}^2)` in order to initialize a tensor, where
+
+    .. math::
+        sigma = gain * \sqrt{\frac{2}{n_{in} + n_{out}}}
+
+    where :math:`gain` is an optional scaling factor, :math:`n_{in}` is the number of input units in the weight tensor,
+    :math:`n_{out}` is the number of output units in the weight tensor.
+
+    Args:
+        gain (float): An optional scaling factor. Default: 1.
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore.common.initializer import initializer, XavierNormal
+        >>> tensor1 = initializer(XavierNormal(), [1, 2, 3], mindspore.float32)
+        >>> tensor2 = initializer('xavier_normal', [1, 2, 3], mindspore.float32)
+    """
+    def __init__(self, gain=1):
+        super().__init__(gain=gain)
+        self.gain = gain
+
+    def _initialize(self, arr):
+        fan_in, fan_out = _calculate_fan_in_and_fan_out(arr.shape)
+
+        std = self.gain * math.sqrt(2.0 / float(fan_in + fan_out))
+        data = _init_random_normal(0, std, arr.shape)
+
+        _assignment(arr, data)
+
+
 @_register('xavier_uniform')
 class XavierUniform(Initializer):
     r"""
@@ -803,6 +837,7 @@ __all__ = [
     'HeUniform',
     'HeNormal',
     'XavierUniform',
+    'XavierNormal',
     'One',
     'Zero',
     'Constant',

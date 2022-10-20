@@ -90,6 +90,20 @@ mindspore.common.initializer
         - **mode** (str) - 可选'fan_in'或'fan_out'，'fan_in'会保留前向传递中权重方差的量级，'fan_out'会保留反向传递的量级，默认为'fan_in'。
         - **nonlinearity** (str) - 非线性激活函数，推荐使用'relu'或'leaky_relu'，默认为'leaky_relu'。
 
+.. py:class:: mindspore.common.initializer.XavierNormal(gain=1)
+
+    生成一个服从Xarvier正态分布的随机数组:math:`{N}(0, \text{sigma}^2)` 用于初始化Tensor，其中：
+
+    .. math::
+        sigma = gain * \sqrt{\frac{2}{n_{in} + n_{out}}}
+
+    :math:`gain` 是一个可选的缩放因子。:math:`n_{in}` 为权重Tensor中输入单元的数量，:math:`n_{out}` 为权重Tensor中输出单元的数量。
+
+    有关 XavierNormal 算法的详细信息，请查看 http://proceedings.mlr.press/v9/glorot10a.html。
+
+    参数：
+        - **gain** (float) - 可选的缩放因子，默认值为1。
+
 .. py:class:: mindspore.common.initializer.XavierUniform(gain=1)
 
     生成一个服从Xarvier均匀分布U(-boundary, boundary)的随机数组用于初始化Tensor，均匀分布的取值范围为[-boundary, boundary]，其中：
