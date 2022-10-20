@@ -1177,5 +1177,17 @@ bool CheckAndGetCnodeIndex(const CNodePtr &cnode, size_t *index, const Primitive
   *index = dst_index;
   return true;
 }
+
+bool IsReduceModeMeetOutEqualIn(const PrimitivePtr &prim) {
+  if (prim == nullptr) {
+    return false;
+  }
+  if (prim->GetAttr(ops::kMode) == nullptr) {
+    return false;
+  }
+  auto mode = GetValue<int64_t>(prim->GetAttr(ops::kMode));
+  std::set<int64_t> meet_mode = {Reduce_Mean, Reduce_Max, Reduce_Min, Reduce_Prod, Reduce_Sum};
+  return meet_mode.find(mode) != meet_mode.end();
+}
 }  // namespace opt
 }  // namespace mindspore
