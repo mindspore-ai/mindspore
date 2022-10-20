@@ -5973,6 +5973,7 @@ class Tensor(Tensor_):
     def bool(self):
         r"""
         Converts input tensor dtype to `bool`.
+        If the value in tensor is zero, it will be `False`, otherwise it will be `True`.
 
         Returns:
             Tensor, converted to the `bool` dtype.
@@ -6032,7 +6033,7 @@ class Tensor(Tensor_):
 
     def int(self):
         r"""
-        Converts input tensor dtype to `int32`.
+        Converts input tensor dtype to `int32`. If the value in tensor is float or half, the decimal will be discarded.
 
         Returns:
             Tensor, converted to the `int32` dtype.
@@ -6052,7 +6053,7 @@ class Tensor(Tensor_):
 
     def long(self):
         r"""
-        Converts input tensor dtype to `int64`.
+        Converts input tensor dtype to `int64`. If the value in tensor is float or half, the decimal will be discarded.
 
         Returns:
             Tensor, converted to the `int64` dtype.
@@ -6374,6 +6375,8 @@ class Tensor(Tensor_):
 
     def expand(self, size):
         r"""
+        Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
+
         Note:
             Passing -1 as the `size` for a dimension means not changing the size of that dimension. Tensor can be
             also expanded to a larger number of dimensions, and the new ones will be appended at the front.

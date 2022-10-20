@@ -225,8 +225,8 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
             and right are the same, equal to pad. If `padding` is a tuple of `2` integers, the padding of left and right
             equal to `padding[0]` and `padding[1]` correspondingly. Default: 0.
-        ceil_mode: If True, apply ceil instead of floor to compute the output shape. Default: False.
-        count_include_pad: If True, include the zero-padding in the averaging calculation. Default: True.
+        ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: False.
+        count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: True.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
@@ -318,8 +318,8 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
             paddings of top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of `4` integers,
             the padding of top, bottom, left and right equal to `padding[0]`, `padding[1]`, `padding[2]` and
             `padding[3]` correspondingly. Default: 0.
-        ceil_mode: If True, apply ceil instead of floor to compute the output shape. Default: False.
-        count_include_pad: If True, include the zero-padding in the averaging calculation. Default: True.
+        ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: False.
+        count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: True.
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
             `kernel_size` will be used. Default: 0.
 
