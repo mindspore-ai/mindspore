@@ -45,8 +45,13 @@ void AscendKernelPlugin::Register() {
   std::string cur_so_path = dl_info.dli_fname;
   auto pos = cur_so_path.find("libmindspore-lite.so");
   if (pos == std::string::npos) {
-    MS_LOG(ERROR) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
-    return;
+    MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
+    auto c_lite_pos = cur_so_path.find("_c_lite");
+    if (c_lite_pos == std::string::npos) {
+      MS_LOG(ERROR) << "Could not find _c_lite so, cur so path: " << cur_so_path;
+      return;
+    }
+    pos = c_lite_pos;
   }
   std::string parent_dir = cur_so_path.substr(0, pos);
   std::string ascend_kernel_plugin_path;

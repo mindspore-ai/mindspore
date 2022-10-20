@@ -185,6 +185,11 @@ build_python_wheel_package() {
     cp ../python/api/* package/mindspore_lite/
     if [[ "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on" ]]; then
       cp src/extendrt/*.so package/mindspore_lite/lib/
+      find src/extendrt/delegate/graph_executor/litert/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;
+      find src/extendrt/convert/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;
+      if [[ "${MSLITE_ENABLE_ACL}" ]]; then
+        cp src/extendrt/kernel/ascend/*.so package/mindspore_lite/lib/
+      fi
     else
       cp src/*.so package/mindspore_lite/lib/
     fi
