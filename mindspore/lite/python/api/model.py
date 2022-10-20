@@ -392,6 +392,7 @@ class RunnerConfig:
             key currently supports ["weight"];
             value is in dict format, key of it currently supports ["weight_path"],
             value of it is the path of weight, e.g. "/home/user/weight.cfg".
+            config_path (str, optional): Define the config path. Default: None.
 
     Raises:
         TypeError: `context` is neither a Context nor None.
@@ -403,6 +404,8 @@ class RunnerConfig:
         TypeError: `config_info` is a dict, the key is str, the value is dict, the key of the value is str, but
             the value of the value is not str.
         ValueError: `workers_num` is an int, but it is less than 0.
+        TypeError: `config_path` is neither a str nor None.
+        ValueError: `config_path` does not exist.
 
     Examples:
         >>> # only for serving inference
@@ -410,12 +413,13 @@ class RunnerConfig:
         >>> context = mslite.Context()
         >>> context.append_device_info(mslite.CPUDeviceInfo())
         >>> config_info = {"weight": {"weight_path": "path of model weight"}}
-        >>> runner_config = mslite.RunnerConfig(context=context, workers_num=0, config_info=config_info)
+        >>> runner_config = mslite.RunnerConfig(context=context, workers_num=0, config_info=config_info,
+        ...                                     config_path="file.txt")
         >>> print(runner_config)
         workers num: 0,
-        config info: weight: weight_path path of model weight
-        ,
+        config info: weight: weight_path path of model weight,
         context: thread num: 0, bind mode: 1.
+        config path: file.txt.
     """
 
     def __init__(self, context=None, workers_num=None, config_info=None, config_path=None):
