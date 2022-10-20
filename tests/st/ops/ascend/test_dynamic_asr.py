@@ -113,12 +113,25 @@ def comm_func(dyn_range, input_shp, data_type, op_net, num=None):
         list_data.append(tuple(tmp_data))
 
     data_map = {}
+    dyn_tensors = []
+
+    def np_type_to_ms(data_type):
+        if data_type == np.float32:
+            return mstype.float32
+        if data_type == np.float64:
+            return mstype.float64
+        if data_type == np.int32:
+            return mstype.int32
+        if data_type == np.int64:
+            return mstype.int64
+        raise ValueError("Unsupportted datatype: {}".format(data_type))
+
     for i, val in enumerate(input_shp):
         data_map["data" + str(i + 1)] = val
+        dyn_tensors.append(Tensor(dtype=np_type_to_ms(data_type), shape=val))
 
     dataset = ds.GeneratorDataset(list_data, list(data_map.keys()))
-    dataset.set_dynamic_columns(columns=data_map)
-
+    op_net.set_inputs(*dyn_tensors)
     gradient = dynamic_sink_process(op_net, dataset)
     gradient_cmp = static_process(op_net, dataset)
     assert compare_acc(gradient, gradient_cmp)

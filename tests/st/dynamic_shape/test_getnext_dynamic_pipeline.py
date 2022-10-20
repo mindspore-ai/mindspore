@@ -14,10 +14,12 @@
 # ==============================================================================
 import numpy as np
 import pytest
-from mindspore import nn, context
+from mindspore import nn, context, Tensor
 from mindspore import ops as P
 from mindspore.train import DatasetHelper, connect_network_with_dataset
 import mindspore.dataset as ds
+import mindspore as ms
+from mindspore.common.initializer import One
 
 
 def _exec_preprocess(network, is_train, dataset, dataset_sink_mode, sink_size=1, epoch_num=1, dataset_helper=None):
@@ -86,8 +88,13 @@ def test_getnext_dynamic_pipeline_ascend():
     network = Net()
     dataset = ds.GeneratorDataset(
         dataset_generator, ["data1", "data2", "data3", "data4", "data5"])
-    dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [32, None, None, 3],
-                                         "data3": [32], "data4": [32, None, 8], "data5": [32, 8, 8]})
+
+    t0 = Tensor(dtype=ms.float32, shape=[32, None])
+    t1 = Tensor(dtype=ms.int32, shape=[32, None, None, 3])
+    t2 = Tensor(dtype=ms.float32, shape=[32], init=One())
+    t3 = Tensor(dtype=ms.float32, shape=[32, None, 8])
+    t4 = Tensor(dtype=ms.float32, shape=[32, 8, 8], init=One())
+    network.set_inputs(t0, t1, t2, t3, t4)
     _eval_dataset_sink_process(network, dataset)
 
 
@@ -100,8 +107,13 @@ def test_getnext_sink_size_dynamic_pipeline():
     network = Net()
     dataset = ds.GeneratorDataset(
         dataset_generator, ["data1", "data2", "data3", "data4", "data5"])
-    dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [32, None, None, 3],
-                                         "data3": [32], "data4": [32, None, 8], "data5": [32, 8, 8]})
+
+    t0 = Tensor(dtype=ms.float32, shape=[32, None])
+    t1 = Tensor(dtype=ms.int32, shape=[32, None, None, 3])
+    t2 = Tensor(dtype=ms.float32, shape=[32], init=One())
+    t3 = Tensor(dtype=ms.float32, shape=[32, None, 8])
+    t4 = Tensor(dtype=ms.float32, shape=[32, 8, 8], init=One())
+    network.set_inputs(t0, t1, t2, t3, t4)
 
     dataset_helper, eval_network = _exec_preprocess(
         network, is_train=False, dataset=dataset, dataset_sink_mode=True, sink_size=-1)

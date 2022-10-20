@@ -18,7 +18,8 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.dataset as ds
 from mindspore.ops import operations as P
-from mindspore import Model
+from mindspore import Model, Tensor
+import mindspore as ms
 
 context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend")
@@ -53,6 +54,8 @@ def test_shape():
     """
     network = Net()
     dataset = ds.GeneratorDataset(dataset_generator, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [32, None]})
+    t0 = Tensor(dtype=ms.float32, shape=[32, None])
+    t1 = Tensor(dtype=ms.float32, shape=[32, None])
+    network.set_inputs(t0, t1)
     model = Model(network)
     model.train(1, dataset, sink_size=1)
