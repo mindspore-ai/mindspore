@@ -47,9 +47,14 @@ class LoadableDeviceAddress : public DeviceAddress {
     return DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   }
 
+  bool mem_offloaded_{false};
+  void *offload_ptr_{nullptr};
+
  public:
+  bool mem_offloaded() const final { return mem_offloaded_; }
+
   // Offload data from device to host and free device memory
-  bool Offload(size_t stream_id) override {
+  bool Offload(size_t stream_id) final {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     if (mem_offloaded_) {
       MS_LOG(WARNING) << "Trying to offload an offloaded AscendDeviceAddress.";
@@ -72,7 +77,7 @@ class LoadableDeviceAddress : public DeviceAddress {
   }
 
   // Load data from host to device and free host memory
-  bool Load(size_t stream_id) override {
+  bool Load(size_t stream_id) final {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     if (!mem_offloaded_) {
       MS_LOG(DEBUG) << "Trying to load a loaded AscendDeviceAddress.";
@@ -95,16 +100,31 @@ class LoadableDeviceAddress : public DeviceAddress {
   }
 
   // Set host ptr data offloaded to
-  void SetOffloadPtr(void *offload_ptr) override {
+  void SetOffloadPtr(void *offload_ptr) final {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     offload_ptr_ = offload_ptr;
     mem_offloaded_ = (offload_ptr != nullptr);
   }
 
   // Get offloaded host ptr
-  void *GetOffloadPtr() const override {
+  void *GetOffloadPtr() const final {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     return offload_ptr_;
+  }
+
+  // Return whether DeviceAddress has a valid ptr.
+  bool IsPtrValid() const final {
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    return ptr_ != nullptr || offload_ptr_ != nullptr;
+  }
+
+  // Load first if data is offloaded and return the device ptr.
+  void *GetValidPtr(size_t stream_id) final {
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    if (mem_offloaded() && !Load(stream_id)) {
+      MS_LOG(EXCEPTION) << "Load offloaded memory failed.";
+    }
+    return ptr_;
   }
 };
 }  // namespace device

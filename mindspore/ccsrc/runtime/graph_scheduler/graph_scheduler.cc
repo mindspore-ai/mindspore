@@ -1983,6 +1983,9 @@ void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
 void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
                                                       const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(graph);
+  if (graph->is_graph_run_mode()) {
+    return;
+  }
   auto &execution_order = graph->execution_order();
   for (size_t i = 1; i < execution_order.size(); ++i) {
     // Rpc op is not available in the execution order.
