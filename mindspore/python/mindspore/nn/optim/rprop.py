@@ -30,7 +30,7 @@ class Rprop(Optimizer):
     Implements Resilient backpropagation.
 
     Further information about this implementation can be found at  `A Direct Adaptive Method for Faster Backpropagation
-    Learning: The RPROP Algorithm <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.21.1417>`_.
+    Learning: The RPROP Algorithm <https://ieeexplore.ieee.org/document/298623>`_ .
 
     The updating formulas are as follows:
 
