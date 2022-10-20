@@ -1669,7 +1669,10 @@ class TransformerEncoderLayer(Cell):
         self._check_input(x, input_mask, init_reset, batch_valid_length)
         x_shape = F.shape(x)
         x = F.reshape(x, (-1, x_shape[-1]))
-        input_x = self.layernorm1(x)
+        if self.post_layernorm_residual:
+            input_x = x
+        else:
+            input_x = self.layernorm1(x)
         input_x = F.cast(input_x, self.dtype)
 
         # indicate whether reset saved states
@@ -1729,11 +1732,13 @@ class TransformerEncoderLayer(Cell):
 
             if self.post_layernorm_residual:
                 output = self.add_3d(output_x, mlp_logit)
+                output = self.layernorm1(output)
             else:
                 output = self.add_3d(x, mlp_logit)
         else:
             if self.post_layernorm_residual:
                 output = self.add(output_x, mlp_logit)
+                output = self.layernorm1(output)
             else:
                 output = self.add(x, mlp_logit)
             output = F.reshape(output, x_shape)
