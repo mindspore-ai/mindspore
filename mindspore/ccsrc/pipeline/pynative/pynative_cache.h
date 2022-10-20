@@ -94,7 +94,6 @@ static std::unordered_map<std::string, std::vector<size_t>> kDynamicInputOpMap =
   {"Xdivy", {0, 1}},
   {"Xlogy", {0, 1}},
   {"ScalarToTensor", {0}},
-  {"ScalarToArray", {0}},
   {"StandardLaplace", {0}},
   {"UniqueWithPad", {1}},
   {"ApplyAdadelta", {3, 4, 5}},

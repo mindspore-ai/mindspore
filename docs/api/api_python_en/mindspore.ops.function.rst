@@ -386,7 +386,6 @@ Type Conversion
     :template: classtemplate.rst
 
     mindspore.ops.scalar_cast
-    mindspore.ops.scalar_to_array
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
