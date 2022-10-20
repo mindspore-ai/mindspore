@@ -24,20 +24,27 @@ constexpr size_t kInputNum = 2;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
-void TraceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  values_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto device_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (IsDynamic(device_shape)) {
-    return;
+bool TraceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  values_type_ = inputs.at(kIndex0)->GetDtype();
+  return true;
+}
+
+int TraceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  input_shape_ = device_shape;
+  input_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
   const std::vector<int64_t> x_shape_ = {2};
   if (input_shape_ != x_shape_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input[x_shape] should be " << Vector2Str(x_shape_)
                       << ", but got " << Vector2Str(input_shape_) << ".";
   }
+  return KRET_OK;
 }
 
 bool TraceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

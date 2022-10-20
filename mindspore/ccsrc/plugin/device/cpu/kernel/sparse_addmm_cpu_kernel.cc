@@ -38,26 +38,41 @@ constexpr size_t kIndex5 = 5;
 constexpr size_t kIndex6 = 6;
 }  // namespace
 
-void SparseAddmmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
+bool SparseAddmmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SparseAddmm does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int SparseAddmmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto indices_shape = inputs.at(kIndex0)->GetShapeVector();
   if (indices_shape.size() != kIndicesSizeNum && LongToSize(indices_shape[1]) != kIndices2rdDimNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'indices' should be a 2-D Tensor and the second dimension length "
                          "should be 2, but got 'indices' shape: "
                       << Vector2Str(indices_shape);
   }
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
+  auto values_shape = inputs.at(kIndex1)->GetShapeVector();
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
                          " should be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
-  output_shape_ = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+  output_shape_ = Convert2SizeT(outputs[0]->GetShapeVector());
   values_size_ = LongToSize(values_shape[0]);
-  b_shape_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex3));
+  b_shape_ = Convert2SizeT(inputs.at(kIndex3)->GetShapeVector());
   if (b_shape_.size() != kSparseAddmmDenseShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' should be "
                       << kSparseAddmmDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";
@@ -66,13 +81,7 @@ void SparseAddmmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
                       << kSparseAddmmOutputShapeSize << "-D, but got " << output_shape_.size() << "-D";
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "SparseAddmm does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename I, typename T>

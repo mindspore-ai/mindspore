@@ -25,26 +25,33 @@ constexpr size_t kInputDim = 2;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
-void TraceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto device_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (IsDynamic(device_shape)) {
-    return;
+bool TraceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  values_type_ = inputs.at(kIndex0)->GetDtype();
+  return true;
+}
+
+int TraceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs,
+                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  input_shape_ = Convert2SizeT(device_shape);
-  values_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  input_shape_ = Convert2SizeT(inputs.at(kIndex0)->GetDeviceShapeAdaptively());
   if (input_shape_.size() != kInputDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension should be " << kInputDim
                       << ", but got " << input_shape_.size();
   }
+  return KRET_OK;
 }
 
 bool TraceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  switch (values_type) {
+  switch (values_type_) {
     case kNumberTypeInt8:
       LaunchKernel<int8_t>(inputs, outputs);
       break;

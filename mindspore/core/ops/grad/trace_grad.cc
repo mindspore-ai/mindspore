@@ -28,58 +28,17 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const int64_t kTraceInputsNum = 2;
+
 abstract::ShapePtr TraceGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  if (input_args[1]->isa<abstract::AbstractTensor>() && !input_args[1]->BuildValue()->isa<AnyValue>() &&
-      !input_args[1]->BuildValue()->isa<None>()) {
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-    auto x_shape = shape_map[kShape];
-    // TraceGrad x_shape must be 2
-    (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
-    // build Trace output shape
-    auto x = input_args[1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(x);
-    auto x_ptr = x->BuildValue();
-    MS_EXCEPTION_IF_NULL(x_ptr);
-    auto x_tensor = x_ptr->cast<tensor::TensorPtr>();
-
-    MS_EXCEPTION_IF_NULL(x_tensor);
-    auto data_size = x_tensor->DataSize();
-    auto type_id = x_tensor->data_type();
-    ShapeVector out_shape = {};
-    switch (type_id) {
-      case kNumberTypeInt32: {
-        int32_t *x_data = reinterpret_cast<int32_t *>(x_tensor->data_c());
-        for (size_t i = 0; i < data_size; ++i) {
-          out_shape.push_back(static_cast<int64_t>(x_data[i]));
-        }
-        break;
-      }
-      case kNumberTypeInt64: {
-        int64_t *x_data = reinterpret_cast<int64_t *>(x_tensor->data_c());
-        for (size_t i = 0; i < data_size; ++i) {
-          out_shape.push_back(static_cast<int64_t>(x_data[i]));
-        }
-        break;
-      }
-      default: {
-        MS_EXCEPTION(TypeError) << "For TraceGrad, the type of shape must be int32 or int64";
-      }
-    }
-    return std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-    auto x_shape = shape_map[kShape];
-    if (!IsDynamic(x_shape)) {
-      // TraceGrad x_shape must be 2
-      (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
-    }
-    auto infer_shape_max = shape_map[kMaxShape];
-    std::vector<int64_t> out_shape = {abstract::Shape::kShapeDimAny};
-    std::vector<int64_t> infer_shape_min = {0};
-    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
-  }
+  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kTraceInputsNum,
+                                     prim_name);
+  auto shape_arg = input_args[1];
+  MS_EXCEPTION_IF_NULL(shape_arg);
+  auto output_shape = GetShapeValue(primitive, shape_arg);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr TraceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

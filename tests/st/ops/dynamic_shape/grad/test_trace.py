@@ -29,6 +29,7 @@ class NetTrace(nn.Cell):
         return self.trace(x)
 
 
+
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -39,10 +40,11 @@ def test_trace_dynamic_shape():
     Description: Test case of dynamic shape for Trace grad operator on CPU and GPU.
     Expectation: success.
     """
-    context.set_context(mode=context.PYNATIVE_MODE)
-    test_dynamic = TestDynamicGrad(NetTrace())
-    x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
-    test_dynamic.test_dynamic_grad_net(x, False)
+    for device in ['GPU', 'CPU']:
+        context.set_context(mode=context.PYNATIVE_MODE, device_target=device)
+        test_dynamic = TestDynamicGrad(NetTrace())
+        x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        test_dynamic.test_dynamic_grad_net(x, False)
 
 
 @pytest.mark.level1
@@ -55,7 +57,8 @@ def test_trace_dynamic_shape_rank():
     Description: Test case of dynamic rank for Trace grad operator on CPU and GPU.
     Expectation: success.
     """
-    context.set_context(mode=context.PYNATIVE_MODE)
-    test_dynamic = TestDynamicGrad(NetTrace())
-    x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
-    test_dynamic.test_dynamic_grad_net(x, True)
+    for device in ['GPU', 'CPU']:
+        context.set_context(mode=context.PYNATIVE_MODE, device_target=device)
+        test_dynamic = TestDynamicGrad(NetTrace())
+        x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        test_dynamic.test_dynamic_grad_net(x, True)
