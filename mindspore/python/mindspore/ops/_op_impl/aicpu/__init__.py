@@ -127,6 +127,7 @@ from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
 from .check_numerics import _check_numerics_aicpu
 from .cumsum import _cumsum_aicpu
+from .cumprod import _cumprod_aicpu
 from .round import _round_aicpu
 from .stft import _stft_aicpu
 from .floor_div import _floor_div_aicpu

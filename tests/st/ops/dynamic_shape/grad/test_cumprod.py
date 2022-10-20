@@ -36,9 +36,10 @@ def dyn_grad_func(dtype=np.float16, is_dynamic_rank=False):
     test_dynamic.test_dynamic_grad_net(inputs, is_dynamic_rank=is_dynamic_rank)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_cumprod_dynamic_shape():
     """
@@ -53,6 +54,7 @@ def test_cumprod_dynamic_shape():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_cumprod_dynamic_rank():
     """
