@@ -106,7 +106,7 @@ bool RandomShuffleCpuKernelMod::ScalarShuffleWithBatchRank(const std::vector<ker
       std::generate(perm.begin(), perm.end(), [&n] { return n++; });
       std::shuffle(perm.begin(), perm.end(), generator_);
       size_t offset = i * shuffle_size_ * inner_size_;
-      for (size_t j = 0; i < perm.size(); i++) {
+      for (size_t j = 0; j < perm.size(); j++) {
         output[offset + j] = input[offset + perm[j]];
       }
     }
