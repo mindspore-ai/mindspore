@@ -36,12 +36,18 @@ class EmbeddingLookUpCommGradCpuKernelMod : public DeprecatedNativeCpuKernelMod 
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
+  template <typename T>
+  void InitSplitNum(const std::vector<kernel::AddressPtr> &inputs);
+
  private:
   size_t split_num_;
+  ShapeVector input_shape_;
+  TypeId split_type_{kNumberTypeInt64};
 };
 }  // namespace kernel
 }  // namespace mindspore

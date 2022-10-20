@@ -47,8 +47,6 @@ abstract::ShapePtr EyeInferShape(const PrimitivePtr &primitive, const std::vecto
   auto n_v = GetValue<int64_t>(n_ptr);
   auto m_v = GetValue<int64_t>(m_ptr);
   std::vector<int64_t> state_shape = {n_v, m_v};
-  (void)primitive->AddAttr("num_rows", MakeValue(static_cast<int64_t>(n_v)));
-  (void)primitive->AddAttr("num_columns", MakeValue(static_cast<int64_t>(m_v)));
   return std::make_shared<abstract::Shape>(state_shape);
 }
 
@@ -60,18 +58,9 @@ TypePtr EyeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
     MS_EXCEPTION(TypeError) << "For Eye, the dtype of Eye is invalid!";
   }
   auto output_type = dtype_value->cast<TypePtr>();
-  auto output_type_value = dtype_value->cast<TypePtr>()->type_id();
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
                                          kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool};
   auto dtype_ret = CheckAndConvertUtils::CheckSubClass("dtype", output_type, valid_types, prim_name);
-  const mindspore::HashMap<TypeId, int> type_to_num = {
-    {kNumberTypeInt8, 2},        {kNumberTypeInt16, 6},   {kNumberTypeInt32, 3},    {kNumberTypeInt64, 9},
-    {kNumberTypeUInt8, 4},       {kNumberTypeUInt16, 7},  {kNumberTypeUInt32, 8},   {kNumberTypeUInt64, 10},
-    {kNumberTypeFloat16, 1},     {kNumberTypeFloat32, 0}, {kNumberTypeFloat64, 11}, {kNumberTypeComplex64, 16},
-    {kNumberTypeComplex128, 17}, {kNumberTypeBool, 12}};
-  auto iter = type_to_num.find(output_type_value);
-  auto dtype_num = iter->second;
-  (void)prim->AddAttr("dtype", MakeValue(static_cast<int64_t>(dtype_num)));
   return dtype_ret;
 }
 
@@ -192,18 +181,6 @@ AbstractBasePtr EyeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   auto infer_type = EyeInferType(primitive, input_args);
   auto infer_shape = EyeInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-int64_t Eye::get_num_rows() const {
-  auto value_ptr = GetAttr("num_rows");
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<int64_t>(value_ptr);
-}
-
-int64_t Eye::get_num_columns() const {
-  auto value_ptr = GetAttr("num_columns");
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<int64_t>(value_ptr);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Eye, prim::kPrimEye, EyeInfer, EyeInferValue, false);

@@ -22,33 +22,37 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kEmbeddingLookupCommGradInputsNum = 1;
+constexpr size_t kEmbeddingLookupCommGradInputsNum = 2;
 constexpr size_t kEmbeddingLookupCommGradOutputsNum = 1;
+constexpr size_t kIndex1 = 1;
 }  // namespace
+
+template <typename T>
+void EmbeddingLookUpCommGradCpuKernelMod::InitSplitNum(const std::vector<kernel::AddressPtr> &inputs) {
+  T split_num = static_cast<T *>(inputs[kIndex1]->addr)[0];
+  split_num_ = LongToSize(static_cast<int64_t>(split_num));
+  if (split_num <= 0 || split_num_ == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' must be greater than 0, but got " << split_num;
+  }
+  if (input_shape_[0] % split_num_ != 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the first dimension value of input must be multiple of "
+                         "'split_num', but got 'split_num': "
+                      << split_num_ << " and the first dimension value of input: " << input_shape_[0];
+  }
+}
 
 void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto split_num = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "split_num");
-  split_num_ = LongToSize(split_num);
-  MS_LOG(INFO) << "split_num: " << split_num;
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (IsDynamic(input_shape)) {
+  split_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (IsDynamic(input_shape_)) {
     return;
   }
-  if (split_num <= 0 || split_num_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' must be greater than 0, but got " << split_num;
-  }
-  split_num_ = LongToSize(split_num);
-  if (input_shape.size() < 1) {
+  if (input_shape_.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input must be at least 1-D, but got: " << input_shape.size() << "-D";
-  }
-  if (input_shape[0] % split_num_ != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension value of input must be multiple of "
-                         "'split_num', but got 'split_num': "
-                      << split_num_ << " and the first dimension value of input: " << input_shape[0];
+                      << "', the dimension of input must be at least 1-D, but got: " << input_shape_.size() << "-D";
   }
 }
 
@@ -65,6 +69,11 @@ bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::Addre
 #endif
   auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  if (split_type_ == kNumberTypeInt32) {
+    InitSplitNum<int32_t>(inputs);
+  } else {
+    InitSplitNum<int64_t>(inputs);
+  }
   size_t input_size = inputs[0]->size;
   size_t output_size = outputs[0]->size;
   MS_LOG(DEBUG) << "input addr: " << input_addr << "input size: " << input_size;

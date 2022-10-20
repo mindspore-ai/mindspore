@@ -353,8 +353,8 @@ AnfNodePtr CreateEmbeddingLookup(const FuncGraphPtr &graph, AnfNodePtr params, A
   MS_EXCEPTION_IF_NULL(graph);
   PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
   emb_lookup_primitive->set_attr(kAttrPrimitiveTarget, MakeValue("CPU"));
-  emb_lookup_primitive->set_attr(kAttrOffset, MakeValue<int64_t>(0));
-  std::vector<AnfNodePtr> emb_lookup_nodes{NewValueNode(emb_lookup_primitive), params, indices};
+  ValueNodePtr offset_value_node = NewValueNode(static_cast<int64_t>(0));
+  std::vector<AnfNodePtr> emb_lookup_nodes{NewValueNode(emb_lookup_primitive), params, indices, offset_value_node};
   auto emb_lookup = graph->NewCNode(emb_lookup_nodes);
   return emb_lookup;
 }

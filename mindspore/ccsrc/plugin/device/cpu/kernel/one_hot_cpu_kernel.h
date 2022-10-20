@@ -45,7 +45,6 @@ class OneHotCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename ID, typename OD>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void SetOnValueInputIndex(size_t input_num);
 
   TypeId input_dtype_{kTypeUnknown};
   TypeId output_dtype_{kTypeUnknown};
@@ -53,7 +52,6 @@ class OneHotCpuKernelMod : public NativeCpuKernelMod {
   size_t stride_{0};
   size_t axis_{0};
   static std::vector<KernelAttr> support_list_;
-  size_t on_value_input_index_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore

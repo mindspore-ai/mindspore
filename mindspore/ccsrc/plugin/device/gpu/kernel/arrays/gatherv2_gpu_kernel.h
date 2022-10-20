@@ -100,7 +100,7 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> indices_shapes_;
   std::vector<int64_t> output_shapes_;
   int64_t dims_[kIndex3] = {};
-  int axis_ = 0;
+  int64_t axis_ = 0;
   bool is_dynamic_shape_ = false;
   bool is_null_input_ = false;
   size_t input_type_size_ = 0;

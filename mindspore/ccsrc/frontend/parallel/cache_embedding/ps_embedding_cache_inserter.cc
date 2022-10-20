@@ -284,17 +284,19 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructEmbeddingLookupSubGraph(const An
   input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(
     kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
 
-  // 2. Create EmbeddingLookup node.
-  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
-  std::vector<AnfNodePtr> emb_lookup_inputs{NewValueNode(emb_lookup_primitive), input_param, input_indices};
-  auto embedding_cache_lookup_node = graph->NewCNode(emb_lookup_inputs);
-  MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node);
-
   if (!common::AnfAlgo::HasNodeAttr(kAttrOffset, dyn_cast<CNode>(node))) {
     MS_LOG(EXCEPTION) << "Can not find offset attr of kernel: " << node->fullname_with_scope();
   }
   int64_t offset = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrOffset);
-  common::AnfAlgo::SetNodeAttr(kAttrOffset, MakeValue(offset), embedding_cache_lookup_node);
+  ValueNodePtr offset_value_node = NewValueNode(offset);
+
+  // 2. Create EmbeddingLookup node.
+  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
+  std::vector<AnfNodePtr> emb_lookup_inputs{NewValueNode(emb_lookup_primitive), input_param, input_indices,
+                                            offset_value_node};
+  auto embedding_cache_lookup_node = graph->NewCNode(emb_lookup_inputs);
+  MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node);
+
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
 

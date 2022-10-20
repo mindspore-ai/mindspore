@@ -46,6 +46,8 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   std::string kernel_type_{"Unknown"};
+  static std::vector<KernelAttr> common_valid_types_with_bool_complex_;
+  static std::vector<KernelAttr> common_two_valid_types_with_bool_complex_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -114,6 +114,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
         gpu_kernel_mod->SetDevicedId(device_id);
         auto args = kernel::AbstractArgsFromCNode(kernel);
+        // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
+        // we will put this tensor in args.inputs.host_data_.
         auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
         kernel::SetInputsByConstInputs(kernel, &inputs_tensor_map);
         kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, kernel::KernelModType::NativeGpuKernelMod);

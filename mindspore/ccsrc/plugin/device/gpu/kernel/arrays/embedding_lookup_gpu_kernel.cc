@@ -18,8 +18,7 @@
 #include "utils/check_convert_utils.h"
 
 namespace {
-constexpr size_t kEmbeddingLookupInputsNum = 2;
-constexpr size_t kEmbeddingLookupDynamicShapeInputsNum = 3;
+constexpr size_t kEmbeddingLookupInputsNum = 3;
 constexpr size_t kEmbeddingLookupOutputsNum = 1;
 }  // namespace
 namespace mindspore {
@@ -35,38 +34,6 @@ using EmbeddingLookupPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::vector<std::pair<KernelAttr, EmbeddingLookupPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-   CreateEmbeddingLookupKernelPtr<double, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-   CreateEmbeddingLookupKernelPtr<double, int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-   CreateEmbeddingLookupKernelPtr<float, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-   CreateEmbeddingLookupKernelPtr<float, int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-   CreateEmbeddingLookupKernelPtr<half, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-   CreateEmbeddingLookupKernelPtr<half, int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-   CreateEmbeddingLookupKernelPtr<bool, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-   CreateEmbeddingLookupKernelPtr<bool, int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   CreateEmbeddingLookupKernelPtr<int, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   CreateEmbeddingLookupKernelPtr<int, int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-   CreateEmbeddingLookupKernelPtr<int16_t, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-   CreateEmbeddingLookupKernelPtr<int16_t, int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-   CreateEmbeddingLookupKernelPtr<int8_t, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
-   CreateEmbeddingLookupKernelPtr<int8_t, int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-   CreateEmbeddingLookupKernelPtr<uint8_t, int, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-   CreateEmbeddingLookupKernelPtr<uint8_t, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeInt32)
@@ -201,20 +168,11 @@ bool EmbeddingLookupGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
 
-  if (inputs.size() == kEmbeddingLookupDynamicShapeInputsNum) {
-    is_dynamic_shape_ = true;
-    MS_LOG(INFO) << " EmbeddingLookup running in Dynamic Mode.";
-  } else if (inputs.size() == kEmbeddingLookupInputsNum) {
-    MS_LOG(INFO) << " EmbeddingLookup running in Normal Mode.";
-    attr_ptr_->offset = kernel_ptr->get_offset();
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << inputs.size();
+  if (inputs.size() != kEmbeddingLookupInputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size();
   }
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  if (!is_dynamic_shape_) {
-    helper_ptr_->SetKernelParam(attr_ptr_);
-  }
 
   int ret = Resize(kernel_ptr, inputs, outputs);
   if (ret == KRET_RESIZE_FAILED) {
@@ -228,8 +186,7 @@ int EmbeddingLookupGpuKernelMod::Resize(
   const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
   const std::vector<KernelTensorPtr> &outputs,
   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {  // check input size
-  if ((inputs.size() != kEmbeddingLookupInputsNum && inputs.size() != kEmbeddingLookupDynamicShapeInputsNum) ||
-      outputs.size() != kEmbeddingLookupOutputsNum) {
+  if (inputs.size() != kEmbeddingLookupInputsNum || outputs.size() != kEmbeddingLookupOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kEmbeddingLookupInputsNum
                   << " and " << kEmbeddingLookupOutputsNum << ", but got " << inputs.size() << " and "
                   << outputs.size();
@@ -242,10 +199,8 @@ int EmbeddingLookupGpuKernelMod::Resize(
   (void)input_shapes.emplace_back(input_params_shape);
   std::vector<int64_t> input_indices_shape = inputs[kIndex1]->GetShapeVector();
   (void)input_shapes.emplace_back(input_indices_shape);
-  if (is_dynamic_shape_) {
-    std::vector<int64_t> input_offset_shape = inputs[kIndex2]->GetShapeVector();
-    (void)input_shapes.emplace_back(input_offset_shape);
-  }
+  std::vector<int64_t> input_offset_shape = inputs[kIndex2]->GetShapeVector();
+  (void)input_shapes.emplace_back(input_offset_shape);
   std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
   (void)output_shapes.emplace_back(output_shape);
 

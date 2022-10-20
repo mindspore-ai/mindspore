@@ -53,8 +53,6 @@ class EmbeddingLookupGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
-  std::shared_ptr<cukernel::EmbeddingLookupAttr> attr_ptr_{nullptr};
-  bool is_dynamic_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -21,9 +21,9 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kEmbeddingLookupInputsNum = 2;
-constexpr size_t kEmbeddingLookupDynamicShapeInputsNum = 3;
+constexpr size_t kEmbeddingLookupInputsNum = 3;
 constexpr size_t kEmbeddingLookUpInputParamsMaxDim = 2;
+constexpr size_t kIndex2 = 2;
 using KernelRunFunc = EmbeddingLookUpCpuKernelMod::KernelRunFunc;
 
 #define ADD_KERNEL(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, input_indices_type) \
@@ -31,30 +31,19 @@ using KernelRunFunc = EmbeddingLookUpCpuKernelMod::KernelRunFunc;
     KernelAttr()                                                                                                 \
       .AddInputAttr(kNumberType##input_params_dtype)                                                             \
       .AddInputAttr(kNumberType##input_indices_dtype)                                                            \
+      .AddInputAttr(kNumberTypeInt64)                                                                            \
       .AddOutputAttr(kNumberType##output_dtype),                                                                 \
       &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type, int64_t>                 \
   }
 
-#define ADD_KERNEL_DYNAMIC(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, \
-                           input_indices_type)                                                       \
-  {                                                                                                  \
-    KernelAttr()                                                                                     \
-      .AddInputAttr(kNumberType##input_params_dtype)                                                 \
-      .AddInputAttr(kNumberType##input_indices_dtype)                                                \
-      .AddInputAttr(kNumberTypeInt64)                                                                \
-      .AddOutputAttr(kNumberType##output_dtype),                                                     \
-      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type, int64_t>     \
-  }
-
-#define ADD_KERNEL_DYNAMIC_INT32(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, \
-                                 input_indices_type)                                                       \
-  {                                                                                                        \
-    KernelAttr()                                                                                           \
-      .AddInputAttr(kNumberType##input_params_dtype)                                                       \
-      .AddInputAttr(kNumberType##input_indices_dtype)                                                      \
-      .AddInputAttr(kNumberTypeInt32)                                                                      \
-      .AddOutputAttr(kNumberType##output_dtype),                                                           \
-      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type, int32_t>           \
+#define ADD_KERNEL_INT32(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, input_indices_type) \
+  {                                                                                                                    \
+    KernelAttr()                                                                                                       \
+      .AddInputAttr(kNumberType##input_params_dtype)                                                                   \
+      .AddInputAttr(kNumberType##input_indices_dtype)                                                                  \
+      .AddInputAttr(kNumberTypeInt32)                                                                                  \
+      .AddOutputAttr(kNumberType##output_dtype),                                                                       \
+      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type, int32_t>                       \
   }
 
 template <typename T, typename S>
@@ -109,34 +98,8 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &EmbeddingLookUpCpuKerne
     ADD_KERNEL(Float32, Int64, Float32, float, int64_t),
     ADD_KERNEL(Float64, Int64, Float64, double, int64_t),
 
-    ADD_KERNEL_DYNAMIC(Bool, Int32, Bool, bool, int32_t),
-    ADD_KERNEL_DYNAMIC(Int8, Int32, Int8, int8_t, int32_t),
-    ADD_KERNEL_DYNAMIC(Int16, Int32, Int16, int16_t, int32_t),
-    ADD_KERNEL_DYNAMIC(Int32, Int32, Int32, int32_t, int32_t),
-    ADD_KERNEL_DYNAMIC(Int64, Int32, Int64, int64_t, int32_t),
-    ADD_KERNEL_DYNAMIC(UInt8, Int32, UInt8, uint8_t, int32_t),
-    ADD_KERNEL_DYNAMIC(UInt16, Int32, UInt16, uint16_t, int32_t),
-    ADD_KERNEL_DYNAMIC(UInt32, Int32, UInt32, uint32_t, int32_t),
-    ADD_KERNEL_DYNAMIC(UInt64, Int32, UInt64, uint64_t, int32_t),
-    ADD_KERNEL_DYNAMIC(Float16, Int32, Float16, float16, int32_t),
-    ADD_KERNEL_DYNAMIC(Float32, Int32, Float32, float, int32_t),
-    ADD_KERNEL_DYNAMIC(Float64, Int32, Float64, double, int32_t),
-
-    ADD_KERNEL_DYNAMIC(Bool, Int64, Bool, bool, int64_t),
-    ADD_KERNEL_DYNAMIC(Int8, Int64, Int8, int8_t, int64_t),
-    ADD_KERNEL_DYNAMIC(Int16, Int64, Int16, int16_t, int64_t),
-    ADD_KERNEL_DYNAMIC(Int32, Int64, Int32, int32_t, int64_t),
-    ADD_KERNEL_DYNAMIC(Int64, Int64, Int64, int64_t, int64_t),
-    ADD_KERNEL_DYNAMIC(UInt8, Int64, UInt8, uint8_t, int64_t),
-    ADD_KERNEL_DYNAMIC(UInt16, Int64, UInt16, uint16_t, int64_t),
-    ADD_KERNEL_DYNAMIC(UInt32, Int64, UInt32, uint32_t, int64_t),
-    ADD_KERNEL_DYNAMIC(UInt64, Int64, UInt64, uint64_t, int64_t),
-    ADD_KERNEL_DYNAMIC(Float16, Int64, Float16, float16, int64_t),
-    ADD_KERNEL_DYNAMIC(Float32, Int64, Float32, float, int64_t),
-    ADD_KERNEL_DYNAMIC(Float64, Int64, Float64, double, int64_t),
-
-    ADD_KERNEL_DYNAMIC_INT32(Int32, Int32, Int32, int32_t, int32_t),
-    ADD_KERNEL_DYNAMIC_INT32(Float32, Int32, Float32, float, int32_t)};
+    ADD_KERNEL_INT32(Int32, Int32, Int32, int32_t, int32_t),
+    ADD_KERNEL_INT32(Float32, Int32, Float32, float, int32_t)};
 
   return func_list;
 }
@@ -160,11 +123,9 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::EmbeddingLookup>(base_operator);
-  if ((inputs.size() != kEmbeddingLookupInputsNum && inputs.size() != kEmbeddingLookupDynamicShapeInputsNum) ||
-      outputs.size() != 1) {
+  if (inputs.size() != kEmbeddingLookupInputsNum || outputs.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kEmbeddingLookupInputsNum
-                  << " and " << 1 << ", but got " << inputs.size() << " and " << outputs.size();
+                  << ", but got " << inputs.size() << " and " << outputs.size();
   }
 
   std::vector<int64_t> input_params_shape = inputs[kIndex0]->GetShapeVector();
@@ -182,22 +143,17 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   std::vector<int64_t> input_indices_shape = inputs[kIndex1]->GetShapeVector();
   input_indices_lens_ = SizeOf(input_indices_shape);
   input_indices_dtype_ = inputs[kIndex1]->GetDtype();
-  if (inputs.size() == kEmbeddingLookupInputsNum) {
-    offset_ = kernel_ptr->get_offset();
-  }
   return KRET_OK;
 }
 
 template <typename T, typename S, typename G>
 bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
-  T *input_params_addr = static_cast<T *>(inputs[0]->addr);
-  S *input_indices_addr = static_cast<S *>(inputs[1]->addr);
-  T *output_addr = static_cast<T *>(outputs[0]->addr);
-  if (inputs.size() == kEmbeddingLookupDynamicShapeInputsNum) {
-    G *input_offset_addr = static_cast<G *>(inputs[2]->addr);
-    memcpy(&offset_, input_offset_addr, sizeof(G));
-  }
+  T *input_params_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  S *input_indices_addr = reinterpret_cast<S *>(inputs[1]->addr);
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  G offset = static_cast<G *>(inputs[kIndex2]->addr)[0];
+  offset_ = static_cast<int64_t>(offset);
 
   auto task = [&](size_t start, size_t end) {
     size_t task_proc_lens = end - start;

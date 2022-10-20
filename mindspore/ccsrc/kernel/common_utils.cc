@@ -1425,6 +1425,7 @@ void SetInputsByConstInputs(const CNodePtr &node, std::map<uint32_t, tensor::Ten
         continue;
       }
       auto out_tensor = GetDependValueByConstTensor(real_input, cnode_name, i);
+      MS_EXCEPTION_IF_NULL(inputs_tensor_map);
       auto ret2 = inputs_tensor_map->try_emplace(i, out_tensor);
       if (!ret2.second) {
         MS_LOG(EXCEPTION) << "Insert map failed.";

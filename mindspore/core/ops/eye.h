@@ -35,14 +35,6 @@ class MIND_API Eye : public BaseOperator {
   Eye() : BaseOperator(kNameEye) { InitIOName({"n", "m", "t"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FloorDiv for the inputs.
   void Init() const {}
-  /// \brief Get num_rows.
-  ///
-  /// \return num_rows.
-  int64_t get_num_rows() const;
-  /// \brief Get num_columns.
-  ///
-  /// \return num_columns.
-  int64_t get_num_columns() const;
 };
 
 abstract::AbstractBasePtr EyeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
