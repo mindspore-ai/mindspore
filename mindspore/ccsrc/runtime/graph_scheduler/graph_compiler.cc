@@ -280,7 +280,7 @@ bool SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
     return false;
   }
 
-  if (common::GetEnv("ENABLE_ZERO_COPY") != "1") {
+  if (common::GetEnv("DISABLE_ZERO_COPY") == "1") {
     return false;
   }
   MS_LOG(INFO) << "Set zero copy flag for graph:" << graph->ToString();
