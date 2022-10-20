@@ -1229,7 +1229,7 @@ def test_mindrecord_commit_exception_01():
         writer.commit()
         writer.write_raw_data(data[5:10])
 
-    assert 'Unexpected error. Not allow to call `write_raw_data` on flushed MindRecord files.' in str(err.value)
+    assert 'Not allowed to call `write_raw_data` on flushed MindRecord files.' in str(err.value)
     remove_multi_files(mindrecord_file_name, 4)
 
 
@@ -1249,7 +1249,7 @@ def test_cv_file_overwrite_exception_01():
                           "label": {"type": "int64"}, "data": {"type": "bytes"}}
         writer.add_schema(cv_schema_json, "img_schema")
         writer.write_raw_data(data)
-    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
+    assert 'Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 def test_cv_file_overwrite_exception_02():
@@ -1268,5 +1268,5 @@ def test_cv_file_overwrite_exception_02():
                           "label": {"type": "int64"}, "data": {"type": "bytes"}}
         writer.add_schema(cv_schema_json, "img_schema")
         writer.write_raw_data(data)
-    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
+    assert 'Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_multi_files(mindrecord_file_name, FILES_NUM)

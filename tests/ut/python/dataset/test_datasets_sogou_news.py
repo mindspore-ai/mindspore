@@ -153,7 +153,7 @@ def test_sogou_news_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.SogouNewsDataset(DATA_SOGOU_NEWS_DIR, usage='test', shuffle=False)
@@ -162,7 +162,7 @@ def test_sogou_news_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.SogouNewsDataset(DATA_SOGOU_NEWS_DIR, usage='test', shuffle=False)
@@ -171,7 +171,7 @@ def test_sogou_news_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == "__main__":

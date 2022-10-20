@@ -149,7 +149,7 @@ def test_libri_tts_exception():
     def exception_func(item):
         raise Exception("Error occur!")
 
-    error_msg_8 = "The corresponding data files"
+    error_msg_8 = "The corresponding data file is"
     with pytest.raises(RuntimeError, match=error_msg_8):
         data = ds.LibriTTSDataset(DATA_DIR)
         data = data.map(operations=exception_func, input_columns=["waveform"], num_parallel_workers=1)

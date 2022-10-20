@@ -205,7 +205,7 @@ def test_squad_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" \
+        assert "map operation: [PyFunc] failed. The corresponding data file is" \
             in str(e)
 
     try:
@@ -216,7 +216,7 @@ def test_squad_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" \
+        assert "map operation: [PyFunc] failed. The corresponding data file is" \
             in str(e)
 
     try:
@@ -227,7 +227,7 @@ def test_squad_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" \
+        assert "map operation: [PyFunc] failed. The corresponding data file is" \
             in str(e)
 
     try:
@@ -238,7 +238,7 @@ def test_squad_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" \
+        assert "map operation: [PyFunc] failed. The corresponding data file is" \
             in str(e)
 
 

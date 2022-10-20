@@ -282,7 +282,8 @@ set(ut_objects ${CORE_OBJECT_LIST} $<TARGET_OBJECTS:_ut_ut_obj> $<TARGET_OBJECTS
         $<TARGET_OBJECTS:_mindspore_common_obj>)
 
 if(ENABLE_MINDDATA)
-    set(ut_objects ${ut_objects} ${dataengine_submodules} $<TARGET_OBJECTS:mindrecord_obj>)
+    set(ut_objects ${ut_objects} ${dataengine_submodules} $<TARGET_OBJECTS:mindrecord_obj>
+        $<TARGET_OBJECTS:md_log_adapter_obj>)
 endif()
 add_executable(ut_tests ${ut_objects})
 

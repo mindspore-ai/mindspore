@@ -131,7 +131,7 @@ def test_ag_news_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.AGNewsDataset(FILE_DIR, usage='test', shuffle=False)
@@ -140,7 +140,7 @@ def test_ag_news_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.AGNewsDataset(FILE_DIR, usage='test', shuffle=False)
@@ -149,7 +149,7 @@ def test_ag_news_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == "__main__":

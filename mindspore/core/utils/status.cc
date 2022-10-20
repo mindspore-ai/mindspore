@@ -26,6 +26,7 @@
 #endif
 #include <map>
 #include <sstream>
+#include <iostream>
 
 namespace mindspore {
 struct Status::Data {
@@ -45,7 +46,7 @@ static std::map<enum StatusCode, std::string> status_info_map = {
   {kMDShapeMisMatch, "Shape is incorrect"},
   {kMDInterrupted, "Interrupted system call"},
   {kMDNoSpace, "No space left on device"},
-  {kMDPyFuncException, "Exception thrown from PyFunc"},
+  {kMDPyFuncException, "Exception thrown from user defined Python function in dataset"},
   {kMDDuplicateKey, "Duplicate key"},
   {kMDPythonInterpreterFailure, ""},
   {kMDTDTPushFailure, "Unexpected error"},
@@ -58,7 +59,7 @@ static std::map<enum StatusCode, std::string> status_info_map = {
   {kMDBuddySpaceFull, "BuddySpace full"},
   {kMDNetWorkError, "Network error"},
   {kMDNotImplementedYet, "Unexpected error"},
-  {kMDUnexpectedError, "Unexpected error"},
+  {kMDUnexpectedError, "Exception thrown from dataset pipeline. Refer to 'Dataset Pipeline Error Message'"},
   // ME
   {kMEFailed, "Common error code."},
   {kMEInvalidInput, "Invalid input."},
@@ -157,6 +158,13 @@ int Status::GetLineOfCode() const {
   return data_->line_of_code;
 }
 
+std::vector<char> Status::GetFileNameChar() const {
+  if (data_ == nullptr) {
+    return std::vector<char>();
+  }
+  return StringToChar(data_->file_name);
+}
+
 std::vector<char> Status::GetErrDescriptionChar() const {
   if (data_ == nullptr) {
     return std::vector<char>();
@@ -202,6 +210,13 @@ std::vector<char> Status::SetErrDescription(const std::vector<char> &err_descrip
   }
   data_->status_msg = ss.str();
   return StringToChar(data_->status_msg);
+}
+
+void Status::SetStatusMsgChar(const std::vector<char> &status_msg) {
+  if (data_ == nullptr) {
+    return;
+  }
+  data_->status_msg = CharToString(status_msg);
 }
 
 bool Status::operator==(const Status &other) const {

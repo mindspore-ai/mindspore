@@ -686,7 +686,7 @@ def test_imdb_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.IMDBDataset(DATA_DIR)
@@ -697,7 +697,7 @@ def test_imdb_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     data_dir_invalid = "../data/dataset/IMDBDATASET"
     try:

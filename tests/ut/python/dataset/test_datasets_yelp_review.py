@@ -129,7 +129,7 @@ def test_yelp_review_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.YelpReviewDataset(DATA_POLARITY_DIR, usage='test', shuffle=False)
@@ -138,7 +138,7 @@ def test_yelp_review_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == "__main__":

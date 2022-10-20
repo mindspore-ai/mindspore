@@ -359,7 +359,7 @@ def test_emnist_exception():
     def exception_func(item):
         raise Exception("Error occur!")
 
-    error_msg_8 = "The corresponding data files"
+    error_msg_8 = "The corresponding data file is"
     with pytest.raises(RuntimeError, match=error_msg_8):
         data = ds.EMnistDataset(DATA_DIR, "mnist", "train")
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)

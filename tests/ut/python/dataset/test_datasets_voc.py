@@ -296,7 +296,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
@@ -306,7 +306,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
@@ -315,7 +315,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
@@ -324,7 +324,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
@@ -333,7 +333,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
@@ -342,7 +342,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
@@ -352,7 +352,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
@@ -361,7 +361,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
@@ -371,7 +371,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 def test_voc_num_classes():

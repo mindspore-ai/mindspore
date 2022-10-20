@@ -205,7 +205,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     # usage = all
     try:
@@ -215,7 +215,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.WIDERFaceDataset(DATA_DIR, shuffle=False)
@@ -224,7 +224,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.WIDERFaceDataset(DATA_DIR, shuffle=False)
@@ -233,7 +233,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.WIDERFaceDataset(DATA_DIR, shuffle=False)
@@ -242,7 +242,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.WIDERFaceDataset(DATA_DIR, shuffle=False)
@@ -251,7 +251,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.WIDERFaceDataset(DATA_DIR, shuffle=False)
@@ -260,7 +260,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.WIDERFaceDataset(DATA_DIR, shuffle=False)
@@ -269,7 +269,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.WIDERFaceDataset(DATA_DIR, shuffle=False)
@@ -278,7 +278,7 @@ def test_wider_face_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == '__main__':

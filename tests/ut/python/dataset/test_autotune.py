@@ -184,7 +184,7 @@ class TestAutotuneWithProfiler:
         with pytest.raises(RuntimeError) as excinfo:
             md_profiler.init()
 
-        assert "Unexpected error. Stop MD Autotune before initializing the MD Profiler." in str(excinfo.value)
+        assert "Stop MD Autotune before initializing the MD Profiler." in str(excinfo.value)
 
     @staticmethod
     def test_autotune_simple_pipeline():

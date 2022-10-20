@@ -150,7 +150,7 @@ def test_gtzan_exception():
     def exception_func(item):
         raise Exception("Error occur!")
 
-    error_msg_8 = "The corresponding data files"
+    error_msg_8 = "The corresponding data file is"
 
     with pytest.raises(RuntimeError, match=error_msg_8):
         data = ds.GTZANDataset(DATA_DIR)

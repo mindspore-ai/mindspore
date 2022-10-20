@@ -119,7 +119,7 @@ def test_iwslt2016_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
@@ -128,7 +128,7 @@ def test_iwslt2016_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 def test_iwslt2017_dataset_basic():
@@ -231,7 +231,7 @@ def test_iwslt2017_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
@@ -240,7 +240,7 @@ def test_iwslt2017_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == "__main__":

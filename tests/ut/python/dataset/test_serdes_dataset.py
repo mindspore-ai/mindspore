@@ -1028,19 +1028,19 @@ def test_serdes_not_implemented_op_exception():
                      vision.Perspective(start_points=[[0, 63], [63, 63], [63, 0], [0, 0]],
                                         end_points=[[0, 63], [63, 63], [63, 0], [0, 0]],
                                         interpolation=Inter.BILINEAR)])
-    assert "Unexpected error. Invalid data, unsupported operation: Perspective" in str(error_info.value)
+    assert "Invalid data, unsupported operation: Perspective" in str(error_info.value)
 
     # Proper to_json and from_json support has not yet been added for AdjustBrightness op
     with pytest.raises(RuntimeError) as error_info:
         test_config([vision.Decode(),
                      vision.AdjustBrightness(brightness_factor=2.0)])
-    assert "Unexpected error. Invalid data, unsupported operation: AdjustBrightness" in str(error_info.value)
+    assert "Invalid data, unsupported operation: AdjustBrightness" in str(error_info.value)
 
     # Proper to_json and from_json support has not yet been added for AdjustContrast op
     with pytest.raises(RuntimeError) as error_info:
         test_config([vision.Decode(),
                      vision.AdjustContrast(contrast_factor=2.0)])
-    assert "Unexpected error. Invalid data, unsupported operation: AdjustContrast" in str(error_info.value)
+    assert "Invalid data, unsupported operation: AdjustContrast" in str(error_info.value)
 
     # Restore configuration
     ds.config.set_seed(original_seed)

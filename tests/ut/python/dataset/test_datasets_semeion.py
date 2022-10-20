@@ -207,7 +207,7 @@ def test_semeion_exception_file_path():
             num_rows += 1
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.SemeionDataset(DATA_DIR_SEMEION)
@@ -217,7 +217,7 @@ def test_semeion_exception_file_path():
             num_rows += 1
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 def test_semeion_pipeline():

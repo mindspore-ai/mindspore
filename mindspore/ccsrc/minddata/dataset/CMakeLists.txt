@@ -76,6 +76,11 @@ else()
     endif()
 endif()
 
+set(MINDDATA_LOG_ADAPTER_SRC ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/util/md_log_adapter.cc)
+add_library(md_log_adapter_obj OBJECT ${MINDDATA_LOG_ADAPTER_SRC})
+add_library(md_log_adapter STATIC $<TARGET_OBJECTS:md_log_adapter_obj>)
+target_link_libraries(md_log_adapter mindspore_core)
+
 ################## Include sub-modules ###############################
 add_subdirectory(util)
 add_subdirectory(core)
@@ -200,6 +205,8 @@ endif()
 
 set(dataengine_submodules ${dataengine_submodules} CACHE INTERNAL "_c_dataengine objects")
 add_library(_c_dataengine SHARED ${dataengine_submodules})
+add_dependencies(_c_dataengine md_log_adapter)
+target_link_libraries(_c_dataengine PRIVATE md_log_adapter)
 if(ENABLE_PYTHON)
 set_target_properties(_c_dataengine PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"

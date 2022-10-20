@@ -201,12 +201,29 @@ Status GeneratorOp::operator()() {
         generator_counter_++;
       } catch (py::error_already_set &e) {
         eoe = e.matches(PyExc_StopIteration);
-        // Restore exception to python
-        e.restore();
         // Pop up non StopIteration Python Exception
         if (!eoe) {
-          RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, e.what());
+          std::string traceback;
+          try {
+            // Construct python-like traceback
+            py::list tb = py::module::import("traceback").attr("format_tb")(e.trace());
+            traceback = "Traceback (most recent call last):\n";
+            for (auto t : tb) {
+              traceback += py::reinterpret_borrow<py::str>(t);
+            }
+            traceback += e.what();
+          } catch (std::exception &) {
+            // Back to original exception
+            traceback = e.what();
+          }
+
+          // Restore exception to python
+          e.restore();
+          RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, traceback);
         }
+
+        // Restore exception to python
+        e.restore();
         if (num_rows_sampled != -1 && num_rows_sampled != generator_counter_) {
           if (generator_counter_ == 0) {
             std::string msg =

@@ -34,6 +34,7 @@ endif()
 set_property(SOURCE ${DIR_LIB_SRCS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 add_library(mindrecord_obj OBJECT ${DIR_LIB_SRCS})
 add_library(_c_mindrecord SHARED $<TARGET_OBJECTS:mindrecord_obj>)
+add_dependencies(_c_mindrecord md_log_adapter)
 
 set_target_properties(_c_mindrecord PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"
@@ -48,6 +49,7 @@ else()
                                                 mindspore::protobuf)
 endif()
 target_link_libraries(_c_mindrecord PRIVATE mindspore_core)
+target_link_libraries(_c_mindrecord PRIVATE md_log_adapter)
 if(USE_GLOG)
     target_link_libraries(_c_mindrecord PRIVATE mindspore::glog)
 else()

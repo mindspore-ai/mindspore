@@ -158,7 +158,7 @@ def test_celeba_dataset_exception_file_path():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.CelebADataset(DATA_DIR, shuffle=False)
@@ -168,7 +168,7 @@ def test_celeba_dataset_exception_file_path():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.CelebADataset(DATA_DIR, shuffle=False)
@@ -177,7 +177,7 @@ def test_celeba_dataset_exception_file_path():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 def test_celeba_sampler_exception():

@@ -25,15 +25,16 @@
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
+#include "minddata/dataset/util/md_log_adapter.h"
 
 namespace py = pybind11;
 namespace mindspore {
 
 namespace dataset {
-#define THROW_IF_ERROR(s)                                      \
-  do {                                                         \
-    Status rc = std::move(s);                                  \
-    if (rc.IsError()) throw std::runtime_error(rc.ToString()); \
+#define THROW_IF_ERROR(s)                                                            \
+  do {                                                                               \
+    Status rc = std::move(s);                                                        \
+    if (rc.IsError()) throw std::runtime_error(MDLogAdapter::Apply(&rc).ToString()); \
   } while (false)
 
 using PybindDefineFunc = std::function<void(py::module *)>;

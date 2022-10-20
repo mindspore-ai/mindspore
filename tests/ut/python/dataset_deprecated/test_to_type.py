@@ -261,7 +261,7 @@ def test_to_type_05():
         data = data.map(operations=transform, input_columns=["image"])
         for _ in enumerate(data):
             pass
-    assert "data type" in str(error_info.value)
+    assert "datatype" in str(error_info.value)
 
 
 def test_to_type_invalid_arg():

@@ -386,7 +386,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     with pytest.raises(RuntimeError) as error_info:
         for _ in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_batches += 1
-    assert "Shape is incorrect. map operation: [UniformAugment] failed." in str(error_info)
+    assert "map operation: [UniformAugment] failed." in str(error_info.value)
 
 
 if __name__ == "__main__":

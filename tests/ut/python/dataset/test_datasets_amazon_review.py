@@ -165,7 +165,7 @@ def test_amazon_review_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.AmazonReviewDataset(FULL_DIR, usage='test', shuffle=False)
@@ -174,7 +174,7 @@ def test_amazon_review_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.AmazonReviewDataset(FULL_DIR, usage='test', shuffle=False)
@@ -183,7 +183,7 @@ def test_amazon_review_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 def test_amazon_review_dataset_pipeline():

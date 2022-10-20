@@ -256,7 +256,7 @@ def test_invalid_db():
         f.write('just for test')
     with pytest.raises(RuntimeError) as err:
         FileReader(file_name)
-    assert "Unexpected error. Failed to execute the sql [ SELECT NAME from SHARD_NAME; ] " \
+    assert "Failed to execute the sql [ SELECT NAME from SHARD_NAME; ] " \
            "while verifying meta file" in str(err.value)
     remove_file(file_name)
 
@@ -271,7 +271,7 @@ def test_overwrite_invalid_mindrecord():
         f.write('just for test')
     with pytest.raises(RuntimeError) as err:
         create_cv_mindrecord(1, file_name)
-    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
+    assert 'Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_file(file_name)
 
 def test_overwrite_invalid_db():
@@ -285,7 +285,7 @@ def test_overwrite_invalid_db():
         f.write('just for test')
     with pytest.raises(RuntimeError) as err:
         create_cv_mindrecord(1, file_name)
-    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
+    assert 'Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_file(file_name)
 
 def test_read_after_close():
@@ -382,7 +382,7 @@ def test_mindpage_pageno_pagesize_not_int():
     with pytest.raises(ParamValueError):
         reader.read_at_page_by_name("822", 0, "qwer")
 
-    with pytest.raises(RuntimeError, match=r"Unexpected error. Invalid data, "
+    with pytest.raises(RuntimeError, match=r"Invalid data, "
                        r"category_id: 99999 must be in the range \[0, 10\]."):
         reader.read_at_page_by_id(99999, 0, 1)
     remove_file(file_name)
@@ -407,11 +407,11 @@ def test_mindpage_filename_not_exist():
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
 
-    with pytest.raises(RuntimeError, match=r"Unexpected error. Invalid data, "
+    with pytest.raises(RuntimeError, match=r"Invalid data, "
                        r"category_id: 9999 must be in the range \[0, 10\]."):
         reader.read_at_page_by_id(9999, 0, 1)
 
-    with pytest.raises(RuntimeError, match="Unexpected error. category_name: abc.jpg could not found."):
+    with pytest.raises(RuntimeError, match="category_name: abc.jpg could not found."):
         reader.read_at_page_by_name("abc.jpg", 0, 1)
 
     with pytest.raises(ParamValueError):
@@ -567,7 +567,7 @@ def test_write_with_invalid_data():
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     # field: file_name  =>  filename
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+    with pytest.raises(RuntimeError, match="Invalid data, " \
                                            "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
@@ -603,7 +603,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field: data  =>  image
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+    with pytest.raises(RuntimeError, match="Invalid data, " \
                                            "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
@@ -639,7 +639,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # string type with int value
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+    with pytest.raises(RuntimeError, match="Invalid data, " \
                                            "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
@@ -675,7 +675,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field with int64 type, but the real data is string
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+    with pytest.raises(RuntimeError, match="Invalid data, " \
                                            "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
@@ -711,7 +711,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # bytes field is string
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+    with pytest.raises(RuntimeError, match="Invalid data, " \
                                            "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
@@ -747,7 +747,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field is not numpy type
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+    with pytest.raises(RuntimeError, match="Invalid data, " \
                                            "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
@@ -783,7 +783,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # not enough field
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+    with pytest.raises(RuntimeError, match="Invalid data, " \
                                            "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")

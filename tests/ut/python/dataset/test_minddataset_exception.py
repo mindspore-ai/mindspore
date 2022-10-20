@@ -113,7 +113,7 @@ def test_invalid_mindrecord():
         f.write('just for test')
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid file, the size of mindrecord file header "
+    with pytest.raises(RuntimeError, match="Invalid file, the size of mindrecord file header "
                                            "is larger than the upper limit."):
         data_set = ds.MindDataset(file_name, columns_list, num_readers)
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -375,21 +375,21 @@ def test_mindrecord_exception():
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "file_name", "label"]
-    with pytest.raises(RuntimeError, match="The corresponding data files"):
+    with pytest.raises(RuntimeError, match="The corresponding data file is"):
         data_set = ds.MindDataset(file_name, columns_list, shuffle=False)
         data_set = data_set.map(operations=exception_func, input_columns=["data"],
                                 num_parallel_workers=1)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
-    with pytest.raises(RuntimeError, match="The corresponding data files"):
+    with pytest.raises(RuntimeError, match="The corresponding data file is"):
         data_set = ds.MindDataset(file_name, columns_list, shuffle=False)
         data_set = data_set.map(operations=exception_func, input_columns=["file_name"],
                                 num_parallel_workers=1)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
-    with pytest.raises(RuntimeError, match="The corresponding data files"):
+    with pytest.raises(RuntimeError, match="The corresponding data file is"):
         data_set = ds.MindDataset(file_name, columns_list, shuffle=False)
         data_set = data_set.map(operations=exception_func, input_columns=["label"],
                                 num_parallel_workers=1)

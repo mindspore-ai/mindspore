@@ -266,7 +266,7 @@ class FileWriter:
         if not isinstance(raw_data, list):
             raise ParamTypeError('raw_data', 'list')
         if self._flush and not self._append:
-            raise RuntimeError("Unexpected error. Not allow to call `write_raw_data` on flushed MindRecord files." \
+            raise RuntimeError("Not allowed to call `write_raw_data` on flushed MindRecord files." \
                                "When creating new Mindrecord files, please remove `commit` before `write_raw_data`." \
                                "In other cases, when appending to existing MindRecord files, " \
                                "please call `open_for_append` first and then `write_raw_data`.")

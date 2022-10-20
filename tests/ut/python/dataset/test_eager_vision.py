@@ -540,7 +540,7 @@ def test_eager_invalid_image_cutout():
         assert error_msg in str(error_info.value)
 
     my_input = np.random.randn(60, 50)
-    test_config(my_input, RuntimeError, "Unexpected error. CutOut: shape is invalid.")
+    test_config(my_input, RuntimeError, "CutOut: shape is invalid.")
 
     test_config(1, TypeError, "Input should be NumPy or PIL image, got <class 'int'>.")
     test_config(1.0, TypeError, "Input should be NumPy or PIL image, got <class 'float'>.")

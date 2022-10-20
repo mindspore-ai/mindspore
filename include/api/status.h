@@ -118,8 +118,10 @@ class MS_API Status {
   inline std::string ToString() const;
 
   int GetLineOfCode() const;
+  inline std::string GetFileName() const;
   inline std::string GetErrDescription() const;
   inline std::string SetErrDescription(const std::string &err_description);
+  inline void SetStatusMsg(const std::string &status_msg);
 
   MS_API friend std::ostream &operator<<(std::ostream &os, const Status &s);
 
@@ -144,8 +146,10 @@ class MS_API Status {
   Status(enum StatusCode status_code, const std::vector<char> &status_msg);
   Status(enum StatusCode code, int line_of_code, const char *file_name, const std::vector<char> &extra);
   std::vector<char> ToCString() const;
+  std::vector<char> GetFileNameChar() const;
   std::vector<char> GetErrDescriptionChar() const;
   std::vector<char> SetErrDescription(const std::vector<char> &err_description);
+  void SetStatusMsgChar(const std::vector<char> &status_msg);
   static std::vector<char> CodeAsCString(enum StatusCode c);
 
   struct Data;
@@ -157,10 +161,12 @@ Status::Status(enum StatusCode status_code, const std::string &status_msg)
 Status::Status(const enum StatusCode code, int line_of_code, const char *file_name, const std::string &extra)
     : Status(code, line_of_code, file_name, StringToChar(extra)) {}
 std::string Status::ToString() const { return CharToString(ToCString()); }
+std::string Status::GetFileName() const { return CharToString(GetFileNameChar()); }
 std::string Status::GetErrDescription() const { return CharToString(GetErrDescriptionChar()); }
 std::string Status::SetErrDescription(const std::string &err_description) {
   return CharToString(SetErrDescription(StringToChar(err_description)));
 }
+void Status::SetStatusMsg(const std::string &status_msg) { SetStatusMsgChar(StringToChar(status_msg)); }
 std::string Status::CodeAsString(enum StatusCode c) { return CharToString(CodeAsCString(c)); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_STATUS_H
