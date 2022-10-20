@@ -36,21 +36,32 @@ const size_t kRank7 = 7;
 const size_t kRank8 = 8;
 }  // namespace
 
-void ExpandCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kExpandInputsNum) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the number of inputs is 2, but got " << input_num << ".";
+bool ExpandCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kExpandInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kExpandOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kExpandOutputsNum) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the number of output is 1, but got " << output_num << ".";
+  return true;
+}
+
+int ExpandCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  input_x_shape_ = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShape(kernel_node, 0));
-  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_shape_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShape(kernel_node, 0));
-  output_y_shape_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShape(kernel_node, 0));
+  input_x_shape_ = LongVecToSizeVec(inputs[kIndex0]->GetDeviceShapeAdaptively());
+  input_x_dtype_ = inputs[kIndex0]->GetDtype();
+  input_shape_ = LongVecToSizeVec(outputs[kIndex0]->GetDeviceShapeAdaptively());
+  output_y_shape_ = LongVecToSizeVec(outputs[kIndex0]->GetDeviceShapeAdaptively());
+  return KRET_OK;
 }
 
 bool ExpandCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
