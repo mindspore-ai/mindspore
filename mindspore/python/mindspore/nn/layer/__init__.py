@@ -38,7 +38,7 @@ from mindspore.nn.layer.combined import *
 from mindspore.nn.layer.timedistributed import *
 from mindspore.nn.layer.thor_layer import DenseThor, Conv2dThor, EmbeddingThor, EmbeddingLookupThor
 from mindspore.nn.layer.padding import ConstantPad1d, ConstantPad2d, ConstantPad3d, ReflectionPad1d, \
-    ReflectionPad2d, ZeroPad2d
+    ReflectionPad2d, ZeroPad2d, ReplicationPad1d, ReplicationPad2d, ReplicationPad3d
 
 __all__ = []
 __all__.extend(activation.__all__)
