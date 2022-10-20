@@ -9095,7 +9095,7 @@ class MultilabelMarginLoss(Primitive):
     Refer to :func:`mindspore.ops.multi_label_margin_loss` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
        >>> loss = ops.MultilabelMarginLoss()
