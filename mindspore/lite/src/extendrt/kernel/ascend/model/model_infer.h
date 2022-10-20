@@ -46,6 +46,7 @@ class ModelInfer {
   // need to be called after model load
   std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
   std::vector<Format> GetInputFormat();
+  const std::vector<ShapeVector> GetOutputShape();
 
  private:
   STATUS LoadAclModel(const Buffer &om_data);
