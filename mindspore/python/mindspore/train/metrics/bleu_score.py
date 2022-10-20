@@ -38,7 +38,7 @@ class BleuScore(Metric):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.train import BleuScore
+        >>> from mindspore.train import BleuScore
         >>>
         >>> candidate_corpus = [['i', 'have', 'a', 'pen', 'on', 'my', 'desk']]
         >>> reference_corpus = [[['i', 'have', 'a', 'pen', 'in', 'my', 'desk'],
