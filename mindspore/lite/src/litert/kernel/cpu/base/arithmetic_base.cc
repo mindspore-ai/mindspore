@@ -87,7 +87,11 @@ int ArithmeticBaseCPUKernel::ReSize() {
     MS_LOG(ERROR) << "broadcast const tensor failed.";
     return ret;
   }
-  ComputeOfflineInfo();
+  ret = ComputeOfflineInfo();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "compute offline info failed.";
+    return ret;
+  }
   return ChooseThreadCuttingStrategy();
 }
 
@@ -267,7 +271,7 @@ int ArithmeticBaseCPUKernel::BroadCastConstTensor() {
   return OptimizeShape();
 }
 
-void ArithmeticBaseCPUKernel::ComputeOfflineInfo() {
+int ArithmeticBaseCPUKernel::ComputeOfflineInfo() {
   int bread_pos{-1};
   int last_dim = static_cast<int>(a_matric_.shape.size()) - 1;
   for (int i = last_dim; i >= 0; --i) {
@@ -281,8 +285,11 @@ void ArithmeticBaseCPUKernel::ComputeOfflineInfo() {
     --batch_tail_dim_;
   }
   for (int i = last_dim; i > batch_tail_dim_; --i) {
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(a_matric_.inner_size, a_matric_.shape[i]), RET_ERROR);
     a_matric_.inner_size *= a_matric_.shape[i];
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(b_matric_.inner_size, b_matric_.shape[i]), RET_ERROR);
     b_matric_.inner_size *= b_matric_.shape[i];
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(c_matric_.inner_size, c_matric_.shape[i]), RET_ERROR);
     c_matric_.inner_size *= c_matric_.shape[i];
   }
   a_matric_.batch_post_sum = std::vector<int64_t>(a_matric_.shape.size() + 1, 1);
@@ -307,6 +314,7 @@ void ArithmeticBaseCPUKernel::ComputeOfflineInfo() {
     param_->in_elements_num1_ = 1;
     scalar_opt_ = true;
   }
+  return RET_OK;
 }
 
 int ArithmeticBaseCPUKernel::ChooseThreadCuttingStrategy() {

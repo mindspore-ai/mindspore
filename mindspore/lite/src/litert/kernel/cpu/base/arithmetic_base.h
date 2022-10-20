@@ -87,7 +87,7 @@ class ArithmeticBaseCPUKernel : public LiteKernel {
   int OptimizeShape();
   int UpdateParameter();
   int BroadCastConstTensor();
-  void ComputeOfflineInfo();
+  int ComputeOfflineInfo();
   int ChooseThreadCuttingStrategy();
   void ComputeOffset(int task_id);
   int primitive_type_{0};
