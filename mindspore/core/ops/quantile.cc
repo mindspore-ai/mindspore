@@ -124,8 +124,8 @@ TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<Abstr
       }
     }
   } else {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', the type of 'q' must be float or tensor, but got: " << q_type->ToString() << ".";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', the type of 'q' must be float or tensor, but got: " << q_type->ToString() << ".";
   }
   return input_type;
 }
