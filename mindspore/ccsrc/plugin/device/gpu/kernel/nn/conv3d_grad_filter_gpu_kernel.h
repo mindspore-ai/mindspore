@@ -431,7 +431,6 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int> stride_;
   std::vector<int> dilation_;
   int group_;
-  std::string kernel_name_;
   size_t input_size_;
   size_t dy_size_;
   size_t output_size_;

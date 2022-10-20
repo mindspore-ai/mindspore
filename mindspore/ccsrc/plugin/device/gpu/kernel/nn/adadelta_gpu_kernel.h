@@ -89,7 +89,6 @@ class AdadeltaGpuKernelMod : public NativeGpuKernelMod {
   int64_t gradient_size_{0};
   bool update_slots{true};
   bool is_null_input_{false};
-  std::string kernel_name_{"ApplyAdadelta"};
 
   int64_t t_size_{4};
   int64_t s_size_{4};

@@ -95,7 +95,6 @@ class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  std::string kernel_name_;
   TypeId dtype_;
   size_t dtype_size_;
   size_t input_size_{1};

@@ -58,7 +58,6 @@ class ReduceStdCpuKernelMod : public NativeCpuKernelMod {
   bool unbiased_;
   std::vector<int64_t> axis_;
   std::vector<int64_t> input_shape_;
-  std::string kernel_name_{kUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -78,7 +78,6 @@ class BCEWithLogitsLossKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   BCEWithLogitsLossLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, BCEWithLogitsLossLaunchFunc>> func_list_;
   size_t input_size_;

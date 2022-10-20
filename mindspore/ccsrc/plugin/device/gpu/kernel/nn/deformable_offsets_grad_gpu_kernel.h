@@ -70,7 +70,6 @@ class DeformableOffsetsGradGpuKernelMod : public NativeGpuKernelMod {
   void SetDims(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                const std::vector<KernelTensorPtr> &outputs);
 
-  std::string kernel_name_;
   cudaStream_t cuda_stream_{nullptr};
   KernelFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;

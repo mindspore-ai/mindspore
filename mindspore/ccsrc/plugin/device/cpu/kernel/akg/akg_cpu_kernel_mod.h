@@ -56,7 +56,6 @@ class AkgCpuKernelMod : public CpuKernelMod {
 
  private:
   void *launch_func_;
-  std::string kernel_name_;
 };
 
 using AkgCpuKernelModPtr = std::shared_ptr<AkgCpuKernelMod>;

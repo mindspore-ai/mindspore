@@ -54,7 +54,6 @@ class ReluGradV2GpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   ReluV2GradLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ReluV2GradLaunchFunc>> func_list_;
   size_t element_num_;

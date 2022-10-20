@@ -90,7 +90,6 @@ class PadFwdGpuKernelMod : public NativeGpuKernelMod {
   size_t output_size_;
   size_t workspace_size_;
   bool is_null_input_;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

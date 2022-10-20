@@ -66,7 +66,6 @@ class MirrorPadGradGpuKernelMod : public NativeGpuKernelMod {
   int num_paddings_{0};
   int mode_{0};
   bool is_null_input_{false};
-  std::string kernel_name_{"MirrorPadGrad"};
   std::vector<int> input_shape_;
   std::vector<int> output_shape_;
   size_t input_size_{1};

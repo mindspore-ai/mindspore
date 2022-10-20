@@ -53,7 +53,6 @@ class SparseSparseMaximumCpuKernelMod : public NativeCpuKernelMod {
                        const int64_t num_dims);
 
   std::vector<KernelTensorPtr> outputs_;
-  std::string kernel_name_;
   TypeId dtype_{kTypeUnknown};
   TypeId itype_{kTypeUnknown};
   int64_t indice_size_;

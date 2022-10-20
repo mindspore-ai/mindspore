@@ -57,7 +57,6 @@ class ReverseV2GpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   ReverseV2LaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ReverseV2LaunchFunc>> func_list_;
 

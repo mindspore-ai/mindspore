@@ -68,7 +68,6 @@ class SplitFwdGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_{false};
   std::unique_ptr<void *[]> outputs_host_ { nullptr };
   void *cuda_stream_{nullptr};
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

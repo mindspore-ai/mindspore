@@ -76,7 +76,6 @@ class ApplyGradientDescentKernelMod : public NativeGpuKernelMod {
 
  private:
   size_t input_size_{1};
-  std::string kernel_name_;
 
   template <typename T>
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,

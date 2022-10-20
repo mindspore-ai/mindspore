@@ -51,7 +51,6 @@ class SigmoidCrossEntropyWithLogitsGradGpuKernelMod : public NativeGpuKernelMod 
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   SigmoidCrossEntropyWithLogitsGradLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, SigmoidCrossEntropyWithLogitsGradLaunchFunc>> func_list_;
 };

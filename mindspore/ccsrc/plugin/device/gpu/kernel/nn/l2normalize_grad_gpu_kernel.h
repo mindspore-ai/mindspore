@@ -167,8 +167,6 @@ class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
 
   bool all_match_{false};
   bool is_null_input_{false};
-  std::string kernel_name_{"L2NormalizeGrad"};
-
   std::vector<ShapeVector> input_shape_list_{};
   size_t workspace_size_{0};
   float epsilon_{0.0};

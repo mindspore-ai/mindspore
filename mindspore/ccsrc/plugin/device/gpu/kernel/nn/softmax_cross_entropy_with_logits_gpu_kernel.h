@@ -87,7 +87,6 @@ class SoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
-  std::string kernel_name_{};
   SoftmaxCrossEntropyWithLogitsGpuLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, SoftmaxCrossEntropyWithLogitsGpuLaunchFunc>> func_list_;
   cudnnHandle_t cudnn_handle_{nullptr};

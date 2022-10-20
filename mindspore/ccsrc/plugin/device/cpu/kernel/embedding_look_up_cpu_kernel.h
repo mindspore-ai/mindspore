@@ -58,8 +58,6 @@ class EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
-  std::string kernel_name_;
-
   int64_t offset_;
   size_t input_indices_lens_{1};
   size_t first_dim_size_{1};

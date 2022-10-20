@@ -66,7 +66,6 @@ class TensorScatterElementsGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   BaseOperatorPtr kernel_ptr_{nullptr};
   TensorScatterElementsFunc kernel_func_;
   TensorScatterElementsReductionType type_{REDCUTION_INVALID_TYPE};

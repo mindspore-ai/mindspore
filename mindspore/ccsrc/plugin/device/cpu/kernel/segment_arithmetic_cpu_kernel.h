@@ -66,7 +66,6 @@ class SegmentArithmeticCPUKernelMod : public NativeCpuKernelMod {
   SegmentComputeFunc compute_func_;
   SegmentArithmeticFunc kernel_func_;
 
-  std::string kernel_name_{};
   ShapeVector input_x_shape_;
   ShapeVector segment_ids_shape_;
   ShapeVector output_shape_;

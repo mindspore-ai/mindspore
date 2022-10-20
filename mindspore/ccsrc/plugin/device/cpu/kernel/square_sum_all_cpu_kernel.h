@@ -42,7 +42,6 @@ class SquareSumAllCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::string kernel_name_{};
   size_t input_size_;
   TypeId dtype_;
   size_t dtype_size_;

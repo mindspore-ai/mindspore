@@ -55,7 +55,6 @@ class ReluV2GpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   ReLUV2FwLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ReLUV2FwLaunchFunc>> func_list_;
   size_t element_num_{0};

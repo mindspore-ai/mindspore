@@ -288,7 +288,6 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
   size_t input_size_;
   size_t output_size_;
   bool is_null_input_;
-  std::string kernel_name_;
   cudnnTensorDescriptor_t dy_desc_;
   cudnnTensorDescriptor_t x_desc_;
   cudnnTensorDescriptor_t y_desc_;

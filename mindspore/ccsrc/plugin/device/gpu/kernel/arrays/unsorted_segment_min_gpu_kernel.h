@@ -113,7 +113,6 @@ class UnsortedSegmentMinGpuKernelMod : public NativeGpuKernelMod {
   size_t segment_ids_size_;
   size_t output_size_;
   bool is_null_input_;
-  std::string kernel_name_;
   std::vector<int64_t> input_shape_;
 };
 }  // namespace kernel

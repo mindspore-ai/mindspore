@@ -52,7 +52,6 @@ class ZerosLikeCpuKernelMod : public NativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, ZerosLikeFunc>> func_list_;
   ZerosLikeFunc kernel_func_;
-  std::string kernel_name_{};
   ShapeVector input_shape_;
   ShapeVector output_shape_;
 };

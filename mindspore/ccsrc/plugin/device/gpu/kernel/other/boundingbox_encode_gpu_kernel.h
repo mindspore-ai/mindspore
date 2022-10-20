@@ -55,7 +55,6 @@ class BoundingBoxEncodeGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   BoundingBoxEncodeLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, BoundingBoxEncodeLaunchFunc>> func_list_;
   size_t anchor_size_;

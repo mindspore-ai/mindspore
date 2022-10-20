@@ -122,7 +122,6 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
   float weight_decay_;
   bool nesterov_;
   bool is_null_input_;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

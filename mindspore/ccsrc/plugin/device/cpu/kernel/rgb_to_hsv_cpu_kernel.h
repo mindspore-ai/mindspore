@@ -47,7 +47,6 @@ class RGBToHSVCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::string kernel_name_;
   TypeId input_dtype{kTypeUnknown};
   size_t input0_elements_nums_;
   bool res_;

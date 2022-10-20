@@ -387,7 +387,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
   cudnnReduceTensorDescriptor_t reduce_tensor_descriptor_{nullptr};
   cudnnTensorDescriptor_t input_descriptor_{nullptr};
   cudnnTensorDescriptor_t output_descriptor_{nullptr};
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

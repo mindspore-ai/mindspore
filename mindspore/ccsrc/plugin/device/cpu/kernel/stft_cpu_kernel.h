@@ -65,7 +65,6 @@ class STFTCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<STF
                     const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
-  std::string kernel_name_;
   TypeId input_type_1_{kTypeUnknown};
   TypeId input_type_2_{kTypeUnknown};
   TypeId output_type_{kTypeUnknown};
