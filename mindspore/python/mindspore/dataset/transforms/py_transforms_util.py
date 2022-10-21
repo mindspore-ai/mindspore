@@ -191,6 +191,7 @@ class FuncWrapper:
                 self.random = False
         except KeyError:
             self.random = True
+        self.logged_list_mixed_type_warning = False  # Warning for list mixed type result is not logged yet
 
     def __call__(self, *args):
         try:
@@ -198,6 +199,15 @@ class FuncWrapper:
         except Exception:
             result = ExceptionHandler(where="in map(or batch) worker and execute Python function")
             result.reraise()
+
+        # Check if result is list type, and mixed type warning for list type result has not been logged yet
+        if isinstance(result, list) and not self.logged_list_mixed_type_warning:
+            result0_type = type(result[0])
+            if not all((type(t) is result0_type) for t in result):  # pylint: disable=unidiomatic-typecheck
+                self.logged_list_mixed_type_warning = True
+                warn_msg = "All elements in returned list are not of the same type in Python function." + \
+                           " First element has type: " + str(result0_type)
+                logger.warning(warn_msg)
         return result
 
     def to_json(self):
