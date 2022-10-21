@@ -29,33 +29,54 @@ constexpr size_t kADimNum_1 = 1;
 constexpr size_t kADimNum_2 = 2;
 }  // namespace
 
-void LstsqCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  input_0_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+bool LstsqCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstsqInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstsqOutputsNum, kernel_name_);
+
+  dtype_0_ = inputs.at(kIndex0)->GetDtype();
+  dtype_1_ = inputs.at(kIndex1)->GetDtype();
+  if (dtype_0_ != dtype_1_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input's dtypes are not the same.";
+    return false;
+  }
+
+  return true;
+}
+
+int LstsqCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs,
+                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
   if (input_0_shape_.size() != kXDimNum) {
-    MS_LOG(EXCEPTION) << "The input x tensor's rank must be 2 for 'Lstsq' Op, but x tensor's rank is "
-                      << input_0_shape_.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the input x tensor's rank must be 2 for 'Lstsq' Op, but x tensor's rank is "
+                  << input_0_shape_.size();
+    return KRET_RESIZE_FAILED;
   }
   if (input_1_shape_.size() != kADimNum_2 && input_1_shape_.size() != kADimNum_1) {
-    MS_LOG(EXCEPTION) << "The input a tensor's rank must be 2 or 1 for 'Lstsq' Op, but a tensor's rank is "
-                      << input_1_shape_.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the input a tensor's rank must be 2 or 1 for 'Lstsq' Op, but a tensor's rank is "
+                  << input_1_shape_.size();
+    return KRET_RESIZE_FAILED;
   }
   if (input_0_shape_[0] != input_1_shape_[0]) {
-    MS_LOG(EXCEPTION) << "The length of x_dim[0]: " << input_0_shape_[0]
-                      << " is not equal to the length of a_dims[0]: " << input_1_shape_[0] << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of x_dim[0]: " << input_0_shape_[0]
+                  << " is not equal to the length of a_dims[0]: " << input_1_shape_[0] << ".";
+    return KRET_RESIZE_FAILED;
   }
-  dtype_0_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  dtype_1_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  if (dtype_0_ != dtype_1_) {
-    MS_LOG(EXCEPTION) << "For Lstsq input's dtypes are not the same.";
-  }
+  return KRET_OK;
 }
 
 bool LstsqCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstsqInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstsqOutputsNum, kernel_name_);
   if (dtype_0_ == kNumberTypeFloat16) {
     LaunchKernel<float, float16>(inputs, outputs);
   } else if (dtype_0_ == kNumberTypeFloat32) {
