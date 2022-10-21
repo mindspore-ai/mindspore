@@ -103,11 +103,14 @@ class InlinerBase : public AnfVisitor {
   explicit InlinerBase(const std::vector<std::vector<CriterionFuncType>> &criterions, bool use_move = true)
       : use_move_(use_move), criterions_(criterions) {}
   ~InlinerBase() override = default;
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     auto cnode = dyn_cast<CNode>(node);
     if (cnode == nullptr || cnode->size() < 1) {
       return nullptr;
     }
+
+    // Check if no recursive flag was set in top graph.
+    CheckNoRecursive(optimizer);
 
     auto &inputs = cnode->inputs();
     // G
@@ -176,6 +179,22 @@ class InlinerBase : public AnfVisitor {
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
   }
 
+  bool IsRecursive(const FuncGraphPtr &fg) {
+    // The user guarantees that fg has no recursive.
+    if (no_recursive_) {
+      return false;
+    }
+
+    if (!is_checked_) {
+      is_checked_ = true;
+      is_recursive_ = fg->recursive();
+    }
+    return is_recursive_;
+  }
+
+  bool no_recursive() { return no_recursive_; }
+
+ private:
   AnfNodePtr InlineMove(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &args,
                         const std::vector<AnfNodePtr> &inputs) const {
     auto mng = fg->manager();
@@ -233,12 +252,19 @@ class InlinerBase : public AnfVisitor {
     }
   }
 
-  bool IsRecursive(const FuncGraphPtr &fg) {
-    if (!is_checked_) {
-      is_checked_ = true;
-      is_recursive_ = fg->recursive();
+  void CheckNoRecursive(const OptimizerPtr &optimizer) {
+    // Check if no recursive flag was set in top graph.
+    const auto &resource = std::dynamic_pointer_cast<pipeline::Resource>(optimizer->resource());
+    if (resource == nullptr) {
+      return;
     }
-    return is_recursive_;
+    const auto &top_graph = resource->func_graph();
+    if (top_graph == nullptr) {
+      return;
+    }
+    if (top_graph->has_flag(FUNC_GRAPH_FLAG_NO_RECURSIVE)) {
+      no_recursive_ = true;
+    }
   }
 
   void Reset() {
@@ -356,7 +382,10 @@ class InlinerBase : public AnfVisitor {
   }
 
  private:
-  bool is_checked_{false}, is_recursive_{false};
+  bool is_checked_{false};
+  bool is_recursive_{false};
+  // If the user guarantee that fg has no recursive.
+  bool no_recursive_{false};
   bool use_move_;
   std::vector<std::vector<CriterionFuncType>> criterions_;
   mindspore::HashMap<FuncGraphPtr, bool> graph_branch_cache_;
@@ -383,9 +412,9 @@ bool IsInside(InlinerBase *, const FuncGraphPtr &, const AnfNodePtr &node) {
 
 bool IsCore(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) { return fg->has_flag("core"); }
 
-bool IsDirectParentCall(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &node) {
+bool IsDirectParentCall(InlinerBase *inliner, const FuncGraphPtr &fg, const AnfNodePtr &node) {
   bool unique_use = IsUniqueUse(nullptr, fg, nullptr);
-  bool is_recursive = fg->recursive();
+  bool is_recursive = (inliner->no_recursive() ? false : fg->recursive());
   if (fg->parent() != nullptr && is_recursive) {
     if (fg->parent() == node->func_graph() && unique_use) {
       return true;

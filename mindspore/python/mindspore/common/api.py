@@ -573,6 +573,98 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     return wrap_mindspore
 
 
+def _core(fn=None, **flags):
+    """
+    A decorator that adds a flag to the function.
+
+    By default, the function is marked as True, enabling to use this decorator to
+    set flag to a graph.
+
+    Args:
+        fn (Function): Function to add flag. Default: None.
+        flags (dict): The following flags can be set core, which indicates that this is a core function or
+                      other flag. Default: None.
+
+    Returns:
+        Function, the function with core flag.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    # need set the attr and access on c++
+    def deco(fn):
+        fn._func_graph_flags = {
+            'core': True,
+            **flags,
+        }
+        return fn
+
+    if fn is not None:
+        ret = deco(fn)
+    else:
+        ret = deco
+    return ret
+
+
+def _add_flags(fn=None, **flags):
+    """
+    A decorator that adds a flag to the function.
+
+    Note:
+        Only supports bool value.
+
+    Args:
+        fn (Function): Function or cell to add flag. Default: None.
+        flags (dict): Flags use kwargs. Default: None.
+
+    Returns:
+        Function, the function with added flags.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    def deco(fn):
+        # need set the attr and access on c++
+        if not hasattr(fn, "_func_graph_flags"):
+            fn._func_graph_flags = {}
+
+        fn._func_graph_flags.update({**flags})
+        return fn
+
+    ret = deco
+    if fn is not None:
+        ret = deco(fn)
+    return ret
+
+
+def no_recursive(callable_obj):
+    """
+    Method or function decorator for ignoring recursive check.
+
+    This allows MindSpore to skip the procedure of checking function or method recursive.
+
+    Args:
+        callable_obj (Union(method, function)): The function or method to call.
+
+    Returns:
+        Function or method with no_recursive flag.
+
+    Raises:
+        TypeError: If ms_class is used for non-class types or nn.Cell.
+        AttributeError: If the private attributes or magic methods of the class decorated by ms_class is called.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    isCellSubClass = inspect.isclass(callable_obj) and issubclass(callable_obj, ms.nn.Cell)
+    if not isCellSubClass and not inspect.ismethod(callable_obj) and not inspect.isfunction(callable_obj):
+        raise TypeError(f"Decorator no_recursive is used for callable object, but got {callable_obj}.")
+    _add_flags(callable_obj, no_recursive=True)
+    return callable_obj
+
+
 def ms_class(cls):
     """
     Class decorator for user-defined classes.
