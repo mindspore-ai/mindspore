@@ -34,10 +34,14 @@ abstract::ShapePtr MaxUnpool3DInferShapeCompute(const std::string &data_format, 
   if (data_format == "NCDHW") {
     int64_t out_d = static_cast<int64_t>((in_shape[kInputIndex2] - 1) * strides[kInputIndex2] - 2 * pads[kInputIndex2] +
                                          ksize[kInputIndex2]);
+    (void)CheckAndConvertUtils::CheckInteger("output_shape[2]", out_d, kGreaterThan, 0, op_name);
     int64_t out_h = static_cast<int64_t>((in_shape[kInputIndex3] - 1) * strides[kInputIndex3] - 2 * pads[kInputIndex3] +
                                          ksize[kInputIndex3]);
+    (void)CheckAndConvertUtils::CheckInteger("output_shape[3]", out_h, kGreaterThan, 0, op_name);
+
     int64_t out_w = static_cast<int64_t>((in_shape[kInputIndex4] - 1) * strides[kInputIndex4] - 2 * pads[kInputIndex4] +
                                          ksize[kInputIndex4]);
+    (void)CheckAndConvertUtils::CheckInteger("output_shape[4]", out_w, kGreaterThan, 0, op_name);
     std::vector<int64_t> out_shape = {in_shape[kInputIndex0], in_shape[kInputIndex1], out_d, out_h, out_w};
     if (attr_output_shape.size() == kDim5) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
@@ -68,10 +72,13 @@ abstract::ShapePtr MaxUnpool3DInferShapeCompute(const std::string &data_format, 
   } else {
     int64_t out_d = static_cast<int64_t>((in_shape[kInputIndex1] - 1) * strides[kInputIndex1] - 2 * pads[kInputIndex1] +
                                          ksize[kInputIndex1]);
+    (void)CheckAndConvertUtils::CheckInteger("output_shape[1]", out_d, kGreaterThan, 0, op_name);
     int64_t out_h = static_cast<int64_t>((in_shape[kInputIndex2] - 1) * strides[kInputIndex2] - 2 * pads[kInputIndex2] +
                                          ksize[kInputIndex2]);
+    (void)CheckAndConvertUtils::CheckInteger("output_shape[2]", out_h, kGreaterThan, 0, op_name);
     int64_t out_w = static_cast<int64_t>((in_shape[kInputIndex3] - 1) * strides[kInputIndex3] - 2 * pads[kInputIndex3] +
                                          ksize[kInputIndex3]);
+    (void)CheckAndConvertUtils::CheckInteger("output_shape[3]", out_w, kGreaterThan, 0, op_name);
     std::vector<int64_t> out_shape = {in_shape[kInputIndex0], out_d, out_h, out_w, in_shape[kInputIndex4]};
     if (attr_output_shape.size() == kDim5) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
@@ -106,8 +113,8 @@ abstract::ShapePtr MaxUnpool3DInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  constexpr int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input_num", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
   auto argmax_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
@@ -137,9 +144,13 @@ abstract::ShapePtr MaxUnpool3DInferShape(const PrimitivePtr &primitive,
   }
 
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, SizeToLong(kDim5), op_name);
-  (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, SizeToLong(kDim5),
-                                           op_name);
-  CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, argmax_shape, op_name, ValueError);
+
+  if (!IsDynamic(argmax_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, SizeToLong(kDim5),
+                                             op_name);
+    CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, argmax_shape, op_name, ValueError);
+  }
+
   auto ksize = GetValue<std::vector<int64_t>>(primitive->GetAttr("ksize"));
   auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr("strides"));
   auto pads = GetValue<std::vector<int64_t>>(primitive->GetAttr("pads"));
@@ -147,7 +158,6 @@ abstract::ShapePtr MaxUnpool3DInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("strides_rank", SizeToLong(strides.size()), kEqual, SizeToLong(kDim5),
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("pads_rank", SizeToLong(pads.size()), kEqual, SizeToLong(kDim5), op_name);
-
   return MaxUnpool3DInferShapeCompute(data_format, in_shape, ksize, strides, pads, attr_output_shape, op_name);
 }
 

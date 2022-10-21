@@ -1895,7 +1895,7 @@ class TripletMarginLoss(LossBase):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU`
 
     Examples:
         >>> loss = nn.TripletMarginLoss()

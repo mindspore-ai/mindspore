@@ -29,65 +29,40 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  constexpr int64_t size_num = 2;
-  constexpr size_t indexid3 = 3;
-  constexpr int64_t image_shape_size = 4;
-  constexpr int64_t size_shape_size = 1;
-  auto input0_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input0_shape);
-  auto input0_shape_value_ptr = input0_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input0_shape_value_ptr);
-  auto input0_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(input0_type);
-  auto input0_type_id = input0_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input0_type_id);
-  auto input0_type_element = input0_type_id->element();
-  MS_EXCEPTION_IF_NULL(input0_type_element);
-  auto input1_shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input1_shape);
-  auto input1_shape_value_ptr = input1_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input1_shape_value_ptr);
-  auto input1_shape_tensor = input1_shape_value_ptr->cast<tensor::TensorPtr>();
+  std::vector<int64_t> output_shape(4, -1);
   auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (!IsDynamicRank(images_shape)) {
+    constexpr int64_t image_shape_size = 4;
+    (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
+                                             image_shape_size, primitive->name());
+    output_shape[0] = images_shape[0];
+    output_shape[kInputIndex3] = images_shape[kInputIndex3];
+  }
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  // support dynamic rank
-  if (IsDynamicRank(images_shape) || IsDynamicRank(size_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  (void)CheckAndConvertUtils::CheckInteger("size dimension", SizeToLong(size_shape.size()), kEqual, 1,
+                                           primitive->name());
+  if (!IsDynamic(size_shape)) {
+    constexpr int64_t size_num = 2;
+    (void)CheckAndConvertUtils::CheckInteger("input1 num", size_shape[0], kEqual, size_num, primitive->name());
   }
 
-  (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
-                                           image_shape_size, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("size dimension", SizeToLong(size_shape.size()), kEqual, size_shape_size,
-                                           primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("input1 num", size_shape[0], kEqual, size_num, primitive->name());
-
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto input1_shape_ptr = static_cast<int32_t *>(input1_shape_tensor->data_c());
+    auto input1_value = input_args[1]->BuildValue();
+    if (!input1_value->isa<tensor::Tensor>()) {
+      MS_LOG(EXCEPTION) << "For ResizeArea, the inputs[1] must be a tensor, but got: " << input1_value->ToString()
+                        << ".";
+    }
+    auto input1_shape_ptr = static_cast<int32_t *>(input1_value->cast<tensor::TensorPtr>()->data_c());
     if (input1_shape_ptr[0] <= 0 || input1_shape_ptr[1] <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size must be positive "
                                << ", but got " << input1_shape_ptr[0] << " , " << input1_shape_ptr[1];
     }
-    std::vector<int64_t> output_shape;
-    for (size_t i = 0; i <= indexid3; ++i) {
-      if (i == 0 || i == indexid3) {
-        output_shape.push_back(images_shape[i]);
-      } else {
-        output_shape.push_back(input1_shape_ptr[i - 1]);
-      }
-    }
-    return std::make_shared<abstract::Shape>(output_shape);
-  } else {
-    auto prim_name = primitive->name();
-    auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
-    auto x_shape = x_shape_ptr->shape();
-    if (x_shape_ptr->IsDynamic()) {
-      return std::make_shared<abstract::Shape>(x_shape);
-    }
-    ShapeVector out_shape = {images_shape[0], abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
-                             images_shape[indexid3]};
-    return std::make_shared<abstract::Shape>(out_shape);
+    output_shape[kInputIndex1] = input1_shape_ptr[kInputIndex0];
+    output_shape[kInputIndex2] = input1_shape_ptr[kInputIndex1];
   }
+  return std::make_shared<abstract::Shape>(output_shape);
 }
+
 TypePtr ResizeAreaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   return kFloat32;
 }

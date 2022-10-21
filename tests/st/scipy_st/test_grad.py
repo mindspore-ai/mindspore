@@ -16,68 +16,11 @@
 import pytest
 import numpy as onp
 import mindspore.nn as nn
-from mindspore.nn import Cell
 import mindspore.ops as ops
-from mindspore.ops import composite as C
 from mindspore import context, Tensor
 from mindspore.scipy.linalg import cho_factor, cho_solve
-from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.scipy.ops import Eigh, SolveTriangular
 from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_cholesky_grad():
-    """
-    Feature: ALL TO ALL
-    Description: test cases for grad implementation of cholesky operator in graph mode and pynative mode.
-    Expectation: the result match gradient checking.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    class CholeskyNet(nn.Cell):
-        def __init__(self):
-            super(CholeskyNet, self).__init__()
-            # Input arg clean not supports grad right now, just default clean to True.
-            self.cholesky = Cholesky()
-
-        def construct(self, a):
-            return self.cholesky(a)
-
-    class CholeskyGradNet(Cell):
-        def __init__(self, network):
-            super(CholeskyGradNet, self).__init__()
-            self.grad = C.GradOperation(get_all=True, sens_param=True)
-            self.network = network
-
-        def construct(self, input_data, grad_np):
-            gout = self.grad(self.network)(input_data, grad_np)
-            return gout
-
-    x_np = onp.array([[10, 22], [22, 50]]).astype(onp.float32)
-    net = CholeskyNet()
-    output_ms = net(Tensor(x_np))
-    grad_np = onp.array([[1, 0], [0, 1]]).astype(onp.float32)
-    grad_net = CholeskyGradNet(net)
-    output_grad_ms = grad_net(Tensor(x_np), Tensor(grad_np))
-    expect_output = onp.array([[3.1622777, 0], [6.9570107, 1.2649117]])
-    expect_grad_output = onp.array([[2.071291, -0.869626], [-0.869626, 0.39528453]])
-    assert onp.allclose(output_ms.asnumpy(), expect_output)
-    assert onp.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
-
-    context.set_context(mode=context.PYNATIVE_MODE)
-    x_np = onp.array([[12.56, 27.28], [27.28, 60.5]]).astype(onp.float64)
-    net = CholeskyNet()
-    output_ms = net(Tensor(x_np))
-    grad_np = onp.array([[1, 0], [0, 1]]).astype(onp.float64)
-    grad_net = CholeskyGradNet(net)
-    output_grad_ms = grad_net(Tensor(x_np), Tensor(grad_np))
-    expect_output = onp.array([[3.544009, 0.], [7.697497, 1.1173816]])
-    expect_grad_output = onp.array([[2.252033, -0.9719036], [-0.9719037, 0.44747472]])
-    assert onp.allclose(output_ms.asnumpy(), expect_output)
-    assert onp.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
 @pytest.mark.level0
