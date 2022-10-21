@@ -55,6 +55,7 @@ option(MSLITE_ENABLE_KERNEL_EXECUTOR "enable kernel executor" off)
 option(MSLITE_ENABLE_GITEE_MIRROR "enable download third_party from gitee mirror" off)
 option(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE "enable cloud and device fusion inference architecture" off)
 option(MSLITE_ENABLE_MODEL_OBF "enable model obfuscation" off)
+option(MSLITE_ENABLE_MODEL_PRE_INFERENCE "enable model do pre-inference when Build interface is called" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -201,6 +202,10 @@ if(DEFINED ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
     else()
         set(MSLITE_ENABLE_MODEL_ENCRYPTION OFF)
     endif()
+endif()
+
+if(DEFINED ENV{MSLITE_ENABLE_MODEL_PRE_INFERENCE})
+    set(MSLITE_ENABLE_MODEL_PRE_INFERENCE $ENV{MSLITE_ENABLE_MODEL_PRE_INFERENCE})
 endif()
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
@@ -458,6 +463,10 @@ if(MSLITE_ENABLE_FP16 AND PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Cla
     endif()
 endif()
 
+if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
+    add_compile_definitions(ENABLE_PRE_INFERENCE)
+endif()
+
 message(STATUS "************MindSpore Lite Build Option:************")
 message(STATUS "\tMSLITE_GPU_BACKEND                         = \t${MSLITE_GPU_BACKEND}")
 message(STATUS "\tMSLITE_REGISTRY_DEVICE                     = \t${MSLITE_REGISTRY_DEVICE}")
@@ -502,6 +511,7 @@ message(STATUS "\tMSLITE_ENABLE_KERNEL_EXECUTOR              = \t${MSLITE_ENABLE
 message(STATUS "\tMSLITE_ENABLE_CLOUD_FUSION_INFERENCE       = \t${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}")
 message(STATUS "\tMSLITE_ENABLE_CAPTURE_SIGNALS              = \t${MSLITE_ENABLE_CAPTURE_SIGNALS}")
 message(STATUS "\tMSLITE_ENABLE_MODEL_OBF                    = \t${MSLITE_ENABLE_MODEL_OBF}")
+message(STATUS "\tMSLITE_ENABLE_MODEL_PRE_INFERENCE          = \t${MSLITE_ENABLE_MODEL_PRE_INFERENCE}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT

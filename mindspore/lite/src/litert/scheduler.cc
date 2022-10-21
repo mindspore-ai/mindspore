@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1545,10 +1545,10 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
       if (IsControlFlowPattern(*node)) {
         kernel = ScheduleNodeToKernel(node, prefer_data_type);
         auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);
+        MS_CHECK_TRUE_MSG(control_flow_scheduler_ != nullptr, RET_ERROR, "control flow scheduler is nullptr.");
         control_flow_scheduler_->RecordSubgraphCaller(partial_subgraph_index, kernel);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
           partial_kernel_subgraph_index_map_[kernel] = static_cast<size_t>(partial_subgraph_index);
-          MS_CHECK_TRUE_MSG(control_flow_scheduler_ != nullptr, RET_ERROR, "control flow scheduler is nullptr.");
           MS_LOG(INFO) << "subgraph has scheduled. ";
         } else {
           SubGraphMarkScheduled(partial_subgraph_index);
@@ -1705,8 +1705,9 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
     if (dtype == kObjectTypeTensorType) {
       return TensorListDataType(tensor);
     }
-    if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
-        dtype == kNumberTypeInt32 || dtype == kNumberTypeBool || dtype == kNumberTypeUInt8) {
+    std::unordered_set<TypeId> type_set = {kNumberTypeFloat32, kNumberTypeFloat16, kNumberTypeInt8,  kNumberTypeInt32,
+                                           kNumberTypeBool,    kNumberTypeUInt8,   kObjectTypeString};
+    if (type_set.find(dtype) != type_set.end()) {
       return dtype;
     }
   }

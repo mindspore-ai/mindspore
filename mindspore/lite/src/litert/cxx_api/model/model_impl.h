@@ -74,6 +74,14 @@ class ModelImpl {
 
   Status Predict(const MSKernelCallBack &before, const MSKernelCallBack &after);
 
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+  // note that: BuildAndRun interface is used for pre-build and pre-inferenence in child process.
+  Status BuildAndRun(const void *model_data, size_t data_size, ModelType model_type,
+                     const std::shared_ptr<Context> &model_context);
+  Status BuildAndRun(const std::string &model_path, ModelType model_type,
+                     const std::shared_ptr<Context> &model_context);
+  Status BuildAndRun();
+#endif
   lite::LiteSession *CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context);
 
   Status LoadConfig(const std::string &config_path);

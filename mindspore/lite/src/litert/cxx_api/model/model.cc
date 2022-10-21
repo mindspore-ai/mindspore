@@ -27,6 +27,9 @@
 #include "include/api/serialization.h"
 #include "include/api/graph.h"
 #include "src/common/log_adapter.h"
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+#include "src/common/thread_utils.h"
+#endif
 #include "src/litert/cxx_api/expression/net_impl.h"
 #include "src/litert/cxx_api/callback/callback_adapter.h"
 #include "src/litert/cxx_api/callback/callback_impl.h"
@@ -94,7 +97,25 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
       return ret;
     }
   } else {
-    Status ret = impl_->Build(model_data, data_size, model_type, model_context);
+    Status ret;
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+    if (lite::GetNumThreads() == lite::kSingleThread) {
+      pid_t pid = fork();
+      if (pid < 0) {
+        return kLiteError;
+      } else if (pid == 0) {  // child process
+        ret = impl_->BuildAndRun(model_data, data_size, model_type, model_context);
+        int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
+        exit(ret_code);
+      }
+      ret = lite::CheckPidStatus(pid);
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "PreBuild or PreInference failed.";
+        return ret;
+      }
+    }
+#endif
+    ret = impl_->Build(model_data, data_size, model_type, model_context);
     if (ret != kSuccess) {
       return ret;
     }
@@ -121,8 +142,25 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
       }
     }
   }
-
-  Status ret = impl_->Build(model_data, data_size, model_type, model_context);
+  Status ret;
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+  if (lite::GetNumThreads() == lite::kSingleThread) {
+    pid_t pid = fork();
+    if (pid < 0) {
+      return kLiteError;
+    } else if (pid == 0) {  // child process
+      ret = impl_->BuildAndRun(model_data, data_size, model_type, model_context);
+      int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
+      exit(ret_code);
+    }
+    ret = lite::CheckPidStatus(pid);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "PreBuild or PreInference failed.";
+      return ret;
+    }
+  }
+#endif
+  ret = impl_->Build(model_data, data_size, model_type, model_context);
   if (ret != kSuccess) {
     return ret;
   }
@@ -170,7 +208,25 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
     }
     delete[] model_buf;
   } else {
-    Status ret = impl_->Build(CharToString(model_path), model_type, model_context);
+    Status ret;
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+    if (lite::GetNumThreads() == lite::kSingleThread) {
+      pid_t pid = fork();
+      if (pid < 0) {
+        return kLiteError;
+      } else if (pid == 0) {  // child process
+        ret = impl_->BuildAndRun(CharToString(model_path), model_type, model_context);
+        int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
+        exit(ret_code);
+      }
+      ret = lite::CheckPidStatus(pid);
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "PreBuild or PreInference failed.";
+        return ret;
+      }
+    }
+#endif
+    ret = impl_->Build(CharToString(model_path), model_type, model_context);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Build model failed.";
       return ret;
@@ -198,8 +254,25 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
       }
     }
   }
-
-  Status ret = impl_->Build(CharToString(model_path), model_type, model_context);
+  Status ret;
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+  if (lite::GetNumThreads() == lite::kSingleThread) {
+    pid_t pid = fork();
+    if (pid < 0) {
+      return kLiteError;
+    } else if (pid == 0) {  // child process
+      ret = impl_->BuildAndRun(CharToString(model_path), model_type, model_context);
+      int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
+      exit(ret_code);
+    }
+    ret = lite::CheckPidStatus(pid);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "PreBuild or PreInference failed.";
+      return ret;
+    }
+  }
+#endif
+  ret = impl_->Build(CharToString(model_path), model_type, model_context);
   if (ret != kSuccess) {
     return ret;
   }
@@ -236,6 +309,21 @@ Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_conte
   impl_->SetContext(model_context);
   impl_->SetGraph(graph.GetGraph());
   impl_->SetConfig(train_cfg);
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+  pid_t pid = fork();
+  if (pid < 0) {
+    return kLiteError;
+  } else if (pid == 0) {  // child process
+    auto ret = impl_->BuildAndRun();
+    int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
+    exit(ret_code);
+  }
+  auto ret = lite::CheckPidStatus(pid);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "PreResize or PreInference failed.";
+    return ret;
+  }
+#endif
   return impl_->Build();
 }
 
