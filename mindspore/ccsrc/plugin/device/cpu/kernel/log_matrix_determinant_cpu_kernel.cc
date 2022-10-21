@@ -29,48 +29,68 @@ static constexpr int kNumber1 = 1;
 static constexpr int kNumber2 = 2;
 }  // namespace
 
-void LogMatrixDeterminantCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputSize, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputSize, kernel_name_);
-  auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto shape_sign = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  auto shape_y = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({shape_x, shape_sign, shape_y})) {
-    return;
+bool LogMatrixDeterminantCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  size_t shape_size_x = shape_x.size();
+  return true;
+}
+
+int LogMatrixDeterminantCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs,
+                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  shape_x_ = inputs[kIndex0]->GetShapeVector();
+  auto shape_sign = outputs[kIndex0]->GetShapeVector();
+  auto shape_y = outputs[kIndex1]->GetShapeVector();
+  size_t shape_size_x = shape_x_.size();
   size_t shape_size_sign = shape_sign.size();
   size_t shape_size_y = shape_y.size();
   if (shape_size_x < kNumber2) {
-    MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
+    MS_LOG(ERROR) << "Input x must be at least rank 2.";
+    return KRET_RESIZE_FAILED;
   }
-  if (shape_x[shape_size_x - kNumber1] < kNumber1) {
-    MS_LOG(EXCEPTION) << "Input x last dimension must be at least 1.";
+  if (shape_x_[shape_size_x - kNumber1] < kNumber1) {
+    MS_LOG(ERROR) << "Input x last dimension must be at least 1.";
+    return KRET_RESIZE_FAILED;
   }
-  if (shape_x[shape_size_x - kNumber2] != shape_x[shape_size_x - kNumber1]) {
-    MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
+  if (shape_x_[shape_size_x - kNumber2] != shape_x_[shape_size_x - kNumber1]) {
+    MS_LOG(ERROR) << "The last two dimensions of Input x must be equal.";
+    return KRET_RESIZE_FAILED;
   }
   if (shape_size_sign != shape_size_x - kNumber2) {
-    MS_LOG(EXCEPTION) << "Output sign must be rank [" << shape_size_x - kNumber2 << "], got [" << shape_size_sign
-                      << "].";
+    MS_LOG(ERROR) << "Output sign must be rank [" << shape_size_x - kNumber2 << "], got [" << shape_size_sign << "].";
+    return KRET_RESIZE_FAILED;
   }
   if (shape_size_y != shape_size_x - kNumber2) {
-    MS_LOG(EXCEPTION) << "Output y must be rank [" << shape_size_x - kNumber2 << "], got [" << shape_size_y << "].";
+    MS_LOG(ERROR) << "Output y must be rank [" << shape_size_x - kNumber2 << "], got [" << shape_size_y << "].";
+    return KRET_RESIZE_FAILED;
   }
   for (size_t i = kNumber0; i < shape_size_x - kNumber2; i++) {
-    if (shape_sign[i] != shape_x[i]) {
-      MS_LOG(EXCEPTION) << "Output sign and Input x dimension " << i << " must be equal.";
+    if (shape_sign[i] != shape_x_[i]) {
+      MS_LOG(ERROR) << "Output sign and Input x dimension " << i << " must be equal.";
+      return KRET_RESIZE_FAILED;
     }
-    if (shape_y[i] != shape_x[i]) {
-      MS_LOG(EXCEPTION) << "Output y and Input x dimension " << i << " must be equal.";
+    if (shape_y[i] != shape_x_[i]) {
+      MS_LOG(ERROR) << "Output y and Input x dimension " << i << " must be equal.";
+      return KRET_RESIZE_FAILED;
     }
   }
+  return KRET_OK;
 }
 
 bool LogMatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -93,24 +113,19 @@ bool LogMatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressP
 template <typename T>
 void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vector<AddressPtr> &inputs,
                                                                   const std::vector<AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_sign = reinterpret_cast<T *>(outputs[0]->addr);
   auto output_y = reinterpret_cast<T *>(outputs[1]->addr);
 
-  auto shape_x = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0));
-  size_t shape_size = shape_x.size();
-  size_t m = shape_x[shape_size - 1];
+  size_t shape_size = shape_x_.size();
+  size_t m = shape_x_[shape_size - 1];
   size_t size_mm = m * m;
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartixXd;
   using RealT = typename Eigen::NumTraits<T>::Real;
   if (size_mm > 0) {
     size_t input_num = 1;
-    for (size_t i = 0; i < shape_x.size(); i++) {
-      input_num *= shape_x[i];
+    for (size_t i = 0; i < shape_x_.size(); i++) {
+      input_num *= shape_x_[i];
     }
     size_t matrix_num = input_num / size_mm;
     size_t data_size = input_num * sizeof(T);

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <functional>
+#include "mindspore/core/ops/hamming_window.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
@@ -30,22 +31,25 @@ const size_t kHammingWindowOutputNum = 1;
 const size_t kHammingWindowInputNum = 1;
 }  // namespace
 
-void HammingWindowCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kHammingWindowInputNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kHammingWindowOutputNum, kernel_name_);
-  periodic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "periodic");
-  alpha_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "alpha");
-  beta_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool HammingWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHammingWindowInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHammingWindowOutputNum, kernel_name_);
+  auto op_prim = std::dynamic_pointer_cast<ops::HammingWindow>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  periodic_ = op_prim->get_periodic();
+  alpha_ = op_prim->get_alpha();
+  beta_ = op_prim->get_beta();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "HammingWindow does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "HammingWindow does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
 }
 
 template <typename T, typename S>

@@ -22,6 +22,7 @@
 #include <mutex>
 #include <random>
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/histogram.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -31,19 +32,29 @@ const uint32_t kInputNum = 1;
 const uint32_t kOutputNum = 1;
 }  // namespace
 
-void HistogramCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  bins_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrBins);
-  min_attr_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kAttrMin);
-  max_attr_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kAttrMax);
+bool HistogramCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  x_type_ = inputs[kIndex0]->GetDtype();
+  auto op_prim = std::dynamic_pointer_cast<ops::Histogram>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  bins_ = op_prim->get_bins();
+  min_attr_ = op_prim->get_min();
+  max_attr_ = op_prim->get_max();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
 }
 
 bool HistogramCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   // Benchmarking framework only support float32 and float64
   // To meet precision requirements, cast float16 or int32 to float32
   switch (x_type_) {

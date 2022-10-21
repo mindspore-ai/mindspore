@@ -38,6 +38,13 @@ class MIND_API Histogram : public BaseOperator {
 
   /// \brief Init.
   void Init() const {}
+
+  void set_bins(const int64_t bins);
+  int64_t get_bins() const;
+  void set_min(const float min);
+  float get_min() const;
+  void set_max(const float max);
+  float get_max() const;
 };
 AbstractBasePtr HistogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
