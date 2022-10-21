@@ -34,6 +34,7 @@ static const std::vector<MatcherPtr> &GetMetaFgOps() {
   static const std::vector<MatcherPtr> meta_fg_ops{
     std::make_shared<MetaFgMatcher<prim::GradOperation>>(),
     std::make_shared<MetaFgMatcher<prim::VmapOperation>>(),
+    std::make_shared<MetaFgMatcher<prim::Shard>>(),
   };
   return meta_fg_ops;
 }

@@ -220,6 +220,15 @@ bool HasNestedMetaFg(const FuncGraphPtr &func_graph) {
   return false;
 }
 
+bool IsEmbedShardNode(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  AnfNodePtr ret = func_graph->get_return();
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  return std::any_of(all_nodes.begin(), all_nodes.end(), [&func_graph](const AnfNodePtr &node) {
+    return IsPrimitiveCNode(node, prim::kPrimShard) && (node->func_graph() == func_graph);
+  });
+}
+
 Shapes GetValueListShape(const AnfNodePtr &node) {
   Shapes shapes;
   std::vector<ValuePtr> inputs_seq;

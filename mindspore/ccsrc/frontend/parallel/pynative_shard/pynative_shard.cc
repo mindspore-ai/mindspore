@@ -384,6 +384,10 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       ScopeGuard scope_guard(vnode->scope());
       auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
       MS_EXCEPTION_IF_NULL(func_graph);
+      if (IsEmbedShardNode(func_graph)) {
+        MS_LOG(EXCEPTION) << "Nested use of shard (e.g shard(shard(...), ...) is not supported currently."
+                          << " | FuncGraph: " << func_graph->ToString();
+      }
       if (HasNestedMetaFg(func_graph)) {
         return false;
       }
