@@ -3,14 +3,14 @@ import numpy as np
 from mindspore import context, Tensor
 from mindspore.nn import Cell
 import mindspore.ops as ops
-from mindspore.ops import ms_kernel
+from mindspore.ops import kernel
 
 #########################
 # test cases for serial #
 #########################
 
 
-@ms_kernel
+@kernel
 def add_serial_1(a, b):
     out = output_tensor(a.shape, a.dtype)
     row = a.shape[0]
@@ -21,7 +21,7 @@ def add_serial_1(a, b):
     return out
 
 
-@ms_kernel
+@kernel
 def add_serial_2(a, b):
     out = output_tensor(a.shape, a.dtype)
     row = a.shape[0]
@@ -36,7 +36,7 @@ def add_serial_2(a, b):
 ###########################
 
 
-@ms_kernel
+@kernel
 def add_parallel_1(a, b):
     out = output_tensor(a.shape, a.dtype)
     row = a.shape[0]
@@ -47,7 +47,7 @@ def add_parallel_1(a, b):
     return out
 
 
-@ms_kernel
+@kernel
 def add_parallel_2(a, b):
     out = output_tensor(a.shape, a.dtype)
     row = a.shape[0]
@@ -58,7 +58,7 @@ def add_parallel_2(a, b):
     return out
 
 
-@ms_kernel
+@kernel
 def add_parallel_3(a, b):
     l0 = b.shape[1]
     l1 = a.shape[0]
@@ -76,7 +76,7 @@ def add_parallel_3(a, b):
 ############################
 
 
-@ms_kernel
+@kernel
 def add_vectorize_1(a, b):
     out = output_tensor(a.shape, a.dtype)
     row = a.shape[0]
@@ -87,7 +87,7 @@ def add_vectorize_1(a, b):
     return out
 
 
-@ms_kernel
+@kernel
 def add_vectorize_2(a, b):
     out = output_tensor(a.shape, a.dtype)
     row = a.shape[0]
@@ -98,7 +98,7 @@ def add_vectorize_2(a, b):
     return out
 
 
-@ms_kernel
+@kernel
 def add_vectorize_3(a, b):
     l0 = b.shape[1]
     l1 = a.shape[0]
@@ -116,7 +116,7 @@ def add_vectorize_3(a, b):
 #########################
 
 
-@ms_kernel
+@kernel
 def add_reduce_1(a):
     out = output_tensor((a.shape[0],), a.dtype)
     row = a.shape[0]
@@ -152,7 +152,7 @@ class TestMsHybridDSLBin(Cell):
         return self.program(x, y)
 
 
-def ms_kernel_single_input_test(dtype, num, kernel):
+def ms_kernel_single_input_test(dtype, num, kernel_fn):
     """
     test case Custom Op with functions written in Hybrid DSL with single input
     """
@@ -160,15 +160,15 @@ def ms_kernel_single_input_test(dtype, num, kernel):
 
     input1 = np.ones((num, num * 2)).astype(support_list.get(dtype))
 
-    test = TestMsHybridDSLSingle(kernel, "hybrid")
+    test = TestMsHybridDSLSingle(kernel_fn, "hybrid")
     output = test(Tensor(input1))
-    expect = kernel(input1)
+    expect = kernel_fn(input1)
     compare_res = np.allclose(expect, output.asnumpy(), 0.001, 0.001)
     if not compare_res:
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def ms_kernel_bin_inputs_test(dtype, kernel):
+def ms_kernel_bin_inputs_test(dtype, kernel_fn):
     """
     test case Custom Op with functions written in Hybrid DSL with two inputs
     """
@@ -177,9 +177,9 @@ def ms_kernel_bin_inputs_test(dtype, kernel):
     input1 = np.ones((1024, 32)).astype(support_list.get(dtype))
     input2 = np.ones((1024, 64)).astype(support_list.get(dtype))
 
-    test = TestMsHybridDSLBin(kernel, "hybrid")
+    test = TestMsHybridDSLBin(kernel_fn, "hybrid")
     output = test(Tensor(input1), Tensor(input2))
-    expect = kernel(input1, input2)
+    expect = kernel_fn(input1, input2)
     compare_res = np.allclose(expect, output.asnumpy(), 0.001, 0.001)
     if not compare_res:
         raise ValueError("Precision error, compare result: {}".format(compare_res))
@@ -192,20 +192,20 @@ def ms_kernel_bin_inputs_test(dtype, kernel):
 def test_ms_kernel_ascend_scheduling_intrin():
     """
     Feature: test case for Custom op with new scheduling intrin
-    Description: ascend test case, Python DSL with ms_kernel decorator in GRAPH_MODE.
+    Description: ascend test case, Python DSL with kernel decorator in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_serial_1)
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_serial_2)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_serial_1)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_serial_2)
 
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_vectorize_1)
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_vectorize_2)
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_vectorize_3)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_vectorize_1)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_vectorize_2)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_vectorize_3)
 
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_parallel_1)
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_parallel_2)
-    ms_kernel_bin_inputs_test(dtype="float32", kernel=add_parallel_3)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_parallel_1)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_parallel_2)
+    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_parallel_3)
 
-    ms_kernel_single_input_test(dtype="float32", num=1024, kernel=add_reduce_1)
+    ms_kernel_single_input_test(dtype="float32", num=1024, kernel_fn=add_reduce_1)

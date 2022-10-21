@@ -163,7 +163,7 @@ class Custom(ops.PrimitiveWithInfer):
               1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
               2. A TBE operator implementation function.
               3. A pure python function
-              4. An ms_kernel decorated function written by the Hybrid DSL.
+              4. An kernel decorated function written by the Hybrid DSL.
 
             - str: If func is of str type, then str should be a path of file along with a function name.
               This could be used when func_type is "aot" or "julia".
@@ -316,7 +316,7 @@ class Custom(ops.PrimitiveWithInfer):
     Examples:
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, ms_kernel
+        >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, kernel
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore.nn import Cell
         >>> input_x = Tensor(np.ones([16, 16]).astype(np.float32))
@@ -326,8 +326,8 @@ class Custom(ops.PrimitiveWithInfer):
         >>> # This is the default func_type in Custom,
         >>> # and both out_shape and out_dtype can be None(default value).
         >>> # In this case, the input func must be a function written in the Hybrid DSL
-        >>> # and decorated by @ms_kernel.
-        >>> @ms_kernel
+        >>> # and decorated by @kernel.
+        >>> @kernel
         ... def add_script(a, b):
         ...     c = output_tensor(a.shape, a.dtype)
         ...     for i0 in range(a.shape[0]):
@@ -589,17 +589,17 @@ class Custom(ops.PrimitiveWithInfer):
             self._check_julia_func()
         elif self.func_type == "hybrid":
             if not hasattr(self.func, "ms_kernel_flag"):
-                raise TypeError("{}, 'func' must be a function decorated by ms_kernel".format(self.log_prefix))
+                raise TypeError("{}, 'func' must be a function decorated by kernel".format(self.log_prefix))
             self._is_ms_kernel = True
             self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
         elif self.func_type == "akg":
             if hasattr(self.func, "ms_kernel_flag"):
                 logger.warning("{}. To have a better user experience, the mode hybrid is suggested "
-                               "for the input function with decorator @ms_kernel. "
+                               "for the input function with decorator @kernel. "
                                "To enable this mode, set the 'func_type' to be \"hybrid\"".format(self.log_prefix))
         elif self.func_type == "pyfunc":
             if hasattr(self.func, "ms_kernel_flag"):
-                logger.warning("{}. Now you are using the function with decorator @ms_kernel in the mode pyfunc. "
+                logger.warning("{}. Now you are using the function with decorator @kernel in the mode pyfunc. "
                                "The kernel will be executed as a native python function, which might lead to "
                                "low efficiency. To accelerate the kernel, set the 'func_type' to be \"hybrid\""
                                .format(self.log_prefix))
@@ -964,7 +964,7 @@ class Custom(ops.PrimitiveWithInfer):
 
     def _auto_infer(self, *args):
         """
-        the automatic infer function for functions with @ms_kernel decorator
+        the automatic infer function for functions with @kernel decorator
         """
         fake_input = []
         enable_infer_value = True

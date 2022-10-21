@@ -31,7 +31,7 @@ Decorators
 
     mindspore.ops.constexpr
     mindspore.ops.custom_info_register
-    mindspore.ops.ms_kernel
+    mindspore.ops.kernel
     mindspore.ops.op_info_register
     mindspore.ops.prim_attr_register
 

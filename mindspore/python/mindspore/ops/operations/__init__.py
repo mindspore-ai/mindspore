@@ -28,7 +28,7 @@ from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg
                         CusMatMulCubeDenseRight, CusMatMulCubeFraczLeftCast, NewIm2Col,
                         LoadIm2Col, UpdateThorGradient, Cholesky, CholeskyTrsm,
                         DetTriangle, ProdForceSeA)
-from ._ms_kernel import (ms_kernel, ms_hybrid)
+from ._ms_kernel import (ms_kernel, kernel)
 from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchToSpace, BatchToSpaceND,
                         BatchToSpaceNDV2, BroadcastTo, Cast, Coalesce, Concat, Cummax, DType, DepthToSpace, Diag,
                         DiagPart, DynamicShape, EditDistance, EmbeddingLookup, ExpandDims, ExtractVolumePatches,
@@ -589,7 +589,7 @@ __sponge__ = [
 
 __custom__ = [
     "ms_kernel",
-    "ms_hybrid",
+    "kernel",
 ]
 
 __all__.extend(__sponge__)

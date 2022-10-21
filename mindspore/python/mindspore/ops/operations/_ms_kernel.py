@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""ms_kernel decorator and related util functions"""
+"""kernel decorator and related util functions"""
 
 import ast
 import json
@@ -284,7 +284,7 @@ class VariableUsage(ast.NodeVisitor):
 
         func_id = node.func.id
         if not (func_id in list(VariableUsage.intrin_runtime.keys()) +
-                ['max', 'min', 'len', 'ms_kernel']):
+                ['max', 'min', 'len', 'kernel', 'ms_kernel']):
             raise ValueError(
                 "In the function {} written in the Hybrid DSL, function call id {} "
                 "not in intrinsics' list".format(self.func_name, func_id))
@@ -474,10 +474,10 @@ def determine_variable_usage(root, func_name):
     return visitor.inplace_assign_output
 
 
-def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
+def kernel(fn=None, reg_info=None, compile_attrs=None):
     """
     The decorator of the Hybrid DSL function for the Custom Op.
-    When a function written by the Hybrid DSL is decorated by ms_kernel,
+    When a function written by the Hybrid DSL is decorated by kernel,
     it can be run as a usual Python function.
     Also, this function can be used in the api Custom and to create :class:`mindspore.ops.Custom`, with func_type
     "hybrid" or "pyfunc". Creating :class:`mindspore.ops.Custom` with mode "hybrid" by the Hybrid DSL function
@@ -499,7 +499,7 @@ def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
     Examples:
         >>> import numpy as np
         >>> from mindspore import ops, Tensor
-        >>> from mindspore.ops import ms_kernel, DataType, CustomRegOp
+        >>> from mindspore.ops import kernel, DataType, CustomRegOp
         ...
         >>> # Create a dict for the compile flags.
         >>> attrs = {
@@ -520,9 +520,9 @@ def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
         >>> input_x = np.ones([4, 4]).astype(np.float32)
         >>> input_y = np.ones([4, 4]).astype(np.float32)
         ...
-        >>> # Write a Hybrid DSL function through the decorator @ms_kernel.
+        >>> # Write a Hybrid DSL function through the decorator @kernel.
         >>> # We can also pass the compile attrs and the reg info through the decorator.
-        >>> @ms_kernel(reg_info=op_gpu_info, compile_attrs=attrs)
+        >>> @kernel(reg_info=op_gpu_info, compile_attrs=attrs)
         ... def outer_product(a, b):
         ...     c = output_tensor(a.shape, a.dtype)
         ...
@@ -548,23 +548,23 @@ def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
         compile_attrs = {}
 
     if not isinstance(compile_attrs, dict):
-        raise TypeError("The input 'compile_attrs' of @ms_kernel must be a dict, "
+        raise TypeError("The input 'compile_attrs' of @kernel must be a dict, "
                         "but get a {}".format(type(compile_attrs)))
 
     for key in compile_attrs.keys():
         if not isinstance(key, str):
-            raise TypeError("The key of 'compile_attrs' of @ms_kernel must be a str, "
+            raise TypeError("The key of 'compile_attrs' of @kernel must be a str, "
                             "but get a {}".format(type(key)))
 
     if reg_info is not None and not isinstance(reg_info, (str, dict, tuple)):
         raise TypeError(
-            "The input 'reg_info' of @ms_kernel should be one of "
+            "The input 'reg_info' of @kernel should be one of "
             "str, dict and tuple, but get a {}".format(type(reg_info)))
 
     def wrap_ms_kernel(func):
         setattr(func, "ms_kernel_flag", True)
 
-        # we enable ml scheduler automatically for ms_kernel function
+        # we enable ml scheduler automatically for kernel function
         if context.get_context('device_target') == "Ascend":
             compile_attrs["enable_polytops"] = "always"
 
@@ -586,14 +586,14 @@ def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
     return wrap_ms_kernel
 
 
-def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
+def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
     """
-    Same as docarator ms_kernel. ms_hybrid will be deprecated in the future.
-    Please use ms_kernel instead.
+    Same as docarator kernel. ms_hybrid will be deprecated in the future.
+    Please use kernel instead.
 
     Supported Platforms:
         Deprecated
     """
-    log.warning("'ms_hybrid' is deprecated from version 1.8 and "
-                "will be removed in a future version, use 'ms_kernel' instead.")
-    return ms_kernel(fn, reg_info, compile_attrs)
+    log.warning("'ms_kernel' is deprecated from version 1.8 and "
+                "will be removed in a future version, use 'kernel' instead.")
+    return kernel(fn, reg_info, compile_attrs)

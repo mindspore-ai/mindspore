@@ -1,7 +1,7 @@
-mindspore.ops.ms_kernel
+mindspore.ops.kernel
 =======================
 
-.. py:function:: mindspore.ops.ms_kernel(fn=None, reg_info=None, compile_attrs=None)
+.. py:function:: mindspore.ops.kernel(fn=None, reg_info=None, compile_attrs=None)
 
     用于MindSpore Hybrid DSL函数书写的装饰器。
     给用MindSpore Hybrid DSL书写的函数加上此装饰器后，它可以用作一个普通的Python函数。
