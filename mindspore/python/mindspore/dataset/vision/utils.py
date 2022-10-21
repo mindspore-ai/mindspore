@@ -20,6 +20,7 @@ import numbers
 import numpy as np
 from PIL import Image
 
+import mindspore
 import mindspore._c_dataengine as cde
 
 
@@ -331,6 +332,41 @@ class SliceMode(IntEnum):
                     SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
 
         return c_values.get(mode)
+
+
+def encode_jpeg(image, quality=75):
+    """
+    Encode the input image as JPEG data.
+
+    Args:
+        image (Union[numpy.ndarray, mindspore.Tensor]): The image to be encoded.
+        quality (int, optional): Quality of the resulting JPEG data, from 1 to 100. Default: 75.
+
+    Returns:
+        numpy.ndarray, one dimension uint8 data.
+
+    Raises:
+        TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
+        TypeError: If `quality` is not of type int.
+        RuntimeError: If the data type of `image` is not uint8.
+        RuntimeError: If the shape of `image` is not <H, W> or <H, W, 1> or <H, W, 3>.
+        RuntimeError: If `quality` is less than 1 or greater than 100.
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore.dataset import vision
+        >>> # Generate a random image with height=120, width=340, channels=3
+        >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
+        >>> jpeg_data = vision.encode_jpeg(image)
+    """
+    if not isinstance(quality, int):
+        raise TypeError("Input quality is not of type {0}, but got: {1}.".format(int, type(quality)))
+    if isinstance(image, np.ndarray):
+        return cde.encode_jpeg(cde.Tensor(image), quality).as_array()
+    if isinstance(image, mindspore.Tensor):
+        return cde.encode_jpeg(cde.Tensor(image.asnumpy()), quality).as_array()
+    raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
+                                                                                  mindspore.Tensor, type(image)))
 
 
 def get_image_num_channels(image):

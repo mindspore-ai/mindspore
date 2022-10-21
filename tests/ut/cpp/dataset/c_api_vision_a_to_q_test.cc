@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <opencv2/opencv.hpp>
+
 #include "common/common.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -2661,7 +2663,6 @@ TEST_F(MindDataTestPipeline, TestAdjustContrastParamCheck) {
   EXPECT_EQ(iter1, nullptr);
 }
 
-
 /// Feature: Perspective
 /// Description: Test Perspective pipeline
 /// Expectation: The returned result is as expected
@@ -2748,4 +2749,85 @@ TEST_F(MindDataTestPipeline, TestPerspectiveParamCheck) {
   std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
   // Expect failure: invalid value of Perspective
   EXPECT_EQ(iter1, nullptr);
+}
+
+/// Feature: EncodeJpeg
+/// Description: Test EncodeJpeg by encoding the image as JPEG data according to the quality
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestEncodeJpegNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesEncodeJpegNormal.";
+  mindspore::MSTensor output;
+  std::string folder_path = "./data/dataset/";
+  std::string filename;
+  const UINT8 *data;
+
+  filename = folder_path + "apple.jpg";
+  cv::Mat image_bgr = cv::imread(filename, cv::ImreadModes::IMREAD_UNCHANGED);
+  cv::Mat image;
+  cv::cvtColor(image_bgr, image, cv::COLOR_BGRA2RGB);
+
+  TensorShape img_tensor_shape = TensorShape({image.size[0], image.size[1], image.channels()});
+  DataType pixel_type = DataType(DataType::DE_UINT8);
+
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromMemory(img_tensor_shape, pixel_type, image.data, &input);
+  auto input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+
+  ASSERT_OK(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
+  data = (const UINT8 *) (output.Data().get());
+  EXPECT_EQ(data[0], 255);
+  EXPECT_EQ(data[1], 216);
+  EXPECT_EQ(data[2], 255);
+
+  int quality;
+  for (quality = 20; quality <= 100 ; quality+= 40) {
+    ASSERT_OK(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output, quality));
+    data = (const UINT8 *) (output.Data().get());
+    EXPECT_EQ(data[1], 216);
+  }
+}
+
+/// Feature: EncodeJpeg
+/// Description: Test EncodeJpeg with invalid parameter
+/// Expectation: Error is caught when the parameter is invalid
+TEST_F(MindDataTestPipeline, TestEncodeJpegException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesEncodeJpegException.";
+  mindspore::MSTensor output;
+  std::string folder_path = "./data/dataset/";
+  std::string filename;
+
+  filename = folder_path + "apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_UNCHANGED);
+
+  TensorShape img_tensor_shape = TensorShape({image.size[0], image.size[1], image.channels()});
+  DataType pixel_type = DataType(DataType::DE_UINT8);
+
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromMemory(img_tensor_shape, pixel_type, image.data, &input);
+  auto input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+
+  // Test with an invalid integer for the quality
+  ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output, 0));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output, 101));
+
+  // Test with an invalid image containing float32 elements
+  std::shared_ptr<Tensor> float32_de_tensor;
+  Tensor::CreateEmpty(TensorShape({5, 4, 3 }), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(float32_de_tensor));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
+
+  // Test with an invalid image with only one dimension
+  input->Reshape(TensorShape({image.size[0] * image.size[1] * image.channels()}));
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
+
+  // Test with an invalid image with four dimensions
+  input->Reshape(TensorShape({image.size[0] / 2, image.size[1], image.channels(), 2}));
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
+
+  // Test with an invalid image with two channels
+  input->Reshape(TensorShape({image.size[0] * image.channels() / 2, image.size[1], 2}));
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
 }
