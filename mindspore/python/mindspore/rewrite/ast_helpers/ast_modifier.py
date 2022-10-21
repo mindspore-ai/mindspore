@@ -484,6 +484,12 @@ class AstModifier(ast.NodeTransformer):
                                    str(src_argument.type))
             dst_ast.value = src_argument.value
             return
+        if isinstance(dst_ast, ast.Num):
+            if src_argument.type not in [ValueType.IntValue, ValueType.FloatValue]:
+                raise RuntimeError("src_argument should be a IntValue or FloatValue, but got:",
+                                   str(src_argument.type))
+            dst_ast.n = src_argument.value
+            return
         if isinstance(dst_ast, ast.Name):
             if src_argument.type not in [ValueType.NamingValue, ValueType.StringValue]:
                 raise RuntimeError("src_argument.type should be ValueType.NamingValue or ValueType.StringValue.")

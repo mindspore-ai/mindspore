@@ -328,7 +328,8 @@ class AssignParser(Parser):
                 parser = ParserRegister.instance().get_parser(type(ast_node.func))
                 func_name = parser.process(stree, ast_node.func)
                 func = get_functional(func_name.split(".")[-1])
-                node = stree.create_call_function(father_ast_node, func_name, func, targets, call_args, call_kwargs)
+                node = stree.inner_create_call_function(func_name, father_ast_node, func_name, func, targets,
+                                                        call_args, call_kwargs)
                 return node
             raise RuntimeError("Operator instance undefined: '", astunparse.unparse(ast_node.func), "' of '",
                                astunparse.unparse(ast_node), "'")

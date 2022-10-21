@@ -46,7 +46,8 @@ class Node:
 
 
     def __eq__(self, other: 'Node'):
-        Validator.check_value_type("other", other, [Node], "Node")
+        if not isinstance(other, Node):
+            return False
         return self._node == other._node
 
     @staticmethod
@@ -200,7 +201,7 @@ class Node:
         if belong_symbol_tree is None:
             self._node.set_arg_by_node(arg_idx, src_node._node, out_idx)
         else:
-            belong_symbol_tree.set_node_arg_by_node(self._node, arg_idx, src_node._node, out_idx)
+            belong_symbol_tree.set_node_arg_by_node(self._node, arg_idx, src_node.get_handler(), out_idx)
 
     def get_targets(self) -> [ScopedValue]:
         """

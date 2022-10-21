@@ -14,12 +14,17 @@
 # ============================================================================
 """Rewrite module api: SymbolTree."""
 from typing import Optional
+from types import FunctionType
+import mindspore as ms
 
 from mindspore.nn import Cell
 from ..._checkparam import Validator
 from .node import Node
 from ..symbol_tree_builder import SymbolTreeBuilder
 from ..symbol_tree import Position, SymbolTree as SymbolTreeImpl
+
+ParamTypes = (int, str, float, bool, Node)
+MsDtypes = (ms.float16, ms.float32, ms.float64)
 
 
 class SymbolTree:
@@ -54,6 +59,63 @@ class SymbolTree:
         """
         Validator.check_value_type("network", network, [Cell], "SymbolTree")
         return cls(SymbolTreeBuilder(network).build())
+
+    @staticmethod
+    def _check_args_type(args):
+        for arg in args:
+            if arg not in MsDtypes and not isinstance(arg, ParamTypes):
+                raise TypeError(f"For call-function Node, got unsupported arg: {arg}, type: {type(arg)}")
+
+    @staticmethod
+    def _check_kwargs_type(kwargs):
+        for k, v in kwargs.items():
+            if not isinstance(k, str):
+                raise TypeError(f"For call-function Node, key in kwarg must be a str, but got: {type(v)}",)
+            if v not in MsDtypes and not isinstance(v, ParamTypes):
+                raise TypeError(f"For call-function Node, got unsupported kwarg value: {v}, type: {type(v)}")
+
+    def create_call_function(self, func, targets, args=None, kwargs=None):
+        """
+        Create a Node object and generate the execution code to insert into the source code.
+        The source code calls the 'func' function with 'args' and' kwargs' as parameters.
+
+        Args:
+            func (FunctionType) - The function to be called.
+            targets * * (list [str]) - indicates the output name. As the output of the node in the source code.
+            args (Union[MsDtypes, ParamTypes]) - parameter name of the node. Used as a parameter to a code statement in
+                source code. The default value is None, which means there is no parameter input in the cell.
+            kwargs ({str: Union[MsDtypes, ParamTypes]}) - The key type must be str, and the value must be value or type
+                must be ParamTypes. The input parameter name used to describe the formal parameter with a keyword.
+                Enter the name in the source code as the 'kwargs' in the statement expression.The default value is
+                None, which means there is no 'kwargs' input.
+
+        Returns:
+            An instance of `Node`.
+
+        Raises:
+            TypeError: If `func` is not FuntionType.
+            TypeError: If `targets` is not `list`.
+            TypeError: If the type of `targets` is not str.
+            TypeError: If arg in `args` is not ParamType.
+            TypeError: If key of `kwarg` is not a str or value of kwarg in `kwargs` is not ParamType.
+        """
+        Validator.check_value_type("func", func, [FunctionType], "SymbolTree node")
+        Validator.check_element_type_of_iterable("targets", targets, [str], "SymbolTree node")
+        if args is not None:
+            SymbolTree._check_args_type(args)
+            for i, arg in enumerate(args):
+                if isinstance(arg, Node):
+                    args[i] = arg.get_handler()
+        else:
+            args = []
+        if kwargs is not None:
+            SymbolTree._check_kwargs_type(kwargs)
+            for key, value in kwargs.items():
+                if isinstance(value, Node):
+                    kwargs[key] = value.get_handler()
+        else:
+            kwargs = {}
+        return Node(self._symbol_tree.create_call_function(func, targets, args, kwargs))
 
     def get_handler(self) -> SymbolTreeImpl:
         """

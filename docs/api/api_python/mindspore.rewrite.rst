@@ -53,6 +53,26 @@ mindspore.rewrite
         异常：
             - **TypeError** - 参数 `network` 不是Cell类型对象。
 
+    .. py:method:: mindspore.rewrite.SymbolTree.create_call_function(self, func, targets, args, kwargs)
+
+        创建一个Node对象，并生成执行代码插入源码中。源码中以 `args` 和 `kwargs` 为参数调用 `func` 函数。
+
+        参数：
+            - **func** (FunctionType) - 要被调用的函数。
+            - **targets**  (list[str]) - 表示输出名称。在源代码中作为节点的输出。
+            - **args** (Union[MsDtypes, ParamTypes]) - 该节点的参数名称。用作源代码中代码语句的参数。默认为None表示 `cell` 没有参数输入。
+            - **kwargs** ({str: Union[MsDtypes, ParamTypes]}) - 键的类型必须是str，值必须是MsDtypes或类型必须是ParamTypes。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示没有 `kwargs` 输入。
+
+        返回：
+            一个Node实例。
+
+        异常：
+            - **TypeError** - 如果参数 `func` 不是FunctionType类型。
+            - **TypeError** - 如果参数 `targets` 不是list类型。
+            - **TypeError** - 如果参数 `targets` 的成员不是str类型。
+            - **TypeError** - 如果参数 `args` 不是ParamType类型。
+            - **TypeError** - 如果参数 `kwarg` 的 `key` 不是str类型或者 `value` 不是ParamType类型。
+
     .. py:method:: mindspore.rewrite.SymbolTree.dump()
 
         将 `SymbolTree` 中network对应的ir图信息打印到屏幕。
@@ -212,8 +232,8 @@ mindspore.rewrite
         参数：
             - **cell** (Cell) - 该节点对应的前向计算的Cell对象。
             - **targets** (list[ScopedValue]) - 表示输出名称。在源代码中作为节点的输出。Rewrite将在插入节点时检查并确保每个目标的唯一性。
-            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认为None表示单元格没有参数输入。Rewrite将在插入节点时检查并确保每个 `arg` 的唯一性。
-            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示单元格没有 `kwargs` 输入。Rewrite将在插入节点时检查并确保每个 `kwarg` 的唯一性。
+            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认为None表示 `cell` 没有参数输入。Rewrite将在插入节点时检查并确保每个 `arg` 的唯一性。
+            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示 `cell` 没有 `kwargs` 输入。Rewrite将在插入节点时检查并确保每个 `kwarg` 的唯一性。
             - **name** (str) - 表示节点的名称。用作源代码中的字段名称。默认为无。当名称为无时，ReWrite将根据 `target` 生成一个默认名称。Rewrite将在插入节点时检查并确保名称的唯一性。
             - **is_sub_net** (bool) - 表示 `cell` 是否是一个网络。如果 `is_sub_net` 为真，Rewrite将尝试将 `cell` 解析为TreeNode，否则为CallCell节点。默认为False。
 
