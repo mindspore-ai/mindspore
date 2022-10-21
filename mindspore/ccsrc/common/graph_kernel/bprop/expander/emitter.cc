@@ -58,6 +58,20 @@ NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bo
               {{"transpose_a", MakeValue(transpose_a)}, {"transpose_b", MakeValue(transpose_b)}});
 }
 
+NodePtr Emitter::ZerosLike(const NodePtr &node) const {
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->get()->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto v = value_node->value();
+    MS_EXCEPTION_IF_NULL(v);
+    if (v->isa<ValueTuple>() || v->isa<ValueList>()) {
+      auto sh = GetValue<std::vector<int64_t>>(v);
+      return Emit(prim::kZerosLike, {Tensor(sh)});
+    }
+  }
+  return Emit(prim::kZerosLike, {node});
+}
+
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Add(lhs, rhs); }
 NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Sub(lhs, rhs); }
 NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Mul(lhs, rhs); }

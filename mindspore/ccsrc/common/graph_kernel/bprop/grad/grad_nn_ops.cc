@@ -17,6 +17,65 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
+REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto x_shape = ib->GetShape(x);
+  auto w_shape = ib->GetShape(w);
+  auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, ib->EmitValue(MakeValue(x_shape))},
+                     {{"mode", ib->GetAttr("mode")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"group", ib->GetAttr("group")},
+                      {"format", ib->GetAttr("format")},
+                      {"out_channel", ib->GetAttr("out_channel")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"pad_list", ib->GetAttr("pad_list")}});
+  auto dw = ib->Emit("Conv2DBackpropFilter", {dout, x, ib->EmitValue(MakeValue(w_shape))},
+                     {{"mode", ib->GetAttr("mode")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"group", ib->GetAttr("group")},
+                      {"format", ib->GetAttr("format")},
+                      {"out_channel", ib->GetAttr("out_channel")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"pad_list", ib->GetAttr("pad_list")}});
+  return {dx, dw};
+});
+
+REG_BPROP_BUILDER(kMaxPoolOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit(kMaxPoolGradOpName, {x, out, dout},
+                     {{"kernel_size", ib->GetAttr("kernel_size")},
+                      {"strides", ib->GetAttr("strides")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"format", ib->GetAttr("format")}});
+  return {dx};
+});
+
+REG_BPROP_BUILDER(kBiasAddOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  return {dout, ib->Emit(kBiasAddGradOpName, {dout}, {{"format", ib->GetAttr("data_format")}})};
+});
+
+REG_BPROP_BUILDER(kReLUOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit(kReluGradOpName, {dout, out});
+  return {dx};
+});
+
 REG_BPROP_BUILDER(kTopKOpName).SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
   auto input_x = builder->GetInput(kIndex0);
   auto out = builder->GetInput(kIndex2);

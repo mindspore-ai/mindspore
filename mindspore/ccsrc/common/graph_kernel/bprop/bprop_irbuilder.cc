@@ -19,7 +19,9 @@
 #include <algorithm>
 #include <queue>
 #include <set>
+#include <map>
 #include "include/common/utils/utils.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace expander {
@@ -43,6 +45,9 @@ bool BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, std::vec
                          return cnode;
                        });
   FindDoutUsers(*outputs, dout_user);
+  if (common::GetEnv("MS_DEV_DUMP_BPROP") == "on") {
+    DumpResult(*outputs, *dout_user);
+  }
   return true;
 }
 
@@ -70,6 +75,67 @@ void BpropIRBuilder::FindDoutUsers(const std::vector<CNodePtr> &outputs, DoutUse
       }
     }
   }
+}
+
+void BpropIRBuilder::DumpResult(const std::vector<CNodePtr> &outputs, const DoutUser &dout_user) const {
+  auto fg = std::make_shared<FuncGraph>();
+  std::map<AnfNodePtr, AnfNodePtr> node_map;
+  CNodePtrList newcnodes;
+  for (auto &inp : *inputs_ptr_) {
+    auto p = fg->add_parameter();
+    p->set_abstract(inp->get()->abstract());
+    node_map[inp->get()] = p;
+  }
+  std::queue<CNodePtr> que;
+  std::for_each(outputs.cbegin(), outputs.cend(), [&que](const CNodePtr &cnode) { que.push(cnode); });
+
+  while (!que.empty()) {
+    auto node = que.front();
+    que.pop();
+    if (node_map.count(node)) {
+      continue;
+    }
+    auto new_node = fg->NewCNode(node->inputs());
+    new_node->CloneCNodeInfo(node);
+    new_node->set_fullname_with_scope(node->fullname_with_scope());
+    node_map[node] = new_node;
+    newcnodes.push_back(new_node);
+    for (size_t i = 1; i < node->size(); ++i) {
+      const auto &inp = node->input(i);
+      if (inp->isa<CNode>() && node_map.count(inp) == 0) {
+        que.push(inp->cast<CNodePtr>());
+      }
+    }
+  }
+
+  for (auto &cnode : newcnodes) {
+    for (size_t i = 1; i < cnode->size(); i++) {
+      if (node_map.count(cnode->input(i)) != 0) {
+        cnode->set_input(i, node_map[cnode->input(i)]);
+      }
+    }
+  }
+
+  if (outputs.size() == 1) {
+    fg->set_output(node_map[outputs[0]]);
+  } else {
+    AnfNodePtrList new_outputs{NewValueNode(prim::kPrimMakeTuple)};
+    AbstractBasePtrList abs;
+    (void)std::transform(outputs.cbegin(), outputs.cend(), std::back_inserter(new_outputs),
+                         [&node_map, &abs](const CNodePtr &node) {
+                           abs.push_back(node->abstract());
+                           return node_map[node];
+                         });
+    auto mt = fg->NewCNode(new_outputs);
+    mt->set_abstract(std::make_shared<abstract::AbstractTuple>(abs));
+    fg->set_output(mt);
+  }
+
+  for (auto &iter : dout_user) {
+    MS_LOG(INFO) << "Dout User: " << iter.first->fullname_with_scope() << "  index: " << iter.second;
+  }
+
+  DumpIR("bprop/bprop_expander_" + name() + ".ir", fg, true);
 }
 
 ValuePtr BpropIRBuilder::GetAttr(const std::string &attr) const {
