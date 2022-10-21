@@ -5142,7 +5142,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     const_op = _get_cache_prim(P.ScalarToTensor)()
 
     sample_shape = _get_cache_prim(P.Shape)()(logits)
-    uniform = C.uniform(sample_shape, const_op(0.0, mstype.float), const_op(1.0, mstype.float))
+    uniform = C.uniform(sample_shape, const_op(0.0, mstype.float32), const_op(1.0, mstype.float32))
     uniform = _get_cache_prim(P.Cast)()(uniform, logits_dtype)
     gumbel = neg_tensor(log_op(neg_tensor(log_op(uniform))))
     gumbel = (logits + gumbel) / tau
