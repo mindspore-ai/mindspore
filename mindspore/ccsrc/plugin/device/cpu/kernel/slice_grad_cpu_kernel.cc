@@ -15,20 +15,49 @@
  */
 
 #include "plugin/device/cpu/kernel/slice_grad_cpu_kernel.h"
+
 #include <algorithm>
 #include <string>
 #include <map>
 #include <complex>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ir/primitive.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kSliceGradDynamicInputsNum = 4;
-constexpr size_t kStridedSliceGradDynamicInputsNum = 5;
+constexpr size_t kSliceGradInputsNum = 4;
+constexpr size_t kStridedSliceGradInputsNum = 5;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kSliceGradMaxInputShapeSize = 8;
+constexpr auto kBegin = "begin";
+constexpr auto kEnd = "end";
+constexpr auto kStrides = "strides";
+constexpr auto kSize = "size";
+
+std::vector<int64_t> GetIntValueFormAddress(const TypeId &dtype, const kernel::AddressPtr &address,
+                                            const size_t elem_size) {
+  std::vector<int64_t> res;
+  if (dtype == kNumberTypeInt32) {
+    MS_EXCEPTION_IF_CHECK_FAIL(address->size == elem_size * sizeof(int32_t),
+                               "Address data size should be " + std::to_string(elem_size * sizeof(int32_t)) +
+                                 ", but got " + std::to_string(address->size));
+    auto data_ptr = reinterpret_cast<int32_t *>(address->addr);
+    res.assign(data_ptr, data_ptr + elem_size);
+  } else if (dtype == kNumberTypeInt64) {
+    MS_EXCEPTION_IF_CHECK_FAIL(address->size == elem_size * sizeof(int64_t),
+                               "Address data size should be " + std::to_string(elem_size * sizeof(int64_t)) +
+                                 ", but got " + std::to_string(address->size));
+    auto data_ptr = reinterpret_cast<int64_t *>(address->addr);
+    res.assign(data_ptr, data_ptr + elem_size);
+  } else {
+    MS_LOG(EXCEPTION) << "Only support int32 or int64, but got " << TypeIdLabel(dtype);
+  }
+
+  return res;
+}
 }  // namespace
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
@@ -37,60 +66,70 @@ bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   auto input_num = inputs.size();
+  MS_EXCEPTION_IF_CHECK_FAIL(input_num == kSliceGradInputsNum || input_num == kStridedSliceGradInputsNum,
+                             "Input number check failed!");
   dtype_ = inputs.at(0)->GetDtype();
-  constexpr size_t kInputNum2 = 2;
-  if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {
-    is_dynamic_attr_ = true;
-    strides_dtype_ = inputs.at(kInputNum2)->GetDtype();
-    return true;
-  }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto begin_value = prim->GetAttr(kAttrBegin);
-  MS_EXCEPTION_IF_NULL(begin_value);
-  begin_ = GetValue<std::vector<int64_t>>(begin_value);
-  auto strides_value = prim->GetAttr(STRIDES);
-  if (strides_value != nullptr) {  // StrideSliceGrad
-    strides_ = GetValue<std::vector<int64_t>>(strides_value);
-    auto end_value = prim->GetAttr(kAttrEnd);
-    MS_EXCEPTION_IF_NULL(end_value);
-    end_ = GetValue<std::vector<int64_t>>(end_value);
-  } else {  // SliceGrad
-    auto size_value = prim->GetAttr(kAttrSize);
-    MS_EXCEPTION_IF_NULL(size_value);
-    size_ = GetValue<std::vector<int64_t>>(size_value);
-  }
+  begin_dtype_ = inputs.at(kBeginIndex_)->GetDtype();
   return true;
+}
+
+std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensorPtr> &inputs, const size_t idx,
+                                             const std::string &kernel_name, std::vector<int64_t> *attr_value,
+                                             const std::string &param_name, size_t *len) {
+  auto res = TryGetIntValue(inputs, idx, kernel_name, attr_value, false);
+  if (!res) {
+    auto shape = inputs[idx]->GetShapeVector();
+    if (shape.size() != 1) {
+      MS_LOG(ERROR) << kernel_name << "'s `" << param_name << "` shape should be one dim, but got " << shape.size();
+      return {false, false};
+    }
+    MS_EXCEPTION_IF_NULL(len);
+    *len = shape[0];
+    return {false, true};
+  }
+  return {true, true};
 }
 
 int SliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto begin = GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_, false);
-  if (kernel_name_ == prim::kPrimStridedSliceGrad->name()) {
-    auto end = GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_, false);
-    auto stride = GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_, false);
-    get_dynamic_attr_value_ = begin && end && stride;
-  } else {
-    auto size = GetDynamicAttrIntValue(inputs, kSizeIndex_, inputsOnHost, kernel_name_, &size_, false);
-    get_dynamic_attr_value_ = begin && size;
-  }
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
   auto ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
+
+  ClearVectors();
   auto input_shape = inputs[0]->GetShapeVector();
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 8D or lower, but got "
                       << input_shape.size() << "D.";
   }
   output_shape_ = outputs[0]->GetShapeVector();
-  FormatArgs(kernel_name_ == prim::kPrimStridedSliceGrad->name());
-  ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
 
-  CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
-  CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
-  return KRET_OK;
+  auto got_begin = GetSliceGradParamValue(inputs, kBeginIndex_, kernel_name_, &begin_, kBegin, &begin_len_);
+  if (kernel_name_ == prim::kPrimStridedSliceGrad->name()) {
+    auto got_end = GetSliceGradParamValue(inputs, kEndIndex_, kernel_name_, &end_, kEnd, &end_len_);
+    auto got_strides = GetSliceGradParamValue(inputs, kStrideIndex_, kernel_name_, &strides_, kStrides, &strides_len_);
+    if (!got_end.second || !got_strides.second) {
+      return static_cast<int>(KRET_RESIZE_FAILED);
+    }
+    get_attr_value_ = got_begin.first && got_end.first && got_strides.first;
+  } else {
+    auto got_size = GetSliceGradParamValue(inputs, kSizeIndex_, kernel_name_, &size_, kSize, &size_len_);
+    if (!got_size.second) {
+      return static_cast<int>(KRET_RESIZE_FAILED);
+    }
+    get_attr_value_ = got_begin.first && got_size.first;
+  }
+
+  if (get_attr_value_) {
+    FormatArgs(kernel_name_ == prim::kPrimStridedSliceGrad->name());
+    ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
+    CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
+    CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
+  }
+
+  return static_cast<int>(KRET_OK);
 }
 
 void SliceGradCpuKernelMod::ClearVectors() {
@@ -180,12 +219,23 @@ bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 template <typename T>
 bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &outputs) {
-  if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of dynamic attr!";
+  if (!get_attr_value_) {
+    begin_ = GetIntValueFormAddress(begin_dtype_, inputs[kBeginIndex_], begin_len_);
+    if (kernel_name_ == prim::kPrimStridedSliceGrad->name()) {
+      end_ = GetIntValueFormAddress(begin_dtype_, inputs[kEndIndex_], end_len_);
+      strides_ = GetIntValueFormAddress(begin_dtype_, inputs[kStrideIndex_], strides_len_);
+    } else {
+      size_ = GetIntValueFormAddress(begin_dtype_, inputs[kSizeIndex_], size_len_);
+    }
+
+    FormatArgs(kernel_name_ == prim::kPrimStridedSliceGrad->name());
+    ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
+    CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
+    CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
   }
+
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output buff memset failed. Error no: " << ret;
@@ -373,23 +423,19 @@ void SliceGradCpuKernelMod::FormatArgs(bool stride) {
   }
 }
 
-#define STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2) \
-  KernelAttr()                                                \
-    .AddInputAttr(TYPEID_1)                                   \
-    .AddInputAttr(TYPEID_2)                                   \
-    .AddInputAttr(TYPEID_2)                                   \
-    .AddInputAttr(TYPEID_2)                                   \
-    .AddInputAttr(TYPEID_2)                                   \
+#define STRIDEDSLICE_GRAD_CPU_REG(TYPEID_1, TYPEID_2) \
+  KernelAttr()                                        \
+    .AddInputAttr(TYPEID_1)                           \
+    .AddInputAttr(TYPEID_2)                           \
+    .AddInputAttr(TYPEID_2)                           \
+    .AddInputAttr(TYPEID_2)                           \
+    .AddInputAttr(TYPEID_2)                           \
     .AddOutputAttr(TYPEID_1)
 
 std::vector<KernelAttr> SliceGradCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
     {kSliceGrad,
-     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-      KernelAttr()
+     {KernelAttr()
         .AddInputAttr(kNumberTypeFloat32)
         .AddInputAttr(kNumberTypeFloat32)
         .AddInputAttr(kNumberTypeInt32)
@@ -412,47 +458,58 @@ std::vector<KernelAttr> SliceGradCpuKernelMod::GetOpSupport() {
         .AddInputAttr(kNumberTypeBool)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeBool),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeBool)
+        .AddInputAttr(kNumberTypeBool)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
         .AddOutputAttr(kNumberTypeBool)}},
     {kStridedSliceGrad,
-     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-      KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-      KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-      KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-      KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-      KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-      KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64),
-      STRIDEDSLICE_GRAD_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64)}}};
+     {STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt32, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt16, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt8, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeBool, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt32, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt16, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeInt8, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeBool, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64),
+      STRIDEDSLICE_GRAD_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64)}}};
 
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {

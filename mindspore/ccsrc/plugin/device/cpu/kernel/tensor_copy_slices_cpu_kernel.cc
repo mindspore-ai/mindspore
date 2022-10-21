@@ -28,6 +28,9 @@ namespace {
 constexpr size_t kTensorCopySlicesInputsNum = 2;
 constexpr size_t kTensorCopySlicesDynamicInputsNum = 5;
 constexpr size_t kTensorCopySlicesOutputsNum = 1;
+constexpr auto kBeginIdx = 2;
+constexpr auto kEndIdx = 3;
+constexpr auto kStridesIdx = 4;
 }  // namespace
 
 void TensorCopySlicesCpuKernelMod::FillSlice(std::vector<int64_t> *begin, std::vector<int64_t> *end) {
@@ -45,6 +48,17 @@ void TensorCopySlicesCpuKernelMod::FillSlice(std::vector<int64_t> *begin, std::v
   }
 }
 
+void TensorCopySlicesCpuKernelMod::InitOffsetAndCopySize(const std::vector<int64_t> &begin,
+                                                         const std::vector<int64_t> &end,
+                                                         const std::vector<int64_t> &stride) {
+  CheckSliceValid(begin, end, stride, input_shape_);
+
+  auto dim_offset = CalDimOffset(input_shape_);
+  auto type_size = abstract::TypeIdSize(data_type_);
+  offset_ = CalOffset(begin, end, dim_offset) * type_size;
+  copy_size_ = GetCopySize(dim_offset, begin, end) * type_size;
+}
+
 void TensorCopySlicesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -59,16 +73,23 @@ void TensorCopySlicesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     return;
   }
 
-  auto begin = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
-  auto end = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
-  auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-  FillSlice(&begin, &end);
-  CheckSliceValid(begin, end, stride, input_shape_);
+  auto kernel_args = GetArgsFromCNode(kernel_node);
+  if (kernel_args == nullptr) {
+    get_value_before_launch_ = false;
+    return;
+  }
 
-  auto dim_offset = CalDimOffset(input_shape_);
-  auto type_size = abstract::TypeIdSize(data_type_);
-  offset_ = CalOffset(begin, end, dim_offset) * type_size;
-  copy_size_ = GetCopySize(dim_offset, begin, end) * type_size;
+  std::vector<int64_t> begin, end, stride;
+  auto get_begin = TryGetIntValue(kernel_args->inputs, kBeginIdx, kernel_name_, &begin, false);
+  auto get_end = TryGetIntValue(kernel_args->inputs, kEndIdx, kernel_name_, &end, false);
+  auto get_stride = TryGetIntValue(kernel_args->inputs, kStridesIdx, kernel_name_, &stride, false);
+  if (get_begin && get_end && get_stride) {
+    FillSlice(&begin, &end);
+    InitOffsetAndCopySize(begin, end, stride);
+    get_value_before_launch_ = true;
+  }
+
+  get_value_before_launch_ = false;
 }
 
 bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -79,9 +100,8 @@ bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
   auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
   auto update_addr = reinterpret_cast<uint8_t *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
-  auto cnode = cnode_ptr_.lock();
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  if (input_num == kTensorCopySlicesDynamicInputsNum) {
+  if (!get_value_before_launch_) {
+    auto cnode = cnode_ptr_.lock();
     auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
     auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
@@ -99,11 +119,7 @@ bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
     std::vector<int64_t> end{end_ptr, end_ptr + end_shape[0]};
     std::vector<int64_t> stride{strides_ptr, strides_ptr + stride_shape[0]};
     FillSlice(&begin, &end);
-    CheckSliceValid(begin, end, stride, input_shape_);
-    auto dim_offset = CalDimOffset(input_shape_);
-    auto type_size = abstract::TypeIdSize(data_type_);
-    offset_ = CalOffset(begin, end, dim_offset) * type_size;
-    copy_size_ = GetCopySize(dim_offset, begin, end) * type_size;
+    InitOffsetAndCopySize(begin, end, stride);
   }
 
   auto ret = memcpy_s(output_addr, outputs[0]->size, input_addr, inputs[0]->size);

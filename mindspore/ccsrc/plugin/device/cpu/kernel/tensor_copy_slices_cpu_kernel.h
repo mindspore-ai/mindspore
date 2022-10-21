@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TENSOR_COPY_SLICES_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TENSOR_COPY_SLICES_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_COPY_SLICES_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_COPY_SLICES_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -36,39 +36,34 @@ class TensorCopySlicesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeBool)
-        .AddInputAttr(kNumberTypeBool)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeBool),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeInt32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat32)
-        .AddInputAttr(kNumberTypeFloat32)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat64)
-        .AddInputAttr(kNumberTypeFloat64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeFloat64)};
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeBool),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat64)};
     return support_list;
   }
 
@@ -76,12 +71,15 @@ class TensorCopySlicesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TypeId data_type_;
   size_t offset_{0};
   size_t copy_size_{0};
+  bool get_value_before_launch_{false};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> update_shape_;
   std::vector<int64_t> output_shape_;
   void FillSlice(std::vector<int64_t> *begin, std::vector<int64_t> *end);
+  void InitOffsetAndCopySize(const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
+                             const std::vector<int64_t> &stride);
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TENSOR_COPY_SLICES_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_COPY_SLICES_CPU_KERNEL_H_

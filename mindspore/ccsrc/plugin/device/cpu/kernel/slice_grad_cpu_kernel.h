@@ -44,8 +44,7 @@ class SliceGradCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -77,11 +76,14 @@ class SliceGradCpuKernelMod : public NativeCpuKernelMod {
   bool SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
                    T *input_addr, T *output_addr);
 
+  size_t begin_len_{0};
+  size_t end_len_{0};
+  size_t strides_len_{0};
+  size_t size_len_{0};
   std::vector<int64_t> begin_;
   std::vector<int64_t> end_;
   std::vector<int64_t> strides_;
   std::vector<int64_t> size_;
-  static constexpr size_t kShapexIndex_{1};
   static constexpr size_t kBeginIndex_{2};
   static constexpr size_t kEndIndex_{3};
   static constexpr size_t kStrideIndex_{4};
@@ -91,9 +93,8 @@ class SliceGradCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
   TypeId dtype_{kTypeUnknown};
-  TypeId strides_dtype_{kNumberTypeInt32};
-  bool get_dynamic_attr_value_{false};
-  bool is_dynamic_attr_{false};
+  TypeId begin_dtype_{kNumberTypeInt32};
+  bool get_attr_value_{false};
   std::string kernel_type_{kUnknown};
 };
 }  // namespace kernel

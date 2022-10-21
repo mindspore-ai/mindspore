@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeNearestNeighborGradInputsNum = 1;
 constexpr size_t kResizeNearestNeighborGradOutputNum = 1;
 constexpr size_t kResizeNearestNeighborGradInputsShapeSize = 4;
 constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
@@ -62,7 +61,6 @@ void ResizeNearestNeighborGradCpuKernelMod::InitKernel(const CNodePtr &kernel_no
 bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborGradOutputNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);

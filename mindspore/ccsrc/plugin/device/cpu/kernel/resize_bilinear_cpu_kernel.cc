@@ -19,15 +19,15 @@
 #include "plugin/device/cpu/kernel/resize_bilinear_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "ops/resize_bilinear.h"
+#include "ops/resize_bilinear_v2.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeBilinearInputsNum = 1;
 constexpr size_t kResizeBilinearV2InputsNum = 2;
 constexpr size_t kResizeBilinearOutputsNum = 1;
 constexpr size_t kResizeBilinearInputsShapeSize = 4;
-constexpr size_t kResizeBilinearAttrSize = 2;
 }  // namespace
 
 using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearCpuKernelMod::KernelRunFunc>>;
@@ -36,9 +36,10 @@ bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                                       const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  if (inputs.size() != kResizeBilinearInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearInputsNum << " or "
-                  << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
+
+  if (inputs.size() != kResizeBilinearV2InputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearV2InputsNum
+                  << ", but got " << inputs.size();
     return false;
   }
   if (outputs.size() != kResizeBilinearOutputsNum) {
@@ -46,6 +47,17 @@ bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                   << ", but got " << outputs.size();
     return false;
   }
+
+  if (kernel_name_ == prim::kPrimResizeBilinear->name()) {
+    auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinear>(base_operator);
+    MS_EXCEPTION_IF_NULL(resize_bilinear_op);
+    align_corners_ = resize_bilinear_op->get_align_corners();
+  } else {
+    auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinearV2>(base_operator);
+    MS_EXCEPTION_IF_NULL(resize_bilinear_op);
+    align_corners_ = resize_bilinear_op->get_align_corners();
+  }
+
   dtype_ = inputs[0]->GetDtype();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
@@ -66,19 +78,21 @@ int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'output' must be "
                       << kResizeBilinearInputsShapeSize << ", but got " << output_shape_.size();
   }
-  align_corners_ = GetValue<bool>(base_operator->GetAttr(kAttrAlignCorners));
+
   is_null_input_ = (std::accumulate(shape_.begin(), shape_.end(), size_t(1), std::multiplies<size_t>()) == 0);
   is_null_input_ = is_null_input_ || (std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1),
                                                       std::multiplies<size_t>()) == 0);
   if (is_null_input_) {
     return static_cast<int>(KRET_OK);
   }
+
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
   size_t out_height = output_shape_[2];
   size_t out_width = output_shape_[3];
   height_scale = Scaling(in_height, out_height, align_corners_);
   width_scale = Scaling(in_width, out_width, align_corners_);
+
   return static_cast<int>(KRET_OK);
 }
 
