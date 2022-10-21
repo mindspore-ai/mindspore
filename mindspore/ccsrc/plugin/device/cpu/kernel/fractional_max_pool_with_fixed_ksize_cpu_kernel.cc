@@ -58,36 +58,31 @@ const size_t kOutputShapeLength2 = 2;
     .AddOutputAttr(kNumberType##t4)
 }  // namespace
 
-void FractionalMaxPoolWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex0);
-  random_samples_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex1);
-  random_samples_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex1);
-  argmax_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kOutputIndex1);
-  output_shape_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_shape");
-  ksize_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "ksize");
-  data_format_ = common::AnfAlgo::GetNodeAttr<string>(kernel_node, FORMAT);
-
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                       const std::vector<KernelTensorPtr> &inputs,
+                                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = kInputsNum;
+  constexpr size_t output_num = kOutputsNum;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  input_type_ = inputs[kInputIndex0]->GetDtype();
+  random_samples_type_ = inputs[kInputIndex1]->GetDtype();
+  argmax_type_ = outputs[kOutputIndex1]->GetDtype();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolWithFixedKsize>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  output_shape_ = kernel_ptr->get_output_shape();
+  ksize_ = kernel_ptr->get_ksize();
+  data_format_ = kernel_ptr->get_data_format();
   if (data_format_ != "NCHW") {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the attr data_format must be NCHW.";
-  }
-  if (input_shape_.size() != kDimSize4) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of input x must be 4.";
-  }
-  if (random_samples_shape_.size() != kDimSize3) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of input random_samples must be 3.";
-  }
-  if (ksize_.size() == kKsizeLength1) {
-    ksize_h_ = ksize_[kKszieIndexH];
-    ksize_w_ = ksize_[kKszieIndexH];
-  } else if (ksize_.size() == kKsizeLength2) {
-    ksize_h_ = ksize_[kKszieIndexH];
-    ksize_w_ = ksize_[kKszieIndexW];
-  } else {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the size of attr kszie must be equal to 1 or 2, but got "
-                             << ksize_.size() << ".";
   }
   if (output_shape_.size() == kOutputShapeLength1) {
     output_h_ = output_shape_[kOutputShapeIndexH];
@@ -100,6 +95,30 @@ void FractionalMaxPoolWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &ker
                              << "', the size of attr output_shape must be equal to 1 or 2, but got "
                              << output_shape_.size() << ".";
   }
+  if (ksize_.size() == kKsizeLength1) {
+    ksize_h_ = ksize_[kKszieIndexH];
+    ksize_w_ = ksize_[kKszieIndexH];
+  } else if (ksize_.size() == kKsizeLength2) {
+    ksize_h_ = ksize_[kKszieIndexH];
+    ksize_w_ = ksize_[kKszieIndexW];
+  } else {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the size of attr kszie must be equal to 1 or 2, but got "
+                             << ksize_.size() << ".";
+  }
+  return true;
+}
+
+int FractionalMaxPoolWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                        const std::vector<KernelTensorPtr> &inputs,
+                                                        const std::vector<KernelTensorPtr> &outputs,
+                                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
+  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+
   input_n_ = input_shape_[kInputDimIndexN];
   input_c_ = input_shape_[kInputDimIndexC];
   input_h_ = input_shape_[kInputDimIndexH];
@@ -132,10 +151,7 @@ void FractionalMaxPoolWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &ker
                              << "', The third dim of input[random_samples] must be 2, but got "
                              << random_samples_shape_[kRandomSimplesLastDimIndex] << ".";
   }
-
-  if (argmax_type_ != kNumberTypeInt64) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the data type of output argmax must be int64.";
-  }
+  return ret;
 }
 
 bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
