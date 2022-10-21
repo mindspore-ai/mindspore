@@ -38,13 +38,29 @@ abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
   auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
   const int kDimensionTwo = 2;
   const int kDimensionOne = 1;
-  if (indices_shape.size() != kDimensionTwo) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input indices should "
-                             << "have rank 2, but got " << indices_shape.size() << ".";
-  }
-  if (indices_shape[1] != kDimensionTwo) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 2nd dimension of indices "
-                             << "should be 2, but got " << indices_shape[1] << ".";
+  std::vector<ShapeVector> all_shapes = {indices_shape, values_shape, shape_shape, x2_shape, x3_shape};
+  bool is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
+  if (!is_dynamic) {
+    if (indices_shape.size() != kDimensionTwo) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input indices should "
+                               << "have rank 2, but got " << indices_shape.size() << ".";
+    }
+    if (indices_shape[1] != kDimensionTwo) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 2nd dimension of indices "
+                               << "should be 2, but got " << indices_shape[1] << ".";
+    }
+    if (shape_shape[0] != kDimensionTwo) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 1st dimension of input shape "
+                               << "should be 2, but got " << shape_shape[0] << ".";
+    }
+    if (x2_shape.size() != kDimensionTwo) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of input dense "
+                               << "should be [2], but got [" << x2_shape.size() << "].";
+    }
+    if (x3_shape.size() != kDimensionTwo) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of input dense "
+                               << "should be [2], but got [" << x3_shape.size() << "].";
+    }
   }
   if (values_shape.size() != kDimensionOne) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input value should "
@@ -53,18 +69,6 @@ abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
   if (shape_shape.size() != kDimensionOne) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input shape should "
                              << "have rank 1, but got " << shape_shape.size() << ".";
-  }
-  if (shape_shape[0] != kDimensionTwo) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 1st dimension of input shape "
-                             << "should be 2, but got " << shape_shape[0] << ".";
-  }
-  if (x2_shape.size() != kDimensionTwo) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of input dense "
-                             << "should be [2], but got [" << x2_shape.size() << "].";
-  }
-  if (x3_shape.size() != kDimensionTwo) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of input dense "
-                             << "should be [2], but got [" << x3_shape.size() << "].";
   }
   if (alpha_shape.size() != kDimensionOne) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input shape should "
@@ -76,6 +80,7 @@ abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
   }
   return std::make_shared<abstract::Shape>(x3_shape);
 }
+
 TypePtr SparseAddmmInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32,  kInt64,  kInt16,
@@ -107,6 +112,7 @@ TypePtr SparseAddmmInferType(const PrimitivePtr &primitive, const std::vector<Ab
   return tensor_element;
 }
 }  // namespace
+
 AbstractBasePtr SparseAddmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -118,6 +124,7 @@ AbstractBasePtr SparseAddmmInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infer_shape = SparseAddmmInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);
 }
+
 MIND_API_OPERATOR_IMPL(SparseAddmm, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseAddmm, prim::kPrimSparseAddmm, SparseAddmmInfer, nullptr, true);
 }  // namespace ops

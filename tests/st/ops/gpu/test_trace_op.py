@@ -17,12 +17,14 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 import mindspore.ops.operations.math_ops as P
 from mindspore import Tensor
 from mindspore.common.api import jit
 
 
 class TraceNet(nn.Cell):
+
     def __init__(self):
         super(TraceNet, self).__init__()
         self.trace = P.Trace()
@@ -30,6 +32,28 @@ class TraceNet(nn.Cell):
     @jit
     def construct(self, x):
         return self.trace(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_trace_dyn():
+    """
+    Feature: test Trace ops in gpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = TraceNet()
+
+    x_dyn = Tensor(shape=[None, None], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+
+    x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=ms.float32)
+    out = net(x)
+
+    expect_shape = ()
+    assert out.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level1
@@ -62,7 +86,8 @@ def test_trace_2d_double():
     """
     for mode in [context.PYNATIVE_MODE, context.GRAPH_MODE]:
         context.set_context(mode=mode, device_target="GPU")
-        x = Tensor(np.array([[3.8, 4.5, 5.], [4.2, 4.5, 6.9]]).astype(np.double))
+        x = Tensor(
+            np.array([[3.8, 4.5, 5.], [4.2, 4.5, 6.9]]).astype(np.double))
         input_x = x.asnumpy()
         net = TraceNet()
         y = net(x)

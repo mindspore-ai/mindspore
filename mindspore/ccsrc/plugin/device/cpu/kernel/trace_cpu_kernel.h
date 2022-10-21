@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRACE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRACE_CPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <algorithm>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -24,12 +25,16 @@
 
 namespace mindspore {
 namespace kernel {
-class TraceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class TraceCpuKernelMod : public NativeCpuKernelMod {
  public:
   TraceCpuKernelMod() = default;
   ~TraceCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -55,7 +60,7 @@ class TraceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   std::vector<size_t> input_shape_;
-  TypeId values_type{kTypeUnknown};
+  TypeId values_type_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore
