@@ -74,14 +74,14 @@ class SymbolTree:
             if v not in MsDtypes and not isinstance(v, ParamTypes):
                 raise TypeError(f"For call-function Node, got unsupported kwarg value: {v}, type: {type(v)}")
 
-    def create_call_function(self, func, targets, args=None, kwargs=None):
+    def create_call_function(self, func, targets, *args, **kwargs):
         """
         Create a Node object and generate the execution code to insert into the source code.
         The source code calls the 'func' function with 'args' and' kwargs' as parameters.
 
         Args:
             func (FunctionType) - The function to be called.
-            targets * * (list [str]) - indicates the output name. As the output of the node in the source code.
+            targets (list [str]) - indicates the output name. As the output of the node in the source code.
             args (Union[MsDtypes, ParamTypes]) - parameter name of the node. Used as a parameter to a code statement in
                 source code. The default value is None, which means there is no parameter input in the cell.
             kwargs ({str: Union[MsDtypes, ParamTypes]}) - The key type must be str, and the value must be value or type
@@ -101,21 +101,16 @@ class SymbolTree:
         """
         Validator.check_value_type("func", func, [FunctionType], "SymbolTree node")
         Validator.check_element_type_of_iterable("targets", targets, [str], "SymbolTree node")
-        if args is not None:
-            SymbolTree._check_args_type(args)
-            for i, arg in enumerate(args):
-                if isinstance(arg, Node):
-                    args[i] = arg.get_handler()
-        else:
-            args = []
-        if kwargs is not None:
-            SymbolTree._check_kwargs_type(kwargs)
-            for key, value in kwargs.items():
-                if isinstance(value, Node):
-                    kwargs[key] = value.get_handler()
-        else:
-            kwargs = {}
-        return Node(self._symbol_tree.create_call_function(func, targets, args, kwargs))
+        args_ = list(args)
+        SymbolTree._check_args_type(args_)
+        for i, arg in enumerate(args_):
+            if isinstance(arg, Node):
+                args_[i] = arg.get_handler()
+        SymbolTree._check_kwargs_type(kwargs)
+        for key, value in kwargs.items():
+            if isinstance(value, Node):
+                kwargs[key] = value.get_handler()
+        return Node(self._symbol_tree.create_call_function(func, targets, args_, kwargs))
 
     def get_handler(self) -> SymbolTreeImpl:
         """

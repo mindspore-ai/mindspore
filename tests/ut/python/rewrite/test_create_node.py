@@ -46,16 +46,16 @@ def test_create_call_function_ok():
     net = SimpleNet()
     stree = SymbolTree.create(net)
 
-    new_node = stree.create_call_function(F.abs, ["x"], ["abc"], {})
+    new_node = stree.create_call_function(F.abs, ["x"], "abc")
     for node in stree.nodes():
         if node.get_instance_type() == P.ReduceMean:
             pos = stree.after(node)
             stree.insert(pos, new_node)
-            new_node_1 = stree.create_call_function(F.abs, ["x"], [node], {})
+            new_node_1 = stree.create_call_function(F.abs, ["x"], node)
             stree.insert(pos, new_node_1)
-            new_node_2 = stree.create_call_function(F.scalar_to_tensor, ["x"], [2], {'dtype': mindspore.float16})
+            new_node_2 = stree.create_call_function(F.scalar_to_tensor, ["x"], 2, dtype=mindspore.float16)
             stree.insert(pos, new_node_2)
-            new_node_3 = stree.create_call_function(F.scalar_to_tensor, ["x"], [2, mindspore.float16])
+            new_node_3 = stree.create_call_function(F.scalar_to_tensor, ["x"], 2, mindspore.float16)
             stree.insert(pos, new_node_3)
 
 
@@ -71,7 +71,7 @@ def test_create_call_function_fail():
     for node in stree.nodes():
         if node.get_instance_type() == P.ReduceMean:
             with pytest.raises(TypeError):
-                _ = stree.create_call_function(F.cast, ["x"], [node, mindspore.float16], {})
+                _ = stree.create_call_function(F.cast, ["x"], node, mindspore.float16)
 
 
 def test_create_call_function_fail_0():
@@ -86,7 +86,7 @@ def test_create_call_function_fail_0():
     for node in stree.nodes():
         if node.get_instance_type() == P.ReduceMean:
             with pytest.raises(TypeError):
-                _ = stree.create_call_function(F.scalar_to_tensor, "x", [2], {'dtype': mindspore.int32})
+                _ = stree.create_call_function(F.scalar_to_tensor, ["x"], 2, dtype=mindspore.int32)
 
 
 def test_create_call_function_fail_1():
@@ -99,11 +99,11 @@ def test_create_call_function_fail_1():
     stree = SymbolTree.create(net)
 
     with pytest.raises(TypeError):
-        _ = stree.create_call_function(F.abs, "x", ["abc", [1, 2]], {})
+        _ = stree.create_call_function(F.abs, ["x"], "abc", [1, 2])
     with pytest.raises(TypeError):
-        _ = stree.create_call_function(F.abs, "x", [], {})
+        _ = stree.create_call_function(F.abs, "x")
     with pytest.raises(TypeError):
-        _ = stree.create_call_function(F.scalar_to_tensor, ["x"], [2], {'dtype': mindspore.int32})
+        _ = stree.create_call_function(F.scalar_to_tensor, ["x"], "2", dtype=mindspore.int32)
     with pytest.raises(TypeError):
         t = mindspore.Tensor(1, mindspore.int32)
-        _ = stree.create_call_function(F.scalar_to_tensor, ["x"], [t, mindspore.float16])
+        _ = stree.create_call_function(F.scalar_to_tensor, ["x"], t, mindspore.float16)
