@@ -36,6 +36,9 @@ mindspore.ops.function
     mindspore.ops.lp_pool2d
     mindspore.ops.lrn
     mindspore.ops.max_pool3d
+    mindspore.ops.max_unpool1d
+    mindspore.ops.max_unpool2d
+    mindspore.ops.max_unpool3d
     mindspore.ops.multi_margin_loss
     mindspore.ops.multi_label_margin_loss
     mindspore.ops.kl_div
