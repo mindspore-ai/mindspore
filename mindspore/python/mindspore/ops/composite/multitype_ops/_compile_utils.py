@@ -45,9 +45,6 @@ def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, 
 
 def _tensor_getitem(self, index):
     """Handle tensor getitem"""
-    tensor_shape = F.shape(self)
-    if not tensor_shape:
-        const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
     if isinstance(index, Tensor):
         return tensor_index_by_tensor(self, index)
     if isinstance(index, list):
@@ -389,10 +386,12 @@ def get_stride_info_from_integer(tensor_int):
 
 def _tensor_index_by_integer(data, int_index):
     """Tensor getitem by a single integer number"""
+    data_shape = F.shape(data)
+    if not data_shape:
+        const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
     if data.ndim < 1 or data.ndim > 8:
         const_utils.raise_value_error("Expect Tensor to have dimension between 1 and 8.")
 
-    data_shape = F.shape(data)
     if is_shape_unknown(data_shape):
         data_shape = F.dyn_shape(data)
         transformed_tensor = check_range(int_index, data_shape[0])
