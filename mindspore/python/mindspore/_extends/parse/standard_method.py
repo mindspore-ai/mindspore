@@ -1949,7 +1949,7 @@ def bool_func(*data):
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
             return data != 0
-        const_utils.raise_value_error("The truth value of an array with several elements is ambiguous.")
+        const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
     if not F.isconstant(data):
         return len(data) != 0
     return cast_to_bool(data)
@@ -2076,7 +2076,7 @@ def get_tensor_num(data):
             tensor_shape = F.shape(input_data)
             tensor_shape_len = len(tensor_shape)
             if tensor_shape_len != 0 and not (tensor_shape_len == 1 and tensor_shape[0] == 1):
-                const_utils.raise_value_error("The truth value of an array with several elements is ambiguous.")
+                const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
             tensor_num = tensor_num + 1
     return tensor_num
 
@@ -2101,8 +2101,11 @@ def ms_max(*data):
         x = data[0]
         if isinstance(x, Tensor):
             tensor_shape = F.shape(x)
-            if len(tensor_shape) == 0:
+            tensor_shape_len = len(tensor_shape)
+            if tensor_shape_len == 0:
                 const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
+            if tensor_shape_len >= 2:
+                const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
             return x.max()
         # Deal with Tensor in tuple or list
         if isinstance(x, (list, tuple)):
@@ -2123,6 +2126,9 @@ def ms_max(*data):
             return max_tensor(*data)
         if tensor_num != 0:
             const_utils.raise_type_error("max() cannot contain both tensor and non-tensor type.")
+        # exist tensor in list/tuple
+        if exist_tensor(data):
+            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
     return max_(*data)
 
 
@@ -2162,8 +2168,11 @@ def ms_min(*data):
         x = data[0]
         if isinstance(x, Tensor):
             tensor_shape = F.shape(x)
-            if len(tensor_shape) == 0:
+            tensor_shape_len = len(tensor_shape)
+            if tensor_shape_len == 0:
                 const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
+            if tensor_shape_len >= 2:
+                const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
             return x.min()
         # Deal with Tensor in tuple or list
         if isinstance(x, (list, tuple)):
@@ -2184,6 +2193,9 @@ def ms_min(*data):
             return min_tensor(*data)
         if tensor_num != 0:
             const_utils.raise_type_error("min() cannot contain both tensor and non-tensor type.")
+        # exist tensor in list/tuple
+        if exist_tensor(data):
+            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
     return min_(*data)
 
 
