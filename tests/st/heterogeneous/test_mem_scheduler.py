@@ -97,7 +97,7 @@ def test_resnet():
     os.environ['ENABLE_MEM_SCHEDULER'] = '0'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -152,3 +152,39 @@ def test_lenet_manual_offload():
     diff = res.asnumpy()[0] - 2.3025851
     assert np.all(diff < 1.e-6)
     os.environ['ENABLE_MEM_SCHEDULER'] = '0'
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_1024_batch_size_resnet():
+    """
+    Feature: Memory offload
+    Description: Test memory offload.
+    Expectation: Run resnet with 1024 batch size successfully.
+    """
+    os.environ['GRAPH_OP_RUN'] = '1'
+    num_classes = 10
+    epoch = 4
+    batch_size = 1024
+    context.set_context(memory_offload='ON')
+    net = resnet50(batch_size, num_classes)
+    lr = 0.1
+    momentum = 0.9
+    optimizer = Momentum(filter(lambda x: x.requires_grad,
+                                net.get_parameters()), lr, momentum)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = TrainOneStepCell(
+        net_with_criterion, optimizer)  # optimizer
+    train_network.set_train()
+    losses = []
+    for _ in range(0, epoch):
+        data = Tensor(np.ones([batch_size, 3, 224, 224]
+                              ).astype(np.float32) * 0.01)
+        label = Tensor(np.ones([batch_size]).astype(np.int32))
+        loss = train_network(data, label)
+        losses.append(loss)
+    assert losses[-1].asnumpy() < 1
+    os.environ['GRAPH_OP_RUN'] = '0'

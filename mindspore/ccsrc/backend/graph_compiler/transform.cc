@@ -578,31 +578,10 @@ BackendPtr CreateBackend() {
     } else {
       backend = std::make_shared<MsBackend>(name, target, device_id);
     }
-
-    const bool enable_mem_offload = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
-    if (target == kAscendDevice) {
-      if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-        backend->set_is_multi_graph_sink(false);
-        context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
-      } else {
-        auto single_op = common::GetEnv(kGraphOpRun);
-        if (single_op == "1") {
-          context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
-        } else if (enable_mem_offload) {
-          MS_LOG(WARNING) << "Memory offload is not available when GRAPH_OP_RUN is not set to 1.";
-          context_ptr->set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
-        }
-      }
-    } else if (target == kCPUDevice) {
-      if (enable_mem_offload) {
-        MS_LOG(WARNING) << "Memory offload is not available on CPU device.";
-        context_ptr->set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
-      }
+    if (target == kAscendDevice && MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+      backend->set_is_multi_graph_sink(false);
     }
-    if (enable_mem_offload && context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {
-      MS_LOG(WARNING) << "Memory offload is not available when memory_optimize_level is set to O1.";
-      context_ptr->set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
-    }
+    context_ptr->Update();
     return backend;
   }
 

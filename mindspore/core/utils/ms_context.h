@@ -148,6 +148,8 @@ class MS_CORE_API MsContext {
   using DeviceTypeSeter = void (*)(std::shared_ptr<MsContext> &);
   static std::shared_ptr<MsContext> GetInstance();
 
+  void Update();
+
   bool enable_dump_ir() const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
@@ -174,6 +176,10 @@ class MS_CORE_API MsContext {
   void decrease_param(MsCtxParam) {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
+
+ private:
+  void UpdateExecutionMode();
+  void UpdateMemoryOffload();
 
  private:
   static DeviceSeter seter_;
