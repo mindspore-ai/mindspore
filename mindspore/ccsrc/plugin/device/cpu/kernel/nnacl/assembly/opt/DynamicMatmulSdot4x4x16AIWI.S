@@ -20,7 +20,7 @@
 
 // void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
 //                                  float *bias, size_t row, size_t col, size_t stride, const int *a_sums,
-//                                  const int *b_sums, int64_t a_zp, int64_t b_zp_sum);
+//                                  const int *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)
 // x2: out ptr
@@ -34,18 +34,21 @@
 // x10: b_sums
 // x19/w19: a_zp
 // x19/w20: b_zp_sum
+// x21: act_type -> 0: none, 1:Relu, 3:Relu6
 
 asm_function DynamicMatmulSdot4x4x16AIWI
-    sub sp, sp, #144
+    sub sp, sp, #160
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
+    stp x21, x22, [sp], #16
     
     ldr x8, [sp]
     ldr x9, [sp, #8]
     ldr x10, [sp, #16]
     ldr x19, [sp, #24]
     ldr x20, [sp, #32]
+    ldr x21, [sp, #40]
 
     dup v16.4s, wzr // dup:Duplicate general-purpose register to vector.
     dup v17.4s, wzr
@@ -64,7 +67,7 @@ asm_function DynamicMatmulSdot4x4x16AIWI
     dup v30.4s, wzr
     dup v31.4s, wzr
 
-    mov x18, x1 // reload rhs ptr
+    mov x11, x1 // reload rhs ptr
     mov x17, x0 // reload lhs ptr
     mov x16, x3 // reload depth
 
@@ -75,7 +78,7 @@ asm_function DynamicMatmulSdot4x4x16AIWI
 
 LoopDepth:
     ld1 {v0.16b}, [x17], #16
-    ld1 {v1.16b, v2.16b, v3.16b, v4.16b}, [x18], #64
+    ld1 {v1.16b, v2.16b, v3.16b, v4.16b}, [x11], #64
 
     sdot v16.4s, v1.16b, v0.4b[0]
     sdot v17.4s, v2.16b, v0.4b[0]
@@ -100,8 +103,8 @@ LoopDepth:
 
 LoopDepthHalf:
     ld1 {v0.16b}, [x17], #16
-    ld1 {v1.16b, v2.16b}, [x18]
-    add x18, x18, #64
+    ld1 {v1.16b, v2.16b}, [x11]
+    add x11, x11, #64
     sdot v16.4s, v1.16b, v0.4b[0]
     sdot v17.4s, v2.16b, v0.4b[0]
     sdot v20.4s, v1.16b, v0.4b[1]
@@ -117,8 +120,8 @@ LoopDepthHalf:
 
 LoopDepthQuarter:
     ld1 {v0.16b}, [x17], #16
-    ld1 {v1.16b}, [x18]
-    add x18, x18, #64
+    ld1 {v1.16b}, [x11]
+    add x11, x11, #64
     sdot v16.4s, v1.16b, v0.4b[0]
     sdot v20.4s, v1.16b, v0.4b[1]
     sdot v24.4s, v1.16b, v0.4b[2]
@@ -271,6 +274,88 @@ AddBias:
     fadd v29.4s,v29.4s,v2.4s
     fadd v30.4s,v30.4s,v3.4s
     fadd v31.4s,v31.4s,v4.4s
+
+Activate:
+    cmp x21, #1
+    beq Relu
+    cmp x21, #3
+    beq Relu6
+    b StoreData
+
+Relu:
+    dup v1.4s, wzr
+
+    smax v16.4s,v16.4s,v1.4s
+    smax v17.4s,v17.4s,v1.4s
+    smax v18.4s,v18.4s,v1.4s
+    smax v19.4s,v19.4s,v1.4s
+
+    smax v20.4s,v20.4s,v1.4s
+    smax v21.4s,v21.4s,v1.4s
+    smax v22.4s,v22.4s,v1.4s
+    smax v23.4s,v23.4s,v1.4s
+
+    smax v24.4s,v24.4s,v1.4s
+    smax v25.4s,v25.4s,v1.4s
+    smax v26.4s,v26.4s,v1.4s
+    smax v27.4s,v27.4s,v1.4s
+
+    smax v28.4s,v28.4s,v1.4s
+    smax v29.4s,v29.4s,v1.4s
+    smax v30.4s,v30.4s,v1.4s
+    smax v31.4s,v31.4s,v1.4s
+
+    b StoreData
+
+Relu6:
+    dup v1.4s, wzr
+    movi v2.4s, #6
+    scvtf v2.4s, v2.4s
+
+    // max (out, 0)
+    smax v16.4s,v16.4s,v1.4s
+    smax v17.4s,v17.4s,v1.4s
+    smax v18.4s,v18.4s,v1.4s
+    smax v19.4s,v19.4s,v1.4s
+
+    smax v20.4s,v20.4s,v1.4s
+    smax v21.4s,v21.4s,v1.4s
+    smax v22.4s,v22.4s,v1.4s
+    smax v23.4s,v23.4s,v1.4s
+
+    smax v24.4s,v24.4s,v1.4s
+    smax v25.4s,v25.4s,v1.4s
+    smax v26.4s,v26.4s,v1.4s
+    smax v27.4s,v27.4s,v1.4s
+
+    smax v28.4s,v28.4s,v1.4s
+    smax v29.4s,v29.4s,v1.4s
+    smax v30.4s,v30.4s,v1.4s
+    smax v31.4s,v31.4s,v1.4s
+
+    // min (out, 6)
+
+    smin v16.4s,v16.4s,v2.4s
+    smin v17.4s,v17.4s,v2.4s
+    smin v18.4s,v18.4s,v2.4s
+    smin v19.4s,v19.4s,v2.4s
+
+    smin v20.4s,v20.4s,v2.4s
+    smin v21.4s,v21.4s,v2.4s
+    smin v22.4s,v22.4s,v2.4s
+    smin v23.4s,v23.4s,v2.4s
+
+    smin v24.4s,v24.4s,v2.4s
+    smin v25.4s,v25.4s,v2.4s
+    smin v26.4s,v26.4s,v2.4s
+    smin v27.4s,v27.4s,v2.4s
+
+    smin v28.4s,v28.4s,v2.4s
+    smin v29.4s,v29.4s,v2.4s
+    smin v30.4s,v30.4s,v2.4s
+    smin v31.4s,v31.4s,v2.4s
+
+    b StoreData
 
 StoreData:
     cmp x7, #16
@@ -547,19 +632,19 @@ Write4:
     b StoreDataEnd
 
 Write3:
-    st1 {v16.1d}, [x15]
+    st1 {v16.1d}, [x15], #8
     st1 {v16.s}[2], [x15]
     cmp x6, #1
     beq StoreDataEnd
-    st1 {v20.1d}, [x14]
+    st1 {v20.1d}, [x14], #8
     st1 {v20.s}[2], [x14]
     cmp x6, #2
     beq StoreDataEnd
-    st1 {v24.1d}, [x13]
+    st1 {v24.1d}, [x13], #8
     st1 {v24.s}[2], [x13]
     cmp x6, #3
     beq StoreDataEnd
-    st1 {v28.1d}, [x12]
+    st1 {v28.1d}, [x12], #8
     st1 {v28.s}[2], [x12]
     b StoreDataEnd
 
@@ -589,9 +674,10 @@ Write1:
     st1 {v28.s}[0], [x12]
     b StoreDataEnd
 StoreDataEnd:
-    sub sp, sp, #144
+    sub sp, sp, #160
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
+    ldp x21, x22, [sp], #16
     ret
 #endif

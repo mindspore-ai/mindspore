@@ -35,8 +35,7 @@ const BaseRef MatMulActivationFusion::DefinePattern() const {
 const AnfNodePtr MatMulActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const EquivPtr &) const {
   // Int8 MatMul Kernel dont support matmul+activation
-  if (param_->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL ||
-      param_->commonQuantParam.quant_type == schema::QuantType_QUANT_DYNAMIC) {
+  if (param_->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
     return nullptr;
   }
   if (func_graph == nullptr || node == nullptr) {

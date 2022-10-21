@@ -19,7 +19,7 @@
 
 void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
                              float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum) {
+                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type) {
   /* *
    * row4x4-major * row4x16-major => (int8)row-major
    * support activation per-layer symmetric && weight per-layer/per-channel symmetric
@@ -43,6 +43,12 @@ void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_
       if (bias != NULL) {
         out[ci] += bias[c];
       }
+      if (act_type == ActType_Relu) {
+        out[ci] = MSMAX(0, out[ci]);
+      } else if (act_type == ActType_Relu6) {
+        out[ci] = MSMAX(0, out[ci]);
+        out[ci] = MSMIN(C6NUM, out[ci]);
+      }
     }
   }
   return;
@@ -50,7 +56,8 @@ void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_
 
 void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
                              int deep, int deep16, size_t stride, int input_zp, float input_scale,
-                             const float *filter_scale, const int filter_zp, bool filter_per_channel) {
+                             const float *filter_scale, const int filter_zp, bool filter_per_channel,
+                             int64_t act_type) {
   /* *
    * row4x16-major * row16x4-major => (int8)row-major
    * support activation per-layer symmetric && weight per-layer/per-channel symmetric
@@ -80,6 +87,12 @@ void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias
       dst[ci] = multi_scale * value;
       if (bias != NULL) {
         dst[ci] += bias[c];
+      }
+      if (act_type == ActType_Relu) {
+        dst[ci] = MSMAX(0, dst[ci]);
+      } else if (act_type == ActType_Relu6) {
+        dst[ci] = MSMAX(0, dst[ci]);
+        dst[ci] = MSMIN(C6NUM, dst[ci]);
       }
     }
   }

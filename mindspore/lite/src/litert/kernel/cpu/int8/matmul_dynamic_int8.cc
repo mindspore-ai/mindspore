@@ -54,10 +54,12 @@ int MatmulDynamicInt8CPUKernel::RunImpl(int task_id) {
   if (filter_per_channel_) {
     filter_scale += cur_stride;
   }
+  int64_t act_type = static_cast<int64_t>(param_->act_type_);
+
   DynamicMatmul4x16x4AIWI(batch_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, bias_ptr,
                           batch_c_ptr_ + cur_stride, param_->row_, cur_oc, param_->deep_, param_->deep_align_,
                           param_->col_, quant_param_->input_zp_, quant_param_->input_scale_, filter_scale, filter_zp,
-                          filter_per_channel_);
+                          filter_per_channel_, act_type);
   return RET_OK;
 }
 

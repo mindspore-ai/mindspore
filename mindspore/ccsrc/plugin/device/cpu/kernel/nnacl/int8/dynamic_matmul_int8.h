@@ -28,17 +28,17 @@ void PackInput2Col4x4(const int8_t *src_input, int8_t *packed_input, int row, in
 void PackInput4x4(const int8_t *src_input, int8_t *packed_input, size_t input_channel, size_t plane_size);
 void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
                              int deep, int deep16, size_t stride, int input_zp, float input_scale,
-                             const float *filter_scale, const int filter_zp, bool filter_per_channel);
+                             const float *filter_scale, const int filter_zp, bool filter_per_channel, int64_t act_type);
 void CalcWeightSums(const int8_t *weight, int row, int col, int32_t *dst, DataOrder order);
 void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, int32_t *dst, DataOrder order);
 #ifdef ENABLE_ARM64
 void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
                                  float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                                 const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum);
+                                 const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
 #endif
 void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
                              float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum);
+                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
 #ifdef __cplusplus
 }
 #endif
