@@ -102,7 +102,10 @@ void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<Code
                                   const Configurator &config) {
   if (config.target() == kCortex_M) {
     ofs << "size_t MSModelCalcWorkspaceSize(MSModelHandle model) {\n";
-    ofs << "  size_t shape_size=0;\n";
+    ofs << "  size_t shape_size=0;\n"
+        << "  if (model == NULL) {\n"
+        << "    return 0;\n"
+        << "  }\n";
     std::vector<Tensor *> inputs = ctx->graph_inputs();
     for (size_t i = 0; i < inputs.size(); ++i) {
       ofs << "  shape_size += " << inputs[i]->shape().size() << " * sizeof(int64_t);\n";
@@ -262,6 +265,9 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
        "                      const MSContextHandle model_context) {\n"
        "  if (model_type != kMSModelTypeMindIR) {\n"
        "    return kMSStatusLiteNotSupport;\n"
+       "  }\n"
+       "  if (model == NULL) {\n"
+       "    return kMSStatusLiteParamInvalid;\n"
        "  }\n"
        "  if (((MicroModel *)model)->runtime_buffer == NULL) {\n"
        "    return kMSStatusLiteMemoryFailed;\n"
