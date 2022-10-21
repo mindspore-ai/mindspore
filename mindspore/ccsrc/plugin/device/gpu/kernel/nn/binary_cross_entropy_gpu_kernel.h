@@ -50,7 +50,6 @@ class BinaryCrossEntropyGpuKernelMod : public NativeGpuKernelMod {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
   bool weight_defined_{false};  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
-  std::string kernel_name_;
   size_t input_size_{1};
   ReductionMode reduction_{ReductionMode::kMean};
   size_t workspace_size_{1};

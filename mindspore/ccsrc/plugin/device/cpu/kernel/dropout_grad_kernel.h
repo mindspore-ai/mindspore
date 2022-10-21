@@ -56,7 +56,6 @@ class DropoutGradBwdCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
   float keep_prob_{1.0};
   size_t num_count_{0};
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

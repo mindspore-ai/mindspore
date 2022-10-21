@@ -100,7 +100,6 @@ class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
   size_t dy_size_;
   size_t dx_size_;
   size_t workspace_size_;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

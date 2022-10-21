@@ -67,7 +67,6 @@ class GatherGradGpuKernelMod : public NativeGpuKernelMod {
   ShapeVector grad_shapes_;
   ShapeVector output_shapes_;
   TypeId dim_type_{0};
-  std::string kernel_name_;
   size_t dims_[4] = {};
   int axis_{0};
   void *cuda_stream_{nullptr};

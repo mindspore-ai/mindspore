@@ -386,7 +386,6 @@ class Conv2dFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::vector<int> dilation_;
   int group_;
   bool is_null_input_;
-  std::string kernel_name_;
   size_t input_size_;
   size_t filter_size_;
   size_t output_size_;

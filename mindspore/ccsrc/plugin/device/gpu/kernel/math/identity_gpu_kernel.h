@@ -62,7 +62,6 @@ class IdentityGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  std::string kernel_name_{""};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
 };

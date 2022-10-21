@@ -60,7 +60,6 @@ class MatrixSetDiagV3CpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void singleCal(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::string kernel_name_{};
   std::vector<int64_t> diagonal_shape_;
   std::vector<int64_t> k_shape_;
   std::vector<int64_t> x_shape_;

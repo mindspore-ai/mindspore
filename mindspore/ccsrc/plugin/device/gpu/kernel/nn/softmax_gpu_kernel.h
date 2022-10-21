@@ -203,7 +203,6 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
   cudnnSoftmaxMode_t mode_{CUDNN_SOFTMAX_MODE_INSTANCE};
   cudnnDataType_t cudnn_data_type_{CUDNN_DATA_FLOAT};
   bool is_null_input_{false};
-  std::string kernel_name_{"Softmax"};
   size_t input_size_{0};
   size_t output_size_{0};
   size_t workspace_size_{0};

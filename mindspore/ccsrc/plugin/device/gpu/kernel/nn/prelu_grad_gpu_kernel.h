@@ -56,7 +56,6 @@ class PReLUGradGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   PReLUGradLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, PReLUGradLaunchFunc>> func_list_;
 

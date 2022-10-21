@@ -89,7 +89,6 @@ class AdagradV2GpuKernelMod : public NativeGpuKernelMod {
   int64_t learning_rate_size_{0};
   int64_t gradient_size_{0};
   bool is_null_input_{false};
-  std::string kernel_name_{"ApplyAdagradV2"};
 
   int64_t t_size_{4};
   int64_t s_size_{4};

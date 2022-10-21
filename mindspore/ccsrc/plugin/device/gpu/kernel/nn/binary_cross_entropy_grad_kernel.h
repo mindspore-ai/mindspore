@@ -47,7 +47,6 @@ class BinaryCrossEntropyGradGpuKernelMod : public NativeGpuKernelMod {
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  std::string kernel_name_;
   size_t input_size_;
   ReductionMode reduction_;
   bool weight_defined_;  // true: there are 4 inputs, false: there are 3 inputs(no [weight])

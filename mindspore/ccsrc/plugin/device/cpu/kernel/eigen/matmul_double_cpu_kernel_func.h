@@ -71,7 +71,6 @@ class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelM
   size_t out_col_{0};
   bool trans_a_{false};
   bool trans_b_{false};
-  std::string kernel_name_;
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel

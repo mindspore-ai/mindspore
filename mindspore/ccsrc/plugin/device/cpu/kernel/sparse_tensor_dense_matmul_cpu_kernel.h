@@ -52,7 +52,6 @@ class SparseTensorDenseMatmulCpuKernelMod : public NativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, SparseTensorDenseMatmulFunc>> func_list_;
   SparseTensorDenseMatmulFunc kernel_func_;
-  std::string kernel_name_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> b_shape_;
   size_t output_size_{0};

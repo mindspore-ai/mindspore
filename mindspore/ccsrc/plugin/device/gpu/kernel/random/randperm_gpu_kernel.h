@@ -57,7 +57,6 @@ class RandpermGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   RandpermGpuLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, RandpermGpuLaunchFunc>> func_list_;
   std::mt19937 rng_;

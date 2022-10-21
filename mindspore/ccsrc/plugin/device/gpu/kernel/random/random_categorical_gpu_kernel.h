@@ -151,7 +151,6 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
   size_t num_classes_;
   size_t num_samples_;
   int64_t seed_;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -161,7 +161,6 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
   size_t oc_;
   size_t oh_;
   size_t ow_;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -55,7 +55,6 @@ class ListDiffCPUKernelMod : public NativeCpuKernelMod {
   template <typename T, typename Tidx>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::string kernel_name_{};
   std::vector<KernelTensorPtr> outputs_ = {};
   size_t data_size_;
   size_t index_size_;

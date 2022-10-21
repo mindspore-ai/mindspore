@@ -60,7 +60,6 @@ class FloatStatusGpuKernelMod : public NativeGpuKernelMod {
 
   enum Optype { OP_STATUS = 0, OP_INF, OP_NAN, OP_FINITE, OP_INVALID = 255 };
   Optype kernel_type_{OP_INVALID};
-  std::string kernel_name_;
   size_t input_size_{0};
   size_t output_size_{0};
   size_t type_id_size_{0};

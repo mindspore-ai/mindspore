@@ -58,7 +58,6 @@ class SmoothL1LossGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   BaseOperatorPtr kernel_ptr_{nullptr};
   SmoothL1LossFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, SmoothL1LossFunc>> func_list_;

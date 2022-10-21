@@ -55,7 +55,6 @@ class SparseSparseMinimumCpuKernelMod : public NativeCpuKernelMod {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   std::vector<KernelTensorPtr> outputs_{};
-  std::string kernel_name_;
   TypeId dtype_{kTypeUnknown};
   TypeId itype_{kTypeUnknown};
   int64_t indice_size_;

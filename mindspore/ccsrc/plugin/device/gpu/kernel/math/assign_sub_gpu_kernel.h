@@ -84,7 +84,6 @@ class AssignSubFwdGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_;
   int64_t input_size_;
   int64_t input_elements_;
-  std::string kernel_name_{"AssignSub"};
   BaseOperatorPtr kernel_ptr_{nullptr};
   AssignSubFunc kernel_func_{};
   void *stream_ptr_{nullptr};

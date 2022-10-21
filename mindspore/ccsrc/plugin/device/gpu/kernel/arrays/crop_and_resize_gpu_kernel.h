@@ -70,7 +70,6 @@ class CropAndResizeGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   CropAndResizeLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, CropAndResizeLaunchFunc>> func_list_;
 

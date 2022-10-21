@@ -62,7 +62,6 @@ class ApplyAdagradCpuKernelMod : public NativeCpuKernelMod {
   bool update_slots_{true};
   TypeId dtype_{kTypeUnknown};
   ShapeVector input_shape_;
-  std::string kernel_name_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

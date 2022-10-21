@@ -164,7 +164,6 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  std::string kernel_name_;
   bool small_ = false;
   int64_t axis_;
   size_t input_size_;

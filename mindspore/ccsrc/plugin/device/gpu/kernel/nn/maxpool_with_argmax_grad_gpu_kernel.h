@@ -100,7 +100,6 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod,
   size_t idx_type_size_{1};
   size_t dx_type_size_{1};
   void *stream_ptr_{nullptr};
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

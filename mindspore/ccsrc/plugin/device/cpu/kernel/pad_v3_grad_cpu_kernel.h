@@ -80,7 +80,6 @@ class PadV3GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TypeId pad_dtype_{kTypeUnknown};
   bool paddings_contiguous_;
   std::string mode_ = "reflect";
-  std::string kernel_name_;
   std::vector<int64_t> paddings_{0, 0, 0, 0, 0, 0};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;

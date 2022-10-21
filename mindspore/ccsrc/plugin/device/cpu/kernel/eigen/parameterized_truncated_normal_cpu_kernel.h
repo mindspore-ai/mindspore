@@ -57,7 +57,6 @@ class ParameterizedTruncatedNormalCpuKernelMod : public DeprecatedNativeCpuKerne
   std::vector<int64_t> input_min_shape_;
   std::vector<int64_t> input_max_shape_;
   std::vector<int64_t> out_shape_;
-  std::string kernel_name_;
   TypeId output_type_;
   TypeId input_type_;
   TypeId input_means_type_;

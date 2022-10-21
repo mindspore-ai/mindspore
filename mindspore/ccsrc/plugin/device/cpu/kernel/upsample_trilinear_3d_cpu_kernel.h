@@ -50,7 +50,6 @@ class UpsampleTrilinear3DCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId in_type_{kTypeUnknown};
-  std::string kernel_name_;
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
   std::vector<float> attr_scales_;

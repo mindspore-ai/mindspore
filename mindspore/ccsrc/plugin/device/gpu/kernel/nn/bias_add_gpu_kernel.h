@@ -78,7 +78,6 @@ class BiasAddGpuKernelMod : public NativeGpuKernelMod {
   cudnnTensorDescriptor_t b_desc_;
   cudnnOpTensorDescriptor_t op_desc_;
   bool is_null_input_;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

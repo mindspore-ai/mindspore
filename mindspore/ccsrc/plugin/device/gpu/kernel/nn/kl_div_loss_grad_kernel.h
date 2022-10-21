@@ -55,7 +55,6 @@ class KLDivLossGradGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   KLDivLossLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, KLDivLossLaunchFunc>> func_list_;
 

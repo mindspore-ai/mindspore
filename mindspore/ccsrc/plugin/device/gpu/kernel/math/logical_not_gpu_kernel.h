@@ -58,7 +58,6 @@ class LogicalNotGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelp
                     const std::vector<AddressPtr> &outputs);
 
  private:
-  std::string kernel_name_{};
   size_t input_num_{1};
   cudaStream_t stream_ptr_{nullptr};
 };

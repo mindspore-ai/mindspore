@@ -56,7 +56,6 @@ class BoundingBoxDecodeGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   BoundingBoxDecodeLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, BoundingBoxDecodeLaunchFunc>> func_list_;
   size_t rois_size_;

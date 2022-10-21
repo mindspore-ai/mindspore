@@ -57,7 +57,6 @@ class SparseTensorDenseAddCpuKernelMod : public NativeCpuKernelMod {
     std::function<bool(SparseTensorDenseAddCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, SparseTensorDenseAddFunc>> func_list_;
-  std::string kernel_name_;
   SparseTensorDenseAddFunc kernel_func_;
   ShapeVector x2_shape_;
   ShapeVector output_shape_;

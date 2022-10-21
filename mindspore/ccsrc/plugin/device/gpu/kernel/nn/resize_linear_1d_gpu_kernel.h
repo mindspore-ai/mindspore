@@ -62,7 +62,6 @@ class ResizeLinear1DGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   BaseOperatorPtr kernel_ptr_{nullptr};
   ResizeLinear1DFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ResizeLinear1DFunc>> func_list_;

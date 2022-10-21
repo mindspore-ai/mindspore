@@ -59,7 +59,6 @@ class SpaceToBatchGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   void *stream_ptr_{nullptr};
-  std::string kernel_name_;
   std::vector<std::vector<int64_t>> paddings_;
   std::vector<size_t> input_shape_;
   int64_t block_size_{0};

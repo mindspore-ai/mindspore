@@ -53,7 +53,6 @@ class IOUGpuKernelMod : public NativeGpuKernelMod {
                                            const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   IOULaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, IOULaunchFunc>> func_list_;
 

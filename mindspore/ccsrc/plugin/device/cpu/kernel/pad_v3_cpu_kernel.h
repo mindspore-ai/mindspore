@@ -81,7 +81,6 @@ class PadV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   int64_t paddings_num_{0};
   int64_t input_dim_{0};
   std::string mode_ = "constant";
-  std::string kernel_name_;
   std::vector<int64_t> paddings_;
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;

@@ -54,7 +54,6 @@ class DropoutCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   ShapeVector input_shape_;
   float keep_prob_{0.0};
   uint64_t tensor_size_{1};
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

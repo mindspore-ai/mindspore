@@ -48,7 +48,6 @@ class AssignCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  std::string kernel_name_;
   size_t batch_size_{1};
   size_t input_x_dtype_size_{4};
   TypeId input_x_dtype_{kTypeUnknown};

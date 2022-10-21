@@ -70,7 +70,6 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_;
   bool is_dynamic_case_;
   std::vector<int64_t> multiples;
-  std::string kernel_name_;
   using TileLaunchFunc =
     std::function<bool(TileGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;

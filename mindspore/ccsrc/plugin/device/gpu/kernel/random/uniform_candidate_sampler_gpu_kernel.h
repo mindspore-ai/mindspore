@@ -120,7 +120,6 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  std::string kernel_name_{};
   UCSGpuLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, UCSGpuLaunchFunc>> func_list_;
   int64_t num_true_{0};

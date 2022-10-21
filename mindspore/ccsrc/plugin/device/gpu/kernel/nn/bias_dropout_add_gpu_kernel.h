@@ -52,7 +52,6 @@ class BiasDropoutAddGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   using KernelFunc =
     std::function<bool(BiasDropoutAddGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
-  std::string kernel_name_;
   cudaStream_t cuda_stream_{nullptr};
   KernelFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;

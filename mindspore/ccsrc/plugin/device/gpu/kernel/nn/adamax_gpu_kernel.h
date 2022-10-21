@@ -90,7 +90,6 @@ class AdamaxGpuKernelMod : public NativeGpuKernelMod {
   size_t epsilon_size_{0};
   size_t gradient_size_{0};
   bool is_null_input_{false};
-  std::string kernel_name_{"ApplyAdamax"};
 
   size_t t_size_{4};
   size_t s_size_{4};
