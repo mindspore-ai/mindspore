@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LUUNPACK_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LUUNPACK_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LUUNPACK_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LUUNPACK_CPU_KERNEL_H_
 #include <Eigen/Dense>
 #include <vector>
 #include <memory>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -27,11 +28,17 @@ namespace mindspore {
 constexpr size_t kInputNum = 2;
 constexpr size_t kOutputNum = 3;
 namespace kernel {
-class LuUnpackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class LuUnpackCpuKernelMod : public NativeCpuKernelMod {
  public:
   LuUnpackCpuKernelMod() = default;
   ~LuUnpackCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -51,10 +58,13 @@ class LuUnpackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        int64_t pivots_stride, int64_t L_stride, int64_t U_stride, T_data *const P_eye);
   using LuUnpackFunc = std::function<bool(LuUnpackCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &)>;
+
+  std::vector<int64_t> input_0_shape_;
+  std::vector<int64_t> input_1_shape_;
   static std::vector<std::pair<KernelAttr, LuUnpackFunc>> func_list_;
   LuUnpackFunc kernel_func_;
   CNodePtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LUUNPACK_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LUUNPACK_CPU_KERNEL_H_
