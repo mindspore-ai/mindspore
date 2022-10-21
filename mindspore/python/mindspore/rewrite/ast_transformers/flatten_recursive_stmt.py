@@ -78,6 +78,20 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         new_target_name = FlattenRecursiveStmt._generate_target_name(node, target_names)
         return new_target_name, ast.Assign(targets=[ast.Name(id=new_target_name, ctx=ast.Store())], value=node)
 
+    @staticmethod
+    def _flatten_list(node_list, target_names):
+        """Flatten a list of node."""
+        results = list()
+        new_list = list()
+        for node in node_list:
+            if isinstance(node, ast.Call):
+                new_target, new_node = FlattenRecursiveStmt._create_new_assign_node(node, target_names)
+                results.append(new_node)
+                new_list.append(ast.Name(id=new_target, ctx=ast.Load()))
+            else:
+                new_list.append(node)
+        return results, new_list
+
     def _flatten_statement(self, node: ast.AST, target_names) -> [ast.AST]:
         """Flatten recursive statement according to different node type."""
         flatten_config = self._flatten_table.get(type(node))
@@ -95,6 +109,10 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                     else:
                         new_list.append(ast.Name(id=new_target_name, ctx=ast.Load()))
                         results.append(new_node)
+                    if isinstance(todo, (ast.Tuple, tuple)):
+                        _res, _new_list = FlattenRecursiveStmt._flatten_list(new_node.value.elts, [new_target_name])
+                        new_node.value.elts = _new_list
+                        results.extend(_res)
                 setattr(node, todo_name, new_list)
             elif isinstance(todos, dict):
                 new_dict = []

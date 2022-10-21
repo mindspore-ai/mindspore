@@ -27,7 +27,7 @@ from mindspore.nn import Cell
 from mindspore import log as logger
 from .node import Node, TreeNode, PASS_THROUGH_METHOD
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, FindConstValueInInit
+from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
@@ -1006,7 +1006,6 @@ class SymbolTree(Observer, Observable):
 
     def _filter_out_to_delete_field(self, to_delete_field):
         """filter out used field from `to_delete_field`"""
-
         # filter _handler field
         if to_delete_field.get("_handler"):
             to_delete_field.pop("_handler")
@@ -1020,7 +1019,7 @@ class SymbolTree(Observer, Observable):
                 var_name = node.get_args()[0].value
                 if to_delete_field.get(var_name):
                     to_delete_field.pop(var_name)
-        # filter field used in test-of-if
+        # filter field used in test-of-if of construct function
         for body in self._root_ast.body:
             if not isinstance(body, ast.If):
                 continue
@@ -1032,13 +1031,18 @@ class SymbolTree(Observer, Observable):
                     to_delete_to_delete_keys.append(key)
             for key in to_delete_to_delete_keys:
                 to_delete_field.pop(key)
-        str_checker = FindConstValueInInit(self._init_func_ast)
-        to_delete_to_delete_keys = []
-        for key, _ in to_delete_field.items():
-            if str_checker.check(key):
-                to_delete_to_delete_keys.append(key)
-        for key in to_delete_to_delete_keys:
-            to_delete_field.pop(key)
+        # filter field used in test-of-if of init function
+        for body in self._init_func_ast.body:
+            if not isinstance(body, ast.If):
+                continue
+            test = body.test
+            field_finder = FieldFinder(test)
+            to_delete_to_delete_keys = []
+            for key, _ in to_delete_field.items():
+                if field_finder.check(key):
+                    to_delete_to_delete_keys.append(key)
+            for key in to_delete_to_delete_keys:
+                to_delete_field.pop(key)
 
     def _remove_unused_field(self):
         """remove unused field in __init__ function"""
