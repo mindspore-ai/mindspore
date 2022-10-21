@@ -18,6 +18,7 @@
 #include <cstring>
 #include <string>
 #include "utils/ms_utils.h"
+#include "mindspore/core/ops/grad/lstm_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -40,21 +41,83 @@ constexpr int kDiffDstLayerIdx = 7;
 constexpr int kDiffDstIterIdx = 8;
 constexpr int kDiffDstIterCIdx = 9;
 constexpr int kWorkspaceIdx = 10;
+constexpr int kNumberOne = 1;
+constexpr int kNumberTwo = 2;
+constexpr int kNumberFour = 4;
+constexpr size_t kDims = 3;
 
 using tag = dnnl::memory::format_tag;
 using dim = dnnl::memory::dims;
 using dt = dnnl::memory::data_type;
 }  // namespace
 
-void LSTMGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
+bool LSTMGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstmGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstmGradOutputsNum, kernel_name_);
+  auto op_prim = std::dynamic_pointer_cast<ops::LSTMGrad>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  bidirectional_ = op_prim->get_bidirectional();
+  input_size_ = op_prim->get_input_size();
+  hidden_size_ = op_prim->get_hidden_size();
+  num_layers_ = op_prim->get_num_layers();
+  has_bias_ = op_prim->get_has_bias();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
 }
 
-void LSTMGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  CheckParam(kernel_node);
+int LSTMGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
+  auto src_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto src_h_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto src_c_shape = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  if (src_shape.size() != kDims || src_h_shape.size() != kDims || src_c_shape.size() != kDims) {
+    MS_LOG(ERROR) << "Lstm only support 3-D input!";
+    return KRET_RESIZE_FAILED;
+  }
+  batch_size_ = src_shape[1];
+  seq_len_ = src_shape[0];
+  num_directions_ = kNumberOne;
+  if (bidirectional_) {
+    num_directions_ = kNumberTwo;
+  }
+  const int64_t gate_size = kNumberFour * hidden_size_;
+  if (num_layers_ <= 0) {
+    MS_LOG(ERROR) << "Layers must be greater than zero!";
+    return KRET_RESIZE_FAILED;
+  }
+  if (num_layers_ > kMaxLSTMLayer) {
+    MS_LOG(ERROR) << "Layers must be lower than 100!";
+    return KRET_RESIZE_FAILED;
+  }
+  for (int64_t i = 0; i < num_layers_; ++i) {
+    weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
+    weight_h_size_ += gate_size * hidden_size_;
+  }
+  weight_size_ = weight_size_ * num_directions_;
+  weight_h_size_ = weight_h_size_ * num_directions_;
+  if (num_directions_ * num_layers_ != src_h_shape[0]) {
+    MS_LOG(ERROR) << "Error iteration shape!";
+    return KRET_RESIZE_FAILED;
+  }
+  InitDnnl();
+  return KRET_OK;
+}
+
+void LSTMGradCpuKernelMod::InitDnnl() {
   auto eng = engine_;
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
   if (bidirectional_) {
@@ -63,9 +126,9 @@ void LSTMGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dim src_dims = {seq_len_, batch_size_, input_size_};
   dim src_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim src_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
-  weights_dims_ = {num_layers_, num_directions_, input_size_, 4, hidden_size_};
-  weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, 4, hidden_size_};
-  bias_dims_ = {num_layers_, num_directions_, 4, hidden_size_};
+  weights_dims_ = {num_layers_, num_directions_, input_size_, kNumberFour, hidden_size_};
+  weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, kNumberFour, hidden_size_};
+  bias_dims_ = {num_layers_, num_directions_, kNumberFour, hidden_size_};
   dim dst_dims = {seq_len_, batch_size_, static_cast<int64_t>(hidden_size_) * num_directions_};
   dim dst_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim dst_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
@@ -139,45 +202,6 @@ void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, con
   AddArgument(DNNL_ARG_DIFF_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DIFF_DST_ITER, dst_h_desc);
   AddArgument(DNNL_ARG_DIFF_DST_ITER_C, dst_c_desc);
-}
-
-void LSTMGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  auto src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-  if (AnfAlgo::IsShapesDynamic({src_shape, src_h_shape, src_c_shape})) {
-    return;
-  }
-  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
-    MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
-  }
-  bidirectional_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size");
-  hidden_size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size");
-  num_layers_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers");
-  has_bias_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
-  batch_size_ = src_shape[1];
-  seq_len_ = src_shape[0];
-  num_directions_ = 1;
-  if (bidirectional_) {
-    num_directions_ = 2;
-  }
-  const int64_t gate_size = 4 * hidden_size_;
-  if (num_layers_ <= 0) {
-    MS_LOG(EXCEPTION) << "Layers must be greater than zero!";
-  }
-  if (num_layers_ > kMaxLSTMLayer) {
-    MS_LOG(EXCEPTION) << "Layers must be lower than 100!";
-  }
-  for (int64_t i = 0; i < num_layers_; ++i) {
-    weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
-    weight_h_size_ += gate_size * hidden_size_;
-  }
-  weight_size_ = weight_size_ * num_directions_;
-  weight_h_size_ = weight_h_size_ * num_directions_;
-  if (num_directions_ * num_layers_ != src_h_shape[0]) {
-    MS_LOG(EXCEPTION) << "Error iteration shape!";
-  }
 }
 
 void LSTMGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,

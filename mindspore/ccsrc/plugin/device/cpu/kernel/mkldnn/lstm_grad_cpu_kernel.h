@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_
 
+#include <map>
 #include <string>
 #include <vector>
 #include <memory>
@@ -24,17 +25,21 @@
 
 namespace mindspore {
 namespace kernel {
-class LSTMGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class LSTMGradCpuKernelMod : public MKLCpuKernelMod {
  public:
   LSTMGradCpuKernelMod() = default;
   ~LSTMGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -63,7 +68,7 @@ class LSTMGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   void SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> &outputs);
   void ResetMemory(const dnnl::memory &mem, const string name) const;
-  void CheckParam(const CNodePtr &kernel_node);
+  void InitDnnl();
 
   int num_directions_{0};
   bool bidirectional_{false};
