@@ -17,6 +17,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
@@ -72,9 +73,45 @@ def test_reverse_v2_float32():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_reverse_v2_float64():
+    """
+    Feature: test ReverseV2 with using float64.
+    Description: input input_x and axis, test the output value
+    Expectation: the result match with expect.
+    """
+    reverse_v2_1d(np.float64)
+    reverse_v2_3d(np.float64)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_reverse_v2_uint8():
     reverse_v2_1d(np.uint8)
     reverse_v2_3d(np.uint8)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reverse_v2_uint16():
+    """
+    Feature: test ReverseV2 with using uint16.
+    Description: input input_x and axis, test the output value
+    Expectation: the result match with expect.
+    """
+    reverse_v2_1d(np.uint16)
+    reverse_v2_3d(np.uint16)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reverse_v2_int8():
+    """
+    Feature: test ReverseV2 with using int8.
+    Description: input input_x and axis, test the output value
+    Expectation: the result match with expect.
+    """
+    reverse_v2_1d(np.int8)
+    reverse_v2_3d(np.int8)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -113,3 +150,33 @@ def test_reverse_v2_invalid_axis():
         reverse_v2_net = ReverseV2Net((-2, -1, 3))
         _ = reverse_v2_net(x)
     assert "'axis' cannot contain duplicate dimensions" in str(info.value)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reverse_v2_tensor_api():
+    """
+    Feature: ReverseV2 GPU operation
+    Description: input axis, test the output value
+    Expectation: the values match the predefined values
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), ms.int32)
+    output = input_x.reverse(axis=[1])
+    expected = np.array([[4, 3, 2, 1], [8, 7, 6, 5]]).astype(np.int32)
+    assert np.array_equal(output.asnumpy(), expected)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reverse_v2_functional_api():
+    """
+    Feature: ReverseV2 GPU operation
+    Description: input input_x and axis, test the output value
+    Expectation: the values match the predefined values
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), ms.int32)
+    output = ms.ops.reverse(input_x, axis=[1])
+    expected = np.array([[4, 3, 2, 1], [8, 7, 6, 5]]).astype(np.int32)
+    assert np.array_equal(output.asnumpy(), expected)
