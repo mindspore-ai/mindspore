@@ -1723,7 +1723,7 @@ StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const
   MS_EXCEPTION_IF_NULL(operator_);
   MS_EXCEPTION_IF_NULL(prim);
   StrategyPtr strategyPtr;
-  std::shared_ptr<Strategies> strategy_v_ptr = operator_->GenerateBatchStrategies();
+  std::shared_ptr<Strategies> strategy_v_ptr = operator_->GenerateBatchStrategiesWithCheck();
   MS_EXCEPTION_IF_NULL(strategy_v_ptr);
   strategyPtr = NewStrategy(0, *strategy_v_ptr);
   std::vector<ValuePtr> elements;

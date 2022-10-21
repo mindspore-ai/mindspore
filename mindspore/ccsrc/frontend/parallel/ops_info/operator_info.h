@@ -107,6 +107,7 @@ class OperatorInfo {
 
   virtual std::shared_ptr<Strategies> GenerateBatchStrategies();
   virtual void ReComputeBatchSplitFlagList();
+  std::shared_ptr<Strategies> GenerateBatchStrategiesWithCheck();
   void ComputeBatchSplitFlagList();
 
   double GetForwardMemoryCostFromCNode();

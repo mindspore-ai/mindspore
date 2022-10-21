@@ -52,6 +52,9 @@ def _init_sink_dataset(dataset, steps, sink_size, input_signature):
         _check_inputs(input_signature, dataset_shapes, dataset_types)
 
     queue_name = transfer_dataset.queue_name
+    if _need_to_full():
+        device_num = _get_device_num() // _get_pipeline_stages()
+        dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
     next_op = ops.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
 
     _set_dataset_mode_config('sink')
