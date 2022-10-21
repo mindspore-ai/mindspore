@@ -159,7 +159,7 @@ def reverse(x, axis):
 
     Args:
         - **x** (Tensor) - The target tensor. The data type is Number except float64.
-        The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **axis** (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
 
     Outputs:

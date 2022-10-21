@@ -636,7 +636,7 @@ class ReplicationPad1d(_ReplicationPadNd):
     Pad on W dimension of input `x` according to `padding`.
 
     Args:
-        padding (int, tuple): the size of the padding. If is `int`, uses the same
+        padding (union[int, tuple]): the size of the padding. If is `int`, uses the same
             padding in all boundaries. If is tuple, uses :math:`(pad_{left}, pad_{right})` to pad.
 
     Inputs:
@@ -644,7 +644,7 @@ class ReplicationPad1d(_ReplicationPadNd):
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
-            where :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
+        where :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
 
     Raises:
         TypeError: If 'padding' is neither a tuple nor an int.
@@ -700,7 +700,7 @@ class ReplicationPad2d(_ReplicationPadNd):
     Pad on HW dimension of input `x` according to `padding`.
 
     Args:
-        padding (int, tuple): the size of the padding. If is `int`, uses the same padding in all boundaries.
+        padding (union[int, tuple]): the size of the padding. If is `int`, uses the same padding in all boundaries.
             If a 4-`tuple`, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})` to pad.
 
     Inputs:
@@ -773,7 +773,7 @@ class ReplicationPad3d(_ReplicationPadNd):
     Pad on DHW dimension of input `x` according to `padding`.
 
     Args:
-        padding (int, tuple): the size of the padding. If is `int`, uses the same padding in all boundaries.
+        padding (union[int, tuple]): the size of the padding. If is `int`, uses the same padding in all boundaries.
             If a 6-`tuple`, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
 
     Inputs:
@@ -782,10 +782,10 @@ class ReplicationPad3d(_ReplicationPadNd):
 
     Outputs:
         Tensor, after padding, shape: :math:`(C, D_{out}, H_{out}, W_{out})` or
-            :math:`(N, C, D_{out}, H_{out}, W_{out})`, where
-            :math:`D_{out} = D_{in} + pad_{front} + pad_{back}`,
-            :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`,
-            :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
+        :math:`(N, C, D_{out}, H_{out}, W_{out})`, where
+        :math:`D_{out} = D_{in} + pad_{front} + pad_{back}`,
+        :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`,
+        :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
 
     Raises:
         TypeError: If 'padding' is neither a tuple nor an int.

@@ -1,7 +1,7 @@
 mindspore.nn.MaxUnpool2d
 ========================
 
-.. py:class:: mindspore.nn.MaxUnpool2d(kernel_size, stride=0, padding=0, output_size=())
+.. py:class:: mindspore.nn.MaxUnpool2d(kernel_size, stride=None, padding=0, output_size=())
 
     `Maxpool2d` 的部分逆过程。 `Maxpool2d` 不是完全可逆的，因为非最大值丢失。
     `MaxUnpool2d` 以 `MaxPool2d` 的输出为输入，包括最大值的索引。在计算 `maxpool2d` 部分逆的过程中，非最大值设置为零。
@@ -20,7 +20,7 @@ mindspore.nn.MaxUnpool2d
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，int类型表示长宽方向的移动步长相同。
           tuple中的两个值分别代表长宽方向移动的步长。若取值为 '0' 或者 '(0, 0)'，`stride` 值与 `kernel_size` 相同。
           默认值：None。
-        - **padding** (str) - 填充值。默认值：0。若为int类型，则长宽方向的填充大小相同，均为 `padding` 。
+        - **padding** (Union[int, tuple[int]]) - 填充值。默认值：0。若为int类型，则长宽方向的填充大小相同，均为 `padding` 。
           若为tuple类型，则tuple中的两个值分别代表长宽方向填充的大小。
         - **output_size** (tuple[int]) - 输出shape，可选参数。默认值：()。
           如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。

@@ -3,7 +3,7 @@ mindspore.Tensor.cholesky
 
 .. py:method:: mindspore.Tensor.cholesky(upper=False)
 
-   计算对称正定矩阵 :math:`A` 或对称正定矩阵批次的Cholesky分解。
+    计算对称正定矩阵 :math:`A` 或对称正定矩阵批次的Cholesky分解。
 
     如果 `upper` 为True，则返回的矩阵 :math:`U` 为上三角矩阵，分解形式为：
 
