@@ -51,6 +51,10 @@ void CheckSparseSparseArithmeticInputs(const std::vector<AbstractBasePtr> &input
   const int64_t indice_size = 2;
   const int64_t values_size = 1;
   const int64_t shape_size = 1;
+  if (IsDynamicRank(x1_indices_shape) || IsDynamicRank(x1_values_shape) || IsDynamicRank(x1_shape_shape) ||
+      IsDynamicRank(x2_indices_shape) || IsDynamicRank(x2_values_shape) || IsDynamicRank(x2_shape_shape)) {
+    return;
+  }
   (void)CheckAndConvertUtils::CheckInteger("x1_indices rank", SizeToLong(x1_indices_shape.size()), kEqual, indice_size,
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("x2_indices rank", SizeToLong(x2_indices_shape.size()), kEqual, indice_size,

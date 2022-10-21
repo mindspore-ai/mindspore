@@ -271,7 +271,7 @@ class SparseSparseMaximum(Primitive):
         ValueError: If the `x1_shape` and `x2_shape` mismatch with each other.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1_indices = Tensor([[0, 1], [1, 2]])
@@ -1758,7 +1758,7 @@ class SparseSparseMinimum(Primitive):
         ValueError: If shape[0] of `x1_shape` is not corresponding to shape[0] of `x2_shape`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
