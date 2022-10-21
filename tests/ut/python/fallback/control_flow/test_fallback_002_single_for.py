@@ -15,7 +15,7 @@
 """ test graph fallback control flow."""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_single_for_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 3, 5])
         y = np.array([0, 2, 4])
@@ -43,7 +43,7 @@ def test_single_for_builtin_function_sum():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 3, 5, 7, 9])
         result = x
@@ -60,7 +60,7 @@ def test_single_for_builtin_function_numpy_sum():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 3, 5, 7, 9])
         y = np.array([0, 2, 4, 6, 8])
@@ -79,7 +79,7 @@ def test_single_for_builtin_function_tensor_sum():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = Tensor(np.array([1, 3, 5, 7, 9]))
         y = Tensor(np.array([0, 2, 4, 6, 8]))
@@ -98,7 +98,7 @@ def test_single_for_builtin_function_list():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1.1, 2.2])
         for _ in range(3):
@@ -114,7 +114,7 @@ def test_single_for_x_in_xs():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1.1, 2.2])
         y = np.array(0)
@@ -131,7 +131,7 @@ def test_single_for_x_in_xs_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         y = np.array(0)
         for i in np.array([1.1, 2.2]):
@@ -147,7 +147,7 @@ def test_single_for_wrong_xs():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         y = np.array(0)
         for i in np.int64(1):
@@ -165,7 +165,7 @@ def test_single_for_wrong_xs_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.int64(1)
         y = np.array(0)

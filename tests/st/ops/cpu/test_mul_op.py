@@ -19,7 +19,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -30,7 +30,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.mul = P.Mul()
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         return self.mul(x, y)
 

@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -46,7 +46,7 @@ class Transpose(nn.Cell):
                         [1, 2, 3, 4, 5]), name='x_5D')
         self.perm_5D = (1, 0, 3, 4, 2)
 
-    @ms_function
+    @jit
     def construct(self):
         return (self.transpose(self.x_2D, self.perm_2D), self.transpose(self.x_3D, self.perm_3D),
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))
@@ -61,7 +61,7 @@ class Transpose_dynamic(nn.Cell):
                         [1, 2, 3, 4, 5]), name='5D')
         self.perm = (1, 0, 3, 4, 2)
 
-    @ms_function
+    @jit
     def construct(self):
         out = self.test_dynamic(self.x)
         return self.transpose(out, self.perm)
@@ -76,7 +76,7 @@ class Transpose_dynamic2(nn.Cell):
         self.perm_1 = perm_1
         self.perm_2 = perm_2
 
-    @ms_function
+    @jit
     def construct(self):
         out_1 = self.test_dynamic(self.x_1)
         out_1 = self.transpose(out_1, self.perm_1)

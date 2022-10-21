@@ -15,7 +15,7 @@
 """ test list insert operation """
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,7 +31,7 @@ def test_list_insert_1():
     Description: support list insert.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert():
         x = [1, 3, 4]
         x.insert(0, 2)
@@ -51,7 +51,7 @@ def test_list_insert_2():
     Description: support list insert.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert():
         x = [1, 3, 4]
         x.insert(5, 2)
@@ -70,7 +70,7 @@ def test_list_insert_3():
     Description: support list insert.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert():
         x = [1, 3, 4]
         x.insert(-1, 2)
@@ -89,7 +89,7 @@ def test_list_insert_4():
     Description: support list insert.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert():
         x = [1, 3, 4]
         x.insert(-5, 2)
@@ -108,7 +108,7 @@ def test_list_insert_5():
     Description: support list insert.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert(x):
         x.insert(-5, 2)
         x.insert(-2, 9)
@@ -129,7 +129,7 @@ def test_list_insert_pop_1():
     Description: support list insert and pop.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert_pop(x):
         x.insert(-5, 2)
         x.insert(-2, 9)
@@ -154,7 +154,7 @@ def test_list_insert_pop_2():
     Description: support list insert.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert_pop(index):
         x = [1, 3, 4]
         y = x.pop(index)
@@ -176,7 +176,7 @@ def test_list_insert_pop_append_1():
     Description: support list insert, pop and append.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert_pop_append(x):
         x.insert(-5, 2)
         x.insert(-2, 9)
@@ -203,7 +203,7 @@ def test_list_insert_type_error():
     Description: support list insert.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_insert():
         x = [1, 2, 3]
         x.insert(1.0, 9)

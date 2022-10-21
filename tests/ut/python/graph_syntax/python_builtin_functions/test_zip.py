@@ -15,7 +15,7 @@
 """ test graph fallback hybrid syntax"""
 import operator
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_zip_with_numpy():
     Description: Test zip in graph mode with numpy input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2])
         y = np.array([10, 20])
@@ -43,7 +43,7 @@ def test_fallback_zip_with_numpy_and_tensor():
     Description: Test zip in graph mode with numpy and tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2])
         y = Tensor([10, 20])

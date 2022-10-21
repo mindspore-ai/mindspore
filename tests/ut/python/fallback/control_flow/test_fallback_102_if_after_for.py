@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow if after for scenario"""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_if_after_for_tensor():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_after_for():
         x = Tensor(7)
         y = Tensor(0)
@@ -45,7 +45,7 @@ def test_if_after_for_tensor_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_after_for():
         x = Tensor(7)
         y = Tensor(0)
@@ -65,7 +65,7 @@ def test_if_after_for_tensor_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_after_for():
         x = Tensor(7)
         y = Tensor(10)
@@ -84,7 +84,7 @@ def test_if_after_for_tensor_zip():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         tuple_x = (Tensor(1), Tensor(3), Tensor(5))
         sum_x = Tensor(0)
@@ -106,7 +106,7 @@ def test_single_for_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 3, 5])
         y = np.array([0, 2, 4])
@@ -125,7 +125,7 @@ def test_single_for_numpy_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 3, 5])
         y = np.array([0, 2, 4])

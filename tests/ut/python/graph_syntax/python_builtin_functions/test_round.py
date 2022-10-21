@@ -15,7 +15,7 @@
 """ test graph fallback buildin python function round"""
 import math
 import pytest
-from mindspore import ms_function, context
+from mindspore import jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_round_with_x_int_n_default():
     Description: Test round() in graph mode with input x int and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10)
         return x
@@ -41,7 +41,7 @@ def test_fallback_round_with_x_float_n_default():
     Description: Test round() in graph mode with input x float and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10.123)
         return x
@@ -56,7 +56,7 @@ def test_fallback_round_with_x_float_n_default_2():
     Description: Test round() in graph mode with input x float and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10.678)
         return x
@@ -71,7 +71,7 @@ def test_fallback_round_with_n_zero():
     Description: Test round() in graph mode with input n is zero.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10.678, 0)
         return x
@@ -86,7 +86,7 @@ def test_fallback_round_with_n_none():
     Description: Test round() in graph mode with input n is None.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10.678, None)
         return x
@@ -101,7 +101,7 @@ def test_fallback_round_with_n_positive_int():
     Description: Test round() in graph mode with input n is positive int.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10.678, 1)
         return x
@@ -116,7 +116,7 @@ def test_fallback_round_with_n_negative_int():
     Description: Test round() in graph mode with input n is negative int.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10.678, -1)
         return x
@@ -131,7 +131,7 @@ def test_fallback_round_with_n_negative_int_2():
     Description: Test round() in graph mode with input n is negative int.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(17.678, -1)
         return x
@@ -146,7 +146,7 @@ def test_fallback_round_with_input_x_not_number():
     Description: Test round() in graph mode with input x is not number.
     Expectation: TypeError.
     """
-    @ms_function
+    @jit
     def foo():
         x = round([1, 2, 3])
         return x
@@ -161,7 +161,7 @@ def test_fallback_round_with_input_n_not_int():
     Description: Test round() in graph mode with input x is not int.
     Expectation: TypeError.
     """
-    @ms_function
+    @jit
     def foo():
         x = round(10.123, 1.0)
         return x

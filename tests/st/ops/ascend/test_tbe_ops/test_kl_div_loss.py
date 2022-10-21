@@ -18,7 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.functional as F
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 
@@ -106,7 +106,7 @@ def test_kl_div_loss_vmap(reduction):
     def cal_kl_div_loss(x, target):
         return P.KLDivLoss(reduction)(x, target)
 
-    @ms_function
+    @jit
     def manually_batched(xs, targets):
         output = []
         for i in range(xs.shape[-1]):

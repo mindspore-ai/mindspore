@@ -254,7 +254,7 @@ class _MindsporeFunctionExecutor:
     Args:
         fn (Function): The root function to compile.
         input_signature (Function): User defines signature to verify input.
-        ms_create_time(TimeStamp): The time ms_function created
+        ms_create_time(TimeStamp): Time the function was created
         obj (Object): If function is a method, obj is the owner of function,
              else, obj is none.
 
@@ -300,9 +300,9 @@ class _MindsporeFunctionExecutor:
         # Check whether hook function registered on Cell object.
         if self.obj and hasattr(self.obj, "_hook_fn_registered"):
             if self.obj._hook_fn_registered():
-                logger.warning(f"For 'Cell', it's not support hook function when using ms_function. If you want to "
-                               f"use hook function, please use context.set_context to set pynative mode and remove "
-                               f"`ms_function`.")
+                logger.warning(f"For 'Cell', it's not support hook function when using 'jit' decorator. "
+                               f"If you want to use hook function, please use context.set_context to set "
+                               f"pynative mode and remove 'jit' decorator.")
         # Chose dynamic shape tensors or actual input tensors as compile args.
         compile_args = self._generate_compile_args(args_list)
         # Restore the mutable attr for every arg.
@@ -409,7 +409,7 @@ class _MindsporeFunctionExecutor:
             self.input_signature = list(self.input_signature)
             dyn_shape = False
             for sig_args in self.input_signature:
-                Validator.check_isinstance("args in `input_signature` of `ms_function`", sig_args, MetaTensor)
+                Validator.check_isinstance("args in `input_signature` of `jit` decorator", sig_args, MetaTensor)
                 if is_shape_unknown(sig_args.shape):
                     dyn_shape = True
             if not dyn_shape:
@@ -465,6 +465,114 @@ def _get_ms_function_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
+def jit(fn=None, input_signature=None, hash_args=None, jit_config=None):
+    """
+    Create a callable MindSpore graph from a Python function.
+
+    This allows the MindSpore runtime to apply optimizations based on graph.
+
+    Note:
+        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
+        will not accept `**kwargs`.
+
+    Args:
+        fn (Function): The Python function that will be run as a graph. Default: None.
+        input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
+            will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
+            And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
+            keep the same as input_signature. Otherwise, TypeError will be raised. Default: None.
+        hash_args (Union[Object, List or Tuple of Objects]): The local free variables used inside `fn`,
+            like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
+            will trigger recompilation.
+        jit_config (JitConfig): Jit config for compile. Default: None.
+
+    Returns:
+        Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
+        None, returns a decorator and when this decorator invokes with a single `fn` argument, the callable function is
+        equal to the case when `fn` is not None.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> from mindspore import jit
+        ...
+        >>> x = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
+        >>> y = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
+        ...
+        >>> # create a callable MindSpore graph by calling decorator @jit
+        >>> def tensor_add(x, y):
+        ...     z = x + y
+        ...     return z
+        ...
+        >>> tensor_add_graph = jit(fn=tensor_add)
+        >>> out = tensor_add_graph(x, y)
+        ...
+        >>> # create a callable MindSpore graph through decorator @jit
+        >>> @jit
+        ... def tensor_add_with_dec(x, y):
+        ...     z = x + y
+        ...     return z
+        ...
+        >>> out = tensor_add_with_dec(x, y)
+        ...
+        >>> # create a callable MindSpore graph through decorator @jit with input_signature parameter
+        >>> @jit(input_signature=(Tensor(np.ones([1, 1, 3, 3]).astype(np.float32)),
+        ...                       Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))))
+        ... def tensor_add_with_sig(x, y):
+        ...     z = x + y
+        ...     return z
+        ...
+        >>> out = tensor_add_with_sig(x, y)
+        ...
+        ... # Set hash_args as fn, otherwise cache of compiled `closure_fn` will not be reused.
+        ... # While fn differs during calling again, recompilation will be triggered.
+        >>> def func(x):
+        ...     return ops.exp(x)
+        ...
+        >>> def closure_fn(x, fn):
+        ...     @jit(hash_args=fn)
+        ...     def inner_fn(a):
+        ...         return fn(a)
+        ...     return inner_fn(x)
+        ...
+        >>> inputs = Tensor(np.ones([10, 10, 10]).astype(np.float32))
+        >>> for i in range(10):
+        ...     closure_fn(inputs, func)
+    """
+
+    def wrap_mindspore(func):
+        if hash_args:
+            hash_obj = _get_ms_function_hash(hash_args)
+        else:
+            hash_obj = int(time.time() * 1e9)
+
+        @wraps(func)
+        def staging_specialize(*args, **kwargs):
+            if os.getenv("MS_JIT") == '0':
+                return func(*args, **kwargs)
+
+            args = _handle_func_args(func, *args, **kwargs)
+            process_obj = None
+            if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
+                process_obj = args[0]
+            # only the function or cell instance wrapped by shard will fall into this branch
+            if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
+                process_obj = args[0]
+                args = args[1:]
+            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args)
+            return out
+
+        return staging_specialize
+
+    if fn is not None:
+        return wrap_mindspore(fn)
+    return wrap_mindspore
+
+
 def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     """
     Create a callable MindSpore graph from a Python function.
@@ -472,6 +580,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     This allows the MindSpore runtime to apply optimizations based on graph.
 
     Note:
+        `ms_function` will be deprecated and removed in a future version. Please use `jit` instead.
         If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
         will not accept `**kwargs`.
 
@@ -544,33 +653,9 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
         ...     closure_fn(inputs, func)
     """
 
-    def wrap_mindspore(func):
-        if hash_args:
-            hash_obj = _get_ms_function_hash(hash_args)
-        else:
-            hash_obj = int(time.time() * 1e9)
-
-        @wraps(func)
-        def staging_specialize(*args, **kwargs):
-            if os.getenv("MS_JIT") == '0':
-                return func(*args, **kwargs)
-
-            args = _handle_func_args(func, *args, **kwargs)
-            process_obj = None
-            if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
-                process_obj = args[0]
-            # only the function or cell instance wrapped by shard will fall into this branch
-            if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
-                process_obj = args[0]
-                args = args[1:]
-            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args)
-            return out
-
-        return staging_specialize
-
-    if fn is not None:
-        return wrap_mindspore(fn)
-    return wrap_mindspore
+    logger.warning("'mindspore.ms_function' will be deprecated and removed in a future version. " \
+                   "Please use 'mindspore.jit' instead.")
+    return jit(fn=fn, input_signature=input_signature, hash_args=hash_args, jit_config=jit_config)
 
 
 def _core(fn=None, **flags):
@@ -671,15 +756,18 @@ def ms_class(cls):
 
     This allows MindSpore to identify user-defined classes and thus obtain their attributes and methods.
 
+    Note:
+        `ms_class` will be deprecated and removed in a future version. Please use `jit_class` instead.
+
     Args:
         cls (Class): User-defined class.
 
     Returns:
-        Class with __ms_class__ attribute.
+        Class.
 
     Raises:
         TypeError: If ms_class is used for non-class types or nn.Cell.
-        AttributeError: If the private attributes or magic methods of the class decorated by ms_class is called.
+        AttributeError: If the private attributes or magic methods of the class decorated with ms_class is called.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -711,6 +799,9 @@ def ms_class(cls):
         20
     """
 
+    logger.warning("'mindspore.ms_class' will be deprecated and removed in a future version. " \
+                   "Please use 'mindspore.jit_class' instead.")
+
     # Check if cls is of type class.
     if not inspect.isclass(cls):
         raise TypeError(f'Decorator ms_class can only be used for class type, but got {cls}.')
@@ -718,6 +809,62 @@ def ms_class(cls):
     if issubclass(cls, ms.nn.Cell):
         raise TypeError(f"Decorator ms_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
     logger.info(f'Found ms_class: {cls}.')
+    setattr(cls, '__ms_class__', True)
+    return cls
+
+
+def jit_class(cls):
+    """
+    Class decorator for user-defined classes.
+
+    This allows MindSpore to identify user-defined classes and thus obtain their attributes and methods.
+
+    Args:
+        cls (Class): User-defined class.
+
+    Returns:
+        Class.
+
+    Raises:
+        TypeError: If jit_class is used for non-class types or nn.Cell.
+        AttributeError: If the private attributes or magic methods of the class decorated with jit_class is called.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.nn as nn
+        >>> from mindspore import jit_class
+        ...
+        >>> @jit_class
+        ... class UserDefinedNet:
+        ...     def __init__(self):
+        ...         self.value = 10
+        ...
+        ...     def func(self, x):
+        ...         return 2 * x
+        ...
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.net = UserDefinedNet()
+        ...
+        ...     def construct(self, x):
+        ...         out = self.net.value + self.net.func(x)
+        ...         return out
+        ...
+        >>> net = Net()
+        >>> out = net(5)
+        >>> print(out)
+        20
+    """
+
+    # Check if cls is of type class.
+    if not inspect.isclass(cls):
+        raise TypeError(f'Decorator jit_class can only be used for class type, but got {cls}.')
+    # Check if cls is nn.Cell.
+    if issubclass(cls, ms.nn.Cell):
+        raise TypeError(f"Decorator jit_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
     setattr(cls, '__ms_class__', True)
     return cls
 
@@ -1401,4 +1548,4 @@ def ms_memory_recycle():
 _cell_graph_executor = _CellGraphExecutor()
 _pynative_executor = _PyNativeExecutor()
 
-__all__ = ['ms_function', 'ms_memory_recycle', 'ms_class']
+__all__ = ['ms_function', 'ms_memory_recycle', 'ms_class', 'jit', 'jit_class']

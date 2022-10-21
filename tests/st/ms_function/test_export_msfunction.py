@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import ms_function
+from mindspore import jit
 from mindspore import Tensor, export, load, context
 from mindspore.nn import GraphCell
 
@@ -35,7 +35,7 @@ def test_add_tensor():
     Expectation: No exception, assert True.
     """
 
-    @ms_function
+    @jit
     def add_tensor(i):
         a = Tensor([9, 8, 5], ms.int32)
         return a + i

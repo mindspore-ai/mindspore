@@ -16,7 +16,7 @@
 import operator
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -27,7 +27,7 @@ def test_fallback_max_with_one_input_list():
     Description: Test max() in graph mode with one input list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max([1, 2, 3])
         return x
@@ -41,7 +41,7 @@ def test_fallback_max_with_one_input_list_2():
     Description: Test max() in graph mode with one input list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max([(1, 2), (1, 3), (3, 4)])
         return x
@@ -55,7 +55,7 @@ def test_fallback_max_with_one_input_tuple():
     Description: Test max() in graph mode with one input tuple.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max((1, 2, 3))
         return x
@@ -69,7 +69,7 @@ def test_fallback_max_with_one_input_tuple_2():
     Description: Test max() in graph mode with one input tuple.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max((1, 2), (1, 3), (3, 4))
         return x
@@ -83,7 +83,7 @@ def test_fallback_max_with_one_input_dict():
     Description: Test max() in graph mode with one input dict.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max({'a': 1, 'b': 2, 'c': 3})
         return x
@@ -97,7 +97,7 @@ def test_fallback_max_with_one_input_numpy_array():
     Description: Test max() in graph mode with one input numpy array.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max(np.array([1, 2, 3]))
         return Tensor(x)
@@ -111,7 +111,7 @@ def test_fallback_max_with_one_input_tensor():
     Description: Test max() in graph mode with one input tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max(Tensor([1, 2, 3]))
         return x
@@ -125,7 +125,7 @@ def test_fallback_max_with_two_inputs_list():
     Description: Test max() in graph mode with two inputs list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max([1, 2, 3], [4, 5])
         return x
@@ -139,7 +139,7 @@ def test_fallback_min_with_two_inputs_list():
     Description: Test min() in graph mode with two inputs list.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = min([1, 2, 3], [4, 5])
         return x
@@ -153,7 +153,7 @@ def test_builtin_function_max_min_with_string():
     Description: Support the type of the input of built-in function min is string.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return max("1, 2, 3, 4"), min("1, 2, 3, 4")
 
@@ -168,7 +168,7 @@ def test_builtin_function_max_min_with_tuple():
     Description: Support the type of the input of built-in function min is tuple.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = [('a', 1), ('A', 1), ('a', 2)]
         return max(x), min(x)
@@ -184,7 +184,7 @@ def test_fallback_max_with_one_input_numpy_array_multidimensional():
     Description: Test max() in graph mode with one input numpy array.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = max(np.array([[1, 2, 3], [1, 2, 3]]))
         return Tensor(x)
@@ -199,7 +199,7 @@ def test_builtin_function_max_min_with_multiple_strings():
     Description: Support the type of the input of built-in function min is string.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return max("1, 2, 3, 4", "2, 1, 0"), min("1, 2, 3, 4", "2, 1, 0")
 
@@ -214,7 +214,7 @@ def test_fallback_max_min_with_multiple_num():
     Description: Test max() in graph mode with multiple numbers.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x1 = max(1, 4, 0, 10)
         x2 = max(3.0, 4.9, 4.8)

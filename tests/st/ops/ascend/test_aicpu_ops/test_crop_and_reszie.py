@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -29,7 +29,7 @@ class Net(nn.Cell):
         self.crop_and_resize = P.CropAndResize()
         self.crop_size = crop_size
 
-    @ms_function
+    @jit
     def construct(self, x, boxes, box_index):
         return self.crop_and_resize(x, boxes, box_index, self.crop_size)
 

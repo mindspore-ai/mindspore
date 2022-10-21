@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-from mindspore import ms_function
+from mindspore import jit
 from mindspore import Tensor, export, load, Parameter, dtype, context
 from mindspore.nn import GraphCell
 
@@ -41,7 +41,7 @@ def test_controller():
     context.set_context(mode=context.GRAPH_MODE)
     input1 = Tensor(np.array([3], np.float32))
     input2 = Tensor(np.array([0], np.float32))
-    controller_graph = ms_function(fn=controller)
+    controller_graph = jit(fn=controller)
     expected_out = controller_graph(input1, input2)
     export(controller_graph, input1, input2, file_name="control.mindir", file_format="MINDIR")
     c_graph = load("control.mindir")

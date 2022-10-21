@@ -15,7 +15,7 @@
 """ test graph fallback """
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_bin():
     Description: Test bin() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = bin(3)
         return x
@@ -39,7 +39,7 @@ def test_fallback_chr():
     Description: Test chr() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = chr(0x61)
         return x
@@ -52,7 +52,7 @@ def test_fallback_complex():
     Description: Test complex() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = complex(1, 2)
         return Tensor(x)
@@ -68,7 +68,7 @@ def test_fallback_divmod():
     Description: Test divmod() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = divmod(7, 2)
         return x
@@ -81,7 +81,7 @@ def test_fallback_hash():
     Description: Test hash() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = hash(1)
         return x
@@ -94,7 +94,7 @@ def test_fallback_hex():
     Description: Test hex() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = hex(255)
         return x
@@ -107,7 +107,7 @@ def test_fallback_oct():
     Description: Test oct() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = oct(8)
         return x
@@ -120,7 +120,7 @@ def test_fallback_ord():
     Description: Test ord() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = ord('a')
         return x
@@ -133,7 +133,7 @@ def test_fallback_reversed():
     Description: Test reversed() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = reversed([1, 2, 3])
         return list(x)
@@ -146,7 +146,7 @@ def test_fallback_set():
     Description: Test set() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = set([1, 2, 1])
         return x
@@ -159,7 +159,7 @@ def test_fallback_slice():
     Description: Test slice() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         slice_x = slice(5)
         arr = range(10)
@@ -173,7 +173,7 @@ def test_fallback_sorted():
     Description: Test sorted() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sorted([5, 3, 1, 4, 2])
         return x
@@ -186,7 +186,7 @@ def test_fallback_str():
     Description: Test str() in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = str(10)
         return x
@@ -199,7 +199,7 @@ def test_fallback_unsupported_builtin_type():
     Description: Test input() in graph mode and JIT Fallback.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def func(x):
         input("input x:")
         return x * 2

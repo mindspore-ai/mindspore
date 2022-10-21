@@ -15,7 +15,7 @@
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
@@ -27,7 +27,7 @@ class Net(nn.Cell):
         self.matmul = P.MatMul(transpose_b=True)
         self.bias_add = P.BiasAdd()
 
-    @ms_function
+    @jit
     def construct(self, x, w, b):
         return self.bias_add(self.matmul(x, w), b)
 

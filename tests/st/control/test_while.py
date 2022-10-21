@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 import mindspore.context as context
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype
 
 
-@ms_function
+@jit
 def t1_while(x, y):
     y = y + 4
     while x < y:

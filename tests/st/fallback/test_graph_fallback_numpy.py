@@ -15,7 +15,7 @@
 """ test graph fallback """
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,7 +31,7 @@ def test_np_linspace():
     Description: Test numpy with linspace in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_linspace():
         a = Tensor(np.linspace(1, 10, 10))
         b = Tensor(np.linspace(1, 1, 10))
@@ -58,7 +58,7 @@ def test_np_arange_slice_1():
     Description: Test numpy with arange slice in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_arange_slice_1():
         x = np.arange(10)
         index = slice(2, 7, 2)
@@ -87,7 +87,7 @@ def test_np_arange_slice_2():
     Description: Test numpy with arange slice in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_arange_slice_2():
         x = np.array([[1, 2, 3], [3, 4, 5], [4, 5, 6]])
         a = Tensor(x[1:])
@@ -113,7 +113,7 @@ def test_np_array_advanced_index_1():
     Description: Test numpy with array advanced index in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_advanced_index_1():
         x = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]])
         a = Tensor(x[[0, 1, 2], [0, 1, 0]])
@@ -140,7 +140,7 @@ def test_np_array_advanced_index_2():
     Description: Test numpy with array advanced index in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_advanced_index_2():
         x = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]])
         y = np.array([np.nan, 1, 2, np.nan, 3, 4, 5])
@@ -166,7 +166,7 @@ def test_np_array_advanced_index_3():
     Description: Test numpy with array advanced index in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_array_advanced_index_3():
         x = np.arange(32).reshape((8, 4))
         a = Tensor(x[[4, 2, 1, 7]])
@@ -192,7 +192,7 @@ def test_np_reshape():
     Description: Test numpy.reshape() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_reshape():
         x = np.arange(8)
         y = x.reshape(2, 4)
@@ -211,7 +211,7 @@ def test_np_ndarray_flatten():
     Description: Test numpy.flatten() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_ndarray_flatten():
         x = np.arange(8).reshape(2, 4)
         y = x.flatten()
@@ -230,7 +230,7 @@ def test_np_ravel():
     Description: Test numpy.ravel() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_ravel():
         x = np.arange(8).reshape(2, 4)
         y = x.ravel(order='F')
@@ -249,7 +249,7 @@ def test_np_transpose():
     Description: Test numpy.transpose() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_transpose():
         x = np.arange(4).reshape(4, 1)
         y = np.transpose(x)
@@ -268,7 +268,7 @@ def test_np_rollaxis():
     Description: Test numpy.rollaxis() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_rollaxis():
         x = np.arange(8).reshape(2, 2, 2)
         tensor_x = Tensor(x)
@@ -290,7 +290,7 @@ def test_np_swapaxes():
     Description: Test numpy.swapaxes() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_swapaxes():
         x = np.arange(8).reshape(2, 2, 2)
         tensor_x = Tensor(x)
@@ -312,7 +312,7 @@ def test_np_broadcast():
     Description: Test numpy.broadcast() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_broadcast():
         x = np.array([[1], [2], [3]])
         y = np.array([4, 5, 6])
@@ -332,7 +332,7 @@ def test_np_broadcast_to():
     Description: Test numpy.broadcast_to() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_broadcast_to():
         x = np.arange(4).reshape(1, 4)
         y = np.broadcast_to(x, (2, 4))
@@ -351,7 +351,7 @@ def test_np_expand_dims():
     Description: Test numpy.expand_dims() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_expand_dims():
         x = np.array(([1, 2], [3, 4]))
         y = np.expand_dims(x, axis=0)
@@ -370,7 +370,7 @@ def test_np_squeeze():
     Description: Test numpy.squeeze() method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_squeeze():
         x = np.arange(4).reshape(1, 2, 2)
         y = np.squeeze(x)
@@ -389,7 +389,7 @@ def test_np_concat():
     Description: Test numpy method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_concat():
         x = np.array([[1, 2], [3, 4]])
         y = np.array([[5, 6], [7, 8]])
@@ -417,7 +417,7 @@ def test_np_split():
     Description: Test numpy split method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_split():
         x = np.arange(4).reshape(2, 2)
         split = np.split(x, 2)
@@ -442,7 +442,7 @@ def test_np_element():
     Description: Test numpy method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_element():
         resize = np.resize(np.array([[1, 2, 3], [4, 5, 6]]), (3, 2))
         append = np.append(np.array([[1, 2, 3], [4, 5, 6]]), [[7, 8, 9]], axis=0)
@@ -470,7 +470,7 @@ def test_np_bitwise():
     Description: Test numpy bitwise method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_bitwise():
         bitwise_and = np.bitwise_and(13, 17)
         bitwise_or = np.bitwise_or(13, 17)
@@ -498,7 +498,7 @@ def test_np_char_1():
     Description: Test numpy char method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_char():
         char_add = np.char.add(['MindSpore'], [' fallback'])
         char_multiply = np.char.multiply('fallback ', 3)
@@ -531,7 +531,7 @@ def test_np_char_2():
     Description: Test numpy char method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_char():
         char_split = np.char.split('MindSpore fallback')
         out_split = np.char.join(' ', char_split)
@@ -564,7 +564,7 @@ def test_np_degree():
     Description: Test numpy method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_degree():
         out_sin = np.sin(30 * np.pi / 180)
         out_arcsin = np.degrees(np.arcsin(out_sin))
@@ -595,7 +595,7 @@ def test_np_math_1():
     Description: Test numpy math method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_math():
         x = np.array([6, 12])
         y = np.array([3, 5])
@@ -628,7 +628,7 @@ def test_np_math_2():
     Description: Test numpy math method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_math():
         x = np.array([0.1, 1.4, 2.51, 3.3])
         out_around = np.around(x)
@@ -657,7 +657,7 @@ def test_np_statistic():
     Description: Test numpy statistic method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_statistic():
         x = np.array([1, 2, 3, 4, 5])
         out_amin = np.amin(x)
@@ -695,7 +695,7 @@ def test_np_sort():
     Description: Test numpy method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_sort():
         x = np.array([3, 1, 2, 4, 5])
         out_sort = np.sort(x)
@@ -727,7 +727,7 @@ def test_np_extract():
     Description: Test numpy extract method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_extract():
         x = np.array([3, 1, 2, 4, 5])
         condition = x % 2 == 0
@@ -749,7 +749,7 @@ def test_np_matrix():
     Description: Test numpy matrix method in graph mode.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def np_matrix():
         x = np.arange(4).reshape(2, 2)
         y = np.array([[2, 2], [3, 3]])

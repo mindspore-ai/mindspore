@@ -19,7 +19,7 @@ import pytest
 
 from mindspore import nn
 from mindspore import Tensor, Parameter, ParameterTuple
-from mindspore import ms_function, context
+from mindspore import jit, context
 import mindspore.ops as ops
 
 
@@ -28,7 +28,7 @@ class PyNet(nn.Cell):
         super(PyNet, self).__init__()
         self.w1 = Parameter(Tensor(np.ones((2, 2), np.float32)), name="w1")
 
-    @ms_function
+    @jit
     def construct(self, param_a, list_a, tuple_a, tensor_a, dict_a, param_b, tensor_b):
         output = param_a + list_a[0] + tuple_a[1] - tensor_a - dict_a["x"] - param_b + tensor_b
         output = output * self.w1

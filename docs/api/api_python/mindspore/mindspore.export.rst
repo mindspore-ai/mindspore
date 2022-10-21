@@ -8,11 +8,11 @@ mindspore.export
     .. note::
         - 当导出文件格式为AIR、ONNX时，单个Tensor的大小不能超过2GB。
         - 当 `file_name` 没有后缀时，系统会根据 `file_format` 自动添加后缀。
-        - 现已支持将Mindspore function (ms_function) 导出成MINDIR格式文件。
-        - 当导出ms_function时，函数内不能包含有类属性参与的计算。
+        - 现已支持将 `jit` 修饰的函数导出成MINDIR格式文件。
+        - 当导出 `jit` 修饰的函数时，函数内不能包含有类属性参与的计算。
 
     参数：
-        - **net** (Union[Cell, ms_function]) - MindSpore网络结构。
+        - **net** (Union[Cell, function]) - MindSpore网络结构。
         - **inputs** (Union[Tensor, Dataset, List, Tuple, Number, Bool]) - 网络的输入，如果网络有多个输入，需要一同传入。当传入的类型为 `Dataset` 时，将会把数据预处理行为同步保存起来。需要手动调整batch的大小，当前仅支持获取 `Dataset` 的 `image` 列。
         - **file_name** (str) - 导出模型的文件名称。
         - **file_format** (str) - MindSpore目前支持导出"AIR"，"ONNX"和"MINDIR"格式的模型。

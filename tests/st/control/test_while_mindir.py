@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore import context, ms_function
+from mindspore import context, jit
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load
 
@@ -59,7 +59,12 @@ def test_single_while():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-def test_ms_function_while():
+def test_jit_function_while():
+    """
+    Features: Control flow.
+    Description: Test while in @jit decorated function.
+    Expectation: No exception.
+    """
     context.set_context(mode=context.GRAPH_MODE)
     network = SingleWhileNet()
 
@@ -76,7 +81,7 @@ def test_ms_function_while():
     loaded_net = nn.GraphCell(graph)
     context.set_context(mode=context.PYNATIVE_MODE)
 
-    @ms_function
+    @jit
     def run_graph(x, y):
         outputs = loaded_net(x, y)
         return outputs

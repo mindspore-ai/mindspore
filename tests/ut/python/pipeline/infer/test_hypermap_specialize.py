@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -44,7 +44,7 @@ def test_hypermap_specialize_param():
     net = Net()
     hypermap = C.HyperMap()
 
-    @ms_function
+    @jit
     def hypermap_specialize_param():
         ret1 = hypermap(F.partial(net, factor1), (x, y))
         # List will be converted to Tuple in SimlifyDataStructurePass.

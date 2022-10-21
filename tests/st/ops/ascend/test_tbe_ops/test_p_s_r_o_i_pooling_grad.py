@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -29,7 +29,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.roi_pooling = G.PSROIPoolingGrad(input_size, spatial_scale, group_size, output_dim)
 
-    @ms_function
+    @jit
     def construct(self, x, rois):
         return self.roi_pooling(x, rois)
 

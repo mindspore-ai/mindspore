@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_for_in_if_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([1, 2, 3, 4, 5])
@@ -43,7 +43,7 @@ def test_for_in_if_list():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         x = list((1, 2, 3, 4, 5))
         if len(x) == 5:
@@ -60,7 +60,7 @@ def test_for_in_if_tuple_list():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         x = tuple([1, 2, 3, 4, 5])
         y = list((0, 1))
@@ -78,7 +78,7 @@ def test_for_in_if_numpy_list_len_max():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         x = np.array([1, 2, 3, 1, 1])
         y = list((4, 6, -2))

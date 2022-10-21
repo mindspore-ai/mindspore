@@ -19,7 +19,7 @@ import mindspore
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.utils.bprop_util import bprop
@@ -50,7 +50,7 @@ def test_InsertGradientOf_1():
         c = x * y
         return c
 
-    @ms_function
+    @jit
     def f(x, y):
         return grad_all(stop_test)(x, y)
 
@@ -81,11 +81,11 @@ def test_InsertGradientOf_2():
         c = x * y
         return c
 
-    @ms_function
+    @jit
     def f(x, y):
         return clip_test(x, y)
 
-    @ms_function
+    @jit
     def fd(x, y):
         return grad_all(clip_test)(x, y)
 

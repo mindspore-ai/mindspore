@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore import ms_function
+from mindspore import jit
 from mindspore.ops import jacfwd
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -52,8 +52,8 @@ def iteration_jac_function(x, y, z):
     return x ** 2 * y * z
 
 
-@ms_function
-def jac_wrap_with_ms_function(x, y, z):
+@jit
+def jac_wrap_with_jit_function(x, y, z):
     output = jacfwd(function, has_aux=True)(x, y, z)
     return output
 
@@ -152,10 +152,10 @@ def test_jac_multiple_inputs_multiple_outputs_cell_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_wrap_with_ms_function_graph():
+def test_jac_wrap_with_jit_function_graph():
     """
     Features: Function jacfwd.
-    Description: Test ops.jacfwd warpped with ms_function in graph mode.
+    Description: Test ops.jacfwd warpped with @jit decorated function in graph mode.
     Expectation: No exception.
     """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
@@ -164,7 +164,7 @@ def test_jac_wrap_with_ms_function_graph():
     expect_jac = np.array([[[[2, 0], [0, 0]], [[0, 4], [0, 0]]],
                            [[[0, 0], [6, 0]], [[0, 0], [0, 8]]]]).astype(np.float32)
     expect_aux = np.array([[0, 18], [-15, -8]]).astype(np.float32)
-    jac, aux = jac_wrap_with_ms_function(x, y, z)
+    jac, aux = jac_wrap_with_jit_function(x, y, z)
     assert np.allclose(jac.asnumpy(), expect_jac)
     assert np.allclose(aux.asnumpy(), expect_aux)
 

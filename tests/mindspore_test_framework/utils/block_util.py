@@ -21,7 +21,7 @@ import numpy as np
 
 from mindspore import ParameterTuple
 from mindspore import nn, context
-from mindspore.common.api import _cell_graph_executor, ms_function
+from mindspore.common.api import _cell_graph_executor, jit
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -53,7 +53,7 @@ def run_block(net, *inputs, rand_func=None, training=True):
     set_block_param_with_rand(net, rand_func)
     if context.get_context("mode") == context.PYNATIVE_MODE:
         def func_pynative(*inputs):
-            @ms_function
+            @jit
             def _func_pynative(*inputs):
                 return net(*inputs)
 

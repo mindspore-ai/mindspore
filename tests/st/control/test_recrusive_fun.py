@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import mindspore.context as context
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype
 from mindspore import ops
 import mindspore.nn as nn
@@ -23,7 +23,7 @@ ZERO = Tensor([0], mstype.int32)
 ONE = Tensor([1], mstype.int32)
 
 
-@ms_function
+@jit
 def f(x):
     y = ZERO
     if x < 0:
@@ -38,7 +38,7 @@ def f(x):
     return z
 
 
-@ms_function
+@jit
 def fr(x):
     y = ZERO
     if x < 0:
@@ -53,7 +53,7 @@ def fr(x):
     return z
 
 
-@ms_function
+@jit
 def f_pythonerr(x):
     if x > 0:
         return f_pythonerr(x - 1)
@@ -69,7 +69,7 @@ def test_python_error():
         assert 'not defined' in str(e)
 
 
-@ms_function
+@jit
 def f_recrusive_endless(x):
     if x > 0:
         return f_recrusive_endless(x - 1)
@@ -94,7 +94,7 @@ def test_endless():
         assert 'loop' in str(e)
 
 
-@ms_function
+@jit
 def f_ok(x):
     if x > 0:
         return f_ok(x - 1) + 1

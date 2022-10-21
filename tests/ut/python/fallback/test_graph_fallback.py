@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.probability import distribution
@@ -33,7 +33,7 @@ def add_func(x, y):
     return x + y
 
 
-@ms_function
+@jit
 def do_increment(i):
     add_1 = F.partial(add_func, 1)
     return add_1(i)
@@ -44,7 +44,7 @@ def test_increment():
     assert a == 10
 
 
-@ms_function
+@jit
 def use_monad(x, y):
     res = P.Mul()(x, y)
     res = F.depend(res, monad.U)
@@ -57,7 +57,7 @@ def test_use_monad():
     print(use_monad(x, y))
 
 
-@ms_function
+@jit
 def use_tuple_of_tensor():
     me_x = (Tensor(1), Tensor(1))
     return me_x
@@ -72,7 +72,7 @@ def test_tuple_of_tensor():
     print(use_tuple_of_tensor())
 
 
-@ms_function
+@jit
 def use_list_of_tensor():
     me_x = [Tensor(1), Tensor(1)]
     return me_x
@@ -104,7 +104,7 @@ def test_builtins_len():
     net()
 
 
-@ms_function
+@jit
 def np_fallback_func():
     array_x = tuple([2, 3, 4, 5])
     np_x = np.array(array_x).astype(np.float32)
@@ -118,7 +118,7 @@ def test_np_fallback_func():
 
 
 # Test `return` interpret node.
-@ms_function
+@jit
 def div_mod_func1():
     x = 8
     y = 3
@@ -131,7 +131,7 @@ def test_div_mod_func1():
 
 
 # Test interpret node with parameters as input.
-@ms_function
+@jit
 def div_mod_func2(x, y):
     a = divmod(x, y)
     return Tensor(a)
@@ -158,7 +158,7 @@ def test_div_mod_func2_tensor():
     assert "Not support Tensor or variable type as input during running JIT Fallback, but got" in str(err.value)
 
 
-@ms_function
+@jit
 def select_func(cond, x, y):
     if isinstance(cond, (tuple, list)):
         output = y
@@ -176,7 +176,7 @@ def test_select_func():
     print(select_func(cond, x, y))
 
 
-@ms_function
+@jit
 def select_func2(cond, x, y):
     if isinstance(cond, (tuple, list)):
         output = y
@@ -194,7 +194,7 @@ def test_select_func2():
     print(select_func2(cond, x, y))
 
 
-@ms_function
+@jit
 def slice_func(a, b):
     a[1:3, ::] = b
     return a

@@ -19,7 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore import Tensor
 from mindspore.ops.operations.image_ops import AdjustHue
 
@@ -29,7 +29,7 @@ class AdHue(nn.Cell):
         super().__init__()
         self.adjusthue = AdjustHue()
 
-    @ms_function
+    @jit
     def construct(self, input_images, hue_delta):
         return self.adjusthue(input_images, hue_delta)
 

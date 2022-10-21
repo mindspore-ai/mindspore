@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -295,7 +295,7 @@ def test_fallback_enumerate_with_numpy():
     Description: Test enumerate in graph mode with numpy input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2])
         y = enumerate(x)

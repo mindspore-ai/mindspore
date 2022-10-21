@@ -14,7 +14,7 @@
 # ============================================================================
 """test python built-in functions in graph mode"""
 import pytest
-from mindspore import Tensor, context, ms_function
+from mindspore import Tensor, context, jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -30,7 +30,7 @@ def test_fallback_bool_with_input_tensor():
     Description: Test bool() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([10])
         return bool(x)

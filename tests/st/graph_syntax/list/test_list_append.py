@@ -15,7 +15,7 @@
 """ test list append operation """
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor, dtype
+from mindspore import jit, context, Tensor, dtype
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 
@@ -34,7 +34,7 @@ def test_list_append_1():
     Description: support list append.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_append():
         x = [1, 3, 4]
         x.append(2)
@@ -54,7 +54,7 @@ def test_list_append_2():
     Description: support list append.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def list_append():
         x = [1, 2, 3]
         x.append(4)

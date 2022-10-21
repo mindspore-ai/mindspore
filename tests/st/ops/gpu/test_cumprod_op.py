@@ -22,7 +22,7 @@ from mindspore import Tensor
 import mindspore.context as context
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 def cum_prod(nptype):
@@ -73,7 +73,7 @@ def cum_prod(nptype):
             self.x6 = Tensor(x6)
             self.axis6 = axis6
 
-        @ms_function
+        @jit
         def construct(self):
             output = (P.CumProd()(self.x0, self.axis0),
                       P.CumProd()(self.x1, self.axis1),

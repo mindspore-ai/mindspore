@@ -86,7 +86,7 @@ class Shard(Shard_):
         def shard_fn(*args):
             args = (fn,) + args
 
-            @ms.common.ms_function(hash_args=fn)
+            @ms.common.jit(hash_args=fn)
             def after_shard(*args):
                 return shard_(fn, in_strategy, out_strategy, parameter_plan, device, level)(*args)
 

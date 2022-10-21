@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_high_order_grad """
 from mindspore import context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 import mindspore.ops.composite as C
 
 
@@ -42,7 +42,7 @@ def second_derivative(x):
     return grad(first_derivative)(x)
 
 
-@ms_function
+@jit
 def third_derivative(x):
     """ third_derivative """
     return grad(second_derivative)(x)
@@ -59,7 +59,7 @@ def first_derivative_all(x):
     return grad_all(single)(x)[0]
 
 
-@ms_function
+@jit
 def second_derivative_all(x):
     """ second_derivative_all """
     return grad_all(first_derivative_all)(x)[0]
@@ -84,7 +84,7 @@ def second_derivative_dual(x, y):
     return dfdx, dfdy
 
 
-@ms_function
+@jit
 def third_derivative_dual(x, y):
     """ third_derivative_dual """
     grad_fn = grad_all_with_sens(second_derivative_dual)
@@ -105,7 +105,7 @@ def first_derivative_if(x):
     return grad(if_test)(x)
 
 
-@ms_function
+@jit
 def second_derivative_if(x):
     """ second_derivative_if """
     return grad(first_derivative_if)(x)

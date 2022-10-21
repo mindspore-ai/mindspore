@@ -18,7 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
@@ -33,7 +33,7 @@ class BatchToSpaceNet(nn.Cell):
         self.x1 = Parameter(initializer(Tensor(data_np), input_shape), name='x1')
 
 
-    @ms_function
+    @jit
     def construct(self):
         y1 = self.BatchToSpace(self.x1)
         return y1

@@ -238,7 +238,7 @@ def resolve_symbol(namespace, symbol):
             if namespace.name == "numpy" and \
                 isinstance(resolve_, (types.FunctionType, types.MethodType, types.ModuleType)):
                 raise NotImplementedError("Mindspore does not support to use the numpy methods " \
-                                          "within the construct() or @ms_function decorated function in graph mode.")
+                                          "within the construct() or @jit decorated function in graph mode.")
 
         # If need trope the obj
         if resolve_ in convert_object_map:
@@ -539,7 +539,7 @@ def is_class_type(cls):
 
 
 def get_ms_class_name(cls):
-    """Get the name of the class instance decorated by ms_class."""
+    """Get the name of the class instance decorated with jit_class."""
     if isinstance(cls, type):
         return cls.__name__
     return cls.__class__.__name__

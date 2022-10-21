@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
@@ -48,7 +48,7 @@ class UnstackNet(nn.Cell):
                                     [14, 15]]]]]).astype(nptype)
         self.x1 = Parameter(initializer(Tensor(self.data_np), [2, 2, 2, 2, 2]), name='x1')
 
-    @ms_function
+    @jit
     def construct(self):
         return self.unstack(self.x1)
 

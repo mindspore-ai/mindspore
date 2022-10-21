@@ -26,7 +26,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common import ms_function
+from mindspore.common import jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -668,7 +668,7 @@ def test_while_in_while():
     c3 = Tensor(3, dtype=ms.int32)
     c4 = Tensor(4, dtype=ms.int32)
 
-    @ms_function
+    @jit
     def while_in_while(x, y, z, u):
         out = c4
         while x < y:

@@ -15,7 +15,7 @@
 import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore.ops import composite as C
 from mindspore import context
 
@@ -83,7 +83,7 @@ def test_single_while():
     Description: The else branches of while loops aren't supported.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_while(x, y):
         while x > y:
             y += x

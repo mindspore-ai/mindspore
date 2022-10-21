@@ -15,7 +15,7 @@
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
@@ -26,7 +26,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.npu_alloc_float_status = P.NPUAllocFloatStatus()
 
-    @ms_function
+    @jit
     def construct(self):
         return self.npu_alloc_float_status()
 

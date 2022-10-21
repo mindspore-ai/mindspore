@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore.ops.operations.other_ops as P
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class BartlettWindowNet(nn.Cell):
@@ -28,7 +28,7 @@ class BartlettWindowNet(nn.Cell):
         super(BartlettWindowNet, self).__init__()
         self.bartlettwindow = P.BartlettWindow(periodic=periodic, dtype=dtype)
 
-    @ms_function
+    @jit
     def construct(self, input_x):
         return self.bartlettwindow(input_x)
 

@@ -14,7 +14,7 @@
 # ==============================================================================
 import pytest
 import mindspore as ms
-from mindspore import context, Tensor, ms_function
+from mindspore import context, Tensor, jit
 from mindspore.common.parameter import Parameter
 from mindspore.common import ParameterTuple
 
@@ -33,7 +33,7 @@ def test_parameter_ms_function_1(mode):
     param_a = Parameter(Tensor([1], ms.float32), name="name_a")
     param_b = Parameter(Tensor([2], ms.float32), name="name_a")
 
-    @ms_function
+    @jit
     def test_parameter_ms_function():
         return param_a + param_b
 
@@ -57,7 +57,7 @@ def test_parameter_ms_function_2(mode):
     param_a = Parameter(Tensor([1], ms.float32), name="name_a")
     param_b = param_a
 
-    @ms_function
+    @jit
     def test_parameter_ms_function():
         return param_a + param_b
 
@@ -80,7 +80,7 @@ def test_parameter_ms_function_3(mode):
     param_a = Parameter(Tensor([1], ms.float32))
     param_b = Parameter(Tensor([2], ms.float32))
 
-    @ms_function
+    @jit
     def test_parameter_ms_function():
         return param_a + param_b
 
@@ -105,7 +105,7 @@ def test_parameter_ms_function_4(mode):
         param_a = ParameterTuple((Parameter(Tensor([1], ms.float32), name="name_a"),
                                   Parameter(Tensor([2], ms.float32), name="name_a")))
 
-        @ms_function
+        @jit
         def test_parameter_ms_function():
             return param_a[0] + param_a[1]
 
@@ -128,7 +128,7 @@ def test_parameter_ms_function_5(mode):
     with pytest.raises(ValueError, match="its name 'Parameter' already exists."):
         param_a = ParameterTuple((Parameter(Tensor([1], ms.float32)), Parameter(Tensor([2], ms.float32))))
 
-        @ms_function
+        @jit
         def test_parameter_ms_function():
             return param_a[0] + param_a[1]
 

@@ -136,8 +136,10 @@ mindspore
     :toctree: mindspore
 
     mindspore.JitConfig
-    mindspore.ms_function
+    mindspore.jit
+    mindspore.jit_class
     mindspore.ms_class
+    mindspore.ms_function
     mindspore.mutable
 
 日志

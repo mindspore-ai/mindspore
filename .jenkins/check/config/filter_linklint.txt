@@ -23,6 +23,7 @@ https://arxiv.org/abs/1409.3215-
 https://arxiv.org/abs/1706.02515alpha
 https://discuss.tvm.ai/t/pool2d-gives-bad-output-for-integer-inputs/3377low
 http://www.apache.org/licenses/LICENSE-2.0////
+http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.21.1417
 https://raw.githubusercontent.com/tvmai/tvmai.github.io/master/images/docs/inferbound/gatherbound.png:align
 https://raw.githubusercontent.com/tvmai/tvmai.github.io/master/images/docs/inferbound/inferbound_traversal.png:align
 https://raw.githubusercontent.com/tvmai/tvmai.github.io/master/images/relay/let_scope.png:align

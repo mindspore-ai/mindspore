@@ -16,7 +16,7 @@
 import operator
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -27,7 +27,7 @@ def test_fallback_list_with_input_tuple():
     Description: Test list() in graph mode with tuple input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list((1, 2, 3))
         x.append(4)
@@ -43,7 +43,7 @@ def test_fallback_list_with_input_list():
     Description: Test list() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list([1, 2, 3])
         x.append(4)
@@ -59,7 +59,7 @@ def test_fallback_list_with_input_dict():
     Description: Test list() in graph mode with dict input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list({'a': 1, 'b': 2, 'c': 3})
         x.append('d')
@@ -75,7 +75,7 @@ def test_fallback_list_with_input_numpy_array():
     Description: Test list() in graph mode with numpy aray.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list(np.array([1, 2, 3]))
         x.append(4)
@@ -90,7 +90,7 @@ def test_fallback_list_with_empty_input():
     Description: Test list() in graph mode with empty input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list()
         if isinstance(x, list):
@@ -108,7 +108,7 @@ def test_fallback_list_with_input_number():
     Description: Test list() in graph mode with number input.
     Expectation: TypeError.
     """
-    @ms_function
+    @jit
     def foo():
         x = list(1)
         return x
@@ -123,7 +123,7 @@ def test_fallback_tuple_with_input_list():
     Description: Test tuple() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = tuple([1, 2, 3])
         return x
@@ -138,7 +138,7 @@ def test_fallback_tuple_with_input_tuple():
     Description: Test tuple() in graph mode with tuple input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = tuple((1, 2, 3))
         return x
@@ -153,7 +153,7 @@ def test_fallback_tuple_with_input_dict():
     Description: Test tuple() in graph mode with dict input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = tuple({'a': 1, 'b': 2, 'c': 3})
         return x
@@ -168,7 +168,7 @@ def test_fallback_tuple_with_input_numpy_array():
     Description: Test tuple() in graph mode with numpy aray.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = tuple(np.array([1, 2, 3]))
         return Tensor(x)
@@ -182,7 +182,7 @@ def test_fallback_tuple_with_empty_input():
     Description: Test tuple() in graph mode with empty input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = tuple()
         if isinstance(x, tuple):
@@ -200,7 +200,7 @@ def test_fallback_tuple_with_input_number():
     Description: Test tuple() in graph mode with number input.
     Expectation: TypeError.
     """
-    @ms_function
+    @jit
     def foo():
         x = tuple(1)
         return x

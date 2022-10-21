@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
-from mindspore import ms_function, Tensor
+from mindspore import jit, Tensor
 
 
 def test_fallback_bool_int():
@@ -23,7 +23,7 @@ def test_fallback_bool_int():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = bool(int)
         return x
@@ -38,7 +38,7 @@ def test_fallback_bool_empty():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = bool()
         return x
@@ -52,7 +52,7 @@ def test_fallback_bool_seq():
     Description: Test bool(sequence) in graph mode.
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x1 = bool([1, 2, 3, 4])
         y1 = bool((1, 2))
@@ -70,7 +70,7 @@ def test_fallback_bool_str():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = bool("")
         y = bool("123")
@@ -87,7 +87,7 @@ def test_fallback_bool_none_and_complex():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x1 = bool(None)
         x2 = bool(complex(0, 0))
@@ -106,7 +106,7 @@ def test_fallback_bool_tensor():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = bool(Tensor([1]))
         y = bool(Tensor([0]))
@@ -122,7 +122,7 @@ def test_fallback_bool_tensor_construct():
     Description: Test bool(Tensor) in graph mode.
     Expectation: No exception
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([1])
         y = Tensor([0])

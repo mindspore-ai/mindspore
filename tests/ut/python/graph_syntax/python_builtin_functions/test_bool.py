@@ -15,7 +15,7 @@
 """ test graph fallback buildin python function bool"""
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_bool_with_input_tensor():
     Description: Test bool() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return bool(x)
     with pytest.raises(ValueError) as ex:
@@ -40,7 +40,7 @@ def test_fallback_bool_with_input_tensor_3():
     Description: Test bool() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([0])
         return bool(x)
@@ -54,7 +54,7 @@ def test_fallback_bool_with_input_tensor_4():
     Description: Test bool() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([1, 2, 3])
         return bool(x)
@@ -70,7 +70,7 @@ def test_fallback_bool_with_input_scalar():
     Description: Test bool() in graph mode with scalar input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return bool(10.0)
 
@@ -83,7 +83,7 @@ def test_fallback_bool_with_input_list():
     Description: Test bool() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3]
         return bool(x)
@@ -97,7 +97,7 @@ def test_fallback_bool_with_input_list_2():
     Description: Test bool() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(a):
         x = [1, 2, 3, a]
         return bool(x)
@@ -111,7 +111,7 @@ def test_fallback_bool_with_input_string():
     Description: Test bool() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return bool("test")
 
@@ -124,7 +124,7 @@ def test_fallback_bool_with_input_string_2():
     Description: Test bool() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return bool("")
 
@@ -137,7 +137,7 @@ def test_fallback_bool_with_input_numpy():
     Description: Test bool() in graph mode with numpy input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         return bool(x)
@@ -153,7 +153,7 @@ def test_fallback_bool_with_input_numpy_2():
     Description: Test bool() in graph mode with numpy input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1,])
         return bool(x)
@@ -167,7 +167,7 @@ def test_fallback_bool_with_no_input():
     Description: Test bool() in graph mode with no input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return bool()
 
@@ -180,7 +180,7 @@ def test_fallback_bool_with_type_input():
     Description: Test bool() in graph mode with type input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return bool(int)
 

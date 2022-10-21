@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
@@ -25,7 +25,7 @@ from mindspore.nn import Cell
 add = P.Add()
 hyper_map = C.HyperMap()
 
-@ms_function
+@jit
 def main_noleaf(x, y):
     return hyper_map(add, x, y)
 

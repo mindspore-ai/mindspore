@@ -921,7 +921,7 @@ bool CheckGraphOutputConstOrParameter(const FuncGraphPtr &func_graph) {
 }
 
 bool EliminateForwardCNode(const ResourcePtr &resource) {
-  // This function only works in Pynative mode. The func_graph is decorated by ms_function.
+  // This function only works in Pynative mode. The func_graph is decorated with 'jit'.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     return true;
   }

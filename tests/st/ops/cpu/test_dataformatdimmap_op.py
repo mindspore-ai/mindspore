@@ -20,7 +20,7 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.api import _pynative_executor
 
 
@@ -77,7 +77,7 @@ def test_data_formata_dim_map_vmap(data_type):
     output_vmap = vmap(data_formata_dim_map_fun, in_axes=(0,))(x)
     _pynative_executor.sync()
 
-    @ms_function
+    @jit
     def manually_batched(xs):
         """manually_batched"""
         output = []

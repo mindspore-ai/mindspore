@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.functional import vmap
@@ -34,7 +34,7 @@ class StridedSliceGrad(nn.Cell):
         self.ssg = G.StridedSliceGrad()
         self.shape = P.Shape()
 
-    @ms_function
+    @jit
     def construct(self, dy, x):
         return self.ssg(dy, self.shape(x), (2, 0, 0), (3, 2, 3), (1, 1, 1))
 
@@ -57,7 +57,7 @@ class StridedSliceGrad2(nn.Cell):
         self.ssg = G.StridedSliceGrad()
         self.shape = P.Shape()
 
-    @ms_function
+    @jit
     def construct(self, dy, x):
         return self.ssg(dy, self.shape(x), (0, 0, 0), (1, 4, 2), (1, 1, 1))
 

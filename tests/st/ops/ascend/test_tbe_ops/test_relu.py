@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend", mode=context.GRAPH_MODE, variable_memory_max_size="31GB")
@@ -28,7 +28,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.relu = P.ReLU()
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.relu(x)
 

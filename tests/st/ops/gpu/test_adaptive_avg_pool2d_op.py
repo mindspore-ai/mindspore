@@ -22,7 +22,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, ops
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -33,7 +33,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.adaptive_avg_pool2d = P.AdaptiveAvgPool2D(output_size)
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.adaptive_avg_pool2d(x)
 
@@ -43,7 +43,7 @@ class GradNet(nn.Cell):
         super(GradNet, self).__init__()
         self.adaptive_avg_pool2d_grad = G.AdaptiveAvgPool2DGrad()
 
-    @ms_function
+    @jit
     def construct(self, x, dy):
         return self.adaptive_avg_pool2d_grad(x, dy)
 

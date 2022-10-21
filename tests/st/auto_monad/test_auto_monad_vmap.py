@@ -14,7 +14,7 @@
 # ==============================================================================
 import pytest
 import mindspore.nn as nn
-from mindspore import context, Tensor, Parameter, ms_function
+from mindspore import context, Tensor, Parameter, jit
 import mindspore.ops.operations as P
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
@@ -44,7 +44,7 @@ def test_monad_vmap():
 
     vampfunc = F.vmap(AssignNet())
 
-    @ms_function
+    @jit
     def test_monad(a):
         c = Tensor([[1, 2], [3, 4], [5, 6]], mstype.int32)
         out = vampfunc(a)

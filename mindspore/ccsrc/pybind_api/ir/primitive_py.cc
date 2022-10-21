@@ -373,8 +373,7 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
       py::object co_name = py::getattr(code_obj, "co_name");
       if (std::string(py::str(co_name)) == "staging_specialize") {
         py::object name_obj = py::getattr(elem.second, "__name__");
-        MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj)
-                          << " with '@ms_function' is not supported.";
+        MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@jit' is not supported.";
       }
       SyncData(grad_output);
       py::tuple hook_fn_args = ConstructCellHookFnArgs(cell_id, iter->second, grad_output);
@@ -404,7 +403,7 @@ BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
     py::object co_name = py::getattr(code_obj, "co_name");
     if (std::string(py::str(co_name)) == "staging_specialize") {
       py::object name_obj = py::getattr(elem.second, "__name__");
-      MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@ms_function' is not supported.";
+      MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@jit' is not supported.";
     }
     SyncData(grad_output);
     py::object ret = elem.second(py::make_tuple(grad_output));

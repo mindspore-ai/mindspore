@@ -20,7 +20,7 @@ import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 from mindspore.ops import operations as P
 
 
@@ -85,12 +85,12 @@ def test_functional_select_scalar():
     assert np.all(-diff < error)
 
 
-@ms_function
+@jit
 def select_tensor_fn(condition, x, y):
     return x.select(condition, y)
 
 
-@ms_function
+@jit
 def select_ops_fn(condition, x, y):
     return ops.select(condition, x, y)
 

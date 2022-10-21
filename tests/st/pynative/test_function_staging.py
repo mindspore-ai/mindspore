@@ -19,7 +19,7 @@ from mindspore import context
 from mindspore.nn import ReLU
 from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -40,7 +40,7 @@ def test_pynative_staging_together():
         def __init__(self):
             super().__init__()
             self.relu = ReLU()
-        @ms_function
+        @jit
         def construct(self, x):
             return self.relu(x)
 

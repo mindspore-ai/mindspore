@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
@@ -41,7 +41,7 @@ def add_tensor(x, y):
     return tensor_add(x, y)
 
 
-@ms_function
+@jit
 def mainf(x, y):
     return add(x, y)
 
@@ -77,7 +77,7 @@ def add_tensor2(x, y):
     return tensor_add(x, y)
 
 
-@ms_function
+@jit
 def mainf2(x, y):
     return add2(x, y)
 

@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 def cum_sum(nptype):
@@ -70,7 +70,7 @@ def cum_sum(nptype):
             self.x6 = Tensor(x6)
             self.axis6 = axis6
 
-        @ms_function
+        @jit
         def construct(self):
             return (P.CumSum()(self.x0, self.axis0),
                     P.CumSum()(self.x1, self.axis1),

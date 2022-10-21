@@ -19,7 +19,7 @@
 @Desc  : parser test function.
 """
 import logging
-from mindspore import ms_class
+from mindspore import jit_class
 
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
@@ -222,7 +222,7 @@ def testDoNamedConstFalse():
 
 
 # Test_Class_type
-@ms_class
+@jit_class
 class TestFoo:
     def __init__(self, x, y):
         self.x = x

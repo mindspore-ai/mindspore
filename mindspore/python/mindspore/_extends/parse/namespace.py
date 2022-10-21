@@ -119,7 +119,7 @@ class ClassMemberNamespace(Namespace):
         except ValueError:
             raise UnboundLocalError(name)
         except KeyError:
-            # Check if cls is user-defined class decorated with ms_class. If true, an exception will be thrown.
+            # Check if cls is user-defined class decorated with jit_class. If true, an exception will be thrown.
             cls = d.__class__
             if hasattr(cls, '__ms_class__'):
                 raise NotImplementedError(f"'{cls.__name__ }' object has no attribute or method: '{name}'.")

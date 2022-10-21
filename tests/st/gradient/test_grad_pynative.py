@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore import ms_function
+from mindspore import jit
 from mindspore.ops import composite as C
 from mindspore.ops import grad, value_and_grad, vmap
 from mindspore.common import dtype as mstype
@@ -66,7 +66,7 @@ def iteration_grad_function(x, y, z):
     return x ** 2 * y * z
 
 
-@ms_function
+@jit
 def grad_wrap_with_msfunction(x, y, z):
     output = grad(function)(x, y, z)
     return output
@@ -175,7 +175,7 @@ def test_grad_iteration_function_pynative():
 def test_grad_wrap_with_msfunction_pynative():
     """
     Features: Function grad.
-    Description: Test F.grad wrapped with ms_function in pynative mode.
+    Description: Test F.grad wrapped with @jit decorated function in pynative mode.
     Expectation: No exception.
     """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))

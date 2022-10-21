@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype
-from mindspore import context, Tensor, Parameter, ParameterTuple, ms_function
+from mindspore import context, Tensor, Parameter, ParameterTuple, jit
 import mindspore.ops as ops
 
 
@@ -25,15 +25,15 @@ class NetWithParamInput(nn.Cell):
         super(NetWithParamInput, self).__init__()
         self.w = Parameter(Tensor([6], mstype.float32))
 
-    @ms_function
+    @jit
     def construct(self, x, y):
         return (x + y) * self.w
 
 
 def test_ms_func_parameter_input():
     """
-    Feature: ms_function support parameter as input in PyNative Mode.
-    Description: Using parameter as input for ms_function.
+    Feature: Functions decorated with jit support parameter as input in PyNative Mode.
+    Description: Using parameter as input for functions decorated with jit.
     Expectation: Calculation result is correct.
     """
     context.set_context(mode=context.PYNATIVE_MODE)

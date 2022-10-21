@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations._grad_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class TraceGradNet(nn.Cell):
@@ -27,7 +27,7 @@ class TraceGradNet(nn.Cell):
         super(TraceGradNet, self).__init__()
         self.trace = P.TraceGrad()
 
-    @ms_function
+    @jit
     def construct(self, y_grad, x_shape):
         return self.trace(y_grad, x_shape)
 

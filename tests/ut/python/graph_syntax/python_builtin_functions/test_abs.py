@@ -16,7 +16,7 @@
 import math
 import numpy as np
 
-from mindspore import ms_function, context, Tensor, nn
+from mindspore import jit, context, Tensor, nn
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -28,7 +28,7 @@ def test_fallback_abs_integer():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = -1
         return abs(x)
@@ -43,7 +43,7 @@ def test_fallback_abs_float():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = -1.0
         return abs(x)
@@ -58,7 +58,7 @@ def test_fallback_abs_complex():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = complex(-1, 2)
         return abs(x)
@@ -73,7 +73,7 @@ def test_fallback_abs_numpy():
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = abs(np.array([1, -2, 3])) + 1
         return Tensor(x)
@@ -116,14 +116,14 @@ def test_fallback_abs_cell_init_tensor():
     assert np.allclose(test_cell().asnumpy(), np.array([1, 2]))
 
 
-def test_fallback_abs_ms_function_tensor():
+def test_fallback_abs_jit_decorated_function_tensor():
     """
     Feature: JIT Fallback
-    Description: Test abs(Tensor) the tensor is construct in ms_function
+    Description: Test abs(Tensor) in graph mode
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         x = abs(Tensor(np.array([1, -2, 3])))
         return x
@@ -134,11 +134,11 @@ def test_fallback_abs_ms_function_tensor():
 def test_fallback_isolated_node():
     """
     Feature: JIT Fallback
-    Description: Test abs(Tensor) the tensor is construct in ms_function
+    Description: Test abs(Tensor) in graph mode
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         a = abs(-1)
         abs(2)
@@ -149,11 +149,11 @@ def test_fallback_isolated_node():
 def test_fallback_tensor_one_element():
     """
     Feature: JIT Fallback
-    Description: Test abs(Tensor) the tensor is construct in ms_function
+    Description: Test abs(Tensor) in graph mode
     Expectation: No exception
     """
 
-    @ms_function
+    @jit
     def foo():
         a = abs(Tensor(-1))
         return a

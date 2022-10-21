@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 from mindspore.ops.primitive import constexpr
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 def _temp_func():
@@ -27,7 +27,7 @@ def _is_need_compile(func):
     return func is None
 
 
-@ms_function
+@jit
 def run_in_ms_function():
     return _is_need_compile(_temp_func)
 

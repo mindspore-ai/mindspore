@@ -21,7 +21,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn
 from mindspore import context
-from mindspore import ms_function
+from mindspore import jit
 from mindspore import Tensor
 from tests.security_utils import security_off_wrap
 
@@ -40,8 +40,13 @@ def remove_path(path):
 
 
 @security_off_wrap
-def test_ms_function():
-    @ms_function
+def test_jit():
+    """
+    Features: Debug info
+    Description: Test debug info with @jit decorated function.
+    Expectation: No exception.
+    """
+    @jit
     def add(x):
         return x + 1
 
@@ -49,17 +54,22 @@ def test_ms_function():
     context.set_context(save_graphs=True, save_graphs_path="ir_dump_path")
     input1 = np.random.randn(5, 5)
     add(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:46/        return x + 1/")
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:51/        return x + 1/")
     assert result == '2'
     remove_path("./ir_dump_path/")
     context.set_context(save_graphs=False)
 
 
 @security_off_wrap
-def test_cell_ms_function():
+def test_cell_jit():
+    """
+    Features: Debug info
+    Description: Test debug info with @jit decorated function.
+    Expectation: No exception.
+    """
     class Net(nn.Cell):
 
-        @ms_function
+        @jit
         def construct(self, x):
             return x
 
@@ -68,7 +78,7 @@ def test_cell_ms_function():
     input1 = np.random.randn(5, 5)
     net = Net()
     net(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:64/            return x/")
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:74/            return x/")
     assert result == '1'
     remove_path("./ir_dump_path/")
     context.set_context(save_graphs=False)

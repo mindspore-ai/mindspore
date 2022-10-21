@@ -503,7 +503,7 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::args &
 
   py::object co_name = py::getattr(code_obj, "co_name");
   if (std::string(py::str(co_name)) == "staging_specialize") {
-    MS_LOG(EXCEPTION) << "Decorating bprop with '@ms_function' is not supported.";
+    MS_LOG(EXCEPTION) << "Decorating bprop with '@jit' is not supported.";
   }
   // Three parameters self, out and dout need to be excluded
   const size_t inputs_num = static_cast<size_t>(py::cast<int64_t>(py::getattr(code_obj, "co_argcount")) - 3);

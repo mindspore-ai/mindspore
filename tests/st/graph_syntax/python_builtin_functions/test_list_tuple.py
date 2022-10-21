@@ -15,7 +15,7 @@
 """test python built-in functions in graph mode"""
 import pytest
 import numpy as np
-from mindspore import Tensor, context, ms_function
+from mindspore import Tensor, context, jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,7 +31,7 @@ def test_fallback_list_with_input_constant_tensor():
     Description: Test list() in graph mode with constant tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list(Tensor([1, 2, 3]))
         x.append(Tensor([4]))
@@ -60,7 +60,7 @@ def test_fallback_list_with_input_constant_tensor_2():
     Description: Test list() in graph mode with constant tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list(Tensor([[1, 2], [3, 4]]))
         x.append(Tensor([5, 6]))
@@ -87,7 +87,7 @@ def test_builtin_function_list_with_non_constant_tensor():
     Description: When the input to list() is non constant tensor, list function will return correct result.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return list(x)
 
@@ -108,7 +108,7 @@ def test_fallback_tuple_with_input_constant_tensor():
     Description: Test tuple() in graph mode with constant tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = tuple(Tensor([1, 2, 3]))
         return x
@@ -134,7 +134,7 @@ def test_fallback_tuple_with_input_constant_tensor_2():
     Description: Test tuple() in graph mode with constant tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = list(Tensor([[1, 2], [3, 4]]))
         return x
@@ -158,7 +158,7 @@ def test_builtin_function_tuple_with_non_constant_tensor():
     Description: When the input to tuple() is non constant tensor, list function will return correct result.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return tuple(x)
 

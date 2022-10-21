@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_dict_get """
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -24,7 +24,7 @@ def test_dict_get_1():
     Description: support dict get.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_1():
         x = {'a': 1, 'b': 2}
         res = x.get('a')
@@ -39,7 +39,7 @@ def test_dict_get_2():
     Description: support dict get.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_2():
         x = {'aa': 1, 'bb': 2}
         res = x.get('c')
@@ -55,7 +55,7 @@ def test_dict_get_3():
     Description: support dict get set default value.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_3():
         dict_x = {'a': 1, 'b': 2}
         the_key = 'a'
@@ -71,7 +71,7 @@ def test_dict_get_4():
     Description: support dict get set default value.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_4():
         dict_x = {'a': 1, 'b': 2}
         the_key = 'c'
@@ -87,7 +87,7 @@ def test_dict_get_5():
     Description: support dict get set default value.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_5():
         dict_x = {"x": Tensor([3]), "y": Tensor([5])}
         the_key = 'c'
@@ -103,7 +103,7 @@ def test_dict_get_6():
     Description: support dict get set default value.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_6():
         dict_x = {"1": Tensor(1), "2": (1, 2)}
         the_key = '2'
@@ -119,7 +119,7 @@ def test_dict_get_7():
     Description: support dict get set default value.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_7():
         dict_x = {"1": Tensor(1), "2": (1, 2)}
         the_value = dict_x.get("3", (3, 4))

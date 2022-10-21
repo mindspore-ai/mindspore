@@ -365,7 +365,7 @@ EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &a
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << abs->ToString() << ".";
     MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
     MS_EXCEPTION(ValueError) << "Can not call " << class_name << " to create python object in graph mode. "
-                             << "Try using ms_class to decorate the class?";
+                             << "Try using 'jit_class' to decorate the class?";
   }
   auto list_func_fg = parse::ParsePythonCode(py_fn);
   auto fg = cnode->func_graph();

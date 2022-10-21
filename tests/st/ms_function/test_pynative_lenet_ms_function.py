@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.nn.optim import Momentum
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.common.initializer import TruncatedNormal
@@ -45,7 +45,7 @@ class conv_relu_maxpool2d_1(nn.Cell):
         self.relu = nn.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = self.conv(x)
         x = self.relu(x)
@@ -62,7 +62,7 @@ class conv_relu_maxpool2d_2(nn.Cell):
         self.relu = nn.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = self.conv(x)
         x = self.relu(x)
@@ -76,7 +76,7 @@ class fc(nn.Cell):
         self.weight_variable = weight_variable()
         self.dense = nn.Dense(16 * 5 * 5, 120, self.weight_variable, self.weight_variable)
 
-    @ms_function
+    @jit
     def construct(self, x):
         x = self.dense(x)
         return x

@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.operations import _inner_ops as inner
 
 class Net(nn.Cell):
@@ -26,7 +26,7 @@ class Net(nn.Cell):
         self.centralization = inner.Centralization()
         self.axis = axis
 
-    @ms_function
+    @jit
     def construct(self, inputs):
         return self.centralization(inputs, self.axis)
 

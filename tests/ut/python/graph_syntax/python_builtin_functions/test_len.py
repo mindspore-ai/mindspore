@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore.common import mutable
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -28,7 +28,7 @@ def test_len_tensor():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         return len(x)
 
@@ -43,7 +43,7 @@ def test_len_tensor_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = Tensor([[1, 2, 3], [4, 5, 6]])
         return len(x)
@@ -59,7 +59,7 @@ def test_len_tuple():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         return len(x)
@@ -75,7 +75,7 @@ def test_len_tuple_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         a = [1, 2, 3, x, x]
         return len(a)
@@ -91,7 +91,7 @@ def test_len_tuple_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         a = [1, 2, 3, x, np.array([1, 2, 3, 4])]
         return len(a)
@@ -107,7 +107,7 @@ def test_len_tuple_4():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         return len(x)
 
@@ -123,7 +123,7 @@ def test_len_list():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         return len(x)
@@ -139,7 +139,7 @@ def test_len_list_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         return len(x)
 
@@ -155,7 +155,7 @@ def test_len_dict():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"1": 1, "2": 2}
         return len(x)
@@ -171,7 +171,7 @@ def test_len_numpy():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = np.array([[1, 2, 3], [0, 0, 0]])
         return len(x)

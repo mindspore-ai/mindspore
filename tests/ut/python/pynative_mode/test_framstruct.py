@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
@@ -38,7 +38,7 @@ grad_all = C.GradOperation(get_all=True)
 grad_by_list = C.GradOperation(get_by_list=True)
 
 
-@ms_function
+@jit
 def while_upper_bound(upper):
     rval = 2
     while rval < upper:
@@ -51,7 +51,7 @@ def test_while_upper_bound():
     assert res == 16
 
 
-@ms_function
+@jit
 def while_lower_bound(lower):
     """ t_while """
     rval = lower
@@ -65,7 +65,7 @@ def test_while_lower_bound():
     assert res == 256
 
 
-@ms_function
+@jit
 def dynamic_make_tuple(x, lower, upper):
     out = ()
     i = lower
@@ -81,7 +81,7 @@ def test_dynamic_make_tuple():
 
 def test_make_tuple():
     # Statically recursively creating static type is valid in mindspore.
-    @ms_function
+    @jit
     def make_tuple(x):
         out = ()
         for i in range(3):
@@ -92,7 +92,7 @@ def test_make_tuple():
     assert res == (5, 5, 5)
 
 
-@ms_function
+@jit
 def add(x, y):
     """ add """
     return x + y
@@ -118,14 +118,14 @@ def grad_add_mul(x, y):
     return grad_all(add_mul)(x, y)
 
 
-@ms_function
+@jit
 def sub(x, y):
     """ sub """
     return x - y
 
 
 # pylint: disable=using-constant-test
-@ms_function
+@jit
 def if_always_true(x):
     """ if_always_true """
     if True:
@@ -173,7 +173,7 @@ def f(x):
     return x
 
 
-@ms_function
+@jit
 def list_subscript():
     """ list_subscript """
     x = [1, 2, 3]
@@ -186,7 +186,7 @@ def test_list_subscript():
     assert res == 2
 
 
-@ms_function
+@jit
 def ms_infer_for(xs, y):
     """ ms_infer_for """
     rval = y
@@ -203,7 +203,7 @@ def test_infer_for():
     assert res == 10
 
 
-@ms_function
+@jit
 def if_construct(a, b):
     z = a
     if a > b:
@@ -222,7 +222,7 @@ def test_if_construct():
     assert res == 15
 
 
-@ms_function
+@jit
 def if_scalar(a, b):
     """ if_abstract """
     if a:
@@ -242,7 +242,7 @@ def test_if_scalar2():
     assert res == 6
 
 
-@ms_function
+@jit
 def if_tensor(a, b):
     c = a
     if a < b:
@@ -331,7 +331,7 @@ c2 = Tensor([10], mstype.float32)
 c3 = Tensor([1], mstype.float32)
 
 
-@ms_function
+@jit
 def t1_while(x, y, z):
     out = x
     i = c1
@@ -350,7 +350,7 @@ def test_while_net():
     assert np.all(res.asnumpy() == np.ones([1, 16, 12, 12]).astype(np.float32) * 2306.0)
 
 
-@ms_function
+@jit
 def if_while(a, b, x, z):
     c = a
     i = c1
@@ -393,7 +393,7 @@ def test_grad_while():
     assert grad_while(Tensor(5, dtype=ms.int32)) == (60,)
 
 
-@ms_function
+@jit
 def factorial(n):
     """ factorial """
     if n == 0:
@@ -406,7 +406,7 @@ def test_factorial():
     assert res == 6
 
 
-@ms_function
+@jit
 def factorial2(n):
     """ factorial """
     if n != 0:
@@ -422,7 +422,7 @@ def test_factorial2():
     assert res == 6
 
 
-@ms_function
+@jit
 def foo(n):
     if n <= 1:
         if n == 1:
@@ -438,7 +438,7 @@ def test_foo():
     assert res == 1
 
 
-@ms_function
+@jit
 def double_nested_loop(x):
     i = 0
     s = 0
@@ -456,7 +456,7 @@ def test_nested_loop():
     assert res == 18
 
 
-@ms_function
+@jit
 def double_nested_loop2(x):
     s = 0
     for i in range(x):
@@ -478,13 +478,13 @@ def _for(x):
     return ret
 
 
-@ms_function
+@jit
 def grad_for(x):
     """ grad_for """
     return grad_all(_for)(x)
 
 
-@ms_function
+@jit
 def try_tail(x):
     """ try_tail """
     return C.tail(x)
@@ -496,7 +496,7 @@ def test_tail():
     try_tail((0, 1, 2, 3))
 
 
-@ms_function
+@jit
 def zero_like_tensor(x):
     """ zero_like_tensor """
     return C.zeros_like(x)
@@ -509,7 +509,7 @@ def test_zeros():
     assert np.all(res.asnumpy() == np.zeros([2, 3]).astype(np.int32))
 
 
-@ms_function
+@jit
 def arithmetic_simplify_01(x, y):
     """ arithmetic_simplify_01 """
     return C.zeros_like(x) * y
@@ -524,7 +524,7 @@ def test_arithmetic_simplify_01():
     assert np.all(res.asnumpy() == expect)
 
 
-@ms_function
+@jit
 def arithmetic_simplify_02(x, y):
     """ arithmetic_simplify_02 """
     return C.ones_like(x) * y
@@ -539,7 +539,7 @@ def test_arithmetic_simplify_02():
     assert np.all(res.asnumpy() == expect)
 
 
-@ms_function
+@jit
 def arithmetic_simplify_03(x, y):
     """ arithmetic_simplify_03 """
     return x * C.ones_like(y)
@@ -554,7 +554,7 @@ def test_arithmetic_simplify_03():
     assert np.all(res.asnumpy() == expect)
 
 
-@ms_function
+@jit
 def arithmetic_simplify_04(x):
     """ arithmetic_simplify_04 """
     return x + 0
@@ -568,7 +568,7 @@ def test_arithmetic_simplify_04():
     assert np.all(res.asnumpy() == expect)
 
 
-@ms_function
+@jit
 def arithmetic_simplify_05(x):
     """ arithmetic_simplify_05 """
     return x * 1
@@ -582,7 +582,7 @@ def test_arithmetic_simplify_05():
     assert np.all(res.asnumpy() == expect)
 
 
-@ms_function
+@jit
 def arithmetic_simplify_06(x):
     """ arithmetic_simplify_06 """
     return x * 2 * 5
@@ -596,7 +596,7 @@ def test_arithmetic_simplify_06():
     assert np.all(res.asnumpy() == expect)
 
 
-@ms_function
+@jit
 def arithmetic_simplify_07(x):
     """ arithmetic_simplify_07 """
     return (x + 1) * 2 * 5
@@ -610,7 +610,7 @@ def test_arithmetic_simplify_07():
     assert np.all(res.asnumpy() == expect)
 
 
-@ms_function
+@jit
 def arithmetic_simplify_08(x, y):
     """ arithmetic_simplify_08 """
     return 1 * x * 1 * 1 + 1 * 0 * 1 + 0 + y * 1
@@ -727,7 +727,7 @@ def multi_outputs(x, y):
     return 2 * z, 2 * z
 
 
-@ms_function
+@jit
 def while_sp(x, y, z):
     out = x
     i = c3

@@ -3,10 +3,10 @@ import numpy as np
 
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore import ms_function
+from mindspore import jit
 
 
-@ms_function
+@jit
 def func(input_x, input_y):
     output = input_x + input_x * input_y
     return output

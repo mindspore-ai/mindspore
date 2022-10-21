@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 import mindspore as ms
@@ -46,15 +46,15 @@ class RLBuffer(nn.Cell):
         self.buffer_sample = P.BufferSample(
             self._capacity, batch_size, shapes, types)
 
-    @ms_function
+    @jit
     def append(self, exps):
         return self.buffer_append(self.buffer, exps, self.count, self.head)
 
-    @ms_function
+    @jit
     def get(self, index):
         return self.buffer_get(self.buffer, self.count, self.head, index)
 
-    @ms_function
+    @jit
     def sample(self):
         return self.buffer_sample(self.buffer, self.count, self.head)
 

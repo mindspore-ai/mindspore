@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -35,7 +35,7 @@ class Net(nn.Cell):
         self.x2 = Parameter(initializer(
             Tensor(np.arange(2 * 3).reshape(2, 3).astype(np.float32)), [2, 3]), name='x2')
 
-    @ms_function
+    @jit
     def construct(self):
         return self.cat((self.x1, self.x2))
 

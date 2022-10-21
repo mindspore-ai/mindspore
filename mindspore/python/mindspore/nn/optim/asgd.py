@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore
@@ -176,7 +176,7 @@ class ASGD(Optimizer):
         self.cast = P.Cast()
         self.squeeze = P.Squeeze()
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)

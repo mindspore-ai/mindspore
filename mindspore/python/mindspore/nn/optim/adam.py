@@ -20,7 +20,7 @@ import numpy as np
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -722,7 +722,7 @@ class Adam(Optimizer):
 
             self._init_distributed_opts(use_locking, use_nesterov)
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         params = self._parameters
         moment1 = self.moment1
@@ -980,7 +980,7 @@ class AdamWeightDecay(Optimizer):
         else:
             self.use_fused_opt = False
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         weight_decay = self.get_weight_decay()
@@ -1195,7 +1195,7 @@ class AdamOffload(Optimizer):
         self.opt = P.AdamNoUpdateParam(use_locking, use_nesterov)
         self.opt.set_device("CPU")
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         params = self._parameters
         moment1 = self.moment1

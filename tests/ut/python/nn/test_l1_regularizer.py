@@ -17,7 +17,7 @@ import math
 import numpy as np
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore import Tensor, ms_function
+from mindspore import Tensor, jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -27,7 +27,7 @@ class Net_l1_regularizer(nn.Cell):
         super(Net_l1_regularizer, self).__init__()
         self.l1_regularizer = nn.L1Regularizer(scale)
 
-    @ms_function
+    @jit
     def construct(self, weights):
         return self.l1_regularizer(weights)
 

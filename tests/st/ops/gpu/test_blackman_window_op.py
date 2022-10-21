@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 import mindspore.ops.operations.other_ops as P
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class BlackmanWindowNet(nn.Cell):
@@ -29,7 +29,7 @@ class BlackmanWindowNet(nn.Cell):
         super(BlackmanWindowNet, self).__init__()
         self.blackmanwindow = P.BlackmanWindow(periodic=periodic, dtype=dtype)
 
-    @ms_function
+    @jit
     def construct(self, input_x):
         return self.blackmanwindow(input_x)
 

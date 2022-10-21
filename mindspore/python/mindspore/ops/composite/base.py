@@ -30,7 +30,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     ListClear_, ListReverse_, ListExtend_, ListCount_, DictClear_, DictHasKey_, DictUpdate_, \
     DictFromKeys_
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function, _pynative_executor, _wrap_func
+from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
 from mindspore.ops.primitive import Primitive
 from mindspore.ops import signature as sig
@@ -340,21 +340,22 @@ class GradOperation(GradOperation_):
         if self.grad_fn is not None and self.fn == fn and self.weights_id == weights_id:
             return self.grad_fn
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
-        # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
+        # If calling Grad in GRAPH_MODE or calling Grad in functions decorated with 'jit', do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
-        #   In PYNATIVE_MODE calling Grad from ms_function, use the out layer after_grad do grad in GRAPH_MODE.
+        #   In PYNATIVE_MODE calling Grad from functions decorated with 'jit', use the out layer after_grad do
+        #   grad in GRAPH_MODE.
         if context.get_context("mode") == context.GRAPH_MODE:
             dynamic_shape_inputs = None
             if isinstance(fn, ms.nn.Cell):
                 dynamic_shape_inputs = fn.get_inputs()
                 fn.grad_ops_label = True
             if self.get_by_list:
-                @ms_function(input_signature=dynamic_shape_inputs)
+                @jit(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
                     return grad_(fn, weights)(*args)
             else:
-                @ms_function(input_signature=dynamic_shape_inputs)
+                @jit(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
                     return grad_(fn)(*args)
         elif self.pynative_:
@@ -368,7 +369,7 @@ class GradOperation(GradOperation_):
                 return out
         else:
             grad_.pynative_ = True
-            # after_grad of this branch can't use @ms_function, just directly call grad_
+            # after_grad of this branch can't use @jit, just directly call grad_
             if self.get_by_list:
                 def after_grad(*args, **kwargs):
                     return grad_(fn, weights)(*args, **kwargs)
@@ -420,9 +421,9 @@ class _TaylorOperation(TaylorOperation_):
             return self.grad_fn
         taylor_grad_ = _TaylorOperation()
 
-        # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
+        # If calling Grad in GRAPH_MODE or calling Grad in functions decorated with 'jit', do grad in GRAPH_MODE
 
-        @ms_function
+        @jit
         def after_taylor_grad(*args):
             return taylor_grad_(fn)(*args)
 
@@ -483,25 +484,26 @@ class _Grad(GradOperation_):
             return res
 
         grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position, self.has_aux, self.get_value)
-        # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
+        # If calling Grad in GRAPH_MODE or calling Grad in functions decorated with 'jit', do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
-        #   In PYNATIVE_MODE calling Grad from ms_function, use the out layer after_grad do grad in GRAPH_MODE.
+        #   In PYNATIVE_MODE calling Grad from functions decorated with 'jit', use the out layer after_grad do
+        #   grad in GRAPH_MODE.
         if context.get_context("mode") == context.GRAPH_MODE:
             dynamic_shape_inputs = None
             if isinstance(fn, ms.nn.Cell):
                 dynamic_shape_inputs = fn.get_inputs()
             if self.get_by_position:
-                @ms_function(input_signature=dynamic_shape_inputs)
+                @jit(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
                     return grad_(fn, weights, grad_position)(*args)
             else:
                 if self.get_by_list:
-                    @ms_function(input_signature=dynamic_shape_inputs)
+                    @jit(input_signature=dynamic_shape_inputs)
                     def after_grad(*args):
                         return grad_(fn, weights)(*args)
                 else:
-                    @ms_function(input_signature=dynamic_shape_inputs)
+                    @jit(input_signature=dynamic_shape_inputs)
                     def after_grad(*args):
                         return grad_(fn)(*args)
         elif self.pynative_:
@@ -522,7 +524,7 @@ class _Grad(GradOperation_):
             fn_ = fn
             if self.has_aux:
                 fn_ = aux_fn
-            # after_grad of this branch can't use @ms_function, just directly call grad_
+            # after_grad of this branch can't use @jit, just directly call grad_
             if self.get_by_position:
                 def after_grad(*args, **kwargs):
                     return grad_(fn_, weights, grad_position)(*args, **kwargs)
@@ -589,7 +591,7 @@ class _Vmap(VmapOperation_):
 
         vmap_ = self
 
-        @ms_function
+        @jit
         def after_vmap(*args):
             return vmap_(fn, in_axes, out_axes)(*args)
 

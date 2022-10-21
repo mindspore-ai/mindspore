@@ -20,7 +20,7 @@ import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
 
@@ -33,7 +33,7 @@ class NetNorm(nn.Cell):
         self.norm_3 = nn.Norm(axis=-1)
         self.norm_4 = nn.Norm(axis=-1, keep_dims=True)
 
-    @ms_function
+    @jit
     def construct(self, indices):
         return (self.norm_1(indices),
                 self.norm_2(indices),

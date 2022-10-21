@@ -15,7 +15,7 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, Parameter, nn, context, ms_function, ops
+from mindspore import Tensor, Parameter, nn, context, jit, ops
 from mindspore import dtype as mstype
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import functional as F
@@ -62,7 +62,7 @@ class Grad(nn.Cell):
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    @ms_function
+    @jit
     def construct(self, input_x, grad):
         return self.grad(self.network)(input_x, grad)
 

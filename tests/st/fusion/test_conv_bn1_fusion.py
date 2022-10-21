@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, Model, ms_function
+from mindspore import Tensor, Model, jit
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.ops import operations as P
 
@@ -33,7 +33,7 @@ class MsWrapper(nn.Cell):
         super(MsWrapper, self).__init__(auto_prefix=False)
         self._network = network
 
-    @ms_function
+    @jit
     def construct(self, *args):
         return self._network(*args)
 

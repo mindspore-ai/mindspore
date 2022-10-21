@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.context as context
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -123,7 +123,7 @@ def test_fast_gelu_grad_vmap_cpu(dtype, shape=(100, 2)):
 
     output_vmap_cpu = vmap(fast_gelu_grad_func, in_axes=(0, 0))(dy_cpu, x_cpu)
 
-    @ms_function
+    @jit
     def manually_batched_cpu(dys_cpu, xs_cpu):
         """manually_batched_cpu"""
         output = []

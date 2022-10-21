@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore._checkparam import Validator as validator
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
 
@@ -225,7 +225,7 @@ class RMSProp(Optimizer):
         self.epsilon = epsilon
         self.decay = decay
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         params = self._parameters
         gradients = self.flatten_gradients(gradients)

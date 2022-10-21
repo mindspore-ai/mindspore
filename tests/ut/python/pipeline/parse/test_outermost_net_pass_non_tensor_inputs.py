@@ -81,7 +81,7 @@ grad_all_inputs_net = GradNet(forward_net, get_all=True)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_grad_first_input_net(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Normal input type.
     Expectation: No exception.
     """
@@ -97,7 +97,7 @@ def test_grad_first_input_net(mode):
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_net_inputs_including_str(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: String input type.
     Expectation: No exception.
     """
@@ -118,7 +118,7 @@ def test_net_inputs_including_str(mode):
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_outermost_net_pass_parameter(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Parameter input type.
     Expectation: No exception.
     """
@@ -130,7 +130,7 @@ def test_outermost_net_pass_parameter(mode):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_outermost_net_pass_tuple_including_parameter(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Tuple with Parameter as input type.
     Expectation: No exception.
     """
@@ -143,7 +143,7 @@ def test_outermost_net_pass_tuple_including_parameter(mode):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_outermost_net_pass_list_including_parameter(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: List with Parameter as input type.
     Expectation: No exception.
     """
@@ -156,7 +156,7 @@ def test_outermost_net_pass_list_including_parameter(mode):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_net_pass_dict_including_parameter(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Dict with Parameter as input type.
     Expectation: No exception.
     """
@@ -216,7 +216,7 @@ class GradCellWithTupleOfParameter(nn.Cell):
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_grad_parameter_tuple(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Grad with Parameters as input type and fv. ParameterTuple as fv.
     Expectation: No exception.
     """
@@ -232,7 +232,7 @@ def test_grad_parameter_tuple(mode):
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_grad_parameter_list_or_tuple(mode):
     """
-    Feature: Construct()/ms_function input type with back propagate.
+    Feature: Input type with back propagate.
     Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
     Expectation: No exception.
     """

@@ -15,7 +15,7 @@
 """ test graph fallback control flow."""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context, nn
+from mindspore import Tensor, jit, context, nn
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
 
@@ -33,7 +33,7 @@ def test_for_in_if_tensor():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         x = Tensor(1)
         y = Tensor(0)
@@ -57,7 +57,7 @@ def test_for_in_if_tensor_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         x = Tensor(1)
         y = Tensor(0)
@@ -115,7 +115,7 @@ def test_for_in_if_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         x = np.array([1, 1, 1])
         y = list((4, 6, -2))
@@ -138,7 +138,7 @@ def test_for_in_if_isinstance_raise():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if(x):
         if isinstance(x, Tensor):
             print("before add:", x)
@@ -160,7 +160,7 @@ def test_for_in_if_dict_isinstance():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_in_if():
         dict_x = {'a': 1, 'b': 2}
         res = 0

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_dict_clear """
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -25,7 +25,7 @@ def test_dict_clear_1():
     Description: support dict clear.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_1():
         x = {'a': 1, 'b': 2}
         x.clear()
@@ -40,7 +40,7 @@ def test_dict_clear_2():
     Description: support dict clear.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_2():
         x = {'a': [1, 2, 'aa'], 'b': 2, 'c': Tensor(1)}
         x.clear()
@@ -55,7 +55,7 @@ def test_dict_clear_3():
     Description: support dict clear.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def dict_net_3():
         x = {}
         x.clear()

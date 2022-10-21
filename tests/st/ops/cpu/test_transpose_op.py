@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 import mindspore.nn as nn
@@ -50,7 +50,7 @@ class Transpose(nn.Cell):
                         [1, 2, 3, 4, 5]), name='x_5D')
         self.perm_5D = (1, 0, 3, 4, 2)
 
-    @ms_function
+    @jit
     def construct(self):
         return (self.transpose(self.x_2D, self.perm_2D), self.transpose(self.x_3D, self.perm_3D),
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))
@@ -169,7 +169,7 @@ class Transpose_int64(nn.Cell):
                         [1, 2, 3, 4, 5]), name='x_5D')
         self.perm_5D = (1, 0, 3, 4, 2)
 
-    @ms_function
+    @jit
     def construct(self):
         return (self.transpose(self.x_2D, self.perm_2D), self.transpose(self.x_3D, self.perm_3D),
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))
@@ -291,7 +291,7 @@ class Transpose_uint8(nn.Cell):
                         [1, 2, 3, 4, 5]), name='x_5D')
         self.perm_5D = (1, 0, 3, 4, 2)
 
-    @ms_function
+    @jit
     def construct(self):
         return (self.transpose(self.x_2D, self.perm_2D), self.transpose(self.x_3D, self.perm_3D),
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))

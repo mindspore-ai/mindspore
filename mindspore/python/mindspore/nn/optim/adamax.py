@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -196,7 +196,7 @@ class AdaMax(Optimizer):
 
         self.opt = P.ApplyAdaMax()
 
-    @ms_function
+    @jit
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)

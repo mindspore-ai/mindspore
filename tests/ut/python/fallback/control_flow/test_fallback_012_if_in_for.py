@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_if_in_for_tensor_4():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = Tensor(7)
         y = Tensor(0.0)
@@ -45,7 +45,7 @@ def test_if_in_for_tensor_5():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = Tensor(7)
         y = Tensor(0.0)
@@ -67,7 +67,7 @@ def test_if_in_for_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 2, 3, 4])
         for _ in range(3):
@@ -84,7 +84,7 @@ def test_if_in_for_numpy_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 2, 3, 4])
         for _ in range(3):
@@ -103,7 +103,7 @@ def test_if_in_for_numpy_3():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 2, 3, 4])
         for _ in range(3):
@@ -121,7 +121,7 @@ def test_if_in_for_numpy_4():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 2, 3, 4])
         y = np.array([1])
@@ -140,7 +140,7 @@ def test_if_in_for_with_break():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 2, 3, 4])
         y = (Tensor(1), Tensor(3), Tensor(5))
@@ -160,7 +160,7 @@ def test_if_in_for_with_continue():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 2, 3, 4])
         y = (Tensor(1), Tensor(3), Tensor(5))
@@ -180,7 +180,7 @@ def test_if_in_for_with_break_continue():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for():
         x = np.array([1, 2, 3, 4])
         y = (Tensor(1), Tensor(2), Tensor(4), Tensor(5))

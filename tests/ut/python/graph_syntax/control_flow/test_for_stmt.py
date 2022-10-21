@@ -15,7 +15,7 @@
 """ test_for_stmt """
 import numpy as np
 
-from mindspore import Tensor, Model, context, ms_class
+from mindspore import Tensor, Model, context, jit_class
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -24,7 +24,7 @@ from mindspore.nn import ReLU
 from ...ut_filter import non_graph_engine
 
 
-@ms_class
+@jit_class
 class Access:
     def __init__(self, a, b):
         self.a = a

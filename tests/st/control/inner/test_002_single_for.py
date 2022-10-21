@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-from mindspore import context, ms_function
+from mindspore import context, jit
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
@@ -267,7 +267,7 @@ def test_single_for():
     Description: The else branches of for loops aren't supported.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for(x, y):
         for _ in range(3):
             y += x
@@ -294,7 +294,7 @@ def test_single_for_with_not_iterable_object():
     Description: The else branches of for loops aren't supported.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for_with_not_iterable_object():
         ret = 0
         a = 1

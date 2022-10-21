@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 import mindspore
-from mindspore import context, nn, ops, Tensor, CSRTensor, Parameter, ms_function, mutable
+from mindspore import context, nn, ops, Tensor, CSRTensor, Parameter, jit, mutable
 from mindspore.ops import functional as F
 
 
@@ -64,7 +64,7 @@ def test_repeat_control_arrow_for_stack_actor():
     assert out == result
 
 
-@ms_function
+@jit
 def switch_op(x, y):
     z1 = y + 1
     z2 = Tensor(5, mindspore.int32)
@@ -87,7 +87,7 @@ def test_switch_op():
     assert out == 5
 
 
-@ms_function
+@jit
 def switch_single_op(x, y, z):
     return F.switch(x, y, z)
 

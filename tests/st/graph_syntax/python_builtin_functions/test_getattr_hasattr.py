@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -33,7 +33,7 @@ def test_getattr_tensor():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "abs")
         return abs_func()
@@ -54,7 +54,7 @@ def test_getattr_tensor_with_concate_string():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         attr_str = "a" + "bs"
         abs_func = getattr(x, attr_str)

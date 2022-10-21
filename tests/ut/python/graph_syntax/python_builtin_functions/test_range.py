@@ -15,7 +15,7 @@
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
 
@@ -26,7 +26,7 @@ def test_nest_range_transpose():
     layers_tuple = tuple(Tensor(np.array(np.ones((3, 4)) * 0.02)) for i in range(num_layers))
     transpose1 = P.Transpose()
 
-    @ms_function()
+    @jit()
     def invoke_range():
         out1 = ()
         for m in range(num_layers):
@@ -50,7 +50,7 @@ def test_nest_range_simple():
     batch_tuple = tuple(Tensor(np.array(np.ones((2, 3)) * 0.01)) for i in range(batch_size))
     layers_tuple = tuple(Tensor(np.array(np.ones((3, 4)) * 0.02)) for i in range(num_layers))
 
-    @ms_function()
+    @jit()
     def invoke_range():
         out1 = ()
         for m in range(num_layers):

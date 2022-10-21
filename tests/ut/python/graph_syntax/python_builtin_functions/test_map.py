@@ -15,7 +15,7 @@
 """ test graph fallback hybrid syntax"""
 import operator
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_map_with_numpy():
     Description: Test map in graph mode with numpy.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         y = np.array([1, 1, 1, 1])
@@ -43,7 +43,7 @@ def test_fallback_map_with_numpy_and_tensor():
     Description: Test map in graph mode with numpy.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         y = Tensor([1, 1, 1, 1])
@@ -65,7 +65,7 @@ def test_fallback_map_with_numpy_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         y = np.array([1, 1, 1, 1])
@@ -82,7 +82,7 @@ def test_fallback_map_with_numpy_and_tensor_2():
     Description: Test map in graph mode with numpy.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         y = Tensor([1, 1, 1, 1])

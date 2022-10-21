@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops.functional import vmap
@@ -34,7 +34,7 @@ class BatchToSpaceNDNet(nn.Cell):
         data_np = np.arange(input_size).reshape(input_shape).astype(nptype)
         self.x1 = Parameter(initializer(Tensor(data_np), input_shape), name='x1')
 
-    @ms_function
+    @jit
     def construct(self):
         y1 = self.batch_to_space_nd(self.x1)
         return y1

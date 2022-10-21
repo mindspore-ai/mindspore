@@ -19,7 +19,7 @@ import numpy as np
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype, Parameter
 from mindspore.ops import operations as P
-from mindspore import ms_function
+from mindspore import jit
 import mindspore.ops.functional as F
 
 
@@ -78,7 +78,7 @@ def test_poly_delay_specialize():
     """
     pow_ops = P.Pow()
 
-    @ms_function
+    @jit
     def poly_node_network(x, y):
         def function_h():
             pow_res = pow_ops(x, x)

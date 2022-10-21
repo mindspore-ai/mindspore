@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore as ms
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class TrilNet(nn.Cell):
@@ -31,7 +31,7 @@ class TrilNet(nn.Cell):
         self.x_np = np.random.randn(2, 3, 4).astype(nptype)
         self.x_ms = Tensor(self.x_np)
 
-    @ms_function
+    @jit
     def construct(self):
         return self.tril(self.x_ms)
 
@@ -64,7 +64,7 @@ class TriuNet(nn.Cell):
         self.x_np = np.random.randn(2, 3, 4).astype(nptype)
         self.x_ms = Tensor(self.x_np)
 
-    @ms_function
+    @jit
     def construct(self):
         return self.triu(self.x_ms)
 

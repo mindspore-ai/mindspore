@@ -17,7 +17,7 @@ import numpy as np
 from mindspore import RowTensor
 from mindspore import context, nn, Tensor, ParameterTuple
 from mindspore.common import dtype as mstype
-from mindspore.common import ms_function
+from mindspore.common import jit
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 
@@ -100,7 +100,7 @@ def test_row_tensor_in_while():
             self.op2 = RowTensorValuesAdd2()
             self.dense_shape = dense_shape
 
-        @ms_function
+        @jit
         def construct(self, a, b, indices, values):
             x = RowTensor(indices, values, self.dense_shape)
             x = self.op2(x)
@@ -148,7 +148,7 @@ def test_parser_switch_layer_inputs_tuple():
             super().__init__()
             self.op = P.Mul()
 
-        @ms_function
+        @jit
         def construct(self, x, y):
             y = self.op(x, y)
             return self.op(x, y)
@@ -158,7 +158,7 @@ def test_parser_switch_layer_inputs_tuple():
             super().__init__()
             self.funcs = funcs
 
-        @ms_function
+        @jit
         def construct(self, i, inputa, inputb):
             inputs = (inputa, inputb)
             x = self.funcs[i](inputs)

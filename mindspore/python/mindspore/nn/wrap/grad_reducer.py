@@ -25,7 +25,7 @@ from mindspore.ops.operations.comm_ops import AllReduce, AllGather
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")
@@ -411,7 +411,7 @@ class DistributedGradReducer(Cell):
         self.mode = context.get_context("mode")
         self.enable_tuple_broaden = True
 
-    @ms_function
+    @jit
     def construct(self, grads):
         """
         Under certain circumstances, the data precision of grads could be mixed with float16 and float32. Thus, the

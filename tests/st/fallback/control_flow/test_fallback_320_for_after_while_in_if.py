@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 import mindspore
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -33,7 +33,7 @@ def test_for_after_while_in_if_1():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def func3201():
         x = Tensor([0])
         y = Tensor([0])
@@ -63,7 +63,7 @@ def test_for_after_while_in_if_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def func3202():
         x = Tensor([2])
         y = Tensor([2])
@@ -102,7 +102,7 @@ def test_for_after_while_in_if_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def func3203():
         x = np.array([1, 2, 3])
         y = np.array([5, 6, 7])

@@ -15,7 +15,7 @@
 """ test graph fallback buildin python function str"""
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -26,7 +26,7 @@ def test_fallback_str_with_input_tensor():
     Description: Test str() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo(x):
         return str(x)
     with pytest.raises(TypeError) as ex:
@@ -40,7 +40,7 @@ def test_fallback_str_with_input_tensor_2():
     Description: Test str() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = Tensor([10])
         return str(x)
@@ -54,7 +54,7 @@ def test_fallback_str_with_input_scalar():
     Description: Test str() in graph mode with scalar input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return str(10.0)
 
@@ -67,7 +67,7 @@ def test_fallback_str_with_input_list():
     Description: Test str() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3]
         return str(x)
@@ -81,7 +81,7 @@ def test_fallback_str_with_input_string():
     Description: Test str() in graph mode with string input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return str("test")
 
@@ -94,7 +94,7 @@ def test_fallback_str_with_input_numpy():
     Description: Test str() in graph mode with numpy input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3])
         return str(x)
@@ -108,7 +108,7 @@ def test_fallback_str_with_no_input():
     Description: Test str() in graph mode with no input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return str()
 
@@ -121,7 +121,7 @@ def test_fallback_str_with_type_input():
     Description: Test str() in graph mode with type input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return str(int)
 

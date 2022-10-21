@@ -15,7 +15,7 @@
 """ test graph fallback buildin python function sum"""
 import pytest
 import numpy as np
-from mindspore import ms_function, Tensor
+from mindspore import jit, Tensor
 
 
 def test_fallback_sum_with_x_list_n_default():
@@ -24,7 +24,7 @@ def test_fallback_sum_with_x_list_n_default():
     Description: Test sum() in graph mode with input x list and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum([1, 2, 3])
         return x
@@ -38,7 +38,7 @@ def test_fallback_sum_with_x_tuple_n_default():
     Description: Test sum() in graph mode with input x tuple and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum((1, 2, 3))
         return x
@@ -52,7 +52,7 @@ def test_fallback_sum_with_x_numpy_array_n_default():
     Description: Test sum() in graph mode with input x numpy array and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(np.array([1, 2, 3]))
         return Tensor(x)
@@ -66,7 +66,7 @@ def test_fallback_sum_with_x_tensor_n_default():
     Description: Test sum() in graph mode with input x tensor and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(Tensor([1, 2, 3]))
         return x
@@ -80,7 +80,7 @@ def test_fallback_sum_with_x_tensor_n_default_2():
     Description: Test sum() in graph mode with input x tensor and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(Tensor([[1, 1], [2, 2]]))
         return x
@@ -94,7 +94,7 @@ def test_fallback_sum_with_x_numpy_array_n_default_2():
     Description: Test sum() in graph mode with input x numpy array and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(np.array([[1, 1], [2, 2]]))
         return Tensor(x)
@@ -108,7 +108,7 @@ def test_fallback_sum_with_x_list_n_not_default():
     Description: Test sum() in graph mode with input x list and input n not default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum([1, 2, 3], 10)
         return x
@@ -122,7 +122,7 @@ def test_fallback_sum_with_x_tensor_n_not_default_1():
     Description: Test sum() in graph mode with input x tensor and input n not default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(Tensor([1, 2, 3]), 10)
         return x
@@ -136,7 +136,7 @@ def test_fallback_sum_with_x_tensor_n_not_default_2():
     Description: Test sum() in graph mode with input x tensor and input n not default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(Tensor([[1, 2], [3, 4]]), [5, 6])
         return x
@@ -151,7 +151,7 @@ def test_fallback_sum_with_x_tuple_n_not_default():
     Description: Test sum() in graph mode with input x tuple and input n not default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum((1, 2, 3), 10)
         return x
@@ -165,7 +165,7 @@ def test_fallback_sum_with_x_numpy_array_n_not_default_1():
     Description: Test sum() in graph mode with input x numpy array and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(np.array([[1, 1], [2, 2]]), 5)
         return Tensor(x)
@@ -179,7 +179,7 @@ def test_fallback_sum_with_x_numpy_array_n_not_default_2():
     Description: Test sum() in graph mode with input x numpy array and input n default.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(np.array([[1, 1], [2, 2]]), [3, 4])
         return Tensor(x)
@@ -194,7 +194,7 @@ def test_fallback_sum_with_x_not_iterable_error():
     Description: Test sum() in graph mode with input x not iterable.
     Expectation: TypeError.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum(1)
         return x
@@ -209,7 +209,7 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_1():
     Description: Test sum() in graph mode when input x is list of list
     Expectation: TypeError.
     """
-    @ms_function
+    @jit
     def foo():
         x = sum([[1, 2], [3, 4]])
         return x
@@ -225,7 +225,7 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_2():
     Expectation: TypeError.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = sum({'a': 1, 'b': 2, 'c': 3})
         return x

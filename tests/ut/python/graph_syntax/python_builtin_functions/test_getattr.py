@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, ms_function, ms_class, context
+from mindspore import Tensor, jit, jit_class, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -30,7 +30,7 @@ def test_getattr_tensor_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = Tensor([-1, -2, -3])
         abs_func = getattr(x, "abs")
@@ -47,7 +47,7 @@ def test_getattr_tensor_with_concate_string_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         attr_str = "a" + "bs"
         abs_func = getattr(Tensor([-1, -2, -3]), attr_str)
@@ -64,7 +64,7 @@ def test_getattr_tensor_with_wrong_attr():
     Expectation: AttributeError.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "abs2")
         return abs_func()
@@ -81,7 +81,7 @@ def test_getattr_tensor_with_default():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         abs_func = getattr(Tensor([-1, -2, -3]), "abs", Tensor([-1, -2, -3]))
         return abs_func()
@@ -97,7 +97,7 @@ def test_getattr_tensor_with_default_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         abs_func = getattr(Tensor([-1, -2, -3]), "abs2", Tensor([-1, -2, -3]))
         return abs_func
@@ -113,7 +113,7 @@ def test_getattr_list():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         abs_func = getattr(x, "__len__")
@@ -130,7 +130,7 @@ def test_getattr_list_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "__len__")
         return abs_func()
@@ -146,7 +146,7 @@ def test_getattr_list_with_concate_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         attr_str = "__" + "len" + "__"
@@ -164,7 +164,7 @@ def test_getattr_with_concate_input_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         attr_str = "__" + "len" + "__"
         abs_func = getattr(x, attr_str)
@@ -181,7 +181,7 @@ def test_getattr_list_with_default():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         abs_func = getattr(x, "__len__", Tensor([-1]))
@@ -198,7 +198,7 @@ def test_getattr_list_with_default_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = [1, 2, 3, 4]
         abs_func = getattr(x, "__len2__", Tensor([-1]))
@@ -215,7 +215,7 @@ def test_getattr_list_with_wrong_attr():
     Expectation: AttributeError.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "abs2")
         return abs_func()
@@ -232,7 +232,7 @@ def test_getattr_tuple():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (1, 2, 3, 4)
         abs_func = getattr(x, "__len__")
@@ -249,7 +249,7 @@ def test_getattr_tuple_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "__len__")
         return abs_func()
@@ -265,7 +265,7 @@ def test_getattr_tuple_with_concate_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (1, 2, 3, 4)
         attr_str = "__" + "len" + "__"
@@ -283,7 +283,7 @@ def test_tuple_getattr_with_concate_input_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         attr_str = "__" + "len" + "__"
         abs_func = getattr(x, attr_str)
@@ -300,7 +300,7 @@ def test_getattr_tuple_with_default():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (1, 2, 3, 4)
         abs_func = getattr(x, "__len__", Tensor([-1]))
@@ -317,7 +317,7 @@ def test_getattr_tuple_with_default_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = (1, 2, 3, 4)
         abs_func = getattr(x, "__len2__", Tensor([-1]))
@@ -334,7 +334,7 @@ def test_getattr_tuple_with_wrong_attr():
     Expectation: AttributeError.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "shape")
         return abs_func()
@@ -351,7 +351,7 @@ def test_getattr_dict():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"1": 1, "2": 2}
         abs_func = getattr(x, "__len__")
@@ -368,7 +368,7 @@ def test_getattr_dict_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "__len__")
         return abs_func()
@@ -384,7 +384,7 @@ def test_getattr_dict_with_concate_input():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"1": 1, "2": 2}
         attr_str = "__" + "len" + "__"
@@ -402,7 +402,7 @@ def test_getattr_dict_with_concate_input_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         attr_str = "__" + "len" + "__"
         abs_func = getattr(x, attr_str)
@@ -419,7 +419,7 @@ def test_getattr_dict_with_wrong_attr():
     Expectation: AttributeError.
     """
 
-    @ms_function
+    @jit
     def foo(x):
         abs_func = getattr(x, "abs2")
         return abs_func()
@@ -436,7 +436,7 @@ def test_getattr_dict_with_default():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"1": 1, "2": 2}
         abs_func = getattr(x, "__len__", Tensor([-1]))
@@ -453,7 +453,7 @@ def test_getattr_dict_with_default_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def foo():
         x = {"1": 1, "2": 2}
         abs_func = getattr(x, "__len2__", Tensor([-1]))
@@ -463,7 +463,7 @@ def test_getattr_dict_with_default_2():
     assert out == -1
 
 
-@ms_class
+@jit_class
 class MSClass1:
     def __init__(self):
         self.num0 = Tensor(0)
@@ -481,7 +481,7 @@ def test_getattr_ms_class():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return getattr(ms_obj, "num1")
 
@@ -497,7 +497,7 @@ def test_getattr_ms_class_with_concate_attr():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         ret = 0
         nums = ["0", "1", "2", "3"]
@@ -518,7 +518,7 @@ def test_getattr_ms_class_with_default():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         return getattr(ms_obj, "none", 10)
 
@@ -534,7 +534,7 @@ def test_getattr_ms_class_with_concate_attr_and_default():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         ret = 0
         nums = ["0", "1", "2", "3", "4"]
@@ -555,7 +555,7 @@ def test_getattr_ms_class_with_wrong_attr():
     """
     ms_obj = MSClass1()
 
-    @ms_function
+    @jit
     def foo():
         abs_func = getattr(ms_obj, "abs2")
         return abs_func()
@@ -587,7 +587,7 @@ def test_getattr_cell_obj():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         return getattr(cell_obj, "a0")
 
@@ -603,7 +603,7 @@ def test_getattr_cell_obj_2():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         return getattr(cell_obj, "none")
 
@@ -619,7 +619,7 @@ def test_getattr_cell_obj_concate_input():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         a = 0
         attrs = ["0", "1", "2", "3"]
@@ -639,7 +639,7 @@ def test_getattr_cell_obj_concate_input_and_default_value():
     """
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         a = 0
         attrs = ["0", "1", "2", "3", "4"]
@@ -660,7 +660,7 @@ def test_getattr_cell_obj_with_wrong_attr():
 
     cell_obj = Net()
 
-    @ms_function
+    @jit
     def foo():
         abs_func = getattr(cell_obj, "foo")
         return abs_func()
@@ -677,7 +677,7 @@ def test_getattr_numpy_array():
     Expectation: TypeError
     """
 
-    @ms_function
+    @jit
     def foo():
         x = np.array([1, 2, 3, 4])
         return getattr(x, "shape")[0]
@@ -694,7 +694,7 @@ def test_getattr_numpy_array_2():
     Expectation: TypeError
     """
 
-    @ms_function
+    @jit
     def foo():
         x = 1
         return getattr(x, "shape", np.array([0, 1, 2, 3, 4]))

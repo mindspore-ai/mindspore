@@ -129,7 +129,7 @@ class Resource : public ResourceBase {
   // We keep all arguments inputs here for subsequent procedure.
   std::vector<ValuePtr> arguments_;
   abstract::AbstractBasePtrList args_abs_;
-  // The source obj to compile, usually a `Cell` or `ms_function` decorated function.
+  // The source obj to compile, usually a `Cell` or `jit` decorated function.
   py::object source_input_;
   bool is_cleaned_;
   // The func_graph_ is loaded from mindir

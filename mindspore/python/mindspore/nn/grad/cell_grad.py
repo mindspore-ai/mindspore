@@ -20,7 +20,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common._decorator import deprecated
 
 
@@ -85,7 +85,7 @@ class Jvp(Cell):
         self.make_tuple = Primitive('MakeTuple')
         self.tuple_len = Primitive("tuple_len")
 
-    @ms_function
+    @jit
     def construct(self, *args):
         """construct for jvp."""
         jvp_input = args[0:-1]
@@ -186,7 +186,7 @@ class Vjp(Cell):
         self.typeof = Primitive('typeof')
         self.tuple_len = Primitive("tuple_len")
 
-    @ms_function
+    @jit
     def construct(self, *args):
         front_input = args[0:-1]
         output = self.fn(*front_input)

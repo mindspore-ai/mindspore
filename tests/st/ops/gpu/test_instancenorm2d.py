@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import functional as F
 from mindspore.ops.composite import GradOperation
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -30,7 +30,7 @@ class Grad(nn.Cell):
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    @ms_function
+    @jit
     def construct(self, input_x, grad):
         return self.grad(self.network)(input_x, grad)
 

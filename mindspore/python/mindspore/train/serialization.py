@@ -1010,11 +1010,12 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     Note:
         1. When exporting AIR, ONNX format, the size of a single tensor can not exceed 2GB.
         2. When file_name does not have a suffix, the system will automatically add one according to the file_format.
-        3. Mindspore functions (ms_function) export as mindir format is enabled.
-        4. When export ms_function, the function should not involve class properties in calculations.
+        3. Exporting functions decorated with 'jit' to mindir format is supported.
+        4. When exporting a function decorated with 'jit', the function should not involve class properties in
+           calculations.
 
     Args:
-        net (Union[Cell, ms_function]): MindSpore network.
+        net (Union[Cell, function]): MindSpore network.
         inputs (Union[Tensor, Dataset, List, Tuple, Number, Bool]): It represents the inputs
              of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
              it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.

@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, ms_function
+from mindspore import Tensor, context, jit
 from . import test_graph_fallback
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -120,7 +120,7 @@ def test_fallback_import_modules():
     Description: Check whether the call to the third-party library is correct. It has nothing to do with class.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def use_imported_module(x, y):
         out = test_graph_fallback.add_func(x, y)
         return out

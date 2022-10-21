@@ -18,7 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
@@ -36,7 +36,7 @@ class SpaceToDepthNet(nn.Cell):
         self.data_np = data_np
         self.x = Parameter(initializer(Tensor(self.data_np), (1, 3, 2, 2)), name='x')
 
-    @ms_function
+    @jit
     def construct(self):
         return self.SpaceToDepth(self.x)
 
@@ -190,7 +190,7 @@ class SpaceToDepthDynNet(nn.Cell):
         super(SpaceToDepthDynNet, self).__init__()
         self.net = P.SpaceToDepth(block_size)
 
-    @ms_function
+    @jit
     def construct(self, input_x):
         y1 = self.net(input_x)
         return y1

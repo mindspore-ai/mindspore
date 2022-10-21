@@ -18,7 +18,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.ops.operations as P
 from mindspore import Tensor, context
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from ...ut_filter import non_graph_engine
 
@@ -36,7 +36,7 @@ def mul(x, y):
     return x * y
 
 
-@ms_function
+@jit
 def mainf(x, y):
     return grad(mul)(x, y)
 

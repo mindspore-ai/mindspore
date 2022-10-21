@@ -284,7 +284,7 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, ops, ms_function
+        >>> from mindspore import Tensor, ops, jit
         >>> a = Tensor(np.array([1.0]).astype(np.float32))
         >>> b = Tensor(np.array([0.2]).astype(np.float32))
         >>> def clip_gradient(dx):
@@ -306,7 +306,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         ...         c = x * y
         ...         return c
         ...
-        ...     @ms_function
+        ...     @jit
         ...     def f(x, y):
         ...         return clip_test(x, y)
         ...

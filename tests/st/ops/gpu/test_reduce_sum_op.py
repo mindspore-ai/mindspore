@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 
@@ -151,7 +151,7 @@ class ReduceSum(nn.Cell):
         self.axis14 = axis14
         self.keep_dims14 = keep_dims14
 
-    @ms_function
+    @jit
     def construct(self):
         return (P.ReduceSum(self.keep_dims0)(self.x0, self.axis0),
                 P.ReduceSum(self.keep_dims1)(self.x1, self.axis1),

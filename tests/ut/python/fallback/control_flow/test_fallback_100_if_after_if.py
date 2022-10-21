@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow if after if scenario"""
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_if_after_if_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_after_if():
         x = np.array([1, 2, 3, 4])
         a = sum(x)

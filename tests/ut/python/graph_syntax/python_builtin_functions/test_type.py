@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback buildin python function type"""
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,7 +25,7 @@ def test_fallback_type_with_input_int():
     Description: Test type() in graph mode with int input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = type(1)
         return x
@@ -39,7 +39,7 @@ def test_fallback_type_with_input_float():
     Description: Test type() in graph mode with float input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = type(1.0)
         return x
@@ -53,7 +53,7 @@ def test_fallback_type_with_input_list():
     Description: Test type() in graph mode with list input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = type([1, 2, 3])
         return x
@@ -67,7 +67,7 @@ def test_fallback_type_with_input_tuple():
     Description: Test type() in graph mode with tuple input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = type((1, 2, 3))
         return x
@@ -81,7 +81,7 @@ def test_fallback_type_with_input_dict():
     Description: Test type() in graph mode with dict input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = type({'a': 1, 'b': 2})
         return x
@@ -95,7 +95,7 @@ def test_fallback_type_with_input_numpy_array():
     Description: Test type() in graph mode with numpy array input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = type(np.array([1, 2, 3]))
         return x
@@ -109,7 +109,7 @@ def test_fallback_type_with_input_tensor():
     Description: Test type() in graph mode with tensor input.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         x = type(Tensor([1, 2, 3]))
         return x

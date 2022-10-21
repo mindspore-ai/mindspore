@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 from mindspore.common import dtype as mstype
-from mindspore import ms_function
+from mindspore import jit
 from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
@@ -95,7 +95,7 @@ def test_if_in_for_dict():
     Description: Execute 'for x in xs' when xs is dictionary.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_for(xs):
         result = 0
         ys = {'b': 0, 'g': 0}

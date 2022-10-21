@@ -15,7 +15,7 @@
 """ test graph fallback control flow."""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -32,7 +32,7 @@ def test_for_after_for_in_for_2():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def func3322():
         x = Tensor([0])
         for i in range(3):
@@ -61,7 +61,7 @@ def test_for_after_for_in_for_3():
     Expectation: No exception.
     """
 
-    @ms_function
+    @jit
     def func3323():
         y = np.array([5, 6, 7])
         for _ in (0, 1, 2):

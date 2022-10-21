@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import context
-from mindspore import ops, Tensor, dtype, ms_function
+from mindspore import ops, Tensor, dtype, jit
 
 
 def test_cast():
@@ -35,7 +35,7 @@ def test_cast():
     assert result.dtype == type_dst
 
 
-@ms_function
+@jit
 def expand_tensor(a, b):
     out = ops.tile(a, b)
     return out

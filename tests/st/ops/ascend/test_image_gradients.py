@@ -18,7 +18,7 @@ import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 context.set_context(device_target="Ascend")
 
@@ -28,7 +28,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.image_gradients = nn.ImageGradients()
 
-    @ms_function
+    @jit
     def construct(self, x):
         return self.image_gradients(x)
 

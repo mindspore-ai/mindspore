@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.operations import _quant_ops as Q
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -34,7 +34,7 @@ class Net(nn.Cell):
         self.variance = variance
         self.op = Q.BatchNormFold(momentum=0.9, freeze_bn=10)
 
-    @ms_function
+    @jit
     def construct(self, x, current_step):
         a, b, c, d = self.op(x, self.mean, self.variance, current_step)
         return a, b, c, d

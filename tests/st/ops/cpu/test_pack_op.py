@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore import Tensor
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -30,7 +30,7 @@ class PackNet(nn.Cell):
         super(PackNet, self).__init__()
         self.stack = P.Stack(axis=2)
 
-    @ms_function
+    @jit
     def construct(self, x1, x2):
         return self.stack((x1, x2))
 

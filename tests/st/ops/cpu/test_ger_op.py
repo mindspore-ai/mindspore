@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 class NetGer(nn.Cell):
@@ -92,7 +92,7 @@ def test_ger_vmap(dtype):
         """ger_func"""
         return P.Ger()(x1, x2)
 
-    @ms_function
+    @jit
     def manually_batched(x1s, x2s):
         """manually_batched"""
         output = []
@@ -133,7 +133,7 @@ def test_ger_vmap_two(dtype):
         """ger_func_two"""
         return P.Ger()(x1, x2)
 
-    @ms_function
+    @jit
     def manually_batched_two(x1s, x2s):
         """manually_batched_two"""
         output = []

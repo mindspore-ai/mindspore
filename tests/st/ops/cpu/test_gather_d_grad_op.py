@@ -21,7 +21,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -43,7 +43,7 @@ class NetGatherDGrad(nn.Cell):
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    @ms_function
+    @jit
     def construct(self, inputx, index, output_grad):
         return self.grad(self.network)(inputx, index, output_grad)
 

@@ -799,7 +799,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 }
 
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {
-  // The compilation cache only support for training cell or ms_function currently.
+  // The compilation cache only support for training cell or functions decorated with 'jit' currently.
   // If enable compilation cache, it will get a non-empty dependent files list from python.
   if (compile_cache_dep_files_.empty()) {
     return;

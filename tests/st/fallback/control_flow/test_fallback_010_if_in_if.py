@@ -15,7 +15,7 @@
 """ test graph fallback control flow if in if scenario"""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,7 +31,7 @@ def test_if_in_if_5():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_if():
         x = list([1, 2, 3, 4])
         if max(x) >= 4:
@@ -55,7 +55,7 @@ def test_if_else_in_if_else_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_if():
         x = Tensor(10)
         y = Tensor(7)
@@ -90,7 +90,7 @@ def test_if_in_if_multi_conds_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_if():
         x = Tensor(10)
         y = Tensor(2)
@@ -119,7 +119,7 @@ def test_if_in_if_4():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def control_flow_if_in_if():
         x = np.array([1, 2, 3, 4, 5])
         y = x % 2

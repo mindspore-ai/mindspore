@@ -22,7 +22,7 @@ import mindspore.context as context
 
 from mindspore.ops.functional import vmap
 from mindspore.ops import functional as F
-from mindspore.common.api import ms_function
+from mindspore.common.api import jit
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -182,8 +182,7 @@ def test_vmap():
     output = vmap_cdist(x1, x2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-    # 【注意】由于Vmap特性在PyNative模式下基于ms_function实现，统一基准，for循环实现也基于ms_function
-    @ms_function
+    @jit
     def manually_batched(xs, ys):
         output = []
         for i in range(xs.shape[0]):

@@ -1721,7 +1721,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     }
   }
 
-  // Get attribute or method of class object decorated by ms_class.
+  // Get attribute or method of class object decorated with 'jit_class'.
   auto class_value = GetMsClassObject(data_args);
   if (class_value != nullptr) {
     return GetEvaluatedValueForMsClassAttrOrMethod(args_spec_list, class_value, out_conf);
@@ -2012,7 +2012,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     if (py::isinstance<py::none>(obj)) {
       MS_LOG(EXCEPTION) << "Create python object `" << py::str(class_type)
                         << "` failed, only support to create \'Cell\', \'Primitive\' or "
-                        << "user-defined Class decorated with \'ms_class\'.";
+                        << "user-defined Class decorated with \'jit_class\'.";
     }
 
     // Process the object.
