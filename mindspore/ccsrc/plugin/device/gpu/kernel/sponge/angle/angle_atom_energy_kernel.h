@@ -14,87 +14,49 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_ANGLE_ANGLE_ATOM_ENERGY_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_ANGLE_ANGLE_ATOM_ENERGY_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_SPONGE_ANGLE_ANGLE_ATOM_ENERGY_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_SPONGE_ANGLE_ANGLE_ATOM_ENERGY_KERNEL_H_
 #include <cuda_runtime_api.h>
 #include <vector>
 #include <string>
 #include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/angle/angle_atom_energy_impl.cuh"
+
 namespace mindspore {
 namespace kernel {
-template <typename T, typename T1>
-class AngleAtomEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class AngleAtomEnergyGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<AngleAtomEnergyGpuKernelMod> {
  public:
-  AngleAtomEnergyGpuKernelMod() : ele_uint_crd(1) {}
+  AngleAtomEnergyGpuKernelMod() = default;
   ~AngleAtomEnergyGpuKernelMod() override = default;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    angle_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "angle_numbers"));
-    auto shape_uint_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_scaler = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_atom_a = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_atom_b = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_atom_c = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_angle_k = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-    auto shape_angle_theta0 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-    ele_uint_crd *= SizeOf(shape_uint_crd);
-    ele_scaler *= SizeOf(shape_scaler);
-    ele_atom_a *= SizeOf(shape_atom_a);
-    ele_atom_b *= SizeOf(shape_atom_b);
-    ele_atom_c *= SizeOf(shape_atom_c);
-    ele_angle_k *= SizeOf(shape_angle_k);
-    ele_angle_theta0 *= SizeOf(shape_angle_theta0);
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); };
 
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    auto uint_crd_f = GetDeviceAddress<const T1>(inputs, 0);
-    auto scaler_f = GetDeviceAddress<T>(inputs, 1);
-    auto atom_a = GetDeviceAddress<const T1>(inputs, 2);
-    auto atom_b = GetDeviceAddress<const T1>(inputs, 3);
-    auto atom_c = GetDeviceAddress<const T1>(inputs, 4);
-    auto angle_k = GetDeviceAddress<T>(inputs, 5);
-    auto angle_theta0 = GetDeviceAddress<T>(inputs, 6);
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-    auto ene = GetDeviceAddress<T>(outputs, 0);
-    AngleAtomEnergy(angle_numbers, ele_uint_crd, uint_crd_f, scaler_f, atom_a, atom_b, atom_c, angle_k, angle_theta0,
-                    ene, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(ele_uint_crd * sizeof(T1));
-    input_size_list_.push_back(ele_scaler * sizeof(T));
-    input_size_list_.push_back(ele_atom_a * sizeof(T1));
-    input_size_list_.push_back(ele_atom_b * sizeof(T1));
-    input_size_list_.push_back(ele_atom_c * sizeof(T1));
-    input_size_list_.push_back(ele_angle_k * sizeof(T));
-    input_size_list_.push_back(ele_angle_theta0 * sizeof(T));
-
-    output_size_list_.push_back(ele_uint_crd * sizeof(T));
-  }
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
  private:
-  size_t ele_uint_crd = 1;
-  size_t ele_scaler = 1;
-  size_t ele_atom_a = 1;
-  size_t ele_atom_b = 1;
-  size_t ele_atom_c = 1;
-  size_t ele_angle_k = 1;
-  size_t ele_angle_theta0 = 1;
+  template <typename T, typename T1>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
-  int angle_numbers;
+  int angle_numbers_{0};
+  size_t ele_uint_crd_{1};
+  void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif
+
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_SPONGE_ANGLE_ANGLE_ATOM_ENERGY_KERNEL_H_

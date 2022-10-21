@@ -15,6 +15,7 @@
  */
 
 #include "ops/adaptive_avg_pool_2d_v1.h"
+#include "ops/adaptive_avg_pool_2d.h"
 
 #include <algorithm>
 #include <set>
@@ -34,10 +35,18 @@ abstract::ShapePtr AdaptiveAvgPool2DV1InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  const int64_t input_num_dims = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {3, 4}, op_name);
-  for (size_t i = 0; i < x_shape.size(); i++) {
-    CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1, op_name);
+  if (!IsDynamicRank(x_shape)) {
+    const int64_t input_num_dims = SizeToLong(x_shape.size());
+    CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {3, 4}, op_name);
+  } else {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+
+  if (!IsDynamicShape(x_shape)) {
+    for (size_t i = 0; i < x_shape.size(); i++) {
+      CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1,
+                                         op_name);
+    }
   }
 
   const auto &output_size_ptr = primitive->GetAttr("output_size");
@@ -67,6 +76,7 @@ TypePtr AdaptiveAvgPool2DV1InferType(const PrimitivePtr &primitive, const std::v
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(AdaptiveAvgPool2DV1, BaseOperator);
+MIND_API_OPERATOR_IMPL(AdaptiveAvgPool2D, AdaptiveAvgPool2DV1);
 AbstractBasePtr AdaptiveAvgPool2DV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -76,8 +86,8 @@ AbstractBasePtr AdaptiveAvgPool2DV1Infer(const abstract::AnalysisEnginePtr &, co
   auto shapes = AdaptiveAvgPool2DV1InferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-
 REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveAvgPool2DV1, prim::kPrimAdaptiveAvgPool2DV1, AdaptiveAvgPool2DV1Infer, nullptr,
                              true);
+REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveAvgPool2D, prim::kPrimAdaptiveAvgPool2D, AdaptiveAvgPool2DV1Infer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
