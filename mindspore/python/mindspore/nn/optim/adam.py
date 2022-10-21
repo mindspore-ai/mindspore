@@ -516,6 +516,16 @@ class Adam(Optimizer):
         parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
         applied.
 
+        When using Adam with use_lazy=True:
+
+        Please note, the optimizer only updates the current index position of the network parameters
+        when the gradient is sparse. The sparse behavior is not equivalent to the original Adam algorithm.
+        If you want to execute a sparse policy, target needs to be set to CPU.
+
+        When using Adam with use_offload=True:
+
+        This optimizer only supports `GRAPH_MODE`.
+
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `params` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
@@ -635,7 +645,7 @@ class Adam(Optimizer):
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
-        >>> optim = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> optim = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0, use_lazy=False, use_offload=False)
         >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
         >>> # centralization of True.
         >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad
