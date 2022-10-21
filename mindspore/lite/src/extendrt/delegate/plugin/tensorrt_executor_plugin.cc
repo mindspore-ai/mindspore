@@ -45,7 +45,7 @@ bool TensorRTExecutorPlugin::Register() {
     return true;
   }
   std::string plugin_path;
-  auto ret = DLSoPath("libmindspore-lite.so", kTensorRtPluginSoName, &plugin_path);
+  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, kTensorRtPluginSoName, &plugin_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of " << kTensorRtPluginSoName << " failed.";
     return false;

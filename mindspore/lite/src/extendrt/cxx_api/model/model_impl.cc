@@ -65,27 +65,12 @@ ConverterPlugin &ConverterPlugin::Instance() {
 ConverterFunc ConverterPlugin::GetConverterFunc() {
 #ifndef _WIN32
   if (converter_func_ == nullptr) {
-    Dl_info dl_info;
-    dladdr(reinterpret_cast<void *>(this), &dl_info);
-    std::string cur_so_path = dl_info.dli_fname;
-    auto pos = cur_so_path.find("libmindspore-lite.so");
-    if (pos == std::string::npos) {
-      MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
-      auto c_lite_pos = cur_so_path.find("_c_lite");
-      if (c_lite_pos == std::string::npos) {
-        MS_LOG(WARNING) << "Could not find mindspore lite so, cur so path: " << cur_so_path;
-        return nullptr;
-      }
-      pos = c_lite_pos;
-    }
-    std::string parent_dir = cur_so_path.substr(0, pos);
     std::string plugin_path;
-    auto ret = FindSoPath(parent_dir, "libruntime_convert_plugin.so", &plugin_path);
+    auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, "libruntime_convert_plugin.so", &plugin_path);
     if (ret != kSuccess) {
-      MS_LOG(WARNING) << "Get real path of libruntime_convert_plugin.so failed.";
+      MS_LOG(ERROR) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
       return nullptr;
     }
-    MS_LOG(INFO) << "Find libruntime_convert_plugin.so success, path = " << plugin_path;
     void *function = nullptr;
     ret = DLSoOpen(plugin_path, "RuntimeConvert", &handle_, &function, true);
     if (ret != kSuccess) {
@@ -138,7 +123,15 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
+  if (model_path.empty()) {
+    MS_LOG(ERROR) << "Model path cannot be empty";
+    return kLiteNullptr;
+  }
   auto buffer = ReadFile(model_path);
+  if (buffer.DataSize() == 0) {
+    MS_LOG(ERROR) << "Failed to read buffer from model file: " << model_path;
+    return kLiteNullptr;
+  }
   return BuildByBufferImpl(buffer.Data(), buffer.DataSize(), model_type, model_context, model_path);
 }
 
@@ -312,7 +305,7 @@ Status ModelImpl::Preprocess(const std::vector<std::vector<MSTensor>> &inputs, s
 #if !defined(_WIN32) && !defined(_WIN64)
   // Config preprocessor, temporary way to let mindspore.so depends on _c_dataengine
   std::string dataengine_so_path;
-  Status dlret = DLSoPath("libmindspore.so", "_c_dataengine", &dataengine_so_path);
+  Status dlret = DLSoPath({"libmindspore.so"}, "_c_dataengine", &dataengine_so_path);
   CHECK_FAIL_AND_RELEASE(dlret, nullptr, "Parse dataengine_so failed: " + dlret.GetErrDescription());
 
   // Run preprocess

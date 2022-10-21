@@ -141,14 +141,15 @@ bool ProfileParser::ParseOptDimStr(const std::string &opt_dim_str, int64_t *opt_
 bool ProfileParser::ParseInputShape(const std::string &input_shapes_str, ProfileConfigs *profile_configs_ptr) {
   auto &profile_configs = *profile_configs_ptr;
   auto input_slices = Split(input_shapes_str, ";");
-  for (auto input_slice : input_slices) {
-    auto name_and_shape = Split(input_slice, ":");
-    if (name_and_shape.size() != KV_NUM) {
-      MS_LOG(ERROR) << "each tensor has name and shape [" << input_slice << "]";
+  for (auto &input_slice : input_slices) {
+    auto split_pos = input_slice.rfind(':');
+    if (split_pos == std::string::npos) {
+      MS_LOG(ERROR) << "The input_shape should be in format of name:shape;name:shape, but got [" << input_shapes_str
+                    << "]";
       return false;
     }
-    std::string name = name_and_shape[0];
-    std::string shape_str = name_and_shape[1];
+    std::string name = input_slice.substr(0, split_pos);
+    std::string shape_str = input_slice.substr(split_pos + 1);
     if (shape_str.front() != '[' || shape_str.back() != ']') {
       MS_LOG(ERROR) << "shape format check fail.";
       return false;
