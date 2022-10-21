@@ -82,6 +82,7 @@ PROTO_LIMIT_SIZE = 1024 * 1024 * 2
 TOTAL_SAVE = 1024 * 1024
 PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
 ENCRYPT_BLOCK_SIZE = 64 * 1024
+INT_64_MAX = 9223372036854775807
 
 
 def _special_process_par(par, new_par):
@@ -386,9 +387,7 @@ def _check_append_dict(append_dict):
 
 def _check_load_obfuscate(**kwargs):
     if 'obf_func' in kwargs.keys():
-        customized_func = kwargs.get('obf_func')
-        if not callable(customized_func):
-            raise ValueError("obf_func must be a callable function, but got a {}.".format(type(customized_func)))
+        customized_func = _check_customized_func(kwargs.get('obf_func'))
         clean_funcs()
         add_opaque_predicate(customized_func.__name__, customized_func)
         return True
@@ -480,12 +479,32 @@ def _check_param_type(param_config, key, target_type, requested):
     if key in param_config:
         if not isinstance(param_config[key], target_type):
             raise TypeError("The type of {} must be {}, but got {}.".format(key, target_type, type(param_config[key])))
+        if key == 'obf_password':
+            if param_config[key] > INT_64_MAX or param_config[key] <= 0:
+                raise ValueError(
+                    "'obf_password' must be in (0, INT_64_MAX({})], but got {}.".format(INT_64_MAX, param_config[key]))
         return param_config[key]
     if requested:
         raise ValueError("The parameter {} is requested, but not got.".format(key))
     if key == "obf_password":
         return 0
     return None
+
+
+def _check_customized_func(customized_func):
+    """ check customized function of dynamic obfuscation """
+    if not callable(customized_func):
+        raise TypeError(
+            "'customized_func' must be a function, but not got {}.".format(type(customized_func)))
+    # test customized_func
+    try:
+        func_result = customized_func(1.0, 1.0)
+    except Exception as ex:
+        raise TypeError("customized_func must be a function with two inputs, but got exception: {}".format(ex))
+    else:
+        if not isinstance(func_result, bool):
+            raise TypeError("Return value of customized_func must be boolean, but got: {}".format(type(func_result)))
+    return customized_func
 
 
 def _check_obfuscate_params(obf_config):
@@ -507,16 +526,8 @@ def _check_obfuscate_params(obf_config):
         raise ValueError("'obf_ratio' must be in (0, 1] if it is a float, but got {}.".format(obf_config['obf_ratio']))
     customized_funcs = []
     if 'customized_func' in obf_config.keys():
-        if callable(obf_config['customized_func']):
-            customized_funcs.append(obf_config['customized_func'])
-        else:
-            raise TypeError(
-                "'customized_func' must be a function, but not got {}.".format(type(obf_config['customized_func'])))
+        customized_funcs.append(_check_customized_func(obf_config['customized_func']))
     obf_password = _check_param_type(obf_config, "obf_password", int, False)
-    int_64_max = 9223372036854775807
-    if obf_password > int_64_max:
-        raise ValueError(
-            "'obf_password' must be less or equal than int64 ({}), but got {}.".format(int_64_max, obf_password))
     return obf_ratio, customized_funcs, obf_password
 
 
@@ -534,8 +545,8 @@ def obfuscate_model(obf_config, **kwargs):
             - save_model_path (str): The path to save the obfuscated model.
             - model_inputs (list(Tensor)): The inputs of the original model, the values of Tensor can be random, which
               is the same as using `export()`.
-            - obf_ratio (float, str): The ratio of nodes in original model that would be obfuscated. `obf_ratio` should
-              be in range of (0, 1] or in ["small", "medium", "large"].
+            - obf_ratio (Union(float, str)): The ratio of nodes in original model that would be obfuscated. `obf_ratio`
+              should be in range of (0, 1] or in ["small", "medium", "large"].
             - customized_func (function): A python function used for customized function mode, which used for control
               the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
               function needs to ensure that its result is constant for any input. Users can refer to opaque
@@ -1045,6 +1056,9 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                 Default: 'AES-GCM'.
               - For details of using the customized encryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
+
+            - dataset (Dataset): Specifies the preprocessing method of the dataset, which is used to import the
+              preprocessing of the dataset into MindIR.
 
             - obf_config (dict): obfuscation config.
 

@@ -2288,11 +2288,14 @@ class GraphCell(Cell):
                             f"but got type {type(graph)}.")
         self.graph = graph
         self.obf_password = obf_password
-        int_64_max = 9223372036854775807
-        if (obf_password is not None) and (obf_password <= 0 or obf_password > int_64_max):
-            raise ValueError(
-                "'obf_password' must be larger than 0, and less or equal than int64 ({}),"
-                "but got {}.".format(int_64_max, obf_password))
+        if obf_password is not None:
+            if not isinstance(obf_password, int):
+                raise TypeError("'obf_password' must be int, but got {}.".format(type(obf_password)))
+            int_64_max = 9223372036854775807
+            if obf_password <= 0 or obf_password > int_64_max:
+                raise ValueError(
+                    "'obf_password' must be larger than 0, and less or equal than int64 ({}),"
+                    "but got {}.".format(int_64_max, obf_password))
         params_init = {} if params_init is None else params_init
         if not isinstance(params_init, dict):
             raise TypeError(f"For 'GraphCell', the argument 'params_init' must be a dict, but got {type(params_init)}.")
