@@ -37,6 +37,10 @@
 #undef OPAQUE
 #endif
 
+#ifdef OPAQUE
+#undef OPAQUE
+#endif
+
 namespace mindspore {
 enum KernelType : int {
   UNKNOWN_KERNEL_TYPE = 0,

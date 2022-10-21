@@ -94,10 +94,6 @@ class GPUKernelExecutor : public DeprecatedKernelExecutor {
 
   uint32_t GetRankID() const override;
 
-  // Create bucket for every allreduce operator. Bucket is used in PyNative distributed training mode, one bucket
-  // handles all resource to launch and sync allreduce operator.
-  std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const override;
-
  private:
   // Select the matching backend kernels according to the data type and format of input and output for all
   // execution operators, and set final device data type and format information for backend kernels, device

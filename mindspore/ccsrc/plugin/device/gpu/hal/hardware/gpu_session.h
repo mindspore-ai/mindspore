@@ -54,7 +54,6 @@ class GPUSession : public SessionBasic {
   void RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                        std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                        const std::vector<int64_t> &tensors_mask) override;
-  std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
   std::string GetCommWorldGroup() override { return kNcclWorldGroup; }
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const override;

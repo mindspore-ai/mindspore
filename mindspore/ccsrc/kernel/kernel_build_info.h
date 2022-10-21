@@ -25,6 +25,10 @@
 #include "ir/kernel_info_dev.h"
 #include "kernel/kernel.h"
 
+#ifdef OPAQUE
+#undef OPAQUE
+#endif
+
 namespace mindspore {
 namespace kernel {
 class BACKEND_EXPORT KernelBuildInfo {
@@ -116,7 +120,7 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::vector<TypeId> outputs_device_type_;
   std::vector<nlohmann::json> output_data_desc_;
   std::vector<std::string> input_value_depend_;
-  FusionType fusion_type_{OPAQUE};
+  FusionType fusion_type_{kernel::FusionType::OPAQUE};
   Processor processor_{AICORE};
 };
 using KernelBuildInfoPtr = std::shared_ptr<KernelBuildInfo>;

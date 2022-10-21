@@ -62,10 +62,6 @@ class AscendKernelExecutor : public DeprecatedKernelExecutor {
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return res_manager_->rank_id_; }
 
-  // Create and initialize bucket for every allreduce operator. Bucket is used in PyNative distributed training mode,
-  // one bucket handles all resource to launch and sync allreduce operator.
-  std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const override;
-
  private:
   // Launch device aicpu library
   void LaunchDeviceLibrary() const;

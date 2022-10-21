@@ -284,8 +284,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   ms_execution_mode_ = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  real_execution_mode_ = ms_execution_mode_;
-  func_graph->set_flag(kFlagPyNativeRunInGraph, real_execution_mode_ == kPynativeMode);
+  func_graph->set_flag(kFlagPyNativeRunInGraph, ms_execution_mode_ == kPynativeMode);
 
   // Compile root graph.
   graph_id_to_device_context_.clear();
@@ -312,7 +311,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
-  if (real_execution_mode_ == kGraphMode &&
+  if (ms_execution_mode_ == kGraphMode &&
       ((!graph_compiler_info->graphs_.empty()) || graph_compiler_info->control_nodes_.size() > 1)) {
     // Transform graph to actor DAG, and schedule the actor DAG.
     ParseControlNodes(*graph_compiler_info);
@@ -322,10 +321,6 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   const ActorInfo &actor_info = graph_compiler_info->name_;
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   PROF_END(compile_func_graph);
-
-  if (ms_execution_mode_ != real_execution_mode_) {
-    context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);
-  }
 
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
                << ", produce actor: " << actor_info;
@@ -389,7 +384,7 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
     MS_EXCEPTION_IF_NULL(context_ptr);
     // Compile graph.
     auto graph_id =
-      graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, real_execution_mode_ == kPynativeMode);
+      graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);
 
     graph_id_to_device_context_[graph_id] = device_context;
 
@@ -550,7 +545,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
   // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
-  if (real_execution_mode_ == kPynativeMode) {
+  if (ms_execution_mode_ == kPynativeMode) {
     RunGraphByCondition(actor_info, graph_compiler_info, args, outputs);
     return;
   }

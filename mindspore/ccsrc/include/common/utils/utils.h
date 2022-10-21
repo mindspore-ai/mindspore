@@ -512,7 +512,6 @@ constexpr auto kAttrComm = "comm";
 constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
 constexpr auto kAttrDuplicated = "duplicated";
-constexpr auto kAttrBucketId = "bucket_id";
 constexpr auto kAttrGradOutputIndex = "grad_output_index";
 constexpr auto kAttrLabelIndex = "label_index";
 constexpr auto kAttrLabelSwitchList = "label_switch_list";

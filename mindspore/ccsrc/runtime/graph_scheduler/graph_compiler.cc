@@ -340,7 +340,6 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   } else {
     graph_id = CompileGraphImpl(graph, device_context, run_in_pynative);
   }
-  session_->InitAllBucket(graph, device_context);
 
   graph->set_front_outputs(outputs);
 
@@ -644,22 +643,6 @@ void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef
                                        GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(session_);
   session_->HandleOpOutputs(kernel, op_outputs, ref_count, op_output_map, graph_output_info);
-}
-
-void GraphCompiler::DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                                       const device::DeviceContext *device_context) const {
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->DoAllReduceOnGrads(actor_info, outputs, device_context);
-}
-
-void GraphCompiler::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->AddGradAddrToBucket(graph_id, grad_tensor);
-}
-
-void GraphCompiler::ClearAllBucket(const GraphId &graph_id) {
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->ClearAllBucket(graph_id);
 }
 
 void GraphCompiler::RegisterSummaryCallBackFunc(const CallBackFunc &callback) const {

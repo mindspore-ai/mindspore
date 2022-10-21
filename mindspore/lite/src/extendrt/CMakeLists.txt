@@ -100,7 +100,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/runtime/device/kernel_info.cc
         ${CCSRC_DIR}/runtime/device/convert_tensor_utils.cc
         ${CCSRC_DIR}/runtime/device/kernel_runtime_manager.cc
-        ${CCSRC_DIR}/runtime/device/bucket.cc
         ${CCSRC_DIR}/runtime/device/kernel_runtime.cc
         ${CCSRC_DIR}/runtime/device/memory_scheduler.cc
         ${CCSRC_DIR}/runtime/device/memory_offload_strategy.cc

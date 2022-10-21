@@ -155,18 +155,6 @@ class GraphCompiler {
                           std::map<KernelWithIndex, TensorPtr> *op_output_map,
                           GraphOutputInfo *const graph_output_info) const;
 
-  // Collect output tensors of back propagation graph for allreduce operators to average gradient,
-  // used in PyNative distributed training mode.
-  void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
-
-  void DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                          const device::DeviceContext *device_context) const;
-
-  // Clear resource in bucket, such as useless tensors and device memory of all communication operators,
-  // Bucket is used in PyNative distributed training mode, one bucket handles all resource to launch and sync allreduce
-  // operator.
-  void ClearAllBucket(const GraphId &graph_id);
-
   // Register a summary callback function, which is called in the final stages of summary.
   void RegisterSummaryCallBackFunc(const CallBackFunc &callback) const;
   // Execute graph summary.

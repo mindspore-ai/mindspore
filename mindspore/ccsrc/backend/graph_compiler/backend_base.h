@@ -136,7 +136,6 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   std::string device_name_;
   uint32_t device_id_;
   int ms_execution_mode_{kGraphMode};
-  int real_execution_mode_{kGraphMode};
   void CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode = device::RunMode::kUnknown);
   void ProcessNotSupportCnode(const FuncGraphPtr &func_graph, const device::DeviceType &old_target,
                               const device::DeviceType &new_target) const;

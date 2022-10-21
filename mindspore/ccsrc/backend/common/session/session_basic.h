@@ -34,7 +34,6 @@
 #include "include/common/utils/contract.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
-#include "runtime/device/bucket.h"
 #include "pipeline/pynative/base.h"
 
 #if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
@@ -306,21 +305,10 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
 
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) const;
-  virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) { return nullptr; }
-  void InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context = nullptr);
-  void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
-  void ClearAllBucket(const GraphId &graph_id);
-  void DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                          const device::DeviceContext *device_context);
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const;
   void GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) const;
-  // TODO(caifubi): refactor and remove bucket.
-  std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
-  std::map<uint32_t, uint32_t> free_bucket_id_map_;
-  // Bucket for the entire actor_set.
-  HashMap<std::string, std::shared_ptr<device::Bucket>> actor_set_to_bucket_;
   mindspore::HashMap<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
   std::shared_ptr<Context> context_;

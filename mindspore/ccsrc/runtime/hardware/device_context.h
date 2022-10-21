@@ -23,7 +23,6 @@
 #include <map>
 #include "runtime/hardware/device_type.h"
 #include "runtime/device/device_address.h"
-#include "runtime/device/bucket.h"
 #include "runtime/collective/collective_communication_lib.h"
 #include "runtime/collective/collective_comm_lib_loader.h"
 #include "backend/common/session/kernel_graph.h"
@@ -233,11 +232,6 @@ class DeprecatedKernelExecutor : public KernelExecutor {
   // Get rank id for distributed training.
   // It is deprecated and will be removed in a future version
   virtual uint32_t GetRankID() const { return 0; }
-
-  // Create and initialize bucket for every allreduce operator. Bucket is used in PyNative distributed training mode,
-  // one bucket handles all resource to launch and sync allreduce operator.
-  // It is deprecated and will be removed in a future version
-  virtual std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const { return nullptr; }
 };
 
 template <class... Args>

@@ -1940,14 +1940,6 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     ReleaseForwardOpOutput(input_tensor_info.input_tensors, &forward_op_output_tensor_id);
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
     HandleOpOutputs(kernel, op_outputs, cnode_refcount, &op_output_map, &graph_output_info);
-    // Save grad node to Bucket
-    if (kernel_graph->has_flag(kFlagIsPynativeBpropGraph)) {
-      AddGradAddrToBucket(graph_id, graph_output_info.graph_output_tensors);
-    }
-  }
-  // Clear bucket resources every step
-  if (kernel_graph->has_flag(kFlagIsPynativeBpropGraph)) {
-    ClearAllBucket(graph_id);
   }
 
   MS_LOG(INFO) << "Finish!";
@@ -2029,29 +2021,6 @@ void SetGraphBpropAttr(const KernelGraphPtr &graph) {
   }
 }
 
-std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const std::vector<uint32_t> &split_index) {
-  if (split_index.empty()) {
-    auto grads_count = GetBpropGraphGradsCount(graph);
-    MS_LOG(DEBUG) << "Get valid grads size:" << grads_count;
-    if (grads_count == 0) {
-      MS_LOG(EXCEPTION) << "Bprop graph has no grad";
-    }
-    return {grads_count};
-  }
-
-  std::vector<uint32_t> bucket_size_list;
-  uint32_t old_index = 0;
-  for (const auto &index : split_index) {
-    if (old_index == 0) {
-      bucket_size_list.emplace_back(index - old_index + 1);
-    } else {
-      bucket_size_list.emplace_back(index - old_index);
-    }
-    old_index = index;
-  }
-  return bucket_size_list;
-}
-
 void CheckSplitIndexValid(const vector<uint32_t> &split_index) {
   uint32_t last = 0;
   for (size_t i = 0; i < split_index.size(); ++i) {
@@ -2081,154 +2050,6 @@ void PreProcessOnSplitIndex(const KernelGraphPtr &graph, vector<uint32_t> *split
     split_index->push_back(grads_count - 1);
   } else if (split_index_num < grads_count - 1) {
     split_index->push_back(grads_count - 1);
-  }
-}
-
-void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Status record: start init all bucket. graph id: " << graph->graph_id();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto parallel_mode = parallel_context->parallel_mode();
-  if (!pynative_mode || (parallel_mode != parallel::kDataParallel && parallel_mode != parallel::kSemiAutoParallel &&
-                         parallel_mode != parallel::kAutoParallel)) {
-    return;
-  }
-  SetGraphBpropAttr(graph);
-
-  if (!graph->has_flag(kFlagIsPynativeBpropGraph)) {
-    return;
-  }
-
-  std::vector<std::shared_ptr<device::Bucket>> bucket_list;
-  // Create bucket for every split allreduce ops
-  auto split_index = GetAllReduceSplitIndex();
-  PreProcessOnSplitIndex(graph, &split_index);
-  auto bucket_size_list = GenerateBucketSizeList(graph, split_index);
-  uint32_t bucket_id = 0;
-  for (const auto &bucket_size : bucket_size_list) {
-    MS_LOG(INFO) << "Create new bucket:" << bucket_id << " size:" << bucket_size;
-    std::shared_ptr<device::Bucket> bucket = nullptr;
-    if (device_context != nullptr) {
-      auto deprecated_kernel_executor =
-        dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-      if (deprecated_kernel_executor != nullptr) {
-        bucket = deprecated_kernel_executor->CreateBucket(bucket_id++, bucket_size);
-      } else {
-        MS_LOG(EXCEPTION) << "Not Support CreateBucket() in Device Context.";
-      }
-    } else {
-      bucket = CreateBucket(bucket_id++, bucket_size);
-    }
-    bucket_list.emplace_back(bucket);
-  }
-
-  auto bucket_ret = bucket_map_.try_emplace(graph->graph_id(), bucket_list);
-  if (!bucket_ret.second) {
-    MS_LOG(EXCEPTION) << "Duplicate bucket_map_ graph key:" << graph->graph_id();
-  }
-  // set all free bucket index to 0
-  auto free_bucket_ret = free_bucket_id_map_.try_emplace(graph->graph_id(), 0);
-  if (!free_bucket_ret.second) {
-    MS_LOG(EXCEPTION) << "Duplicate free_bucket_id_map_ graph key:" << graph->graph_id();
-  }
-  MS_LOG(INFO) << "Status record: end init all bucket. graph id: " << graph->graph_id();
-}
-
-void SessionBasic::DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                                      const device::DeviceContext *device_context) {
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto parallel_mode = parallel_context->parallel_mode();
-  if (parallel_mode != parallel::kDataParallel && parallel_mode != parallel::kSemiAutoParallel &&
-      parallel_mode != parallel::kAutoParallel) {
-    MS_LOG(DEBUG) << "No need to do AllReduce";
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(device_context);
-  std::shared_ptr<device::Bucket> bucket;
-  auto iter = actor_set_to_bucket_.find(actor_info);
-  if (iter == actor_set_to_bucket_.end()) {
-    auto deprecated_kernel_executor =
-      dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-    if (deprecated_kernel_executor != nullptr) {
-      static size_t bucket_id = 0;
-      bucket = deprecated_kernel_executor->CreateBucket(SizeToUint(bucket_id++), SizeToUint(outputs.size()));
-    } else {
-      MS_LOG(EXCEPTION) << "Not Support CreateBucket() in Device Context.";
-    }
-    actor_set_to_bucket_[actor_info] = bucket;
-  } else {
-    bucket = iter->second;
-  }
-
-  MS_EXCEPTION_IF_NULL(bucket);
-  for (auto &output : outputs) {
-    bucket->AddGradTensor(output);
-  }
-  if (bucket->full()) {
-    bucket->Launch();
-  } else {
-    MS_LOG(EXCEPTION) << "Do AllReduce for " << actor_info << " failed, grad size " << outputs.size() << " bucket size "
-                      << bucket->bucket_size() << " not equal";
-  }
-  bucket->Release();
-}
-
-void SessionBasic::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto parallel_mode = parallel_context->parallel_mode();
-  if (parallel_mode != parallel::kDataParallel && parallel_mode != parallel::kAutoParallel &&
-      parallel_mode != parallel::kSemiAutoParallel) {
-    return;
-  }
-
-  auto iter = bucket_map_.find(graph_id);
-  if (iter == bucket_map_.end()) {
-    MS_LOG(EXCEPTION) << "unknown graph id:" << graph_id;
-  }
-  auto &bucket_list = iter->second;
-  auto free_bucket_iter = free_bucket_id_map_.find(graph_id);
-  if (free_bucket_iter == free_bucket_id_map_.end()) {
-    MS_LOG(EXCEPTION) << "unknown free graph id:" << graph_id;
-  }
-
-  auto free_bucket_index = free_bucket_iter->second;
-  for (auto &tensor : grad_tensor) {
-    if (free_bucket_index >= bucket_list.size()) {
-      MS_LOG(EXCEPTION) << "Invalid free bucket id:" << free_bucket_iter->second
-                        << " total bucket num:" << bucket_list.size();
-    }
-    auto &free_bucket = bucket_list[free_bucket_index];
-    free_bucket->AddGradTensor(tensor);
-    if (free_bucket->full()) {
-      // AllReduce need to wait for the kernel execution of bprop to complete.
-      runtime::OpExecutor::GetInstance().Wait();
-      MS_LOG(INFO) << "bucket is full";
-      free_bucket->Launch();
-      free_bucket_index = ++free_bucket_iter->second;
-      MS_LOG(INFO) << "new free bucket:" << free_bucket_index;
-    }
-  }
-}
-
-void SessionBasic::ClearAllBucket(const GraphId &graph_id) {
-  auto iter = bucket_map_.find(graph_id);
-  if (iter != bucket_map_.end()) {
-    auto bucket_list = iter->second;
-    for (auto &bucket : bucket_list) {
-      MS_LOG(INFO) << "Clear bucket:" << bucket->id();
-      bucket->Release();
-    }
-  }
-  auto free_iter = free_bucket_id_map_.find(graph_id);
-  if (free_iter != free_bucket_id_map_.end()) {
-    free_iter->second = 0;
   }
 }
 

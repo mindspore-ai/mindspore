@@ -639,10 +639,6 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
     }
     WaitTaskFinish();
-    // Clear bucket resources every step
-    if (graph->has_flag(kFlagIsPynativeBpropGraph)) {
-      graph_compiler_->ClearAllBucket(graph->graph_id());
-    }
   }
 }
 
@@ -650,21 +646,11 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
                                         const VectorRef &args, VectorRef *outputs) {
   bool contain_cut_graph = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
                                        [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagsIsCutGraph); });
-  if (contain_cut_graph) {
-    // Python API will be called in cut_graph, so we cannot release gil here.
+  MS_EXCEPTION_IF_NULL(root_graph_);
+  if (contain_cut_graph || root_graph_->has_flag(kFlagIsDynamicStructure)) {
     RunGraphBySingleOp(graph_compiler_info, args, outputs);
   } else {
-    auto parallel_context = parallel::ParallelContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(parallel_context);
-    auto parallel_mode = parallel_context->parallel_mode();
-    bool is_parallel = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-
-    MS_EXCEPTION_IF_NULL(root_graph_);
-    if (root_graph_->has_flag(kFlagIsDynamicStructure) || is_parallel) {
-      RunGraphBySingleOp(graph_compiler_info, args, outputs);
-    } else {
-      RunGraphByActors(actor_info, graph_compiler_info, args, outputs);
-    }
+    RunGraphByActors(actor_info, graph_compiler_info, args, outputs);
   }
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
