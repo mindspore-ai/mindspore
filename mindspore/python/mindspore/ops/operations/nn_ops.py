@@ -6046,7 +6046,7 @@ class ApplyAdagradV2(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -6701,7 +6701,7 @@ class ApplyProximalGradientDescent(Primitive):
         RuntimeError: If the data type of `var`, and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -9264,7 +9264,7 @@ class GridSampler3D(Primitive):
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> gridsampler = GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)

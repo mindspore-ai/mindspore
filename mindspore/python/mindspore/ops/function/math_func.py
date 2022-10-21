@@ -308,7 +308,7 @@ def addcdiv(input_data, x1, x2, value):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1/x2)`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
@@ -349,7 +349,7 @@ def addcmul(input_data, x1, x2, value):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
@@ -960,7 +960,7 @@ def inplace_update(x, v, indices):
         TypeError: If `indices` is a tuple and its element is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = (0, 1)
@@ -1007,7 +1007,7 @@ def inplace_add(x, v, indices):
         ValueError: If the values of `indices` are not in range of `[0, x.shape[0])`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1930,7 +1930,7 @@ def bessel_j0(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
@@ -1957,7 +1957,7 @@ def bessel_j1(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
@@ -1984,7 +1984,7 @@ def bessel_i0(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
@@ -2011,7 +2011,7 @@ def bessel_i0e(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
@@ -2038,7 +2038,7 @@ def bessel_k0(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
@@ -2065,7 +2065,7 @@ def bessel_k0e(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
@@ -2092,7 +2092,7 @@ def bessel_y0(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
@@ -2119,7 +2119,7 @@ def bessel_y1(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
@@ -2418,7 +2418,7 @@ def trunc(input_x):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
@@ -2840,7 +2840,7 @@ def approximate_equal(x, y, tolerance=1e-5):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.function.math_func import approximate_equal
@@ -2911,7 +2911,7 @@ def isnan(x):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
@@ -3869,7 +3869,7 @@ def lerp(start, end, weight):
         ValueError: If `weight` could not be broadcast to tensors with shapes of `start` and `end` when it is a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
@@ -3945,7 +3945,7 @@ def bessel_i1(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
@@ -3972,7 +3972,7 @@ def bessel_i1e(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
@@ -3999,7 +3999,7 @@ def bessel_k1(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
@@ -4026,7 +4026,7 @@ def bessel_k1e(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
