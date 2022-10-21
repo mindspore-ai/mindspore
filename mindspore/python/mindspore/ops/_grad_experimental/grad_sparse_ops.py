@@ -301,7 +301,7 @@ def get_bprop_map_tensor_get(self):
     """Grad definition for `MapTensorGet` operation."""
     grad_op = G.MapTensorGetGrad()
 
-    def bprop(map_tensor, key_tensor, default_value, out, dout):
-        grad_map_tensor = grad_op(map_tensor, key_tensor, default_value, dout)
-        return grad_map_tensor, zeros_like(key_tensor), zeros_like(default_value)
+    def bprop(map_tensor, key_tensor, out, dout):
+        grad_map_tensor = grad_op(map_tensor, key_tensor, dout)
+        return grad_map_tensor, zeros_like(key_tensor)
     return bprop

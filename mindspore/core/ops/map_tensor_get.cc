@@ -28,7 +28,7 @@ AbstractBasePtr MapTensorGetInfer(const abstract::AnalysisEnginePtr &, const Pri
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // Check number of arguments.
-  constexpr int64_t input_num = 3;
+  constexpr int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorGet);
   // Check argument abstracts.
   auto abs_map_tensor =
@@ -52,11 +52,6 @@ AbstractBasePtr MapTensorGetInfer(const abstract::AnalysisEnginePtr &, const Pri
     MS_EXCEPTION(TypeError) << kNameMapTensorGet << " - key_tensor shape should be 1 rank"
                             << " but got " << key_tensor_shape->ToString() << ".";
   }
-
-  // Check 'default_value'.
-  auto default_value_scalar =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractScalar>(kNameMapTensorGet, input_args, kInputIndex2);
-  MS_EXCEPTION_IF_NULL(default_value_scalar);
 
   // Concate key shape and value shape as the result shape.
   ShapeVector shape_vec = key_tensor_shape->shape();

@@ -56,7 +56,14 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \param[in] value_shape [TypeId] The value shape.
   /// \param[in] default_value [ValuePtr] the default value.
   MapTensor(TypeId key_dtype, TypeId value_dtype, const ShapeVector &value_shape, const ValuePtr &default_value)
-      : key_dtype_(key_dtype), value_dtype_(value_dtype), value_shape_(value_shape), default_value_(default_value) {}
+      : key_dtype_(key_dtype), default_value_(default_value) {
+    data_type_ = value_dtype;
+    shape_ = value_shape;
+    ShapeVector key_shape = {1};
+    key_tensor_ = std::make_shared<Tensor>(key_dtype, key_shape);
+    value_tensor_ = std::make_shared<Tensor>(value_dtype, value_shape);
+    status_tensor_ = std::make_shared<Tensor>(kNumberTypeUInt8, key_shape);
+  }
 
   ~MapTensor() override = default;
 
@@ -79,41 +86,25 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   TypeId key_dtype() const { return key_dtype_; }
 
-  TypeId value_dtype() const { return value_dtype_; }
+  TypeId value_dtype() const { return data_type_; }
 
-  const ShapeVector &value_shape() const { return value_shape_; }
+  const ShapeVector &value_shape() const { return shape_; }
 
   const ValuePtr &default_value() const { return default_value_; }
 
   TypePtr KeyDtype() const { return TypeIdToType(key_dtype_); }
 
-  TypePtr ValueDtype() const { return TypeIdToType(value_dtype_); }
+  TypePtr ValueDtype() const { return TypeIdToType(data_type_); }
 
   abstract::AbstractBasePtr ToAbstract() override;
 
   std::string ToString() const override;
 
-  /// \brief Get tensor's param_info info.
-  ///
-  /// \return The tensor's param_info info.
-  const ParamInfoPtr &param_info() const { return param_info_; }
-
-  /// \brief Check whether this MapTensor is a parameter.
-  ///
-  /// \return Whether this MapTensor is a parameter.
-  bool is_parameter() const { return param_info_ != nullptr; }
-
-  /// \brief Set param_info info.
-  ///
-  /// \param[in] param_info The input param_info.
-  void set_param_info(const ParamInfoPtr &param_info) { param_info_ = param_info; }
-
   /// \brief Get or create values.
   ///
   /// \param[in] key_tensor [Tensor] The key tensor.
-  /// \param[in] default_value [Value] The default value.
-  /// \return The value tensor according the key tensor.
-  TensorPtr Get(const TensorPtr &key_tensor, const ValuePtr &default_value);
+  /// \return The value tensor according the key tensor, return default_value if key_tensor is not exist.
+  TensorPtr Get(const TensorPtr &key_tensor);
 
   /// \brief Put or insert key value pairs.
   ///
@@ -137,21 +128,36 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \return The exported data.
   ExportData Export(bool full = false);
 
+  /// \brief Get the key tensor of MapTensor data.
+  ///
+  /// \return The key tensor.
+  const TensorPtr &KeyTensor() const { return key_tensor_; }
+
+  /// \brief Get the value tensor of MapTensor data.
+  ///
+  /// \return The value tensor.
+  const TensorPtr &ValueTensor() const { return value_tensor_; }
+
+  /// \brief Get the status tensor of MapTensor data.
+  ///
+  /// \return The status tensor.
+  const TensorPtr &StatusTensor() const { return status_tensor_; }
+
  private:
   // Data type of the key.
   TypeId key_dtype_;
 
-  // Data type of the value.
-  TypeId value_dtype_;
-
-  // Shape of the value.
-  ShapeVector value_shape_;
-
   // Default value. should be a scalar as the initial value or a string as the initializer name.
   ValuePtr default_value_;
 
-  // Parameter information.
-  ParamInfoPtr param_info_;
+  // Key tensor of data.
+  TensorPtr key_tensor_;
+
+  // Value tensor of data.
+  TensorPtr value_tensor_;
+
+  // Status tensor of data.
+  TensorPtr status_tensor_;
 };
 }  // namespace tensor
 }  // namespace mindspore

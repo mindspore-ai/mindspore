@@ -74,13 +74,9 @@ std::tuple<py::array, py::array, py::array> MapTensorPy::ExportAsNumpy(const Map
 }
 
 // Python wrapper for MapTensor::Get.
-static tensor::TensorPtr PyMapTensorGet(const MapTensorPtr &map_tensor, const tensor::TensorPtr &key_tensor,
-                                        const py::object &default_value_obj) {
+static tensor::TensorPtr PyMapTensorGet(const MapTensorPtr &map_tensor, const tensor::TensorPtr &key_tensor) {
   MS_EXCEPTION_IF_NULL(map_tensor);
-  ValuePtr default_value =
-    (default_value_obj.is_none() ? map_tensor->default_value()
-                                 : ConvertMapTensorDefaultValue(default_value_obj, map_tensor->ValueDtype()));
-  return map_tensor->Get(key_tensor, default_value);
+  return map_tensor->Get(key_tensor);
 }
 
 namespace tensor {

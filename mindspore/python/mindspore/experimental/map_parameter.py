@@ -130,20 +130,18 @@ class MapParameter(Parameter):
         x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value)  # pylint: disable=W0212
         return x
 
-    def get(self, key_tensor, default_value=None):
+    def get(self, key_tensor):
         """
-        Get value tensor according the key tensor, fill and return the default value if key is not existed.
+        Get value tensor according the key tensor, fill and return the default value in map parameter if key is not
+        existed.
 
         Args:
             key_tensor (Tensor): The key tensor.
-            default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: None
 
         Returns:
             Tensor, the value tensor for the key tensor.
         """
-        if default_value is None:
-            default_value = self.default_value
-        result_tensor = self._map_tensor.get(key_tensor, default_value)
+        result_tensor = self._map_tensor.get(key_tensor)
         return Tensor(result_tensor, internal=True)
 
     def get_keys(self):

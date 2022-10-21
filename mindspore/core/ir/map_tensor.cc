@@ -51,13 +51,12 @@ std::string MapTensor::ToString() const {
   auto value_dtype = ValueDtype();
   return "MapTensor(key_dtype=" + (key_dtype == nullptr ? "<null>" : key_dtype->ToString()) +
          ", value_dtype=" + (value_dtype == nullptr ? "<null>" : value_dtype->ToString()) +
-         ", value_shape=" + tensor::ShapeToString(value_shape_) +
+         ", value_shape=" + tensor::ShapeToString(shape_) +
          ", default_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) + ")";
 }
 
-TensorPtr MapTensor::Get(const TensorPtr &key_tensor, const ValuePtr &default_value) {
+TensorPtr MapTensor::Get(const TensorPtr &key_tensor) {
   MS_EXCEPTION_IF_NULL(key_tensor);
-  MS_EXCEPTION_IF_NULL(default_value);
   // Check input.
   if (key_tensor->shape().size() != 1) {
     MS_LOG(EXCEPTION) << "Invalid key tensor shape: " << tensor::ShapeToString(key_tensor->shape());
@@ -83,6 +82,10 @@ void MapTensor::Erase(const TensorPtr &key_tensor) { MS_EXCEPTION_IF_NULL(key_te
 void MapTensor::Update(const MapTensor::ExportData &data) {
   MS_EXCEPTION_IF_NULL(data.key_tensor);
   MS_EXCEPTION_IF_NULL(data.value_tensor);
+  MS_EXCEPTION_IF_NULL(data.status_tensor);
+  key_tensor_ = data.key_tensor;
+  value_tensor_ = data.value_tensor;
+  status_tensor_ = data.status_tensor;
 }
 
 MapTensor::ExportData MapTensor::Export(bool full) {

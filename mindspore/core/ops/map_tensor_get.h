@@ -30,9 +30,7 @@ class MIND_API MapTensorGet : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MapTensorGet);
   /// \brief Constructor.
-  MapTensorGet() : BaseOperator(kNameMapTensorGet) {
-    InitIOName({"map_tensor", "key_tensor", "default_value"}, {"output"});
-  }
+  MapTensorGet() : BaseOperator(kNameMapTensorGet) { InitIOName({"map_tensor", "key_tensor"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
