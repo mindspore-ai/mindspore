@@ -46,6 +46,10 @@ MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
   TensorCopySlicesGpuKernelMod, uchar)
+MS_REG_GPU_KERNEL_ONE(
+  TensorCopySlices,
+  KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  TensorCopySlicesGpuKernelMod, bool)
 MS_REG_GPU_KERNEL_TWO(TensorCopySlices,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
@@ -109,5 +113,14 @@ MS_REG_GPU_KERNEL_TWO(TensorCopySlices,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeUInt8),
                       TensorCopySlicesGpuKernelMod, uchar, int64_t)
+MS_REG_GPU_KERNEL_TWO(TensorCopySlices,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeBool),
+                      TensorCopySlicesGpuKernelMod, bool, int64_t)
 }  // namespace kernel
 }  // namespace mindspore
