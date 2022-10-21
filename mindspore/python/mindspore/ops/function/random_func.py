@@ -315,7 +315,7 @@ def uniform_candidate_sampler(true_classes, num_true, num_sampled, unique, range
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> data = Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int32))
+        >>> data = Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int64))
         >>> output1, output2, output3 = ops.uniform_candidate_sampler(data, 1, 3, False, 4, 1)
         >>> print(output1.shape)
         (3,)
