@@ -16,6 +16,7 @@
 """Defines sparse operators with functional form."""
 
 from __future__ import absolute_import
+from typing import Tuple
 from mindspore.ops.operations.sparse_ops import (
     DenseToCSRSparseMatrix,
     CSRSparseMatrixToSparseTensor,
@@ -30,7 +31,8 @@ from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.ops.operations.array_ops import GatherNd, Coalesce
 from mindspore.ops.operations import _csr_ops
 from mindspore.common import CSRTensor, COOTensor, Tensor
-from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor
+from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor,\
+    promote_binary_dtype
 
 # utility functions and values
 gather_nd = GatherNd()
@@ -60,7 +62,29 @@ def is_scalar(tensor):
     return len(tensor.shape) <= 2
 
 
-def coalesce(x_indices, x_values, x_shape):
+def promote_tensor(tensor_1, tensor_2):
+    dtype = promote_binary_dtype(tensor_1.dtype, tensor_2.dtype)
+    return tensor_1.astype(dtype), tensor_2.astype(dtype)
+
+
+def promote_csr(csr_tensor_1, csr_tensor_2):
+    indptr_1, indptr_2 = promote_tensor(csr_tensor_1.indptr, csr_tensor_2.indptr)
+    indices_1, indices_2 = promote_tensor(csr_tensor_1.indices, csr_tensor_2.indices)
+    values_1, values_2 = promote_tensor(csr_tensor_1.values, csr_tensor_2.values)
+    csr_tensor_1 = CSRTensor(indptr_1, indices_1, values_1, csr_tensor_1.shape)
+    csr_tensor_2 = CSRTensor(indptr_2, indices_2, values_2, csr_tensor_2.shape)
+    return csr_tensor_1, csr_tensor_2
+
+
+def promote_coo(coo_tensor_1, coo_tensor_2):
+    indices_1, indices_2 = promote_tensor(coo_tensor_1.indices, coo_tensor_2.indices)
+    values_1, values_2 = promote_tensor(coo_tensor_1.values, coo_tensor_2.values)
+    coo_tensor_1 = COOTensor(indices_1, values_1, coo_tensor_1.shape)
+    coo_tensor_2 = COOTensor(indices_2, values_2, coo_tensor_2.shape)
+    return coo_tensor_1, coo_tensor_2
+
+
+def coalesce(x_indices: Tensor, x_values: Tensor, x_shape: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
     """
     Returns the coalesced sparse tensor of the input.
 
@@ -122,7 +146,7 @@ coo_tensor_get_indices = Primitive('COOTensorGetIndices')
 coo_tensor_get_values = Primitive('COOTensorGetValues')
 
 
-def csr_div(x, y):
+def csr_div(x: CSRTensor, y: Tensor) -> Tensor:
     """
     Returns x / y where x is CSRTensor and y is Tensor.
 
@@ -148,13 +172,14 @@ def csr_div(x, y):
         if y.ndim > x.ndim:
             raise_value_error("dense tensor cannot broadcast to the sparse tensor.")
         return (x.values / y).reshape(x.values.shape)
-    return _csr_ops.CSRDiv()(x.indptr, x.indices, x.values, x.shape, y)
+    x_values, y = promote_tensor(x.values, y)
+    return _csr_ops.CSRDiv()(x.indptr, x.indices, x_values, x.shape, y)
 
 
 csr_gather = _csr_ops.CSRGather()
 
 
-def csr_mul(x, y):
+def csr_mul(x: CSRTensor, y: Tensor) -> Tensor:
     """
     Returns x * y where x is CSRTensor and y is Tensor.
 
@@ -180,10 +205,11 @@ def csr_mul(x, y):
         if y.ndim > x.ndim:
             raise_value_error("dense tensor cannot broadcast to the sparse tensor.")
         return (x.values * y).reshape(x.values.shape)
-    return _csr_ops.CSRMul()(x.indptr, x.indices, x.values, x.shape, y)
+    x_values, y = promote_tensor(x.values, y)
+    return _csr_ops.CSRMul()(x.indptr, x.indices, x_values, x.shape, y)
 
 
-def csr_mv(csr_tensor, dense):
+def csr_mv(csr_tensor: CSRTensor, dense: Tensor) -> Tensor:
     """
     Sparse matrix-vector multiplication.
 
@@ -197,10 +223,11 @@ def csr_mv(csr_tensor, dense):
     Supported Platforms:
         ``GPU`` ``CPU``
     """
-    return _csr_ops.CSRMV()(csr_tensor.indptr, csr_tensor.indices, csr_tensor.values, csr_tensor.shape, dense)
+    csr_tensor_values, dense = promote_tensor(csr_tensor.values, dense)
+    return _csr_ops.CSRMV()(csr_tensor.indptr, csr_tensor.indices, csr_tensor_values, csr_tensor.shape, dense)
 
 
-def csr_reduce_sum(csr_tensor, axis):
+def csr_reduce_sum(csr_tensor: CSRTensor, axis: int) -> Tensor:
     """
     Reduces a dimension of a CSRTensor by summing all elements in the dimension.
 
@@ -217,7 +244,7 @@ def csr_reduce_sum(csr_tensor, axis):
     return _csr_ops.CSRReduceSum()(csr_tensor.indptr, csr_tensor.indices, csr_tensor.values, csr_tensor.shape, axis)
 
 
-def csr_to_coo(tensor):
+def csr_to_coo(tensor: CSRTensor) -> COOTensor:
     """
     Converts a CSRTensor to COOTensor.
 
@@ -259,7 +286,7 @@ def csr_to_coo(tensor):
     return COOTensor(indices, values, shape)
 
 
-def csr_to_dense(csr_tensor):
+def csr_to_dense(csr_tensor: CSRTensor) -> Tensor:
     """
     Converts a CSRTensor to its dense form.
 
@@ -323,7 +350,7 @@ csr_tensor_get_indptr = Primitive('CSRTensorGetIndptr')
 csr_tensor_get_values = Primitive('CSRTensorGetValues')
 
 
-def dense_to_sparse_coo(tensor):
+def dense_to_sparse_coo(tensor: Tensor) -> COOTensor:
     """
     Convert a Tensor to COOTensor.
 
@@ -369,7 +396,7 @@ def dense_to_sparse_coo(tensor):
     return COOTensor(indices, values, tensor.shape)
 
 
-def dense_to_sparse_csr(tensor):
+def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
     """
     Convert a Tensor to CSRTensor.
 
@@ -523,7 +550,7 @@ def sparse_concat(sp_input, concat_dim=0):
     return COOTensor(indices, values, out_shape)
 
 
-def sparse_add(x1, x2, thresh):
+def sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
     """
     Computes the sum of x1(COOTensor) and x2(COOTensor).
 
@@ -577,6 +604,7 @@ def sparse_add(x1, x2, thresh):
         dtype = Int64, value=[[0 0], [0 1], [1 1], [1 2]]),  values=Tensor(shape[4],
         dtype=Int32, value=[3 1 4 2]))
     """
+    x1, x2 = promote_coo(x1, x2)
     x1_indices = x1.indices
     x1_values = x1.values
     x2_indices = x2.indices
@@ -587,7 +615,7 @@ def sparse_add(x1, x2, thresh):
     return COOTensor(indices, values, x1.shape)
 
 
-def csr_softmax(logits, dtype):
+def csr_softmax(logits: CSRTensor, dtype: mstype):
     """
     Calculates the softmax of a CSRTensorMatrix.
 
@@ -634,7 +662,7 @@ def csr_softmax(logits, dtype):
     return CSRTensor(indptr=indptr, indices=indices, values=values, shape=output_shape)
 
 
-def csr_add(a, b, alpha, beta):
+def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTensor:
     """
     Returns alpha * csr_a + beta * csr_b where both csr_a and csr_b are CSRTensor, alpha and beta are both Tensor.
 
@@ -688,10 +716,11 @@ def csr_add(a, b, alpha, beta):
     if not isinstance(alpha, Tensor) or not isinstance(beta, Tensor):
         raise_type_error("For functional operator csr_add, both inputs alpha and beta must be Tensor.")
     csr_add_op = SparseMatrixAdd()
-    a_batch_pointers = make_tensor([0, a.values.shape[0]], mstype.int32)
-    b_batch_pointers = make_tensor([0, b.values.shape[0]], mstype.int32)
-    a_shape = make_tensor(a.shape, mstype.int32)
-    b_shape = make_tensor(b.shape, mstype.int32)
+    a, b = promote_csr(a, b)
+    a_batch_pointers = make_tensor([0, a.values.shape[0]], a.indptr.dtype)
+    b_batch_pointers = make_tensor([0, b.values.shape[0]], b.indptr.dtype)
+    a_shape = make_tensor(a.shape, a.indptr.dtype)
+    b_shape = make_tensor(b.shape, b.indptr.dtype)
     _, _, indptr, indices, values = csr_add_op(a_shape, a_batch_pointers, a.indptr, a.indices, a.values,
                                                b_shape, b_batch_pointers, b.indptr, b.indices, b.values,
                                                alpha, beta)
