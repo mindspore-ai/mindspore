@@ -26,31 +26,17 @@ constexpr size_t kNextAfterInputsNum = 2;
 constexpr size_t kNextAfterOutputsNum = 1;
 }  // namespace
 
-void NextAfterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-}
-
-bool NextAfterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool NextAfterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNextAfterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNextAfterOutputsNum, kernel_name_);
-  if (input_dtype_ == kNumberTypeFloat32) {
-    return LaunchKernel<float>(inputs, outputs);
-  } else if (input_dtype_ == kNumberTypeFloat64) {
-    return LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dtype of input should be float32 or float64, but got "
-                            << TypeIdToType(input_dtype_)->ToString();
-  }
-  return true;
+  kernel_name_ = base_operator->GetPrim()->name();
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 template <typename T>
-bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) const {
+bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                         const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 1) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 1 outputs, but got "
                             << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
@@ -67,18 +53,15 @@ bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-std::vector<std::pair<KernelAttr, NextAfterCpuKernelMod::NextAfterFunc>> NextAfterCpuKernelMod::func_list_ = {
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &NextAfterCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &NextAfterCpuKernelMod::LaunchKernel<double>}};
-
-std::vector<KernelAttr> NextAfterCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, NextAfterFunc> &pair) { return pair.first; });
-
-  return support_list;
+const std::vector<std::pair<KernelAttr, NextAfterCpuKernelMod::KernelRunFunc>> &NextAfterCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, NextAfterCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &NextAfterCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &NextAfterCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, NextAfter, NextAfterCpuKernelMod);
