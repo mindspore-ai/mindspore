@@ -262,7 +262,11 @@ if(MSLITE_ENABLE_CLOUD_MIND_DATA)
     target_link_libraries(_c_dataengine PRIVATE mindspore_shared_lib mindspore::grpc++)
     target_link_libraries(_c_dataengine PUBLIC mindspore::protobuf)
 else()
-    target_link_libraries(_c_dataengine PRIVATE mindspore_core mindspore_shared_lib)
+    target_link_libraries(_c_dataengine PRIVATE mindspore_core)
+endif()
+
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(_c_dataengine PRIVATE mindspore_shared_lib)
 endif()
 
 if(USE_GLOG)
