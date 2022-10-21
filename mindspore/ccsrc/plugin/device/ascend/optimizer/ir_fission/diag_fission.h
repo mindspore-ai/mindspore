@@ -32,6 +32,7 @@ class DiagFission : public PatternProcessPass {
  protected:
   ValueNodePtr CreateAssistNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                 const ShapeVector &ori_shape) const;
+  bool CheckOpAICoreSupported(const TypeId &type) const;
 };
 }  // namespace opt
 }  // namespace mindspore
