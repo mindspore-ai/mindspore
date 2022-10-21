@@ -35,7 +35,7 @@ mindspore.nn.Adagrad
             &\hline \\
        \end{array}
 
-    :math:`state\_sum` 表示梯度平方的累积和 :math:`accum` 。:math:`g` 表示 `grads` ，:math:`\lambda` 代表 `weight_decay`  。
+    :math:`state\_sum` 表示梯度平方的累积和 :math:`accum` 。:math:`g` 表示 `grads` ，:math:`\lambda` 代表 `weight_decay` 。
     :math:`\gamma` 代表 `learning_rate`，:math:`w` 代表 `params` 。
 
     .. note::
