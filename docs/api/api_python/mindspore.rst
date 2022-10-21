@@ -110,6 +110,7 @@ mindspore
     mindspore.load_param_into_net
     mindspore.merge_pipeline_strategys
     mindspore.merge_sliced_parameter
+    mindspore.obfuscate_model
     mindspore.parse_print
     mindspore.rank_list_for_transform
     mindspore.restore_group_info_list
