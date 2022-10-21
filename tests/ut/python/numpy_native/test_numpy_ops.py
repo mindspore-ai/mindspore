@@ -154,6 +154,12 @@ class IsClose(Cell):
         return ret
 
 
+class ArgMax(Cell):
+    def construct(self, a):
+        ret = mnp.argmax(a)
+        return ret
+
+
 class Average(Cell):
     def construct(self, a):
         ret = mnp.average(a)
@@ -280,6 +286,10 @@ test_cases = [
         'block': IsClose(),
         'desc_inputs': [Tensor(np.array([0, 1, 2, float('inf'), float('inf'), float('nan')], dtype=np.float32)),
                         Tensor(np.array([0, 1, -2, float('-inf'), float('inf'), float('nan')], dtype=np.float32))],
+    }),
+    ('ArgMax', {
+        'block': ArgMax(),
+        'desc_inputs': [Tensor(np.array([False, True]))],
     }),
     ('Average', {
         'block': Average(),
