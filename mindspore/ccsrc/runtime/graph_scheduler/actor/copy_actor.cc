@@ -107,8 +107,9 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
   if (device_tensor_store_keys_.size() > 0) {
     const auto &device_tensor_store_node = device_tensor_store_keys_[0].second;
     MS_EXCEPTION_IF_NULL(device_tensor_store_node);
-    input_device_tensor_[0] =
-      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_node.get(), input_device_context->GetDeviceType());
+    input_device_tensor_[0] = DeviceTensorStore::GetInstance()
+                                .Fetch(device_tensor_store_node.get(), input_device_context->GetDeviceType())
+                                .get();
     if (input_device_tensor_[0] == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_node->fullname_with_scope() +
@@ -116,8 +117,9 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
-    output_device_tensor_[0] =
-      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_node.get(), output_device_context->GetDeviceType());
+    output_device_tensor_[0] = DeviceTensorStore::GetInstance()
+                                 .Fetch(device_tensor_store_node.get(), output_device_context->GetDeviceType())
+                                 .get();
     if (output_device_tensor_[0] == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_node->fullname_with_scope() +

@@ -152,42 +152,44 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
   }
 }
 
-void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto ref_node_map = graph->GetRefMap();
-  for (auto iter : ref_node_map) {
-    auto &output_pair = iter.first;
-    auto &input_pair = iter.second;
-    auto &ref_node = output_pair.first;
-    auto output_index = output_pair.second;
-    auto &input_node = input_pair.first;
-    auto input_node_output_index = input_pair.second;
-
-    auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index, false);
-    auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(ref_node, output_index, false);
-    // Just compare shared_ptr of two DeviceAddress.
-    // The ptr of DeviceAddress may still be nullptr.
-    if (input_addr != ref_node_output_addr) {
-      // AnfAlgo::SetOutputAddr cannot update the device_address of frontend Tensor
-      // if the output of RefNode is used by subsequent nodes.
-      // Because the frontend Tensor is copied from backend Tensor and the shared_ptr of Tensor is different.
-      MS_EXCEPTION_IF_NULL(input_addr);
-      if (input_addr->GetMutablePtr() == nullptr) {
-        AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
-      } else {
-        ref_node_output_addr->set_ptr(input_addr->GetMutablePtr());
-      }
-    }
-  }
-}
-
-void UpdateGraphsRefNodeAddress(const std::vector<KernelGraphPtr> &graphs) {
+// The device address of input ref node may be modified by input tensor, so need update the device address of ref node.
+void UpdateDeviceAddressByRefInputNode(const std::vector<KernelGraphPtr> &graphs,
+                                       const std::set<AnfNode *> &modified_input_nodes) {
   for (const auto &graph : graphs) {
-    // The DeviceAddress of the graph parameter has been updated.
-    // The output address of RefNode needs to be consistent with the address of parameter.
     MS_EXCEPTION_IF_NULL(graph);
-    if (!graph->is_graph_run_mode()) {
-      UpdateRefNodeOutputDeviceAddress(graph);
+    // The DeviceAddress of the graph parameter has been updated.
+    if (graph->is_graph_run_mode()) {
+      continue;
+    }
+
+    for (auto &iter : graph->GetRefMap()) {
+      auto &output_pair = iter.first;
+      auto &input_pair = iter.second;
+      MS_EXCEPTION_IF_NULL(output_pair.first);
+      MS_EXCEPTION_IF_NULL(input_pair.first);
+      if (modified_input_nodes.count(input_pair.first.get()) == 0) {
+        continue;
+      }
+      // The output device tensor of ref node actor can't be changed in the running, and only the ptr of output device
+      // address can be modified. And need set `ref_count` to `SIZE_MAX` for avoiding clean. So only support the
+      // persistent device tensor.
+      if (!IsPersistentDeviceTensor(input_pair.first)) {
+        MS_LOG(EXCEPTION) << "The input parameter: " << input_pair.first->fullname_with_scope()
+                          << " isn't the ref parameter which used by the ref node: "
+                          << output_pair.first->fullname_with_scope();
+      }
+
+      MS_LOG(INFO) << "Update the ptr of ref node: " << output_pair.first->fullname_with_scope()
+                   << " by the modified ref input parameter: " << input_pair.first->fullname_with_scope();
+      auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(output_pair.first, output_pair.second, false);
+      MS_EXCEPTION_IF_NULL(ref_node_output_addr);
+      const auto &front_input_node = graph->GetFrontAnfByBackendAnf(input_pair.first);
+      const auto &input_addr =
+        DeviceTensorStore::GetInstance().Fetch(front_input_node.get(), ref_node_output_addr->GetDeviceType());
+      MS_EXCEPTION_IF_NULL(input_addr);
+      ref_node_output_addr->set_ptr(input_addr->GetMutablePtr());
+      ref_node_output_addr->set_original_ref_count(SIZE_MAX);
+      ref_node_output_addr->ResetRefCount();
     }
   }
 }
@@ -292,7 +294,7 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
 
 void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
                                                       const KernelGraphPtr &graph,
-                                                      const DeviceContext *device_context) const {
+                                                      const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(graph);
@@ -323,8 +325,9 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
                                      tensor_address->type_id() != device_address->type_id()))) {
     return;
   }
-  if (tensor_address != nullptr) {
-    // Assign tensor address to input data node and set `ref_count` to `SIZE_MAX` for avoiding clean
+  if ((tensor_address != nullptr) && (tensor_address != device_address)) {
+    // Assign tensor address to input data node and set `ref_count` to `SIZE_MAX` for avoiding clean.
+    (void)address_modified_input_nodes_.insert(input_node.get());
     AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
     tensor_address->SetNodeIndex(input_node, 0);
     tensor_address->set_original_ref_count(SIZE_MAX);
@@ -381,7 +384,11 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
     return;
   }
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
-  UpdateGraphsRefNodeAddress(graph_compiler_info_->graphs_);
+  if (!address_modified_input_nodes_.empty()) {
+    UpdateDeviceAddressByRefInputNode(graph_compiler_info_->graphs_, address_modified_input_nodes_);
+    address_modified_input_nodes_.clear();
+  }
+
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
     SendDebugReq(context);
@@ -704,7 +711,7 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
 // Prepare the device data for persistent device tensor of weight node from host tensor.
 void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &front_node,
                                                 const TensorPtr &tensor, const DeviceContext *device_context,
-                                                OpContext<DeviceTensor> *const context) const {
+                                                OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(backend_node);
   MS_EXCEPTION_IF_NULL(front_node);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -735,20 +742,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     }
     MS_EXCEPTION_IF_NULL(host_tensor_address);
 
-    if (host_tensor_address->GetDeviceType() == device_tensor->GetDeviceType()) {
-      // In the scenario of training + inference , the device address of the weight node can not be changed when
-      // multi-graphs sink mode is set.
-      if (device_tensor->is_ptr_persisted() && (host_tensor_address != device_tensor)) {
-        if (!Copy(device_tensor.get(), host_tensor_address.get())) {
-          std::string error_info = "Sync data error.";
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
-        }
-        host_tensor_address = device_tensor;
-        tensor->set_device_address(device_tensor);
-      } else {
-        AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
-      }
-    } else {
+    if (host_tensor_address->GetDeviceType() != device_tensor->GetDeviceType()) {
       MS_LOG(INFO) << "The device type is not equal, host tensor type:" << host_tensor_address->GetDeviceType()
                    << ", device tensor type:" << device_tensor->GetDeviceType();
       // The fake heterogeneous scenario.
@@ -757,6 +751,20 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
         host_tensor_address = device_tensor;
         tensor->set_device_address(device_tensor);
         is_need_sync = true;
+      }
+    } else if (host_tensor_address != device_tensor) {
+      // In the scenario of training + inference , the device address of the weight node can not be changed when
+      // multi-graphs sink mode is set.
+      if (device_tensor->is_ptr_persisted()) {
+        if (!Copy(device_tensor.get(), host_tensor_address.get())) {
+          std::string error_info = "Sync data error.";
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
+        }
+        host_tensor_address = device_tensor;
+        tensor->set_device_address(device_tensor);
+      } else {
+        (void)address_modified_input_nodes_.insert(backend_node.get());
+        AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
       }
     }
   }

@@ -163,7 +163,8 @@ DeviceTensor *MemorySwapNodeScheduler::GetNodeOutputDeviceTensor(
   if (front_node == nullptr || front_node->isa<CNode>()) {
     return device_address;
   }
-  auto real_device_address = DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType());
+  auto real_device_address =
+    DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()).get();
   if (real_device_address != nullptr) {
     return real_device_address;
   }

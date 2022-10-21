@@ -545,7 +545,7 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetMutableOutputAddr(output_idx);
   if (addr == nullptr) {
-    MS_LOG(EXCEPTION) << "Output_idx" << output_idx << " of node " << node->DebugString()
+    MS_LOG(EXCEPTION) << "Output_idx " << output_idx << " of node " << node->DebugString()
                       << " output addr is not exist." << trace::DumpSourceLines(node);
   }
   return addr;

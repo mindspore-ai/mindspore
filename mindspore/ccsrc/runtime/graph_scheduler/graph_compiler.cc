@@ -569,7 +569,6 @@ void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const Devic
   DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context, graph);
   DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(graph);
   DeviceAddressUtils::UpdateDeviceAddressForRefNode(graph);
-
   MS_LOG(INFO) << "Status record: end create device address. graph id: " << graph->graph_id();
 }
 

@@ -61,7 +61,7 @@ class DeviceSync {
     }
   }
   void DecreaseOriginalRefCount() {
-    if (original_ref_count_ > 0) {
+    if ((original_ref_count_ < SIZE_MAX) && (original_ref_count_ > 0)) {
       original_ref_count_--;
     }
   }

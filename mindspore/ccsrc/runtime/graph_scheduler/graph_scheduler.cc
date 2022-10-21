@@ -507,6 +507,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   const auto &actor_set = Build(graph_compiler_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   CacheGraphOutputToActor(graph_compiler_info);
+  UpdateDeviceAddressByRefInternalParameter(graph_compiler_info);
   Link(actor_set.get(), graph_compiler_info);
 
   DumpActor(actor_set.get(), graph_compiler_info);
@@ -776,6 +777,68 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
         MS_EXCEPTION_IF_CHECK_FAIL((!is_somas),
                                    (output_kernel->fullname_with_scope() + " can't use somas for graph output."));
       }
+    }
+  }
+}
+
+void GraphScheduler::UpdateDeviceAddressByRefInternalParameter(const GraphCompilerInfo &graph_compiler_info) {
+  for (const auto &graph : graph_compiler_info.graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
+    // The graph run mode no need update.
+    if (graph->is_graph_run_mode()) {
+      continue;
+    }
+
+    for (const auto &ref_node_pair : graph->GetRefMap()) {
+      auto &cur_node_pair = ref_node_pair.first;
+      auto &origin_node_pair = ref_node_pair.second;
+      MS_EXCEPTION_IF_NULL(cur_node_pair.first);
+      MS_EXCEPTION_IF_NULL(origin_node_pair.first);
+      // Only the internal parameter need update.
+      if (!IsInternalParameter(origin_node_pair.first, graph)) {
+        continue;
+      }
+
+      // Get the real origin node by the internal parameter.
+      auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(origin_node_pair.first);
+      MS_EXCEPTION_IF_NULL(front_output_with_index.first);
+      if (graph_output_to_actor_.count(front_output_with_index) == 0) {
+        MS_LOG(EXCEPTION) << "Can't find graph output by front node:" << front_output_with_index.first->DebugString();
+      }
+      auto real_origin_node_pair = graph_output_to_actor_[front_output_with_index].second;
+      real_origin_node_pair =
+        common::AnfAlgo::VisitKernelWithReturnType(real_origin_node_pair.first, real_origin_node_pair.second, false);
+      MS_EXCEPTION_IF_NULL(real_origin_node_pair.first);
+
+      auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(cur_node_pair.first, cur_node_pair.second, false);
+      MS_EXCEPTION_IF_NULL(cur_node_output_addr);
+      auto origin_node_output_addr =
+        AnfAlgo::GetMutableOutputAddr(real_origin_node_pair.first, real_origin_node_pair.second, false);
+      // The persistent device tensor need fetch the device address by device type from the device tensor store.
+      if (IsPersistentDeviceTensor(real_origin_node_pair.first)) {
+        front_output_with_index = common::AnfAlgo::VisitKernelWithReturnType(front_output_with_index.first,
+                                                                             front_output_with_index.second, false);
+        origin_node_output_addr = DeviceTensorStore::GetInstance().Fetch(front_output_with_index.first.get(),
+                                                                         cur_node_output_addr->GetDeviceType());
+      }
+      MS_EXCEPTION_IF_NULL(origin_node_output_addr);
+      // The device address can't be updated through heterogeneous address.
+      if ((origin_node_output_addr.get() == cur_node_output_addr.get()) ||
+          (origin_node_output_addr->GetDeviceType() != cur_node_output_addr->GetDeviceType())) {
+        continue;
+      }
+
+      MS_LOG(INFO) << "Update device address by internal parameter: ref origin kernel is "
+                   << real_origin_node_pair.first->fullname_with_scope() << ", index is "
+                   << real_origin_node_pair.second << "; cur kernel is " << cur_node_pair.first->fullname_with_scope()
+                   << ", index is " << cur_node_pair.second << "; internal parameter is "
+                   << origin_node_pair.first->DebugString();
+      AnfAlgo::SetOutputAddr(origin_node_output_addr, cur_node_pair.second, cur_node_pair.first.get());
+      // Update the reference count of device address.
+      cur_node_output_addr->DecreaseOriginalRefCount();
+      cur_node_output_addr->ResetRefCount();
+      origin_node_output_addr->IncreaseOriginalRefCount();
+      origin_node_output_addr->ResetRefCount();
     }
   }
 }

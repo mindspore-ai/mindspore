@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <map>
+#include <set>
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
@@ -77,7 +78,7 @@ class DataPrepareActor : public DebugAwareActor {
   void UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor) const;
 
   void UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
-                                      const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+                                      const KernelGraphPtr &graph, const DeviceContext *device_context);
 
   void PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                        OpContext<DeviceTensor> *const context);
@@ -86,7 +87,7 @@ class DataPrepareActor : public DebugAwareActor {
 
   // Prepare the device data for persistent device tensor of weight node from host tensor.
   void PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &front_node, const TensorPtr &tensor,
-                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
+                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
   // Prepare the device data for persistent device tensor of value node.
   void PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
@@ -132,6 +133,9 @@ class DataPrepareActor : public DebugAwareActor {
   std::vector<size_t> total_size_list_;
   std::vector<const DeviceContext *> continuous_memory_device_contexts_;
   std::vector<std::vector<TensorPtr>> init_tensors_;
+
+  // Record the address modified input ndoes to refresh the ref node.
+  std::set<AnfNode *> address_modified_input_nodes_;
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;

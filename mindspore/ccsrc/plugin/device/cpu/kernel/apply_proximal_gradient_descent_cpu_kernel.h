@@ -51,8 +51,7 @@ class ApplyProximalGradientDescentCpuKernelMod : public NativeCpuKernelMod {
                                                      .AddInputAttr(kNumberTypeFloat16)
                                                      .AddInputAttr(kNumberTypeFloat16)
                                                      .AddOutputAttr(kNumberTypeFloat16)
-                                                     .AddOutInRef(0, 0)
-                                                     .AddOutInRef(1, 1),
+                                                     .AddOutInRef(0, 0),
                                                    KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -60,8 +59,7 @@ class ApplyProximalGradientDescentCpuKernelMod : public NativeCpuKernelMod {
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutInRef(0, 0)
-                                                     .AddOutInRef(1, 1)};
+                                                     .AddOutInRef(0, 0)};
     return support_list;
   }
 
