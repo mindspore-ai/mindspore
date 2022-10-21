@@ -130,7 +130,7 @@ void ApplyAdagradDACpuKernelMod::CheckShapeAndDtypeEqual(int64_t size_a, int64_t
 }
 
 void ApplyAdagradDACpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+                                            const std::vector<AddressPtr> &outputs) const {
   // Inputs: var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
