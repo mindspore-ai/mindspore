@@ -30,9 +30,29 @@ namespace ascend {
 constexpr uint32_t kProfilingModelStartLogId = 0;
 constexpr uint32_t kProfilingModelEndLogId = 1;
 
-static std::map<enum KernelType, MsprofGeTaskType> KernelType2TaskTypeEnum{{TBE_KERNEL, MSPROF_GE_TASK_TYPE_AI_CORE},
-                                                                           {AKG_KERNEL, MSPROF_GE_TASK_TYPE_AI_CORE},
-                                                                           {AICPU_KERNEL, MSPROF_GE_TASK_TYPE_AI_CPU}};
+// GE task info task_type
+enum class TaskInfoTaskType {
+  MSPROF_AI_CORE = 0,
+  MSPROF_AI_CPU,
+  MSPROF_AIV,
+  MSPROF_RTS,
+  MSPROF_HCCL,
+  MSPROF_UNKNOWN_TYPE = 1000,
+};
+
+// MS kernel to GE task info task_type
+static std::map<KernelType, TaskInfoTaskType> KernelType2TaskTypeEnum{
+  {KernelType::TBE_KERNEL, TaskInfoTaskType::MSPROF_AI_CORE},
+  {KernelType::AKG_KERNEL, TaskInfoTaskType::MSPROF_AI_CORE},
+  {KernelType::AICPU_KERNEL, TaskInfoTaskType::MSPROF_AI_CPU},
+  {KernelType::RT_KERNEL, TaskInfoTaskType::MSPROF_RTS},
+  {KernelType::HCCL_KERNEL, TaskInfoTaskType::MSPROF_HCCL},
+  {KernelType::HOST_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::CPU_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::GPU_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::BISHENG_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::ACL_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::UNKNOWN_KERNEL_TYPE, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE}};
 
 // 0 means unknown format
 static std::map<string, uint32_t> OpFormat2Index{{kOpFormat_DEFAULT, 1},
@@ -197,9 +217,6 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
   MsprofGeProfTaskData task_info{};
   task_info.taskType = static_cast<uint32_t>(KernelType2TaskTypeEnum[kernel_type]);
   std::string opType = common::AnfAlgo::GetCNodeName(node);
-  if (opType == PROFILING_OP_NAME) {
-    task_info.taskType = MSPROF_GE_TASK_TYPE_PROFILING;
-  }
   SetAlternativeValue(&task_info.opName, MSPROF_MIX_DATA_STRING_LEN, node->fullname_with_scope(), device_id_);
   SetAlternativeValue(&task_info.opType, MSPROF_GE_OP_TYPE_LEN, opType, device_id_);
   // Note: Currently, the profiler supports only static shapes.
