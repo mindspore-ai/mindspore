@@ -127,8 +127,8 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
   auto shape_vector = shape->shape();
   auto shape_base_vector = shape_base->shape();
   if (shape_vector.size() != shape_base_vector.size()) {
-    MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape->ToString()
-                      << " are not consistent with second arg shape " << shape_base->ToString();
+    MS_EXCEPTION(ValueError) << "For " << op << ", the first arg shape " << shape->ToString()
+                             << " are not consistent with second arg shape " << shape_base->ToString();
   }
 
   for (size_t i = 0; i < shape_vector.size(); i++) {
@@ -136,8 +136,8 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
       continue;
     }
     if (shape_vector[i] != shape_base_vector[i]) {
-      MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape->ToString()
-                        << " are not consistent with second arg shape " << shape_base->ToString();
+      MS_EXCEPTION(ValueError) << "For " << op << ", the first arg shape " << shape->ToString()
+                               << " are not consistent with second arg shape " << shape_base->ToString();
     }
   }
   return;
@@ -155,8 +155,8 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
   MS_EXCEPTION_IF_NULL(type_base);
   MS_EXCEPTION_IF_NULL(type);
   if (*type != *type_base) {
-    MS_LOG(EXCEPTION) << op << " evaluator first arg dtype " << type_base->ToString()
-                      << " are not consistent with second arg dtype " << type->ToString();
+    MS_EXCEPTION(TypeError) << "For " << op << ", the first arg dtype " << type_base->ToString()
+                            << " are not consistent with second arg dtype " << type->ToString();
   }
   return type_base;
 }
