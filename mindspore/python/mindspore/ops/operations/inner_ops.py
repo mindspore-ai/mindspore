@@ -70,7 +70,7 @@ class Randperm(Primitive):
         dtype (mindspore.dtype): The type of output. Default: mindspore.int32.
 
     Inputs:
-        - **n** (Tensor[int32]) - The input tensor with shape: (1,) and the number must be in [0, `max_length`].
+        - **n** (Tensor) - The input tensor with shape (1,) and dtype int32 or int64. 'n' must be in [0, `max_length`].
 
     Outputs:
         - **output** (Tensor) - The output Tensor with shape: (`max_length`,) and type: `dtype`.
@@ -80,6 +80,9 @@ class Randperm(Primitive):
         TypeError: If `n` is not a Tensor.
         TypeError: If `n` has non-Int elements.
         TypeError: If `n` has negative elements.
+        TypeError: If `dtype` is not supported.
+        ValueError: If `n` is out of range of `dtype`.
+        ValueError: If `n` is larger than `max_length`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -100,6 +103,9 @@ class Randperm(Primitive):
         validator.check_value_type("pad", pad, [int], self.name)
         validator.check_value_type("max_length", max_length, [int], self.name)
         validator.check_int(max_length, 1, Rel.GE, "max_length", self.name)
+        valid_values = (mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16,
+                        mstype.uint32, mstype.uint64, mstype.float16, mstype.float32, mstype.float64)
+        validator.check_type_name("dtype", dtype, valid_values, self.name)
         self.dtype = dtype
         self.max_length = max_length
         self.init_prim_io_names(inputs=[], outputs=['output'])

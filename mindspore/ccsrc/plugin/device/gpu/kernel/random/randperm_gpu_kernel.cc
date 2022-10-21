@@ -49,7 +49,7 @@ int RandpermGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-template <typename T>
+template <typename T, typename S>
 bool RandpermGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   T *input_device = GetDeviceAddress<T>(inputs, 0);
@@ -57,24 +57,21 @@ bool RandpermGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   T *output_device = GetDeviceAddress<T>(outputs, 0);
   MS_ERROR_IF_NULL_W_RET_VAL(output_device, false);
 
-  int32_t n = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&n, input_device, sizeof(int32_t), cudaMemcpyDeviceToHost,
-                                                     reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                     kernel_name_ + " Failed to copy error code to host.");
+  S n = 0;
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&n, input_device, sizeof(S), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    kernel_name_ + " Failed to copy error code to host.");
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(),
                                      kernel_name_ + " cudaDeviceSyncFailed in RandpermGpuKernelMod");
 
-  if (static_cast<size_t>(n) > max_length_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', n (" << n << ") cannot exceed max_length_ (" << max_length_
-                      << ")";
-  }
-
   // might not be a significant performance gain if this kernel is executed in cuda,
   // so we do the calculations on host and copy to device afterwards.
   std::vector<T> output_host(max_length_);
-  std::iota(output_host.begin(), output_host.begin() + n, 0);
-  std::fill(output_host.begin() + n, output_host.end(), static_cast<T>(pad_));
+  for (S i = 0; i < n; i++) {
+    output_host[i] = static_cast<T>(static_cast<float>(i));
+  }
+  std::fill(output_host.begin() + n, output_host.end(), static_cast<T>(static_cast<float>(pad_)));
   std::shuffle(output_host.begin(), output_host.begin() + n, rng_);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -87,21 +84,49 @@ bool RandpermGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
 
 std::vector<std::pair<KernelAttr, RandpermGpuKernelMod::RandpermGpuLaunchFunc>> RandpermGpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-   &RandpermGpuKernelMod::LaunchKernel<int64_t>},
+   &RandpermGpuKernelMod::LaunchKernel<int64_t, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &RandpermGpuKernelMod::LaunchKernel<int32_t>},
+   &RandpermGpuKernelMod::LaunchKernel<int32_t, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-   &RandpermGpuKernelMod::LaunchKernel<int16_t>},
+   &RandpermGpuKernelMod::LaunchKernel<int16_t, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-   &RandpermGpuKernelMod::LaunchKernel<int8_t>},
+   &RandpermGpuKernelMod::LaunchKernel<int8_t, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-   &RandpermGpuKernelMod::LaunchKernel<uint8_t>},
+   &RandpermGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-   &RandpermGpuKernelMod::LaunchKernel<uint16_t>},
+   &RandpermGpuKernelMod::LaunchKernel<uint16_t, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
-   &RandpermGpuKernelMod::LaunchKernel<uint32_t>},
+   &RandpermGpuKernelMod::LaunchKernel<uint32_t, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-   &RandpermGpuKernelMod::LaunchKernel<uint64_t>},
+   &RandpermGpuKernelMod::LaunchKernel<uint64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+   &RandpermGpuKernelMod::LaunchKernel<half, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+   &RandpermGpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+   &RandpermGpuKernelMod::LaunchKernel<double, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &RandpermGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &RandpermGpuKernelMod::LaunchKernel<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   &RandpermGpuKernelMod::LaunchKernel<int16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   &RandpermGpuKernelMod::LaunchKernel<int8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   &RandpermGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   &RandpermGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   &RandpermGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   &RandpermGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   &RandpermGpuKernelMod::LaunchKernel<half, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   &RandpermGpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   &RandpermGpuKernelMod::LaunchKernel<double, int64_t>},
 };
 
 std::vector<KernelAttr> RandpermGpuKernelMod::GetOpSupport() {

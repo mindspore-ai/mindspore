@@ -81,11 +81,11 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
   constexpr size_t size_4 = 4;
 
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("dimension of input x", SizeToLong(in_shape.size()), kEqual,
-                                           SizeToLong(size_4), op_name);
-  if (input_args[kInputIndex0]->BuildShape()->IsDynamic()) {
+  if (IsDynamic(in_shape)) {
     return std::make_shared<abstract::Shape>(in_shape);
   }
+  (void)CheckAndConvertUtils::CheckInteger("dimension of input x", SizeToLong(in_shape.size()), kEqual,
+                                           SizeToLong(size_4), op_name);
   (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("spatial size of input", in_shape, op_name);
   auto ksizes_ptr = primitive->GetAttr(kKsizes);
   MS_EXCEPTION_IF_NULL(ksizes_ptr);
