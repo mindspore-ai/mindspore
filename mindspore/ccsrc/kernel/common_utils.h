@@ -392,7 +392,7 @@ struct KernelArgs {
   // cppcheck-suppress unusedStructMember
   constexpr static char key[] = "KernelArgs";
 };
-BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode);
+BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode, bool is_without_operator = false);
 
 BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                                    const std::vector<KernelTensorPtr> &outputs);
@@ -406,8 +406,7 @@ void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr
 BACKEND_EXPORT std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode);
 BACKEND_EXPORT void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args);
 BACKEND_EXPORT void SetInputsByDependMap(const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                                         std::vector<KernelTensorPtr> *inputs,
-                                         const enum KernelModType &kernel_mod_type);
+                                         std::vector<KernelTensorPtr> *inputs, bool is_stored_in_device = false);
 BACKEND_EXPORT void SetInputsByConstInputs(const CNodePtr &node,
                                            std::map<uint32_t, tensor::TensorPtr> *inputs_tensor_map);
 inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cnode) {

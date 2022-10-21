@@ -243,6 +243,23 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
                 << new_abs;
   cnode->set_abstract(new_abs);
 }
+
+inline bool IsDeprecatedCpuOrGpuKernelMod(kernel::KernelModType kernel_mod_type) {
+  return kernel_mod_type == kernel::KernelModType::DeprecatedNativeGpuKernelMod ||
+         kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod;
+}
+
+inline bool IsCpuGpuKernelMod(kernel::KernelModType kernel_mod_type) {
+  return kernel_mod_type == kernel::KernelModType::NativeGpuKernelMod ||
+         kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod ||
+         kernel_mod_type == kernel::KernelModType::DeprecatedNativeGpuKernelMod ||
+         kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod;
+}
+
+inline bool IsCpuKernelMod(kernel::KernelModType kernel_mod_type) {
+  return kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod ||
+         kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod;
+}
 }  // namespace
 bool IsRealCNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n)) {
@@ -301,12 +318,10 @@ void InferOp(const CNodePtr &cnode, void *args) {
     InferShape(cnode, &kernel_args.depend_tensor_map, args);
   }
 
-  if (auto kernel_mod_type = kernel_mod->GetKernelModType();
-      kernel_mod_type == kernel::KernelModType::NativeGpuKernelMod ||
-      kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod) {
-    auto update = kernel::AbstractArgsFromCNode(cnode);
+  if (auto kernel_mod_type = kernel_mod->GetKernelModType(); IsCpuGpuKernelMod(kernel_mod_type)) {
+    auto update = kernel::AbstractArgsFromCNode(cnode, IsDeprecatedCpuOrGpuKernelMod(kernel_mod_type));
     update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
-    kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, kernel_mod_type);
+    kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, IsCpuKernelMod(kernel_mod_type));
     kernel::SetArgsToCNode(cnode, update);
   } else {
     kernel::SetArgsToCNode(cnode, kernel_args);

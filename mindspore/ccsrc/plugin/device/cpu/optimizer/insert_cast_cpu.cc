@@ -70,32 +70,20 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
     MS_LOG(EXCEPTION) << "Operator[Cast] " << cast->kernel_info() << " is not support.";
   }
 
-  // This branch would be removed When KernelMode rectification is complete
-  auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
-  if (discard_cpu_kernel_mod) {
-    try {
-      discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(cast);
-      discard_cpu_kernel_mod->Init(cast);
-    } catch (std::exception &e) {
-      MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(cast);
-    }
-    AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, cast.get());
-  } else {
-    auto kernel_attrs = cpu_kernel->GetOpSupport();
-    kernel::SetCpuRefMapToKernelInfo(cast, kernel_attrs);
-    auto thread_pool = kernel::GetActorMgrInnerThreadPool();
-    cpu_kernel->SetThreadPool(thread_pool);
-    auto args = kernel::AbstractArgsFromCNode(cast);
-    auto ret = cpu_kernel->Init(args.op, args.inputs, args.outputs);
-    if (!ret) {
-      MS_LOG(EXCEPTION) << trace::DumpSourceLines(cast);
-    }
-    if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(cast)) ==
-        kernel::KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Resize failed.";
-    }
-    AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
+  auto kernel_attrs = cpu_kernel->GetOpSupport();
+  kernel::SetCpuRefMapToKernelInfo(cast, kernel_attrs);
+  auto thread_pool = kernel::GetActorMgrInnerThreadPool();
+  cpu_kernel->SetThreadPool(thread_pool);
+  auto args = kernel::AbstractArgsFromCNode(cast);
+  auto ret = cpu_kernel->Init(args.op, args.inputs, args.outputs);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << trace::DumpSourceLines(cast);
   }
+  if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(cast)) ==
+      kernel::KRET_RESIZE_FAILED) {
+    MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Resize failed.";
+  }
+  AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   return cast;
 }
 

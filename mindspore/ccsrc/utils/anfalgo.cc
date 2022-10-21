@@ -1304,8 +1304,11 @@ static ShapeVector GetShapeFromSequenceShape(const abstract::SequenceShapePtr &s
 
   auto shape = shape_list[index];
   MS_EXCEPTION_IF_NULL(shape);
-  if (!shape->isa<abstract::Shape>()) {
-    MS_LOG(EXCEPTION) << "Invalid Shape Type In Shape List";
+  if (shape->isa<abstract::NoShape>()) {
+    // For scalar in sequeue case.
+    return {};
+  } else if (!shape->isa<abstract::Shape>()) {
+    MS_LOG(EXCEPTION) << "Invalid Shape Type(" << shape->ToString() << ") In Shape List";
   }
 
   auto shape_ptr = shape->cast<abstract::ShapePtr>();
