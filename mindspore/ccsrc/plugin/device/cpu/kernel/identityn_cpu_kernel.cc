@@ -20,6 +20,11 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
+namespace {
+const size_t kInputsNum = 1;
+const size_t kOutputsNum = 1;
+}  // namespace
+
 namespace mindspore {
 namespace kernel {
 bool IdentityNCpuKernelMod::CheckType(TypeId idx_type, size_t idx) {
@@ -36,31 +41,40 @@ bool IdentityNCpuKernelMod::CheckType(TypeId idx_type, size_t idx) {
   return true;
 }
 
-void IdentityNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  in_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  out_num_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (in_num_ != out_num_) {
-    MS_EXCEPTION(ValueError) << "For IdentityN, input tensor number should same to outputs but get [" << in_num_
-                             << "] != [" << out_num_ << "].";
+bool IdentityNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  if (inputs.size() != outputs.size()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', inputs size should be equal to outputs size: " << inputs.size()
+                  << " vs " << outputs.size();
+    return false;
   }
-  for (size_t idx = 0; idx < in_num_; ++idx) {
-    auto idx_type = AnfAlgo::GetInputDeviceDataType(kernel_node, idx);
-    (void)CheckType(idx_type, idx);
-    auto out_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, idx);
-    if (idx_type != out_type) {
+  return true;
+}
+
+int IdentityNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  for (size_t idx = 0; idx < inputs.size(); ++idx) {
+    auto in_type = inputs[idx]->GetDtype();
+    (void)CheckType(in_type, idx);
+    auto out_type = outputs[idx]->GetDtype();
+    if (in_type != out_type) {
       MS_EXCEPTION(TypeError) << "For IdentityN, input tensor datatype should be same to output. But datatype ["
-                              << TypeIdLabel(idx_type) << "] != [" << TypeIdLabel(out_type) << "].";
+                              << TypeIdLabel(in_type) << "] != [" << TypeIdLabel(out_type) << "].";
     }
   }
+  return ret;
 }
 
 bool IdentityNCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), in_num_, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), out_num_, kernel_name_);
-  for (size_t idx = 0; idx < in_num_; ++idx) {
+  for (size_t idx = 0; idx < inputs.size(); ++idx) {
     auto idx_in_addr = inputs[idx]->addr;
     size_t idx_in_size = inputs[idx]->size;
     auto idx_out_addr = outputs[idx]->addr;

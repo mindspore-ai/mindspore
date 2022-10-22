@@ -41,14 +41,14 @@ int StridedSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs,
                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  GetDynamicAttrIntValue(inputs, kShapexIndex_, inputsOnHost, kernel_name_, &shapex_);
-  GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
-  GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
-  GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
   auto ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
+  GetDynamicAttrIntValue(inputs, kShapexIndex_, inputsOnHost, kernel_name_, &shapex_);
+  GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
+  GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
+  GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
   input_shape_.clear();
   for (auto x : shapex_) {
     input_shape_.push_back(static_cast<size_t>(x));
