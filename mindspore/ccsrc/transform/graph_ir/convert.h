@@ -63,6 +63,10 @@ class GeOpConvertor {
   static std::shared_ptr<GeTensorDesc> GetTensorDesc(const ShapeVector &dev_shape, const TypeId &dev_type,
                                                      const std::string &dev_format, const ShapeVector &ori_shape,
                                                      const std::string &ori_format);
+
+  static mindspore::HashSet<size_t> GetNeedRemoveInput(const AnfNodePtr &node, const bool training);
+
+  static std::map<std::string, unsigned int> GetNeedAddInput(const AnfNodePtr &node, const bool training);
 };
 
 class DfGraphConvertor {

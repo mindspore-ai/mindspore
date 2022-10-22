@@ -74,6 +74,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   for (const auto &[attr_name, value] : attr_list_) {
     op_desc_ptr->AddTensorAttr(attr_name, value);
   }
+  op_desc_ptr->AddConstInputTensor(anf_node_.lock());
 
   // Current enable binary->fuzz->stable mode.
   auto set_compile_flag = ACL_SUCCESS;

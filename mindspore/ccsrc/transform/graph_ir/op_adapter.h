@@ -38,6 +38,7 @@ class OpAdapterImpl {
                 const mindspore::HashMap<std::string, AttrDesc> &attr_map,
                 const mindspore::HashMap<std::string, int> &enum_map,
                 const mindspore::HashMap<unsigned int, AttrDesc> &input_attr_map,
+                const std::map<std::string, unsigned int> &attr_input_map,
                 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *cus_input_map,
                 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *cus_output_map,
                 mindspore::HashMap<std::string, ValuePtr> *extra_attr,
@@ -51,6 +52,7 @@ class OpAdapterImpl {
         attr_map_(attr_map),
         enum_map_(enum_map),
         input_attr_map_(input_attr_map),
+        attr_input_map_(attr_input_map),
         cus_input_map_(cus_input_map),
         cus_output_map_(cus_output_map),
         extra_attr_(extra_attr),
@@ -86,7 +88,7 @@ class OpAdapterImpl {
   Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                 const std::string &format);
   size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op) const;
-  std::map<std::string, ValuePtr> GetNormalOpAttrList(const PrimitivePtr &prim) const;
+  std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) const;
   std::shared_ptr<GeTensorDesc> CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
                                                  const std::string &format) const;
   Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
@@ -113,6 +115,7 @@ class OpAdapterImpl {
   const mindspore::HashMap<std::string, AttrDesc> &attr_map_;
   const mindspore::HashMap<std::string, int> &enum_map_;
   const mindspore::HashMap<unsigned int, AttrDesc> &input_attr_map_;
+  const std::map<std::string, unsigned int> &attr_input_map_;
   mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *const cus_input_map_;
   mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *const cus_output_map_;
   mindspore::HashMap<std::string, ValuePtr> *const extra_attr_;
@@ -126,15 +129,15 @@ class OpAdapter : public BaseOpAdapter {
   using OpType = T;
   OpAdapter()
       : impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_, subgraph_map_,
-                                              dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, &cus_input_map_,
-                                              &cus_output_map_, &extra_attr_, &name_counts_, this)) {
+                                              dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, attr_input_map_,
+                                              &cus_input_map_, &cus_output_map_, &extra_attr_, &name_counts_, this)) {
     MS_EXCEPTION_IF_NULL(impl_);
   }
   explicit OpAdapter(const ExtraAttr &extra_attr)
       : extra_attr_(extra_attr),
         impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_, subgraph_map_,
-                                              dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, &cus_input_map_,
-                                              &cus_output_map_, &extra_attr_, &name_counts_, this)) {
+                                              dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, attr_input_map_,
+                                              &cus_input_map_, &cus_output_map_, &extra_attr_, &name_counts_, this)) {
     MS_EXCEPTION_IF_NULL(impl_);
   }
   ~OpAdapter() override {}
@@ -239,12 +242,13 @@ class OpAdapter : public BaseOpAdapter {
   }
   const mindspore::HashMap<int, InputDesc> &getInputMap() override { return input_map_; }
   const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
+  const std::map<std::string, unsigned int> &getAttrInputMap() override { return attr_input_map_; }
   const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
   const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() override { return subgraph_map_; }
   const mindspore::HashMap<int, OutputDesc> &getOutputMap() override { return output_map_; }
   const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
-  std::map<std::string, ValuePtr> GetNormalOpAttrList(const PrimitivePtr &prim) override {
-    return impl_->GetNormalOpAttrList(prim);
+  std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) override {
+    return impl_->GetNormalOpAttrList(node);
   }
   bool IsDynInputOp(uint64_t index) override { return dyn_input_map_.find(index) != dyn_input_map_.end(); }
   bool IsDyOutputOp(uint64_t index) override { return dyn_output_map_.find(index) != dyn_output_map_.end(); }
@@ -521,6 +525,7 @@ class OpAdapter : public BaseOpAdapter {
   static const mindspore::HashMap<std::string, int> enum_map_;
   // convert input from anf graph to Attr in Operators
   static const mindspore::HashMap<unsigned int, AttrDesc> input_attr_map_;
+  static const std::map<std::string, unsigned int> attr_input_map_;
   static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_input_map_;
   static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_output_map_;
   mindspore::HashMap<std::string, ValuePtr> extra_attr_;
@@ -546,6 +551,8 @@ template <typename T>
 const mindspore::HashMap<std::string, int> OpAdapter<T>::enum_map_;
 template <typename T>
 const mindspore::HashMap<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_;
+template <typename T>
+const std::map<std::string, unsigned int> OpAdapter<T>::attr_input_map_;
 template <typename T>
 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<T>::cus_input_map_;
 template <typename T>

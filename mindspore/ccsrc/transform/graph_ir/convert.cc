@@ -2841,13 +2841,7 @@ std::map<std::string, ValuePtr> GeOpConvertor::GetAttrAndValue(const AnfNodePtr 
     return attr_list;
   }
 
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  AnfNodePtr primitive = cnode->input(0);
-  if (IsValueNode<Primitive>(primitive)) {
-    auto prim = GetValueNode<PrimitivePtr>(primitive);
-    attr_list = adpt->GetNormalOpAttrList(prim);
-  }
+  attr_list = adpt->GetNormalOpAttrList(node);
   return attr_list;
 }
 
@@ -2867,6 +2861,32 @@ std::shared_ptr<GeTensorDesc> GeOpConvertor::GetTensorDesc(const ShapeVector &de
   auto tensor_desc = transform::TransformUtil::GetGeTensorDesc(dev_shape, dev_type, dev_format, ori_shape, ori_format);
   MS_EXCEPTION_IF_NULL(tensor_desc);
   return tensor_desc;
+}
+
+mindspore::HashSet<size_t> GeOpConvertor::GetNeedRemoveInput(const AnfNodePtr &node, const bool training) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adpt = FindAdapter(node, training);
+  if (adpt == nullptr) {
+    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
+    return {};
+  }
+
+  mindspore::HashSet<size_t> remove_input_index;
+  for (auto info : adpt->getInputAttrMap()) {
+    remove_input_index.insert(info.first);
+  }
+  return remove_input_index;
+}
+
+std::map<std::string, unsigned int> GeOpConvertor::GetNeedAddInput(const AnfNodePtr &node, const bool training) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adpt = FindAdapter(node, training);
+  if (adpt == nullptr) {
+    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
+    return {};
+  }
+
+  return adpt->getAttrInputMap();
 }
 }  // namespace transform
 }  // namespace mindspore

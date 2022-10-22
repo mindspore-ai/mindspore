@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
@@ -148,6 +149,10 @@ namespace mindspore::transform {
 #define INPUT_ATTR_MAP(T) \
   template <>             \
   const mindspore::HashMap<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_
+
+#define ATTR_INPUT_MAP(T) \
+  template <>             \
+  const std::map<std::string, unsigned int> OpAdapter<T>::attr_input_map_
 
 #define OUTPUT_MAP(T) \
   template <>         \
