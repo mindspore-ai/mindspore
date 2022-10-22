@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include "Eigen/Dense"
+#include "mindspore/core/ops/qr.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,37 +33,38 @@ constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 constexpr int64_t kParallelDataNums = 8 * 1024;
 }  // namespace
-void QrCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kQRInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kQROutputsNum, kernel_name_);
 
-  full_matrices_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "full_matrices");
-  auto x_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  if (x_shape.empty() || x_shape.size() < kAMatrixDimNumMin) {
-    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', input x matrix shape must greater than or equal to 2, but got "
-                     << x_shape.size();
-  }
-  m = x_shape[x_shape.size() - kRowIndex];
-  n = x_shape[x_shape.size() - kColIndex];
-  auto q_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
-  if (q_shape.empty() || q_shape.size() < kAMatrixDimNumMin) {
-    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', output q matrix shape must greater than or equal to 2, but got "
-                     << q_shape.size();
-  }
-  auto r_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 1));
-  if (r_shape.empty() || r_shape.size() < kAMatrixDimNumMin) {
-    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', output r matrix shape must greater than or equal to 2, but got "
-                     << r_shape.size();
-  }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool QrCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kQRInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kQROutputsNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Qr does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Qr>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  full_matrices_ = kernel_ptr->get_full_matrices();
+  return true;
+}
+
+int QrCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                           const std::vector<KernelTensorPtr> &outputs,
+                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
+  m = x_shape[x_shape.size() - kRowIndex];
+  n = x_shape[x_shape.size() - kColIndex];
+  return KRET_OK;
 }
 
 template <typename T>
