@@ -29,6 +29,9 @@ class MIND_API ResizeNearestNeighborGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ResizeNearestNeighborGrad);
   ResizeNearestNeighborGrad() : BaseOperator(kNameResizeNearestNeighborGrad) {}
+
+  void set_align_corners(const bool align_corners);
+  bool get_align_corners() const;
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/resize_nearest_neighbor_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/grad/resize_nearest_neighbor_grad.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
@@ -26,26 +27,46 @@ constexpr size_t kResizeNearestNeighborGradInputsShapeSize = 4;
 constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
 }  // namespace
 
-void ResizeNearestNeighborGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (IsDynamic(shape_signed)) {
-    return;
+bool ResizeNearestNeighborGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                 const std::vector<KernelTensorPtr> &inputs,
+                                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  return true;
+}
+
+int ResizeNearestNeighborGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                  const std::vector<KernelTensorPtr> &inputs,
+                                                  const std::vector<KernelTensorPtr> &outputs,
+                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto shape_signed = inputs[kIndex0]->GetShapeVector();
   auto input_shape = Convert2SizeTClipNeg(shape_signed);
-  auto output_size = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  dtype_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  auto output_size = outputs[kIndex0]->GetShapeVector();
+  auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborGrad>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(op_prim, KRET_RESIZE_FAILED);
+  align_corners_ = op_prim->get_align_corners();
+  dtype_ = inputs[kIndex0]->GetDtype();
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be "
-                      << kResizeNearestNeighborGradInputsShapeSize << ", but got " << input_shape.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input must be "
+                  << kResizeNearestNeighborGradInputsShapeSize << ", but got " << input_shape.size();
+    return KRET_RESIZE_FAILED;
   }
 
   if (output_size.size() != kResizeNearestNeighborGradOutputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
-                      << kResizeNearestNeighborGradOutputsShapeSize << ", but got " << output_size.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of output must be "
+                  << kResizeNearestNeighborGradOutputsShapeSize << ", but got " << output_size.size();
+    return KRET_RESIZE_FAILED;
   }
 
   batch_size_ = input_shape[0];
@@ -56,6 +77,7 @@ void ResizeNearestNeighborGradCpuKernelMod::InitKernel(const CNodePtr &kernel_no
   out_width_ = LongToSize(output_size[3]);
   height_scale_ = Scaling(out_height_, in_height_, align_corners_);
   width_scale_ = Scaling(out_width_, in_width_, align_corners_);
+  return KRET_OK;
 }
 
 bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

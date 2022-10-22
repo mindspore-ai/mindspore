@@ -78,6 +78,16 @@ TypePtr ResizeNearestNeighborGradInferType(const PrimitivePtr &, const std::vect
 }
 }  // namespace
 
+void ResizeNearestNeighborGrad::set_align_corners(const bool align_corners) {
+  (void)AddAttr(kAlignCorners, api::MakeValue(align_corners));
+  return;
+}
+
+bool ResizeNearestNeighborGrad::get_align_corners() const {
+  auto value_ptr = GetAttr(kAlignCorners);
+  return GetValue<bool>(value_ptr);
+}
+
 MIND_API_OPERATOR_IMPL(ResizeNearestNeighborGrad, BaseOperator);
 AbstractBasePtr ResizeNearestNeighborGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
