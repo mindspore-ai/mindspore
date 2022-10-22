@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/sample_distorted_bounding_box_v2_cpu_kernel.h"
 #include <random>
+#include "mindspore/core/ops/sample_distorted_bounding_box_v2.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 #include "utils/ms_utils.h"
@@ -187,69 +188,94 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::GenerateRandomCrop(int ms_origina
   return true;
 }
 
-void SampleDistortedBoundingBoxV2CPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputSize, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputSize, kernel_name_);
-
-  auto shape_image_size = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto shape_bounding_boxes = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({shape_image_size, shape_bounding_boxes})) {
-    return;
+bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                    const std::vector<KernelTensorPtr> &inputs,
+                                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
+  auto op_prim = std::dynamic_pointer_cast<ops::SampleDistortedBoundingBoxV2>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  seed_ = op_prim->get_seed();
+  seed2_ = op_prim->get_seed2();
+  aspect_ratio_range_ = op_prim->get_aspect_ratio_range();
+  area_range_ = op_prim->get_area_range();
+  max_attempts_ = op_prim->get_max_attempts();
+  use_image_if_no_bounding_boxes_ = op_prim->get_use_image();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For 'Arithmetic', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  seed = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed");
-  seed2 = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2");
-  aspect_ratio_range = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "aspect_ratio_range");
-  area_range = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "area_range");
-  max_attempts = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "max_attempts");
-  use_image_if_no_bounding_boxes = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_image_if_no_bounding_boxes");
 
+  return true;
+}
+
+int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                     const std::vector<KernelTensorPtr> &inputs,
+                                                     const std::vector<KernelTensorPtr> &outputs,
+                                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  auto shape_image_size = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto shape_bounding_boxes = inputs[kIndex1]->GetDeviceShapeAdaptively();
   size_t shape_dim_image_size = shape_image_size.size();
   size_t shape_dim_bounding_boxes = shape_bounding_boxes.size();
 
   if (shape_dim_image_size != kShapeSize1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', image_size must be 1-dimensional, got: ["
-                      << shape_dim_image_size << "].";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', image_size must be 1-dimensional, got: [" << shape_dim_image_size
+                  << "].";
+    return KRET_RESIZE_FAILED;
   }
   if (LongToSize(shape_image_size[kIndex0]) != kShapeSize3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', image_size must contain 3 elements, got: ["
-                      << shape_image_size[kIndex0] << "].";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', image_size must contain 3 elements, got: ["
+                  << shape_image_size[kIndex0] << "].";
+    return KRET_RESIZE_FAILED;
   }
   if (shape_dim_bounding_boxes != kBBoxesDimension) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', bounding_boxes must be 3-dimensional"
-                      << " [batch, num_boxes, coords], got: [" << shape_dim_bounding_boxes << "].";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', bounding_boxes must be 3-dimensional"
+                  << " [batch, num_boxes, coords], got: [" << shape_dim_bounding_boxes << "].";
+    return KRET_RESIZE_FAILED;
   }
   if (LongToSize(shape_bounding_boxes[shape_dim_bounding_boxes - 1]) != kShapeSize4) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', bounding_boxes must have shape [4], got: ["
-                      << shape_bounding_boxes[shape_dim_bounding_boxes - 1] << "].";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', bounding_boxes must have shape [4], got: ["
+                  << shape_bounding_boxes[shape_dim_bounding_boxes - 1] << "].";
+    return KRET_RESIZE_FAILED;
   }
 
-  if (max_attempts <= SizeToLong(kNumber0)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', max_attempts must be positive: [" << max_attempts << "].";
+  if (max_attempts_ <= SizeToLong(kNumber0)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', max_attempts must be positive: [" << max_attempts_ << "].";
+    return KRET_RESIZE_FAILED;
   }
-  if (aspect_ratio_range[kIndex1] <= kFloatNum0 || aspect_ratio_range[kIndex0] <= kFloatNum0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', aspect_ratio_range must be positive: ["
-                      << aspect_ratio_range[kIndex0] << "], [" << aspect_ratio_range[kIndex1] << "].";
+  if (aspect_ratio_range_[kIndex1] <= kFloatNum0 || aspect_ratio_range_[kIndex0] <= kFloatNum0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range must be positive: ["
+                  << aspect_ratio_range_[kIndex0] << "], [" << aspect_ratio_range_[kIndex1] << "].";
+    return KRET_RESIZE_FAILED;
   }
-  if (area_range[kIndex1] <= kFloatNum0 || area_range[kIndex0] <= kFloatNum0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', area_range must be positive: [" << area_range[kIndex0] << "], ["
-                      << area_range[kIndex1] << "].";
+  if (area_range_[kIndex1] <= kFloatNum0 || area_range_[kIndex0] <= kFloatNum0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range must be positive: [" << area_range_[kIndex0] << "], ["
+                  << area_range_[kIndex1] << "].";
+    return KRET_RESIZE_FAILED;
   }
-  if (area_range[kIndex1] > kFloatNum1 || area_range[kIndex0] > kFloatNum1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', area_range must be less then or equal to 1.0: ["
-                      << area_range[kIndex0] << "], [" << area_range[kIndex1] << "].";
+  if (area_range_[kIndex1] > kFloatNum1 || area_range_[kIndex0] > kFloatNum1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range must be less then or equal to 1.0: ["
+                  << area_range_[kIndex0] << "], [" << area_range_[kIndex1] << "].";
+    return KRET_RESIZE_FAILED;
   }
-  if (aspect_ratio_range.size() != kShapeSize2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', aspect_ratio_range field must specify 2 dimensions.";
+  if (aspect_ratio_range_.size() != kShapeSize2) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range field must specify 2 dimensions.";
+    return KRET_RESIZE_FAILED;
   }
-  if (area_range.size() != kShapeSize2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', area_range field must specify 2 dimensions.";
+  if (area_range_.size() != kShapeSize2) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range field must specify 2 dimensions.";
+    return KRET_RESIZE_FAILED;
   }
+  return KRET_OK;
 }
 
 bool SampleDistortedBoundingBoxV2CPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -323,7 +349,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<
 
   const Region ms_image_rect(0, 0, width, height);
   if (boxes.empty()) {
-    if (!use_image_if_no_bounding_boxes) {
+    if (!use_image_if_no_bounding_boxes_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', no bounding boxes provided as input. One must enable use_image_if_no_bounding_boxes "
                            "if you wish to not provide any bounding boxes.";
@@ -332,16 +358,16 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<
     boxes.push_back(ms_image_rect);
   }
 
-  const float ms_min_sample_area = area_range[kIndex0];
-  const float ms_max_sample_area = area_range[kIndex1];
-  const float ms_min_sample_aspect_ratio = aspect_ratio_range[kIndex0];
-  const float ms_max_sample_aspect_ratio = aspect_ratio_range[kIndex1];
+  const float ms_min_sample_area = area_range_[kIndex0];
+  const float ms_max_sample_area = area_range_[kIndex1];
+  const float ms_min_sample_aspect_ratio = aspect_ratio_range_[kIndex0];
+  const float ms_max_sample_aspect_ratio = aspect_ratio_range_[kIndex1];
 
-  InitMSPhiloxRandom(seed, seed2);
+  InitMSPhiloxRandom(seed_, seed2_);
 
   Region ms_crop_rect;
   bool ms_sample_generated = false;
-  for (size_t i = 0; i < LongToSize(max_attempts); ++i) {
+  for (size_t i = 0; i < LongToSize(max_attempts_); ++i) {
     const float sample_aspect_ratio =
       RandFloat() * (ms_max_sample_aspect_ratio - ms_min_sample_aspect_ratio) + ms_min_sample_aspect_ratio;
     if (GenerateRandomCrop(width, height, ms_min_sample_area, ms_max_sample_area, sample_aspect_ratio, &ms_crop_rect)) {

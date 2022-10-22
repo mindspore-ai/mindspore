@@ -26,6 +26,11 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr auto kAspectRatioRange = "aspect_ratio_range";
+constexpr auto kAreaRange = "area_range";
+constexpr auto kMaxAttempts = "max_attempts";
+constexpr auto kUseImage = "use_image_if_no_bounding_boxes";
+
 abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePtr &primitive,
                                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
@@ -55,7 +60,7 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   (void)CheckAndConvertUtils::CheckInteger("min_object_covered elements", min_object_covered_shape[kIndex0], kEqual,
                                            kSize1, prim_name);
 
-  auto aspect_ratio_range = GetValue<std::vector<float>>(primitive->GetAttr("aspect_ratio_range"));
+  auto aspect_ratio_range = GetValue<std::vector<float>>(primitive->GetAttr(kAspectRatioRange));
   auto aspect_ratio_range_dim = aspect_ratio_range.size();
   (void)CheckAndConvertUtils::CheckInteger("aspect_ratio_range elements", SizeToLong(aspect_ratio_range_dim), kEqual,
                                            kSize2, prim_name);
@@ -69,7 +74,7 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
                              << "', aspect_ratio_range[0] must less than aspect_ratio_range[1].";
   }
 
-  auto area_range = GetValue<std::vector<float>>(primitive->GetAttr("area_range"));
+  auto area_range = GetValue<std::vector<float>>(primitive->GetAttr(kAreaRange));
   auto area_range_dim = area_range.size();
   (void)CheckAndConvertUtils::CheckInteger("area_range elements", SizeToLong(area_range_dim), kEqual, kSize2,
                                            prim_name);
@@ -80,7 +85,7 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', area_range[0] must less than area_range[1].";
   }
 
-  auto use_image_if_no_bounding_boxes = GetValue<bool>(primitive->GetAttr("use_image_if_no_bounding_boxes"));
+  auto use_image_if_no_bounding_boxes = GetValue<bool>(primitive->GetAttr(kUseImage));
   if (!use_image_if_no_bounding_boxes) {
     if (bboxes_shape[kIndex0] == 0 || bboxes_shape[kIndex1] == 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -116,6 +121,47 @@ TuplePtr SampleDistortedBoundingBoxV2InferType(const PrimitivePtr &prim,
   return std::make_shared<Tuple>(std::vector<TypePtr>{image_size_type, image_size_type, min_object_type});
 }
 }  // namespace
+
+void SampleDistortedBoundingBoxV2::set_seed(const int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+int64_t SampleDistortedBoundingBoxV2::get_seed() const {
+  auto value_ptr = GetAttr(kSeed);
+  return GetValue<int64_t>(value_ptr);
+}
+void SampleDistortedBoundingBoxV2::set_seed2(const int64_t seed2) {
+  (void)this->AddAttr(kSeed2, api::MakeValue(seed2));
+}
+int64_t SampleDistortedBoundingBoxV2::get_seed2() const {
+  auto value_ptr = GetAttr(kSeed2);
+  return GetValue<int64_t>(value_ptr);
+}
+void SampleDistortedBoundingBoxV2::set_aspect_ratio_range(const std::vector<float> aspect_ratio_range) {
+  (void)this->AddAttr(kAspectRatioRange, api::MakeValue(aspect_ratio_range));
+}
+std::vector<float> SampleDistortedBoundingBoxV2::get_aspect_ratio_range() const {
+  auto value_ptr = GetAttr(kAspectRatioRange);
+  return GetValue<std::vector<float>>(value_ptr);
+}
+void SampleDistortedBoundingBoxV2::set_area_range(const std::vector<float> area_range) {
+  (void)this->AddAttr(kAreaRange, api::MakeValue(area_range));
+}
+std::vector<float> SampleDistortedBoundingBoxV2::get_area_range() const {
+  auto value_ptr = GetAttr(kAreaRange);
+  return GetValue<std::vector<float>>(value_ptr);
+}
+void SampleDistortedBoundingBoxV2::set_max_attempts(const int64_t max_attempts) {
+  (void)this->AddAttr(kMaxAttempts, api::MakeValue(max_attempts));
+}
+int64_t SampleDistortedBoundingBoxV2::get_max_attempts() const {
+  auto value_ptr = GetAttr(kMaxAttempts);
+  return GetValue<int64_t>(value_ptr);
+}
+void SampleDistortedBoundingBoxV2::set_use_image(const bool use_image) {
+  (void)this->AddAttr(kUseImage, api::MakeValue(use_image));
+}
+bool SampleDistortedBoundingBoxV2::get_use_image() const {
+  auto value_ptr = GetAttr(kUseImage);
+  return GetValue<bool>(value_ptr);
+}
 
 MIND_API_OPERATOR_IMPL(SampleDistortedBoundingBoxV2, BaseOperator);
 AbstractBasePtr SampleDistortedBoundingBoxV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <algorithm>
+#include <map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/random_util.h"
@@ -57,23 +58,28 @@ class Region {
   int max_y_;
 };
 
-class SampleDistortedBoundingBoxV2CPUKernelMod : public DeprecatedNativeCpuKernelMod {
+class SampleDistortedBoundingBoxV2CPUKernelMod : public NativeCpuKernelMod {
  public:
   SampleDistortedBoundingBoxV2CPUKernelMod() = default;
   ~SampleDistortedBoundingBoxV2CPUKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   bool Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
               const std::vector<kernel::AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  int64_t seed = 0;
-  int64_t seed2 = 0;
-  std::vector<float> aspect_ratio_range;
-  std::vector<float> area_range;
-  int64_t max_attempts = 100;
-  bool use_image_if_no_bounding_boxes = false;
+  int64_t seed_{0};
+  int64_t seed2_{0};
+  std::vector<float> aspect_ratio_range_;
+  std::vector<float> area_range_;
+  int64_t max_attempts_{100};
+  bool use_image_if_no_bounding_boxes_{false};
   TypeId dtype_{kTypeUnknown};
 
   random::MSPhiloxRandom generator_;

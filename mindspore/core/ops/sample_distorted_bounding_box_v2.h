@@ -34,6 +34,19 @@ class MIND_API SampleDistortedBoundingBoxV2 : public BaseOperator {
   SampleDistortedBoundingBoxV2() : BaseOperator(kNameSampleDistortedBoundingBoxV2) {
     InitIOName({"image_size", "bounding_boxes", "min_object_covered"}, {"begin", "size", "bboxes"});
   }
+
+  void set_seed(const int64_t seed);
+  int64_t get_seed() const;
+  void set_seed2(const int64_t seed2);
+  int64_t get_seed2() const;
+  void set_aspect_ratio_range(const std::vector<float> aspect_ratio_range);
+  std::vector<float> get_aspect_ratio_range() const;
+  void set_area_range(const std::vector<float> area_range);
+  std::vector<float> get_area_range() const;
+  void set_max_attempts(const int64_t max_attempts);
+  int64_t get_max_attempts() const;
+  void set_use_image(const bool use_image);
+  bool get_use_image() const;
 };
 abstract::AbstractBasePtr SampleDistortedBoundingBoxV2Infer(const abstract::AnalysisEnginePtr &,
                                                             const PrimitivePtr &primitive,
