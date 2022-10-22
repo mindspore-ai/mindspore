@@ -148,6 +148,7 @@ void MatrixExpCpuKernelMod::MexpImpl(const Eigen::MatrixBase<Derived1> &A, const
   const auto norm = A.cwiseAbs().colwise().sum().maxCoeff();
   constexpr std::array<int, total_n_degs> m_vals = {1, 2, 4, 8, 12, 18};
   constexpr int cut_deg = 2;
+  int64_t s = -1;
   if (data_type_ == kNumberTypeFloat16 || data_type_ == kNumberTypeFloat || data_type_ == kNumberTypeComplex64) {
     constexpr std::array<float, total_n_degs> thetas_float = {1.192092800768788e-07, 5.978858893805233e-04,
                                                               5.116619363445086e-02, 5.800524627688768e-01,
@@ -159,16 +160,7 @@ void MatrixExpCpuKernelMod::MexpImpl(const Eigen::MatrixBase<Derived1> &A, const
       }
     }
     if (norm >= thetas_float[total_n_degs - cut_deg]) {
-      int64_t s = ceil(log2(norm / thetas_float[total_n_degs - 1]));
-      if (s <= 0) {
-        s = 0;
-      }
-      const auto pow2s = pow(2, s);
-      const auto A_scaled = A / pow2s;
-      MTaylorApproximant(A_scaled, I, m_vals[total_n_degs - 1], mexp);
-      for (int k = 0; k < s; k++) {
-        *mexp = (*mexp) * (*mexp);
-      }
+      s = ceil(log2(norm / thetas_float[total_n_degs - 1]));
     }
   } else {
     constexpr std::array<double, total_n_degs> thetas_double = {2.220446049250313e-16, 2.580956802971767e-08,
@@ -181,17 +173,17 @@ void MatrixExpCpuKernelMod::MexpImpl(const Eigen::MatrixBase<Derived1> &A, const
       }
     }
     if (norm >= thetas_double[total_n_degs - cut_deg]) {
-      int64_t s = ceil(log2(norm / thetas_double[total_n_degs - 1]));
-      if (s <= 0) {
-        s = 0;
-      }
-      const auto pow2s = pow(2, s);
-      const auto A_scaled = A / pow2s;
-      MTaylorApproximant(A_scaled, I, m_vals[total_n_degs - 1], mexp);
-      for (int k = 0; k < s; k++) {
-        *mexp = (*mexp) * (*mexp);
-      }
+      s = ceil(log2(norm / thetas_double[total_n_degs - 1]));
     }
+  }
+  if (s <= 0) {
+    s = 0;
+  }
+  const auto pow2s = pow(2, s);
+  const auto A_scaled = A / pow2s;
+  MTaylorApproximant(A_scaled, I, m_vals[total_n_degs - 1], mexp);
+  for (int k = 0; k < s; k++) {
+    *mexp = (*mexp) * (*mexp);
   }
 }
 
@@ -207,7 +199,7 @@ bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   int64_t size_mm = m * m;
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
-  I.setIdentity();
+  (void)I.setIdentity();
   int64_t total = SizeToLong(inputs[0]->size / sizeof(T));
   int64_t matrix_num = total / size_mm;
   auto task = [this, &input_x, &output_y, &I, m](size_t start, size_t end) {
@@ -227,7 +219,7 @@ void MatrixExpCpuKernelMod::TyepChangeForFp16(int64_t i, int64_t m, int64_t size
                                               mindspore::Float16 *output_y) const {
   typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
-  I.setIdentity();
+  (void)I.setIdentity();
   MatrixXd matrix_x(m, m);
   MatrixXd matrix_y(m, m);
   for (int p = 0; p < m; p++) {
@@ -257,7 +249,7 @@ bool MatrixExpCpuKernelMod::LaunchKernelFP16(const std::vector<kernel::AddressPt
   int64_t size_mm = m * m;
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
-  I.setIdentity();
+  (void)I.setIdentity();
   int64_t total = SizeToLong(inputs[0]->size / sizeof(T));
   int64_t matrix_num = total / size_mm;
   auto task = [this, &input_x, &output_y, m, size_mm](size_t start, size_t end) {

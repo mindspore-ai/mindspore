@@ -39,8 +39,8 @@ template <typename T_in, typename T_out>
 void BincountTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                   const std::vector<AddressPtr> &outputs, const std::vector<int64_t> &input_arr_sizes, int32_t num_bins,
                   const std::vector<int64_t> &input_weights_sizes, const std::vector<int64_t> &output_sizes) {
-  auto bin_array = reinterpret_cast<T_in *>(inputs[0]->addr);
-  auto output_data = reinterpret_cast<T_out *>(outputs[0]->addr);
+  auto bin_array = static_cast<T_in *>(inputs[0]->addr);
+  auto output_data = static_cast<T_out *>(outputs[0]->addr);
   const size_t data_num = SizeOf(input_arr_sizes);
   for (int32_t i = 0; i < num_bins; i++) {
     output_data[i] = 0;
@@ -53,7 +53,7 @@ void BincountTask(const std::vector<AddressPtr> &inputs, const std::vector<Addre
       }
     }
   } else {
-    auto bin_weights = reinterpret_cast<T_out *>(inputs[2]->addr);
+    auto bin_weights = static_cast<T_out *>(inputs[2]->addr);
     for (size_t i = 0; i < data_num; i++) {
       T_in value = bin_array[i];
       if (value < num_bins) {
@@ -85,14 +85,14 @@ bool BincountCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   if (input_size_sizes_.size() != 0) {
     MS_LOG(EXCEPTION) << "For Bincount, input_size should be a scalar, but got rank " << input_size_sizes_.size();
   }
-  auto num_bins_ptr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto num_bins_ptr = static_cast<int32_t *>(inputs[1]->addr);
   if (*num_bins_ptr < 0) {
     MS_LOG(EXCEPTION) << "For Bincount, input size should be nonnegative, but got" << *num_bins_ptr;
   }
   int32_t num_bins = *num_bins_ptr;
 
   // check input_arr nonnegative
-  auto bin_array = reinterpret_cast<int32_t *>(inputs[0]->addr);
+  auto bin_array = static_cast<int32_t *>(inputs[0]->addr);
   for (size_t i = 0; i < array_num; i++) {
     if (bin_array[i] < 0) {
       MS_LOG(EXCEPTION) << "For Bincount, input array should be nonnegative, but got " << bin_array[i];

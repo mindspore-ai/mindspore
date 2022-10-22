@@ -82,7 +82,7 @@ bool SincCpuKernelMod::LaunchDiffKernel(const std::vector<kernel::AddressPtr> &i
   size_t total = inputs[0]->size / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      if (input[i] == T(0.0f)) {
+      if (input[i] == static_cast<T>(0)) {
         output[i] = static_cast<float>(1.0f);
       } else {
         float pi = static_cast<float>(3.14159265358979323846);

@@ -66,10 +66,10 @@ bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   int64_t num;
   if (num_dtype_ == kNumberTypeInt32) {
-    int32_t num_val = *reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
+    int32_t num_val = *static_cast<int32_t *>(inputs[kIndex2]->addr);
     num = IntToLong(num_val);
   } else {
-    num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+    num = *static_cast<int64_t *>(inputs[kIndex2]->addr);
   }
   // Deal wtih num equal to 1
   if (num == 1) {

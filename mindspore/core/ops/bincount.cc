@@ -29,11 +29,11 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   auto arr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
-  size_t arr_size = 1;
-  size_t weight_size = 1;
+  int64_t arr_size = 1;
+  int64_t weight_size = 1;
   if (w_shape.size() != 0) {
     auto weights_num = std::accumulate(w_shape.begin(), w_shape.end(), int64_t(1), std::multiplies{});
-    CheckAndConvertUtils::CheckInteger("size of weights", weights_num, kNotEqual, 0, primitive->name());
+    (void)CheckAndConvertUtils::CheckInteger("size of weights", weights_num, kNotEqual, 0, primitive->name());
   }
   for (size_t i = 0; i < arr_shape.size(); ++i) {
     arr_size *= arr_shape[i];
@@ -41,9 +41,10 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
   for (size_t i = 0; i < w_shape.size(); ++i) {
     weight_size *= w_shape[i];
   }
-  CheckAndConvertUtils::CheckInteger("size of array and weights", arr_size, kEqual, weight_size, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("size of array and weights", arr_size, kEqual, weight_size,
+                                           primitive->name());
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
-  CheckAndConvertUtils::CheckInteger("size", size_shape.size(), kEqual, 0, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("size", size_shape.size(), kEqual, 0, primitive->name());
   auto size_value_ptr = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   if (!size_value_ptr->isa<AnyValue>() && !size_value_ptr->isa<None>()) {
@@ -56,17 +57,17 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
     std::vector<int64_t> out_shape;
-    out_shape.emplace_back(-1);
+    (void)out_shape.emplace_back(-1);
     return std::make_shared<abstract::Shape>(out_shape);
   }
 }
 TypePtr BincountInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::set<TypePtr> valid_type = {kInt32};
-  CheckAndConvertUtils::CheckTensorTypeValid("array", input_args[kInputIndex0]->BuildType(), valid_type,
-                                             primitive->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->BuildType(), valid_type,
-                                             primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("array", input_args[kInputIndex0]->BuildType(), valid_type,
+                                                   primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->BuildType(), valid_type,
+                                                   primitive->name());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32, kInt64};
   auto weights_type = input_args[kInputIndex2]->BuildType();
   return CheckAndConvertUtils::CheckTensorTypeValid("weights", weights_type, valid_types, primitive->name());

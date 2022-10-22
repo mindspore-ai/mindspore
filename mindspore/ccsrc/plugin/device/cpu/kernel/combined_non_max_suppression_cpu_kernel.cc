@@ -39,7 +39,7 @@ constexpr int multiplier = 4;
 }  // namespace
 
 void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std::vector<float>> *boxes_buffer,
-                                                                 float *box_src, const int class_idx) {
+                                                                 float *box_src, int class_idx) {
   /**
    * shape of box_src
    * box_src[num_boxes_*q_*4]
@@ -68,7 +68,7 @@ void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std
 }
 
 // Calculate the area ratio of the intersection of two squares
-float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>> *boxes_buffer, int i, int j) {
+float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>> *boxes_buffer, int i, int j) const {
   std::vector<float> box_a = (*boxes_buffer)[i];
   std::vector<float> box_b = (*boxes_buffer)[j];
   float lx, ly, rx, ry;
@@ -117,7 +117,7 @@ void CombinedNonMaxSuppressionCpuKernelMod::non_max_suppression(std::vector<std:
     float original_score = next_si.score;
     pq.pop();
     bool should_hard_suppress = false;
-    for (int j = selected.size() - 1; j >= next_si.suppress_begin_index; j--) {
+    for (int j = SizeToInt(selected.size()) - 1; j >= next_si.suppress_begin_index; j--) {
       similarity = IOU(boxes_buffer, next_si.box_index, selected[IntToSize(j)]);
       if (is_soft_nms) {
         next_si.score *=
@@ -129,10 +129,9 @@ void CombinedNonMaxSuppressionCpuKernelMod::non_max_suppression(std::vector<std:
       }
       if (next_si.score <= score_threshold_) break;
     }
-
     next_si.suppress_begin_index = static_cast<int>(selected.size());
     if (!should_hard_suppress) {
-      if (next_si.score == original_score) {
+      if (mindspore::common::IsFloatEqual(next_si.score, original_score)) {
         selected.push_back(next_si.box_index);
         continue;
       }
@@ -179,7 +178,7 @@ void CombinedNonMaxSuppressionCpuKernelMod::nms_perclass(
         j,
         {boxes[boxe_len1 + 0], boxes[boxe_len1 + 1], boxes[boxe_len1 + KIndex2], boxes[boxe_len1 + KIndex3]}};
     }
-    result_size += selected.size();
+    result_size += SizeToInt(selected.size());
   }
 }
 
@@ -378,16 +377,16 @@ void CombinedNonMaxSuppressionCpuKernelMod::InitKernel(const CNodePtr &kernel_no
 bool CombinedNonMaxSuppressionCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  float *boxes = reinterpret_cast<float *>(inputs[0]->addr);
-  float *scores = reinterpret_cast<float *>(inputs[KIndex1]->addr);
-  max_output_size_per_class_ = *(reinterpret_cast<int *>(inputs[KIndex2]->addr));
-  max_total_size_ = *(reinterpret_cast<int *>(inputs[KIndex3]->addr));
-  iou_threshold_ = *(reinterpret_cast<float *>(inputs[KIndex4]->addr));
-  score_threshold_ = *(reinterpret_cast<float *>(inputs[KIndex5]->addr));
-  float *nmsed_boxes = reinterpret_cast<float *>(outputs[KIndex0]->addr);
-  float *nmsed_scores = reinterpret_cast<float *>(outputs[KIndex1]->addr);
-  float *nmsed_class = reinterpret_cast<float *>(outputs[KIndex2]->addr);
-  int *valid_detection = reinterpret_cast<int *>(outputs[KIndex3]->addr);
+  float *boxes = static_cast<float *>(inputs[0]->addr);
+  float *scores = static_cast<float *>(inputs[KIndex1]->addr);
+  max_output_size_per_class_ = *(static_cast<int *>(inputs[KIndex2]->addr));
+  max_total_size_ = *(static_cast<int *>(inputs[KIndex3]->addr));
+  iou_threshold_ = *(static_cast<float *>(inputs[KIndex4]->addr));
+  score_threshold_ = *(static_cast<float *>(inputs[KIndex5]->addr));
+  float *nmsed_boxes = static_cast<float *>(outputs[KIndex0]->addr);
+  float *nmsed_scores = static_cast<float *>(outputs[KIndex1]->addr);
+  float *nmsed_class = static_cast<float *>(outputs[KIndex2]->addr);
+  int *valid_detection = static_cast<int *>(outputs[KIndex3]->addr);
   if (pad_per_class_) {
     num_detection_ = std::min(max_total_size_, max_output_size_per_class_ * num_class_);
   } else {
@@ -433,7 +432,7 @@ bool CombinedNonMaxSuppressionCpuKernelMod::Launch(const std::vector<kernel::Add
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " The nmsed_classes's 2nd dims must be same with " << num_detection_
                       << "but got " << output2_shape_[KIndex1] << ".";
   }
-  nms_perbath(boxes, scores, nmsed_boxes, nmsed_scores, nmsed_class, valid_detection);
+  (void)nms_perbath(boxes, scores, nmsed_boxes, nmsed_scores, nmsed_class, valid_detection);
   return true;
 }
 std::vector<KernelAttr> CombinedNonMaxSuppressionCpuKernelMod::GetOpSupport() {

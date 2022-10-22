@@ -47,12 +47,14 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
   auto input3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto input4_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
   auto input5_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("boxes dim", input0_shape.size(), kEqual, kInputDimension0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("scores dim", input1_shape.size(), kEqual, kInputDimension1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("boxes dim", SizeToLong(input0_shape.size()), kEqual, kInputDimension0,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scores dim", SizeToLong(input1_shape.size()), kEqual, kInputDimension1,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("max_output_size_per_class dim", input2_shape.size(), kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("max_total_size dim", input3_shape.size(), kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("iou_threshold", input4_shape.size(), kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("score_threshold", input5_shape.size(), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("max_total_size dim", SizeToLong(input3_shape.size()), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("iou_threshold", SizeToLong(input4_shape.size()), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("score_threshold", SizeToLong(input5_shape.size()), kEqual, 0, prim_name);
   if (input0_shape[0] != input1_shape[0]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the boxes's 1st dim must be same with the scores's"
                              << " 1st dim, but got" << input0_shape[0] << " and " << input1_shape[0] << ".";
@@ -70,7 +72,7 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the boxes's 4th dim must be equal to 4, but got"
                              << input0_shape[kInputIndex3] << ".";
   }
-  for (int i = 0; i < kInputs; i++) {
+  for (int64_t i = 0; i < kInputs; i++) {
     if (!input_args[i]->isa<abstract::AbstractTensor>()) {
       MS_EXCEPTION(TypeError) << "For " << prim_name << " input" << i << " only support tensor!";
     }
@@ -84,8 +86,8 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
   auto input5_tensor = Get_Value(input_args, kInputIndex5);
   if (IsValue(input_args[kInputIndex2]->BuildValue()) && IsValue(input_args[kInputIndex3]->BuildValue())) {
     if (IsValue(input_args[kInputIndex4]->BuildValue()) && input_args[kInputIndex5]->BuildValue()) {
-      auto iou_threshold = *(reinterpret_cast<float *>(input4_tensor->data_c()));
-      auto score_threshold = *(reinterpret_cast<float *>(input5_tensor->data_c()));
+      auto iou_threshold = *(static_cast<float *>(input4_tensor->data_c()));
+      auto score_threshold = *(static_cast<float *>(input5_tensor->data_c()));
       if (iou_threshold < 0 || iou_threshold > 1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", iou_threshold must be in [0,1], but got " << iou_threshold
                                  << ".";
@@ -95,8 +97,8 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
                                  << "is not 1 and score_threshold is less than 1.";
       }
     }
-    auto max_output_size_per_class = *(reinterpret_cast<int32_t *>(input2_tensor->data_c()));
-    auto max_total_size = *(reinterpret_cast<int32_t *>(input3_tensor->data_c()));
+    auto max_output_size_per_class = *(static_cast<int32_t *>(input2_tensor->data_c()));
+    auto max_total_size = *(static_cast<int32_t *>(input3_tensor->data_c()));
     if (max_total_size <= 0) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << " max_total_size must be > 0, but got " << max_total_size
                                << ".";
