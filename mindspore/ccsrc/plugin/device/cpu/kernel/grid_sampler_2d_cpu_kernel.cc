@@ -66,6 +66,9 @@ int GridSampler2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   grid_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
   output_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
   output_number_ = LongToSize(output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] * output_shape_[kThree]);
+  x_stride_.clear();
+  grid_stride_.clear();
+  output_stride_.clear();
 
   size_t stride_tmp = 1;
   auto stride_compute = [this, &stride_tmp](std::vector<size_t> &stride, ShapeVector shape) {
