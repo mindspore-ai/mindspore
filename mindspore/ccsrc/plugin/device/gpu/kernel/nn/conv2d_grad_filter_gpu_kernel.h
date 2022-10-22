@@ -157,7 +157,6 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy") || CHECK_SHAPE_NULL(in_shape, kernel_name_, "x");
     if (is_null_input_ || AnfAlgo::IsShapesDynamic({in_shape, dy_shape})) {
-      InitSizeLists();
       return true;
     }
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
