@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
+#include "mindspore/core/ops/concat_offset.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -26,46 +27,70 @@ namespace {
 constexpr size_t kConcatOffsetOutputNum = 1;
 constexpr size_t kConcatOffsetOutputShapeSize = 2;
 }  // namespace
-void ConcatOffsetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  cnode_ptr_ = kernel_node;
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool ConcatOffsetCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOffsetOutputNum, kernel_name_);
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << ", input tensors can not be empty";
+    return false;
+  }
+  auto op_prim = std::dynamic_pointer_cast<ops::ConcatOffset>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  if (op_prim->HasAttr(kAttrAxis)) {
+    axis_ = op_prim->get_axis();
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Concat offset does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "Concat offset does not support this kernel data type: " << kernel_attr;
+    return false;
   }
 
   kernel_func_ = func_list_[index].second;
+  return true;
 }
-template <typename T>
-bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOffsetOutputNum, kernel_name_);
-  auto node_ = cnode_ptr_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
+
+int ConcatOffsetCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(node_);
-  if (input_num == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", input tensors can not be empty";
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+  if (output_shape_.size() != kConcatOffsetOutputShapeSize) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of output must be " << kConcatOffsetOutputShapeSize
+                  << ", but got:" << output_shape_.size();
+    return KRET_RESIZE_FAILED;
   }
-  // check input shapes
-  std::vector<ShapeVector> input_shapes;
-  for (size_t i = 0; i < input_num; i++) {
-    ShapeVector input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
-    input_shapes.push_back(input_shape_i);
-    if (input_shape_i.size() != input_shapes[0].size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', input tensors shape's rank must be equal, but got input[0] shape's rank = "
-                        << input_shapes[0].size() << ", input[" << i << "] shape's rank = " << input_shape_i.size();
+  if (LongToSize(output_shape_[kIndex0]) != inputs.size()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the first dimension value of output must be equal to "
+                     "the number of input, but got the first dimension value of output: "
+                  << output_shape_[kIndex0] << ", and the number of input: " << inputs.size();
+    return KRET_RESIZE_FAILED;
+  }
+  input_shapes_.clear();
+  for (size_t i = 0; i < inputs.size(); i++) {
+    ShapeVector shape_i = inputs[i]->GetShapeVector();
+    input_shapes_.push_back(shape_i);
+    if (shape_i.size() != input_shapes_[kIndex0].size()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', input tensors shape's rank must be equal, but got input[0] shape's rank = "
+                    << input_shapes_[kIndex0].size() << ", input[" << i << "] shape's rank = " << shape_i.size();
+      return KRET_RESIZE_FAILED;
     }
   }
-  // check axis
-  auto x_rank = SizeToLong(input_shapes[0].size());
+  return KRET_OK;
+}
+
+template <typename T>
+bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
+  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+
+  auto x_rank = SizeToLong(input_shapes_[kIndex0].size());
   if (axis_ < -x_rank || axis_ >= x_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", 'axis' must be in range [-" << x_rank << ", " << x_rank
                       << "), but got " << axis_;
@@ -76,27 +101,16 @@ bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   auto axis = LongToSize(axis_);
 
   ShapeVector offset{0};
-  auto all_shape = input_shapes[0][axis];
+  auto all_shape = input_shapes_[0][axis];
 
   // cal offset
-  for (size_t i = 1; i < input_num; i++) {
+  for (size_t i = 1; i < inputs.size(); i++) {
     offset.emplace_back(all_shape);
-    all_shape += input_shapes[i][axis];
+    all_shape += input_shapes_[i][axis];
   }
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(node_, 0);
-  if (output_shape.size() != kConcatOffsetOutputShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
-                      << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();
-  }
-  if (LongToSize(output_shape[0]) != input_num) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension value of output must be equal to "
-                         "the number of input, but got the first dimension value of output: "
-                      << output_shape[0] << ", and the number of input: " << input_num;
-  }
-  size_t rank = LongToSize(output_shape[1]);
+  size_t rank = LongToSize(output_shape_[kIndex1]);
   size_t idx = 0;
-  for (size_t i = 0; i < input_num; ++i) {
+  for (size_t i = 0; i < inputs.size(); ++i) {
     for (size_t j = 0; j < rank; ++j) {
       if (j == axis) {
         output_addr[idx] = offset[i];

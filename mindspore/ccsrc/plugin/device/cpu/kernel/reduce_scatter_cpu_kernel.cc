@@ -17,11 +17,13 @@
 #include "plugin/device/cpu/kernel/reduce_scatter_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/mpi/mpi_interface.h"
+#include "mindspore/core/ops/reduce_scatter.h"
 #include "ir/primitive.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr auto kOP = "op";
 constexpr auto kRanksGroup = "group";
 constexpr size_t kReduceScatterInputsNum = 1;
 constexpr size_t kReduceScatterOutputsNum = 1;
@@ -29,22 +31,23 @@ constexpr size_t kReduceScatterOutputsNum = 1;
 
 ReduceScatterCpuKernelMod::ReduceScatterCpuKernelMod() : op_type_(kMPIOpTypeSum) {}
 
-void ReduceScatterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op = primitive->GetAttr("op");
+bool ReduceScatterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto op_prim = std::dynamic_pointer_cast<ops::ReduceScatter>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  auto op = op_prim->GetAttr(kOP);
   if (op != nullptr) {
     op_type_ = GetValue<std::string>(op);
   }
-
-  auto ranks_group = primitive->GetAttr(kRanksGroup);
-  if (ranks_group != nullptr) {
-    ranks_group_ = GetValue<std::vector<int>>(ranks_group);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'group' can not be null, but got empty value.";
+  auto ranks_group = op_prim->GetAttr(kRanksGroup);
+  if (ranks_group == nullptr) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'group' can not be null, but got empty value.";
+    return false;
   }
+  ranks_group_ = GetValue<std::vector<int>>(ranks_group);
+  return true;
 }
 
 bool ReduceScatterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -17,15 +17,17 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_OTHER_CONCAT_OFFSET_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_OTHER_CONCAT_OFFSET_GPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <string>
+#include "mindspore/core/ops/concat_offset.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
  public:
   ConcatOffsetGpuKernelMod() {}
   ~ConcatOffsetGpuKernelMod() override = default;
@@ -34,23 +36,42 @@ class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     S *output_device_address = GetDeviceAddress<S>(outputs, 0);
     size_t out_size = out_offset_.size() * sizeof(S);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_device_address, out_offset_.data(), out_size,
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync error in ConcatOffsetGpuKernelMod::Launch");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(output_device_address, out_offset_.data(), out_size, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemcpyAsync error in ConcatOffsetGpuKernelMod::Launch");
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    if (!CheckParam(kernel_node)) {
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    kernel_name_ = base_operator->GetPrim()->name();
+    constexpr size_t outputs_num = 1;
+    if (outputs.size() != outputs_num) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size();
       return false;
     }
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (inputs.size() == 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of input is 0";
+      return false;
+    }
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+    ResetResource();
+    if (inputs[kIndex0]->IsDynamicShape()) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+    auto input_shape = inputs[kIndex0]->GetShapeVector();
     auto rank = input_shape.size();
     auto rank_int = SizeToInt(rank);
-    auto axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::ConcatOffset>(base_operator);
+    int64_t axis = 0;
+    if (kernel_ptr->HasAttr(kAttrAxis)) {
+      axis = kernel_ptr->get_axis();
+    }
     if (axis < -rank_int || axis >= rank_int) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << rank << "," << rank
                         << "), but got " << axis;
@@ -58,23 +79,20 @@ class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (axis < 0) {
       axis += rank_int;
     }
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be greater than 0";
-    }
+    size_t input_num = inputs.size();
     for (size_t i = 0; i < input_num; i++) {
       int64_t input_size = 1;
-      auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
-      for (size_t j = 0; j < input_shape.size(); j++) {
-        input_size *= input_shape[j];
+      auto input_shape_i = inputs[i]->GetDeviceShapeAdaptively();
+      for (size_t j = 0; j < input_shape_i.size(); j++) {
+        input_size *= input_shape_i[j];
       }
       input_size_list_.push_back(LongToSizeClipNeg(input_size) * sizeof(T));
     }
     // cal offset
-    int64_t shape_offset = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0)[axis];
+    int64_t shape_offset = input_shape[axis];
     std::vector<size_t> offset(input_num, 0);
     for (size_t i = 1; i < input_num; i++) {
-      input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      input_shape = inputs[i]->GetShapeVector();
       if (input_shape.size() != rank) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the dimension of input should be equal, but got:"
                           << " the dimension of the " << i << "'th input: " << input_shape.size()
@@ -84,18 +102,18 @@ class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       shape_offset += input_shape[axis];
     }
     constexpr size_t kConcatOffsetOutputShapeSize = 2;
-    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+    auto output_shape = outputs[0]->GetShapeVector();
     if (output_shape.size() != kConcatOffsetOutputShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
                         << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();
     }
-    if (output_shape[0] != input_num) {
+    if (output_shape[0] != SizeToInt(input_num)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the first dimension value of output should be equal to "
                            "the number of input, but got the first dimension value of output: "
                         << output_shape[0] << ", and the number of input: " << input_num;
     }
-    if (output_shape[1] != rank) {
+    if (output_shape[1] != rank_int) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the second dimension value of output should be equal to "
                            "the dimension of input, but got the second dimension value of output: "
@@ -107,27 +125,16 @@ class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       out_offset_[i * rank + axis] = offset[i];
     }
     output_size_list_.push_back(out_offset_.size() * sizeof(S));
-    InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
-    ResetSizeLists();
+  void ResetResource() {
+    input_size_list_.clear();
+    output_size_list_.clear();
     out_offset_.clear();
   }
 
- protected:
-  void InitSizeLists() override {}
-
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
-    }
-    return true;
-  }
-
   std::vector<S> out_offset_;
 };
 }  // namespace kernel

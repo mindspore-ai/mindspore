@@ -389,7 +389,7 @@ class _HostAllGather(PrimitiveWithInfer):
         raise NotImplementedError
 
 
-class ReduceScatter(PrimitiveWithInfer):
+class ReduceScatter(Primitive):
     """
     Reduces and scatters tensors from the specified communication group.
 
@@ -453,19 +453,6 @@ class ReduceScatter(PrimitiveWithInfer):
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
         self.add_prim_attr('no_eliminate', True)
-
-    def infer_shape(self, x_shape):
-        if self.rank_size == 0:
-            raise ValueError(f"For '{self.name}', the 'rank_size' can not be zero, but got {self.rank_size}.")
-        if x_shape[0] % self.rank_size != 0:
-            raise ValueError(f"For '{self.name}', the first dimension of 'x_shape' must be divided by 'rank_size', "
-                             f"but got 'x_shape[0]': {x_shape[0]}, 'rank_size': {self.rank_size}.")
-        x_shape[0] = int(x_shape[0] / self.rank_size)
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        check_collective_target_dtype('x', x_dtype, self.name)
-        return x_dtype
 
     def __call__(self, tensor):
         raise NotImplementedError
