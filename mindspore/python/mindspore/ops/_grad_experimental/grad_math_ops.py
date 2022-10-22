@@ -1060,7 +1060,7 @@ def get_bprop_minimum_grad(self):
     """Grad definition for 'MinimumGrad' operation"""
     input_grad = G.MinimumGradGrad()
 
-    def bprop(grad, x1, x2, out, dout):
+    def bprop(x1, x2, grad, out, dout):
         sopd_x1, sopd_x2, sopd_grads = input_grad(x1, x2, dout[0], dout[1])
         sopd_x1 = zeros_like(x1)
         sopd_x2 = zeros_like(x2)
