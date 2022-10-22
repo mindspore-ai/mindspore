@@ -55,7 +55,6 @@ bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 template <typename T>
 void GammaCpuKernelMod::InferShape(const std::vector<AddressPtr> &inputs) {
   const auto *shape_value = reinterpret_cast<T *>(inputs[0]->addr);
-
   for (int64_t i = 0; i < shape_shape_[0]; i++) {
     output_shape_.emplace_back(static_cast<int64_t>(shape_value[i]));
   }
@@ -71,10 +70,13 @@ int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret != KRET_OK) {
-    dyamic_shape_ = ret == KRET_UNKNOWN_OUT_SHAPE;
+    ret = KRET_UNKNOWN_OUT_SHAPE;
     return ret;
   }
-
+  alpha_shape_ = inputs[1]->GetShapeVector();
+  alpha_dtype_ = inputs[1]->GetDtype();
+  shape_dtype_ = inputs[0]->GetDtype();
+  shape_shape_ = inputs[0]->GetShapeVector();
   return KRET_OK;
 }
 
@@ -194,19 +196,16 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
 
 bool GammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                const std::vector<AddressPtr> &outputs) {
-  if (dyamic_shape_) {
-    output_shape_.clear();
-    if (output_shape_.empty()) {
-      if (shape_dtype_ == kNumberTypeInt32) {
-        InferShape<int32_t>(inputs);
-      } else if (shape_dtype_ == kNumberTypeInt64) {
-        InferShape<int64_t>(inputs);
-      }
-      outputs_[0]->SetShapeVector(output_shape_);
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' output size and input size mismatch.";
-      return KRET_RESIZE_FAILED;
+  output_shape_.clear();
+  if (output_shape_.empty()) {
+    if (shape_dtype_ == kNumberTypeInt32) {
+      InferShape<int32_t>(inputs);
+    } else if (shape_dtype_ == kNumberTypeInt64) {
+      InferShape<int64_t>(inputs);
     }
+    outputs_[0]->SetShapeVector(output_shape_);
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' output size and input size mismatch.";
   }
 
   if (alpha_dtype_ == kNumberTypeFloat16) {
