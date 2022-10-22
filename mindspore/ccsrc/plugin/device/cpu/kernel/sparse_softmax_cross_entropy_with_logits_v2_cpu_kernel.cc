@@ -27,15 +27,34 @@ constexpr std::size_t kSparseSoftmaxCrossEntropyWithLogitsV2FeaturesShape{2};
 constexpr std::size_t kSparseSoftmaxCrossEntropyWithLogitsV2LabelsShape{1};
 }  // namespace
 
-void SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  features_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  loss_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  backprop_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  int64_t features_batch = features_shape[kIndex0];
-  int64_t labels_batch = labels_shape[kIndex0];
+bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                             const std::vector<KernelTensorPtr> &inputs,
+                                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogitsV2 does not support this kernel data type: "
+                      << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                              const std::vector<KernelTensorPtr> &inputs,
+                                                              const std::vector<KernelTensorPtr> &outputs,
+                                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  features_shape = inputs.at(kIndex0)->GetShapeVector();
+  labels_shape = inputs.at(kIndex1)->GetShapeVector();
+  loss_shape = outputs.at(kIndex0)->GetShapeVector();
+  backprop_shape = outputs.at(kIndex1)->GetShapeVector();
+  auto features_batch = features_shape[kIndex0];
+  auto labels_batch = labels_shape[kIndex0];
   if (features_shape.size() != kSparseSoftmaxCrossEntropyWithLogitsV2FeaturesShape ||
       labels_shape.size() != kSparseSoftmaxCrossEntropyWithLogitsV2LabelsShape) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input logits(features) shape " << Vector2Str(features_shape)
@@ -46,13 +65,7 @@ void SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::InitKernel(const CNodePt
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input logits(features) batch " << features_batch
                       << " must be equal to the input label batch " << labels_batch;
   }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogitsV2 does not support this kernel data type: "
-                      << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename data_type, typename label_type>
