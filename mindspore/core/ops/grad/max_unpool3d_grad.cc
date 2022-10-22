@@ -38,6 +38,11 @@ abstract::ShapePtr MaxUnpool3DGradInferShape(const PrimitivePtr &primitive,
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto argmax_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
+
+  if (IsDynamic(in_shape)) {
+    return std::make_shared<abstract::Shape>(in_shape);
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, SizeToLong(kDim5), op_name);
   (void)CheckAndConvertUtils::CheckInteger("grads_rank", SizeToLong(grads_shape.size()), kEqual, SizeToLong(kDim5),
                                            op_name);
