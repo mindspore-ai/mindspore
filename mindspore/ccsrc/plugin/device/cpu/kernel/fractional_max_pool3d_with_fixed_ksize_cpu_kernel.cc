@@ -67,20 +67,43 @@ constexpr size_t kOutputsNum = 2;
     .AddOutputAttr(kNumberType##t4)
 }  // namespace
 
-void FractionalMaxPool3DWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex0);
-  random_samples_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex1);
-  random_samples_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex1);
-  argmax_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kOutputIndex1);
-  output_shape_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_shape");
-  ksize_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "ksize");
-  data_format_ = common::AnfAlgo::GetNodeAttr<string>(kernel_node, FORMAT);
-  if (AnfAlgo::IsShapesDynamic({input_shape_, random_samples_shape_, output_shape_})) {
-    return;
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                         const std::vector<KernelTensorPtr> &inputs,
+                                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = kInputsNum;
+  constexpr size_t output_num = kOutputsNum;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  return true;
+}
+
+int FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                          const std::vector<KernelTensorPtr> &inputs,
+                                                          const std::vector<KernelTensorPtr> &outputs,
+                                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_type_ = inputs[kInputIndex0]->GetDtype();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
+  random_samples_type_ = inputs[kInputIndex1]->GetDtype();
+  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+  argmax_type_ = outputs[kOutputIndex1]->GetDtype();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DWithFixedKsize>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  output_shape_ = kernel_ptr->get_output_shape();
+  ksize_ = kernel_ptr->get_ksize();
+  data_format_ = kernel_ptr->get_data_format();
   size_t input_num_dims = input_shape_.size();
   size_t random_samples_dims = random_samples_shape_.size();
   size_t output_shape_dims = output_shape_.size();
@@ -160,6 +183,7 @@ void FractionalMaxPool3DWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &k
                              << "', expected the third dimension of 'random_samples' must be 3, but got "
                              << random_samples_shape_[kDimSize2] << ".";
   }
+  return ret;
 }
 
 template <typename random_sample_t>
