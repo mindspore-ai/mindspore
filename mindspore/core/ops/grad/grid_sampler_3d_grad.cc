@@ -35,6 +35,12 @@ abstract::TupleShapePtr GridSampler3DGradInferShape(const PrimitivePtr &primitiv
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kZero]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kOne]->BuildShape())[kShape];
   auto grid_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kTwo]->BuildShape())[kShape];
+  // dynamic rank
+  if (IsDynamicRank(input_x_shape) || IsDynamicRank(grid_shape) || IsDynamicRank(grad_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny}),
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny})});
+  }
   if (grad_shape.size() != kFive) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'grad' must be a 5-D tensor, but got a "
                              << std::to_string(grad_shape.size()) << "-D tensor.";
@@ -46,6 +52,17 @@ abstract::TupleShapePtr GridSampler3DGradInferShape(const PrimitivePtr &primitiv
   if (grid_shape.size() != kFive) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'grid' must be a 5-D tensor, but got a "
                              << std::to_string(grid_shape.size()) << "-D tensor.";
+  }
+  // dynamic shape
+  if (IsDynamic(input_x_shape) || IsDynamic(grid_shape) || IsDynamic(grad_shape)) {
+    ShapeVector dx_dyn_shape;
+    ShapeVector dgrid_dyn_shape;
+    for (size_t i = 0; i < input_x_shape.size(); ++i) {
+      dx_dyn_shape.push_back(abstract::Shape::kShapeDimAny);
+      dgrid_dyn_shape.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      std::make_shared<abstract::Shape>(dx_dyn_shape), std::make_shared<abstract::Shape>(dgrid_dyn_shape)});
   }
   if (input_x_shape[kZero] != grid_shape[kZero]) {
     MS_EXCEPTION(ValueError)
