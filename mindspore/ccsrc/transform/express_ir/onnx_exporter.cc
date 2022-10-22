@@ -912,6 +912,11 @@ OPERATOR_ONNX_CONVERT_DEFINE(
     .Attr("strides", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<kTwoNum>)
     .Attr("output_padding", "output_padding", onnx::AttributeProto_AttributeType_INTS,
           SetAttrTupleValueToProto<kTwoNum>))
+
+OPERATOR_ONNX_CONVERT_DEFINE(DepthToSpace, DepthToSpace,
+                             OpNameInfo().Attr("block_size", "blocksize", onnx::AttributeProto_AttributeType_INT,
+                                               SetAttrValueToProto<Int64Imm>))
+
 OPERATOR_ONNX_CONVERT_DEFINE(BiasAdd, Add, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(MatMul, Gemm,
                              OpNameInfo()
@@ -1022,6 +1027,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(TensorScatterUpdate, ScatterND,
 #define OP_CONVERT_FUNCTION_NAME(name) GetOpOnnxConvertInfo_##name
 
 void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
+  fn(OP_CONVERT_FUNCTION_NAME(DepthToSpace)());
   fn(OP_CONVERT_FUNCTION_NAME(Add)());
   fn(OP_CONVERT_FUNCTION_NAME(Mul)());
   fn(OP_CONVERT_FUNCTION_NAME(Pow)());
