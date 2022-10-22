@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CORE_OPS_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_
 #define MINDSPORE_CORE_OPS_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_
 
+#include <string>
 #include <memory>
 #include <vector>
 
@@ -35,6 +36,10 @@ class MIND_API ResizeNearestNeighborV2Grad : public BaseOperator {
 
   /// \brief Constructor.
   ResizeNearestNeighborV2Grad() : BaseOperator(kNameResizeNearestNeighborV2Grad) {}
+
+  bool get_align_corners() const;
+  bool get_half_pixel_centers() const;
+  std::string get_data_format() const;
 };
 
 AbstractBasePtr ResizeNearestNeighborV2GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

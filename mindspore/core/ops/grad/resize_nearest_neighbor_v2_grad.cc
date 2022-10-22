@@ -104,6 +104,21 @@ TypePtr ResizeNearestNeighborV2GradInferType(const PrimitivePtr &primitive,
 }
 }  // namespace
 
+bool ResizeNearestNeighborV2Grad::get_align_corners() const {
+  auto value_ptr = GetAttr(kAlignCorners);
+  return GetValue<bool>(value_ptr);
+}
+
+bool ResizeNearestNeighborV2Grad::get_half_pixel_centers() const {
+  auto value_ptr = GetAttr(kHalfPixelCenters);
+  return GetValue<bool>(value_ptr);
+}
+
+std::string ResizeNearestNeighborV2Grad::get_data_format() const {
+  auto value_ptr = GetAttr(kFormat);
+  return GetValue<std::string>(value_ptr);
+}
+
 AbstractBasePtr ResizeNearestNeighborV2GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
