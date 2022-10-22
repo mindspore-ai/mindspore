@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/log_space.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,33 +26,54 @@ namespace {
 constexpr size_t kLogSpaceInputsNum = 2;
 constexpr size_t kLogSpaceOutputsNum = 1;
 }  // namespace
-void LogSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kLogSpaceInputsNum, common::AnfAlgo::GetCNodeName(kernel_node));
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kLogSpaceOutputsNum, common::AnfAlgo::GetCNodeName(kernel_node));
-  auto input_shape_1 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto input_shape_2 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+
+bool LogSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSpaceInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSpaceOutputsNum, kernel_name_);
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogSpace>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  steps_ = kernel_ptr->get_steps();
+  if (steps_ < 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', attr[steps] must be greater than 0, but got steps: " << steps_
+                  << ".";
+    return false;
+  }
+  base_ = kernel_ptr->get_base();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int LogSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto input_shape_1 = inputs[kIndex0]->GetShapeVector();
+  auto input_shape_2 = inputs[kIndex1]->GetShapeVector();
   auto input_shape_size_1 = input_shape_1.size();
   auto input_shape_size_2 = input_shape_2.size();
   if (input_shape_size_1 > 0) {
-    MS_EXCEPTION(ValueError) << "For LogSpace, input[start] must be 0-D, but got " << input_shape_size_1 << "-D.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[start] must be 0-D, but got " << input_shape_size_1 << "-D.";
+    return KRET_RESIZE_FAILED;
   }
   if (input_shape_size_2 > 0) {
-    MS_EXCEPTION(ValueError) << "For LogSpace, input[end] must be 0-D, but got " << input_shape_size_2 << "-D.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[end] must be 0-D, but got " << input_shape_size_2 << "-D.";
+    return KRET_RESIZE_FAILED;
   }
-  steps_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "steps");
-  if (steps_ < 0) {
-    MS_EXCEPTION(ValueError) << "For LogSpace, attr[steps] must be greater than 0, but got steps: " << steps_ << ".";
-  }
-  base_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "base");
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "LogSpace does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T, typename S>
