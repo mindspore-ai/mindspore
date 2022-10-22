@@ -49,27 +49,37 @@ bool SparseReshapeCpuKernelMod::SameConvert(int64_t input_size, int64_t output_s
   return false;
 }
 
-void SparseReshapeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  indices_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (indices_shape_.size() != kIndicesShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'indices' should be a " << kIndicesShapeSize
-                      << "-D Tensor, but got " << indices_shape_.size() << "-D";
-  }
-  auto shape_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (indices_shape_[1] != shape_shape[0]) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the rank of input tensor must match input shape length, but got input tensor rank = "
-                      << indices_shape_[1] << ", and input shape length = " << shape_shape[0] << ".";
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool SparseReshapeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires int64 data type, but got " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int SparseReshapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  indices_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  if (indices_shape_.size() != kIndicesShapeSize) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'indices' should be a " << kIndicesShapeSize
+                      << "-D Tensor, but got " << indices_shape_.size() << "-D";
+  }
+  auto shape_shape = inputs.at(kIndex1)->GetShapeVector();
+  if (indices_shape_[1] != shape_shape[0]) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the rank of input tensor must match input shape length, but got input tensor rank = "
+                      << indices_shape_[1] << ", and input shape length = " << shape_shape[0] << ".";
+  }
+  return KRET_OK;
 }
 
 template <typename I, typename T>
