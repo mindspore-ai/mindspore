@@ -40,9 +40,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
@@ -64,6 +61,17 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/convert/runtime_convert.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
         )
+    if(MSLITE_ENABLE_BFC_MEMORY)
+        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
+            )
+    endif()
+    if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
+        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
+            )
+    endif()
     include_directories("${CCSRC_DIR}/ps/core")
     file(GLOB_RECURSE COMM_PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CCSRC_DIR}/ps/core/protos/*.proto")
     ms_protobuf_generate(COMM_PROTO_SRCS COMM_PROTO_HDRS ${COMM_PROTO_IN})

@@ -1,6 +1,7 @@
 include_directories(${TOP_DIR}/graphengine/inc/external)
 include_directories(${TOP_DIR}/mindspore)
 include_directories(${TOP_DIR}/mindspore/lite/src)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN/")
 
 find_library(ge_graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(acl libascendcl.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
@@ -14,6 +15,8 @@ file(GLOB_RECURSE ASCEND_SRC ${CMAKE_CURRENT_SOURCE_DIR}
 
 add_library(ascend_kernel_plugin SHARED ${ASCEND_SRC})
 add_dependencies(ascend_kernel_plugin fbs_inner_src)
+add_dependencies(ascend_kernel_plugin mindspore-extendrt)
+target_link_libraries(ascend_kernel_plugin mindspore-extendrt)
 
 if("${MSLITE_REGISTRY_DEVICE}" STREQUAL "SD3403" AND PLATFORM_ARM64)
     find_library(acl_retr libacl_retr.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
