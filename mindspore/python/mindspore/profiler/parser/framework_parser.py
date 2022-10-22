@@ -459,8 +459,8 @@ class GpuFrameWorkParser:
                 framework_info = f_obj.readlines()
             for line_info in framework_info:
                 line_info = line_info.strip(' ').strip('\n').split(';')
-                input_shape = line_info[2:]
-                # line_info[0]: op_type, line_info[1]: op_name, line_info[2]: input_shape;
+                # line_info[0]: op_type, line_info[1]: op_name, line_info[2]: graph_id, line_info[3]: input_shape;
+                input_shape = line_info[3:]
                 item = [line_info[0], line_info[1], input_shape, op_side]
                 if not self.op_step_shape_info.get(line_info[1]):
                     self.op_step_shape_info[line_info[1]].append(op_side)
