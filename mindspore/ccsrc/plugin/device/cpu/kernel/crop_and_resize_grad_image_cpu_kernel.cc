@@ -132,10 +132,10 @@ int CropAndResizeGradImageCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
 template <typename T>
 bool CropAndResizeGradImageCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto *grads = reinterpret_cast<float *>(inputs[kGradsImage]->addr);
-  auto *image_size = reinterpret_cast<int *>(inputs[kImageSizeImage]->addr);
-  auto *boxes = reinterpret_cast<float *>(inputs[kBoxesImage]->addr);
-  auto *box_ind = reinterpret_cast<int *>(inputs[kBoxIndexImage]->addr);
+  auto *grads = static_cast<float *>(inputs[kGradsImage]->addr);
+  auto *image_size = static_cast<int *>(inputs[kImageSizeImage]->addr);
+  auto *boxes = static_cast<float *>(inputs[kBoxesImage]->addr);
+  auto *box_ind = static_cast<int *>(inputs[kBoxIndexImage]->addr);
 
   const int64_t image_batch = *(image_size + kBatchImage);
   const int64_t image_height = *(image_size + kHeightImage);
