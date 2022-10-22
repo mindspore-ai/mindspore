@@ -103,7 +103,7 @@ int MatmulDoubleCpuKernelFunc::Resize(const BaseOperatorPtr &, const std::vector
   for (size_t i = 0; i < rank - kIndexOffset; ++i) {
     batch *= a_shape[i];
   }
-  if (batch > 1) {
+  if (batch > 1 || rank > kIndexOffset) {
     batch_ = static_cast<size_t>(batch);
     rank_ = static_cast<size_t>(rank);
     a_row_ = static_cast<size_t>(a_shape[rank - kIndexOffset + kDim0]);
