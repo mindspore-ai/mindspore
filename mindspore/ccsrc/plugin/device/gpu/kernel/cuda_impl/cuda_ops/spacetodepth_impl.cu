@@ -17,6 +17,7 @@
 #include <cuda_runtime.h>
 #include "spacetodepth_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
 __global__ void SpaceToDepth(const size_t size, const T *input, const size_t in,
@@ -136,3 +137,20 @@ CalSpaceToDepth<uint64_t>(const size_t size, const uint64_t *input,
                           const size_t iw, const size_t on, const size_t oc,
                           const size_t oh, const size_t ow, const size_t r,
                           uint64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalSpaceToDepth<Complex<float>>(const size_t size, const Complex<float> *input,
+                                                              const size_t in, const size_t ic, const size_t ih,
+                                                              const size_t iw, const size_t on, const size_t oc,
+                                                              const size_t oh, const size_t ow, const size_t r,
+                                                              Complex<float> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalSpaceToDepth<Complex<double>>(const size_t size, const Complex<double> *input,
+                                                               const size_t in, const size_t ic, const size_t ih,
+                                                               const size_t iw, const size_t on, const size_t oc,
+                                                               const size_t oh, const size_t ow, const size_t r,
+                                                               Complex<double> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalSpaceToDepth<double>(const size_t size, const double *input,
+                                                      const size_t in, const size_t ic,
+                                                      const size_t ih, const size_t iw,
+                                                      const size_t on, const size_t oc,
+                                                      const size_t oh, const size_t ow,
+                                                      const size_t r, double *output,
+                                                      cudaStream_t cuda_stream);

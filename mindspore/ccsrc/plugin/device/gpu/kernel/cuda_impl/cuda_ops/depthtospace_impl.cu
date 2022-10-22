@@ -16,6 +16,7 @@
 #include <cuda_runtime.h>
 #include "depthtospace_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
 __global__ void DepthToSpace(const size_t size, const T *input, const size_t in, const size_t ic, const size_t ih,
@@ -111,3 +112,20 @@ template CUDA_LIB_EXPORT void CalDepthToSpace<uint64_t>(const size_t size, const
                                                         const size_t on, const size_t oc, const size_t oh,
                                                         const size_t ow, const size_t r, uint64_t *output,
                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalDepthToSpace<double>(const size_t size, const double *input, const size_t in,
+                                                        const size_t ic, const size_t ih, const size_t iw,
+                                                        const size_t on, const size_t oc, const size_t oh,
+                                                        const size_t ow, const size_t r, double *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalDepthToSpace<Complex<float>>(const size_t size, const Complex<float> *input,
+                                                              const size_t in, const size_t ic, const size_t ih,
+                                                              const size_t iw, const size_t on, const size_t oc,
+                                                              const size_t oh, const size_t ow, const size_t r,
+                                                              Complex<float> *output, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalDepthToSpace<Complex<double>>(const size_t size, const Complex<double> *input,
+                                                               const size_t in, const size_t ic, const size_t ih,
+                                                               const size_t iw, const size_t on, const size_t oc,
+                                                               const size_t oh, const size_t ow, const size_t r,
+                                                               Complex<double> *output, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
