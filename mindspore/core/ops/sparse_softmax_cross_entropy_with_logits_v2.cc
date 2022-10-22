@@ -35,12 +35,14 @@ abstract::TupleShapePtr SparseSoftmaxCrossEntropyWithLogitsV2InferShape(
   auto labels_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   const int64_t features_rank = 2;
   const int64_t labels_rank = 1;
+  if (!IsDynamic(features_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(labels_shape.size()), kEqual,
+                                             labels_rank, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("batch of logits(features)", features_shape[kInputIndex0], kEqual,
+                                             labels_shape[kInputIndex0], op_name);
+  }
   (void)CheckAndConvertUtils::CheckInteger("dimension of logits(features)", SizeToLong(features_shape.size()), kEqual,
                                            features_rank, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(labels_shape.size()), kEqual, labels_rank,
-                                           op_name);
-  (void)CheckAndConvertUtils::CheckInteger("batch of logits(features)", features_shape[kInputIndex0], kEqual,
-                                           labels_shape[kInputIndex0], op_name);
   auto loss_shape = labels_shape;
   auto backprop_shape = features_shape;
   abstract::ShapePtr loss_shape_ptr, backprop_shape_ptr;
@@ -65,7 +67,6 @@ TuplePtr SparseSoftmaxCrossEntropyWithLogitsV2InferType(const PrimitivePtr &prim
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SparseSoftmaxCrossEntropyWithLogitsV2, PrimitiveC, BaseOperator);
 AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsV2Infer(const abstract::AnalysisEnginePtr &,
                                                            const PrimitivePtr &primitive,
                                                            const std::vector<AbstractBasePtr> &input_args) {
@@ -76,6 +77,8 @@ AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsV2Infer(const abstract::Analy
   auto infer_shape = SparseSoftmaxCrossEntropyWithLogitsV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+MIND_API_OPERATOR_IMPL(SparseSoftmaxCrossEntropyWithLogitsV2, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSoftmaxCrossEntropyWithLogitsV2, prim::kPrimSparseSoftmaxCrossEntropyWithLogitsV2,
                              SparseSoftmaxCrossEntropyWithLogitsV2Infer, nullptr, true);
 }  // namespace ops
