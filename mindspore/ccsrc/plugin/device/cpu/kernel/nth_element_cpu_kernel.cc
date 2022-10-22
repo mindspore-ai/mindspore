@@ -16,6 +16,7 @@
 #include <algorithm>
 #include "plugin/device/cpu/kernel/nth_element_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/nth_element.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -24,77 +25,40 @@ constexpr size_t kNthElementOutputsNum = 1;
 constexpr size_t kParallelDataNums = 32 * 1024;
 }  // namespace
 
-size_t get_nth_element_num(const ShapeVector &shape) { return SizeOf(shape); }
-
-void NthElementCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_n_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (input_n_shape_.size() != 0) {
-    MS_LOG(EXCEPTION) << "For NthElement, the input n must be a scalar or a 0-D tensor but got a "
-                      << input_n_shape_.size() << "-D tensor.";
-  }
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (input_shape_.size() < 1) {
-    MS_LOG(EXCEPTION) << "For NthElement, input size must be equal or greater than 1, "
-                      << "but got " << input_shape_.size() << ".";
-  }
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  input_elements_ = get_nth_element_num(input_shape_);
-  output_elements_ = get_nth_element_num(output_shape_);
-  reverse_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "reverse");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-}
-
-bool NthElementCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool NthElementCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNthElementInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNthElementOutputsNum, kernel_name_);
-  switch (dtype_) {
-    case kNumberTypeFloat32:
-      LaunchKernel<float>(inputs, outputs);
-      break;
-    case kNumberTypeFloat16:
-      LaunchKernel<float16>(inputs, outputs);
-      break;
-    case kNumberTypeInt8:
-      LaunchKernel<int8_t>(inputs, outputs);
-      break;
-    case kNumberTypeUInt16:
-      LaunchKernel<uint16_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt16:
-      LaunchKernel<int16_t>(inputs, outputs);
-      break;
-    case kNumberTypeUInt8:
-      LaunchKernel<uint8_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt32:
-      LaunchKernel<int32_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt64:
-      LaunchKernel<int64_t>(inputs, outputs);
-      break;
-    case kNumberTypeFloat64:
-      LaunchKernel<double>(inputs, outputs);
-      break;
-    default:
-      MS_EXCEPTION(TypeError) << "For NthElement, input data type must be float32, float16, int8, "
-                              << "uint16, int 16, uint8, int32, int64 or float64 but got data type "
-                              << TypeIdLabel(dtype_) << ".";
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::NthElement>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  reverse_ = kernel_ptr->get_reverse();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int NthElementCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  return true;
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+  input_elements_ = SizeOf(input_shape_);
+  output_elements_ = SizeOf(output_shape_);
+  return KRET_OK;
 }
 
 template <typename T>
-void NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+bool NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   auto *n_data = static_cast<int32_t *>(inputs[1]->addr);
   input_n_val_ = *n_data;
   if (input_n_val_ < 0 || input_n_val_ >= static_cast<int>(input_shape_.back())) {
-    MS_LOG(EXCEPTION) << "For NthElement, the value of input n must be in [0, input.shape[-1]), "
-                      << "but got " << input_n_val_ << ".";
+    MS_LOG(ERROR) << "For NthElement, the value of input n must be in [0, input.shape[-1]), "
+                  << "but got " << input_n_val_ << ".";
+    return false;
   }
   auto last_dim = input_shape_.back();
   if (reverse_) {
@@ -125,21 +89,34 @@ void NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     };
     ParallelLaunchAutoSearch(shard_nth_element, output_elements_, this, &parallel_search_info_);
   }
+  return true;
 }
 
-std::vector<KernelAttr> NthElementCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-    KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-    KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, NthElementCpuKernelMod::KernelRunFunc>> &NthElementCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, NthElementCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+     &NthElementCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+     &NthElementCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+     &NthElementCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+     &NthElementCpuKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+     &NthElementCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+     &NthElementCpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &NthElementCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+     &NthElementCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+     &NthElementCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, NthElement, NthElementCpuKernelMod);
 // }
 }  // namespace kernel

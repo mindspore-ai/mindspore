@@ -21,11 +21,12 @@ namespace mindspore {
 namespace kernel {
 bool LogicalNotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

@@ -34,6 +34,11 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
 
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kGreaterEqual, 1,
                                            primitive->name());
   auto n_val = 0;
@@ -83,6 +88,16 @@ TypePtr NthElementInferType(const PrimitivePtr &primitive, const std::vector<abs
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(NthElement, BaseOperator);
+
+void NthElement::Init(const bool reverse) { this->set_reverse(reverse); }
+
+void NthElement::set_reverse(const bool reverse) { (void)this->AddAttr(kReverse, api::MakeValue(reverse)); }
+
+bool NthElement::get_reverse() const {
+  auto value_ptr = GetAttr(kReverse);
+  return GetValue<bool>(value_ptr);
+}
+
 abstract::AbstractBasePtr NthElementInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args) {
   const int64_t input_num = 2;
