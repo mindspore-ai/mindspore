@@ -34,45 +34,61 @@ constexpr uint32_t kSecondOutputIndex = 1;
 constexpr uint32_t kThirdOutputIndex = 2;
 }  // namespace
 
-void LuUnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  node_wpt_ = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputNum, kernel_name_);
-  auto LU_data_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto LU_pivots_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (LU_data_shape.size() < kDimNum) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', LU_data's dimensions must be greater than or equal to 2.";
-  }
-  if (LU_pivots_shape.size() < 1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', LU_pivots's dimensions must be greater than or equal to 1.";
-  }
-  if (LU_pivots_shape[LU_pivots_shape.size() - 1] !=
-      std::min(LU_data_shape[LU_data_shape.size() - kFirstDim], LU_data_shape[LU_data_shape.size() - kSecondDim])) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "',"
-                             << " the last dimension of LU_pivots must be the same as the minimum value of the last"
-                             << " two dimensions of the LU_data.";
-  }
-  for (size_t i = 0; i < LU_pivots_shape.size() - 1; i++) {
-    if (LU_data_shape[i] != LU_pivots_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "',"
-                               << " batch dimension of LU_pivots should match batch dimension of LU_data.";
-    }
-  }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool LuUnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, LuUnpackFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "LuUnpack does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
 }
+
+int LuUnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto input_0_size = input_0_shape_.size();
+  auto input_1_size = input_1_shape_.size();
+  if (input_0_size < kDimNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', LU_data's dimensions must be greater than or equal to 2.";
+    return KRET_RESIZE_FAILED;
+  }
+  if (input_1_size < 1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', LU_pivots's dimensions must be greater than or equal to 1.";
+    return KRET_RESIZE_FAILED;
+  }
+  if (input_1_shape_[input_1_size - 1] !=
+      std::min(input_0_shape_[input_0_size - kFirstDim], input_0_shape_[input_0_size - kSecondDim])) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "',"
+                  << " the last dimension of LU_pivots must be the same as the minimum value of the last"
+                  << " two dimensions of the LU_data.";
+    return KRET_RESIZE_FAILED;
+  }
+  for (size_t i = 0; i < input_1_size - 1; i++) {
+    if (input_0_shape_[i] != input_1_shape_[i]) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "',"
+                    << " batch dimension of LU_pivots should match batch dimension of LU_data.";
+      return KRET_RESIZE_FAILED;
+    }
+  }
+  return KRET_OK;
+}
+
 template <typename T_data, typename T_pivots>
 void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &outputs, int64_t Lu_data_dim1,
@@ -148,16 +164,13 @@ void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
 template <typename T_data, typename T_pivots>
 bool LuUnpackCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_0_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
-  auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
-
-  size_t LU_data_dims = input_0_Shape.size();
-  std::vector<int64_t> LU_data_dims_vector = input_0_Shape;
+  size_t LU_data_dims = input_0_shape_.size();
+  std::vector<int64_t> LU_data_dims_vector = input_0_shape_;
   int64_t Lu_data_dim1 = LU_data_dims_vector[LU_data_dims - 2];
   int64_t Lu_data_dim2 = LU_data_dims_vector[LU_data_dims - 1];
 
-  size_t LU_pivots_dims = input_1_Shape.size();
-  std::vector<int64_t> LU_pivots_dims_vector = input_1_Shape;
+  size_t LU_pivots_dims = input_1_shape_.size();
+  std::vector<int64_t> LU_pivots_dims_vector = input_1_shape_;
   int64_t Lu_pivots_dim = LU_pivots_dims_vector[LU_pivots_dims - 1];
   int64_t pivots_stride = Lu_data_dim1 * Lu_data_dim1;
   int64_t L_stride = 0;
@@ -184,7 +197,7 @@ bool LuUnpackCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   int64_t Lu_data_stride = Lu_data_dim1 * Lu_data_dim2;
   int64_t Lu_pivots_stride = Lu_pivots_dim;
   int64_t batch_num =
-    std::accumulate(input_0_Shape.begin(), input_0_Shape.end(), 1, std::multiplies<int>()) / Lu_data_stride;
+    std::accumulate(input_0_shape_.begin(), input_0_shape_.end(), 1, std::multiplies<int>()) / Lu_data_stride;
   for (int64_t matrix_index = 0; matrix_index < batch_num; matrix_index++) {
     T_pivots *Lu_pivots_working_ptr = input_x1 + matrix_index * Lu_pivots_stride;
     LuUnpack(inputs, outputs, Lu_data_dim1, Lu_pivots_dim, Lu_pivots_working_ptr, matrix_index, matrix_size,
