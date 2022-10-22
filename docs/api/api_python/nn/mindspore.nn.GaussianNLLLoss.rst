@@ -23,6 +23,7 @@ mindspore.nn.GaussianNLLLoss
         - **logits** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。`*` 代表着任意数量的额外维度。
         - **labels** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。和 `logits` 具有相同shape，或者相同shape但有一个维度为1（以允许广播）。
         - **var** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。和 `logits` 具有相同shape，或者相同shape但有一个维度为1，或者少一个维度（以允许广播）。
+
     返回：
         Tensor或Tensor scalar，根据 :math:`reduction` 计算的loss。
 

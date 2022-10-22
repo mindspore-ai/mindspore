@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import math
 import mindspore
 import mindspore.common.dtype as mstype
+import mindspore.ops as ops
 from mindspore import log
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
@@ -2330,3 +2331,77 @@ class GaussianNLLLoss(LossBase):
         c = 0 if not self.full else 0.5 * math.log(2 * math.pi)
         loss = 0.5 * (logarithm + squared_loss / maxima) + c
         return self.get_loss(loss)
+
+
+class HingeEmbeddingLoss(LossBase):
+    r"""
+    Hinge Embedding Loss. Compute the output according to the input elements. Measures the loss given an input tensor x
+    and a labels tensor y (containing 1 or -1).
+    This is usually used for measuring the similarity between two inputs.
+
+    The loss function for :math:`n`-th sample in the mini-batch is
+
+        .. math::
+            l_n = \begin{cases}
+                x_n, & \text{if}\; y_n = 1,\\
+                \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
+            \end{cases}
+
+        and the total loss functions is
+
+        .. math::
+            \ell(x, y) = \begin{cases}
+                \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+                \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+            \end{cases}
+
+        where :math:`L = \{l_1,\dots,l_N\}^\top`.
+
+    Args:
+        margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.
+            Represented as :math:`\Delta` in the formula. Default: 1.0.
+        reduction (string): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
+        - **labels** (Tensor) - Same shape as the logits, contains -1 or 1.
+
+    Returns:
+        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+
+    Raises:
+        TypeError: If `logits` is not a Tensor.
+        TypeError: If `labels` is not a Tensor.
+        TypeError: If `margin` is not a float.
+        ValueError: If `labels` does not have the same shape as `logits`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examplse:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.nn as nn
+        >>> import mindspore.common.dtype as mstype
+        >>> arr1 = np.array([0.9, -1.2, 2, 0.8, 3.9, 2, 1, 0, -1]).reshape((3, 3))
+        >>> arr2 = np.array([1, 1, -1, 1, -1, 1, -1, 1, 1]).reshape((3, 3))
+        >>> logits = Tensor(arr1, mstype.float32)
+        >>> labels = Tensor(arr2, mstype.float32)
+        >>> loss = nn.HingeEmbeddingLoss(reduction='mean')
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        Tensor(shape=[], dtype=Float32, value= 1.6666667)
+    """
+
+    def __init__(self, margin=1.0, reduction='mean'):
+        super(HingeEmbeddingLoss, self).__init__()
+        validator.check_value_type('margin', margin, [float], self.cls_name)
+        validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.cls_name)
+        self.margin = margin
+        self.reduction = reduction
+
+    def construct(self, logits, labels):
+        loss = ops.hinge_embedding_loss(logits, labels, self.margin, self.reduction)
+        return loss

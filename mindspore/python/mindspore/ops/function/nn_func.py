@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from math import pi
 
+import mindspore.ops as ops
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
@@ -2459,6 +2460,90 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
     return (loss, log_alpha)
 
 
+@constexpr
+def _check_hinge_embedding_loss(shape, shape2, prim_name):
+    if shape2 != shape:
+        raise ValueError(f"For '{prim_name}' the input tensor and the labels must have the same shape.")
+
+
+def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
+    r"""
+    Hinge Embedding Loss. Compute the output according to the input elements. Measures the loss given an input tensor x
+    and a labels tensor y (containing 1 or -1).
+    This is usually used for measuring the similarity between two inputs.
+
+    The loss function for :math:`n`-th sample in the mini-batch is
+
+        .. math::
+            l_n = \begin{cases}
+                x_n, & \text{if}\; y_n = 1,\\
+                \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
+            \end{cases}
+
+        and the total loss functions is
+
+        .. math::
+            \ell(x, y) = \begin{cases}
+                \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+                \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+            \end{cases}
+
+        where :math:`L = \{l_1,\dots,l_N\}^\top`.
+
+    Args:
+        inputs (Tensor) - Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
+        targets (Tensor) - Same shape as the logits, contains -1 or 1.
+        margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.
+            Represented as :math:`\Delta` in the formula. Default: 1.0.
+        reduction (string): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+
+    Returns:
+        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+
+    Raises:
+        TypeError: If `inputs` is not a Tensor.
+        TypeError: If `targets` is not a Tensor.
+        TypeError: If `margin` is not a float.
+        ValueError: If `targets` does not have the same shape as `inputs`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examplse:
+        >>> import numpy as np
+        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> arr1 = np.array([0.9, -1.2, 2, 0.8, 3.9, 2, 1, 0, -1]).reshape((3, 3))
+        >>> arr2 = np.array([1, 1, -1, 1, -1, 1, -1, 1, 1]).reshape((3, 3))
+        >>> logits = Tensor(arr1, mstype.float32)
+        >>> labels = Tensor(arr2, mstype.float32)
+        >>> loss = ops.hinge_embedding_loss(logits, targets, margin=1.0, reduction='mean')
+        >>> print(loss)
+        Tensor(shape=[], dtype=Float32, value= 1.6666667)
+    """
+    _shape = inputs.shape
+    _dtype = inputs.dtype
+    _t_shape = targets.shape
+    _check_hinge_embedding_loss(_shape, _t_shape, 'HingeEmbeddingLoss')
+    min_val = Tensor(0, _dtype)
+    pos_index = targets > 0
+    neg_index = targets < 0
+    pos = pos_index * inputs
+    neg = neg_index * inputs
+    margin_matrix = margin * neg_index
+    neg = margin_matrix - neg
+    neg = ops.clip_by_value(neg, min_val)
+    loss = pos + neg
+    if reduction == 'mean':
+        loss = loss.mean()
+    elif reduction == 'sum':
+        loss = loss.sum()
+    return loss
+
+
 def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
     r"""
     Performs greedy decoding on the logits given in inputs.
@@ -3466,5 +3551,6 @@ __all__ = [
     'multi_label_margin_loss',
     'elu',
     'gelu',
+    'hinge_embedding_loss'
 ]
 __all__.sort()

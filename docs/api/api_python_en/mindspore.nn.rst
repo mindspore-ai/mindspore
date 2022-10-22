@@ -237,6 +237,7 @@ Loss Function
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
     mindspore.nn.GaussianNLLLoss
+    mindspore.nn.HingeEmbeddingLoss
     mindspore.nn.HuberLoss
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
