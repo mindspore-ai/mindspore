@@ -27,34 +27,37 @@ namespace mindspore {
 namespace kernel {
 namespace {
 using KernelRunFunc = RandomCategoricalCpuKernel::KernelRunFunc;
-}
+#define ADD_KERNEL(logits_dtype, nun_sample_dtype, seed_dtype, output_dtype, logits_type, output_type) \
+  {                                                                                                    \
+    KernelAttr()                                                                                       \
+      .AddInputAttr(kNumberType##logits_dtype)                                                         \
+      .AddInputAttr(kNumberType##nun_sample_dtype)                                                     \
+      .AddInputAttr(kNumberType##seed_dtype)                                                           \
+      .AddOutputAttr(kNumberType##output_dtype),                                                       \
+      &RandomCategoricalCpuKernel::LaunchKernel<logits_type, output_type>                              \
+  }
+}  // namespace
+
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &RandomCategoricalCpuKernel::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, RandomCategoricalCpuKernel::KernelRunFunc>> func_list = {
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt32),
-     &RandomCategoricalCpuKernel::LaunchKernel<float, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &RandomCategoricalCpuKernel::LaunchKernel<float, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt32),
-     &RandomCategoricalCpuKernel::LaunchKernel<double, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &RandomCategoricalCpuKernel::LaunchKernel<double, int32_t>},
-  };
+    ADD_KERNEL(Float16, Int32, Int32, Int16, float16, int16_t),
+    ADD_KERNEL(Float16, Int32, Int32, Int32, float16, int32_t),
+    ADD_KERNEL(Float16, Int32, Int32, Int64, float16, int64_t),
+    ADD_KERNEL(Float32, Int32, Int32, Int16, float, int16_t),
+    ADD_KERNEL(Float32, Int32, Int32, Int32, float, int32_t),
+    ADD_KERNEL(Float32, Int32, Int32, Int64, float, int64_t),
+    ADD_KERNEL(Float64, Int32, Int32, Int16, double, int16_t),
+    ADD_KERNEL(Float64, Int32, Int32, Int32, double, int32_t),
+    ADD_KERNEL(Float64, Int32, Int32, Int64, double, int64_t),
+    ADD_KERNEL(Float16, Int64, Int64, Int16, float16, int16_t),
+    ADD_KERNEL(Float16, Int64, Int64, Int32, float16, int32_t),
+    ADD_KERNEL(Float16, Int64, Int64, Int64, float16, int64_t),
+    ADD_KERNEL(Float32, Int64, Int64, Int16, float, int16_t),
+    ADD_KERNEL(Float32, Int64, Int64, Int32, float, int32_t),
+    ADD_KERNEL(Float32, Int64, Int64, Int64, float, int64_t),
+    ADD_KERNEL(Float64, Int64, Int64, Int16, double, int16_t),
+    ADD_KERNEL(Float64, Int64, Int64, Int32, double, int32_t),
+    ADD_KERNEL(Float64, Int64, Int64, Int64, double, int64_t)};
   return func_list;
 }
 
@@ -94,15 +97,17 @@ void GetCdf(T *logits_addr, T *dev_cdf, const size_t batch_size, const size_t nu
     if (cur_col != 0) {
       return;
     }
-    float max_of_row = logits_addr[pos];
+    T max_of_row = logits_addr[pos];
     for (size_t i = 1; i < num_classes; i++) {
       if (logits_addr[pos + i] > max_of_row) {
         max_of_row = logits_addr[pos + i];
       }
     }
-    dev_cdf[cur_row * num_classes] = std::exp(static_cast<T>(logits_addr[pos] - max_of_row));
+    float exp1 = static_cast<float>(logits_addr[pos] - max_of_row);
+    dev_cdf[cur_row * num_classes] = static_cast<T>(std::exp(exp1));
     for (size_t i = 1; i < num_classes; i++) {
-      T tmp = std::exp(static_cast<T>(logits_addr[pos + i] - max_of_row));
+      float exp2 = static_cast<float>(logits_addr[pos + i] - max_of_row);
+      T tmp = static_cast<T>(std::exp(exp2));
       dev_cdf[cur_row * num_classes + i] = dev_cdf[cur_row * num_classes + i - 1] + tmp;
     }
   }
@@ -115,7 +120,7 @@ void RandomCategoricalFunc(const size_t num_samples, const T1 *dev_rand, const T
   for (size_t pos = 0; pos < size; pos++) {
     size_t cur_row = pos / num_samples;
     size_t cur_col = pos % num_samples;
-    const float to_find = dev_cdf[cur_row * num_classes + num_classes - 1] * dev_rand[cur_row * num_samples + cur_col];
+    const T1 to_find = dev_cdf[cur_row * num_classes + num_classes - 1] * dev_rand[cur_row * num_samples + cur_col];
 
     size_t idx = 0;
     while (dev_cdf[cur_row * num_classes + idx] < to_find) {
@@ -160,7 +165,7 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
   for (int j = 0; j < num_sample; j++) {
     float random = dist(rng_);
     for (int i = 0; i < batch_size; ++i) {
-      host_rand[i * num_sample + j] = random;
+      host_rand[i * num_sample + j] = static_cast<T1>(random);
     }
   }
   RandomCategoricalFunc(num_sample, host_rand.data(), host_cdf.data(), batch_size, num_classes, output);
