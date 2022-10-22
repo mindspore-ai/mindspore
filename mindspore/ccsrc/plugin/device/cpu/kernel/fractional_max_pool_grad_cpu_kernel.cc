@@ -34,31 +34,46 @@ constexpr size_t kOutputShapeIndexN = 0;
 constexpr size_t kOutputShapeIndexH = 1;
 constexpr size_t kOutputShapeIndexW = 2;
 constexpr size_t kOutputShapeIndexC = 3;
+constexpr size_t kInputIndex0 = 0;
+constexpr size_t kInputIndex1 = 1;
 constexpr size_t kInputIndex2 = 2;
 constexpr size_t kInputIndex3 = 3;
 constexpr size_t kInputIndex4 = 4;
 }  // namespace
 
-void FractionalMaxPoolGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  overlapping_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "overlapping");
-  tensor_in_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (tensor_in_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_input' must be a tensor of rank 4.";
-  }
-  tensor_out_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (tensor_out_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_output' must be a tensor of rank 4.";
-  }
+bool FractionalMaxPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = kInputsNum;
+  constexpr size_t output_num = kOutputsNum;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
+    return false;
   }
 
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int FractionalMaxPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs,
+                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  overlapping_ = kernel_ptr->get_overlapping();
+  return ret;
 }
 
 template <typename T>
