@@ -41,31 +41,34 @@ abstract::TupleShapePtr SparseReshapeInferShape(const PrimitivePtr &primitive,
   auto in2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(new_shape)[kShape];
   const size_t kone = 1;
   const size_t ktwo = 2;
-
-  if (in0_shape.size() != ktwo) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ",the shape of input `indices` must be 2-D, but got "
-                             << in0_shape.size() << "-D.";
-  }
-
+  std::vector<ShapeVector> all_shapes = {in0_shape, in1_shape, in2_shape};
+  auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
   if (in1_shape.size() != kone) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ",the shape of input `shape` must be 1-D, but got "
                              << in0_shape.size() << "-D.";
   }
-
   if (in2_shape.size() != kone) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ",the shape of input `new_shape` must be 1-D, but got "
                              << in0_shape.size() << "-D.";
   }
-
-  if (in0_shape[1] != in1_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of input tensor must match input shape length,"
-                             << " but got input tensor rank = " << in0_shape[1]
-                             << ", and input shape length = " << in1_shape[0] << ".";
+  if (!is_dynamic) {
+    if (in0_shape.size() != ktwo) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ",the shape of input `indices` must be 2-D, but got "
+                               << in0_shape.size() << "-D.";
+    }
+    if (in0_shape[1] != in1_shape[0]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of input tensor must match input shape length,"
+                               << " but got input tensor rank = " << in0_shape[1]
+                               << ", and input shape length = " << in1_shape[0] << ".";
+    }
   }
-  std::vector<int64_t> out0_shape;
-  out0_shape.push_back(in0_shape[0]);
-  out0_shape.push_back(in2_shape[0]);
-
+  std::vector<int64_t> out0_shape{-1, -1};
+  if (!IsDynamicRank(in0_shape)) {
+    out0_shape[0] = in0_shape[0];
+  }
+  if (!IsDynamicRank(in2_shape)) {
+    out0_shape[1] = in2_shape[0];
+  }
   abstract::ShapePtr y_indices = std::make_shared<abstract::Shape>(out0_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{y_indices, new_shape});
 }
