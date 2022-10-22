@@ -32,7 +32,15 @@ class MIND_API NthElement : public BaseOperator {
   MIND_API_BASE_MEMBER(NthElement);
   /// \brief Constructor.
   NthElement() : BaseOperator(kNameNthElement) { InitIOName({"input", "n"}, {"output"}); }
-  void Init() const {}
+  void Init(const bool use_locking = false);
+
+  /// \brief Set reverse.
+  void set_reverse(const bool reverse);
+
+  /// \brief Get reverse.
+  ///
+  /// \return reverse.
+  bool get_reverse() const;
 };
 abstract::AbstractBasePtr NthElementInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args);
