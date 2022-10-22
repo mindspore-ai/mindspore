@@ -22,6 +22,7 @@
 #include <map>
 #include "include/common/utils/utils.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace expander {
@@ -185,6 +186,12 @@ ValuePtr BpropIRBuilder::GetAttr(const NodePtr &node, const std::string &attr) c
   auto p = GetCNodePrimitive(node->get());
   MS_EXCEPTION_IF_NULL(p);
   return p->GetAttr(attr);
+}
+
+std::string BpropIRBuilder::GetTargetFromContext() const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  return context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
 }  // namespace bprop
 }  // namespace expander
