@@ -14,29 +14,43 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MVLGAMMA_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MVLGAMMA_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MVLGAMMA_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MVLGAMMA_GRAD_CPU_KERNEL_H_
 #include <functional>
 #include <memory>
 #include <vector>
+#include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MvlgammaGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MvlgammaGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<MvlgammaGradCpuKernelMod> {
  public:
   MvlgammaGradCpuKernelMod() = default;
   ~MvlgammaGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
- private:
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
   template <typename T>
   T Digamma(const T &input) const;
@@ -45,14 +59,9 @@ class MvlgammaGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   T MvlgammaGradSingle(const T &y_grad, const T &x, const int64_t &p) const;
 
   ShapeVector input_shape_;
-  ShapeVector output_shape_;
   int64_t attr_p_;
   int64_t input_tensor_size_;
-  TypeId dtype_{kTypeUnknown};
-
- protected:
-  std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MVLGAMMA_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MVLGAMMA_GRAD_CPU_KERNEL_H_

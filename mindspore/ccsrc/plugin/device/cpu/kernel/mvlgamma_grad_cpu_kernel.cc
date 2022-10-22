@@ -20,6 +20,7 @@
 #include <limits>
 #include "plugin/device/cpu/kernel/mvlgamma_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/grad/mvlgamma_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,18 +43,32 @@ constexpr int64_t kInputsNum = 2;
 constexpr int64_t kOutputsNum = 1;
 }  // namespace
 
-void MvlgammaGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  attr_p_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "p");
-  input_tensor_size_ = static_cast<int64_t>(SizeOf(input_shape_));
-
+bool MvlgammaGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  // get kernel attr
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MvlgammaGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  attr_p_ = kernel_ptr->get_p();
   if (attr_p_ < 1) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1.";
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1.";
+    return false;
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int MvlgammaGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_tensor_size_ = static_cast<int64_t>(SizeOf(input_shape_));
+  return KRET_OK;
 }
 
 /* Compute the Digamma function using Lanczos' approximation from "A Precision
@@ -121,23 +136,10 @@ T MvlgammaGradCpuKernelMod::MvlgammaGradSingle(const T &y_grad, const T &x, cons
   return output;
 }
 
-bool MvlgammaGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeFloat32) {
-    return LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    return LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
-  }
-}
-
 template <typename T>
 bool MvlgammaGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-
   auto input_y_grad = static_cast<T *>(inputs[0]->addr);
   auto input_x = static_cast<T *>(inputs[1]->addr);
   auto output_x_grad = static_cast<T *>(outputs[0]->addr);
@@ -148,11 +150,15 @@ bool MvlgammaGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   return true;
 }
 
-std::vector<KernelAttr> MvlgammaGradCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, MvlgammaGradCpuKernelMod::KernelRunFunc>>
+  &MvlgammaGradCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, MvlgammaGradCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &MvlgammaGradCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &MvlgammaGradCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MvlgammaGrad, MvlgammaGradCpuKernelMod);
