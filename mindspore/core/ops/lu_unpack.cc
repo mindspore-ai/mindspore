@@ -42,6 +42,12 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
   auto LU_data_shape = LU_data_shape_map[kShape];
   auto LU_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto LU_pivots_shape = LU_pivots_shape_map[kShape];
+  if (IsDynamicRank(LU_data_shape)) {
+    auto output_shpe = std::make_shared<abstract::Shape>(LU_data_shape);
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{output_shpe, output_shpe, output_shpe});
+  }
+
   if (LU_data_shape.size() < kLuDataRank) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',"
                              << " the dimension of LU_data must be greater than or equal to 2, but got: "

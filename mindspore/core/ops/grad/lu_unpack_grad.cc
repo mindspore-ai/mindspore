@@ -32,6 +32,11 @@ abstract::TupleShapePtr LuUnpackGradInferShape(const PrimitivePtr &primitive,
   auto L_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto U_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto LU_data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  if (IsDynamicRank(LU_data_shape)) {
+    auto output_shpe = std::make_shared<abstract::Shape>(LU_data_shape);
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{output_shpe, output_shpe});
+  }
+
   auto L_data_dim1 = L_shape[L_shape.size() - 2];
   auto L_data_dim2 = L_shape[L_shape.size() - 1];
   auto U_data_dim1 = U_shape[U_shape.size() - 2];

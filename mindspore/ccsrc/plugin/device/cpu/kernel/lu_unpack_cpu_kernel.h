@@ -63,7 +63,6 @@ class LuUnpackCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> input_1_shape_;
   static std::vector<std::pair<KernelAttr, LuUnpackFunc>> func_list_;
   LuUnpackFunc kernel_func_;
-  CNodePtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore
