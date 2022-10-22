@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,10 @@ class MIND_API SparseSplit : public BaseOperator {
   MIND_API_BASE_MEMBER(SparseSplit);
   SparseSplit() : BaseOperator(kNameSparseSplit) {
     InitIOName({"split_dim", "indices", "values", "shape"}, {"y_indices", "y_values", "y_shape"});
+  }
+  auto get_num_split() const {
+    auto num_splits = GetValue<int64_t>(GetAttr("num_split"));
+    return num_splits;
   }
 };
 abstract::AbstractBasePtr SparseSplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
