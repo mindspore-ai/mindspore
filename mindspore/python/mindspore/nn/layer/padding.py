@@ -647,9 +647,9 @@ class ReplicationPad1d(_ReplicationPadNd):
             where :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
 
     Raises:
-        TypeError: If 'padding' is neither a tuple nor an int.
-        TypeError: If there is an element in 'padding' that is not int.
-        ValueError: If `padding` is tuple and the length of 'padding' is not divisible by 2.
+        TypeError: If `padding` is neither a tuple nor an int.
+        TypeError: If there is an element in `padding` that is not int.
+        ValueError: If `padding` is tuple and the length of `padding` is not divisible by 2.
         ValueError: If `padding` is tuple and there is a dimension mismatch between the padding and the tensor.
 
     Supported Platforms:
@@ -711,9 +711,9 @@ class ReplicationPad2d(_ReplicationPadNd):
         where :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`, :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
 
     Raises:
-        TypeError: If 'padding' is neither a tuple nor an int.
-        TypeError: If there is an element in 'padding' that is not int.
-        ValueError: If `padding` is tuple and the length of 'padding' is not divisible by 2.
+        TypeError: If `padding` is neither a tuple nor an int.
+        TypeError: If there is an element in `padding` that is not int.
+        ValueError: If `padding` is tuple and the length of `padding` is not divisible by 2.
         ValueError: If `padding` is tuple and there is a dimension mismatch between the padding and the tensor.
 
     Supported Platforms:
@@ -788,9 +788,9 @@ class ReplicationPad3d(_ReplicationPadNd):
             :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
 
     Raises:
-        TypeError: If 'padding' is neither a tuple nor an int.
-        TypeError: If there is an element in 'padding' that is not int.
-        ValueError: If `padding` is tuple and the length of 'padding' is not divisible by 2.
+        TypeError: If `padding` is neither a tuple nor an int.
+        TypeError: If there is an element in `padding` that is not int.
+        ValueError: If `padding` is tuple and the length of `padding` is not divisible by 2.
         ValueError: If `padding` is tuple and there is a dimension mismatch between the padding and the tensor.
 
     Supported Platforms:

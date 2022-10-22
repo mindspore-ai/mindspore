@@ -46,17 +46,15 @@ def test_replicationpad1d_2d(mode):
     context.set_context(mode=mode, device_target="GPU")
     # Test functionality with 2D tensor as input
     x = Tensor(np.array([[0, 1, 2, 3], [4, 5, 6, 7]]).astype(np.float16))
-    padding = (3, 1)
-    net = Net1d(padding)
+    net = Net1d((3, 1))
     output = net(x)
     expected_output = Tensor(np.array([[0, 0, 0, 0, 1, 2, 3, 3],
                                        [4, 4, 4, 4, 5, 6, 7, 7]]).astype(np.float16))
     assert np.array_equal(output, expected_output)
 
-    padding = 2
     expected_output = Tensor(np.array([[0, 0, 0, 1, 2, 3, 3, 3],
                                        [4, 4, 4, 5, 6, 7, 7, 7]]).astype(np.float16))
-    net = Net1d(padding)
+    net = Net1d(2)
     output = net(x)
     assert np.array_equal(output, expected_output)
 
@@ -74,18 +72,16 @@ def test_replicationpad1d_3d(mode):
     context.set_context(mode=mode, device_target="GPU")
     # Test functionality with 3D tensor input
     x = Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
-    padding = (3, 1)
-    net = Net1d(padding)
+    net = Net1d((3, 1))
     output = net(x)
     expected_output = Tensor(np.array([[[0, 0, 0, 0, 1, 2, 3, 3],
                                         [4, 4, 4, 4, 5, 6, 7, 7]]]).astype(np.float32))
 
     assert np.array_equal(output, expected_output)
 
-    padding = 2
     expected_output = Tensor(np.array([[[0, 0, 0, 1, 2, 3, 3, 3],
                                         [4, 4, 4, 5, 6, 7, 7, 7]]]).astype(np.float32))
-    net = Net1d(padding)
+    net = Net1d(2)
     output = net(x)
     assert np.array_equal(output, expected_output)
 
@@ -103,15 +99,13 @@ def test_replicationpad2d_3d(mode):
     context.set_context(mode=mode, device_target="GPU")
     # Test functionality with 3D tensor as input
     x = Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
-    padding = (1, 1, 2, 0)
-    net = Net2d(padding)
+    net = Net2d((1, 1, 2, 0))
     output = net(x)
     expected_output = Tensor(np.array([[[0, 0, 1, 2, 2], [0, 0, 1, 2, 2], [0, 0, 1, 2, 2],
                                         [3, 3, 4, 5, 5], [6, 6, 7, 8, 8]]]).astype(np.float32))
     assert np.array_equal(output, expected_output)
 
-    padding = 2
-    net = Net2d(padding)
+    net = Net2d(2)
     output = net(x)
     expected_output = Tensor(np.array([[[0, 0, 0, 1, 2, 2, 2], [0, 0, 0, 1, 2, 2, 2],
                                         [0, 0, 0, 1, 2, 2, 2], [3, 3, 3, 4, 5, 5, 5],
@@ -133,15 +127,13 @@ def test_replicationpad2d_4d(mode):
     context.set_context(mode=mode, device_target="GPU")
     # Test functionality with 4D tensor as input
     x = Tensor(np.array([[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]]).astype(np.int32))
-    padding = (1, 1, 2, 0)
-    net = Net2d(padding)
+    net = Net2d((1, 1, 2, 0))
     output = net(x)
     expected_output = Tensor(np.array([[[[0, 0, 1, 2, 2], [0, 0, 1, 2, 2], [0, 0, 1, 2, 2],
                                          [3, 3, 4, 5, 5], [6, 6, 7, 8, 8]]]]).astype(np.int32))
     assert np.array_equal(output, expected_output)
 
-    padding = 2
-    net = Net2d(padding)
+    net = Net2d(2)
     output = net(x)
     expected_output = Tensor(np.array([[[[0, 0, 0, 1, 2, 2, 2], [0, 0, 0, 1, 2, 2, 2],
                                          [0, 0, 0, 1, 2, 2, 2], [3, 3, 3, 4, 5, 5, 5],
@@ -163,8 +155,7 @@ def test_replicationpad3d_4d(mode):
     context.set_context(mode=mode, device_target="GPU")
     # Test functionality with 4D tensor as input
     x = Tensor(np.array([[[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]]]).astype(np.int32))
-    padding = (1, 1, 2, 0, 1, 1)
-    net = Net3d(padding)
+    net = Net3d((1, 1, 2, 0, 1, 1))
     output = net(x)
     expected_output = Tensor(np.array([[[[[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
                                           [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]],
@@ -174,8 +165,7 @@ def test_replicationpad3d_4d(mode):
                                           [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]]]]]).astype(np.int32))
     assert np.array_equal(output, expected_output)
 
-    padding = 1
-    net = Net3d(padding)
+    net = Net3d(1)
     output = net(x)
     expected_output = Tensor(np.array([[[[[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [3., 3., 4., 5., 5.],
                                           [6., 6., 7., 8., 8.], [6., 6., 7., 8., 8.]],
@@ -199,8 +189,7 @@ def test_replicationpad3d_5d(mode):
     context.set_context(mode=mode, device_target="GPU")
     # Test functionality with 5D tensor as input
     x = Tensor(np.array([[[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]]]).astype(np.float32))
-    padding = (1, 1, 2, 0, 1, 1)
-    net = Net3d(padding)
+    net = Net3d((1, 1, 2, 0, 1, 1))
     output = net(x)
     expected_output = Tensor(np.array([[[[[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
                                           [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]],
@@ -210,8 +199,7 @@ def test_replicationpad3d_5d(mode):
                                           [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]]]]]).astype(np.float32))
     assert np.array_equal(output, expected_output)
 
-    padding = 1
-    net = Net3d(padding)
+    net = Net3d(1)
     output = net(x)
     expected_output = Tensor(np.array([[[[[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [3., 3., 4., 5., 5.],
                                           [6., 6., 7., 8., 8.], [6., 6., 7., 8., 8.]],
