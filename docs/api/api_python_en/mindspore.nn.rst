@@ -359,6 +359,8 @@ Image Processing Layer
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.PixelShuffle
+    mindspore.nn.PixelUnshuffle
     mindspore.nn.ResizeBilinear
 
 Tools

@@ -310,6 +310,8 @@ from .nn_func import (
     dropout3d,
     deformable_conv2d,
     fast_gelu,
+    pixel_shuffle,
+    pixel_unshuffle,
     hardshrink,
     soft_shrink,
     intopk,

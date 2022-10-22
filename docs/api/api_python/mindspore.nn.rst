@@ -356,6 +356,8 @@ Dynamic LR函数
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.PixelShuffle
+    mindspore.nn.PixelUnshuffle
     mindspore.nn.ResizeBilinear
 
 工具

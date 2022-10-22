@@ -20,6 +20,7 @@ import numbers
 import numpy as np
 
 import mindspore.common.dtype as mstype
+import mindspore.ops as ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -31,7 +32,7 @@ from mindspore.nn.layer.pooling import AvgPool2d
 from mindspore.nn.layer.activation import ReLU
 from mindspore.nn.cell import Cell
 
-__all__ = ['ImageGradients', 'SSIM', 'MSSSIM', 'PSNR', 'CentralCrop']
+__all__ = ['ImageGradients', 'SSIM', 'MSSSIM', 'PSNR', 'CentralCrop', 'PixelShuffle', 'PixelUnshuffle']
 
 
 class ImageGradients(Cell):
@@ -555,3 +556,94 @@ class CentralCrop(Cell):
         image = self.slice(image, bbox_begin, bbox_size)
 
         return image
+
+
+class PixelShuffle(Cell):
+    r"""
+    PixelShuffle operatrion.
+
+    Applies a pixelshuffle operation over an input signal composed of several input planes. This is useful for
+    implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
+    `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
+    <https://arxiv.org/abs/1609.05158> `_ .
+
+    Typically, the input is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
+    :math:`(*, C, H \times r, W \times r)`, where r is an upscale factor and * is zero or more batch dimensions.
+
+    Args:
+        upscale_factor (int):  factor to increase spatial resolution by, and is a positive integer.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and
+          the length of third to last dimension can be divisible by `upscale_factor` squared.
+
+    Output:
+        - **output** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` .
+
+    Raises:
+        ValueError: If `upscale_factor` is not a positive integer.
+        ValueError: If the length of third to last dimension of `x` is not divisible by `upscale_factor` squared.
+        TypeError: If the dimension of `x` is less than 3.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(3 * 2 * 9 * 4 * 4).reshape((3, 2, 9, 4, 4))
+        >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
+        >>> pixel_shuffle = nn.PixelShuffle(3)
+        >>> output = pixel_shuffle(input_x)
+        >>> print(output.shape)
+        (3, 2, 1, 12, 12)
+    """
+    def __init__(self, upscale_factor):
+        super(PixelShuffle, self).__init__()
+        self.upscale_factor = upscale_factor
+
+    def construct(self, x):
+        return ops.pixel_shuffle(x, self.upscale_factor)
+
+
+class PixelUnshuffle(Cell):
+    r"""
+    PixelUnshuffle operatrion.
+
+    Applies a pixelunshuffle operation over an input signal composed of several input planes. For more details, refer to
+    `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
+    <https://arxiv.org/abs/1609.05158> `_ .
+
+    Typically, the input is of shape :math:`(*, C, H \times r, W \times r)` , and the output is of shape
+    :math:`(*, C \times r^2, H, W)` , where r is a downscale factor and * is zero or more batch dimensions.
+
+    Args:
+        downscale_factor (int): factor to decrease spatial resolution by, and is a positive integer.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `x` is larger than
+          2, and the length of second to last dimension or last dimension can be divisible by `downscale_factor` .
+
+    Output:
+        - **output** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` .
+
+    Raises:
+        ValueError: If `downscale_factor` is not a positive integer.
+        ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
+        TypeError: If the dimension of `x` is less than 3.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> pixel_unshuffle = nn.PixelUnshuffle(3)
+        >>> input_x = np.arange(12 * 12).reshape((1, 1, 12, 12))
+        >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
+        >>> output = pixel_unshuffle(input_x)
+        >>> print(output.shape)
+        >>> (1, 9, 4, 4)
+    """
+    def __init__(self, downscale_factor):
+        super(PixelUnshuffle, self).__init__()
+        self.downscale_factor = downscale_factor
+
+    def construct(self, x):
+        return ops.pixel_unshuffle(x, self.downscale_factor)
