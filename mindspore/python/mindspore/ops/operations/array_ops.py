@@ -2669,7 +2669,7 @@ class ParallelConcat(Primitive):
         ValueError: If the shape of these tensors are not the same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
