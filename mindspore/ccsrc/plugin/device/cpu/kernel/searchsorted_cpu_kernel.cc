@@ -21,6 +21,7 @@
 #include <functional>
 #include <algorithm>
 #include <utility>
+#include "mindspore/core/ops/search_sorted.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,20 +30,35 @@ constexpr size_t kSearchSortedInputsNum = 2;
 constexpr size_t kSearchSortedOutputsNum = 1;
 }  // namespace
 
-void SearchSortedCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  right_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "right");
-  sequence_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  search_len = LongToSize(sequence_shape_.back());
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool SearchSortedCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
+  auto op_prim = std::dynamic_pointer_cast<ops::SearchSorted>(base_operator);
+  right_ = op_prim->get_right();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "SearchSorted does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "SearchSorted does not support this kernel data type: " << kernel_attr;
+    return true;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int SearchSortedCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  sequence_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  values_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  search_len_ = LongToSize(sequence_shape_.back());
+  return KRET_OK;
 }
 
 template <typename S>
@@ -71,9 +87,9 @@ bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
 
   auto task = [this, &sequence, &values, &output, seq_dim, search_repeat](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto seq_start = (seq_dim == 1) ? sequence : sequence + (i / search_repeat) * search_len;
-      auto result = right_ ? std::upper_bound(seq_start, seq_start + search_len, values[i]) - seq_start
-                           : CustomizedLowerBound<S>(seq_start, seq_start + search_len, values[i]) - seq_start;
+      auto seq_start = (seq_dim == 1) ? sequence : sequence + (i / search_repeat) * search_len_;
+      auto result = right_ ? std::upper_bound(seq_start, seq_start + search_len_, values[i]) - seq_start
+                           : CustomizedLowerBound<S>(seq_start, seq_start + search_len_, values[i]) - seq_start;
       output[i] = static_cast<T>(result);
     }
   };
@@ -97,10 +113,10 @@ void SearchSortedCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
   int list_count = accumulate(sequence_shape_.begin(), sequence_shape_.end() - 1, 1, std::multiplies<int>());
   auto task = [this, &sequence](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      for (size_t j = 0; j < search_len - 1; j++) {
-        if (sequence[i * search_len + j] > sequence[i * search_len + j + 1]) {
+      for (size_t j = 0; j < search_len_ - 1; j++) {
+        if (sequence[i * search_len_ + j] > sequence[i * search_len_ + j + 1]) {
           MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input sequence must be forward sequence. But got "
-                            << sequence[i * search_len + j] << '>' << sequence[i * search_len + j + 1];
+                            << sequence[i * search_len_ + j] << '>' << sequence[i * search_len_ + j + 1];
         }
       }
     }
