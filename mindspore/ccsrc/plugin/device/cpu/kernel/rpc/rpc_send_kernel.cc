@@ -21,37 +21,32 @@
 
 namespace mindspore {
 namespace kernel {
-void RpcSendKernelMod::Init(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::Init(kernel_node);
-  // Assign one piece of workspace memory with the same size of all inputs. It's the data which will be sent to remote.
-  // Only allocate one piece of workspace memory to avoid extra memory copying and serialize inputs data to one message.
-  size_t total_size = 0;
-  if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    // In dynamic shape scenario, workspace size should be updated.
-    size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    for (size_t i = 0; i < input_size; i++) {
-      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_node, i, false);
-      auto real_input = input_node_with_index.first;
-      auto real_input_index = input_node_with_index.second;
-      MS_EXCEPTION_IF_NULL(real_input);
-
-      auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-      TypeId data_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
-
-      runtime::rpc::DynamicShapeMessage pb_msg;
-      pb_msg.set_type_id(static_cast<int>(data_type));
-      *pb_msg.mutable_shape_vector() = {shapes.begin(), shapes.end()};
-      std::string pb_msg_str = pb_msg.SerializeAsString();
-      total_size += strlen(kRpcDynamicShapeData);
-      total_size += sizeof(size_t);
-      total_size += pb_msg_str.size();
-      total_size += input_size_list_[i];
-    }
-  } else {
-    total_size = std::accumulate(input_size_list_.begin(), input_size_list_.end(), total_size,
-                                 [](size_t total_size, const auto &input_size) { return total_size + input_size; });
+bool RpcSendKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  return true;
+}
+
+int RpcSendKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  workspace_size_list_.clear();
+  size_t total_size = 0;
+  total_size = std::accumulate(input_size_list_.begin(), input_size_list_.end(), total_size,
+                               [](size_t total_size, const auto &input_size) { return total_size + input_size; });
   workspace_size_list_.push_back(total_size);
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
