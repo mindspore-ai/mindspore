@@ -31,6 +31,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.train.serialization import export, _get_mindir_inputs, convert_model
+from mindspore.nn import GraphCell
 
 
 def weight_variable():
@@ -295,4 +296,58 @@ def test_export_lenet_mindir_with_encryption():
            enc_key=b'123456789', enc_mode=encrypt_func)
     verify_name = file_name + ".mindir"
     assert os.path.exists(verify_name)
+    os.remove(verify_name)
+
+
+def test_export_lenet_mindir_with_aes():
+    """
+    Feature: Export encrypted LeNet to MindIR
+    Description: Test export API to save network with AES encryption into MindIR
+    Expectation: save successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    network = LeNet5()
+    file_name = "aes_encrypt"
+
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    export(network, input_tensor, file_name=file_name, file_format='MINDIR',
+           enc_key=b'0123456789012345', enc_mode="AES-GCM")
+    verify_name = file_name + ".mindir"
+    assert os.path.exists(verify_name)
+    load_graph = mindspore.load("aes_encrypt.mindir",
+                                dec_key=b'0123456789012345', dec_mode="AES-GCM")
+    load_net = nn.GraphCell(load_graph)
+    os.remove(verify_name)
+
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    export(network, input_tensor, file_name=file_name, file_format='MINDIR',
+           enc_key=b'0123456789012345', enc_mode="AES-CBC")
+    verify_name = file_name + ".mindir"
+    assert os.path.exists(verify_name)
+    load_graph = mindspore.load("aes_encrypt.mindir",
+                                dec_key=b'0123456789012345', dec_mode="AES-CBC")
+    load_net = nn.GraphCell(load_graph)
+    assert isinstance(load_net, GraphCell)
+    os.remove(verify_name)
+
+
+def test_export_lenet_mindir_with_sm4():
+    """
+    Feature: Export encrypted LeNet to MindIR
+    Description: Test export API to save network with SM4-CBC encryption into MindIR
+    Expectation: save successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    network = LeNet5()
+    file_name = "sm4_encrypt"
+
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    export(network, input_tensor, file_name=file_name, file_format='MINDIR',
+           enc_key=b'0123456789012345', enc_mode="SM4-CBC")
+    verify_name = file_name + ".mindir"
+    assert os.path.exists(verify_name)
+    load_graph = mindspore.load("sm4_encrypt.mindir",
+                                dec_key=b'0123456789012345', dec_mode="SM4-CBC")
+    load_net = nn.GraphCell(load_graph)
+    assert isinstance(load_net, GraphCell)
     os.remove(verify_name)
