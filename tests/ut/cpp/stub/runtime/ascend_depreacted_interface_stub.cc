@@ -31,8 +31,6 @@ FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &, const
 void AscendDeprecatedInterface::ClearGraphWrapper() {}
 void AscendDeprecatedInterface::ClearOpAdapterMap() {}
 void AscendDeprecatedInterface::EraseGeResource() {}
-// for ascend
-uint32_t AscendDeprecatedInterface::InitCollective() { return 0; }
 void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &) {}
 
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &) { return true; }

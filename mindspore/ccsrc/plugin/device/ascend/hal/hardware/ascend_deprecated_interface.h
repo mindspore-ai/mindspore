@@ -47,8 +47,6 @@ class AscendDeprecatedInterface : public DeprecatedInterface {
   void ClearGraphWrapper() override;
   void ClearOpAdapterMap() override;
   void EraseGeResource() override;
-  // for ascend
-  uint32_t InitCollective() override;
   void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) override;
 
   bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) override;

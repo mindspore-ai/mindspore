@@ -35,10 +35,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
   uint32_t group_rank = GetGroupRank(global_rank_);
   CHECK_RET(HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_),
-            MPI_SUCCESS, "Initializing HCCL communicator failed.");
-  if (name_ == "hccl_world_group") {
-    hccl::HcclAdapter::GetInstance().SetHcclComm(comm_);
-  }
+            static_cast<int32_t>(HCCL_SUCCESS), "Initializing HCCL communicator failed.");
   initialized_ = true;
   return true;
 }
@@ -47,8 +44,9 @@ bool AscendCommunicationGroup::Finalize() {
   if (!initialized_) {
     return false;
   }
-  CHECK_RET(HcclCommDestroy(comm_), HCCL_SUCCESS, "Failed to destroy HCCL communicator.");
+  CHECK_RET(HcclCommDestroy(comm_), static_cast<int32_t>(HCCL_SUCCESS), "Failed to destroy HCCL communicator.");
   initialized_ = false;
+  comm_ = nullptr;
   return true;
 }
 
@@ -56,7 +54,7 @@ void *AscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
   *root_info_size = sizeof(unique_id_);
   uint32_t group_rank = GetGroupRank(global_rank_);
   if (group_rank == 0) {
-    CHECK_RET(HcclGetRootInfo(&unique_id_), HCCL_SUCCESS, "Failed to get HCCL unique id.");
+    CHECK_RET(HcclGetRootInfo(&unique_id_), static_cast<int32_t>(HCCL_SUCCESS), "Failed to get HCCL unique id.");
   }
   return &unique_id_;
 }

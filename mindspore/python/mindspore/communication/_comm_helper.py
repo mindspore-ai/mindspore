@@ -19,40 +19,30 @@ from mindspore import context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode,\
                                            _get_ps_context
 from mindspore import log as logger
-from mindspore.communication._hccl_management import load_lib as hccl_load_lib
-from mindspore._c_expression import get_rank_id, get_rank_size, CollectiveManager, set_cluster_exit_with_exception
+from mindspore._c_expression import CollectiveManager, set_cluster_exit_with_exception
 
-_HCCL_AVAILABLE = False
+
+def hccl_load_lib():
+    """load hccl lib"""
+    try:
+        base_dir = os.path.dirname(os.path.realpath(__file__))
+        lib_path = os.path.join(base_dir, "../lib", HCCL_LIB)
+        ctypes.CDLL(lib_path)
+    except Exception:
+        raise RuntimeError('Get hccl lib error.')
+
 _HCCL_TEST_AVAILABLE = False
-_NCCL_AVAILABLE = False
-_MPI_AVAILABLE = False
-try:
-    import mindspore._ms_mpi as mpi
-    _NCCL_AVAILABLE = True
-except ImportError:
-    _NCCL_AVAILABLE = False
-
 
 try:
     hccl_load_lib()
-    _HCCL_AVAILABLE = True
 except RuntimeError:
-    _HCCL_AVAILABLE = False
+    _HCCL_TEST_AVAILABLE = True
 
-if _HCCL_AVAILABLE:
-    from mindspore.communication import _hccl_management as hccl
-    try:
-        import mindspore._ascend_mpi as mpi
-        _MPI_AVAILABLE = True
-    except ImportError:
-        _MPI_AVAILABLE = False
-else:
+if _HCCL_TEST_AVAILABLE:
     try:
         import hccl_test.manage.api as hccl
-        _HCCL_AVAILABLE = True
-        _HCCL_TEST_AVAILABLE = True
     except ImportError:
-        _HCCL_AVAILABLE = False
+        _HCCL_TEST_AVAILABLE = False
 
 
 HCCL_WORLD_COMM_GROUP = "hccl_world_group"
@@ -82,7 +72,6 @@ class Backend:
     UNDEFINED = "undefined"
     HCCL = "hccl"
     NCCL = "nccl"
-    HCCL_MPI = "hccl_mpi"
     MCCL = "mccl"
 
     def __new__(cls, name):
@@ -120,34 +109,8 @@ class _ExistingGroup:
     ITEMS = {}
 
 
-def is_hccl_available():
-    """
-    Check HCCL api is available.
-
-    Returns:
-        Boolean. Return whether HCCL is available or not.
-    """
-    return _HCCL_AVAILABLE
-
-
-def is_mpi_available():
-    """
-    Check HCCL & MPI api is available.
-
-    Returns:
-        Boolean. Return whether HCCL & MPI is available or not.
-    """
-    return _MPI_AVAILABLE
-
-
-def is_nccl_available():
-    """
-    Check NCCL api is available.
-
-    Returns:
-        Boolean. Return whether NCCL is available or not.
-    """
-    return _NCCL_AVAILABLE
+def _hccl_test():
+    return _HCCL_TEST_AVAILABLE and GlobalComm.BACKEND == Backend.HCCL
 
 
 def _check_mpi_envs():
@@ -228,27 +191,14 @@ def check_parameter_available(func):
             if group is not None and not isinstance(group, str):
                 raise TypeError("The parameter 'group' should be str or None, "
                                 "but got the type : {}".format(type(group)))
-
-        if "backend" in kargs.keys():
-            backend = kargs.get("backend")
-            if backend is Backend.HCCL and not is_hccl_available():
-                raise RuntimeError("Distributed Communication doesn't have HCCL built in")
-            if backend is Backend.HCCL_MPI and not is_mpi_available():
-                raise RuntimeError("Distributed Communication doesn't have MPI built in")
-            if backend is Backend.NCCL and not is_nccl_available():
-                raise RuntimeError("Distributed Communication doesn't have NCCL built in")
-
         if group is None:
-            if backend is Backend.HCCL or Backend.HCCL_MPI:
-                group = HCCL_WORLD_COMM_GROUP
-            elif backend is Backend.NCCL:
-                group = NCCL_WORLD_COMM_GROUP
+            group = GlobalComm.WORLD_COMM_GROUP
         return func(*args, **kargs)
     return wrapper
 
 
 @check_parameter_available
-def _get_rank_helper(group, backend):
+def _get_rank_helper(group):
     """
     The Helper to do get_rank_id.
 
@@ -265,26 +215,14 @@ def _get_rank_helper(group, backend):
     if _check_bypass_rank_id_and_size():
         rank_id = 0
         return rank_id
-    if backend == Backend.HCCL_MPI:
-        rank_id = mpi.get_rank_id(group)
-    elif backend == Backend.HCCL:
-        if group == HCCL_WORLD_COMM_GROUP:
-            rank_id = hccl.get_rank_id()
-        else:
-            rank_id = hccl.get_rank_id(group)
-    elif backend == Backend.NCCL:
-        rank_id = get_rank_id(group)
-    elif backend == Backend.MCCL:
-        # Call cluster getting rank function.
-        rank_id = CollectiveManager.get_instance().get_rank_id(group)
-    else:
-        raise ValueError("For '_get_rank_helper', the argument 'backend' {} is not supported, "
-                         "please use hccl_mpi, hccl or nccl.".format(backend))
+    if _hccl_test():
+        return hccl.get_rank_id(group)
+    rank_id = CollectiveManager.get_instance().get_rank_id(group)
     return rank_id
 
 
 @check_parameter_available
-def _get_local_rank_helper(group, backend):
+def _get_local_rank_helper(group):
     """
     The Helper to do get_local_rank_id.
 
@@ -298,24 +236,12 @@ def _get_local_rank_helper(group, backend):
     Returns:
         Integer. The local rank id of the calling process.
     """
-    rank_id = None
-    if backend == Backend.HCCL_MPI:
-        rank_id = mpi.get_rank_id(group)
-    elif backend == Backend.HCCL:
-        if group == HCCL_WORLD_COMM_GROUP:
-            rank_id = hccl.get_local_rank_id()
-        else:
-            rank_id = hccl.get_local_rank_id(group)
-    elif backend == Backend.NCCL:
-        raise RuntimeError("Nccl doesn't support get_local_rank_id now.")
-    else:
-        raise ValueError("For '_get_local_rank_helper', the argument 'backend' {} is not supported, "
-                         "please use hccl_mpi or hccl.".format(backend))
+    rank_id = CollectiveManager.get_instance().get_local_rank_id(group)
     return rank_id
 
 
 @check_parameter_available
-def _get_size_helper(group, backend):
+def _get_size_helper(group):
     """
     The Helper to do get_rank_size.
 
@@ -329,30 +255,17 @@ def _get_size_helper(group, backend):
     Returns:
         Integer. The rank size of specified group.
     """
-    size = None
     if _check_bypass_rank_id_and_size():
         size = 1
         return size
-    if backend == Backend.HCCL_MPI:
-        size = mpi.get_rank_size(group)
-    elif backend == Backend.HCCL:
-        if group == HCCL_WORLD_COMM_GROUP:
-            size = hccl.get_rank_size()
-        else:
-            size = hccl.get_rank_size(group)
-    elif backend == Backend.NCCL:
-        size = get_rank_size(group)
-    elif backend == Backend.MCCL:
-        # Call cluster getting group size function.
-        size = CollectiveManager.get_instance().get_group_size(group)
-    else:
-        raise ValueError("For '_get_size_helper', the argument 'backend' {} is not supported, "
-                         "please use hccl or nccl.".format(backend))
+    if _hccl_test():
+        return hccl.get_rank_size(group)
+    size = CollectiveManager.get_instance().get_group_size(group)
     return size
 
 
 @check_parameter_available
-def _get_local_size_helper(group, backend):
+def _get_local_size_helper(group):
     """
     The Helper to do get_local_rank_size.
 
@@ -366,24 +279,12 @@ def _get_local_size_helper(group, backend):
     Returns:
         Integer. The local rank size where the calling process is being within specified group.
     """
-    size = None
-    if backend == Backend.HCCL_MPI:
-        size = mpi.get_local_rank_size(group)
-    elif backend == Backend.HCCL:
-        if group == HCCL_WORLD_COMM_GROUP:
-            size = hccl.get_local_rank_size()
-        else:
-            size = hccl.get_local_rank_size(group)
-    elif backend == Backend.NCCL:
-        raise RuntimeError("Nccl doesn't support get_local_rank_size now.")
-    else:
-        raise ValueError("For '_get_local_size_helper', the argument 'backend' {} is not supported, "
-                         "please use hccl.".format(backend))
+    size = CollectiveManager.get_instance().get_local_group_size(group)
     return size
 
 
 @check_parameter_available
-def _get_world_rank_from_group_rank_helper(group, group_rank_id, backend):
+def _get_world_rank_from_group_rank_helper(group, group_rank_id):
     """
     The Helper to do get_world_rank_from_group_rank.
 
@@ -399,29 +300,17 @@ def _get_world_rank_from_group_rank_helper(group, group_rank_id, backend):
     Returns:
         Integer. A rank id in world communication group.
     """
-    world_rank_id = None
     if not isinstance(group_rank_id, int):
         raise TypeError("For 'get_world_rank_from_group_rank', the argument 'group_rank_id' must be"
                         " type of int, but got 'group_rank_id' type : {}.".format(type(group_rank_id)))
-    if backend == Backend.HCCL_MPI:
-        if group == HCCL_WORLD_COMM_GROUP:
-            raise ValueError("For 'get_world_rank_from_group_rank', the argument 'group' "
-                             "should not be 'HCCL_WORLD_COMM_GROUP'.")
-        world_rank_id = mpi.get_world_rank_from_group_rank(group, group_rank_id)
-    elif backend == Backend.HCCL:
-        if group == HCCL_WORLD_COMM_GROUP:
-            raise ValueError("For 'get_world_rank_from_group_rank' on GPU, the argument 'group' "
-                             "should be 'NCCL_WORLD_COMM_GROUP', but got 'HCCL_WORLD_COMM_GROUP'.")
-        world_rank_id = hccl.get_world_rank_from_group_rank(group, group_rank_id)
-    elif backend == Backend.NCCL:
-        raise RuntimeError("Nccl doesn't support get_world_rank_from_group_rank now.")
-    else:
-        raise ValueError("The argument 'backend' {} is not supported, please use hccl.".format(backend))
+    if _hccl_test():
+        return hccl.get_world_rank_from_group_rank(group, group_rank_id)
+    world_rank_id = CollectiveManager.get_instance().get_world_rank_from_group_rank(group, group_rank_id)
     return world_rank_id
 
 
 @check_parameter_available
-def _get_group_rank_from_world_rank_helper(world_rank_id, group, backend):
+def _get_group_rank_from_world_rank_helper(world_rank_id, group):
     """
     The Helper to do get_group_rank_from_world_rank.
 
@@ -441,25 +330,14 @@ def _get_group_rank_from_world_rank_helper(world_rank_id, group, backend):
     if not isinstance(world_rank_id, int):
         raise TypeError("For 'get_group_rank_from_world_rank', the argument 'world_rank_id' must be type of int, "
                         "but got 'world_rank_id' type : {}.".format(type(world_rank_id)))
-    if backend == Backend.HCCL_MPI:
-        if group == HCCL_WORLD_COMM_GROUP:
-            raise ValueError("For 'get_group_rank_from_world_rank', the argument 'group' "
-                             "should not be 'HCCL_WORLD_COMM_GROUP'.")
-        group_rank_id = mpi.get_group_rank_from_world_rank(world_rank_id, group)
-    elif backend == Backend.HCCL:
-        if group == HCCL_WORLD_COMM_GROUP:
-            raise ValueError("For 'get_group_rank_from_world_rank' on GPU, the argument 'group' "
-                             "should be 'NCCL_WORLD_COMM_GROUP', but got 'HCCL_WORLD_COMM_GROUP'.")
-        group_rank_id = hccl.get_group_rank_from_world_rank(world_rank_id, group)
-    elif backend == Backend.NCCL:
-        raise RuntimeError("Nccl doesn't support get_group_rank_from_world_rank now.")
-    else:
-        raise ValueError("The argument 'backend' {} is not supported, please use hccl.".format(backend))
+    if _hccl_test():
+        return hccl.get_group_rank_from_world_rank(world_rank_id, group)
+    group_rank_id = CollectiveManager.get_instance().get_group_rank_from_world_rank(world_rank_id, group)
     return group_rank_id
 
 
 @check_parameter_available
-def _create_group_helper(group, rank_ids, backend):
+def _create_group_helper(group, rank_ids):
     """
     The Helper to do create_group.
 
@@ -479,29 +357,24 @@ def _create_group_helper(group, rank_ids, backend):
                              format(group, _ExistingGroup.ITEMS[group], rank_ids))
         logger.warning("%r group has existed.", group)
         return
-    if backend == Backend.HCCL:
-        if not isinstance(rank_ids, list):
-            raise TypeError("For 'create_group', the argument 'rank_ids' must be type of list, "
-                            "but got 'rank_ids' type : {}.".format(type(rank_ids)))
-        rank_size = len(rank_ids)
-        if rank_size < 1:
-            raise ValueError("For 'create_group', the argument 'rank_ids' size should be greater than 1, "
-                             "but got 'rank_ids' size : {}.".format(len(rank_ids)))
-        if len(rank_ids) - len(list(set(rank_ids))) > 0:
-            raise ValueError("List rank_ids in Group {} has duplicate data!".format(group))
+    if not isinstance(rank_ids, list):
+        raise TypeError("For 'create_group', the argument 'rank_ids' must be type of list, "
+                        "but got 'rank_ids' type : {}.".format(type(rank_ids)))
+    rank_size = len(rank_ids)
+    if rank_size < 1:
+        raise ValueError("For 'create_group', the argument 'rank_ids' size should be greater than 1, "
+                         "but got 'rank_ids' size : {}.".format(len(rank_ids)))
+    if len(rank_ids) - len(list(set(rank_ids))) > 0:
+        raise ValueError("List rank_ids in Group {} has duplicate data!".format(group))
+    if _hccl_test():
         hccl.create_group(group, rank_size, rank_ids)
-    elif backend == Backend.HCCL_MPI:
-        mpi.create_group(group, rank_ids)
-    elif backend == Backend.NCCL:
-        raise RuntimeError("Nccl doesn't support create_group now.")
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
-                         "please use hccl.".format(backend))
+        CollectiveManager.get_instance().create_group(group, rank_ids)
     _ExistingGroup.ITEMS[group] = rank_ids
 
 
 @check_parameter_available
-def _destroy_group_helper(group, backend):
+def _destroy_group_helper(group):
     """
     The Helper to do destroy_group.
 
@@ -512,12 +385,9 @@ def _destroy_group_helper(group, backend):
     Raises:
         ValueError: If group is "hccl_world_group" or backend is invalid.
     """
-    if backend == Backend.HCCL:
-        if group == HCCL_WORLD_COMM_GROUP:
-            raise ValueError("The hccl_world_group does not support destruction.")
-        hccl.destroy_group(group)
-    elif backend == Backend.NCCL:
-        raise RuntimeError("Nccl doesn't support destroy_group now.")
+    if group == GlobalComm.WORLD_COMM_GROUP:
+        raise ValueError("The world_group does not support destruction.")
+    if _hccl_test():
+        hccl.create_group(group)
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
-                         "please use hccl.".format(backend))
+        CollectiveManager.get_instance().destroy_group(group)

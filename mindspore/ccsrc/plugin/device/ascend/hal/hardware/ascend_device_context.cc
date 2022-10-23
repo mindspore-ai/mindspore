@@ -49,7 +49,15 @@ void AscendDeviceContext::Initialize() {
   auto ascend_res_manager = dynamic_cast<AscendDeviceResManager *>(device_res_manager_.get());
   MS_EXCEPTION_IF_NULL(ascend_res_manager);
   runtime_instance_ = ascend_res_manager->runtime_instance_;
+#ifndef ENABLE_SECURITY
+  runtime_instance_->PreInit();
+#endif
+  MS_EXCEPTION_IF_NULL(GetDeprecatedInterface());
+  GetDeprecatedInterface()->OpenTsd(MsContext::GetInstance());
   MS_EXCEPTION_IF_NULL(runtime_instance_);
+  if (!runtime_instance_->Init()) {
+    MS_LOG(EXCEPTION) << "Runtime init failed.";
+  }
   auto ascend_kernel_executor = dynamic_cast<AscendKernelExecutor *>(kernel_executor_.get());
   MS_EXCEPTION_IF_NULL(ascend_kernel_executor);
   ascend_kernel_executor->Initialize();

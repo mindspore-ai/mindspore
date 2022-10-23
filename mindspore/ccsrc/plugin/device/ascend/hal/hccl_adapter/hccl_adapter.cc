@@ -161,7 +161,7 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
 
 void HcclAdapter::CheckExcutionMode() const {
   auto hccl_mode = GetCurrentHcclMode();
-  if (hccl_mode != hccl_mode_ && !common::UseMPI()) {
+  if (hccl_mode != hccl_mode_ && !common::UseHostCollective()) {
     MS_LOG(EXCEPTION) << "HCCL is initialized in " << GetHcclModeString(hccl_mode_) << " but current execution mode is "
                       << GetHcclModeString(hccl_mode)
                       << ". Please set the execution mode before HCCL init(), and then do not change it in the "
@@ -241,17 +241,9 @@ bool HcclAdapter::FinalizeHccl() {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
-  if (common::UseMPI()) {
-    (void)HcclCollectiveGroup::instance().DestroyCommGroup();
-    (void)FinalizeHcclExec();
-    (void)FinalizeKernelInfoStore();
-  } else if (hccl_mode_ == HcclMode::kGraph) {
-    (void)FinalizeHcclExec();
-    (void)FinalizeKernelInfoStore();
-  } else {
-    (void)FinalizeHcclComm();
-  }
-
+  (void)FinalizeHcclExec();
+  (void)FinalizeKernelInfoStore();
+  (void)FinalizeHcclComm();
   FinalizePlugin();
   init_flag_ = false;
   MS_LOG(INFO) << "Destroy hccl adapter success.";
@@ -329,56 +321,49 @@ std::string HcclAdapter::GetHcclType(const AnfNodePtr &node) {
 }
 
 HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root,
-                                      aclrtStream stream, const std::string &group) const {
+                                      aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_broadcast_);
-  auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                      const HcclReduceOp op, const aclrtStream stream, const std::string &group) const {
+                                      const HcclReduceOp op, const aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_all_reduce_);
-  auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_reduce_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                          const HcclReduceOp op, const aclrtStream stream,
-                                          const std::string &group) const {
+                                          const HcclReduceOp op, const aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_reduce_scatter_);
-  auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_reduce_scatter_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                      const aclrtStream stream, const std::string &group) const {
+                                      const aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_all_gather_);
-  auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_gather_(send_buf, recv_buf, count, dataType, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
-                                 const aclrtStream stream, const std::string &group) const {
+                                 const aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_send_);
-  auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_send_(send_buf, count, dataType, destRank, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
-                                 const aclrtStream stream, const std::string &group) const {
+                                 const aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_recv_);
-  auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
 }
@@ -422,11 +407,15 @@ bool HcclAdapter::InitKernelInfoStore(const std::map<std::string, std::string> o
   if (ret != ge::SUCCESS) {
     MS_LOG(EXCEPTION) << "Init info store failed.";
   }
+  init_kernel_info_store_ = true;
   MS_LOG(INFO) << "Init hccl kernel info store success.";
   return true;
 }
 
 bool HcclAdapter::FinalizeKernelInfoStore() {
+  if (!init_kernel_info_store_) {
+    return true;
+  }
   MS_LOG(INFO) << "Start destroy hccl kernel info store.";
   if (ops_kernel_info_store_ != nullptr) {
     auto ret = ops_kernel_info_store_->Finalize();
@@ -448,6 +437,7 @@ bool HcclAdapter::FinalizeKernelInfoStore() {
   finalize_hcom_graph_adapter_();
   ops_kernel_info_store_.reset();
   ops_kernel_builder_.reset();
+  init_kernel_info_store_ = false;
   MS_LOG(INFO) << "Destroy hccl kernel info store success.";
   return true;
 }
@@ -502,28 +492,26 @@ HcclResult HcclAdapter::HcclDestroyGroup(const std::string &group) const {
   return hccl_destroy_group_(group.c_str());
 }
 
-HcclResult HcclAdapter::HcclGetRankId(uint32_t *rank_id) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(single_op_hccl_get_rank_id_);
-  return single_op_hccl_get_rank_id_(hccl_comm_, rank_id);
-}
-
-HcclResult HcclAdapter::HcclGetRankSize(uint32_t *rank_size) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(single_op_hccl_get_rank_size_);
-  return single_op_hccl_get_rank_size_(hccl_comm_, rank_size);
-}
-
 HcclResult HcclAdapter::HcclGetRankId(const std::string &group, uint32_t *rank_id) const {
   CheckExcutionMode();
-  CHECK_SYMBOL_NULL(hccl_get_rank_id_);
-  return hccl_get_rank_id_(group.c_str(), rank_id);
+  if (hccl_mode_ != HcclMode::kGraph) {
+    CHECK_SYMBOL_NULL(single_op_hccl_get_rank_id_);
+    return single_op_hccl_get_rank_id_(hccl_comm_, rank_id);
+  } else {
+    CHECK_SYMBOL_NULL(hccl_get_rank_id_);
+    return hccl_get_rank_id_(group.c_str(), rank_id);
+  }
 }
 
 HcclResult HcclAdapter::HcclGetRankSize(const std::string &group, uint32_t *rank_size) const {
   CheckExcutionMode();
-  CHECK_SYMBOL_NULL(hccl_get_rank_size_);
-  return hccl_get_rank_size_(group.c_str(), rank_size);
+  if (hccl_mode_ != HcclMode::kGraph) {
+    CHECK_SYMBOL_NULL(single_op_hccl_get_rank_size_);
+    return single_op_hccl_get_rank_size_(hccl_comm_, rank_size);
+  } else {
+    CHECK_SYMBOL_NULL(hccl_get_rank_size_);
+    return hccl_get_rank_size_(group.c_str(), rank_size);
+  }
 }
 
 HcclResult HcclAdapter::HcclGetLocalRankId(const std::string &group, uint32_t *local_rank_id) const {
@@ -584,11 +572,15 @@ bool HcclAdapter::InitHcclExec() {
     MS_LOG(ERROR) << "Hcom DynamicKernel Initialize failed";
     return false;
   }
+  init_hccl_exec_ = true;
   MS_LOG(INFO) << "InitHcclExec success";
   return true;
 }
 
 bool HcclAdapter::FinalizeHcclExec() {
+  if (!init_hccl_exec_) {
+    return true;
+  }
   MS_LOG(INFO) << "Start finalize hccl exec.";
   MS_EXCEPTION_IF_NULL(hccl_exec_finalize_);
   HcclResult hccl_ret = hccl_exec_finalize_();
@@ -596,6 +588,7 @@ bool HcclAdapter::FinalizeHcclExec() {
     MS_LOG(ERROR) << "Hcom DynamicKernel Finalize failed";
     return false;
   }
+  init_hccl_exec_ = false;
   MS_LOG(INFO) << "HcclExec destroy success";
   return true;
 }
@@ -613,10 +606,9 @@ HcclResult HcclAdapter::HcclExecAllToAllv(const ::HcomAllToAllVParams &params, c
 }
 
 HcclResult HcclAdapter::HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params,
-                                     HcclDataType dataType, aclrtStream stream, const std::string &group) const {
+                                     HcclDataType dataType, aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_all_to_allv_);
-  auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_to_allv_(send_buf, params.sendcounts.data(), params.sdispls.data(), dataType, recv_buf,
                                   params.recvcounts.data(), params.rdispls.data(), dataType, hccl_comm, stream);

@@ -68,12 +68,11 @@
 #include "distributed/collective/collective_manager.h"
 #include "mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.h"
 #include "mindspore/ccsrc/utils/dynamic_obfuscation/registry_opaque_predicate.h"
-
+#include "distributed/init.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "distributed/init.h"
 #include "distributed/cluster/cluster_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #include "ps/scheduler.h"
@@ -1608,32 +1607,11 @@ void InitHccl() {
     return;
   }
 #endif
-
   mindspore::python_adapter::set_python_env_flag(true);
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  if (common::UseMPI() && device_name == kAscendDevice) {
-    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-    device_id = device_context->GetDeprecatedInterface()->InitCollective();
-  }
-  ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
-  if (ms_context->backend_policy() == "ms" &&
-      ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-#ifndef ENABLE_SECURITY
-    runtime_instance->PreInit();
-#endif
-    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-    (void)device_context->GetDeprecatedInterface()->OpenTsd(ms_context);
-    if (!runtime_instance->Init()) {
-      MS_LOG(EXCEPTION) << "Runtime init failed.";
+  if (ms_context->backend_policy() == "ms" && device_name == kAscendDevice) {
+    if (!mindspore::distributed::Initialize()) {
+      MS_LOG(EXCEPTION) << "InitHccl failed.";
     }
   }
 }
@@ -1649,8 +1627,8 @@ void FinalizeHccl() {
   }
 #endif
   session::ExecutorManager::Instance().Clear();
-  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   device::DeviceContextManager::GetInstance().UnloadPlugin();
 }
 

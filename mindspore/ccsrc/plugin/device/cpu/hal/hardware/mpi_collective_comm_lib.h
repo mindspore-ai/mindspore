@@ -69,7 +69,7 @@ class EXPORT_MPI_WRAPPER MPICollectiveCommLib : public CollectiveCommunicationLi
 
  private:
   MPICollectiveCommLib();
-  ~MPICollectiveCommLib() override = default;
+  ~MPICollectiveCommLib() override;
 
   MPI_Group world_group_;
 };

@@ -22,7 +22,8 @@ from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get
     MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
     _not_require_collective_comm_lib, _check_mpi_envs, _use_old_ps, \
     _set_elegant_exit_handle
-from mindspore._c_expression import init_hccl, finalize_hccl, init_gpu_collective, init_cluster
+from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster
+
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",
@@ -53,6 +54,11 @@ def _get_group(group):
     if group == DEFAULT_WORLD_COMM_GROUP:
         return GlobalComm.WORLD_COMM_GROUP
     return group
+
+
+def _host_distribute():
+    """Check whether host distribute needed."""
+    return os.getenv("MS_ROLE") or _check_mpi_envs()
 
 
 def _check_parallel_envs():
@@ -113,7 +119,7 @@ def init(backend_name=None):
     """
     if _not_require_collective_comm_lib():
         return
-    mpi_init = _check_mpi_envs()
+    host_init = _host_distribute()
     device_target = context.get_context("device_target")
 
     if backend_name is None:
@@ -142,20 +148,15 @@ def init(backend_name=None):
         if device_target != "Ascend":
             raise RuntimeError("For 'init', the argument  'backend_name' should be 'Ascend' to init hccl, "
                                "but got {}".format(device_target))
-        if not mpi_init:
+        if not host_init:
             _check_parallel_envs()
-            GlobalComm.BACKEND = Backend("hccl")
-        else:
-            GlobalComm.BACKEND = Backend("hccl_mpi")
+        GlobalComm.BACKEND = Backend("hccl")
         init_hccl()
         GlobalComm.WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
     elif backend_name == "nccl":
-        init_gpu_collective()
-        GlobalComm.BACKEND = Backend("nccl")
+        init_cluster()
         GlobalComm.WORLD_COMM_GROUP = NCCL_WORLD_COMM_GROUP
     elif backend_name == "mccl":
-        GlobalComm.BACKEND = Backend("mccl")
-        # Init cluster.
         init_cluster()
         GlobalComm.WORLD_COMM_GROUP = MCCL_WORLD_COMM_GROUP
     else:
@@ -220,7 +221,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
     if not isinstance(group, str):
         raise TypeError("For 'get_rank', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    return _get_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
+    return _get_rank_helper(group=_get_group(group))
 
 
 def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
@@ -261,7 +262,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
     if not isinstance(group, str):
         raise TypeError("For 'get_local_rank', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    return _get_local_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
+    return _get_local_rank_helper(group=_get_group(group))
 
 
 def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
@@ -299,7 +300,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     if not isinstance(group, str):
         raise TypeError("For 'get_group_size', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    return _get_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
+    return _get_size_helper(group=_get_group(group))
 
 
 def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
@@ -339,7 +340,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
     if not isinstance(group, str):
         raise TypeError("For 'get_local_rank_size', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    return _get_local_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
+    return _get_local_size_helper(group=_get_group(group))
 
 
 def get_world_rank_from_group_rank(group, group_rank_id):
@@ -383,7 +384,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     if not isinstance(group, str):
         raise TypeError("For 'get_world_rank_from_group_rank', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    return _get_world_rank_from_group_rank_helper(group=group, group_rank_id=group_rank_id, backend=GlobalComm.BACKEND)
+    return _get_world_rank_from_group_rank_helper(group=group, group_rank_id=group_rank_id)
 
 
 def get_group_rank_from_world_rank(world_rank_id, group):
@@ -428,7 +429,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
     if not isinstance(group, str):
         raise TypeError("For 'get_group_rank_from_world_rank', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    return _get_group_rank_from_world_rank_helper(world_rank_id=world_rank_id, group=group, backend=GlobalComm.BACKEND)
+    return _get_group_rank_from_world_rank_helper(world_rank_id=world_rank_id, group=group)
 
 
 def create_group(group, rank_ids):
@@ -469,7 +470,7 @@ def create_group(group, rank_ids):
     if not isinstance(group, str):
         raise TypeError("For 'create_group', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    _create_group_helper(group, rank_ids, backend=GlobalComm.BACKEND)
+    _create_group_helper(group, rank_ids)
 
 
 def destroy_group(group):
@@ -495,4 +496,4 @@ def destroy_group(group):
     if not isinstance(group, str):
         raise TypeError("For 'destroy_group', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
-    _destroy_group_helper(group, backend=GlobalComm.BACKEND)
+    _destroy_group_helper(group)

@@ -94,7 +94,6 @@ class AscendKernelRuntime : public KernelRuntime {
   bool InitDevice();
   void SetRtDevice(uint32_t device_id);
   bool ResetDevice(uint32_t device_id);
-  static bool HcclInit();
   static bool NeedDestroyHccl();
   static bool DestroyHccl();
   void SetCurrentContext();

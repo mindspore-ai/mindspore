@@ -23,7 +23,6 @@
 #include <set>
 #include "include/common/utils/signal_util.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
-#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/mpi/mpi_config.h"
 #include "runtime/device/ms_device_shape_transfer.h"
@@ -91,21 +90,6 @@ constexpr size_t kPathMax = 4096;
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
 namespace {
-std::string GetRankIdStr() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (common::UseMPI()) {
-    MS_LOG(INFO) << "Get hccl rankid from mpi";
-    auto rank = HcclCollectiveGroup::instance().GetRankId();
-    return std::to_string(rank);
-  }
-  auto rank_id_str = common::GetEnv("RANK_ID");
-  if (rank_id_str.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid environment variable 'RANK_ID', it should not be empty.";
-  }
-  return rank_id_str;
-}
-
 void IntHandler(int, siginfo_t *, void *) {
   mindspore::kernel::AscendKernelBuildClient::Instance().Close();
   int this_pid = getpid();
@@ -379,14 +363,12 @@ bool AscendKernelRuntime::Init() {
   if (error_manager_ret != 0) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
-  bool init_device = false;
   try {
     // Start up profiling before rtSetDevice
     bool ret = InitDevice();
     if (!ret) {
       return ret;
     }
-    init_device = true;
 #ifdef ENABLE_DEBUGGER
     SetDebugger();
 #endif
@@ -410,12 +392,8 @@ bool AscendKernelRuntime::Init() {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
     }
   } catch (const std::exception &e) {
-    if (init_device) {
-      (void)ResetDevice(device_id_);
-    }
     MS_LOG(EXCEPTION) << "Ascend kernel runtime initialization failed. The details refer to 'Ascend Error Message'."
                       << GetErrorMessage(true) << "#dmsg#Framework Error Message:#dmsg#" << e.what();
-    throw;
   }
 
   initialized_ = true;
@@ -1212,12 +1190,6 @@ bool AscendKernelRuntime::InitDevice() {
     MS_LOG(ERROR) << "Get MsContext instance failed";
     return false;
   }
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
-    if (!HcclInit()) {
-      MS_LOG(ERROR) << "HcclInit init failed";
-      return false;
-    }
-  }
 
   // Context will be created by rtSetDevice
   const auto rt_ret = rtCtxGetCurrent(&rt_context_);
@@ -1252,63 +1224,13 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   return true;
 }
 
-bool AscendKernelRuntime::HcclInit() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  MS_LOG(INFO) << "Do hcom init.";
-  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  std::string rank_id_str = GetRankIdStr();
-  if (common::UseMPI()) {
-    MS_LOG(INFO) << "Create hccl_world_group hcom with mpi.";
-    (void)hccl::HcclAdapter::GetInstance().InitHccl(device_id, rank_id_str);
-    auto rank_size = HcclCollectiveGroup::instance().GetRankSize();
-    std::vector<unsigned int> ranks(rank_size);
-    std::iota(std::begin(ranks), std::end(ranks), 0);
-    HcclCollectiveGroup::instance().CreateCommGroup(kHcclWorldGroup, ranks);
-    return true;
-  }
-  MS_LOG(INFO) << "Create hccl_world_group with rank table.";
-  auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
-  if (config_path_str == nullptr) {
-    config_path_str = std::getenv("RANK_TABLE_FILE");
-    if (config_path_str == nullptr) {
-      MS_LOG(ERROR) << "The environment variable 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE' is not set, so get"
-                    << " hccl json config failed, please set env 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE'";
-      return false;
-    }
-  }
-  if (strlen(config_path_str) >= kPathMax) {
-    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE', the path length"
-                  << " should be smaller than " << kPathMax << ", but got " << config_path_str;
-    return false;
-  }
-  auto full_path = realpath(config_path_str, nullptr);
-  if (full_path == nullptr) {
-    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE', the path is: "
-                  << config_path_str << ". Please check (1) whether the path exists, "
-                  << "(2) whether the path has the access permission, (3) whether the path is too long. ";
-    return false;
-  }
-  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
-  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(
-    device_id, rank_id_str, full_path, mode == kGraphMode ? hccl::HcclMode::kGraph : hccl::HcclMode::kPynative);
-  free(full_path);
-  if (!ret) {
-    MS_LOG(ERROR) << "Hcom init failed.";
-    return false;
-  }
-  return true;
-}
-
 bool AscendKernelRuntime::DestroyHccl() {
   if (!NeedDestroyHccl()) {
     MS_LOG(INFO) << "Hccl is not enable, no need to close.";
     return true;
   }
-  bool res = hccl::HcclAdapter::GetInstance().FinalizeHccl();
-  if (!res) {
-    MS_LOG(ERROR) << "Hccl destroy failed";
+  if (!AscendCollectiveCommLib::GetInstance().DestroyHcclComm()) {
+    MS_LOG(ERROR) << "Hccl destroy failed.";
     return false;
   }
   MS_LOG(INFO) << "Hccl destroy successful.";

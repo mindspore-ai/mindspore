@@ -41,7 +41,7 @@ bool HcomAllToAllKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllToAll(inputs[0]->addr, outputs[0]->addr, params_,
-                                                                   data_type_, stream_ptr, group_);
+                                                                   data_type_, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclAllToAll failed, ret:" << hccl_result;
     return false;
