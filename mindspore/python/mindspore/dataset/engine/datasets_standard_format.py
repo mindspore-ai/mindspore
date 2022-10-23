@@ -55,7 +55,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         column_names (list[str], optional): List of column names of the dataset (default=None). If this
             is not provided, infers the column_names from the first row of CSV file.
         num_samples (int, optional): The number of samples to be included in the dataset
-            (default=None, will include all images).
+            (default=None, will include all samples).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch
