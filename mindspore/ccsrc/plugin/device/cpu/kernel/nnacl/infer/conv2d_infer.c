@@ -66,6 +66,8 @@ int ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, ConvP
   return NNACL_OK;
 }
 
+static const int MAX_CONV_KERNEL_DIM = 10000;  // One big value that should not be adopted as the conv kernel dimension.
+
 int CheckConvAttr(const int input_c, const TensorC *weight_tensor, const ConvParameter *param) {
   // common conv: input_c == weight_tensor->shape_[3]
   // conv depthwise: input_c == 1
@@ -83,6 +85,10 @@ int CheckConvAttr(const int input_c, const TensorC *weight_tensor, const ConvPar
     return NNACL_PARAM_INVALID;
   }
   if (param->stride_h_ <= 0 || param->stride_w_ <= 0) {
+    return NNACL_PARAM_INVALID;
+  }
+
+  if ((param->kernel_h_ >= MAX_CONV_KERNEL_DIM) || (param->kernel_w_ >= MAX_CONV_KERNEL_DIM)) {
     return NNACL_PARAM_INVALID;
   }
 
