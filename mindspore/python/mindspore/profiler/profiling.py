@@ -156,6 +156,9 @@ class Profiler:
     }
 
     def __init__(self, **kwargs):
+        self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
+        if self._msprof_enable:
+            return
         if kwargs.get("env_enable"):
             self._profiler_init(kwargs)
             return
@@ -299,6 +302,8 @@ class Profiler:
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
         """
+        if self._msprof_enable:
+            return
         Profiler._has_initialized = False
         self._dynamic_status = self._profiler_manager.dynamic_status()
         _environment_check()
@@ -356,6 +361,8 @@ class Profiler:
              >>>     def end(self, run_context):
              ...         self.profiler.analyse()
         """
+        if self._msprof_enable:
+            return
         if not self.start_profile and context.get_context("mode") == context.PYNATIVE_MODE:
             raise RuntimeError("Pynative mode does not support conditional collection of performance data.")
 
@@ -417,6 +424,8 @@ class Profiler:
              >>>     def end(self, run_context):
              ...         self.profiler.analyse()
         """
+        if self._msprof_enable:
+            return
         if self._has_started:
             self._has_started = False
         else:
