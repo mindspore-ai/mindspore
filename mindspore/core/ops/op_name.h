@@ -369,6 +369,7 @@ constexpr auto kSpatialScale = "spatial_scale";
 constexpr auto kSampleNum = "sample_num";
 constexpr auto kRoiEndMode = "roi_end_mode";
 constexpr auto kUpper = "upper";
+constexpr auto kConjugate = "conjugate";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;

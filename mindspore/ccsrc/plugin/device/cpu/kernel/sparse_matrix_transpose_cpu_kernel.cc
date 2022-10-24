@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ops/sparse_matrix_transpose.h"
 #include "plugin/device/cpu/kernel/sparse_matrix_transpose_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -69,22 +70,6 @@ KernelAttr AddKernel(const TypeId &ms_type1, const TypeId &ms_type2, const TypeI
     LaunchcomplexKernel<VTYPEONE, VTYPETWO>(inputs, outputs);                                    \
     break;
 
-#define NODE_CHECK_AND_OUTPUT_TYPE(node_)           \
-  do {                                              \
-    if (!node_) {                                   \
-      MS_LOG(EXCEPTION) << "node_wpt_ is expired."; \
-    }                                               \
-  } while (0);
-
-#define SET_OUTPUT_SHAPE_AND_TYPE(node_, dtypes, y_row_pointers_shape)                 \
-  common::AnfAlgo::SetOutputInferTypeAndShape(                                         \
-    dtypes,                                                                            \
-    {common::AnfAlgo::GetOutputInferShape(node_, kOutputIndex0),                       \
-     common::AnfAlgo::GetOutputInferShape(node_, kOutputIndex1), y_row_pointers_shape, \
-     common::AnfAlgo::GetOutputInferShape(node_, kOutputIndex3),                       \
-     common::AnfAlgo::GetOutputInferShape(node_, kOutputIndex4)},                      \
-    node_.get());
-
 #define BATCH_CHECK(batch, batch_pointers, kernel_name_)                                                   \
   do {                                                                                                     \
     if (batch + 1 != batch_pointers) {                                                                     \
@@ -94,23 +79,37 @@ KernelAttr AddKernel(const TypeId &ms_type1, const TypeId &ms_type2, const TypeI
   } while (0);
 }  // namespace
 
-void SparseMatrixTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  std::vector<int64_t> input_dense_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
+bool SparseMatrixTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixTranspose>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  conjugate = kernel_ptr->get_conjugate();
+  indiceT_ = inputs.at(kInputIndex0)->GetDtype();
+  valueT_ = inputs.at(kInputIndex4)->GetDtype();
+  return true;
+}
+
+int SparseMatrixTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs,
+                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_dense_shape = inputs.at(kIndex0)->GetShapeVector();
   rank_x_ = static_cast<size_t>(input_dense_shape[0]);
   if (rank_x_ != kRankWithOutBatch && rank_x_ != kRankWithBatch) {
     MS_LOG(EXCEPTION) << "For SparseMatrixTranspose,the rank must be 2 or 3, but got" << rank_x_ << "!";
   }
-  conjugate = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "conjugate");
-  std::vector<int64_t> x_batch_pointers_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1);
-  std::vector<int64_t> x_row_pointers_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex2);
-  std::vector<int64_t> x_col_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex3);
-  std::vector<int64_t> x_value_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex4);
+  std::vector<int64_t> x_batch_pointers_shape = inputs.at(kInputIndex1)->GetShapeVector();
+  std::vector<int64_t> x_row_pointers_shape = inputs.at(kInputIndex2)->GetShapeVector();
+  std::vector<int64_t> x_col_indices_shape = inputs.at(kInputIndex3)->GetShapeVector();
+  std::vector<int64_t> x_value_shape = inputs.at(kInputIndex4)->GetShapeVector();
   x_value_size_ = static_cast<size_t>(x_value_shape[0]);
   x_batch_pointers_size_ = static_cast<size_t>(x_batch_pointers_shape[0]);
   x_col_indice_size_ = static_cast<size_t>(x_col_indices_shape[0]);
@@ -119,9 +118,7 @@ void SparseMatrixTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input of col indice shape should equals "
                       << "values shape to match the CSR form input.";
   }
-  node_wpt_ = kernel_node;
-  indiceT_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  valueT_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex4);
+  return KRET_OK;
 }
 
 bool SparseMatrixTransposeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -186,19 +183,16 @@ void SparseMatrixTransposeCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   indiceT *y_row_pointers_addr = static_cast<indiceT *>(outputs[kOutputIndex2]->addr);
   indiceT *y_col_indices_addr = static_cast<indiceT *>(outputs[kOutputIndex3]->addr);
   valueT *y_values_addr = static_cast<valueT *>(outputs[kOutputIndex4]->addr);
-  std::vector<indiceT> y_row_pointers_shape;
   size_t batch_pointers = x_batch_pointers_size_;
   if (rank_x_ == kRankWithBatch) {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape0];
     y_dense_shape_addr[kDenseShape1] = x_dense_shape[kDenseShape2];
     y_dense_shape_addr[kDenseShape2] = x_dense_shape[kDenseShape1];
-    y_row_pointers_shape.push_back(x_dense_shape[kDenseShape0] * (x_dense_shape[kDenseShape2] + 1));
     size_t batch = static_cast<size_t>(x_dense_shape[kDenseShape0]);
     BATCH_CHECK(batch, batch_pointers, kernel_name_)
   } else {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape1];
     y_dense_shape_addr[kDenseShape1] = x_dense_shape[kDenseShape0];
-    y_row_pointers_shape.push_back(x_dense_shape[kDenseShape1] + 1);
     if (batch_pointers != kTwo) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input of batch pionters shape should equals"
                         << "2 to match the CSR form input when input has no batch.";
@@ -258,16 +252,6 @@ void SparseMatrixTransposeCpuKernelMod::LaunchKernel(const std::vector<kernel::A
       y_col_indices_addr[static_cast<size_t>(x_batch_pointers[j]) + k] = y_part_col_indices[k];
     }
   }
-  auto node_ = node_wpt_.lock();
-  NODE_CHECK_AND_OUTPUT_TYPE(node_)
-  size_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
-  std::vector<TypeId> dtypes(output_nm);
-  for (size_t i = 0; i < output_nm; i++) {
-    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
-  }
-  std::vector<int64_t> y_row_pointers_shape_(1);
-  y_row_pointers_shape_[0] = static_cast<int64_t>(y_row_pointers_shape[0]);
-  SET_OUTPUT_SHAPE_AND_TYPE(node_, dtypes, y_row_pointers_shape_)
 }
 
 template <typename indiceT, typename valueT>
@@ -283,19 +267,16 @@ void SparseMatrixTransposeCpuKernelMod::LaunchcomplexKernel(const std::vector<ke
   indiceT *y_row_pointers_addr = static_cast<indiceT *>(outputs[kOutputIndex2]->addr);
   indiceT *y_col_indices_addr = static_cast<indiceT *>(outputs[kOutputIndex3]->addr);
   valueT *y_values_addr = static_cast<valueT *>(outputs[kOutputIndex4]->addr);
-  std::vector<indiceT> y_row_pointers_shape;
   size_t batch_pointers = x_batch_pointers_size_;
   if (rank_x_ == kRankWithBatch) {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape0];
     y_dense_shape_addr[kDenseShape1] = x_dense_shape[kDenseShape2];
     y_dense_shape_addr[kDenseShape2] = x_dense_shape[kDenseShape1];
-    y_row_pointers_shape.push_back(x_dense_shape[kDenseShape0] * (x_dense_shape[kDenseShape2] + 1));
     size_t batch = static_cast<size_t>(x_dense_shape[kDenseShape0]);
     BATCH_CHECK(batch, batch_pointers, kernel_name_)
   } else {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape1];
     y_dense_shape_addr[kDenseShape1] = x_dense_shape[kDenseShape0];
-    y_row_pointers_shape.push_back(x_dense_shape[kDenseShape1] + 1);
     if (batch_pointers != kTwo) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input of batch pionters shape should equals"
                         << "2 to match the CSR form input when input has no batch.";
@@ -360,17 +341,8 @@ void SparseMatrixTransposeCpuKernelMod::LaunchcomplexKernel(const std::vector<ke
       y_values_addr[i] = std::conj(y_values_addr[i]);
     }
   }
-  auto node_ = node_wpt_.lock();
-  NODE_CHECK_AND_OUTPUT_TYPE(node_)
-  size_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
-  std::vector<TypeId> dtypes(output_nm);
-  for (size_t i = 0; i < output_nm; i++) {
-    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
-  }
-  std::vector<int64_t> y_row_pointers_shape_(1);
-  y_row_pointers_shape_[0] = static_cast<int64_t>(y_row_pointers_shape[0]);
-  SET_OUTPUT_SHAPE_AND_TYPE(node_, dtypes, y_row_pointers_shape_)
 }
+
 std::vector<KernelAttr> SparseMatrixTransposeCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> kernel_attr_list = {
     ADD_KERNEL(Int32, Int32, Int32, Int32, Int8, Int32, Int32, Int32, Int32, Int8),

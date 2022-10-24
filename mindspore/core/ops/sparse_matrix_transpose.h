@@ -34,6 +34,12 @@ class MIND_API SparseMatrixTranspose : public BaseOperator {
     InitIOName({"x_dense_shape", "x_batch_pointers", "x_row_pointers", "x_col_indices", "x_values"},
                {"y_dense_shape", "y_batch_pointers", "y_row_pointers", "y_col_indices", "y_values"});
   }
+
+  void Init(const bool conjugate = false);
+
+  void set_conjugate(const bool conjugate);
+
+  bool get_conjugate() const;
 };
 
 abstract::AbstractBasePtr SparseMatrixTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

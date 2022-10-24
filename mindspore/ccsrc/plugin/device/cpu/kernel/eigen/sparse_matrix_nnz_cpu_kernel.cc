@@ -40,14 +40,23 @@ constexpr size_t kOutputIndex0 = 0;
     .AddOutputAttr(kNumberType##t6)
 }  // namespace
 
-void SparseMatrixNNZCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
+bool SparseMatrixNNZCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  return true;
+}
+
+int SparseMatrixNNZCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   const int rank_x = input_shape[0];
   const int kInputNoBatch = 2;
   const int kInputWithBatch = 3;
@@ -55,8 +64,9 @@ void SparseMatrixNNZCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For SparseMatrixNNZ, the shape of x_dense_shape must be (2,) or (3,), but got (" << rank_x
                       << ",).";
   }
-  batch_size_ = static_cast<size_t>(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1)[0] - 1);
-  value_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
+  batch_size_ = static_cast<size_t>(inputs.at(kIndex1)->GetShapeVector()[0] - 1);
+  value_type_ = inputs.at(kIndex0)->GetDtype();
+  return KRET_OK;
 }
 
 bool SparseMatrixNNZCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -68,19 +68,20 @@ abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_values should be 1-D, bug got " << values.size() << "-D.";
   }
 
-  if (rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
+  if (!IsDynamic(dense_shape) && rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
     MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, the shape of x_dense_shape must be (2,) or (3,), but got ("
                              << rank_x << ",).";
   }
-  if (values[0] != col_indices[0]) {
+  if (!IsDynamic(values) && !IsDynamic(col_indices) && values[0] != col_indices[0]) {
     MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, 'x_col_indices' and 'x_values' should have the same length, bug "
                                 "got length of x_col_indices is "
                              << col_indices[0] << " and length of x_values is " << values[0] << ".";
   }
-
+  if (IsDynamic(batch_pointer)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny});
+  }
   const int64_t batch_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape][0];
-
   int64_t y_shape = batch_shape - 1;
   std::vector<int64_t> inShape = {y_shape};
   return std::make_shared<abstract::Shape>(inShape);
@@ -107,7 +108,6 @@ TypePtr SparseMatrixNNZInferType(const PrimitivePtr &prim, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SparseMatrixNNZ, PrimitiveC, BaseOperator);
 AbstractBasePtr SparseMatrixNNZInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -117,6 +117,8 @@ AbstractBasePtr SparseMatrixNNZInfer(const abstract::AnalysisEnginePtr &, const 
   auto infer_shape = SparseMatrixNNZInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+MIND_API_OPERATOR_IMPL(SparseMatrixNNZ, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixNNZ, prim::kPrimSparseMatrixNNZ, SparseMatrixNNZInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

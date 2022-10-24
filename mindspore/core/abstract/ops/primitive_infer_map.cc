@@ -132,6 +132,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSetSize = prim::kPrimSetSize->name();
   static const auto &kDynamicStitch = prim::kPrimDynamicStitch->name();
   static const auto &kSparseTensorDenseMatmul = prim::kPrimSparseTensorDenseMatmul->name();
+  static const auto &kSparseMatrixTranspose = prim::kPrimSparseMatrixTranspose->name();
   static const auto &kSparseToDense = prim::kPrimSparseToDense->name();
   // Common host depends.
   static PrimShapeDependMap host_depends{{prim::kPrimArgMax->name(), ShapeSet{1}},
@@ -207,6 +208,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kSetSize, ShapeSet{2}},
                                          {kDynamicStitch, ShapeSet{0}},
                                          {kSparseTensorDenseMatmul, ShapeSet{2}},
+                                         {kSparseMatrixTranspose, ShapeSet{0}},
                                          {kSparseToDense, ShapeSet{2}}};
   return host_depends;
 }
