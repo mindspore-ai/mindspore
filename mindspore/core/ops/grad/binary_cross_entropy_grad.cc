@@ -42,10 +42,17 @@ void BinaryCrossEntropyGrad::set_reduction(const Reduction &reduction) {
 }
 
 Reduction BinaryCrossEntropyGrad::get_reduction() const {
-  auto value_ptr = MakeValue(GetValue<std::string>(GetAttr(kReduction)));
-  int64_t reduction = 0;
-  CheckAndConvertUtils::GetReductionEnumValue(value_ptr, &reduction);
-  return Reduction(reduction);
+  auto reduction_ptr = GetAttr(kReduction);
+  MS_EXCEPTION_IF_NULL(reduction_ptr);
+  MS_EXCEPTION_IF_CHECK_FAIL(reduction_ptr->isa<api::StringImm>() || reduction_ptr->isa<api::Int64Imm>(),
+                             "invalid value type");
+  if (reduction_ptr->isa<api::StringImm>()) {
+    auto value_ptr = MakeValue(GetValue<std::string>(reduction_ptr));
+    int64_t reduction = 0;
+    CheckAndConvertUtils::GetReductionEnumValue(value_ptr, &reduction);
+    return Reduction(reduction);
+  }
+  return Reduction(GetValue<int64_t>(reduction_ptr));
 }
 
 class BinaryCrossEntropyGradInfer : public abstract::OpInferBase {
