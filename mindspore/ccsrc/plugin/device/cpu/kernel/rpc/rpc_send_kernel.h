@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RPC_RPC_SEND_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RPC_RPC_SEND_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include "plugin/device/cpu/kernel/rpc/rpc_kernel.h"
 
@@ -34,9 +35,13 @@ class RpcSendKernelMod : public RpcKernelMod {
     return true;
   }
 
-  void Init(const CNodePtr &kernel_node) override;
-  void InitKernel(const CNodePtr &kernel_node) override { return; }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel

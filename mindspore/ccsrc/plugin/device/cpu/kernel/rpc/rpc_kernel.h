@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class RpcKernelMod : public DeprecatedNativeCpuKernelMod {
+class RpcKernelMod : public NativeCpuKernelMod {
  public:
   RpcKernelMod() : remote_input_(nullptr) {}
   ~RpcKernelMod() override = default;
@@ -32,8 +32,6 @@ class RpcKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &) override {
     return true;
   }
-
-  void InitKernel(const CNodePtr &kernel_node) override { return; }
 
   // Set and get remote data as input.
   void SetRemoteInput(MessageBase *const msg) { remote_input_ = msg; }

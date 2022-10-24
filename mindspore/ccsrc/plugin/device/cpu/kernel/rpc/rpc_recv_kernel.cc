@@ -21,6 +21,27 @@
 
 namespace mindspore {
 namespace kernel {
+bool RpcRecvKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto abstract_base = base_operator->GetPrim()->ToAbstract();
+  if (abstract_base) {
+    if (abstract_base->isa<abstract::AbstractUMonad>() || abstract_base->isa<abstract::AbstractIOMonad>()) {
+      recv_monad_ = true;
+    }
+  }
+  // RpcRecv kernel is similar with Unique, the next op's infer op must be launched after RpcRecv kernel is done.
+  is_need_retrieve_output_shape_ = true;
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
 int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
@@ -30,6 +51,7 @@ int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTe
     if (IsDynamic(int64_shape)) {
       // Shape is invalid before recv data.
       MS_LOG(DEBUG) << "The recv kernel's input " << i << " shape inferred is still dynamic:" << int64_shape;
+      is_dynamic_shape_ = true;
       return KRET_UNKNOWN_SHAPE;
     }
 
@@ -43,6 +65,7 @@ int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTe
     if (IsDynamic(int64_shape)) {
       // Shape is invalid before recv data.
       MS_LOG(DEBUG) << "The recv kernel's output " << i << " shape inferred is still dynamic:" << int64_shape;
+      is_dynamic_shape_ = true;
       return KRET_UNKNOWN_SHAPE;
     }
 
