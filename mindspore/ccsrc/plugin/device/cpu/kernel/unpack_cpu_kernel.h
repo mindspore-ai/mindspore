@@ -84,6 +84,7 @@ class UnpackCpuKernelMod : public NativeCpuKernelMod {
   UnstackParameter unstack_param_{};
   size_t output_num_{0};
   size_t input_size_{1};
+  int64_t origin_axis_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

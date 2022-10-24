@@ -49,6 +49,7 @@ bool UnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     }
     unstack_param_.axis_ = kernel_ptr->get_axis();
   }
+  origin_axis_ = unstack_param_.axis_;
   unstack_param_.pre_dims_ = 1;
   unstack_param_.axis_dim_ = 1;
   unstack_param_.after_dims_ = 1;
@@ -78,6 +79,13 @@ int UnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (ret != 0) {
     return ret;
   }
+
+  input_size_ = 1;
+  unstack_param_.pre_dims_ = 1;
+  unstack_param_.axis_dim_ = 1;
+  unstack_param_.after_dims_ = 1;
+  unstack_param_.axis_ = origin_axis_;
+
   auto input_shape = inputs[0]->GetShapeVector();
   if (unstack_param_.axis_ < 0) {
     unstack_param_.axis_ += input_shape.size();
