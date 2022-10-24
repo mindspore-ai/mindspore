@@ -1014,9 +1014,44 @@ void ModelPool::UpdateFreeTaskId(size_t id) {
   std::lock_guard<std::mutex> lock(task_id_mutex_);
   free_tasks_id_.push(id);
 }
+Status ModelPool::WarmUpForAllWorker(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  bool user_data = true;
+  for (auto &item : all_model_workers_) {
+    for (auto &worker : item.second) {
+      if (user_data) {
+        auto ret = worker->Predict(inputs, outputs);
+        if (ret != kSuccess) {
+          MS_LOG(ERROR) << "predict failed.";
+          return kLiteError;
+        }
+        user_data = false;
+        continue;
+      }
+      std::vector<MSTensor> outs;
+      auto ret = worker->Predict(inputs, &outs);
+      if (ret != kSuccess) {
+        MS_LOG(WARNING) << "warm up failed.";
+        return kSuccess;
+      }
+    }
+  }
+  return kSuccess;
+}
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  if (MS_UNLIKELY(!is_warm_up_)) {
+    std::unique_lock<std::mutex> warm_up_l(warm_up_mutex);
+    if (!is_warm_up_) {
+      MS_LOG(INFO) << "do warm up.";
+      if (WarmUpForAllWorker(inputs, outputs) != kSuccess) {
+        return kLiteError;
+      }
+      is_warm_up_ = true;
+      MS_LOG(INFO) << "do warm up done.";
+      return kSuccess;
+    }
+  }
   int max_wait_worker_node_id = 0;
   int max_wait_worker_num = 0;
   if (inputs.size() == 0 || inputs.front().Shape().size() == 0) {
