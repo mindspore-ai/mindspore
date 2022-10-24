@@ -21,7 +21,7 @@
 
 namespace mindspore::lite::quant {
 namespace {
-constexpr int8_t kCurrentBitCount = 64;
+constexpr int8_t kMaxBitCount = 64;
 constexpr int8_t kTableSize = 6;
 constexpr size_t kInt32Mask = 31;
 }  // namespace
@@ -57,8 +57,8 @@ void FSEBitStream::Empty() {
 }
 
 uint64_t FSEBitStream::Pop(uint8_t bit_count) {
-  MS_ASSERT(curr_bit_count_ <= kCurrentBitCount);
-  uint64_t right = curr_chunk_ >> static_cast<size_t>(kCurrentBitCount - curr_bit_count_);
+  MS_ASSERT(curr_bit_count_ <= kMaxBitCount);
+  uint64_t right = curr_chunk_ >> static_cast<size_t>(kMaxBitCount - curr_bit_count_);
   uint64_t res = right & ((1u << bit_count) - 1);
   curr_bit_count_ -= static_cast<int8_t>(bit_count);
   if (curr_bit_count_ > 0) {
@@ -69,7 +69,7 @@ uint64_t FSEBitStream::Pop(uint8_t bit_count) {
     // not so often...
     if (curr_chunk_index_ > -1) {
       // rare...
-      curr_bit_count_ = kCurrentBitCount;
+      curr_bit_count_ = kMaxBitCount;
       curr_chunk_ = chunks_[curr_chunk_index_--];
     }
     return res;
@@ -78,16 +78,16 @@ uint64_t FSEBitStream::Pop(uint8_t bit_count) {
   curr_bit_count_ += static_cast<int8_t>(bit_count);
   curr_chunk_ = chunks_[curr_chunk_index_--];
   right |= (curr_chunk_ & ((1u << (static_cast<int8_t>(bit_count) - curr_bit_count_)) - 1)) << curr_bit_count_;
-  curr_bit_count_ = kCurrentBitCount - (static_cast<int8_t>(bit_count) - curr_bit_count_);
+  curr_bit_count_ = kMaxBitCount - (static_cast<int8_t>(bit_count) - curr_bit_count_);
   return right;
 }
 
 void FSEBitStream::Push(int64_t state, uint8_t bit_count) {
   curr_bit_count_ += static_cast<int8_t>(bit_count);
-  if (curr_bit_count_ <= kCurrentBitCount) {
+  if (curr_bit_count_ <= kMaxBitCount) {
     // happy path, no split
     curr_chunk_ = (curr_chunk_ << bit_count) | (static_cast<size_t>(state) & ((1 << bit_count) - 1));
-    if (curr_bit_count_ == kCurrentBitCount) {
+    if (curr_bit_count_ == kMaxBitCount) {
       // flush (rare)
       chunks_[++curr_chunk_index_] = curr_chunk_;
       curr_chunk_ = 0;
@@ -95,7 +95,7 @@ void FSEBitStream::Push(int64_t state, uint8_t bit_count) {
     }
   } else {
     // split, rare
-    int left_bits = curr_bit_count_ - kCurrentBitCount;
+    int left_bits = curr_bit_count_ - kMaxBitCount;
     int right_bits = bit_count - left_bits;
     curr_chunk_ = (curr_chunk_ << right_bits) | ((static_cast<size_t>(state) >> left_bits) & ((1 << right_bits) - 1));
     // flush left
@@ -105,11 +105,11 @@ void FSEBitStream::Push(int64_t state, uint8_t bit_count) {
   }
 }
 
-void FSEBitStream::Flush() { curr_chunk_ <<= (kCurrentBitCount - curr_bit_count_); }
+void FSEBitStream::Flush() { curr_chunk_ <<= (kMaxBitCount - curr_bit_count_); }
 
 // The function gives the index of most import `1` in the binary representation.
 // e.g. for the number 00100 it gives 2.
-size_t FSEBitStream::CountBits(int32_t x) {
+size_t FSEBitStream::CountBits(size_t x) {
 #ifdef _MSC_VER
   size_t num = 0;
   uint32_t tmp = x;

@@ -45,7 +45,7 @@ class TensorCompressor {
                        const std::vector<schema::QuantParamT> &quant_params) {
     auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
     CHECK_NULL_RETURN(tensor_info);
-    if (tensor_info->compression_type() != kNoCompression) {
+    if (tensor_info->compression_type() != mindspore::kNoCompression) {
       MS_LOG(INFO) << weight->fullname_with_scope() << " is shared weight.";
       return RET_OK;
     }
@@ -142,7 +142,7 @@ class TensorCompressor {
       return RET_ERROR;
     }
 
-    auto ret = SetNewCompressionTensor(weight, bits, bit_num, tensor_info, kIndexing);
+    auto ret = SetNewCompressionTensor(weight, bits, bit_num, tensor_info, mindspore::kIndexing);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Add New tensor failed.";
       return RET_ERROR;
@@ -215,7 +215,7 @@ class TensorCompressor {
       return RET_ERROR;
     }
 
-    auto ret = SetNewCompressionTensor(weight, bits, bit_num, tensor_info, kSparse);
+    auto ret = SetNewCompressionTensor(weight, bits, bit_num, tensor_info, mindspore::kSparse);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Add New tensor failed.";
       return RET_ERROR;

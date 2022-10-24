@@ -30,14 +30,14 @@
 
 namespace mindspore::lite::quant {
 namespace {
-constexpr int kFseTableExtendSize = 3;
-constexpr int kFreqTableExtendSize = 2;
-constexpr int kAlignSize = 8;
-constexpr float kUpRoundOffSet = 0.5;
-constexpr size_t kMaxModelBufferSize = static_cast<size_t>(1024) * 1024 * 1024 * 2;  // 2G
+constexpr size_t kFseTableExtendSize = 3u;
+constexpr size_t kFreqTableExtendSize = 2u;
+constexpr size_t kAlignSize = 8u;
+constexpr float kUpRoundOffSet = 0.5f;
+constexpr size_t kMaxModelBufferSize = 1024u * 1024 * 1024 * 2;  // 2G
 }  // namespace
 
-int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_count, int table_log,
+int FSEEncoder::FSECreateStatesForEncoding(const uint32_t *frequency, size_t frequency_count, size_t table_log,
                                            uint32_t *delta_bit_count, int16_t *delta_state, uint16_t *coding_table,
                                            uint16_t *symbol_table) {
   CHECK_NULL_RETURN(frequency);
@@ -46,15 +46,17 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   CHECK_NULL_RETURN(symbol_table);
   CHECK_NULL_RETURN(coding_table);
   const size_t table_size = 1u << static_cast<size_t>(table_log);
-  size_t tablemask = table_size - 1;
-  size_t step = ((table_size >> 1) + (table_size >> kFseTableExtendSize) + kFseTableExtendSize);
+  size_t table_mask = table_size - 1;
+  size_t step = ((table_size >> 1u) + (table_size >> kFseTableExtendSize) + kFseTableExtendSize);
   size_t pos = 0;
   // Separate the same symbols, coding will be better if the same characters are distributed evenly across the table.
-  for (int sym = 0; sym < frequency_count; sym++) {
+  for (size_t sym = 0; sym < frequency_count; sym++) {
     for (uint32_t i = 0; i < frequency[sym]; i++) {
       symbol_table[pos] = sym;
-      pos = (pos + step) & tablemask;
-      while (pos > tablemask) pos = (pos + step) & tablemask;
+      pos = (pos + step) & table_mask;
+      while (pos > table_mask) {
+        pos = (pos + step) & table_mask;
+      }
     }
   }
   if (pos != 0) {
@@ -63,7 +65,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
 
   std::vector<uint32_t> cfreqs(frequency_count + kFreqTableExtendSize);
   cfreqs[0] = 0;
-  for (int i = 1; i < frequency_count + 1; i++) {
+  for (size_t i = 1; i < frequency_count + 1; i++) {
     cfreqs[i] = cfreqs[i - 1] + frequency[i - 1];
   }
   cfreqs[frequency_count + 1] = cfreqs[frequency_count] + 1;
@@ -74,11 +76,13 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   }
 
   int total = 0;
-  for (int sym = 0; sym < frequency_count; sym++) {
+  for (size_t sym = 0; sym < frequency_count; sym++) {
     if (frequency[sym] >= kFreqTableExtendSize) {
-      int max_bits_out = table_log - FSEBitStream::CountBits(frequency[sym] - 1);
+      auto bit = FSEBitStream::CountBits(frequency[sym] - 1);
+      MS_CHECK_GE(table_log, bit, RET_ERROR);
+      size_t max_bits_out = table_log - bit;
       int min_state_plus = frequency[sym] << max_bits_out;
-      delta_bit_count[sym] = (static_cast<size_t>(max_bits_out) << k16Bit) - min_state_plus;
+      delta_bit_count[sym] = (max_bits_out << k16Bit) - min_state_plus;
       delta_state[sym] = total - static_cast<int>(frequency[sym]);
       total += static_cast<int>(frequency[sym]);
     } else {
@@ -92,7 +96,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
 }
 
 int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param,
-                         TensorCompressionType compress_type) {
+                         mindspore::TensorCompressionType compress_type) {
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   CHECK_NULL_RETURN(tensor_info);
   FSEQuant fse_quant;
@@ -109,7 +113,7 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
     MS_LOG(ERROR) << "Squeeze quant data failed.";
     return ret;
   }
-  int table_log = 0;
+  size_t table_log = 0;
   ret = NormalizeFrequency(&fse_quant, &table_log);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Normalize frequency failed.";
@@ -146,7 +150,7 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
 
 uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state,
                                                 const uint32_t *delta_bit_count, const int16_t *delta_state,
-                                                uint16_t *coding_table) {
+                                                const uint16_t *coding_table) {
   MS_ASSERT(bs != nullptr);
   MS_ASSERT(delta_bit_count != nullptr);
   MS_ASSERT(delta_state != nullptr);
@@ -159,11 +163,11 @@ uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, 
   return coding_table[(state >> bits_out) + delta_state[sym]];
 }
 
-int GetMaxIndex(const uint32_t *arr, int arr_count) {
+int GetMaxIndex(const uint32_t *arr, size_t arr_count) {
   MS_ASSERT(arr != nullptr);
   float max = -INFINITY;
   int index = -1;
-  for (int i = 0; i < arr_count; i++) {
+  for (size_t i = 0; i < arr_count; i++) {
     if (arr[i] > max) {
       max = arr[i];
       index = i;
@@ -172,7 +176,7 @@ int GetMaxIndex(const uint32_t *arr, int arr_count) {
   return index;
 }
 
-int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
+int FSEEncoder::NormalizeFrequency(FSEQuant *q, size_t *table_log) {
   CHECK_NULL_RETURN(q);
   CHECK_NULL_RETURN(table_log);
   // The higher the number, the more accurate we'll be to the shannon entropy,
@@ -180,7 +184,7 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   *table_log = std::min(MAX_TABLE_LOG, (FSEBitStream::CountBits((uint32_t)q->size) + 1 + kFseTableExtendSize));
   const int new_table_size = 1 << (*table_log);
   int curr_table_size = 0;
-  for (int i = 0; i < q->size; i++) {
+  for (size_t i = 0; i < q->size; i++) {
     curr_table_size += q->frequency[i];
   }
 
@@ -191,7 +195,7 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   // normalize
   int updated_table_size = 0;
   float rat = (static_cast<float>(new_table_size)) / curr_table_size;
-  for (int i = 0; i < q->size; i++) {
+  for (size_t i = 0; i < q->size; i++) {
     q->frequency[i] = std::max(1, static_cast<int>(floorf(kUpRoundOffSet + rat * q->frequency[i])));
     updated_table_size += q->frequency[i];
   }
@@ -222,8 +226,8 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   return RET_OK;
 }
 
-int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency,
-                          int frequency_count, int table_log) {
+int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, size_t data_count, const uint32_t *frequency,
+                          size_t frequency_count, size_t table_log) {
   CHECK_NULL_RETURN(bs);
   CHECK_NULL_RETURN(data);
   CHECK_NULL_RETURN(frequency);
@@ -249,7 +253,7 @@ int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count
   state = FSEEncodeSymbolGetNewState(bs, data[0], state, delta_number_bits.data(), delta_find_state.data(),
                                      coding_table.data());
   bs->Empty();
-  for (int i = 0; i < data_count; i++) {
+  for (size_t i = 0; i < data_count; i++) {
     state = FSEEncodeSymbolGetNewState(bs, data[i], state, delta_number_bits.data(), delta_find_state.data(),
                                        coding_table.data());
   }
@@ -257,8 +261,9 @@ int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count
   return ret;
 }
 
-int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant, int table_log, size_t max_size,
-                                    uint8_t *out8, size_t *out_size, TensorCompressionType compress_type) {
+int FSEEncoder::SerializingToBuffer(const FSEBitStream *bs, const FSEQuant &fse_quant, size_t table_log,
+                                    size_t max_size, uint8_t *out8, size_t *out_size,
+                                    TensorCompressionType compress_type) {
   MSLITE_CHECK_PTR(bs);
   MSLITE_CHECK_PTR(out_size);
   MSLITE_CHECK_PTR(out8);
@@ -280,7 +285,7 @@ int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant,
   }
   *(reinterpret_cast<uint32_t *>(&out8[offset])) = (uint32_t)chunksc;
   offset += sizeof(uint32_t);
-  for (int j = 0; j < fse_quant.size; j++) {
+  for (size_t j = 0; j < fse_quant.size; j++) {
     if (offset + sizeof(uint32_t) > max_size) {
       MS_LOG(ERROR) << " offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
@@ -298,13 +303,13 @@ int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant,
     *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)0;
     offset += sizeof(uint16_t);
   }
-  for (int j = 0; j < fse_quant.size; j++) {
+  for (size_t j = 0; j < fse_quant.size; j++) {
     if (offset + sizeof(float) > max_size) {
       MS_LOG(ERROR) << " offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
-    if (compress_type == kFSE) {
+    if (compress_type == mindspore::kFSE || compress_type == mindspore::kFSEInfer) {
       *(reinterpret_cast<float *>(&out8[offset])) = fse_quant.centroids_float[j];
     } else {
       *(reinterpret_cast<int32_t *>(&out8[offset])) = fse_quant.centroids_int[j];
@@ -326,7 +331,7 @@ int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant,
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
-    *(reinterpret_cast<uint64_t *>(&out8[offset])) = (uint64_t)bs->GetChunks()[j];
+    *(reinterpret_cast<uint64_t *>(&out8[offset])) = bs->GetChunks()[j];
     offset += sizeof(uint64_t);
   }
   if (offset + sizeof(uint64_t) > max_size) {
@@ -334,14 +339,14 @@ int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant,
                   << " offset:" << offset << " max_size:" << max_size;
     return RET_ERROR;
   }
-  *(reinterpret_cast<uint64_t *>(&out8[offset])) = (uint64_t)bs->GetCurrChunk();
+  *(reinterpret_cast<uint64_t *>(&out8[offset])) = bs->GetCurrChunk();
   offset += sizeof(uint64_t);
   if (offset + sizeof(uint8_t) > max_size) {
     MS_LOG(ERROR) << " offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
     return RET_ERROR;
   }
-  *(reinterpret_cast<uint8_t *>(&out8[offset])) = (uint8_t)bs->GetCurrBitCount();
+  *(reinterpret_cast<uint8_t *>(&out8[offset])) = bs->GetCurrBitCount();
   offset += sizeof(uint8_t);
   if (offset > max_size) {
     MS_LOG(ERROR) << " too many symbol.";
@@ -351,8 +356,8 @@ int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant,
   return RET_OK;
 }
 
-int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs, const FSEQuant &fse_quant,
-                                    int table_log, TensorCompressionType compress_type) {
+int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, const FSEBitStream *bs, const FSEQuant &fse_quant,
+                                    size_t table_log, TensorCompressionType compress_type) {
   MSLITE_CHECK_PTR(weight);
   MSLITE_CHECK_PTR(bs);
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
@@ -374,7 +379,7 @@ int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs
   }
 
   std::shared_ptr<mindspore::tensor::Tensor> compress_tensor;
-  if (compress_type == kFSE) {
+  if (compress_type == mindspore::kFSE || compress_type == mindspore::kFSEInfer) {
     compress_tensor =
       std::make_shared<mindspore::tensor::Tensor>(kNumberTypeFloat32, tensor_info->shape(), out_size, compress_type);
   } else {

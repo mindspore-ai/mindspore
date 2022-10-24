@@ -28,6 +28,7 @@
 #include "tools/converter/quantizer/cluster_quantization.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
 #include "tools/converter/quantizer/fixed_bit_weight_quantization.h"
+#include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/common/node_util.h"
 #include "src/common/quant_utils.h"
 
@@ -143,7 +144,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     tensor::TensorPtr tensor_info;
     GetLiteParameter(input, &parameter, &tensor_info);
     if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32 ||
-        tensor_info->compression_type() != kNoCompression) {
+        tensor_info->compression_type() != mindspore::kNoCompression) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
       continue;
     }
@@ -237,10 +238,14 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
     auto tensor_quant_params = quant_param_holder->get_input_quant_params();
     MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
     auto quant_params = tensor_quant_params.at(idx - 1);
-    status = fse_encoder.Compress(parameter, quant_params, kFSE);
+    mindspore::TensorCompressionType compress_type = inference_dequant_ ? mindspore::kFSEInfer : mindspore::kFSE;
+    status = fse_encoder.Compress(parameter, quant_params, compress_type);
     if (status == RET_OK) {
       quant_param_holder->ClearQuantParams();
     }
+    auto new_tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
+    CHECK_NULL_RETURN(new_tensor_info);
+    weight_quantized_tensors_.insert(new_tensor_info);
   }
   // rollback to 8 bit.
   if (status == RET_ERROR || status == RET_NO_CHANGE) {
@@ -261,6 +266,39 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
     }
   }
   return status;
+}
+
+int WeightQuantizer::InsertQuantDtypeNode(const FuncGraphPtr &func_graph) {
+  CHECK_NULL_RETURN(func_graph);
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
+    if (primitive == nullptr) {
+      MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
+      continue;
+    }
+    // Support Share Weight Quant.
+    for (size_t i = kPrimOffset; i < cnode->size(); i++) {
+      auto inputNode = cnode->input(i);
+      if (inputNode->isa<Parameter>()) {
+        ParameterPtr param_node;
+        tensor::TensorPtr tensor_info;
+        GetLiteParameter(inputNode, &param_node, &tensor_info);
+        auto param = weight_quantized_tensors_.find(tensor_info);
+        if (param != weight_quantized_tensors_.end()) {
+          InsertQuantNodeManager manager;
+          auto ret = manager.InsertWeightQuantNode(
+            func_graph, cnode, i, kNumberTypeInt8, kNumberTypeFloat32,
+            GetPreferredDim(cnode, i - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c())));
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << "Insert weight quant node failed.";
+            return ret;
+          }
+          continue;
+        }
+      }
+    }
+  }
+  return RET_OK;
 }
 
 int WeightQuantizer::MarkCnodeWeightQuantType(const CNodePtr &cnode) {
@@ -346,6 +384,9 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight Quant failed.";
     return ret;
+  }
+  if (inference_dequant_) {
+    return InsertQuantDtypeNode(func_graph);
   }
   return MarkGraphWeightQuantType(func_graph);
 }

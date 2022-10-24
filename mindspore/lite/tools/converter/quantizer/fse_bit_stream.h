@@ -33,13 +33,13 @@ class FSEBitStream {
   uint64_t Pop(uint8_t bit_count);
   void Push(int64_t state, uint8_t bit_count);
   void Flush();
-  static size_t CountBits(int32_t x);
+  static size_t CountBits(size_t x);
 
-  int32_t GetCurrChunkIndex() { return this->curr_chunk_index_; }
-  uint64_t GetCurrChunk() { return this->curr_chunk_; }
-  int8_t GetCurrBitCount() { return this->curr_bit_count_; }
-  uint64_t *GetChunks() { return this->chunks_; }
-  int GetChunkCount() { return this->chunk_count_; }
+  int32_t GetCurrChunkIndex() const { return this->curr_chunk_index_; }
+  uint64_t GetCurrChunk() const { return this->curr_chunk_; }
+  int8_t GetCurrBitCount() const { return this->curr_bit_count_; }
+  uint64_t *GetChunks() const { return this->chunks_; }
+  int GetChunkCount() const { return this->chunk_count_; }
 
   void SetCurrChunkIndex(int32_t curr_chunk_index) { this->curr_chunk_index_ = curr_chunk_index; }
   void SetCurrChunk(uint64_t curr_chunk) { this->curr_chunk_ = curr_chunk; }

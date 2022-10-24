@@ -80,6 +80,8 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
   result->shape_ = src_tensor.shape_;
   result->category_ = src_tensor.category_;
   result->format_ = src_tensor.format_;
+  result->compress_type_ = src_tensor.compress_type_;
+  result->compressed_size_ = src_tensor.compressed_size_;
   result->set_allocator(allocator);
   result->set_tensor_name(src_tensor.tensor_name() + "_duplicate");
   if (copy_data) {
@@ -92,7 +94,7 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
     result->own_data_ = src_tensor.own_data_;
   }
 
-  for (LiteQuantParam quant : src_tensor.quant_params()) {
+  for (const LiteQuantParam &quant : src_tensor.quant_params()) {
     result->AddQuantParam(quant);
   }
 
@@ -246,17 +248,21 @@ int32_t Tensor::Width() const {
 }
 
 size_t Tensor::Size() const {
-  size_t element_size = DataTypeSize(this->data_type_);
-  if (element_size == 0) {
-    MS_LOG(INFO) << "Unexpected data type: " << data_type_;
-    return 0;
+  if (compress_type_ != kNoCompression) {
+    return compressed_size_;
+  } else {
+    size_t element_size = DataTypeSize(this->data_type_);
+    if (element_size == 0) {
+      MS_LOG(INFO) << "Unexpected data type: " << data_type_;
+      return 0;
+    }
+    auto element_num = (format_ == mindspore::NC4HW4 || format_ == mindspore::NHWC4) ? ElementsC4Num() : ElementsNum();
+    if (element_num <= 0) {
+      MS_LOG(INFO) << "Element number of tensor should large than 0 : " << element_num << ", shape: " << shape_;
+      return 0;
+    }
+    return element_size * static_cast<size_t>(element_num);
   }
-  auto element_num = (format_ == mindspore::NC4HW4 || format_ == mindspore::NHWC4) ? ElementsC4Num() : ElementsNum();
-  if (element_num <= 0) {
-    MS_LOG(INFO) << "Element number of tensor should large than 0 : " << element_num << ", shape: " << shape_;
-    return 0;
-  }
-  return element_size * static_cast<size_t>(element_num);
 }
 
 int64_t Tensor::ElementsNum() const {

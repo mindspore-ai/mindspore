@@ -146,13 +146,17 @@ int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type) {
 
 ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
                                    const std::vector<schema::QuantParamT> &input_quant_params,
-                                   const std::vector<schema::QuantParamT> &output_quant_params) {
+                                   const std::vector<schema::QuantParamT> &output_quant_params, int axis,
+                                   bool set_quant_flag) {
   auto prim_c = std::make_shared<ops::QuantDTypeCast>();
   MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
   prim_c->Init(src_type, dst_type);
+  prim_c->set_axis(axis);
   auto quant_params_holder = std::make_shared<QuantParamHolder>(input_quant_params.size(), output_quant_params.size());
   MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
-  quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+  if (set_quant_flag) {
+    quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+  }
   quant_params_holder->set_input_quant_param(0, input_quant_params);
   quant_params_holder->set_output_quant_param(0, output_quant_params);
   auto prim = prim_c->GetPrim();

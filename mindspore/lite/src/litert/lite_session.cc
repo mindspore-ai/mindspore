@@ -167,7 +167,11 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
     return RET_ERROR;
   }
 
-  auto ret = WeightDecoder::DecompressTensor(*src_tensor, dst_tensor);
+  int compress_type = src_tensor->handler()->weightQuantCompressType();
+  int ret = RET_NO_CHANGE;
+  if (compress_type != kFSEInfer) {
+    ret = WeightDecoder::DecompressTensor(*src_tensor, dst_tensor);
+  }
   if (ret == RET_NO_CHANGE) {
     if (dst_tensor->Size() == 0 || src_tensor->length() < dst_tensor->Size()) {
       MS_LOG(ERROR) << "Tensor data shape invalid";
@@ -219,6 +223,11 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   if (src_tensor.name() != nullptr) {
     dst_tensor->set_tensor_name(src_tensor.name()->str());
+  }
+  auto compress_type = static_cast<CompressType>(src_tensor.weightQuantCompressType());
+  if (compress_type == kFSEInfer) {
+    dst_tensor->set_compress_type(static_cast<CompressType>(compress_type));
+    dst_tensor->set_compressed_size(src_tensor.data()->size());
   }
   return dst_tensor;
 }
@@ -1572,7 +1581,7 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
     return mindspore::ModelType::kUnknownType;
   }
 
-  flatbuffers::Verifier verify((const uint8_t *)model_buf, buf_size);
+  flatbuffers::Verifier verify((const uint8_t *)model_buf, buf_size, INT32_MAX, INT32_MAX);
   auto version_verify = lite::LiteModel::VersionVerify(&verify);
   if (version_verify != SCHEMA_INVALID) {
     MS_LOG(DEBUG) << "The kMindIR type model buffer is valid mslite model buffer";

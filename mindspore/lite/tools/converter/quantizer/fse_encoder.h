@@ -30,11 +30,11 @@ constexpr size_t MAX_SYMS = 65534;
 constexpr size_t MAX_TABLE_LOG = 16;
 typedef struct FSEQuant {
   uint16_t *symbol_table{nullptr};  // the place to store the quantized tensor
-  int32_t symbol_table_count{0};    // the number of symbols that exist
+  size_t symbol_table_count{0};     // the number of symbols that exist
   float centroids_float[MAX_SYMS];  // the mean of all the numbers that got quantized into it
   int32_t centroids_int[MAX_SYMS];  // the mean of all the numbers that got quantized into it
   uint32_t frequency[MAX_SYMS];     // holds the number of times each symbol appears in `*symbol_table`
-  int32_t size{0};                  // the number of entries in `symbol_table`
+  size_t size{0};                   // the number of entries in `symbol_table`
 } FSEQuant;
 
 class FSEEncoder {
@@ -43,14 +43,15 @@ class FSEEncoder {
   ~FSEEncoder() = default;
 
   int Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param,
-               TensorCompressionType compress_type);
+               mindspore::TensorCompressionType compress_type);
 
  private:
-  int FSECreateStatesForEncoding(uint32_t *frequency, int frequency_count, int table_log, uint32_t *delta_bit_count,
-                                 int16_t *delta_state, uint16_t *coding_table, uint16_t *symbol_table);
+  int FSECreateStatesForEncoding(const uint32_t *frequency, size_t frequency_count, size_t table_log,
+                                 uint32_t *delta_bit_count, int16_t *delta_state, uint16_t *coding_table,
+                                 uint16_t *symbol_table);
 
   uint16_t FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state, const uint32_t *delta_bit_count,
-                                      const int16_t *delta_state, uint16_t *coding_table);
+                                      const int16_t *delta_state, const uint16_t *coding_table);
 
   // Encoding is therefore just a repeat of this process :
   // - get Symbol to encode
@@ -58,20 +59,20 @@ class FSEEncoder {
   // - determine nbBits, flush them
   // - determine sub-Range Id
   // - look for Symbol position of same Id : you get your next state
-  int FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency, int frequency_count,
-                int table_log);
+  int FSEEncode(FSEBitStream *bs, const uint16_t *data, size_t data_count, const uint32_t *frequency,
+                size_t frequency_count, size_t table_log);
 
-  int NormalizeFrequency(FSEQuant *q, int *table_log);
+  int NormalizeFrequency(FSEQuant *q, size_t *table_log);
 
-  int SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log,
-                          TensorCompressionType compress_type);
+  int SerializingToTensor(const ParameterPtr &weight, const FSEBitStream *bs, const FSEQuant &fse_quant,
+                          size_t table_log, TensorCompressionType compress_type);
 
-  int SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant, int table_log, size_t max_size, uint8_t *out8,
-                          size_t *out_size, TensorCompressionType compress_type);
+  int SerializingToBuffer(const FSEBitStream *bs, const FSEQuant &fse_quant, size_t table_log, size_t max_size,
+                          uint8_t *out8, size_t *out_size, TensorCompressionType compress_type);
 
   template <typename T>
   int SqueezeQuant(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param, FSEQuant *quants,
-                   TensorCompressionType compress_type) {
+                   mindspore::TensorCompressionType compress_type) {
     CHECK_NULL_RETURN(weight);
     CHECK_NULL_RETURN(quants);
     auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
@@ -114,7 +115,7 @@ class FSEEncoder {
         uncompressed_freqs_to_compressed_sym[i] = sym;
         quants->frequency[sym] = uncompressed_frequency[i];
         // real = varCorr * (q - zp) * scale + meanCorr
-        if (compress_type == kFSE) {
+        if (compress_type == mindspore::kFSE || compress_type == mindspore::kFSEInfer) {
           if (q_param.empty()) {
             MS_LOG(ERROR) << "q_param is empty.";
             return RET_ERROR;
@@ -137,7 +138,7 @@ class FSEEncoder {
       MS_LOG(ERROR) << "malloc memory failed.";
       return RET_ERROR;
     }
-    for (int i = 0; i < quants->symbol_table_count; i++) {
+    for (size_t i = 0; i < quants->symbol_table_count; i++) {
       auto data = static_cast<T>(data_c[i]);
       int q = data - qmin;
       sym = uncompressed_freqs_to_compressed_sym[q];

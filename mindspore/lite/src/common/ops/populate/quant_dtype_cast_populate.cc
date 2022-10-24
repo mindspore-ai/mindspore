@@ -38,6 +38,7 @@ OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   param->srcT = value->src_t();
   param->dstT = value->dst_t();
+  param->axis = value->axis();
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter, SCHEMA_CUR);

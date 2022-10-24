@@ -102,6 +102,7 @@ file(GLOB_RECURSE CUDA_KERNEL_SRC
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/select_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/where_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/one_hot_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/quant_impl.cu
 )
 
 set_source_files_properties(${CUDA_KERNEL_SRC} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)

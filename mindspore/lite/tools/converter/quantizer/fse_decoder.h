@@ -32,10 +32,10 @@ class FSEDecoder {
   static int DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor,
                         schema::WeightQuantCompressType compress_type);
 
- private:
   static int FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, size_t table_log,
-                                        uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table);
+                                        uint16_t *new_state_baseline, uint8_t *bit_count, uint16_t *symbol_table);
 
+ private:
   template <typename C_TYPE, typename OUT_TYPE>
   static int FSEDecode(FSEBitStream *bs, OUT_TYPE *buff, int buff_count, uint32_t *frequency, int frequency_count,
                        const C_TYPE *centroids, size_t table_log) {

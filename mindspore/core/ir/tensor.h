@@ -49,7 +49,15 @@ enum TensorSyncStatus {
   kNeedSyncDeviceToHostImmediately
 };
 
-enum TensorCompressionType { kNoCompression = 0, kIndexing = 1, kSparse = 2, kFSE = 3, kBitPacking = 4, kFSEInt = 5 };
+enum TensorCompressionType {
+  kNoCompression = 0,
+  kIndexing = 1,
+  kSparse = 2,
+  kFSE = 3,
+  kBitPacking = 4,
+  kFSEInt = 5,
+  kFSEInfer = 6
+};
 
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {

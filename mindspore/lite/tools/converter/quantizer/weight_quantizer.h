@@ -117,14 +117,14 @@ class WeightQuantizer : public Quantizer {
                     int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true,
                     bool update_tensor = true);
   bool CheckWeightQuantExist(const CNodePtr &cnode);
+  int InsertQuantDtypeNode(const FuncGraphPtr &func_graph);
 
  private:
-  bool linear_quant_{true};
-  size_t bit_num_{8};
-  // Support for mark shared weight node.
-  std::set<tensor::TensorPtr> weight_quantized_tensors_;
   bool is_auto_tune_{false};
   bool is_mixed_bit_{false};
+  bool inference_dequant_{false};
+  bool linear_quant_{true};
+  size_t bit_num_{8};
   double mixed_bit_init_scale_ = 0.02;
   int quant_min_{-128};
   int quant_max_{127};
@@ -135,6 +135,8 @@ class WeightQuantizer : public Quantizer {
   std::unique_ptr<QuantStrategy> quant_strategy_;
   schema::QuantType quant_type_{schema::QuantType_WeightQuant};
   bool enable_encode_{true};
+  // Support for mark shared weight node.
+  std::set<tensor::TensorPtr> weight_quantized_tensors_;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_

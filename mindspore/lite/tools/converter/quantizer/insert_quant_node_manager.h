@@ -47,6 +47,9 @@ class InsertQuantNodeManager {
   int InsertBackwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
                              schema::QuantType curr_quant_type);
 
+  int InsertWeightQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index, TypeId src_dtype,
+                            TypeId dst_dtype, int axis);
+
  private:
   int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 

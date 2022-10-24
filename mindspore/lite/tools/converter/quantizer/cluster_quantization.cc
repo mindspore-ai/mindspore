@@ -178,7 +178,7 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
     tensor::TensorPtr tensor_info;
     GetLiteParameter(input, &parameter, &tensor_info);
     if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32 ||
-        tensor_info->compression_type() != kNoCompression) {
+        tensor_info->compression_type() != mindspore::kNoCompression) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
       continue;
     }
@@ -205,7 +205,7 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
     quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
 
     FSEEncoder fse_encoder;
-    ret = fse_encoder.Compress(parameter, {}, kFSEInt);
+    ret = fse_encoder.Compress(parameter, {}, mindspore::kFSEInt);
     if (ret == RET_OK) {
       MS_LOG(INFO) << "Execute FSE compression success.";
     }

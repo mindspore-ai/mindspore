@@ -86,6 +86,16 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
+bool MatMulTensorRT::HasConst() const {
+  for (size_t i = 0; i < 2u && i < in_tensors_.size(); i++) {
+    auto tensor = in_tensors_[i];
+    if (tensor.Data() != nullptr && tensor.IsConst()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 int MatMulTensorRT::PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b) {
   if (!HasConst()) {
     *matmul_a = input(ctx, 0);
@@ -157,6 +167,10 @@ nvinfer1::ITensor *MatMulTensorRT::AddAsMatmul(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "matmul input a " << GetTensorFormat(matmul_a);
   MS_LOG(DEBUG) << "matmul input b " << GetTensorFormat(matmul_b);
 
+  auto has_const = HasConst();
+  while (!has_const && matmul_a.trt_tensor_->getDimensions().nbDims > matmul_b.trt_tensor_->getDimensions().nbDims) {
+    matmul_b.trt_tensor_ = ExpandDim(ctx, matmul_b.trt_tensor_, 0);
+  }
   auto matmul_layer = ctx->network()->addMatrixMultiply(
     *matmul_a.trt_tensor_, transpose_a_ ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE,
     *matmul_b.trt_tensor_, transpose_b_ ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE);

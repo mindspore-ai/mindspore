@@ -885,6 +885,7 @@ OP_SCHEMA_DEF_END(Rsqrt)
 OP_SCHEMA_DEF(QuantDTypeCast)
 OP_ATTR(src_t, long)
 OP_ATTR(dst_t, long)
+OP_ATTR_WITH_VALUE(axis, long, 0)
 OP_SCHEMA_DEF_END(QuantDTypeCast)
 
 OP_SCHEMA_DEF(ScaleFusion)
