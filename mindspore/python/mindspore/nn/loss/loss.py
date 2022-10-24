@@ -2263,7 +2263,7 @@ class GaussianNLLLoss(LossBase):
         full (bool): Include the constant term in the loss calculation. When :math:`full=True`, the constant term
             `const.` will be :math:`0.5 * log(2\pi)`. Default: False.
         eps (float): Used to improve the stability of log function. Default: 1e-6.
-        reduction (string): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` or :math:`(*)` where :math:`*` means any number of

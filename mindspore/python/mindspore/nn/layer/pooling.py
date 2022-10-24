@@ -112,8 +112,8 @@ class MaxPool3d(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` or
-        :math:`(C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8, int16, int32,
-        int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
+          :math:`(C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8, int16, int32,
+          int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
 
     Outputs:
         If `return_indices` is False, output is a Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, or

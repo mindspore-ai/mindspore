@@ -3794,7 +3794,7 @@ class SBDataset(GeneratorDataset):
 
     - The tensor of column :py:obj:`image` is of the uint8 type.
     - The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is 'Boundaries' otherwise
-    contains 1 image of the uint8 type.
+      contains 1 image of the uint8 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
