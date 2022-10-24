@@ -46,11 +46,18 @@ def _raise_type_error():
 
 
 @constexpr
+def _check_duplicate_grad_position(grad_position):
+    """Check if `grad_position` has duplicate positions when `grad_position` has more than one numbers."""
+    if len(set(grad_position)) != len(grad_position):
+        raise ValueError("There are duplicate positions in `grad_position`, please check it")
+
+
+@constexpr
 def _convert_grad_position_type(grad_position):
     """Check and convert the type and size of grad position index."""
     if isinstance(grad_position, tuple):
-        _grad_position = list(set(grad_position))
-        _grad_position.sort(key=grad_position.index)
+        _check_duplicate_grad_position(grad_position)
+        _grad_position = list(grad_position)
         for i, gp in enumerate(_grad_position):
             if isinstance(gp, bool):
                 _grad_position[i] = int(gp)
@@ -636,22 +643,23 @@ def jvp(fn, inputs, v, has_aux=False):
         res = outputs[0]
         return res
 
-    if has_aux:
-        fn_ = aux_fn
-    else:
-        fn_ = fn
-
     def grad_single(u, first_grad_single_value):
-        return _grad_single(fn_)(*first_grad_single_value, u)
+        if has_aux:
+            return _grad_single(aux_fn)(*first_grad_single_value, u)
+        return _grad_single(fn)(*first_grad_single_value, u)
 
     def grad_all(u, first_grad):
-        return _grad_all(fn_)(*first_grad, u)
+        if has_aux:
+            return _grad_all(aux_fn)(*first_grad, u)
+        return _grad_all(fn)(*first_grad, u)
 
-    @jit(hash_args=fn_)
-    def _wrap_container(*arg):
+    def _wrap_container_inner(*arg):
         jvp_inputs = arg[1:]
         vectors = arg[0]
-        outputs = fn_(*jvp_inputs)
+        if has_aux:
+            outputs = aux_fn(*jvp_inputs)
+        else:
+            outputs = fn(*jvp_inputs)
         if isinstance(outputs, tuple):
             u = ()
             for item in outputs:
@@ -670,6 +678,15 @@ def jvp(fn, inputs, v, has_aux=False):
                 return res[0], gradient_outputs, res[1]
             return res[0], gradient_outputs, res[1:]
         return outputs, gradient_outputs
+
+    if has_aux:
+        @jit(hash_args=aux_fn)
+        def _wrap_container(*arg):
+            return _wrap_container_inner(*arg)
+    else:
+        @jit(hash_args=fn)
+        def _wrap_container(*arg):
+            return _wrap_container_inner(*arg)
 
     if not isinstance(inputs, (Tensor, tuple, list)) or not isinstance(v, (Tensor, tuple, list)):
         _raise_type_error()
@@ -813,10 +830,10 @@ def vjp(fn, *inputs, has_aux=False):
         >>> outputs, vjp_fn, aux = vjp(fn, x, y, has_aux=True)
         >>> gradient = vjp_fn(v)
         >>> print(outputs)
-        [[ 3.  6.],
+        [[ 3.  6.]
          [ 9. 12.]]
         >>> print(aux)
-        [[ 1.  8.],
+        [[ 1.  8.]
          [27. 64.]]
         >>> print(gradient)
         (Tensor(shape=[2, 2], dtype=Float32, value=
@@ -835,13 +852,12 @@ def vjp(fn, *inputs, has_aux=False):
         res = outputs[0]
         return res
 
-    if has_aux:
-        fn_ = aux_fn
-    else:
-        fn_ = fn
-
     def wrap_container(*v):
         _check_tensor(v)
+        if has_aux:
+            fn_ = aux_fn
+        else:
+            fn_ = fn
         if len(v) == 1:
             return _grad_all(fn_)(*inputs, v[0])
         return _grad_all(fn_)(*inputs, v)
@@ -974,15 +990,18 @@ def jacfwd(fn, grad_position=0, has_aux=False):
         >>> net = MultipleInputsMultipleOutputsNet()
         >>> jac, aux = jacfwd(net, grad_position=0, has_aux=True)(x, y, z)
         >>> print(jac)
-        Tensor(shape=[2, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.00000000e+00,  0.00000000e+00],
-           [ 0.00000000e+00,  0.00000000e+00]],
-          [[ 0.00000000e+00,  4.00000000e+00],
-           [ 0.00000000e+00,  0.00000000e+00]]],
-         [[[ 0.00000000e+00,  0.00000000e+00],
-           [ 6.00000000e+00,  0.00000000e+00]],
-          [[ 0.00000000e+00,  0.00000000e+00],
-           [ 0.00000000e+00,  8.00000000e+00]]]])
+        [[[[ 2.,  0.]
+           [ 0.,  0.]]
+
+          [[ 0.,  4.]
+           [ 0.,  0.]]]
+
+
+         [[[ 0.,  0.]
+           [ 6.,  0.]]
+
+          [[ 0.,  0.]
+           [ 0.,  8.]]]]
         >>> print(aux)
         [[ 1.  4.]
          [ 9. 16.]]
@@ -1166,15 +1185,18 @@ def jacrev(fn, grad_position=0, has_aux=False):
         >>> net = MultipleInputsMultipleOutputsNet()
         >>> jac, aux = jacrev(net, grad_position=0, has_aux=True)(x, y, z)
         >>> print(jac)
-        Tensor(shape=[2, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.00000000e+00,  0.00000000e+00],
-           [ 0.00000000e+00,  0.00000000e+00]],
-          [[ 0.00000000e+00,  4.00000000e+00],
-           [ 0.00000000e+00,  0.00000000e+00]]],
-         [[[ 0.00000000e+00,  0.00000000e+00],
-           [ 6.00000000e+00,  0.00000000e+00]],
-          [[ 0.00000000e+00,  0.00000000e+00],
-           [ 0.00000000e+00,  8.00000000e+00]]]])
+        [[[[ 2.,  0.]
+           [ 0.,  0.]]
+
+          [[ 0.,  4.]
+           [ 0.,  0.]]]
+
+
+         [[[ 0.,  0.]
+           [ 6.,  0.]]
+
+          [[ 0.,  0.]
+           [ 0.,  8.]]]]
         >>> print(aux)
         [[ 1.  4.]
          [ 9. 16.]]

@@ -104,7 +104,7 @@ def test_branch_same_shape():
     x = np.array([-1], np.float32)
     y = np.array([2], np.float32)
     net = Net()
-    grad_net = F.grad(net, grad_position=(1, 1))
+    grad_net = F.grad(net, grad_position=(0, 1))
     context.set_context(mode=context.GRAPH_MODE)
     fgrad = grad_net(Tensor(x), Tensor(y))
     print(fgrad)
