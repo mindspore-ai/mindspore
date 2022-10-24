@@ -45,7 +45,7 @@ __device__ __forceinline__ int32_t GetInsertIndex(const CG &g, const int32_t *id
                                                   CudaAtomicSize *current_index) {
   int32_t candidate_index;
   if (g.thread_rank() == 0) {
-    if (idle_index->load() != 0) {
+    if (idle_index->load(cuda::std::memory_order_relaxed) != 0) {
       // Idle slot position is preferred.
       candidate_index = idle_slot[idle_index->fetch_sub(1)];
     } else {
@@ -114,7 +114,7 @@ template <typename Value>
 __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
                                             size_t elements_per_block, const Value &mean, const Value &stddev,
                                             curandStatePhilox4_32_10_t *state, bool **idle_flags_ptr,
-                                            Value **blocks_ptr) {
+                                            Value *const *blocks_ptr) {
   size_t total_thread_num = blockDim.x * gridDim.x;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num; pos += total_thread_num) {
     const size_t block_idx = indices[pos] / elements_per_block;
@@ -155,7 +155,7 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
 template <typename Value>
 __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
                                    size_t elements_per_block, const Value &default_value, bool **idle_flags_ptr,
-                                   Value **blocks_ptr) {
+                                   Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num;
        pos += blockDim.x * gridDim.x) {
     const size_t block_idx = indices[pos] / elements_per_block;
@@ -179,7 +179,7 @@ __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_element
 // Get all values by indices in blocks.
 template <typename Value>
 __global__ void GetValues(size_t value_dim, size_t total_size, const int *indices, const size_t elements_per_block,
-                          Value **blocks_ptr, Value *outputs) {
+                          Value *const *blocks_ptr, Value *outputs) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / value_dim;
     const size_t offset = pos % value_dim;
@@ -198,7 +198,7 @@ __global__ void GetValues(size_t value_dim, size_t total_size, const int *indice
 // Insert values into map by indices in blocks.
 template <typename Value>
 __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const int *indices, const Value *insert_values,
-                             const size_t elements_per_block, bool **idle_flags_ptr, Value **blocks_ptr) {
+                             const size_t elements_per_block, bool **idle_flags_ptr, Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / value_dim;
     const size_t offset = pos % value_dim;
