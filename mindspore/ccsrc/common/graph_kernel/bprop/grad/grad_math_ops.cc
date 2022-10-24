@@ -15,6 +15,7 @@
  */
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
+#include "common/graph_kernel/bprop/expander/common_utils.h"
 
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDER(kMatMulOpName).SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
@@ -36,5 +37,38 @@ REG_BPROP_BUILDER(kMatMulOpName).SetBody([](const BpropIRBuilder *builder) -> No
     dw = builder->MatMul(x, dout, ((!ta) || tb), (ta && tb));
   }
   return {dx, dw};
+});
+
+REG_BPROP_BUILDER(kAddOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return BinopGradCommon(ib, x, y, dout, dout);
+});
+
+REG_BPROP_BUILDER(kMulOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto bc_dx = ib->Mul(y, dout);
+  auto bc_dy = ib->Mul(x, dout);
+  return BinopGradCommon(ib, x, y, bc_dx, bc_dy);
+});
+
+REG_BPROP_BUILDER(kSubOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
+});
+
+REG_BPROP_BUILDER(kDivOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto bc_x = ib->Emit(kDivOpName, {dout, y});
+  auto bc_y = ib->Emit(kNegOpName, {ib->Mul(bc_x, out)});
+  return BinopGradCommon(ib, x, y, bc_x, bc_y);
 });
 }  // namespace mindspore::expander::bprop
