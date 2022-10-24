@@ -9579,7 +9579,7 @@ class NthElement(Primitive):
 
 
     Supported Platforms:
-         ``Ascend`` ``CPU``
+         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([[1,2,3],[4,5,6]]) , mstype.int8)
