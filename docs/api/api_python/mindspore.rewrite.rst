@@ -53,15 +53,15 @@ mindspore.rewrite
         异常：
             - **TypeError** - 参数 `network` 不是Cell类型对象。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.create_call_function(self, func, targets, args, kwargs)
+    .. py:method:: mindspore.rewrite.SymbolTree.create_call_function(func, targets, args, kwargs)
 
         创建一个Node对象，并生成执行代码插入源码中。源码中以 `args` 和 `kwargs` 为参数调用 `func` 函数。
 
         参数：
             - **func** (FunctionType) - 要被调用的函数。
-            - **targets**  (list[str]) - 表示输出名称。在源代码中作为节点的输出。
+            - **targets** (list[str]) - 表示输出名称。在源代码中作为节点的输出。
             - **args** (Union[MsDtypes, ParamTypes]) - 该节点的参数名称。用作源代码中代码语句的参数。默认为None表示 `cell` 没有参数输入。
-            - **kwargs** ({str: Union[MsDtypes, ParamTypes]}) - 键的类型必须是str，值必须是MsDtypes或类型必须是ParamTypes。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示没有 `kwargs` 输入。
+            - **kwargs** (dict{str,Union[MsDtypes, ParamTypes]}) - 键的类型必须是str，值必须是MsDtypes或类型必须是ParamTypes。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示没有 `kwargs` 输入。
 
         返回：
             一个Node实例。

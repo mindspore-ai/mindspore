@@ -58,7 +58,7 @@ def _environment_check():
 
 
 class Profiler:
-    """
+    r"""
     This class to enable the profiling of MindSpore neural networks.
     MindSpore users can import the mindspore.Profiler, initialize the Profiler object to start profiling,
     and use Profiler.analyse() to stop profiling and analyse the results.
@@ -85,7 +85,7 @@ class Profiler:
             - 2: Memory contains ub_read/write_bw, l1_read/write_bw, l2_read/write_bw, main_mem_read/write_bw etc.
             - 3: MemoryL0 contains l0a_read/write_bw, l0b_read/write_bw, l0c_read/write_bw etc.
             - 4: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio etc.
-            - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub_/write_bw_scalar etc.
+            - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub\_/write_bw_scalar etc.
 
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True. Default: False.
 
