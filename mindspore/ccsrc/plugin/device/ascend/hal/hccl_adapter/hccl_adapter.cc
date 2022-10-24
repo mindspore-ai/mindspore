@@ -294,7 +294,8 @@ bool HcclAdapter::GenTask(const AnfNodePtr &node, HcclDataType datatype,
 
 int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) const {
   if (ops_kernel_builder_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Hccl ops kernel builder is null, may not be inited.";
+    MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Hccl ops kernel builder is null, may not be inited. "
+                         "Please call HCCL init() first.";
   }
   MS_LOG(INFO) << "Start calc workspace size for hccl node " << node->DebugString() << " ,dtype is " << datatype;
   auto [ge_node, ge_graph] = GenerateStubGeNode(node, datatype);

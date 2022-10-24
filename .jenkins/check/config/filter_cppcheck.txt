@@ -36,6 +36,7 @@
 "mindspore/mindspore/ccsrc/backend/graph_compiler/backend_base.cc"                                    "knownConditionTrueFalse"
 "mindspore/mindspore/ccsrc/backend/graph_compiler/backend_base.cc"                                    "variableScope"
 "mindspore/mindspore/core/ops/max_pool.cc"                                                            "zerodivcond"
+"mindspore/core/utils/log_adapter.cc"                                                                 "stlIfStrFind"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"
