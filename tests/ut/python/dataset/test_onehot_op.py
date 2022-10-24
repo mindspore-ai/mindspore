@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import dataset_equal_with_function
+from util import dataset_equal_with_function, config_get_set_seed
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -93,7 +93,7 @@ def test_one_hot_post_aug():
     buffer_size = 100
     seed = 10
     batch_size = 2
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
     data1 = data1.batch(batch_size, drop_remainder=True)
 
@@ -104,6 +104,7 @@ def test_one_hot_post_aug():
         num_iter += 1
 
     assert num_iter == 1
+    ds.config.set_seed(original_seed)
 
 
 def test_one_hot_success():

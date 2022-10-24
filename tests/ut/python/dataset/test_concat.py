@@ -19,6 +19,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as F
 from mindspore import log as logger
+from util import config_get_set_seed
 
 
 # In generator dataset: Number of rows is 3; its values are 0, 1, 2
@@ -303,7 +304,7 @@ def test_concat_12():
     data3 = data1 + data2
     res = [8, 6, 2, 5, 0, 4, 9, 3, 7, 1]
 
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     assert data3.get_dataset_size() == 10
     data3 = data3.shuffle(buffer_size=10)
 
@@ -314,6 +315,7 @@ def test_concat_12():
         assert res[i] == t[0][0]
 
     assert sum([1 for _ in data3]) == 10
+    ds.config.set_seed(original_seed)
 
 
 def test_concat_13():
@@ -332,7 +334,7 @@ def test_concat_13():
     data3 = data1 + data2
     res = [15, 0, 10]
 
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     assert data3.get_dataset_size() == 3
 
     data3 = data3.shuffle(buffer_size=int(data3.get_dataset_size()))
@@ -344,6 +346,7 @@ def test_concat_13():
         assert res[i] == t[0][0]
 
     assert sum([1 for _ in data3]) == 3
+    ds.config.set_seed(original_seed)
 
 
 def test_concat_14():
@@ -423,10 +426,11 @@ def test_concat_16():
     data6 = data3 + data4
     data7 = data5 + data6
 
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
 
     # 57 is the total size of all 4 leaf datasets
     assert data7.get_dataset_size() == 57
+    ds.config.set_seed(original_seed)
 
 
 def test_concat_17():
@@ -447,7 +451,7 @@ def test_concat_17():
     data6 = data3 + data4
     data7 = data5 + data6
 
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     shard_num = 10
     counter = 0
 
@@ -463,6 +467,7 @@ def test_concat_17():
 
     # 29 is the total size of all 4 leaf datasets
     assert counter == 29
+    ds.config.set_seed(original_seed)
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check_dict
+from util import save_and_check_dict, config_get_set_seed
 
 # Note: Number of rows in test.data dataset:  12
 DATA_DIR = ["../data/dataset/testTFTestAllTypes/test.data"]
@@ -35,11 +35,13 @@ def test_shuffle_01():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_01_result.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_02():
@@ -55,11 +57,13 @@ def test_shuffle_02():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_02_result.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_03():
@@ -75,11 +79,13 @@ def test_shuffle_03():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size)
 
     filename = "shuffle_03_result.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_04():
@@ -95,11 +101,13 @@ def test_shuffle_04():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, num_samples=2)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_04_result.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_05():
@@ -115,11 +123,13 @@ def test_shuffle_05():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_05_result.npz"
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_06():
@@ -135,7 +145,7 @@ def test_shuffle_06():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
-    ds.config.set_seed(seed)
+    original_seed = config_get_set_seed(seed)
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     data2 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -144,6 +154,8 @@ def test_shuffle_06():
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
                             data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_equal(item1, item2)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_exception_01():
@@ -156,7 +168,7 @@ def test_shuffle_exception_01():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR)
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     try:
         data1 = data1.shuffle(buffer_size=-1)
         sum([1 for _ in data1])
@@ -164,6 +176,8 @@ def test_shuffle_exception_01():
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input buffer_size is not within the required interval of [2, 2147483647]" in str(e)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_exception_02():
@@ -176,7 +190,7 @@ def test_shuffle_exception_02():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR)
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     try:
         data1 = data1.shuffle(buffer_size=0)
         sum([1 for _ in data1])
@@ -184,6 +198,8 @@ def test_shuffle_exception_02():
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input buffer_size is not within the required interval of [2, 2147483647]" in str(e)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_exception_03():
@@ -196,7 +212,7 @@ def test_shuffle_exception_03():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR)
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     try:
         data1 = data1.shuffle(buffer_size=1)
         sum([1 for _ in data1])
@@ -204,6 +220,8 @@ def test_shuffle_exception_03():
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input buffer_size is not within the required interval of [2, 2147483647]" in str(e)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_exception_05():
@@ -216,7 +234,7 @@ def test_shuffle_exception_05():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR)
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     try:
         data1 = data1.shuffle()
         sum([1 for _ in data1])
@@ -224,6 +242,8 @@ def test_shuffle_exception_05():
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_exception_06():
@@ -236,7 +256,7 @@ def test_shuffle_exception_06():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR)
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     try:
         data1 = data1.shuffle(buffer_size=False)
         sum([1 for _ in data1])
@@ -244,6 +264,8 @@ def test_shuffle_exception_06():
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_shuffle_exception_07():
@@ -256,7 +278,7 @@ def test_shuffle_exception_07():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR)
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     try:
         data1 = data1.shuffle(buffer_size=True)
         sum([1 for _ in data1])
@@ -264,6 +286,8 @@ def test_shuffle_exception_07():
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
+
+    ds.config.set_seed(original_seed)
 
 
 if __name__ == '__main__':

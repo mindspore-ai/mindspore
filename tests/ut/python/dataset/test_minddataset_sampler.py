@@ -22,6 +22,7 @@ import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
+from util import config_get_set_seed
 
 FILES_NUM = 4
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
@@ -787,7 +788,7 @@ def test_cv_minddataset_split_deterministic(add_and_remove_cv_file):
     d = ds.MindDataset(file_name + "0", columns_list,
                        num_readers, shuffle=False)
     # should set seed to avoid data overlap
-    ds.config.set_seed(111)
+    original_seed = config_get_set_seed(111)
     d1, d2 = d.split([0.8, 0.2])
     assert d.get_dataset_size() == 10
     assert d1.get_dataset_size() == 8
@@ -819,6 +820,7 @@ def test_cv_minddataset_split_deterministic(add_and_remove_cv_file):
     assert num_iter == 2
     inter_dataset = [x for x in d1_dataset if x in d2_dataset]
     assert inter_dataset == []  # intersection of  d1 and d2
+    ds.config.set_seed(original_seed)
 
 
 def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
@@ -834,7 +836,7 @@ def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
     d = ds.MindDataset(file_name + "0", columns_list,
                        num_readers, shuffle=False)
     # should set seed to avoid data overlap
-    ds.config.set_seed(111)
+    original_seed = config_get_set_seed(111)
     d1, d2 = d.split([0.8, 0.2])
     assert d.get_dataset_size() == 10
     assert d1.get_dataset_size() == 8
@@ -895,6 +897,8 @@ def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
     assert epoch1_dataset != epoch2_dataset
     assert epoch2_dataset != epoch3_dataset
     assert epoch3_dataset != epoch1_dataset
+
+    ds.config.set_seed(original_seed)
 
 
 def get_data(dir_name, sampler=False):

@@ -29,6 +29,7 @@ import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 from mindspore.mindrecord import FileWriter
+from util import config_get_set_seed
 
 FILES_NUM = 4
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
@@ -518,7 +519,7 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
-    ds.config.set_seed(54321)
+    original_seed = config_get_set_seed(54321)
     epoch1 = []
     epoch2 = []
     epoch3 = []
@@ -575,7 +576,9 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     assert epoch2 == epoch2_new_dataset
     assert epoch3 == epoch3_new_dataset
 
-    ds.config.set_seed(12345)
+    ds.config.set_seed(original_seed)
+
+    original_seed = config_get_set_seed(12345)
     epoch1_new_dataset2 = []
     epoch2_new_dataset2 = []
     epoch3_new_dataset2 = []
@@ -605,6 +608,8 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     assert epoch1 != epoch1_new_dataset2
     assert epoch2 != epoch2_new_dataset2
     assert epoch3 != epoch3_new_dataset2
+
+    ds.config.set_seed(original_seed)
 
 
 def test_cv_minddataset_dataset_size(add_and_remove_cv_file):
@@ -2180,7 +2185,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
     Description: Test without and with shuffle args for MindDataset
     Expectation: Output is equal to the expected output
     """
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     datas_all = []
     index = 0
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -2416,6 +2421,8 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
         shard_count += 1
     assert origin_index != current_index
 
+    ds.config.set_seed(original_seed)
+
 
 def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_files):
     """
@@ -2423,7 +2430,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
     Description: Test distributed MindDataset (with num_shards and shard_id) without and with shuffle args
     Expectation: Output is equal to the expected output
     """
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     datas_all = []
     datas_all_samples = []
     index = 0
@@ -2614,6 +2621,8 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
         shard_count += 1
     assert origin_index != current_index
 
+    ds.config.set_seed(original_seed)
+
 
 def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     """
@@ -2622,7 +2631,7 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
         without and with shuffle args under multiple epochs
     Expectation: Output is equal to the expected output
     """
-    ds.config.set_seed(1)
+    original_seed = config_get_set_seed(1)
     datas_all = []
     datas_all_samples = []
     index = 0
@@ -2783,6 +2792,8 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     assert datas_epoch1 not in (datas_epoch2, datas_epoch3)
     assert datas_epoch2 not in (datas_epoch1, datas_epoch3)
     assert datas_epoch3 not in (datas_epoch2, datas_epoch1)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_field_is_null_numpy():

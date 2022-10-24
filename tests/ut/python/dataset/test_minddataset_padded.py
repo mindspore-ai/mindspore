@@ -616,6 +616,10 @@ def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_resul
         by checking whole result_per_epoch to ensure there is no reshuffling
     Expectation: Output is equal to the expected output
     """
+    original_seed = ds.config.get_seed()
+    ds.config.set_seed(0)
+    assert ds.config.get_seed() == 0
+
     columns_list = ["input_ids", "id", "rating"]
 
     padded_sample = {'id': "-1",
@@ -671,6 +675,9 @@ def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_resul
     partitions(4, 6, 4)
     partitions(5, 5, 3)
     partitions(9, 8, 2)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
 
 
 def get_data(dir_name):
