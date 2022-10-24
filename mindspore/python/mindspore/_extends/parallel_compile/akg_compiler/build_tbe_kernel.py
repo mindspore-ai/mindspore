@@ -177,12 +177,16 @@ def get_inputs_name(input_desc):
     return inputs_name
 
 
-def get_outputs_name(output_desc):
-    """Get output tensor names."""
+def get_outputs_info(output_desc):
+    """Get output tensor names and inplace tensor names."""
     outputs_name = []
+    inplace_names = {}
     for item in output_desc:
-        outputs_name.append(item["tensor_name"])
-    return outputs_name
+        out_name = item["tensor_name"]
+        outputs_name.append(out_name)
+        if isinstance(item.get("inplace_to"), str):
+            inplace_names[out_name] = item["inplace_to"]
+    return outputs_name, inplace_names
 
 
 def get_all_op_name(op_desc):
@@ -218,19 +222,20 @@ def get_inputs_tensor(input_desc, all_tensors):
     return inputs
 
 
+def get_attr_dict(attr_desc):
+    """Parse attr_desc to dict."""
+    attrs = {}
+    if not isinstance(attr_desc, list):
+        return attrs
+    for attr in attr_desc:
+        attrs[attr["name"]] = attr["value"]
+    return attrs
+
+
 def get_op_attrs(op, fusion_op_name):
     """Get op attrs."""
-
-    def _get_attrs(attr_desc):
-        attrs = {}
-        if not isinstance(attr_desc, list):
-            return attrs
-        for attr in attr_desc:
-            attrs[attr["name"]] = attr["value"]
-        return attrs
-
     op_name = op["name"]
-    op_attrs = _get_attrs(op.get("attr"))
+    op_attrs = get_attr_dict(op.get("attr"))
     if op_name == "BatchMatMul":
         op_attrs["dst_type"] = op["output_desc"][0]["data_type"]
         op_attrs["dst_ori_shape"] = op["output_desc"][0].get("ori_shape")
@@ -343,12 +348,101 @@ def update_format(json_dict):
         _update_output_format(op["output_desc"])
 
 
-def build(json_str):
+def gen_args_remap(orig_inputs_name, orig_outputs_name, inputs_name, outputs_name, inplace_names):
+    """Generate the final kernel args indices."""
+    input_indices = []
+    output_indices = []
+    ni = len(orig_inputs_name)
+    for _, name in enumerate(inputs_name):
+        if name not in orig_inputs_name:
+            raise ValueError("Current input name [{}] can not be found in original input names list: {}"
+                             .format(name, orig_inputs_name))
+        input_indices.append(orig_inputs_name.index(name))
+    for _, name in enumerate(outputs_name):
+        if name in orig_outputs_name:
+            output_indices.append(ni + orig_outputs_name.index(name))
+        elif name in inplace_names and inplace_names[name] in orig_inputs_name:
+            output_indices.append(orig_inputs_name.index(inplace_names[name]))
+        else:
+            raise ValueError("Current output name [{}] can not be found in original output names list: {}, and it not "
+                             "inplace to an input tensor".format(name, orig_outputs_name))
+    return input_indices, output_indices
+
+
+def update_json(json_dict, inputs_name, outputs_name, inplace_names, kernel_meta_parent_dir):
+    """update kernel json."""
+
+    def _get_tensor_name(idx):
+        if idx < len(input_indices):
+            orig_idx = input_indices[idx]
+        elif idx - len(input_indices) < len(output_indices):
+            orig_idx = output_indices[idx - len(input_indices)]
+        else:
+            raise ValueError("parameters index >= the sum of input and output tensor numbers: {} vs {}"
+                             .format(idx, len(input_indices) + len(output_indices)))
+        if orig_idx < len(orig_input_names):
+            return orig_input_names[orig_idx]
+        if orig_idx - len(orig_input_names) >= len(orig_output_names):
+            raise ValueError("parameters index [{}]'s original index >= the sum of original input and original output"
+                             "tensor numbers: {} vs {}"
+                             .format(idx, orig_idx, len(orig_input_names) + len(orig_output_names)))
+        return orig_output_names[orig_idx - len(orig_input_names)]
+
+    def _update_parameters(cur_parameters):
+        atomic_tensors = set()
+        for i, p in enumerate(cur_parameters):
+            if p == 0:
+                continue
+            orig_tensor_name = _get_tensor_name(i)
+            if orig_tensor_name not in orig_input_names:
+                atomic_tensors.add(orig_tensor_name)
+        res = [0] * len(orig_input_names)
+        for _, name in enumerate(orig_output_names):
+            p = 1 if name in atomic_tensors else 0
+            res.append(p)
+        return res
+
+    def _save_json():
+        # remove original .json
+        try:
+            os.remove(json_path)
+        except OSError:
+            pass
+        # generate new .json
+        try:
+            with os.fdopen(os.open(json_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fi:
+                json.dump(json_dict, fi, sort_keys=True, indent=4, separators=(',', ':'))
+        except OSError:
+            pass
+
+    global_attrs = get_attr_dict(json_dict.get("global_attrs", []))
+    orig_input_names = global_attrs.get("orig_input_names", [])
+    orig_output_names = global_attrs.get("orig_output_names", [])
+    input_indices, output_indices = gen_args_remap(orig_input_names, orig_output_names,
+                                                   inputs_name, outputs_name, inplace_names)
+    json_name = json_dict.get("op") + ".json"
+    json_path = os.path.join(os.path.realpath(kernel_meta_parent_dir), "kernel_meta", json_name)
+    if os.path.isfile(json_path):
+        with open(json_path, "r") as f:
+            json_dict = json.loads(f.read())
+        # Save args_remap to .json: use this information to fetch the correct address during kernel launch
+        json_dict["args_remap"] = [input_indices, output_indices]
+        # Update parameters: current parameters is relative to current info(the composite optimized info) whose input
+        # and output tensors may be different from the original info, however, the frame can only see the original
+        # info's input and output tensors, so we need to generate a new parameters which is relative to original info.
+        parameters = json_dict.get("parameters", [])
+        new_parameters = _update_parameters(parameters)
+        json_dict["parameters"] = new_parameters
+        # Save the updated json
+        _save_json()
+
+
+def build(json_str, kernel_meta_parent_dir):
     """Build kernel."""
     json_dict = json.loads(json_str)
     update_format(json_dict)
     inputs_name = get_inputs_name(json_dict.get("input_desc", []))
-    outputs_name = get_outputs_name(json_dict["output_desc"])
+    outputs_name, inplace_names = get_outputs_info(json_dict["output_desc"])
     op_names = get_all_op_name(json_dict["op_desc"])
     fusion_op_name = create_fusion_op_name(op_names)
 
@@ -395,9 +489,12 @@ def build(json_str):
         update_config(config, op_names)
         tbe_build(sch, config)
 
+    if inplace_names:
+        update_json(json_dict, inputs_name, outputs_name, inplace_names, kernel_meta_parent_dir)
+
 
 def build_tbe_kernel(json_str, kernel_meta_parent_dir):
     """Build TBE kernel."""
     initialize(kernel_meta_parent_dir)
     with build_config(kernel_meta_parent_dir=kernel_meta_parent_dir):
-        build(json_str)
+        build(json_str, kernel_meta_parent_dir)

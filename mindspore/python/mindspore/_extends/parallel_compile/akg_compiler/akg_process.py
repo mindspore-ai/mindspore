@@ -71,7 +71,7 @@ def _compile_akg_task_ascend(json_strs, attrs):
     akg_compile_dir = compile_dirs.get("akg_compile_dir")
     tbe_compile_dir = compile_dirs.get("tbe_compile_dir")
     composite_graph_dir = compile_dirs.get("composite_graph_dir")
-    attrs = update_attr(attrs, {"dump_composite_graph": composite_graph_dir})
+    attrs = update_attr(attrs, {"dump_composite_graph": composite_graph_dir, "optimize_for_tbe": True})
     for json_str in json_strs:
         json_desc = json.loads(json_str)
         op_name = json_desc["op"]

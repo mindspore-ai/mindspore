@@ -36,6 +36,7 @@ class AkgKernelMod : public AscendKernelMod {
 
  private:
   KernelPackPtr kernel_pack_;
+  std::vector<std::vector<size_t>> args_remap_;
 };
 
 using AkgKernelModPtr = std::shared_ptr<AkgKernelMod>;

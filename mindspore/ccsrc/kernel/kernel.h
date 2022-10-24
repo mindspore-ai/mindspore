@@ -140,6 +140,7 @@ struct KernelJsonInfo {
   uint32_t batch_bind_only;
   uint32_t task_ration;
   std::string core_type;
+  std::vector<std::vector<size_t>> args_remap;
   KernelJsonInfo() : block_dim(0), op_para_size(0) {}
 };
 
@@ -183,6 +184,7 @@ class BACKEND_EXPORT KernelPack {
   static void ParseKernelList(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
   static void ParseModeInArgsFirstField(const std::string &key, const nlohmann::json &js,
                                         KernelJsonInfo *kernel_json_info);
+  static void ParseArgsRemap(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
 
   KernelJsonInfo kernel_json_info_;
   FlexArray *json_;
