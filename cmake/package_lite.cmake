@@ -609,20 +609,6 @@ if(PLATFORM_ARM64)
             endif()
         endif()
     endif()
-    if(MSLITE_ENABLE_KERNEL_EXECUTOR)
-        install(DIRECTORY ${TOP_DIR}/mindspore/core/ops/ DESTINATION ${RUNTIME_INC_DIR}/core/ops
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(DIRECTORY ${TOP_DIR}/mindspore/core/mindapi/ DESTINATION ${RUNTIME_INC_DIR}/core/mindapi
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(FILES ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/kernel_executor/kernel_executor.h DESTINATION
-                ${RUNTIME_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(MSLITE_ENABLE_CONVERTER)
-            install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${GLOG_DIR}
-                    RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        endif()
-    endif()
 elseif(PLATFORM_ARM32)
     if(SUPPORT_NPU)
         install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
@@ -1014,19 +1000,66 @@ else()
             endif()
         endif()
     endif()
-    if(MSLITE_ENABLE_KERNEL_EXECUTOR)
-        install(DIRECTORY ${TOP_DIR}/mindspore/core/ops/ DESTINATION ${RUNTIME_INC_DIR}/core/ops
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(DIRECTORY ${TOP_DIR}/mindspore/core/mindapi/ DESTINATION ${RUNTIME_INC_DIR}/core/mindapi
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(FILES ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/kernel_executor/kernel_executor.h DESTINATION
-                ${RUNTIME_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(MSLITE_ENABLE_CONVERTER)
-            install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0
-                    DESTINATION ${GLOG_DIR} RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        endif()
+endif()
+
+if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+    install(FILES
+            ${TOP_DIR}/mindspore/core/ops/abs.h
+            ${TOP_DIR}/mindspore/core/ops/batch_norm.h
+            ${TOP_DIR}/mindspore/core/ops/ceil.h
+            ${TOP_DIR}/mindspore/core/ops/concat.h
+            ${TOP_DIR}/mindspore/core/ops/equal.h
+            ${TOP_DIR}/mindspore/core/ops/flatten.h
+            ${TOP_DIR}/mindspore/core/ops/gather.h
+            ${TOP_DIR}/mindspore/core/ops/gather_nd.h
+            ${TOP_DIR}/mindspore/core/ops/maximum.h
+            ${TOP_DIR}/mindspore/core/ops/minimum.h
+            ${TOP_DIR}/mindspore/core/ops/reshape.h
+            ${TOP_DIR}/mindspore/core/ops/softmax.h
+            ${TOP_DIR}/mindspore/core/ops/strided_slice.h
+            ${TOP_DIR}/mindspore/core/ops/transpose.h
+            ${TOP_DIR}/mindspore/core/ops/base_operator.h
+            ${TOP_DIR}/mindspore/core/ops/custom.h
+            ${TOP_DIR}/mindspore/core/ops/add.h
+            ${TOP_DIR}/mindspore/core/ops/arg_max.h
+            ${TOP_DIR}/mindspore/core/ops/arg_min.h
+            ${TOP_DIR}/mindspore/core/ops/avg_pool.h
+            ${TOP_DIR}/mindspore/core/ops/conv2d.h
+            ${TOP_DIR}/mindspore/core/ops/conv2d_transpose.h
+            ${TOP_DIR}/mindspore/core/ops/div.h
+            ${TOP_DIR}/mindspore/core/ops/mat_mul.h
+            ${TOP_DIR}/mindspore/core/ops/max_pool.h
+            ${TOP_DIR}/mindspore/core/ops/mul.h
+            ${TOP_DIR}/mindspore/core/ops/pad.h
+            ${TOP_DIR}/mindspore/core/ops/prelu.h
+            ${TOP_DIR}/mindspore/core/ops/topk.h
+            ${TOP_DIR}/mindspore/core/ops/relu.h
+            ${TOP_DIR}/mindspore/core/ops/sigmoid.h
+            DESTINATION ${RUNTIME_INC_DIR}/ops
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES
+            ${TOP_DIR}/mindspore/core/mindapi/base/format.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/types.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/macros.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/shared_ptr.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/type_traits.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/base.h
+            DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES
+            ${TOP_DIR}/mindspore/core/mindapi/ir/common.h
+            ${TOP_DIR}/mindspore/core/mindapi/ir/primitive.h
+            ${TOP_DIR}/mindspore/core/mindapi/ir/value.h
+            DESTINATION ${RUNTIME_INC_DIR}/mindapi/ir
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/kernel_executor/kernel_executor.h DESTINATION
+            ${RUNTIME_INC_DIR}/api COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    if(MSLITE_ENABLE_CONVERTER)
+        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+            RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
 endif()
 

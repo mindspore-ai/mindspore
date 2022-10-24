@@ -26,7 +26,7 @@
 namespace mindspore {
 class KernelExecutorImpl {
  public:
-  KernelExecutorImpl() = default;
+  KernelExecutorImpl();
   ~KernelExecutorImpl();
   Status Build(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
                const std::shared_ptr<Context> &ms_context);
@@ -41,11 +41,10 @@ class KernelExecutorImpl {
   Status GetCustomKernel(const std::shared_ptr<Context> &ms_context);
   Status GetCpuKernel(const std::shared_ptr<Context> &ms_context);
   Status GetOpParameter();
-  void InitTensors(const std::vector<MSTensor> &inputs, const int output_num);
+  Status InitTensors(const std::vector<MSTensor> &inputs, const int output_num);
   void FreeAllResource();
   std::vector<MSTensor> GetOutputs();
   bool TensorIsValid(const MSTensor &ms_tensor, const lite::Tensor *lite_tensor);
-  void Int8TensorAddQuantParam(lite::Tensor *lite_tensor);
 
  private:
   const schema::Primitive *primitive_ = nullptr;
@@ -57,6 +56,8 @@ class KernelExecutorImpl {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
+  std::shared_ptr<flatbuffers::FlatBufferBuilder> fbb_;
+  bool support_fp16_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_KERNEL_EXECUTOR_KERNEL_EXECUTOR_IMPL_H_
