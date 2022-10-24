@@ -32,6 +32,7 @@ constexpr auto kNCHWCIdx = 1;
 constexpr auto kNCHWHeightIdx = 2;
 constexpr auto kNCHWWidthIdx = 3;
 constexpr auto kImageSizeHwNum = 2;
+constexpr auto kUnknownDim = -1;
 }  // namespace
 
 int DynShapeProcess::ProcDynamicInput(std::vector<KernelTensorPtr> *const original_datas,
@@ -73,10 +74,6 @@ std::string GenResultStr(const std::vector<int64_t> &input_vec) {
 
 int DynShapeProcess::CheckBatchSize(std::vector<KernelTensorPtr> *const original_datas,
                                     std::vector<KernelTensorPtr> *const inputs) {
-  if (is_first_invoked_) {
-    is_first_invoked_ = false;
-    return lite::RET_OK;
-  }
   if (input_data_idx_ >= inputs->size()) {
     MS_LOG(ERROR) << " Input data index " << input_data_idx_ << " is larger than input size " << inputs->size();
     return lite::RET_ERROR;
@@ -90,7 +87,7 @@ int DynShapeProcess::CheckBatchSize(std::vector<KernelTensorPtr> *const original
     return lite::RET_ERROR;
   }
   for (uint32_t i = 1; i < cur_shape.size(); ++i) {
-    if (original_shape[i] != cur_shape[i]) {
+    if (original_shape[i] != kUnknownDim && (original_shape[i] != cur_shape[i])) {
       MS_LOG(ERROR) << "Shape Conflict: Original Shape:[" << GenResultStr(original_shape) << "], Current Shape:["
                     << GenResultStr(cur_shape) << "]";
       return lite::RET_ERROR;
@@ -120,13 +117,15 @@ int DynShapeProcess::CheckImageSize(std::vector<KernelTensorPtr> *const original
   }
   auto format = acl_options_->input_format[input_data_idx_];
   if (format == mindspore::Format::NHWC) {
-    if (original_shape[kNHWCCIdx] != cur_shape[kNHWCCIdx] || original_shape[kNHWCNIdx] != cur_shape[kNHWCNIdx]) {
+    if ((original_shape[kNHWCCIdx] != kUnknownDim && (original_shape[kNHWCCIdx] != cur_shape[kNHWCCIdx])) ||
+        (original_shape[kNHWCNIdx] != kUnknownDim && (original_shape[kNHWCNIdx] != cur_shape[kNHWCNIdx]))) {
       MS_LOG(ERROR) << "Shape Conflict: Original Shape:[" << GenResultStr(original_shape) << "], Current Shape:["
                     << GenResultStr(cur_shape) << "]";
       return lite::RET_ERROR;
     }
   } else {
-    if (original_shape[kNCHWCIdx] != cur_shape[kNCHWCIdx] || original_shape[kNCHWNIdx] != cur_shape[kNCHWNIdx]) {
+    if ((original_shape[kNCHWCIdx] != kUnknownDim && (original_shape[kNCHWCIdx] != cur_shape[kNCHWCIdx])) ||
+        (original_shape[kNCHWNIdx] != kUnknownDim && (original_shape[kNCHWNIdx] != cur_shape[kNCHWNIdx]))) {
       MS_LOG(ERROR) << "Shape Conflict: Original Shape:[" << GenResultStr(original_shape) << "], Current Shape:["
                     << GenResultStr(cur_shape) << "]";
       return lite::RET_ERROR;

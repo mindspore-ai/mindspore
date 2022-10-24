@@ -134,6 +134,28 @@ std::vector<Format> ModelProcess::GetInputFormat() {
   return input_formats;
 }
 
+const std::vector<ShapeVector> ModelProcess::GetOutputShape() {
+  std::vector<ShapeVector> shapes;
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return shapes;
+  }
+  size_t output_size = aclmdlGetNumOutputs(model_desc_);
+  for (size_t i = 0; i < output_size; ++i) {
+    aclError ret;
+    aclmdlIODims dims;
+    ret = aclmdlGetCurOutputDims(model_desc_, i, &dims);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Get index: " << i << " output shape failed, ret = " << ret;
+      return shapes;
+    }
+
+    ShapeVector shape(dims.dims, dims.dims + dims.dimCount);
+    shapes.emplace_back(shape);
+  }
+  return shapes;
+}
+
 std::set<std::pair<uint64_t, uint64_t>> ModelProcess::GetDynamicImage() {
   if (model_desc_ == nullptr) {
     MS_LOG(ERROR) << " Model desc is nullptr.";

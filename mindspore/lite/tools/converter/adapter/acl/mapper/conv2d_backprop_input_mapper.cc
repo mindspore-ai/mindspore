@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace lite {
 namespace {
-constexpr auto kNameFormat = "data_format";
+constexpr auto kNameFormat = "format";
 constexpr auto kPrimIndex = 0;
 constexpr auto kFilterIndex = 1;
 constexpr auto kOutBackpropIndex = 2;

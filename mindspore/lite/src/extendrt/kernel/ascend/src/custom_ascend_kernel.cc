@@ -248,5 +248,21 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   UpdateOutputAddr(outputs);
   return true;
 }
+
+std::vector<KernelTensorPtr> CustomAscendKernelMod::RetrieveOutputShape() {
+  const std::vector<ShapeVector> shapes = model_infer_->GetOutputShape();
+  if (shapes.empty()) {
+    MS_LOG(ERROR) << "update output shape fail because got empty shape";
+    return outputs_;
+  }
+  if (shapes.size() != outputs_.size()) {
+    MS_LOG(ERROR) << "shapes size and outputs size are not same. shapes' size: " << shapes.size()
+                  << ". outputs' size: " << outputs_.size();
+  }
+  for (size_t i = 0; i < shapes.size(); ++i) {
+    outputs_.at(i)->SetShapeVector(shapes[i]);
+  }
+  return outputs_;
+}
 }  // namespace acl
 }  // namespace mindspore::kernel

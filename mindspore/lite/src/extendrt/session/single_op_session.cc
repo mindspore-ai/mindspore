@@ -69,6 +69,25 @@ Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context) {
   return kSuccess;
 }
 
+void InitInputSizeList(const std::shared_ptr<CNode> &kernel_node, std::vector<size_t> *input_size_list) {
+  MS_EXCEPTION_IF_NULL(input_size_list);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
+    size_t type_size = GetTypeByte(TypeIdToType(type_id));
+    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
+    size_t tensor_size;
+    if (std::any_of(shape.begin(), shape.end(), [](int64_t tmp) { return tmp < 0; })) {
+      tensor_size = type_size;
+    } else {
+      tensor_size =
+        shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+    }
+    tensor_size = std::max(tensor_size, type_size);
+    (void)input_size_list->emplace_back(tensor_size);
+  }
+}
+
 Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "SingleOpInferSession::CompileGraph";
   std::vector<KernelGraphPtr> all_out_graph;
@@ -82,6 +101,8 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   }
 
   auto &kernel_nodes = kernel_graph_->execution_order();
+  bool update_flag = false;
+  std::vector<kernel::KernelTensorPtr> update_outputs;
   for (const auto &kernel_node : kernel_nodes) {
     mindspore::infer::SetKernelInfo(kernel_node);
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -107,23 +128,7 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
 
     std::vector<size_t> input_size_list;
     std::vector<size_t> output_size_list;
-    input_size_list.clear();
-    output_size_list.clear();
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
-      size_t type_size = GetTypeByte(TypeIdToType(type_id));
-      auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
-      size_t tensor_size;
-      if (std::any_of(shape.begin(), shape.end(), [](int64_t tmp) { return tmp < 0; })) {
-        tensor_size = type_size;
-      } else {
-        tensor_size =
-          shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-      }
-      tensor_size = std::max(tensor_size, type_size);
-      (void)input_size_list.emplace_back(tensor_size);
-    }
+    InitInputSizeList(kernel_node, &input_size_list);
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       TypeId type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, output_index);
@@ -138,6 +143,11 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     kernel_mod->SetOutputSizeList(output_size_list);
 
     AnfAlgo::SetKernelMod(kernel_mod, kernel_node.get());
+
+    if (kernel_name == kNameCustomAscend) {
+      update_flag = true;
+      update_outputs = kernel_mod->RetrieveOutputShape();
+    }
   }
 
   RuntimeUtils::AssignKernelGraphAddress(kernel_graph_);
@@ -164,6 +174,12 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     auto data_type = static_cast<enum DataType>(output->data_type());
     auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
     outputs_.push_back(impl);
+  }
+
+  if (update_flag) {
+    for (size_t i = 0; i < update_outputs.size(); ++i) {
+      outputs_.at(i)->SetShape(update_outputs.at(i)->GetShapeVector());
+    }
   }
   return kSuccess;
 }
