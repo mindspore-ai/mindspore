@@ -26,10 +26,10 @@ namespace ops {
 namespace {
 const int64_t MAX_WINDOW_LEN = 1024 * 1024;
 
-#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                         \
-  case (DTYPE): {                                                                            \
-    LENGTH_VALUE = static_cast<int64_t>(*reinterpret_cast<TYPE *>(LENGTH_TENSOR->data_c())); \
-    break;                                                                                   \
+#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                    \
+  case (DTYPE): {                                                                       \
+    LENGTH_VALUE = static_cast<int64_t>(*static_cast<TYPE *>(LENGTH_TENSOR->data_c())); \
+    break;                                                                              \
   }
 
 abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
