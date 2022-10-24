@@ -34,39 +34,36 @@ const size_t kIndex2 = 2;
 constexpr int64_t kParallelDataNums = 16 * 1024;
 }  // namespace
 
-void RaggedRangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  auto starts_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto starts_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool RaggedRangeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  input_type_ = inputs[kIndex0]->GetDtype();
+  tsplits_type_ = outputs[kIndex0]->GetDtype();
+  return true;
+}
+
+int RaggedRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto starts_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
   size_t starts_dim = starts_shape.size();
-  auto limits_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  auto limits_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  auto limits_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
   size_t limits_dim = limits_shape.size();
-  auto deltas_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-  auto deltas_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 2);
+  auto deltas_shape = inputs[kIndex2]->GetDeviceShapeAdaptively();
   size_t deltas_dim = deltas_shape.size();
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputNum, kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputNum, kernel_node);
-  if (starts_dim > 1) {
-    MS_LOG(EXCEPTION) << "For RaggedRange, the dimension of RaggedRange input starts must be less than 2, but got "
-                      << starts_dim << ".";
-  }
-  if (limits_dim > 1) {
-    MS_LOG(EXCEPTION) << "For RaggedRange, the dimension of RaggedRange input limits must be less than 2, but got "
-                      << limits_dim << ".";
-  }
-  if (deltas_dim > 1) {
-    MS_LOG(EXCEPTION) << "For RaggedRange, the dimension of RaggedRange input deltas must be less than 2, but got "
-                      << deltas_dim << ".";
-  }
-  if (!((starts_dim == limits_dim) && (starts_dim == deltas_dim) && (limits_dim == deltas_dim))) {
-    MS_LOG(EXCEPTION) << "For RaggedRange, starts, limits, and deltas must have the same shape"
-                      << ", but got starts (" << starts_dim << ",)"
-                      << ", limits (" << limits_dim << ",)"
-                      << ", deltas (" << deltas_dim << ",).";
-  }
 
   broadcast_starts_ = starts_dim == 0;
   broadcast_limits_ = limits_dim == 0;
@@ -74,13 +71,7 @@ void RaggedRangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (!broadcast_starts_) in_sizes_.push_back(starts_shape[0]);
   if (!broadcast_limits_) in_sizes_.push_back(limits_shape[0]);
   if (!broadcast_deltas_) in_sizes_.push_back(deltas_shape[0]);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  tsplits_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  if (starts_type != limits_type || starts_type != deltas_type || limits_type != deltas_type) {
-    MS_LOG(EXCEPTION) << "For  RaggedRange, starts, limits, and deltas must have the same type, "
-                      << "but got starts " << starts_type << ", limits " << limits_type << ", deltas " << deltas_type
-                      << ".";
-  }
+  return KRET_OK;
 }
 
 bool RaggedRangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -64,6 +64,12 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
   auto in_shape_limits = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto in_shape_deltas =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(in_shape_starts) || IsDynamicRank(in_shape_limits) || IsDynamicRank(in_shape_deltas)) {
+    auto unknow_rank_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{unknow_rank_ptr});
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("dimension of RaggedRange input starts", SizeToLong(in_shape_starts.size()),
                                            kLessThan, max_dim, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("dimension of RaggedRange input limits", SizeToLong(in_shape_limits.size()),
