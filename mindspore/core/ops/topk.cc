@@ -37,6 +37,14 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x_shape = shape_map[kShape];
   int64_t k_v = 0;
+
+  if ((IsDynamicRank(x_shape)) || ((input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) &&
+                                   (!input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()))) {
+    auto unknown_shape_p = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknown_shape_p, unknown_shape_p});
+  }
+
   // 2rd input is a Tensor when TopK is a dynamic shape operator
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     auto k_ptr = input_args[kInputIndex1]->BuildValue();
