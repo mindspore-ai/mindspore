@@ -27,6 +27,7 @@
 #include "runtime/device/auto_mem_offload.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
+#include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 
 namespace mindspore {
 namespace device {
@@ -65,6 +66,11 @@ class AscendDeviceResManager : public DeviceResManager {
 
   bool SyncStream(size_t stream_id) const override;
   bool SyncAllStreams() const override;
+
+  bool LoadCollectiveCommLib() override {
+    collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
+    return true;
+  }
 
  private:
   friend class AscendKernelExecutor;

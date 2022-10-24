@@ -25,8 +25,6 @@
 #include "mindspore/core/ir/anf.h"
 #include "hccl/hccl_types.h"
 #include "plugin/device/ascend/hal/hccl_adapter/plugin/hccl_plugin.h"
-#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 namespace ge {
 class OpsKernelInfoStore;
@@ -58,18 +56,11 @@ class HcclAdapter {
   bool InitHccl(uint32_t device_id, std::string_view rank_id);
   bool FinalizeHccl();
   const bool Inited() const { return init_flag_; }
-  void SetHcclComm(HcclComm comm) {
-    if (hccl_comm_ == nullptr) hccl_comm_ = comm;
-  }
   HcclComm get_hccl_comm() const { return hccl_comm_; }
   HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
   HcclResult HcclDestroyGroup(const std::string &group) const;
   HcclResult HcclGetRankId(const std::string &group, uint32_t *rank_id) const;
   HcclResult HcclGetRankSize(const std::string &group, uint32_t *rank_size) const;
-
-  HcclResult HcclGetRankId(uint32_t *rank_id) const;
-  HcclResult HcclGetRankSize(uint32_t *rank_size) const;
-
   HcclResult HcclGetLocalRankId(const std::string &group, uint32_t *lcoal_rank_id) const;
   HcclResult HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const;
   HcclResult HcclGetWorldRankFromGroupRank(const std::string &group, uint32_t local_rank, uint32_t *world_rank) const;
@@ -83,19 +74,19 @@ class HcclAdapter {
 
   // for single op
   HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream,
-                           const std::string &group = "") const;
+                           HcclComm comm) const;
   HcclResult HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
-                           const aclrtStream stream, const std::string &group = "") const;
+                           const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                           const aclrtStream stream, const std::string &group = "") const;
+                           const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
-                               const aclrtStream stream, const std::string &group = "") const;
+                               const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
-                      const aclrtStream stream, const std::string &group = "") const;
+                      const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank, const aclrtStream stream,
-                      const std::string &group = "") const;
+                      HcclComm comm) const;
   HcclResult HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params, HcclDataType dataType,
-                          const aclrtStream stream, const std::string &group) const;
+                          const aclrtStream stream, HcclComm comm) const;
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
@@ -106,16 +97,6 @@ class HcclAdapter {
   ~HcclAdapter() = default;
   void InitPlugin();
   void FinalizePlugin();
-
-  HcclComm GetHcomm(const std::string &group) const {
-    if (common::UseMPI()) {
-      return HcclCollectiveGroup::instance().GetGroupComm(group);
-    } else if (hccl_comm_ != nullptr) {
-      return hccl_comm_;
-    } else {
-      MS_LOG(EXCEPTION) << "Couldn't get correct hccl hcom with group " << group;
-    }
-  }
 
   bool InitKernelInfoStore(const std::map<std::string, std::string> options);
   bool FinalizeKernelInfoStore();
@@ -169,6 +150,8 @@ class HcclAdapter {
   std::shared_ptr<::ge::OpsKernelBuilder> ops_kernel_builder_ = nullptr;
 
   bool init_flag_ = false;
+  bool init_kernel_info_store_ = false;
+  bool init_hccl_exec_ = false;
   HcclMode hccl_mode_ = HcclMode::kGraph;
   std::mutex init_mutex_;
 };

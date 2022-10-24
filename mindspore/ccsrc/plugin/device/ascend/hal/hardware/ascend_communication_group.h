@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_COMMUNICATION_GROUP_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_COMMUNICATION_GROUP_H_
 
-#include <mpi.h>
 #include <string>
 #include <vector>
 #include <memory>

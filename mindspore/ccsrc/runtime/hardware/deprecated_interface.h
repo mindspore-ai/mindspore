@@ -50,7 +50,6 @@ class DeprecatedInterface {
   virtual void EraseGeResource() {}
 
   // ascend
-  virtual uint32_t InitCollective() { return 0; }  // return device id
   virtual void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}
   virtual bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) { return true; }
   virtual bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) { return true; }

@@ -151,11 +151,6 @@ bool CollectiveManager::Initialize() {
 
   MS_LOG(INFO) << "Start initializing collective communication for backend: " << device_type_ << "...";
 
-  if (device_type_ == kAscendDevice) {
-    MS_LOG(WARNING) << "The Ascend backend is not supported by CollectiveManager for now. So the collcetive "
-                       "communication lib will be replaced by library on host side.";
-    device_lib_supported_ = false;
-  }
   if (!need_host_collective_) {
     RETURN_IF_FALSE_WITH_LOG(InitDeviceCommLib(), "Failed to initialize device communication library.");
     comm_lib_instance_ = device_comm_lib_instance_;
@@ -447,7 +442,11 @@ bool CollectiveManager::AssignLocalRank() {
     return false;
   }
   all_host_hashs_[global_rank_id_] = host_hash;
-
+  // some case, call init("hccl"), though is one card case and DEVICE_ID is set by user.
+  if (global_rank_size_ <= 1) {
+    local_rank_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    return true;
+  }
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
   RETURN_IF_FALSE_WITH_LOG(host_comm_lib_instance_->AllGatherHostHashName(host_hash, &all_host_hashs_),
                            "AllGather for host names failed.");

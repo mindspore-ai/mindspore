@@ -23,11 +23,12 @@
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
+#include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
+using AscendCollectiveCommLib = mindspore::device::ascend::AscendCollectiveCommLib;
 
 namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
@@ -138,10 +139,11 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
     }
   }
   HcomUtil::GetHcomGroup(NOT_NULL(anf_node), NOT_NULL(&group_));
-  if (common::UseMPI()) {
-    auto comm = HcclCollectiveGroup::instance().GetGroupComm(group_);
-    MS_EXCEPTION_IF_NULL(comm);
-    common::AnfAlgo::SetNodeAttr(kAttrComm, MakeValue<int64_t>((int64_t)comm), anf_node);
+  // pynative with ranktable also need hccl_comm
+  comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
+  if (common::UseHostCollective()) {
+    MS_EXCEPTION_IF_NULL(comm_);
+    common::AnfAlgo::SetNodeAttr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)), anf_node);
   }
   anf_node_ = anf_node;
   CalLoopSize();

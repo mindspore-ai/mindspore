@@ -25,7 +25,7 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
-#include "plugin/device/gpu/hal/device/distribution/collective_init.h"
+#include "distributed/init.h"
 #ifndef _WIN32
 #include "plugin/device/gpu/kernel/nccl/nccl_gpu_kernel.h"
 #endif
@@ -116,7 +116,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_a
   std::vector<TypeId> dtypes(split_count, single_type);
   std::vector<BaseShapePtr> shapes(split_count, single_shape);
   common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, all_to_all_v.get());
-  uint32_t rank_size = device::gpu::CollectiveInitializer::instance().GetGroupSize(group);
+  uint32_t rank_size = distributed::collective::CollectiveManager::instance()->GetGroupSize(group);
   std::vector<int64_t> rank_ids(rank_size, 0);
   for (uint32_t i = 0; i < rank_size; ++i) {
     rank_ids[i] = static_cast<int64_t>(i);

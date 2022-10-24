@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 
@@ -101,16 +102,41 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   if (initialized_) {
     return false;
   }
-  if (!common::UseHostCollective()) {
-    return InitializeHccl();
+  try {
+    if (!common::UseHostCollective()) {
+      return InitializeHccl();
+    }
+    std::string rank_id_str = std::to_string(global_rank);
+    (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "Ascend collective communication initialization failed." << GetErrorMessage(true)
+                      << "#dmsg#Framework Error Message:#dmsg#" << e.what();
+    throw;
   }
-  std::string rank_id_str = std::to_string(global_rank);
-  (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   local_rank_id_ = local_rank_id;
   initialized_ = true;
   finalized_ = false;
+  return true;
+}
+
+bool AscendCollectiveCommLib::DestroyHcclComm() {
+  for (auto &group : groups_) {
+    CHECK_IF_NULL(group.second);
+    if (!group.second->Finalize()) {
+      return false;
+    }
+  }
+  groups_.clear();
+  bool res = hccl::HcclAdapter::GetInstance().FinalizeHccl();
+  if (!res) {
+    MS_LOG(ERROR) << "Hccl finalize failed";
+    return false;
+  }
   return true;
 }
 
@@ -145,6 +171,9 @@ bool AscendCollectiveCommLib::CreateCommunicationGroup(const std::string &group_
 }
 
 HcclComm AscendCollectiveCommLib::HcclCommunicator(const std::string &group_name) {
+  if (!common::UseHostCollective()) {
+    return hccl::HcclAdapter::GetInstance().get_hccl_comm();
+  }
   CHECK_RET((groups_.count(group_name) != 0), true, "The HCCL group " + group_name + " does not existed.");
   auto group = std::dynamic_pointer_cast<AscendCommunicationGroup>(groups_[group_name]);
   CHECK_IF_NULL(group);

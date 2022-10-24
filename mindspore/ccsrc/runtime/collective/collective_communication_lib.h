@@ -71,7 +71,11 @@ class CollectiveCommunicationLib {
     return true;
   }
 
+  // Destroy device group. This is only needed on device side with rank_table.
   virtual bool DestroyDeviceCommunicationGroup(const std::string &group_name) { return true; }
+
+  // Destroy hccl comm createed on host side. This is needed when host distribute needed.
+  virtual bool DestroyCollectiveComms() { return true; }
 
   // Destroy the communication group.
   virtual bool DestroyCommunicationGroup(const std::string &group_name);

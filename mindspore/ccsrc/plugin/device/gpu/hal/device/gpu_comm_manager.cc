@@ -18,13 +18,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/parallel_context.h"
-#include "plugin/device/gpu/hal/device/distribution/collective_init.h"
-
-using CollectiveInitializer = mindspore::device::gpu::CollectiveInitializer;
-using CreateCommGroupFunc = mindspore::device::gpu::CreateCommGroupFunc;
-using GetRankIDByGroupFunc = mindspore::device::gpu::GetRankIDByGroupFunc;
-using GetGroupSizeFunc = mindspore::device::gpu::GetGroupSizeFunc;
-using DestroyGroupFunc = mindspore::device::gpu::DestroyGroupFunc;
+#include "distributed/init.h"
 
 namespace mindspore {
 namespace {
@@ -36,7 +30,7 @@ class GpuCommManager : public CommManager {
   ~GpuCommManager() override = default;
 
   bool CreateGroupSync(const std::string &group, const std::vector<unsigned int> &rank_id_list) const override {
-    bool ret = CollectiveInitializer::instance().CreateCommunicationGroup(group, rank_id_list);
+    bool ret = distributed::collective::CollectiveManager::instance()->CreateCommunicationGroup(group, rank_id_list);
     if (!ret) {
       MS_LOG(ERROR) << "Failed to create group " << group << " for rank id list " << rank_id_list;
       return ret;
@@ -47,19 +41,19 @@ class GpuCommManager : public CommManager {
   }
 
   bool GetRankID(const std::string &group, unsigned int *rank_id) const override {
-    *rank_id = CollectiveInitializer::instance().GetRankIDByGroup(group);
+    *rank_id = distributed::collective::CollectiveManager::instance()->GetRankId(group);
     MS_LOG(DEBUG) << "This process rank id is " << *rank_id << " in group " << group;
     return true;
   }
 
   bool GetRankSize(const std::string &group, unsigned int *rank_size) const override {
-    *rank_size = CollectiveInitializer::instance().GetGroupSize(group);
+    *rank_size = distributed::collective::CollectiveManager::instance()->GetGroupSize(group);
     MS_LOG(DEBUG) << "Group " << group << " size is " << *rank_size;
     return true;
   }
 
   bool DestroyGroup(const std::string &group) const override {
-    bool ret = CollectiveInitializer::instance().DestroyCommunicationGroup(group);
+    bool ret = distributed::collective::CollectiveManager::instance()->DestroyCommunicationGroup(group);
     if (!ret) {
       MS_LOG(ERROR) << "Failed to destroy group " << group;
       return ret;
@@ -75,7 +69,7 @@ class GpuCommManager : public CommManager {
     MS_EXCEPTION_IF_NULL(parallel_context);
     if (parallel_context->parallel_mode() != parallel::kStandalone) {
       // Check NCCL inited.
-      if (!CollectiveInitializer::instance().collective_inited()) {
+      if (!distributed::collective::CollectiveManager::instance()->initialized()) {
         MS_LOG(DEBUG) << "NCLL not inited, return rank_id = 0";
         return rank_id;
       }

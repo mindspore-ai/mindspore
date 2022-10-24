@@ -25,7 +25,7 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/device/gpu_stream_assign.h"
-#include "plugin/device/gpu/hal/device/distribution/collective_init.h"
+#include "distributed/init.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/hardware/gpu_somas.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
@@ -96,9 +96,10 @@ void GPUDeviceContext::Initialize() {
 
 void GPUDeviceResManager::Initialize() {
   // Set device id
-  if (CollectiveInitializer::instance().collective_inited()) {
+  if (distributed::collective::CollectiveManager::instance()->initialized()) {
     DeviceContextKey old_key = device_context_->device_context_key();
-    device_context_->device_context_key_.device_id_ = CollectiveInitializer::instance().local_rank_id();
+    device_context_->device_context_key_.device_id_ =
+      distributed::collective::CollectiveManager::instance()->local_rank_id();
 
     DeviceContextManager::GetInstance().UpdateDeviceContextKey(old_key, device_context_->device_context_key());
 
@@ -126,21 +127,10 @@ void GPUDeviceResManager::Initialize() {
   }
 
   // Initialize NCCL.
-  if (CollectiveInitializer::instance().collective_inited()) {
-    auto collective_handle = CollectiveInitializer::instance().collective_handle();
-    if (collective_handle != nullptr) {
-#ifndef _WIN32
-      MS_LOG(INFO) << "Start initializing NCCL communicator for device "
-                   << device_context_->device_context_key().device_id_;
-      auto init_nccl_comm_funcptr =
-        reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle), "InitNCCLComm"));
-      MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
-      (*init_nccl_comm_funcptr)();
-      MS_LOG(INFO) << "End initializing NCCL communicator.";
-#else
-      MS_LOG(EXCEPTION) << "windows not support nccl.";
+  if (distributed::collective::CollectiveManager::instance()->initialized()) {
+#if defined(_WIN32)
+    MS_LOG(EXCEPTION) << "windows not support nccl.";
 #endif
-    }
   }
 }
 
@@ -717,7 +707,7 @@ bool GPUDeviceResManager::SyncAllStreams() const {
 }
 
 uint32_t GPUKernelExecutor::GetRankID() const {
-  bool collective_inited = CollectiveInitializer::instance().collective_inited();
+  bool collective_inited = distributed::collective::CollectiveManager::instance()->initialized();
   uint32_t rank_id = 0;
   if (collective_inited) {
     if (!CommManager::GetInstance().GetRankID(kNcclWorldGroup, &rank_id)) {

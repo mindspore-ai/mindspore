@@ -23,6 +23,14 @@ MPICollectiveCommLib::MPICollectiveCommLib() : world_group_(MPI_GROUP_NULL) {
   global_group_name_ = kMPIGlobalGroupName;
 }
 
+MPICollectiveCommLib::~MPICollectiveCommLib() {
+  int finalized;
+  (void)MPI_Finalized(&finalized);
+  if (finalized == 0) {
+    (void)MPI_Finalize();
+  }
+}
+
 bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t, uint32_t) {
   if (initialized_) {
     return false;

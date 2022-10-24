@@ -76,7 +76,7 @@
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
-#include "plugin/device/gpu/hal/device/distribution/collective_init.h"
+#include "distributed/init.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/config_manager.h"
@@ -98,13 +98,10 @@ namespace mindspore {
 namespace session {
 namespace gpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
-using CollectiveInitializer = device::gpu::CollectiveInitializer;
-using GetLocalRankId = device::gpu::GetLocalRankId;
-using InitNCCLComm = device::gpu::InitNCCLComm;
 
 void GPUSession::Init(uint32_t device_id) {
-  if (CollectiveInitializer::instance().collective_inited()) {
-    device_id = CollectiveInitializer::instance().local_rank_id();
+  if (distributed::collective::CollectiveManager::instance()->initialized()) {
+    device_id = distributed::collective::CollectiveManager::instance()->local_rank_id();
   }
   bool ret = device::gpu::CudaDriver::SetDevice(UintToInt(device_id));
   if (!ret) {
@@ -113,21 +110,12 @@ void GPUSession::Init(uint32_t device_id) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
-  if (CollectiveInitializer::instance().collective_inited()) {
-    auto collective_handle = CollectiveInitializer::instance().collective_handle();
-    if (collective_handle != nullptr) {
+  if (distributed::collective::CollectiveManager::instance()->initialized()) {
 #ifndef _WIN32
-      MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_id;
-      auto init_nccl_comm_funcptr =
-        reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle), "InitNCCLComm"));
-      MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
-      (*init_nccl_comm_funcptr)();
-      MS_LOG(INFO) << "End initializing NCCL communicator.";
-      rank_id_ = GetRankId();
+    rank_id_ = GetRankId();
 #else
-      MS_LOG(EXCEPTION) << "windows not support nccl.";
+    MS_LOG(EXCEPTION) << "windows not support nccl.";
 #endif
-    }
   }
 #ifndef ENABLE_SECURITY
   auto &json_parser = DumpJsonParser::GetInstance();

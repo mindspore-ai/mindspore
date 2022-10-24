@@ -72,6 +72,7 @@ class HcclKernel : public AscendKernelMod {
   mutable std::vector<size_t> mutable_workspace_size_list_;
   std::string op_name_;
   std::string group_;
+  HcclComm comm_;
   std::mutex hccl_mutex_;
   std::condition_variable cond_;
   ulong loop_size_{0};
