@@ -27,6 +27,13 @@ MS_REG_GPU_KERNEL_ONE(FusedAddReluGradV2,
                       FusedAddReluGradV2GpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(FusedAddReluGradV2,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeUInt32)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      FusedAddReluGradV2GpuKernelMod, double)
+MS_REG_GPU_KERNEL_ONE(FusedAddReluGradV2,
+                      KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeUInt32)
