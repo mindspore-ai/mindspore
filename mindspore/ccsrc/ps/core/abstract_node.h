@@ -136,13 +136,6 @@ class BACKEND_EXPORT AbstractNode : public Node {
   void Response(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta, const void *data,
                 size_t size);
 
-  std::shared_ptr<CommunicatorBase> GetOrCreateHttpComm(const std::string &ip, uint16_t port,
-                                                        const std::shared_ptr<TaskExecutor> &task_executor);
-  std::shared_ptr<CommunicatorBase> GetOrCreateTcpComm(const std::string &scheduler_ip, std::int16_t scheduler_port,
-                                                       uint32_t worker_num, uint32_t server_num,
-                                                       const std::shared_ptr<TaskExecutor> &task_executor);
-
-  void SetIterationResult(size_t last_iteration, bool is_iteration_valid);
   bool HasIterationFailed(uint32_t iteration_num) const;
   // register cancel SafeMode function to node
   void SetCancelSafeModeCallBack(const CancelSafeModeFn &fn) { cancelSafeModeFn_ = fn; }

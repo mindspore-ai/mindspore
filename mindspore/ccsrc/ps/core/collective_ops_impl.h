@@ -25,7 +25,6 @@
 #include "proto/ps.pb.h"
 #include "ps/ps_context.h"
 #include "ps/core/server_node.h"
-#include "ps/core/common.h"
 
 namespace mindspore {
 namespace fl {

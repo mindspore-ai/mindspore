@@ -79,7 +79,8 @@ class MirrorPadInfer : public abstract::OpInferBase {
     for (size_t i = 0; i < paddings_arg.size(); i = i + kPaddingsSecondDimSize) {
       paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));
     }
-    (void)CheckAndConvertUtils::CheckInteger(kPaddingsSize, paddings_attr.size(), kEqual, x_shape.size(), prim_name);
+    (void)CheckAndConvertUtils::CheckInteger(kPaddingsSize, SizeToLong(paddings_attr.size()), kEqual,
+                                             SizeToLong(x_shape.size()), prim_name);
     int64_t size = x_shape.size();
     if (size < 0 || size > MAX_PADDINGS) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
