@@ -76,9 +76,6 @@ void Profiler::SetRunTimeData(const std::string &op_name, const uint64_t start, 
 
 void Profiler::RecordOneStepStartEndInfo() {
   // Multi-graph dotting data is not supported.
-  auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_manage_inst);
-  auto dynamic_status = profiler_manage_inst->GetNetDynamicShapeStatus();
   std::lock_guard<std::mutex> locker(record_mutex_);
   uint32_t vector_size = static_cast<uint32_t>(step_start_end_info_vector_.size());
   step_start_end_info_.iter_start_op_name = step_start_end_info_vector_[0];
@@ -93,10 +90,8 @@ void Profiler::RecordOneStepStartEndInfo() {
       (void)step_start_end_info_vector_.erase(step_start_end_info_vector_.begin(),
                                               step_start_end_info_vector_.begin() + iter_end_op_index_ + 1);
     } else {
-      if ((dynamic_status && constom_vector_size_ == vector_size) || !dynamic_status) {
-        all_step_start_end_info_.push_back(step_start_end_info_);
-        step_start_end_info_vector_.clear();
-      }
+      all_step_start_end_info_.push_back(step_start_end_info_);
+      step_start_end_info_vector_.clear();
     }
   } else {
     all_step_start_end_info_.push_back(step_start_end_info_);
@@ -155,7 +150,6 @@ void Profiler::FindOneStepIterEndOp(uint32_t vector_size) {
     }
   }
   if (has_find_) {
-    constom_vector_size_ = iter_end_op_index_ + 1;
     step_start_end_info_.iter_end_op_name = step_start_end_info_vector_[iter_end_op_index_];
   } else {
     step_start_end_info_.iter_end_op_name = step_start_end_info_vector_[step_start_end_info_vector_.size() - 1];

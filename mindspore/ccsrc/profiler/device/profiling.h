@@ -126,7 +126,6 @@ class BACKEND_EXPORT Profiler {
   std::string profiling_options_;
   uint32_t iter_end_op_index_ = 0;
   uint32_t fp_start_op_index_ = 1;
-  uint32_t constom_vector_size_ = 0;
   std::string op_type_ = "GetNext";
 
  private:
