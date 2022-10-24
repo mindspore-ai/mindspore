@@ -203,11 +203,12 @@ public class ModelParallelRunner {
             break;
         }
         rwLock.writeLock().lock();
-        if (modelParallelRunnerPtr != 0L) {
-            this.free(modelParallelRunnerPtr);
-            modelParallelRunnerPtr = 0L;
-        }
+        long modelParallelRunnerTempPtr = modelParallelRunnerPtr;
+        modelParallelRunnerPtr = 0L;
         rwLock.writeLock().unlock();
+        if (modelParallelRunnerTempPtr != 0L) {
+            this.free(modelParallelRunnerTempPtr);
+        }
     }
 
     private native long init(String modelPath, long runnerConfigPtr);
