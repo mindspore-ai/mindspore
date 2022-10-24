@@ -4247,6 +4247,8 @@ def argmax(a, axis=None):
         [2 2]
     """
     a = _to_tensor(a)
+    if a.dtype == mstype.bool_:
+        a = a.astype(mstype.int32)
     return a.argmax(axis)
 
 
