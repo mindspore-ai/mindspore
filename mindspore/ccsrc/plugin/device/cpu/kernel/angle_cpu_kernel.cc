@@ -58,8 +58,8 @@ bool AngleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 template <typename T, typename T2>
 bool AngleCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T2 *>(outputs[0]->addr);
+  auto input_addr = static_cast<T *>(inputs[0]->addr);
+  auto output_addr = static_cast<T2 *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size / sizeof(T2);
   auto task = [output_addr, input_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
