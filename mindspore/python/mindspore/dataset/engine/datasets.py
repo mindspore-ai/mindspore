@@ -3067,6 +3067,11 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
     def launch(self, op_id=-1):
         self.op_id = op_id
         logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
+        if self.is_mp_enabled():
+            logger.warning('Launching a new Python multiprocessing pool while a pool already exists! \
+                The existing pool will be terminated first.')
+            self.terminate()
+        self.threads_to_workers = {}
         self.create_pool()
 
     def create_pool(self):
@@ -3113,7 +3118,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         Returns:
             list of strings
         """
-        if not self.is_mp_enabled:
+        if not self.is_mp_enabled():
             return []
         if not self.pids:
             self.pids = []
