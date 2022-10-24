@@ -7010,6 +7010,8 @@ class Tensor(Tensor_):
                 of `index` should be in [0, b), where the b is the size of input tensor in the `dim` dimension.
             source (Tensor): The input tensor with the value to add. Must have same data type as input tensor.
                 The shape must be the same as input tensor except the `dim` th dimension.
+
+        Keyword args:
             alpha (number.Number): the scalar multiplier for `source`. Default: 1.
 
         Returns:

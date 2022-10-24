@@ -350,6 +350,7 @@ from .nn_func import (
     hinge_embedding_loss,
     lp_pool1d,
     lp_pool2d,
+    mse_loss,
 )
 from .linalg_func import (
     svd,
@@ -423,7 +424,8 @@ from .image_func import (
     crop_and_resize
 )
 from .spectral_func import (
-    blackman_window
+    blackman_window,
+    bartlett_window,
 )
 
 __all__ = []

@@ -62,6 +62,7 @@ mindspore.ops.function
     mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.cross_entropy
     mindspore.ops.hinge_embedding_loss
+    mindspore.ops.mse_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
 
@@ -494,6 +495,7 @@ Parameter操作函数
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.bartlett_window
     mindspore.ops.blackman_window
 
 其他函数

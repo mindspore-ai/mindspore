@@ -20,7 +20,7 @@ from mindspore.common import dtype as mstype
 from .._primitive_cache import _get_cache_prim
 
 
-def blackman_window(window_length, periodic=True, dtype=mstype.float32):
+def blackman_window(window_length, periodic=True, *, dtype=None):
     r"""
     Blackman window function.
 
@@ -42,11 +42,14 @@ def blackman_window(window_length, periodic=True, dtype=mstype.float32):
             The input data should be an integer with a value of [0, 1000000].
         periodic (bool): If True, returns a window to be used as periodic function.
             If False, return a symmetric window. Default: True.
-        dtype (mindspore.dtype): the desired data type of returned tensor. Only float16, float32 and float64 is allowed.
-            Default: mindspore.float32.
+
+    Keyword args:
+        dtype (mindspore.dtype): the desired data type of returned tensor.
+            Only float16, float32 and float64 is allowed. Default: None.
 
     Returns:
         A 1-D tensor of size `window_length` containing the window. Its datatype is set by the attr `dtype`.
+        If 'dtype' is None, output datatype is float32.
 
     Raises:
         TypeError: If `window_length` is not a Tensor.
@@ -67,13 +70,74 @@ def blackman_window(window_length, periodic=True, dtype=mstype.float32):
           8.4922993e-01  1.0000000e+00  8.4922981e-01  5.0978690e-01
           2.0077008e-01  4.0212870e-02]
     """
+    if dtype is None:
+        dtype = mstype.float32
 
     blackman_window_op = _get_cache_prim(P.BlackmanWindow)(periodic, dtype)
     return blackman_window_op(window_length)
 
 
+def bartlett_window(window_length, periodic=True, *, dtype=None):
+    r"""
+    Bartlett window function.
+
+    The input `window_length` is a tensor that datatype must be a integer, which controlling the returned window size.
+    In particular, if `window_length` = 1, the returned window contains a single value 1.
+
+    Attr `periodic` determines whether the returned window trims off the last duplicate value from the symmetric
+    window and is ready to be used as a periodic window with functions. Therefore, if attr `periodic` is true,
+    the "N" in formula is in fact `window_length` + 1.
+
+    .. math::
+
+        w[n] = 1 - \left| \frac{2n}{N-1} - 1 \right| = \begin{cases}
+        \frac{2n}{N - 1} & \text{if } 0 \leq n \leq \frac{N - 1}{2} \\
+        2 - \frac{2n}{N - 1} & \text{if } \frac{N - 1}{2} < n < N \\
+        \end{cases},
+
+        \text{where : N is the full window size.}
+
+    Args:
+        window_length (Tensor): The size of returned window, with data type int32, int64.
+            The input data should be an integer with a value of [0, 1000000].
+        periodic (bool): If True, returns a window to be used as periodic function.
+            If False, return a symmetric window. Default: True.
+
+    Keyword args:
+        dtype (mindspore.dtype): The desired datatype of returned tensor.
+            Only float16, float32 and float64 are allowed. Default: None.
+
+    Returns:
+        A 1-D tensor of size `window_length` containing the window. Its datatype is set by the attr `dtype`.
+        If `dtype` is None, output datatype is float32.
+
+    Raises:
+        TypeError: If `window_length` is not a Tensor.
+        TypeError: If the type of `window_length` is not one of: int32, int64.
+        TypeError: If `periodic` is not a bool.
+        TypeError: If `dtype` is not one of: float16, float32, float64.
+        ValueError: If the value range of `window_length` is not [0,1000000].
+        ValueError: If the dimension of `window_length` is not 0.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> window_length = Tensor(5, mstype.int32)
+        >>> output = ops.bartlett_window(window_length, periodic=True, dtype=mstype.float32)
+        >>> print(output)
+        [0. 0.4 0.8 0.8 0.4]
+    """
+    if dtype is None:
+        dtype = mstype.float32
+
+    bartlett_window_op = _get_cache_prim(P.BartlettWindow)(periodic, dtype)
+    return bartlett_window_op(window_length)
+
+
 __all__ = [
-    'blackman_window'
+    'blackman_window',
+    'bartlett_window',
 ]
 
 __all__.sort()
