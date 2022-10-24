@@ -849,13 +849,14 @@ class Profiler:
             finally:
                 pass
 
-            flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
-                                       self._dev_id, self._rank_id, is_training_mode_flag)
-            logger.info("Profiling: analyzing the operation FLOPs.")
-            flops_parser.execute()
         else:
             dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
             dynamic_parser.write_dynamic_shape_data()
+
+        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id, self._rank_id,
+                                   is_training_mode_flag)
+        logger.info("Profiling: analyzing the operation FLOPs.")
+        flops_parser.execute()
 
         self._ascend_graph_memory_analyse(points)
         self._ascend_graph_hccl_analyse()
