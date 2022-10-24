@@ -31,6 +31,9 @@
 #include "src/common/log_adapter.h"
 #include "src/litert/lite_session.h"
 #include "src/common/file_utils.h"
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+#include "src/common/random_data_generator.h"
+#endif
 #include "src/common/config_file.h"
 #include "src/litert/cpu_info.h"
 
@@ -59,6 +62,75 @@ ExpressionLoader CreateExpressionLoader(const ExpressionLoader &loader) {
   return loader_;
 }
 
+#if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
+Status ModelImpl::BuildAndRun(const void *model_data, size_t data_size, ModelType model_type,
+                              const std::shared_ptr<Context> &model_context) {
+  Status ret = this->Build(model_data, data_size, model_type, model_context);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  for (auto &tensor : this->GetInputs()) {
+    if (tensor.Shape().empty() || tensor.DataSize() == 0 ||
+        std::find(tensor.Shape().begin(), tensor.Shape().end(), -1) != tensor.Shape().end()) {
+      return kSuccess;
+    }
+    auto status = lite::GenRandomData(&tensor);
+    if (status != RET_OK) {
+      return kLiteError;
+    }
+  }
+  ret = this->Predict(nullptr, nullptr);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  return kSuccess;
+}
+
+Status ModelImpl::BuildAndRun(const std::string &model_path, ModelType model_type,
+                              const std::shared_ptr<Context> &model_context) {
+  Status ret = this->Build(model_path, model_type, model_context);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  for (auto &tensor : this->GetInputs()) {
+    if (tensor.Shape().empty() || tensor.DataSize() == 0 ||
+        std::find(tensor.Shape().begin(), tensor.Shape().end(), -1) != tensor.Shape().end()) {
+      return kSuccess;
+    }
+    auto status = lite::GenRandomData(&tensor);
+    if (status != RET_OK) {
+      return kLiteError;
+    }
+  }
+  ret = this->Predict(nullptr, nullptr);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  return kSuccess;
+}
+
+Status ModelImpl::BuildAndRun() {
+  Status ret = this->Build();
+  if (ret != kSuccess) {
+    return ret;
+  }
+  for (auto &tensor : this->GetInputs()) {
+    if (tensor.Shape().empty() || tensor.DataSize() == 0 ||
+        std::find(tensor.Shape().begin(), tensor.Shape().end(), -1) != tensor.Shape().end()) {
+      return kSuccess;
+    }
+    auto status = lite::GenRandomData(&tensor);
+    if (status != RET_OK) {
+      return kLiteError;
+    }
+  }
+  ret = this->Predict(nullptr, nullptr);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  return kSuccess;
+}
+#endif
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
   if (model_data == nullptr) {

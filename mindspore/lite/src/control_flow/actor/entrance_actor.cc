@@ -25,6 +25,11 @@ const constexpr int kToExitIndex = 0;
 }
 namespace mindspore::lite {
 void LiteEntranceOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context) {
+  auto input_actor_id_data_vec = input_actor_id_data_[inputs->op_id_];
+  if (std::find(input_actor_id_data_vec.begin(), input_actor_id_data_vec.end(), inputs) !=
+      input_actor_id_data_vec.end()) {
+    return;
+  }
   input_actor_id_data_[inputs->op_id_].push_back(inputs);
   if (input_actor_id_data_[inputs->op_id_].size() < kernel_->in_tensors().size()) {
     return;
@@ -44,7 +49,7 @@ void LiteEntranceOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *c
 
 int LiteEntranceOpActor::InitInputData() {
   auto ret = SetInputShape();
-
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "set input shape failed.");
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->out_tensors()[i + 1];
     auto src_tensor = inputs_data_[i];
@@ -59,9 +64,11 @@ int LiteEntranceOpActor::InitInputData() {
 }
 
 int LiteEntranceOpActor::SetInputShape() {
+  CHECK_NULL_RETURN(kernel_);
   auto ret = RET_OK;
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto &output_tensor = kernel_->out_tensors()[i + 1];
+    CHECK_NULL_RETURN(inputs_data_[i]);
     if (output_tensor->shape() == inputs_data_[i]->shape()) {
       continue;
     }

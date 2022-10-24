@@ -168,6 +168,14 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
         )
 
+if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${SRC_DIR}/common/thread_utils.cc
+            ${SRC_DIR}/common/random_data_generator.cc
+            )
+endif()
+
 set(MODEL_LOADER_FRAMEWORK_SRC
         ${MODEL_LOADER_FRAMEWORK_SRC}
         ${SRC_DIR}/extendrt/mindir_loader/model_loader.cc

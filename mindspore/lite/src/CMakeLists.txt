@@ -143,6 +143,14 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         )
 
+if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/thread_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/random_data_generator.cc
+            )
+endif()
+
 set(MODEL_LOADER_FRAMEWORK_SRC
         ${MODEL_LOADER_FRAMEWORK_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/model_loader.cc
