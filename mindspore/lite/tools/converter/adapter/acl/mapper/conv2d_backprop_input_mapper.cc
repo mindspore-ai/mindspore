@@ -26,11 +26,6 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr auto kNameFormat = "format";
-constexpr auto kPrimIndex = 0;
-constexpr auto kFilterIndex = 1;
-constexpr auto kOutBackpropIndex = 2;
-constexpr auto kInputSizeIndex = 3;
-constexpr auto kInputNum = 4;
 }  // namespace
 
 STATUS Conv2DBackpropInputMapper::Mapper(const CNodePtr &cnode) {
@@ -61,24 +56,6 @@ STATUS Conv2DBackpropInputMapper::Mapper(const CNodePtr &cnode) {
   }
   value_node->set_value(dst_prim);
 
-  if (AdjustInputOrder(cnode) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Adjust input order failed.";
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-STATUS Conv2DBackpropInputMapper::AdjustInputOrder(const CNodePtr &cnode) {
-  // original input order: out_backprop, filter, input_sizes
-  // new order: input_sizes, filter, out_backprop
-  if (cnode->inputs().size() != kInputNum) {
-    MS_LOG(ERROR) << "Input num must be " << kInputNum << ",real num " << cnode->inputs().size();
-    return lite::RET_ERROR;
-  }
-  auto inputs = cnode->inputs();
-  std::vector<AnfNodePtr> new_inputs = {inputs[kPrimIndex], inputs[kInputSizeIndex], inputs[kOutBackpropIndex],
-                                        inputs[kFilterIndex]};
-  cnode->set_inputs(new_inputs);
   return lite::RET_OK;
 }
 
