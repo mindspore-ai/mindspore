@@ -16,6 +16,7 @@ Neural Network
     mindspore.ops.adaptive_avg_pool3d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
+    mindspore.ops.bias_add
     mindspore.ops.conv2d
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
@@ -102,6 +103,8 @@ Element-by-Element Operations
     mindspore.ops.acos
     mindspore.ops.acosh
     mindspore.ops.add
+    mindspore.ops.addcdiv
+    mindspore.ops.addcmul
     mindspore.ops.addn
     mindspore.ops.asin
     mindspore.ops.asinh

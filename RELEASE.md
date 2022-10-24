@@ -10,6 +10,53 @@
 
 - [STABLE] Add the object-oriented and functional combination programming paradigm, add mixed-precision APIs for combination programming paradigms such as `mindspore.amp.LossScaler`, `mindspore.amp.DynamicLossScaler`, `mindspore.amp.StaticLossScaler`, `mindspore.amp.auto_mixed_precision` and `mindspore.amp.all_finite`.
 
+### API Change
+
+#### operator
+
+- [STABLE] Add nn interface for `nn.AdaptiveAvgPool3d`.
+- [STABLE] Add functional interface for `ops.adaptive_avg_pool3d`.
+- [STABLE] Add functional interface for `ops.addcdiv`.
+- [STABLE] Add functional interface for `ops.addcmul`.
+- [STABLE] Add GPU and CPU support for `ops.approximate_equal`.
+- [STABLE] Add GPU support for `ops.atanh`.
+- [STABLE] Add GPU support for `ops.bessel_i0`.
+- [STABLE] Add Ascend support for `ops.bessel_i0e`.
+- [STABLE] Add GPU support for `ops.bessel_i1`.
+- [STABLE] Add Ascend and GPU support for `ops.bessel_i1e`.
+- [STABLE] Add GPU support for `ops.bessel_j0`.
+- [STABLE] Add GPU support for `ops.bessel_j1`.
+- [STABLE] Add GPU support for `ops.bessel_k0`.
+- [STABLE] Add GPU support for `ops.bessel_k0e`.
+- [STABLE] Add GPU support for `ops.bessel_k1`.
+- [STABLE] Add GPU support for `ops.bessel_k1e`.
+- [STABLE] Add GPU support for `ops.bessel_y0`.
+- [STABLE] Add GPU support for `ops.bessel_y1`.
+- [STABLE] Add functional interface for `ops.bias_add`.
+- [STABLE] Add GPU support for `ops.bitwise_and`.
+- [STABLE] Add GPU support for `ops.bitwise_or`.
+- [STABLE] Add GPU support for `ops.bitwise_xor`.
+- [STABLE] Add Ascend support for `ops.grid_sample`.
+- [STABLE] Add CPU support for `ops.inplace_update`.
+- [STABLE] Add Ascend and GPU support for `ops.isclose`.
+- [STABLE] Add Ascend support for `ops.isnan`.
+- [STABLE] Add GPU support for `ops.lerp`.
+- [STABLE] Add functional interface for `ops.random_poisson`.
+- [STABLE] Add functional interface for `ops.reverse_sequence`.
+- [STABLE] Add GPU support for `ops.scatter_mul`.
+- [STABLE] Add functional interface for `ops.scatter_nd_max`.
+- [STABLE] Add functional interface for `ops.scatter_nd_min`.
+- [STABLE] Add GPU support for `ops.SparseToDense`.
+- [STABLE] Add functional interface for `ops.square`.
+- [STABLE] Add GPU support for `ops.standard_laplace`.
+- [STABLE] Add functional interface for `ops.std`.
+- [STABLE] Add Ascend and GPU support for `ops.trunc`.
+- [STABLE] Add functional interface for `ops.unsorted_segment_sum`.
+- [STABLE] Add functional interface for `ops.xdivy`.
+- [STABLE] Add GPU support for `ops.xlogy`.
+- Deprecate `ops.poisson` and use `ops.random_poisson` instead.
+- Deprecate `ops.SparseApplyAdagrad` and use `ops.SparseApplyAdagradV2` instead.
+
 ### Bug fixes
 
 - [BUGFIX] The logic of the auto mixed precision (amp) O2 level is revised. In addition to the `BatchNorm1d` and `BatchNorm2d` operators, the other two operators `BatchNorm3d` and `LayerNorm` are added. The four operators still use the float32 data type when calculating.
