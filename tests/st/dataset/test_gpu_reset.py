@@ -29,7 +29,10 @@ def create_np_dataset(size):
     """
     Create dataset for train or test
     """
+    def my_func(x):
+        return x + 1 if x % 2 else x - 1
     data = ds.NumpySlicesDataset(list(range(1, size + 1)), shuffle=False)
+    data = data.map(operations=my_func, python_multiprocessing=True)
     return data
 
 
