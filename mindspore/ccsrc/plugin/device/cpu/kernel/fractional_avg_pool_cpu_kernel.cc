@@ -17,7 +17,9 @@
 #include "plugin/device/cpu/kernel/fractional_avg_pool_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/fractional_avg_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,25 +39,17 @@ constexpr size_t kOutputShapeIndexW = 2;
 constexpr size_t kOutputShapeIndexC = 3;
 }  // namespace
 
-void FractionalAvgPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
-    return;
+bool FractionalAvgPoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalAvgPool>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "Init FractionalAvgPool kernel ptr failed.";
+    return false;
   }
-  if (input_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
-  }
-  for (size_t i = 0; i < input_shape_.size(); i++) {
-    if (input_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                               << "', expected input have non-empty spatial dimensions, but input has sizes "
-                               << input_shape_[i] << " with dimension " << i << " being empty.";
-    }
-  }
-  pooling_ratio_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "pooling_ratio");
+
+  pooling_ratio_ = kernel_ptr->get_pooling_ratio();
   if (pooling_ratio_.size() != tensor_in_and_out_dims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the size of parameter 'pooling_ratio' must be 4, but got " << pooling_ratio_.size()
@@ -66,19 +60,34 @@ void FractionalAvgPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the first and last elements of parameter 'pooling_ratio' must be 1.0.";
   }
-  pseudo_random_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "pseudo_random");
-  overlapping_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "overlapping");
-  deterministic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "deterministic");
-  seed_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
-  seed2_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  pseudo_random_ = kernel_ptr->get_pseudo_random();
+  overlapping_ = kernel_ptr->get_overlapping();
+  deterministic_ = kernel_ptr->get_deterministic();
+  seed_ = kernel_ptr->get_seed();
+  seed2_ = kernel_ptr->get_seed2();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
   }
 
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int FractionalAvgPoolCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(int64_t input_length, int64_t output_length,

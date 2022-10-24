@@ -17,12 +17,14 @@
 #include "plugin/device/cpu/kernel/fill_diagonal_cpu_kernel.h"
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <type_traits>
 #include <memory>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
+#include "mindspore/core/ops/fill_diagonal.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,30 +37,32 @@ const size_t kInputMinDim = 2;
 constexpr int64_t kParallelDataNums = 512 * 1024;
 }  // namespace
 
-void FillDiagonalCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kFillDiagonalInputNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kFillDiagonalOutputNum, kernel_name_);
+bool FillDiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFillDiagonalInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFillDiagonalOutputNum, kernel_name_);
 
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (input_shape_.size() < kInputMinDim) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input dims must larger than 1.";
+  input_type_ = inputs[0]->GetDtype();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::FillDiagonal>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "Init FillDiagonal kernel ptr failed.";
+    return false;
   }
-  if (input_shape_.size() > kInputMinDim) {
-    for (size_t i = 1; i < input_shape_.size(); i++) {
-      if (input_shape_[i] != input_shape_[i - 1]) {
-        MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                                 << "', each dim of input must be of equal length while dims > 2.";
-      }
-    }
-  }
+  fill_value_ = kernel_ptr->get_fill_value();
+  wrap_ = kernel_ptr->get_wrap();
+  return true;
+}
 
-  fill_value_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "fill_value");
-  wrap_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "wrap");
+int FillDiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
