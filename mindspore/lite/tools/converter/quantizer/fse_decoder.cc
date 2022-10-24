@@ -60,7 +60,7 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
     frequency[sym] += 1;
     MS_CHECK_GE(table_log, FSEBitStream::CountBits(x), RET_ERROR);
     bit_count[i] = static_cast<uint8_t>(table_log - FSEBitStream::CountBits(x));
-    new_state_baselne[i] = (x << bit_count[i]) - table_size;
+    new_state_baseline[i] = (x << bit_count[i]) - table_size;
   }
   return RET_OK;
 }
