@@ -10,7 +10,7 @@ mindspore.Tensor.div
     当输入是两个Tensor时，它们的数据类型不能同时为bool，它们的shape可以广播。
     当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
 
-    .. math:
+    .. math::
         out_{i} = input_{i} / other_{i}:
 
     参数：

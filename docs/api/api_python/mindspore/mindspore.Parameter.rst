@@ -37,19 +37,19 @@
         返回：
             Parameter，返回克隆的新参数。
 
-    .. py:method:: copy
-
-        拷贝参数。
-
-        返回：
-            Parameter，返回拷贝的新参数。
-
     .. py:method:: comm_fusion
         :property:
 
         获取此参数的通信算子的融合类型（int）。
 
         在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下，一些用于参数或梯度聚合的通信算子将自动插入。fusion的值必须大于等于0。当fusion的值为0时，算子不会融合在一起。
+
+    .. py:method:: copy
+
+        拷贝参数。
+
+        返回：
+            Parameter，返回拷贝的新参数。
 
     .. py:method:: data
         :property:

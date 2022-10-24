@@ -6197,7 +6197,7 @@ class Tensor(Tensor_):
                 the size of their `dim` dimension should be `3`.
             dim (int): dimension to apply cross product in. Default: None.
 
-        Outputs:
+        Returns:
             Tensor, has the same dtype as the input.
 
         Raises:

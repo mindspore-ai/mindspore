@@ -14,11 +14,9 @@ mindspore.Tensor.reverse
         - **axis** (Union[tuple(int), list(int)]): 要反转的维度的索引。
 
     返回:
-            Tensor, 和输入有相同的形状和类型。
+        Tensor, 和输入有相同的形状和类型。
 
     异常：
         - **TypeError** - `axis` 既不是list也不是tuple。
         - **TypeError** - `axis` 的元素不是int。
-    
-    支持平台:
-        ``Ascend`` ``GPU`` ``CPU``
+

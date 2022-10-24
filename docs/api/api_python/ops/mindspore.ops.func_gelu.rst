@@ -26,7 +26,7 @@ mindspore.ops.gelu
         - **input_x** (Tensor) - 用于计算GELU的Tensor。数据类型为float16、float32、float64。
         - **approximate** (str) - gelu近似算法。有两种：'none' 和 'tanh'。默认值：none。
 
-    输出：
+    返回：
         Tensor，具有与 `input_x` 相同的数据类型和shape。
 
     异常：

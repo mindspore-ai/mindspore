@@ -142,7 +142,7 @@ mindspore.set_context
         - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，必须大于0。默认值为30，如果同时运行多个进程，应将该值设置得小一些，以避免线程争用。
         - **disable_format_transform** (bool) - 表示是否取消NCHW到NHWC的自动格式转换功能。当fp16的网络性能不如fp32的时，可以设置 `disable_format_transform` 为True，以尝试提高训练性能。默认值：False。
         - **support_binary** (bool) - 是否支持在图形模式下运行.pyc或.so。如果要支持在图形模式下运行.so或.pyc，可将 `support_binary` 置为True，并运行一次.py文件，从而将接口源码保存到接口定义.py文件中，因此要保证该文件可写。然后将.py文件编译成.pyc或.so文件，即可在图模式下运行。
-        - ** memory_optimize_level** (str) - 内存优化级别，默认值：O0。其值必须在 ['O0', 'O1'] 范围中。
+        - **memory_optimize_level** (str) - 内存优化级别，默认值：O0。其值必须在 ['O0', 'O1'] 范围中。
 
           - O0: 执行性能优先，关闭 SOMAS (Safe Optimized Memory Allocation Solver)。
           - O1: 内存性能优先，使能 SOMAS。
