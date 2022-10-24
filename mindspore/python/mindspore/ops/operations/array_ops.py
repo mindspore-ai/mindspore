@@ -1582,7 +1582,7 @@ class MatrixBandPart(Primitive):
         self.init_prim_io_names(inputs=['x', 'lower', 'upper'], outputs=['y'])
 
 
-class Fill(PrimitiveWithInfer):
+class Fill(PrimitiveWithCheck):
     """
     Create a Tensor of the specified shape and fill it with the specified value.
 
@@ -1607,32 +1607,14 @@ class Fill(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Fill"""
+        self.init_prim_io_names(inputs=['type', 'shape', 'value'], outputs=['y'])
 
-    def __infer__(self, dtype, dims, x):
-        validator.check_value_type("shape", dims['value'], [tuple], self.name)
-        validator.check_value_type("value", x['value'], [numbers.Number, bool], self.name)
-        valid_dtypes = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                        mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
-                        mstype.float16, mstype.float32, mstype.float64, mstype.complex64,
-                        mstype.complex128]
-        validator.check_types_same_and_valid({"value": dtype['value']}, valid_dtypes, self.name)
-        x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        if not is_shape_unknown(dims['value']):
-            for i, item in enumerate(dims['value']):
-                validator.check_positive_int(item, f'dims[{i}]', self.name)
-            ret = np.full(dims['value'], x['value'], x_nptype)
-            out = {
-                'value': Tensor(ret),
-                'shape': dims['value'],
-                'dtype': x['dtype'],
-            }
-        else:
-            out = {
-                'value': None,
-                'shape': dims['value'],
-                'dtype': x['dtype'],
-            }
-        return out
+    def infer_value(self, dtype, dims, x):
+        x_nptype = mstype.dtype_to_nptype(dtype)
+        if dims is not None and not is_shape_unknown(dims) and x is not None:
+            ret = np.full(dims, x, x_nptype)
+            return Tensor(ret)
+        return None
 
 
 class Fills(Primitive):
