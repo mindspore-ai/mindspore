@@ -38,41 +38,43 @@ const size_t DIM_SIZE6 = 6;
 const size_t DIM_SIZE7 = 7;
 const size_t DIM_SIZE8 = 8;
 }  // namespace
-void NuclearNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+
+bool NuclearNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNuclearNormInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNuclearNormOutputsNum, kernel_name_);
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+
   // Attr dim is the optional attribute. Default:[0, 1]
-  if (common::AnfAlgo::HasNodeAttr("dim", kernel_node)) {
-    dim_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dim");
+  if (prim->HasAttr("dim")) {
+    dim_ = GetValue<std::vector<int64_t>>(prim->GetAttr("dim"));
     if (dim_.size() == 1 && dim_[0] == kDimIsNone) {
       dim_.clear();
       dim_.push_back(0);
       dim_.push_back(1);
     }
   }
+
   // Attr keepdim is the optional attribute. Default:false
-  if (common::AnfAlgo::HasNodeAttr("keepdim", kernel_node)) {
-    keepdim = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "keepdim");
+  if (prim->HasAttr("keepdim")) {
+    keepdim = GetValue<bool>(prim->GetAttr("keepdim"));
   }
 
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kNuclearNormInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kNuclearNormOutputsNum, kernel_name_);
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
 
-  input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (input_shape.size() < DIM_SIZE2 || input_shape.size() > DIM_SIZE8) {
-    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', the rank of parameter 'a' must be in [2, 8], but got "
-                     << input_shape.size() << " dimensions.";
+int NuclearNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "NuclearNorm does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename T>
@@ -503,6 +505,7 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
 
 template <typename T>
 bool NuclearNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   bool res = true;
   switch (input_shape.size()) {
@@ -537,17 +540,15 @@ bool NuclearNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   return res;
 }
 
-std::vector<std::pair<KernelAttr, NuclearNormCpuKernelMod::NuclearNormFunc>> NuclearNormCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &NuclearNormCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &NuclearNormCpuKernelMod::LaunchKernel<double>}};
-
-std::vector<KernelAttr> NuclearNormCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, NuclearNormFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, NuclearNormCpuKernelMod::KernelRunFunc>> &NuclearNormCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, NuclearNormCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &NuclearNormCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &NuclearNormCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, NuclearNorm, NuclearNormCpuKernelMod);

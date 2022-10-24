@@ -14,30 +14,43 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_NUCLEAR_NORM_CPU_KERNEL_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_NUCLEAR_NORM_CPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_NUCLEAR_NORM_CPU_KERNEL_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_NUCLEAR_NORM_CPU_KERNEL_H
 
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class NuclearNormCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class NuclearNormCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<NuclearNormCpuKernelMod> {
  public:
   NuclearNormCpuKernelMod() = default;
   ~NuclearNormCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
  private:
   template <typename T>
@@ -72,19 +85,11 @@ class NuclearNormCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T, int32_t RANK>
   bool ComputeTensorNuclearNorm(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  using NuclearNormFunc = std::function<bool(NuclearNormCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, NuclearNormFunc>> func_list_;
-  NuclearNormFunc kernel_func_;
-
   std::vector<int64_t> input_shape;
-  TypeId input_dtype{kTypeUnknown};
   std::vector<int64_t> dim_ = {0, 1};
   bool keepdim = false;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_NUCLEAR_NORM_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_NUCLEAR_NORM_CPU_KERNEL_H

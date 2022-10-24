@@ -31,6 +31,11 @@ abstract::ShapePtr NuclearNormInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   auto input_rank = SizeToLong(input_shape.size());
   const int64_t min_dim = 2;
   (void)CheckAndConvertUtils::CheckInteger("input_size", input_rank, kGreaterEqual, min_dim, prim_name);
@@ -100,7 +105,7 @@ AbstractBasePtr NuclearNormInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infer_shape = NuclearNormInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-MIND_API_BASE_IMPL(NuclearNorm, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(NuclearNorm, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(NuclearNorm, prim::kPrimNuclearNorm, NuclearNormInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
