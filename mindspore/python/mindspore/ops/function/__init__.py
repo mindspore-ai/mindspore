@@ -339,6 +339,7 @@ from .nn_func import (
     multi_label_margin_loss,
     elu,
     gelu,
+    hinge_embedding_loss,
 )
 from .linalg_func import (
     svd,
