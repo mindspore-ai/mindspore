@@ -20,6 +20,7 @@
 #include <cuda_runtime.h>
 
 #include <vector>
+#include <map>
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -27,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
  public:
   TensorShapeGpuKernelMod() { ResetResource(); }
   ~TensorShapeGpuKernelMod() = default;
@@ -39,8 +40,7 @@ class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     S *output_device_address = GetDeviceAddress<S>(outputs, 0);
     size_t prev_node_output_shape_size = prev_node_output_shape_.size() * sizeof(S);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(output_device_address, prev_node_output_shape_.data(), prev_node_output_shape_size,
                       cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpyAsync prev_node_output_shape failed");
@@ -48,16 +48,23 @@ class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_count != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_count;
-    }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    const size_t kDynamicShapeOutputNum = 1;
+    MS_EXCEPTION_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDynamicShapeOutputNum, kernel_name_);
+    return true;
+  }
 
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    ResetResource();
+    auto shape = inputs.at(kIndex0)->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
       return true;
@@ -69,11 +76,10 @@ class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     output_size_ = prev_node_output_shape_.size();
 
     InitSizeLists();
-
-    return true;
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     input_size_ = 0;
     output_size_ = 0;
     is_null_input_ = false;
@@ -84,7 +90,7 @@ class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {
+  void InitSizeLists() {
     input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(output_size_ * sizeof(S));
   }
