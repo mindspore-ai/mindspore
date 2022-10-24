@@ -24,7 +24,20 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-const BaseRef SigmoidMulFusion::DefinePattern() const {
+VectorRef SigmoidMulFusion::DefineSigmoidMulFirstPattern() const {
+  auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_activation != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  auto activation_input = VectorRef({is_activation, is_var});
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto is_const = std::make_shared<CondVar>(IsParamOrValueNodeWithData);
+  MS_CHECK_TRUE_RET(is_const != nullptr, {});
+  return VectorRef({is_mul, activation_input, is_const});
+}
+
+VectorRef SigmoidMulFusion::DefineSigmoidMulSecondPattern() const {
   auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
   MS_CHECK_TRUE_RET(is_activation != nullptr, {});
   auto is_var = std::make_shared<Var>();
@@ -35,9 +48,16 @@ const BaseRef SigmoidMulFusion::DefinePattern() const {
   return VectorRef({is_mul, is_var, activation_input});
 }
 
+std::unordered_map<std::string, VectorRef> SigmoidMulFusion::DefinePatterns() const {
+  std::unordered_map<std::string, VectorRef> patterns;
+  patterns["SigmoidMulFirstPatternName"] = DefineSigmoidMulFirstPattern();
+  patterns["SigmoidMulSecondPatternName"] = DefineSigmoidMulSecondPattern();
+  return patterns;
+}
+
 // x * sigmoid(x) ->swish(x)
-const AnfNodePtr SigmoidMulFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                           const EquivPtr &) const {
+AnfNodePtr SigmoidMulFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
+                                     const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &) const {
   if (func_graph == nullptr || node == nullptr) {
     return nullptr;
   }
@@ -51,14 +71,35 @@ const AnfNodePtr SigmoidMulFusion::Process(const FuncGraphPtr &func_graph, const
   if (IsMarkedTrainOp(activation_cnode)) {
     return nullptr;
   }
-  // activation must sigmoid
-  auto activation_prim = ops::GetOperator<mindspore::ops::Activation>(activation_cnode->input(0));
-  MS_CHECK_TRUE_RET(activation_prim != nullptr, nullptr);
-  if (activation_prim == nullptr || (activation_prim->GetAttr(ops::kActivationType) != nullptr &&
-                                     activation_prim->get_activation_type() != mindspore::SIGMOID)) {
+
+  if (!CheckPattern(pattern_name, func_graph, activation_cnode, mul_cnode)) {
     return nullptr;
   }
+  auto activation_prim = ops::GetOperator<mindspore::ops::Activation>(activation_cnode->input(0));
+  MS_CHECK_TRUE_RET(activation_prim != nullptr, nullptr);
   activation_prim->set_activation_type(mindspore::SWISH);
   return activation_cnode;
+}
+
+bool SigmoidMulFusion::CheckPattern(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                    const CNodePtr &act_cnode, const CNodePtr &mul_cnode) const {
+  // activation must sigmoid
+  auto activation_prim = ops::GetOperator<mindspore::ops::Activation>(act_cnode->input(0));
+  MS_CHECK_TRUE_RET(activation_prim != nullptr, false);
+  if (activation_prim == nullptr || (activation_prim->GetAttr(ops::kActivationType) != nullptr &&
+                                     activation_prim->get_activation_type() != mindspore::SIGMOID)) {
+    MS_LOG(ERROR) << "activation type is not sigmoid.";
+    return false;
+  }
+  MS_CHECK_TRUE_RET(mul_cnode->input(kInputIndexOne) != nullptr, false);
+  if (pattern_name == "SigmoidMulFirstPatternName") {
+    return true;
+  } else {
+    MS_CHECK_TRUE_RET(act_cnode->input(kInputIndexOne) != nullptr, false);
+    if (act_cnode->input(kInputIndexOne) != mul_cnode->input(kInputIndexOne)) {
+      return false;
+    }
+  }
+  return true;
 }
 }  // namespace mindspore::opt
