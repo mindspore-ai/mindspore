@@ -26,34 +26,40 @@ constexpr size_t kIndicesShapeSize = 2;
 constexpr size_t kSparseToDenseInputsNum = 3;
 constexpr size_t kSparseToDenseOutputsNum = 1;
 }  // namespace
+bool SparseToDenseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SparseToDense does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
 
-void SparseToDenseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+int SparseToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto indices_shape = inputs.at(kIndex0)->GetShapeVector();
   if (indices_shape.size() != kIndicesShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'indices' must be a " << kIndicesShapeSize
                       << "-D Tensor, but got " << indices_shape.size() << "-D";
   }
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape})) {
-    return;
-  }
+  auto values_shape = inputs.at(kIndex1)->GetShapeVector();
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' must be a 1-D Tensor and the first dimension length "
                          "must be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
+  output_shape_ = Convert2SizeT(outputs.at(kIndex0)->GetShapeVector());
   values_size_ = LongToSize(values_shape[0]);
-  output_shape_ = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "SparseToDense does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename I, typename T>

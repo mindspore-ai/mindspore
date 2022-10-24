@@ -21,7 +21,7 @@
 from mindspore._checkparam import Validator as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops import signature as sig
-from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
+from mindspore.ops.primitive import prim_attr_register, Primitive
 
 
 class SparseDenseCwiseAdd(Primitive):
@@ -394,7 +394,7 @@ class SparseReorder(Primitive):
         self.init_prim_io_names(inputs=['indices', 'values', 'shape'], outputs=['y_indices', 'y_values'])
 
 
-class SparseToDense(PrimitiveWithInfer):
+class SparseToDense(Primitive):
     """
     Converts a sparse representation into a dense tensor.
 
@@ -433,34 +433,6 @@ class SparseToDense(PrimitiveWithInfer):
         """Initialize SparseToDense."""
         self.init_prim_io_names(
             inputs=['indices', 'values', 'dense_shape'], outputs=['output'])
-
-    def __infer__(self, indices, values, sparse_shape):
-        validator.check_tensor_dtype_valid('indices', indices['dtype'], [
-            mstype.int32, mstype.int64], self.name)
-        validator.check_tensor_dtype_valid(
-            'values', values['dtype'], mstype.number_type + (mstype.bool_,), self.name)
-        indices_shape = indices['shape']
-        if len(indices_shape) != 2:
-            raise ValueError(f"For '{self.name}', the 'indices' must be a 2-D tensor, "
-                             f"but got 'indices' shape: {indices_shape}.")
-        values_shape = values['shape']
-        if len(values_shape) != 1 or values_shape[0] != indices_shape[0]:
-            raise ValueError(f"For '{self.name}', the 'values' must be a 1-D tensor and the first dimension length "
-                             f"must be equal to the first dimension length of 'indices', "
-                             f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}.")
-        sparse_shape_v = sparse_shape['value']
-        for i in sparse_shape_v:
-            if isinstance(i, bool) or not isinstance(i, int) or i <= 0:
-                raise ValueError(f"For '{self.name}', all elements in 'sparse_shape' must be "
-                                 f"positive int number, but got 'sparse_shape': {sparse_shape_v}.")
-        if len(sparse_shape_v) != indices_shape[1]:
-            raise ValueError(f"For '{self.name}', the length of 'sparse_shape' must be equal to the second dimension "
-                             f"length of 'indices', but got the second dimension length of 'indices': "
-                             f"{indices_shape[1]}, length of 'sparse_shape': {len(sparse_shape_v)}.")
-        out = {'shape': sparse_shape['value'],
-               'dtype': values['dtype'],
-               'value': None}
-        return out
 
 
 class SparseToDenseV2(Primitive):
