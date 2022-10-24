@@ -18,6 +18,8 @@
 #define MINDSPORE_SHAPE_UTILS_INFO_H_
 
 #include <algorithm>
+#include <vector>
+#include <string>
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
 
@@ -55,6 +57,21 @@ inline bool IsDynamic(const ShapeVector &shape) {
     MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << shape << ").";
   }
   return IsDynamicRank(shape) || IsDynamicShape(shape);
+}
+
+template <typename T>
+std::string VectorToString(const std::vector<T> &values) {
+  std::stringstream ss;
+  ss << "[";
+  auto size = values.size();
+  for (size_t i = 0; i < size; ++i) {
+    ss << values[i];
+    if (i != size - 1) {
+      ss << ", ";
+    }
+  }
+  ss << "]";
+  return ss.str();
 }
 }  // namespace mindspore
 

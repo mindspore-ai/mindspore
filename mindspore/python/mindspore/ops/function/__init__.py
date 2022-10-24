@@ -384,6 +384,7 @@ from .random_func import (
     random_gamma,
     uniform_candidate_sampler,
     random_poisson,
+    log_uniform_candidate_sampler,
     shuffle,
     choice_with_mask
 )

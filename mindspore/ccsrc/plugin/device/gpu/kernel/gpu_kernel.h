@@ -116,12 +116,12 @@ class NativeGpuKernelMod : public GpuKernelMod {
     }
     return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->GetAllSupportedList(kernel_name);
   }
+  std::vector<KernelAttr> GetOpSupport() { return {}; }
   static bool GpuCheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr);
 
   static ReducePrecisonRes GpuReducePrecisionCheck(const std::string &kernel_name, const KernelAttr &kernel_attr) {
     return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->ReducePrecisionCheck(kernel_name, kernel_attr);
   }
-  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
   enum KernelModType GetKernelModType() const override { return KernelModType::NativeGpuKernelMod; }
 
  protected:

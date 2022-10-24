@@ -366,7 +366,8 @@ class Gamma(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize RandomGamma"""
-        self.init_prim_io_names(inputs=['shape', 'alpha', 'beta'], outputs=['output'])
+        self.init_prim_io_names(
+            inputs=['shape', 'alpha', 'beta'], outputs=['output'])
         self.add_prim_attr("side_effect_hidden", True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
@@ -452,7 +453,8 @@ class ParameterizedTruncatedNormal(Primitive):
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize ParameterizedTruncatedNormal"""
-        self.init_prim_io_names(inputs=['shape', 'mean', 'stdevs', 'min', 'max'], outputs=['y'])
+        self.init_prim_io_names(
+            inputs=['shape', 'mean', 'stdevs', 'min', 'max'], outputs=['y'])
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('seed2', seed2, [int], self.name)
 
@@ -511,8 +513,10 @@ class Poisson(PrimitiveWithInfer):
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        Validator.check_tensor_dtype_valid("mean", mean["dtype"], [mstype.float32], self.name)
-        broadcast_shape = get_broadcast_shape(mean['shape'], shape_v, self.name, arg_name1="mean", arg_name2="shape")
+        Validator.check_tensor_dtype_valid(
+            "mean", mean["dtype"], [mstype.float32], self.name)
+        broadcast_shape = get_broadcast_shape(
+            mean['shape'], shape_v, self.name, arg_name1="mean", arg_name2="shape")
         out = {
             'shape': broadcast_shape,
             'dtype': mstype.int32,
@@ -568,7 +572,8 @@ class RandomPoisson(Primitive):
         self.init_prim_io_names(inputs=['shape', 'rate'], outputs=['output'])
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('seed2', seed2, [int], self.name)
-        valid_values = (mstype.int64, mstype.int32, mstype.float16, mstype.float32, mstype.float64)
+        valid_values = (mstype.int64, mstype.int32,
+                        mstype.float16, mstype.float32, mstype.float64)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
@@ -623,7 +628,8 @@ class UniformInt(Primitive):
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformInt"""
-        self.init_prim_io_names(inputs=['shape', 'minval', 'maxval'], outputs=['output'])
+        self.init_prim_io_names(
+            inputs=['shape', 'minval', 'maxval'], outputs=['output'])
         self.add_prim_attr("side_effect_hidden", True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
@@ -807,7 +813,8 @@ class Multinomial(Primitive):
         """Initialize Multinomial."""
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
-        self.init_prim_io_names(inputs=['x', 'num_samples'], outputs=['output'])
+        self.init_prim_io_names(
+            inputs=['x', 'num_samples'], outputs=['output'])
         Validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
         valid_values = (mstype.int64, mstype.int32)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
@@ -839,66 +846,49 @@ class UniformCandidateSampler(PrimitiveWithInfer):
     def __init__(self, num_true, num_sampled, unique, range_max, seed=0, remove_accidental_hits=False):
         """Initialize UniformCandidateSampler"""
         Validator.check_value_type("num_true", num_true, [int], self.name)
-        Validator.check_value_type("num_sampled", num_sampled, [int], self.name)
+        Validator.check_value_type(
+            "num_sampled", num_sampled, [int], self.name)
         Validator.check_value_type("unique", unique, [bool], self.name)
         Validator.check_value_type("range_max", range_max, [int], self.name)
         Validator.check_value_type("seed", seed, [int], self.name)
-        Validator.check_value_type("remove_accidental_hits", remove_accidental_hits, [bool], self.name)
-        Validator.check("value of num_true", num_true, '', 0, Rel.GT, self.name)
-        Validator.check("value of num_sampled", num_sampled, '', 0, Rel.GT, self.name)
-        Validator.check("value of range_max", range_max, '', 0, Rel.GT, self.name)
+        Validator.check_value_type(
+            "remove_accidental_hits", remove_accidental_hits, [bool], self.name)
+        Validator.check("value of num_true", num_true,
+                        '', 0, Rel.GT, self.name)
+        Validator.check("value of num_sampled", num_sampled,
+                        '', 0, Rel.GT, self.name)
+        Validator.check("value of range_max", range_max,
+                        '', 0, Rel.GT, self.name)
         self.num_true = num_true
         if unique:
-            Validator.check('value of num_sampled', num_sampled, "value of range_max", range_max, Rel.LE, self.name)
+            Validator.check('value of num_sampled', num_sampled,
+                            "value of range_max", range_max, Rel.LE, self.name)
         Validator.check("value of seed", seed, '', 0, Rel.GE, self.name)
         self.num_sampled = num_sampled
 
     def infer_dtype(self, true_classes_type):
-        Validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor, self.name)
+        Validator.check_subclass(
+            "true_classes_type", true_classes_type, mstype.tensor, self.name)
         Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type,
                                            (mstype.int32, mstype.int64), self.name)
         return true_classes_type, mstype.float32, mstype.float32
 
     def infer_shape(self, true_classes_shape):
-        Validator.check("true_class.shape[1]", true_classes_shape[1], "num_true", self.num_true, Rel.EQ, self.name)
+        Validator.check("true_class.shape[1]", true_classes_shape[1],
+                        "num_true", self.num_true, Rel.EQ, self.name)
         return [self.num_sampled], true_classes_shape, [self.num_sampled]
 
 
-class LogUniformCandidateSampler(PrimitiveWithInfer):
+class LogUniformCandidateSampler(Primitive):
     r"""
     Generates random labels with a log-uniform distribution for sampled_candidates.
 
     Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
 
-    Args:
-        num_true (int): The number of target classes per training example. Default: 1.
-        num_sampled (int): The number of classes to randomly sample. Default: 5.
-        unique (bool): Determines whether sample with rejection. If `unique` is True,
-          all sampled classes in a batch are unique. Default: True.
-        range_max (int): The number of possible classes. When `unique` is True,
-          `range_max` must be greater than or equal to `num_sampled`. Default: 5.
-        seed (int): Random seed, must be non-negative. Default: 0.
-
-    Inputs:
-        - **true_classes** (Tensor) - The target classes. With data type of int64 and
-          shape :math:`(batch\_size, num\_true)` .
-
-    Outputs:
-        Tuple of 3 Tensors.
-
-        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)`
-          and the same type as `true_classes`.
-        - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
-        - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
-
-    Raises:
-        TypeError: If neither `num_true` nor `num_sampled` is an int.
-        TypeError: If `unique` is not a bool.
-        TypeError: If neither `range_max` nor `seed` is an int.
-        TypeError: If `true_classes` is not a Tensor.
+    Refer to :func:`mindspore.ops.log_uniform_candidate_sampler` for more details.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> sampler = ops.LogUniformCandidateSampler(2, 5, True, 5)
@@ -918,30 +908,22 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['true_classes'],
                                 outputs=['sampled_candidates', 'true_expected_count', 'sampled_expected_count'])
         Validator.check_value_type("num_true", num_true, [int], self.name)
-        Validator.check_value_type("num_sampled", num_sampled, [int], self.name)
+        Validator.check_value_type(
+            "num_sampled", num_sampled, [int], self.name)
         Validator.check_value_type("unique", unique, [bool], self.name)
         Validator.check_value_type("range_max", range_max, [int], self.name)
         Validator.check_value_type("seed", seed, [int], self.name)
-        self.num_true = Validator.check_number("num_true", num_true, 1, Rel.GE, self.name)
-        self.num_sampled = Validator.check_number("num_sampled", num_sampled, 1, Rel.GE, self.name)
+        self.num_true = Validator.check_number(
+            "num_true", num_true, 1, Rel.GE, self.name)
+        self.num_sampled = Validator.check_number(
+            "num_sampled", num_sampled, 1, Rel.GE, self.name)
         Validator.check_number("range_max", range_max, 1, Rel.GE, self.name)
         if unique:
-            Validator.check("range_max", range_max, "num_sampled", num_sampled, Rel.GE, self.name)
+            Validator.check("range_max", range_max, "num_sampled",
+                            num_sampled, Rel.GE, self.name)
         self.range_max = range_max
         self.unique = unique
         self.seed = Validator.check_number("seed", seed, 0, Rel.GE, self.name)
-
-    def infer_shape(self, true_classes_shape):
-        Validator.check_int(len(true_classes_shape), 2, Rel.EQ, "dim of true_classes", self.name)
-        Validator.check("true_classes_shape[1]", true_classes_shape[1], "num_true", self.num_true, Rel.EQ, self.name)
-        return (self.num_sampled,), true_classes_shape, (self.num_sampled,)
-
-    def infer_dtype(self, true_classes_type):
-        Validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor, self.name)
-        valid_types = (mstype.int64,)
-        Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type, valid_types, self.name)
-        expected_type = mstype.float32
-        return true_classes_type, expected_type, expected_type
 
 
 class RandomShuffle(Primitive):

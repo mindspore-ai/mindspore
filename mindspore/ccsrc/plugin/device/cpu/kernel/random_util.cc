@@ -66,6 +66,13 @@ double Uint64ToDouble(uint32_t x0, uint32_t x1) {
   return d_result - 1.0;
 }
 
+float Uint32ToFloat(uint32_t x) {
+  uint32_t val = (127 << 23) | (x & 0x7fffffu);
+  float f;
+  memcpy(&f, &val, sizeof(val));
+  return f - 1.0f;
+}
+
 void BoxMullerDouble(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, double *data0, double *data1) {
   const double epsilon = 1.0e-7;
   double u1 = Uint64ToDouble(x0, x1);

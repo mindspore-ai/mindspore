@@ -49,8 +49,9 @@ class SparseAddGradGpuKernelMod : public NativeGpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+ protected:
   void SyncData() override;
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 

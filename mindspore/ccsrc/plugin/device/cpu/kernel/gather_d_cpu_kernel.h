@@ -38,6 +38,7 @@ class GatherDCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
     return kernel_func_(this, inputs, workspace, outputs);
   }
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   template <typename T, typename I>

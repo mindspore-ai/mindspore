@@ -49,6 +49,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
   std::vector<KernelTensorPtr> RetrieveOutputShape() { return outputs_; }
+  std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
  private:
   void RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs);

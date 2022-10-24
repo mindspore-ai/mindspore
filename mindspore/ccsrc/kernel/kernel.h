@@ -218,6 +218,7 @@ struct TensorInfo {
 using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 
+class KernelAttr;
 class BACKEND_EXPORT KernelTensor {
  public:
   KernelTensor() = default;
@@ -286,6 +287,8 @@ class BACKEND_EXPORT KernelMod {
   virtual const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
   virtual const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
+  virtual const std::vector<std::vector<int64_t>> &GetInputShapes() const { return input_shapes_; }
+  virtual const std::vector<std::vector<int64_t>> &GetOutputShapes() const { return output_shapes_; }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
   virtual std::vector<size_t> GenParameters() { return {}; }
@@ -295,11 +298,9 @@ class BACKEND_EXPORT KernelMod {
                     const std::vector<KernelTensorPtr> & /* outputs */) {
     return true;
   }
-
-  // Resize is for updating shape related information and performing shape related operation(e.g., calculate output
-  // tensor size and allocate output tensor memory).
-  // sometimes resize need the input tensor data, framework will sync and retain these tensor data from device to host
-  // and pass them by the param inputsOnHost
+  virtual std::vector<KernelAttr> GetOpSupport() = 0;
+  // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this
+  // routine after infer shape.
   virtual int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
@@ -342,7 +343,9 @@ class BACKEND_EXPORT KernelMod {
   std::string fullname_;
   bool is_monad_{false};
   std::vector<size_t> input_size_list_;
+  std::vector<std::vector<int64_t>> input_shapes_;
   std::vector<size_t> output_size_list_;
+  std::vector<std::vector<int64_t>> output_shapes_;
   std::vector<size_t> workspace_size_list_;
   bool is_need_retrieve_output_shape_ = false;
   uint32_t device_id_ = 0;

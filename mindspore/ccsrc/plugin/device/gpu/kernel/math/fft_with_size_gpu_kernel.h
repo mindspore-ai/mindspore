@@ -54,7 +54,6 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
     return launch_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

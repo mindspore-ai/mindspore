@@ -22,6 +22,7 @@
 #include "kernel/kernel.h"
 #include "ir/func_graph.h"
 #include "runtime/hardware/device_context.h"
+#include "kernel/common_utils.h"
 namespace mindspore::kernel {
 class SubgraphKernel : public KernelMod {
  public:
@@ -37,6 +38,7 @@ class SubgraphKernel : public KernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
  protected:
   FuncGraphPtr subgraph_;

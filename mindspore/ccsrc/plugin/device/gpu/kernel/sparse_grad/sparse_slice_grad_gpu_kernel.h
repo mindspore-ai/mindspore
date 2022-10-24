@@ -49,7 +49,6 @@ class SparseSliceGradGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

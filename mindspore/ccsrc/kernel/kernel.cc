@@ -191,6 +191,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   auto ret = KRET_OK;
   workspace_size_list_.clear();
   input_size_list_.clear();
+  input_shapes_.clear();
   for (auto &input : inputs) {
     size_t tensor_size = 0;
     size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
@@ -204,8 +205,9 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
       tensor_size = std::max(tensor_size, type_size);
     }
     (void)input_size_list_.emplace_back(tensor_size);
+    input_shapes_.emplace_back(shape);
   }
-
+  output_shapes_.clear();
   output_size_list_.clear();
   for (auto &output : outputs) {
     size_t tensor_size = 0;
@@ -232,6 +234,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
       tensor_size = std::max(tensor_size, type_size);
     }
     (void)output_size_list_.emplace_back(tensor_size);
+    output_shapes_.emplace_back(shape);
   }
   return static_cast<int>(ret);
 }

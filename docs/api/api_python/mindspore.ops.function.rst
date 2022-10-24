@@ -104,6 +104,17 @@ mindspore.ops.function
 
     mindspore.ops.cdist
 
+
+采样函数
+^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.log_uniform_candidate_sampler
+
 数学运算函数
 ^^^^^^^^^^^^^^^^^
 

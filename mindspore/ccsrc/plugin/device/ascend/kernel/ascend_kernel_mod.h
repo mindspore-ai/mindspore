@@ -22,6 +22,7 @@
 #include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "kernel/kernel.h"
+#include "kernel/common_utils.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -50,6 +51,7 @@ class AscendKernelMod : public KernelMod {
   bool IsNeedRetrieveOutputShape() override;
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
   std::string GetAtomicCompileInfo() const { return atomic_compile_info_; }
+  std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
  protected:
   virtual void UpdateOutputSizeList();

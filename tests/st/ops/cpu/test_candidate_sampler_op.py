@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -27,18 +28,14 @@ from mindspore.ops.functional import vmap
 class UniformCandidateSamplerNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max):
         super(UniformCandidateSamplerNet, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true, num_sampled,
-                                                 unique, range_max)
+        self.sampler = P.UniformCandidateSampler(num_true, num_sampled, unique, range_max)
 
     def construct(self, x):
         return self.sampler(x)
 
 
 def uniform_candidate_sampler(x, num_true, num_sampled, unique, range_max):
-    uniform_candidate_sampler_net = UniformCandidateSamplerNet(num_true,
-                                                               num_sampled,
-                                                               unique,
-                                                               range_max)
+    uniform_candidate_sampler_net = UniformCandidateSamplerNet(num_true, num_sampled, unique, range_max)
     out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int32)))
     return out1.shape, out2.shape, out3.shape
 
@@ -49,10 +46,7 @@ def uniform_candidate_sampler_functional(x, num_true, num_sample, unique, range_
 
 
 def uniform_candidate_sampler_int64(x, num_true, num_sampled, unique, range_max):
-    uniform_candidate_sampler_net = UniformCandidateSamplerNet(num_true,
-                                                               num_sampled,
-                                                               unique,
-                                                               range_max)
+    uniform_candidate_sampler_net = UniformCandidateSamplerNet(num_true, num_sampled, unique, range_max)
     out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int64)))
     return out1.shape, out2.shape, out3.shape
 
@@ -60,21 +54,19 @@ def uniform_candidate_sampler_int64(x, num_true, num_sampled, unique, range_max)
 class UniformCandidateSamplerHitNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max, seed, remove_accidental_hits):
         super(UniformCandidateSamplerHitNet, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true, num_sampled, unique,
-                                                 range_max, seed=seed,
+        self.sampler = P.UniformCandidateSampler(num_true,
+                                                 num_sampled,
+                                                 unique,
+                                                 range_max,
+                                                 seed=seed,
                                                  remove_accidental_hits=remove_accidental_hits)
 
     def construct(self, x):
         return self.sampler(x)
 
 
-def uniform_candidate_sampler_hit(x, num_true, num_sampled, unique, range_max, seed,
-                                  remove_accidental_hits):
-    uniform_candidate_sampler_net = UniformCandidateSamplerHitNet(num_true,
-                                                                  num_sampled,
-                                                                  unique,
-                                                                  range_max,
-                                                                  seed,
+def uniform_candidate_sampler_hit(x, num_true, num_sampled, unique, range_max, seed, remove_accidental_hits):
+    uniform_candidate_sampler_net = UniformCandidateSamplerHitNet(num_true, num_sampled, unique, range_max, seed,
                                                                   remove_accidental_hits)
     out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int32)))
     return out1.shape, out2.shape, out3.shape
@@ -90,8 +82,7 @@ def test_uniform_candidate_sampler_unique_1_true():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]),
-                                              1, 3, True, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]), 1, 3, True, 4)
     expected_1 = (3,)
     expected_2 = (5, 1)
     expected_3 = (3,)
@@ -110,8 +101,7 @@ def test_uniform_candidate_sampler_not_unique_1_true():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]),
-                                              1, 3, False, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]), 1, 3, False, 4)
     expected_1 = (3,)
     expected_2 = (5, 1)
     expected_3 = (3,)
@@ -130,9 +120,7 @@ def test_uniform_candidate_sampler_unique_2_true():
     Expectation: The value and shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2], [4, 2],
-                                                        [6, 2], [3, 2]]),
-                                              2, 3, True, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2], [4, 2], [6, 2], [3, 2]]), 2, 3, True, 4)
     expected_1 = (3,)
     expected_2 = (5, 2)
     expected_3 = (3,)
@@ -151,10 +139,7 @@ def test_uniform_candidate_sampler_not_unique_2_true():
     Expectation: The value and shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2],
-                                                        [4, 2], [6, 2],
-                                                        [3, 2]]),
-                                              2, 3, False, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2], [4, 2], [6, 2], [3, 2]]), 2, 3, False, 4)
     expected_1 = (3,)
     expected_2 = (5, 2)
     expected_3 = (3,)
@@ -173,12 +158,9 @@ def test_uniform_candidate_sampler_large():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[12221, 41414],
-                                                        [3312, 5125152],
-                                                        [3312454, 51252],
-                                                        [65125, 225125],
-                                                        [35125, 5125122]]),
-                                              2, 5, False, 100)
+    ms1, ms2, ms3 = uniform_candidate_sampler(
+        np.array([[12221, 41414], [3312, 5125152], [3312454, 51252], [65125, 225125], [35125, 5125122]]), 2, 5, False,
+        100)
     expected_1 = (5,)
     expected_2 = (5, 2)
     expected_3 = (5,)
@@ -197,8 +179,7 @@ def test_uniform_candidate_sampler_large_random():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler(np.arange(2142).reshape(34, 63),
-                                              63, 10, False, 12)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.arange(2142).reshape(34, 63), 63, 10, False, 12)
     expected_1 = (10,)
     expected_2 = (34, 63)
     expected_3 = (10,)
@@ -217,8 +198,7 @@ def test_uniform_candidate_sampler_large_random_int64_input():
     Expectation: The value and shape of output are the expected values.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler_int64(np.arange(2142).reshape(34, 63),
-                                                    63, 10, False, 12)
+    ms1, ms2, ms3 = uniform_candidate_sampler_int64(np.arange(2142).reshape(34, 63), 63, 10, False, 12)
     expected_1 = (10,)
     expected_2 = (34, 63)
     expected_3 = (10,)
@@ -331,8 +311,8 @@ def test_uniform_candidate_sampler_vmap_unique_1_true():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     in_axes = (0)
-    ms1, ms2, ms3 = uniform_candidate_sampler_vmap(np.array([[[1], [3], [4], [6], [3]], [[1], [3], [4], [6], [3]]]),
-                                                   1, 3, True, 4, in_axes)
+    ms1, ms2, ms3 = uniform_candidate_sampler_vmap(np.array([[[1], [3], [4], [6], [3]], [[1], [3], [4], [6], [3]]]), 1,
+                                                   3, True, 4, in_axes)
 
     expected_1 = (2, 3)
     expected_2 = (2, 5, 1)
@@ -391,8 +371,7 @@ def test_uniform_candidate_sampler_functional_unique_1_true():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.array([[1], [3], [4], [6], [3]]),
-                                                         1, 3, True, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.array([[1], [3], [4], [6], [3]]), 1, 3, True, 4)
     expected_1 = (3,)
     expected_2 = (5, 1)
     expected_3 = (3,)
@@ -411,10 +390,8 @@ def test_uniform_candidate_sampler_functional_not_unique_2_true():
     Expectation: The value and shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.array([[1, 2], [3, 2],
-                                                                   [4, 2], [6, 2],
-                                                                   [3, 2]]),
-                                                         2, 3, False, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.array([[1, 2], [3, 2], [4, 2], [6, 2], [3, 2]]), 2, 3,
+                                                         False, 4)
     expected_1 = (3,)
     expected_2 = (5, 2)
     expected_3 = (3,)
@@ -433,11 +410,31 @@ def test_uniform_candidate_sampler_functional_large_random():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.arange(2142).reshape(34, 63),
-                                                         63, 10, False, 12)
+    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.arange(2142).reshape(34, 63), 63, 10, False, 12)
     expected_1 = (10,)
     expected_2 = (34, 63)
     expected_3 = (10,)
     np.testing.assert_array_equal(ms1, expected_1)
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_log_uniform_candidate_sampler_unique():
+    """
+    Feature: LogUniformCandidateSampler CPU TEST.
+    Description: The unique is true and num_true is 2 for LogUniformCandidateSampler
+    Expectation: The value and shape of output are the expected values.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    sampled_candidates, true_expected_count, sampled_expected_count = F.log_uniform_candidate_sampler(
+        Tensor(np.array([[1, 7], [0, 4], [3, 3]]), ms.int64), 2, 5, True, 5, 1)
+
+    expected_1 = np.array([4, 1, 2, 0, 3])
+    expected_2 = np.array([[0.99236274, 0.7252593], [0.99990803, 0.8698345], [0.9201084, 0.9201084]])
+    expected_3 = np.array([0.8698345, 0.99236274, 0.96404004, 0.99990803, 0.9201084])
+    assert np.array_equal(sampled_candidates.asnumpy(), expected_1)
+    assert np.allclose(true_expected_count.asnumpy(), expected_2)
+    assert np.allclose(sampled_expected_count.asnumpy(), expected_3)
