@@ -378,7 +378,7 @@ class MS_CORE_API StringImm : public Value {
   /// \param[in] str Define the string.
   explicit StringImm(const std::string &str) noexcept
       : Value(kString), str_(str), hash_(std::hash<std::string>{}(str_)) {}
-  /// \brief Destructor of ValueDictionary.
+  /// \brief Destructor of StringImm.
   ~StringImm() override = default;
   MS_DECLARE_PARENT(StringImm, Value)
   /// \brief The hash value of the StringImm object.
@@ -466,6 +466,56 @@ class MS_CORE_API AnyValue final : public Value {
 };
 
 GVAR_DEF(ValuePtr, kAnyValue, std::make_shared<AnyValue>());
+
+enum ErrorValueType : int { kDead = 0, kPoly = 1 };
+
+/// \brief ErrorValue defines a class for DeadNode and PolyNode.
+class MS_CORE_API ErrorValue final : public Value {
+ public:
+  /// \brief Constructor of ErrorValue.
+  ///
+  /// \param[in] err_type Define the error value type.
+  explicit ErrorValue(ErrorValueType err_type) : err_type_(err_type) {}
+  /// \brief Destructor of RefKey.
+  ~ErrorValue() override = default;
+  MS_DECLARE_PARENT(ErrorValue, Value)
+  /// \brief The hash value of the ErrorValue object.
+  ///
+  /// \return The hash value.
+  std::size_t hash() const override { return tid(); }
+  /// \brief Check whether the input is the current ErrorValue object.
+  ///
+  /// \param[in] other Define a Value object.
+  /// \return Whether the input is the current ErrorValue object.
+  bool operator==(const Value &other) const override;
+  /// \brief Check whether the input is the current ErrorValue object.
+  ///
+  /// \param[in] other Define a ErrorValue object.
+  /// \return Whether the input is the current ErrorValue object.
+  bool operator==(const ErrorValue &other) const;
+  /// \brief Get abstract of the ErrorValue object.
+  ///
+  /// \return The abstract of the ErrorValue object.
+  abstract::AbstractBasePtr ToAbstract() override {
+    MS_LOG(EXCEPTION) << "ErrorValue(" << ToString() << ") can't be converted to abstract.";
+  }
+  /// \brief Check whether the value belongs to DeadNode.
+  ///
+  /// \return Whether the value belongs to DeadNode.
+  bool IsDead() const { return err_type_ == kDead; }
+  /// \brief Check whether the value belongs to PolyNode.
+  ///
+  /// \return Whether the value belongs to PolyNode.
+  bool IsPoly() const { return err_type_ == kPoly; }
+  /// \brief Show the ErrorValue object.
+  ///
+  /// \return The description of the ErrorValue object.
+  std::string ToString() const override { return IsDead() ? "DeadNode" : "PolyNode"; }
+
+ private:
+  ErrorValueType err_type_{kDead};
+};
+using ErrorValuePtr = std::shared_ptr<ErrorValue>;
 
 /// \brief Monad defines a Value class which is used in side effect.
 class MS_CORE_API Monad : public Value {

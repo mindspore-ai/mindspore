@@ -328,7 +328,7 @@ class MS_CORE_API AbstractError final : public AbstractBase {
   ///
   /// \param[in] err the error string.
   /// \param[in] node the binding anf node.
-  AbstractError(const StringImmPtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
+  AbstractError(const ErrorValuePtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
     if (err == nullptr || node == nullptr) {
       MS_LOG(EXCEPTION) << "err or node is nullptr";
     }
@@ -343,7 +343,7 @@ class MS_CORE_API AbstractError final : public AbstractBase {
   AbstractBasePtr Broaden() const override { return Clone(); }
 
   AbstractBasePtr Clone() const override {
-    return std::make_shared<AbstractError>(GetValueTrack()->cast<StringImmPtr>(), node_);
+    return std::make_shared<AbstractError>(GetValueTrack()->cast<ErrorValuePtr>(), node_);
   }
 
   std::string ToString() const override;

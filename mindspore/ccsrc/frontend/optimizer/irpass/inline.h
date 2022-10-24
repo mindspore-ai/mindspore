@@ -308,25 +308,10 @@ class InlinerBase : public AnfVisitor {
     return node->func_graph()->NewCNode(node_inputs);
   }
 
-  bool CheckSwitchBranchAbstract(const AbstractBasePtr &branch_abstract) {
-    if (branch_abstract != nullptr && branch_abstract->isa<abstract::AbstractError>()) {
-      auto branch_abstract_value = branch_abstract->GetValueTrack();
-      MS_EXCEPTION_IF_NULL(branch_abstract_value);
-      auto branch_abstract_value_string_imm = branch_abstract_value->cast<StringImmPtr>();
-      if (branch_abstract_value_string_imm != nullptr) {
-        auto branch_abstract_value_string_imm_value = branch_abstract_value_string_imm->value();
-        return branch_abstract_value_string_imm_value == kDeadNodeName ||
-               branch_abstract_value_string_imm_value == kPolyNodeName;
-      }
-    }
-    return false;
-  }
-
   bool CheckSwitchInputs(const std::vector<AnfNodePtr> &sw_inputs) {
-    auto true_branch_abstract = sw_inputs[kSwitchTrueBranchIndex]->abstract();
-    auto false_branch_abstract = sw_inputs[kSwitchFalseBranchIndex]->abstract();
     // When branch has dead node or poly node, do not perform inline.
-    if (CheckSwitchBranchAbstract(true_branch_abstract) || CheckSwitchBranchAbstract(false_branch_abstract)) {
+    if (IsDeadNode(sw_inputs[kSwitchTrueBranchIndex]) || IsPolyNode(sw_inputs[kSwitchTrueBranchIndex]) ||
+        IsDeadNode(sw_inputs[kSwitchFalseBranchIndex]) || IsPolyNode(sw_inputs[kSwitchFalseBranchIndex])) {
       return true;
     }
     return !sw_inputs[1]->isa<ValueNode>() || IsValueNode<tensor::Tensor>(sw_inputs[1]);

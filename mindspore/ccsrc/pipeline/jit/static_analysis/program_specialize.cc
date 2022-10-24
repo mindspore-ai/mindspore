@@ -55,9 +55,6 @@ bool IsVisible(FuncGraphPtr fg, const FuncGraphPtr &parent) {
   return fg == parent;
 }
 
-const StringImmPtr kDeadNode = std::make_shared<StringImm>(kDeadNodeName);
-const StringImmPtr kPolyNode = std::make_shared<StringImm>(kPolyNodeName);
-
 bool CanSpecializeValueNode(const AnfNodePtr &node) {
   if (IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
     return true;
@@ -117,8 +114,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
       if (pos + 1 >= cnode->inputs().size()) {
         continue;
       }
-      auto input_value = GetValuePtr<StringImm>(cnode->input(pos + 1));
-      if (input_value == nullptr || input_value->value() != kDeadNodeName) {
+      if (!IsDeadNode(cnode->input(pos + 1))) {
         continue;
       }
 
@@ -126,7 +122,8 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
       MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << cnode->DebugString(recursive_level);
       // Change the node.
       auto zero_value = NewValueNode(MakeValue(0));
-      zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+      zero_value->set_abstract(
+        std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0), std::make_shared<Problem>()));
       cnode->set_input(pos + 1, zero_value);
 
       // Change the abstract.
@@ -146,8 +143,8 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
         continue;
       }
       ValuePtr element_value = sequence_value->value()[pos];
-      auto element_str_value = element_value->cast_ptr<StringImm>();
-      if (element_str_value == nullptr || element_str_value->value() != kDeadNodeName) {
+      auto element_err_value = element_value->cast_ptr<ErrorValue>();
+      if (element_err_value == nullptr || !element_err_value->IsDead()) {
         continue;
       }
 
@@ -621,7 +618,7 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
 }
 
 // Purify specific input of a CNode.
-template <typename T>
+template <typename T, typename S>
 void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecializer *const specializer) {
   const auto &old_input = cnode->input(index);
   auto sequence_value = GetValuePtr<T>(old_input);
@@ -632,8 +629,14 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   if (flags == nullptr) {
     return;
   }
+  auto old_input_abs = old_input->abstract();
+  MS_EXCEPTION_IF_NULL(old_input_abs);
+  auto old_sequence_abs = dyn_cast<AbstractSequence>(old_input_abs);
+  MS_EXCEPTION_IF_NULL(old_sequence_abs);
+
   std::vector<size_t> dead_node_positions;
   ValuePtrList elements;
+  AbstractBasePtrList elements_abs{};
   auto sequence_value_size = sequence_value->value().size();
   if (flags->size() < sequence_value_size) {
     MS_LOG(EXCEPTION) << "Inner exception. CNode: " << cnode->ToString() << " input: " << old_input->ToString()
@@ -641,26 +644,27 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   }
   for (size_t i = 0; i < sequence_value_size; ++i) {
     ValuePtr old_sequence_value = sequence_value->value()[i];
-    auto old_sequence_str_value = old_sequence_value->cast_ptr<StringImm>();
-    if (!(*flags)[i]) {
-      auto zero = MakeValue(0);
-      (void)elements.emplace_back(zero);
-      MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
-                    << index << "] of " << cnode->DebugString();
-    } else if (old_sequence_str_value != nullptr && old_sequence_str_value->value() == kDeadNodeName) {
+    auto old_sequence_err_value = old_sequence_value->cast_ptr<ErrorValue>();
+    if (old_sequence_err_value != nullptr && old_sequence_err_value->IsDead()) {
       MS_LOG(DEBUG) << "Collect for erasing elements[" << i << "] DeadNode as zero for " << old_input->DebugString()
                     << ", which is inputs[" << index << "] of " << cnode->DebugString();
       (void)dead_node_positions.emplace_back(i);
-      (void)elements.emplace_back(old_sequence_value);
+    }
+    if (!(*flags)[i]) {
+      auto zero = MakeValue(0);
+      (void)elements.emplace_back(zero);
+      (void)elements_abs.emplace_back(zero->ToAbstract());
+      MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
+                    << index << "] of " << cnode->DebugString();
     } else {
       (void)elements.emplace_back(old_sequence_value);
+      (void)elements_abs.emplace_back(old_sequence_abs->elements()[i]);
     }
   }
+
   auto new_sequence_value = std::make_shared<T>(elements);
   auto new_input = NewValueNode(new_sequence_value);
-  auto new_input_abs = new_sequence_value->ToAbstract();
-  auto new_sequence_abs = dyn_cast<AbstractSequence>(new_input_abs);
-  MS_EXCEPTION_IF_NULL(new_sequence_abs);
+  auto new_sequence_abs = std::make_shared<S>(elements_abs);
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
   (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
   new_sequence_abs->set_sequence_nodes(sequence_nodes);
@@ -720,14 +724,13 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
       (void)inputs.emplace_back(cnode->input(0));
       for (size_t i = 0; i < (*flags).size(); ++i) {
         auto old_input = cnode->input(i + 1);
-        auto old_input_value = GetValuePtr<StringImm>(old_input);
         if (!(*flags)[i]) {
           auto zero_value = NewValueNode(MakeValue(0));
           zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
           (void)inputs.emplace_back(zero_value);
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);
-        } else if (old_input_value != nullptr && old_input_value->value() == kDeadNodeName) {
+        } else if (IsDeadNode(old_input)) {
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Collect for erasing elements[" << i << "] DeadNode as zero for " << cnode << "/"
                         << cnode->DebugString(recursive_level);
@@ -744,9 +747,9 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
   // Purify each Tuple/List ValueNode in CNode.
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     if (IsValueNode<ValueTuple>(cnode->input(i))) {
-      PurifySequenceValueNode<ValueTuple>(cnode, i, specializer_);
+      PurifySequenceValueNode<ValueTuple, AbstractTuple>(cnode, i, specializer_);
     } else if (IsValueNode<ValueList>(cnode->input(i))) {
-      PurifySequenceValueNode<ValueList>(cnode, i, specializer_);
+      PurifySequenceValueNode<ValueList, AbstractList>(cnode, i, specializer_);
     }
   }
 }
@@ -907,13 +910,15 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const CNodePtr &cnode, con
   AnfNodePtr repl = BuildSpecializedNodeInner(cnode, func, abs, func_abs, argvals, &errcode);
   if (repl == nullptr) {
     if (errcode == kSpecializeDead) {
-      const auto error_dead_node = std::make_shared<AbstractError>(kDeadNode, func);
-      repl = BuildValueNode(kDeadNode, error_dead_node);
+      const auto err_dead_value = std::make_shared<ErrorValue>(ErrorValueType::kDead);
+      const auto err_dead_abstract = std::make_shared<AbstractError>(err_dead_value, func);
+      repl = BuildValueNode(err_dead_value, err_dead_abstract);
       constexpr auto recursive_level = 2;
       MS_LOG(DEBUG) << "DEAD for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
     } else if (errcode == kSpecializePoly) {
-      const auto error_poly_node = std::make_shared<AbstractError>(kPolyNode, func);
-      repl = BuildValueNode(kPolyNode, error_poly_node);
+      const auto error_poly_value = std::make_shared<ErrorValue>(ErrorValueType::kPoly);
+      const auto error_poly_abstract = std::make_shared<AbstractError>(error_poly_value, func);
+      repl = BuildValueNode(error_poly_value, error_poly_abstract);
       constexpr auto recursive_level = 2;
       MS_LOG(DEBUG) << "POLY for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
     } else {

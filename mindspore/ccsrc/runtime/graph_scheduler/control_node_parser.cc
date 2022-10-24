@@ -555,9 +555,7 @@ bool IsInvalidPartial(const AnfNodePtr &node) {
   if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
     return false;
   }
-
-  auto func_value = GetValueNode<StringImmPtr>(inputs[kPartialFuncGraphPos]);
-  if (func_value != nullptr && func_value->value() == kDeadNodeName) {
+  if (IsDeadNode(inputs[kPartialFuncGraphPos])) {
     return true;
   }
   return false;
@@ -1267,8 +1265,7 @@ void ControlNodeParser::ParseDeviceContextForPartialNode(const std::vector<AnfNo
     }
     auto &func_node = inputs[kPartialFuncGraphPos];
     // Ignore if the node is 'Partial(DeadNode,)'.
-    auto func_value = GetValueNode<StringImmPtr>(func_node);
-    if (func_value != nullptr && func_value->value() == kDeadNodeName) {
+    if (IsDeadNode(func_node)) {
       MS_LOG(DEBUG) << "Ignore partial dead node:" << cnode->DebugString();
       continue;
     }
@@ -1658,8 +1655,7 @@ void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr>
       auto &func_node = inputs[kPartialFuncGraphPos];
       MS_EXCEPTION_IF_NULL(func_node);
       // Ignore if the node is 'Partial(DeadNode,)'.
-      auto func_value = GetValueNode<StringImmPtr>(func_node);
-      if (func_value != nullptr && func_value->value() == kDeadNodeName) {
+      if (IsDeadNode(func_node)) {
         MS_LOG(DEBUG) << "Ignore partial dead node:" << node->DebugString();
         continue;
       }

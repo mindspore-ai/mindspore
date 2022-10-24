@@ -39,6 +39,7 @@ using mindspore::abstract::AbstractMapTensor;
 using mindspore::abstract::AbstractRefTensor;
 using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
+using mindspore::abstract::AbstractSequence;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractType;
@@ -84,12 +85,16 @@ bool CheckAbstractScalar(const AnfNodePtr &node) {
     if (type->isa<EnvType>() || type->isa<MsClassType>()) {
       MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
     }
-    if (type->isa<Problem>() || type->isa<External>()) {
-      // Only allow string type from external.
-      if (!IsValueNode<StringImm>(node)) {
-        // Validate a type.
-        MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
-      }
+    // Only allow string type from external.
+    if (type->isa<External>() && !IsValueNode<StringImm>(node)) {
+      MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
+    }
+    // When a DeadNode is renormalized before, its abstract may be changed to
+    // AbstractScalar(std:: make_shared<Int32Imm>(0), std:: make_shared<Problem>()).
+    if (type->isa<Problem>()) {
+      auto value = abstract->GetValueTrack();
+      MS_EXCEPTION_IF_NULL(value);
+      node->set_abstract(value->ToAbstract());
     }
     return true;
   }
@@ -201,9 +206,34 @@ void CheckAssignReturnValue(const AnfNodePtr &node) {
   }
 }
 
+void CheckDeadNodeInOutputRecursively(const AnfNodePtr &node, const AbstractBasePtr &abstract) {
+  if (abstract == nullptr) {
+    return;
+  }
+  TypePtr type = abstract->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->isa<Problem>()) {
+    MS_LOG(EXCEPTION) << "Function in output is not supported. Please check your code. "
+                      << trace::GetDebugInfo(node->debug_info());
+  }
+  if (abstract->isa<AbstractSequence>()) {
+    auto abs_seq = abstract->cast_ptr<AbstractSequence>();
+    for (const auto &elem : abs_seq->elements()) {
+      CheckDeadNodeInOutputRecursively(node, elem);
+    }
+  }
+}
+
+void ValidateTopGraphOutput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto abstract = node->abstract();
+  CheckDeadNodeInOutputRecursively(node, abstract);
+}
+
 void Validate(const FuncGraphPtr &func_graph) {
   FuncGraphManagerPtr mgr = Manage(func_graph, false);
   MS_EXCEPTION_IF_NULL(mgr);
+  ValidateTopGraphOutput(func_graph->output());
   const AnfNodeSet &all_nodes = mgr->all_nodes();
   for (auto node : all_nodes) {
     TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));

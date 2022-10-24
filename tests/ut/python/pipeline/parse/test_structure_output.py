@@ -15,6 +15,7 @@
 """
 test_structure_output
 """
+import pytest
 import numpy as np
 
 import mindspore.ops.operations as P
@@ -99,9 +100,6 @@ def test_output_const_str():
 
 def test_output_parameter_int():
     class Net(Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x):
             return x
 
@@ -122,6 +120,42 @@ def test_output_parameter_str():
     x = "hello world"
     net = Net()
     assert net() == x
+
+
+def test_output_function():
+    """
+    Feature: Graph syntax.
+    Description: Return function as output in graph mode.
+    Expectation: Throw Exception.
+    """
+    class Net(Cell):
+        def func(self):
+            return 0
+
+        def construct(self):
+            return self.func
+
+    with pytest.raises(RuntimeError, match="Function in output is not supported."):
+        net = Net()
+        net()
+
+
+def test_output_function_tuple():
+    """
+    Feature: Graph syntax.
+    Description: Return function in output in graph mode.
+    Expectation: Throw Exception.
+    """
+    class Net(Cell):
+        def func(self):
+            return 0
+
+        def construct(self):
+            return (self.func,)
+
+    with pytest.raises(RuntimeError, match="Function in output is not supported."):
+        net = Net()
+        net()
 
 
 def test_tuple_tuple_0():
