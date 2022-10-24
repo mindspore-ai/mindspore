@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include <numeric>
 
 #include "ir/dtype.h"
 #include "ir/tensor.h"
@@ -89,17 +90,6 @@ struct OutStrategyValueRegister {
     });
   }
 } out_regist;
-
-int64_t MaxCommonDivisor(int64_t n1, int64_t n2) {
-  while (n1 != n2) {
-    if (n1 > n2) {
-      n1 -= n2;
-    } else {
-      n2 -= n1;
-    }
-  }
-  return n1;
-}
 }  // namespace
 
 std::string StrategyToString(const Strategies &strategy) {
@@ -1093,6 +1083,9 @@ std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
       return batch_strategy;
     }
     for (size_t j = 0; j < input_shape.size(); ++j) {
+      if (input_shape[j] <= 0) {
+        return batch_strategy;
+      }
       if (stra[j] == 1) {
         continue;
       }
@@ -1100,7 +1093,7 @@ std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
         MS_LOG(WARNING) << "The batch parallel value is not equal to device num, skip adjust it.";
         return batch_strategy;
       }
-      shard_size = MaxCommonDivisor(input_shape[j], shard_size);
+      shard_size = std::gcd(input_shape[j], shard_size);
       changed_pos.push_back({i, j});
     }
   }
