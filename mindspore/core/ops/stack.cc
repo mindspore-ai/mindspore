@@ -52,6 +52,8 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   const int64_t kOneNum = 1;
   (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
                                            primitive->name());
+
+  bool has_rank_valid_shape = false;
   ShapeVector input_shape;
   size_t element_rank = 0;
   for (size_t i = 0; i < elements.size(); ++i) {
@@ -60,7 +62,9 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
     if (IsDynamicRank(input_shape_tmp)) {
       continue;
     }
-    if (input_shape.empty()) {
+
+    if (!has_rank_valid_shape) {
+      has_rank_valid_shape = true;
       input_shape = input_shape_tmp;
       element_rank = input_shape_tmp.size();
       continue;
@@ -79,7 +83,7 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
     }
   }
 
-  if (input_shape.empty()) {
+  if (!has_rank_valid_shape) {
     return std::make_shared<abstract::Shape>(ShapeVector{kUnknownRank});
   }
   std::vector<int64_t> infer_shape = input_shape;
