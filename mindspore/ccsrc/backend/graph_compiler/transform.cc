@@ -578,7 +578,7 @@ BackendPtr CreateBackend() {
     } else {
       backend = std::make_shared<MsBackend>(name, target, device_id);
     }
-    if (target == kAscendDevice && MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    if (target == kAscendDevice && context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
       backend->set_is_multi_graph_sink(false);
     }
     context_ptr->Update();
