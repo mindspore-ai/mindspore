@@ -489,6 +489,8 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     FormatTransformChecker::GetInstance().CheckSupportFormatTransform(kernel_graph);
     SetOperatorInfo(kernel_graph);
 
+    RunOpHardwareOptimize(kernel_graph);
+
     RunOpHideNopNode(kernel_graph);
     RunOpRemoveNopNode(kernel_graph);
     UpdateKernelRefInfo(kernel_graph);
