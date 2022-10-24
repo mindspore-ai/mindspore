@@ -60,18 +60,30 @@ void CheckShape(ShapeVector *shape) {
 }
 }  // namespace
 
-void MinimumGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  y_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  dout_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  dx_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dy_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool MinimumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
+}
+
+int MinimumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  x_shape_ = inputs[kIndex0]->GetShapeVector();
+  y_shape_ = inputs[kIndex1]->GetShapeVector();
+  dout_shape = inputs[kIndex2]->GetShapeVector();
+
   CheckShape(&x_shape_);
   CheckShape(&y_shape_);
   CheckShape(&dout_shape);
+
+  return KRET_OK;
 }
 
 bool MinimumGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

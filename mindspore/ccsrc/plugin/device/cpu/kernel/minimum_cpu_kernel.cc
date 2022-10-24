@@ -32,14 +32,35 @@ constexpr size_t kIdx5 = 5;
 constexpr size_t kIdx6 = 6;
 }  // namespace
 
-void MinimumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_y_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  TypeId input_x_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  TypeId input_y_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+bool MinimumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MinimumLaunchFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(ERROR) << "Minimum does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int MinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  input_x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_y_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  TypeId input_x_dtype = inputs[kIndex0]->GetDtype();
+  TypeId input_y_dtype = inputs[kIndex0]->GetDtype();
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
   for (size_t i = 0; i < output_shape_.size(); i++) {
@@ -52,15 +73,7 @@ void MinimumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     InitInputTensors(input_x_dtype, input_y_dtype);
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, MinimumLaunchFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "Minimum does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 void MinimumCpuKernelMod::InitInputTensorAndScalar(size_t max_input_shape_size) {
