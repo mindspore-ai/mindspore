@@ -647,3 +647,22 @@ def test_batchmatmul_type_complex128():
                        [[8+0j, 8+0j, 8+0j, 8+0j]]], np.complex128)
     assert (out.asnumpy() == expect).all()
     assert str(out.dtype) == "Complex128"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batchmatmul_default_transpose():
+    """
+    Feature: test bmm with default transpose.
+    Description: test bmm with default transpose.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_a = [[[1.73676595], [0.12718279]]]
+    input_b = [[[1.04756699, 0.40877772, -0.05073088]]]
+    net = BatchMatMulNet()
+    output = net(Tensor(input_a), Tensor(input_b))
+    expected = [[[1.8193787, 0.7099512, -0.08810767],
+                 [0.1332325, 0.05198949, -0.0064521]]]
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
