@@ -80,8 +80,16 @@ class RpcRecvKernelMod : public RpcKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  void InitKernel(const CNodePtr &kernel_node) override {
+    auto input0 = common::AnfAlgo::GetInputNode(kernel_node, 0);
+    // If the input is a monad, no need to launch recv kernel.
+    if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
+      recv_monad_ = true;
+    }
+    is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_node);
+    // RpcRecv kernel is similar with Unique, the next op's infer op must be launched after RpcRecv kernel is done.
+    is_need_retrieve_output_shape_ = true;
+  }
 
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
