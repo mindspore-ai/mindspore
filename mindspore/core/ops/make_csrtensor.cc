@@ -73,8 +73,13 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
                              << ", CSRTensor's dimension: " << shape_vec.size() << ".";
   }
 
-  if (IsDynamicShape(indptr_shp) || IsDynamicShape(indices_shp) || IsDynamicShape(values_shp) ||
-      IsDynamicShape(shape_vec)) {
+  for (const auto &elem_type : shape->ElementsType()) {
+    if (!elem_type->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << elem_type->ToString();
+    }
+  }
+
+  if (IsDynamic(indptr_shp) || IsDynamic(indices_shp) || IsDynamic(values_shp)) {
     MS_LOG(DEBUG) << "Dynamic shape in MakeCSRTensor's inputs! Ignore shape check.";
     std::vector<abstract::AbstractBasePtr> element_list{indptr, indices, values, shape};
     return std::make_shared<abstract::AbstractCSRTensor>(element_list);
@@ -90,7 +95,6 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   }
 
   size_t shape_size = 1;
-  auto shape_types = shape->ElementsType();
   for (size_t i = 0; i < shape_vec.size(); ++i) {
     if (shape_vec[i] <= 0) {
       MS_EXCEPTION(ValueError) << "The element of shape must be positive, but got " << shape_value->ToString();
@@ -100,9 +104,6 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
         << "CSRTensor's shape[2: ] must be equal to value's shape[1: ], but CSRTensor's shape got: "
         << shape_value->ToString() << ", "
         << "values's shape got: " << values->shape()->ToString() << ".";
-    }
-    if (!shape_types[i]->isa<Int>()) {
-      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << shape_types[i]->ToString();
     }
     shape_size *= LongToSize(shape_vec[i]);
   }
