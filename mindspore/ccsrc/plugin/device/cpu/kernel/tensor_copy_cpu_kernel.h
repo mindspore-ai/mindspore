@@ -18,10 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_COPY_CPU_KERNEL_H_
 
 #include <vector>
-#include <string>
-#include <memory>
 #include <map>
-#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
