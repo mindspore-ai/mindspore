@@ -92,6 +92,7 @@ mindspore.Tensor
     mindspore.Tensor.log
     mindspore.Tensor.log1p
     mindspore.Tensor.logit
+    mindspore.Tensor.negative
     mindspore.Tensor.pow
     mindspore.Tensor.round
     mindspore.Tensor.sigmoid

@@ -98,6 +98,7 @@ Element-wise Methods
     mindspore.Tensor.log1p
     mindspore.Tensor.logit
     mindspore.Tensor.pow
+    mindspore.Tensor.negative
     mindspore.Tensor.round
     mindspore.Tensor.sigmoid
     mindspore.Tensor.sqrt

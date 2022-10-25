@@ -1870,6 +1870,25 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('lerp')(self, end, weight)
 
+    def negative(self):
+        r"""
+        Return a new tensor with the negative of the elements of input.
+
+        Returns:
+            Tensor, with the negative of the elements of the self Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
+            >>> output = x.negative()
+            >>> print(output)
+            [-1.  -2.   1.  -2.   0.   3.5]
+        """
+        self._init_check()
+        return tensor_operator_registry.get("negative")(self)
+
     def norm(self, axis, p=2, keep_dims=False, epsilon=1e-12):
         """
         Returns the matrix norm or vector norm of a given tensor.
