@@ -89,16 +89,16 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     return ret;
   }
   enum input_index : size_t { Var_no, Accum_no, Lr_no, Grad_no, Indices_no, Momentum_no };
-  ShapeVector var_shape = inputs[Var_no]->GetShapeVector();
-  ShapeVector accum_shape = inputs[Accum_no]->GetShapeVector();
-  ShapeVector lr_shape = inputs[Lr_no]->GetShapeVector();
-  ShapeVector grad_shape = inputs[Grad_no]->GetShapeVector();
-  ShapeVector indices_shape = inputs[Indices_no]->GetShapeVector();
-  ShapeVector momentum_shape = inputs[Momentum_no]->GetShapeVector();
+  auto var_shape = inputs[static_cast<size_t>(Var_no)]->GetShapeVector();
+  auto accum_shape = inputs[static_cast<size_t>(Accum_no)]->GetShapeVector();
+  auto lr_shape = inputs[static_cast<size_t>(Lr_no)]->GetShapeVector();
+  auto grad_shape = inputs[static_cast<size_t>(Grad_no)]->GetShapeVector();
+  auto indices_shape = inputs[static_cast<size_t>(Indices_no)]->GetShapeVector();
+  auto momentum_shape = inputs[static_cast<size_t>(Momentum_no)]->GetShapeVector();
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, var must be at least 1D.";
   } else {
-    var_first_dim_size_ = var_shape[0];
+    var_first_dim_size_ = LongToSize(var_shape[0]);
   }
   if (var_shape.size() != grad_shape.size()) {
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, rank(grad) should be same as rank(var), but got rank(grad): "
@@ -111,12 +111,12 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(EXCEPTION) << "For SparseApplyMomentum, the shape of var and grad must equal in dimension " << i << ".";
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, indices must be 1D, but got " << indices_shape.size() << "D.";
   }
-  indices_size_ = indices_shape[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION)
       << "For SparseApplyMomentum, grad.shape[0] must be equal to indices.shape[0], but got grad.shape[0]: "
@@ -129,23 +129,23 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     MS_LOG(EXCEPTION) << "For SparseApplyMomentum, momentum is not a scalar, got shape: " << Vector2Str(momentum_shape)
                       << ".";
   }
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
 template <typename I, typename T>
 bool SparseApplyMomentumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs) {
+                                                   const std::vector<AddressPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyMomentumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyMomentumOutputsNum, kernel_name_);
 
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[1]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[3]->addr);
-  auto indices = reinterpret_cast<I *>(inputs[4]->addr);
-  auto lr_scalar = reinterpret_cast<T *>(inputs[2]->addr)[0];
-  auto momentum_scalar = reinterpret_cast<T *>(inputs[5]->addr)[0];
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto var = static_cast<T *>(inputs[0]->addr);
+  auto accum = static_cast<T *>(inputs[1]->addr);
+  auto grad = static_cast<T *>(inputs[3]->addr);
+  auto indices = static_cast<I *>(inputs[4]->addr);
+  auto lr_scalar = static_cast<T *>(inputs[2]->addr)[0];
+  auto momentum_scalar = static_cast<T *>(inputs[5]->addr)[0];
+  auto output = static_cast<T *>(outputs[0]->addr);
 
   for (size_t i = 0; i < indices_size_; ++i) {
     I index = indices[i];

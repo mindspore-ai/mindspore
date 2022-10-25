@@ -70,7 +70,7 @@ bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   if (data_format_ == "NHWC") {
-    int64_t input_shape_size = input_shape_.size();
+    int64_t input_shape_size = SizeToLong(input_shape_.size());
     size_t kStep = input_shape_[input_shape_size - 1];
     size_t num_value = 1;
     for (size_t i = 0; i < kStep; i++) {

@@ -46,7 +46,7 @@ abstract::ShapePtr TrilIndicesInferShape(const PrimitivePtr &primitive,
     auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col, row + offset));
     auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row, row + offset));
     auto n_row_trapezoid = (m_last_row - m_first_row + 1);
-    tril_size = ((m_first_row + m_last_row) * n_row_trapezoid) >> 1;
+    tril_size = static_cast<int64_t>(((m_first_row + m_last_row) * n_row_trapezoid) >> 1);
     auto diff_row = n_row_all - n_row_trapezoid;
     if (diff_row > 0) {
       tril_size += diff_row * col;

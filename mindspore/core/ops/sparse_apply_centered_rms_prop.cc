@@ -57,7 +57,7 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
   }
 
   // Var dimension must be equal or greater than 1.
-  (void)CheckAndConvertUtils::CheckInteger("var dimension", var_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
 
   if (var_shape.size() != grad_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -73,7 +73,7 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
   }
 
   // Indices must be rank 1.
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
   if (indices_shape[0] != grad_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "

@@ -55,8 +55,8 @@ int ReverseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (base_operator->HasAttr("axis")) {
     axis_shape_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr("axis"));
   }
-  input_dims_ = input_shape_.size();
-  axis_dims_ = axis_shape_.size();
+  input_dims_ = SizeToLong(input_shape_.size());
+  axis_dims_ = SizeToLong(axis_shape_.size());
   if (input_dims_ >= kInputDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should less than " << kInputDim
                       << ", but got " << input_dims_;

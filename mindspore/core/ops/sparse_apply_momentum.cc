@@ -38,9 +38,10 @@ abstract::ShapePtr SparseApplyMomentumInferShape(const PrimitivePtr &primitive,
   auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShapeTrack())[kShape];
 
   auto scalar_shape = 0;
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", momentum_shape.size(), kEqual, scalar_shape,
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, scalar_shape,
                                            prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", SizeToLong(momentum_shape.size()), kEqual,
+                                           scalar_shape, prim_name);
 
   std::map<std::string, ShapeVector> same_shape_args_map;
   (void)same_shape_args_map.insert({"shape of accum", accum_shape});
@@ -49,7 +50,7 @@ abstract::ShapePtr SparseApplyMomentumInferShape(const PrimitivePtr &primitive,
   }
 
   // Var dimension must be equal or greater than 1.
-  (void)CheckAndConvertUtils::CheckInteger("var dimension", var_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
 
   if (var_shape.size() != grad_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -65,7 +66,7 @@ abstract::ShapePtr SparseApplyMomentumInferShape(const PrimitivePtr &primitive,
   }
 
   // Indices must be rank 1.
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
   if (indices_shape[0] != grad_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', grad.shape[0] must be equal to indices.shape[0], but got grad.shape[0]: "
@@ -86,11 +87,11 @@ TypePtr SparseApplyMomentumInferType(const PrimitivePtr &primitive, const std::v
   auto momentum_type = input_args[5]->BuildType();
 
   std::map<std::string, TypePtr> args;
-  args.insert({"var", var_type});
-  args.insert({"accum", accum_type});
-  args.insert({"grad", grad_type});
-  args.insert({"lr", lr_type});
-  args.insert({"momentum", momentum_type});
+  (void)args.insert({"var", var_type});
+  (void)args.insert({"accum", accum_type});
+  (void)args.insert({"grad", grad_type});
+  (void)args.insert({"lr", lr_type});
+  (void)args.insert({"momentum", momentum_type});
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, common_valid_types, prim_name);
 
   const std::set<TypePtr> valid_types2 = {kInt32, kInt64};
