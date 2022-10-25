@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/max_pool3d_with_argmax_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/max_pool3d_with_argmax.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,49 +32,44 @@ const size_t DIM_SIZE_1 = 1;
 const size_t DIM_SIZE_5 = 5;
 }  // namespace
 
-void MaxPool3DWithArgmaxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kZero);
-  y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kZero);
-  argmax_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kOne);
-  x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kZero);
-  argmax_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kOne);
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  auto ksize_addr = prim->GetAttr("ksize");
-  auto strides_addr = prim->GetAttr("strides");
-  auto pads_addr = prim->GetAttr("pads");
-  auto dilation_addr = prim->GetAttr("dilation");
-  if (ksize_addr->isa<Int64Imm>()) {
-    ksize_int_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "ksize");
-    ksize_list_.push_back(ksize_int_);
-  } else {
-    ksize_list_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "ksize");
-  }
-  if (strides_addr->isa<Int64Imm>()) {
-    strides_int_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "strides");
-    strides_list_.push_back(strides_int_);
-  } else {
-    strides_list_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "strides");
-  }
-  if (pads_addr->isa<Int64Imm>()) {
-    pads_int_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pads");
-    pads_list.push_back(pads_int_);
-  } else {
-    pads_list = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "pads");
-  }
-  if (dilation_addr->isa<Int64Imm>()) {
-    dilation_int_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dilation");
-    dilation_list_.push_back(dilation_int_);
-  } else {
-    dilation_list_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilation");
-  }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool MaxPool3DWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+
+  x_dtype_ = inputs[kZero]->GetDtype();
+  argmax_dtype_ = outputs[kOne]->GetDtype();
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPool3DWithArgmax>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  ksize_list_ = kernel_ptr->get_kernel_size();
+  strides_list_ = kernel_ptr->get_strides();
+  pads_list_ = kernel_ptr->get_pads();
+  dilation_list_ = kernel_ptr->get_dilation();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "MaxPool3DWithargmax does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int MaxPool3DWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs,
+                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
+  y_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
+  argmax_shape_ = outputs[kOne]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename DATA_T, typename INDICES_T>
@@ -225,14 +221,14 @@ bool MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     strides_temp_list.push_back(strides_list_[kTwo]);
   }
   std::vector<int64_t> pads_temp_list;
-  if (pads_list.size() == DIM_SIZE_1) {
-    pads_temp_list.push_back(pads_list[kZero]);
-    pads_temp_list.push_back(pads_list[kZero]);
-    pads_temp_list.push_back(pads_list[kZero]);
+  if (pads_list_.size() == DIM_SIZE_1) {
+    pads_temp_list.push_back(pads_list_[kZero]);
+    pads_temp_list.push_back(pads_list_[kZero]);
+    pads_temp_list.push_back(pads_list_[kZero]);
   } else {
-    pads_temp_list.push_back(pads_list[kZero]);
-    pads_temp_list.push_back(pads_list[kOne]);
-    pads_temp_list.push_back(pads_list[kTwo]);
+    pads_temp_list.push_back(pads_list_[kZero]);
+    pads_temp_list.push_back(pads_list_[kOne]);
+    pads_temp_list.push_back(pads_list_[kTwo]);
   }
   std::vector<int64_t> dilation_temp_list;
   if (dilation_list_.size() == DIM_SIZE_1) {

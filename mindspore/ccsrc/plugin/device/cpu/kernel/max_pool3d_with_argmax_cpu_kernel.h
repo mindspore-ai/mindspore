@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MAX_POOL3D_WITH_ARGMAX_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MAX_POOL3D_WITH_ARGMAX_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAX_POOL3D_WITH_ARGMAX_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAX_POOL3D_WITH_ARGMAX_CPU_KERNEL_H_
 
+#include <map>
 #include <algorithm>
 #include <functional>
 #include <numeric>
@@ -31,12 +32,16 @@
 
 namespace mindspore {
 namespace kernel {
-class MaxPool3DWithArgmaxCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MaxPool3DWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
  public:
   MaxPool3DWithArgmaxCpuKernelMod() = default;
   ~MaxPool3DWithArgmaxCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -77,15 +82,11 @@ class MaxPool3DWithArgmaxCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int64_t> argmax_shape_;
   std::vector<int64_t> ksize_list_;
   std::vector<int64_t> strides_list_;
-  std::vector<int64_t> pads_list;
+  std::vector<int64_t> pads_list_;
   std::vector<int64_t> dilation_list_;
-  int64_t ksize_int_ = 0;
-  int64_t strides_int_ = 0;
-  int64_t pads_int_ = 0;
-  int64_t dilation_int_ = 0;
   TypeId x_dtype_{kTypeUnknown};
   TypeId argmax_dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MAX_POOL3D_WITH_ARGMAX_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAX_POOL3D_WITH_ARGMAX_CPU_KERNEL_H_
