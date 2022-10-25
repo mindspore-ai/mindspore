@@ -67,6 +67,8 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     if (v->isa<ValueTuple>() || v->isa<ValueList>()) {
       auto sh = GetValue<std::vector<int64_t>>(v);
       return Emit(prim::kZerosLike, {Tensor(sh)});
+    } else if (v->isa<Scalar>() || v->isa<Type>()) {
+      return Emit(prim::kZerosLike, {Tensor(0, v->type())});
     }
   }
   return Emit(prim::kZerosLike, {node});
