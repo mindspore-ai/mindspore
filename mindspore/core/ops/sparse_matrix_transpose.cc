@@ -47,7 +47,7 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   std::vector<int64_t> values_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  if (rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
+  if (!IsDynamic(dense_shape_shape) && rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ",the rank of input must be 2 or 3, but got "
                              << dense_shape_shape.size() << "!";
   }
@@ -67,35 +67,18 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
     MS_EXCEPTION(ValueError) << "For " << prim_name << ",the shape of input col indices must be 1-D, but got "
                              << col_indices_shape.size() << "-D.";
   }
-  auto transpose_shape_shape = input_args[kInputIndex0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(transpose_shape_shape);
-  abstract::ShapePtr transpose_shape_shape_list = transpose_shape_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(transpose_shape_shape_list);
-  auto transpose_batch_shape = input_args[kInputIndex1]->BuildShape();
-  MS_EXCEPTION_IF_NULL(transpose_batch_shape);
-  abstract::ShapePtr transpose_batch_shape_list = transpose_batch_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(transpose_batch_shape_list);
-  auto transpose_col_indices_shape = input_args[kInputIndex3]->BuildShape();
-  MS_EXCEPTION_IF_NULL(transpose_col_indices_shape);
-  abstract::ShapePtr transpose_col_indices_shape_list = transpose_col_indices_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(transpose_col_indices_shape_list);
-  auto transpose_values_shape = input_args[kInputIndex4]->BuildShape();
-  MS_EXCEPTION_IF_NULL(transpose_values_shape);
-  abstract::ShapePtr transpose_values_shape_list = transpose_values_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(transpose_values_shape_list);
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-      !input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() &&
-      !input_args[kInputIndex0]->BuildValue()->isa<None>()) {
-    auto dense_shape = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(dense_shape);
-    auto dense_shape_ptr = dense_shape->BuildValue();
-    MS_EXCEPTION_IF_NULL(dense_shape_ptr);
-    auto dense_shape_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_ptr, prim_name);
-    ShapeVector transpose_row_pointers_shape = {0};
+  ShapeVector transpose_row_pointers_shape{abstract::Shape::kShapeDimAny};
+  auto dense_shape = input_args[kInputIndex0];
+  if (dense_shape->isa<abstract::AbstractTensor>() && dense_shape->BuildValue()->isa<tensor::Tensor>()) {
+    auto dense_shape_ = dense_shape->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(dense_shape_);
+    auto dense_shape_value = dense_shape->BuildValue();
+    MS_EXCEPTION_IF_NULL(dense_shape_value);
+    auto dense_shape_tensor = CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_value, prim_name);
     if (rank_x == kInputNoBatch) {
-      transpose_row_pointers_shape[0] = dense_shape_ptr_tensor[1] + 1;
+      transpose_row_pointers_shape[0] = dense_shape_tensor[1] + 1;
     } else {
-      transpose_row_pointers_shape[0] = dense_shape_ptr_tensor[0] * (dense_shape_ptr_tensor[ktwo] + 1);
+      transpose_row_pointers_shape[0] = dense_shape_tensor[0] * (dense_shape_tensor[ktwo] + 1);
     }
     if (transpose_row_pointers_shape[0] > max_length) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << "the shape of output row pointers must be "
@@ -104,23 +87,15 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
                                << "! The shape of output row pointers should be reduced"
                                << " or max_length should be increased.";
     }
-    ShapeVector transpose_row_pointer_min_shape = {0};
-    ShapeVector transpose_row_pointer_max_shape = {max_length};
-    abstract::ShapePtr transpose_row_pointers_shape_list = std::make_shared<abstract::Shape>(
-      transpose_row_pointers_shape, transpose_row_pointer_min_shape, transpose_row_pointer_max_shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-      transpose_shape_shape_list, transpose_batch_shape_list, transpose_row_pointers_shape_list,
-      transpose_col_indices_shape_list, transpose_values_shape_list});
-  } else {
-    ShapeVector transpose_row_pointers_shape = {abstract::Shape::kShapeDimAny};
-    ShapeVector transpose_row_pointer_min_shape = {0};
-    ShapeVector transpose_row_pointer_max_shape = {max_length};
-    abstract::ShapePtr transpose_row_pointers_shape_list = std::make_shared<abstract::Shape>(
-      transpose_row_pointers_shape, transpose_row_pointer_min_shape, transpose_row_pointer_max_shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-      transpose_shape_shape_list, transpose_batch_shape_list, transpose_row_pointers_shape_list,
-      transpose_col_indices_shape_list, transpose_values_shape_list});
   }
+  abstract::ShapePtr dense_shape_shape_ptr = std::make_shared<abstract::Shape>(dense_shape_shape);
+  abstract::ShapePtr batch_pointers_shape_ptr = std::make_shared<abstract::Shape>(batch_pointers_shape);
+  abstract::ShapePtr transpose_row_pointers_shape_ptr = std::make_shared<abstract::Shape>(transpose_row_pointers_shape);
+  abstract::ShapePtr col_indices_shape_ptr = std::make_shared<abstract::Shape>(col_indices_shape);
+  abstract::ShapePtr values_shape_ptr = std::make_shared<abstract::Shape>(values_shape);
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{dense_shape_shape_ptr, batch_pointers_shape_ptr,
+                                        transpose_row_pointers_shape_ptr, col_indices_shape_ptr, values_shape_ptr});
 }
 
 TuplePtr SparseMatrixTransposeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -146,16 +121,28 @@ TuplePtr SparseMatrixTransposeInferType(const PrimitivePtr &prim, const std::vec
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SparseMatrixTranspose, BaseOperator);
+void SparseMatrixTranspose::Init(const bool conjugate) { this->set_conjugate(conjugate); }
+
+void SparseMatrixTranspose::set_conjugate(const bool conjugate) {
+  (void)this->AddAttr(kConjugate, api::MakeValue(conjugate));
+}
+
+bool SparseMatrixTranspose::get_conjugate() const { return GetValue<bool>(GetAttr(kConjugate)); }
+
 AbstractBasePtr SparseMatrixTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto &input : input_args) {
+    MS_EXCEPTION_IF_NULL(input);
+  }
   const int64_t input_num = 5;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = SparseMatrixTransposeInferType(primitive, input_args);
   auto infer_shape = SparseMatrixTransposeInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+MIND_API_OPERATOR_IMPL(SparseMatrixTranspose, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixTranspose, prim::kPrimSparseMatrixTranspose, SparseMatrixTransposeInfer,
                              nullptr, true);
 REGISTER_HOST_DEPENDS(kNameSparseMatrixTranspose, {0});

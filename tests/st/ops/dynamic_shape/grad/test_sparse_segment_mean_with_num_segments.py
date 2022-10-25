@@ -21,12 +21,15 @@ from .test_grad_of_dynamic import TestDynamicGrad
 
 
 class NetSparseSegmentMeanWithNumSegments(nn.Cell):
+
     def __init__(self):
         super(NetSparseSegmentMeanWithNumSegments, self).__init__()
-        self.sparse_segment_mean_with_num_segments = S.SparseSegmentMeanWithNumSegments()
+        self.sparse_segment_mean_with_num_segments = S.SparseSegmentMeanWithNumSegments(
+        )
 
     def construct(self, x, indices, seg_ids, num_segments):
-        return self.sparse_segment_mean_with_num_segments(x, indices, seg_ids, num_segments)
+        return self.sparse_segment_mean_with_num_segments(
+            x, indices, seg_ids, num_segments)
 
 
 @pytest.mark.level1
@@ -39,8 +42,10 @@ def test_sparse_segment_mean_with_num_segments_dynamic_shape():
     Expectation: success.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_dynamic = TestDynamicGrad(NetSparseSegmentMeanWithNumSegments(), skip_convert_out_ids=[0])
-    x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]], dtype=mindspore.float32)
+    test_dynamic = TestDynamicGrad(NetSparseSegmentMeanWithNumSegments(),
+                                   skip_convert_out_ids=[0])
+    x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]],
+               dtype=mindspore.float32)
     indices = Tensor([0, 2, 1], dtype=mindspore.int32)
     segment_ids = Tensor([0, 0, 2], dtype=mindspore.int32)
     num_segments = Tensor([4], dtype=mindspore.int32)
@@ -58,10 +63,12 @@ def test_sparse_segment_mean_with_num_segments_dynamic_rank():
     Expectation: success.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]], dtype=mindspore.float32)
+    x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]],
+               dtype=mindspore.float32)
     indices = Tensor([0, 2, 1], dtype=mindspore.int32)
     segment_ids = Tensor([0, 0, 2], dtype=mindspore.int32)
     num_segments = Tensor([4], dtype=mindspore.int32)
-    test_dynamic = TestDynamicGrad(NetSparseSegmentMeanWithNumSegments(), skip_convert_out_ids=[0])
+    test_dynamic = TestDynamicGrad(NetSparseSegmentMeanWithNumSegments(),
+                                   skip_convert_out_ids=[0])
     inputs = [x, indices, segment_ids, num_segments]
     test_dynamic.test_dynamic_grad_net(inputs, True)

@@ -35,12 +35,16 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class SparseMatrixTransposeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseMatrixTransposeCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseMatrixTransposeCpuKernelMod() = default;
   ~SparseMatrixTransposeCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -63,7 +67,6 @@ class SparseMatrixTransposeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool conjugate;
   TypeId indiceT_{kTypeUnknown};
   TypeId valueT_{kTypeUnknown};
-  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore
