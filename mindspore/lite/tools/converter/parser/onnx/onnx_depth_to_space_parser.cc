@@ -29,6 +29,9 @@ PrimitiveCPtr OnnxDepthToSpaceParser::Parse(const onnx::GraphProto &onnx_graph, 
     if (attribute_name == "blocksize") {
       prim->set_block_size(onnx_node_attr.i());
     }
+    if (attribute_name == "mode") {
+      prim->AddAttr(ops::kMode, api::MakeValue<std::string>(onnx_node_attr.s().c_str()));
+    }
   }
 
   return prim->GetPrim();

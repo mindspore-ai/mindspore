@@ -63,7 +63,8 @@ REG_ADPT_DESC(SpaceToDepth, kNameSpaceToDepth, ADPT_DESC(SpaceToDepth))
 
 // DepthToSpace
 INPUT_MAP(DepthToSpace) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(DepthToSpace) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())}};
+ATTR_MAP(DepthToSpace) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
+                          {"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
 OUTPUT_MAP(DepthToSpace) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DepthToSpace, kNameDepthToSpace, ADPT_DESC(DepthToSpace))
 

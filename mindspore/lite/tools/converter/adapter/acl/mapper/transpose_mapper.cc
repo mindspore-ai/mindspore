@@ -49,6 +49,9 @@ STATUS TransposeMapper::Mapper(const CNodePtr &cnode) {
   std::transform(data.begin(), data.end(), std::back_inserter(perm),
                  [](int32_t n) -> int64_t { return static_cast<int64_t>(n); });
   ValueNodePtr value_node = NewValueNode<std::vector<int64_t>>(perm);
+  std::vector<int64_t> shape_vec_shape = {};
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
+  value_node->set_abstract(abstract);
   MS_CHECK_TRUE_MSG(value_node != nullptr, lite::RET_ERROR, "New value node failed.");
   cnode->set_input(kCommonInputNum - 1, value_node);
   return lite::RET_OK;
