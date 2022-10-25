@@ -567,7 +567,7 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
 
 int MoveAttrBatchNorm(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
-  if (cnode->size() != kFusedBatchNormInputSize) {
+  if (cnode->size() < kFusedBatchNormInputSize) {
     return lite::RET_OK;
   }
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
