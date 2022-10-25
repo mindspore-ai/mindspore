@@ -77,6 +77,11 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape]);
   auto shape0_v = shape0_ptr->shape();
   auto shape1_v = shape1_ptr->shape();
+  // support dynamic rank
+  if (IsDynamicRank(shape0_v) || IsDynamicRank(shape1_v)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   if (shape0_v.size() != shape0_dim) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the images tensor must be a 4-D tensor. But got "
                              << shape0_v.size() << "-D";

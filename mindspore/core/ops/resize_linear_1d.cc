@@ -64,6 +64,10 @@ abstract::ShapePtr ResizeLinear1DInferShape(const PrimitivePtr &primitive,
     std::make_shared<abstract::Shape>(CheckAndConvertUtils::ConvertShapePtrToShapeMap(size_arg->BuildShape())[kShape]);
   auto shape0_v = shape0_ptr->shape();
   auto shape1_v = shape1_ptr->shape();
+  // support dynamic shape
+  if (IsDynamicRank(shape0_v) || IsDynamicRank(shape1_v)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
   if (shape0_v.size() < kInputShape0Dim) {
     MS_EXCEPTION(ValueError) << "For 'ResizeLinear1D', the rank of images tensor must be greater than 3. But got "
                              << shape0_v.size();

@@ -53,6 +53,10 @@ abstract::ShapePtr ResizeNearestNeighborInferShape(const PrimitivePtr &primitive
   auto prim_name = primitive->name();
   auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   auto x_shape = x_shape_ptr->shape();
+  // support dynamic rank
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
   ValuePtr size_ptr;
   if (x_shape_ptr->IsDynamic() && input_args.size() > 1) {
     size_ptr = input_args[1]->BuildValue();

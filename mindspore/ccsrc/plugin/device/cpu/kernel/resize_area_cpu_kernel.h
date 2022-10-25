@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_AREA_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_AREA_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RESIZE_AREA_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RESIZE_AREA_CPU_KERNEL_H_
 
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -35,14 +36,21 @@ struct ResizeAreaCachedInterpolation {
   bool needs_bounding = true;
 };
 
-class ResizeAreaCPUKernelMod : public DeprecatedNativeCpuKernelMod {
+class ResizeAreaCPUKernelMod : public NativeCpuKernelMod {
  public:
   ResizeAreaCPUKernelMod() = default;
   ~ResizeAreaCPUKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs, x_interps_);
+  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -55,11 +63,14 @@ class ResizeAreaCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   void ComputePatchSum(float scale, const std::vector<const T *> &y_ptrs, const std::vector<float> &y_scales,
                        const ResizeAreaCachedInterpolation &x_interp, float *output_patch_ptr) const;
   float ResizeAreaScaling(size_t in_size, size_t out_size, bool align_corners);
-  void SetResizeAreaOutShape(int32_t *out_size) const;
 
-  AnfNodePtr cnode_ptr_;
-  TypeId dtype_{kTypeUnknown};
-  TypeId size_type_{kTypeUnknown};
+  using ResizeAreaLaunchFunc =
+    std::function<bool(ResizeAreaCPUKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<ResizeAreaCachedInterpolation> &)>;
+
+  ResizeAreaLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, ResizeAreaLaunchFunc>> func_list_;
+
   bool align_corners_{false};
   float height_scale_{1.0};
   float width_scale_{1.0};
@@ -71,8 +82,9 @@ class ResizeAreaCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   int64_t out_width_{0};
   std::vector<int64_t> input0_shape_;
   std::vector<int64_t> input1_shape_;
+  std::vector<ResizeAreaCachedInterpolation> x_interps_{};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_AREA_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RESIZE_AREA_CPU_KERNEL_H_

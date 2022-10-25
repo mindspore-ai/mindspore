@@ -19,6 +19,7 @@
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/grad/resize_bicubic_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,9 +28,6 @@ constexpr size_t kResizeBicubicGradInputsNum = 2;
 constexpr size_t kResizeBicubicGradOutputNum = 1;
 constexpr size_t kResizeBicubicGradInputs0ShapeSize = 4;
 constexpr size_t kResizeBicubicGradInputs1ShapeSize = 4;
-constexpr size_t indexid4 = 4;
-constexpr size_t indexid3 = 3;
-constexpr size_t indexid2 = 2;
 constexpr int64_t cached_values_hand_max = 4;
 constexpr size_t caseid2 = 2;
 constexpr size_t caseid3 = 3;
@@ -44,22 +42,16 @@ std::vector<int64_t> shape0;
 std::vector<int64_t> shape1;
 bool align_corners = false;
 bool half_pixel_centers = false;
-TypeId dtype0_{kTypeUnknown};
-TypeId dtype1_{kTypeUnknown};
-AnfNodePtr kernel_node_ptr;
 }  // namespace
 
 struct ResizerGradState {
-  void CalculateSize(const AnfNodePtr &kernel_node) {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    shape0 = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    shape1 = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  void CalculateSize(const std::vector<int64_t> &shape0, const std::vector<int64_t> &shape1) {
     batch_size = shape0[0];
-    channels = shape0[indexid3];
+    channels = shape0[kIndex3];
     resized_height = shape0[1];
-    resized_width = shape0[indexid2];
+    resized_width = shape0[kIndex2];
     original_height = shape1[1];
-    original_width = shape1[indexid2];
+    original_width = shape1[kIndex2];
     height_scale = Scaling(original_height, resized_height, align_corners);
     width_scale = Scaling(original_width, resized_width, align_corners);
   }
@@ -120,9 +112,9 @@ class CachedInterpolationCalculator {
       case 1:
         indexes_[1] = x_1;
       case caseid2:
-        indexes_[indexid2] = x_2;
+        indexes_[kIndex2] = x_2;
       case caseid3:
-        indexes_[indexid3] = x_3;
+        indexes_[kIndex3] = x_3;
         break;
     }
     return new_indices_hand;
@@ -315,71 +307,54 @@ inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &R
   }
 }
 
-void ResizeBicubicGradCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_node_ptr = kernel_node;
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape0 = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  shape1 = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  align_corners = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  half_pixel_centers = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "half_pixel_centers");
-  dtype1_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  dtype0_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (shape0.size() != kResizeBicubicGradInputs0ShapeSize) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', grads shape size should be "
-                             << kResizeBicubicGradInputs0ShapeSize << ", but got " << shape0.size();
-  }
-  if (shape1.size() != kResizeBicubicGradInputs1ShapeSize) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', original image shape size should be "
-                             << kResizeBicubicGradInputs1ShapeSize << ", but got " << shape1.size();
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool ResizeBicubicGradCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBicubicGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBicubicGradOutputNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBicubicGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  align_corners = kernel_ptr->get_align_corners();
+  half_pixel_centers = kernel_ptr->get_half_pixel_centers();
+  return true;
+}
+
+int ResizeBicubicGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
 
-  kernel_func_ = func_list_[index].second;
+  shape0 = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  shape1 = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename T>
 bool ResizeBicubicGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) const {
+                                                 const std::vector<AddressPtr> &outputs) {
   auto input0_addr = static_cast<float *>(inputs[0]->addr);
   auto output_addr = static_cast<T *>(outputs[0]->addr);
-  ResizerGradState sta;
-  sta.CalculateSize(kernel_node_ptr);
-  ResizeBicubicGrad(input0_addr, sta, half_pixel_centers, output_addr);
-  std::vector<int64_t> out_shape = {sta.batch_size, sta.original_height, sta.original_width, sta.channels};
-  std::vector<TypeId> out_dtypes(1);
-  out_dtypes[0] = dtype1_;
-  common::AnfAlgo::SetOutputInferTypeAndShape(out_dtypes, {out_shape}, kernel_node_ptr.get());
-
-  return true;
-}
-
-bool ResizeBicubicGradCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_addr = outputs[0]->addr;
   size_t output_size = outputs[0]->size;
   if (memset_s(output_addr, output_size, 0, output_size) != EOK) {
     MS_EXCEPTION(ValueError) << "Memset Failed!";
   }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBicubicGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBicubicGradOutputNum, kernel_name_);
-  if (dtype0_ == kNumberTypeFloat32) {
-    if (dtype1_ == kNumberTypeFloat64) {
-      return LaunchKernel<double>(inputs, outputs);
-    } else if (dtype1_ == kNumberTypeFloat32) {
-      return LaunchKernel<float>(inputs, outputs);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', unsupported Original image data type: " << dtype1_;
-    }
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', unsupported Grads data type: " << dtype0_;
-  }
+  ResizerGradState sta;
+  sta.CalculateSize(shape0, shape1);
+  ResizeBicubicGrad(input0_addr, sta, half_pixel_centers, output_addr);
+  return true;
 }
 
 std::vector<std::pair<KernelAttr, ResizeBicubicGradCPUKernelMod::ResizeBicubicGradFunc>>

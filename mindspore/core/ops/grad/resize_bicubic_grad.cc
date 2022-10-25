@@ -33,6 +33,10 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto original_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(grads_shape) || IsDynamicRank(original_image_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
   if (grads_shape.size() != num4) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', The rank of grads shape need to be equal to 4, but got " << grads_shape.size();
@@ -42,6 +46,16 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
                              << "', the rank of original_image shape need to be equal to 4, but got "
                              << original_image_shape.size();
   }
+
+  // support dynamic shape
+  if (IsDynamic(grads_shape) || IsDynamic(original_image_shape)) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < original_image_shape.size(); ++i) {
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(shape_out);
+  }
+
   if (grads_shape[0] != original_image_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[0] is " << grads_shape[0]
                              << ", but the shape of original_image_shape[0] is " << original_image_shape[0]
