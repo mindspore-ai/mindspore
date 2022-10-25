@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FRACTIONAL_AVG_POOL_CPU_KERNEL_H_
 
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <random>
@@ -28,12 +29,17 @@
 
 namespace mindspore {
 namespace kernel {
-class FractionalAvgPoolCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class FractionalAvgPoolCpuKernelMod : public NativeCpuKernelMod {
  public:
   FractionalAvgPoolCpuKernelMod() = default;
   ~FractionalAvgPoolCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
