@@ -26,7 +26,7 @@
 #include "src/litert/cpu_info.h"
 #include "include/errorcode.h"
 #include "flatbuffers/flatbuffers.h"
-#include "extendrt/delegate/graph_executor/litert/converters.h"
+#include "extendrt/mock/lite_runtime/converters.h"
 #include "extendrt/delegate/factory.h"
 
 #include "tools/common/meta_graph_serializer.h"
