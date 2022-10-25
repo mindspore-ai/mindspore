@@ -90,6 +90,14 @@ install(
     COMPONENT mindspore
 )
 
+if(ENABLE_D OR ENABLE_GPU)
+    install(
+            TARGETS api_lib
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+endif()
+
 install(
     TARGETS mindspore_core mindspore_common mindspore_backend
     DESTINATION ${INSTALL_LIB_DIR}
