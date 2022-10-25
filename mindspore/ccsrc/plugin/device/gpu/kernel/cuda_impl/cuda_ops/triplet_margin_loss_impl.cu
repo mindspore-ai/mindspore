@@ -122,6 +122,32 @@ __global__ void ReductionDivde(S *output, float *tem_output, const size_t k) {
   output[0] = tem_output[0] / k;
 }
 
+// double
+template <>
+__global__ void PairwiseDistance(const double *anchor, const double *positive, const double *negative,
+                                 const size_t *bound_list, const size_t bound, const size_t outer_size,
+                                 const size_t inner_size, float *tem_output, const size_t n, const int64_t p,
+                                 const float eps) {
+  const double *pair_tensor[3] = {anchor, positive, negative};
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x;
+       pos < n * outer_size * inner_size; pos += gridDim.x * blockDim.x) {
+    size_t mode = pos / (outer_size * inner_size);
+    size_t idx = pos % (outer_size * inner_size);
+    double res = 0;
+    size_t x = idx / inner_size % outer_size;
+    size_t y = idx % inner_size;
+    for (int i = 0; i < bound_list[mode]; i++) {
+      size_t input_offset = x * bound * inner_size + i * inner_size + y;
+      double base =
+        abs(static_cast<double>(pair_tensor[mode / 2][input_offset] - pair_tensor[(mode + 3) / 2][input_offset]) + eps);
+      double tem = pow(base, static_cast<double>(p));
+      res += tem;
+    }
+    tem_output[pos] = pow(res, static_cast<double>(1.0 / p));
+  }
+  return;
+}
+
 // half
 template <>
 __global__ void PairwiseDistance(const half *anchor, const half *positive, const half *negative,
