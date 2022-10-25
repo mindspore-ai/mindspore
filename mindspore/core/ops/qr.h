@@ -34,6 +34,15 @@ class MIND_API Qr : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Qr);
   Qr() : BaseOperator(kNameQr) { InitIOName({"x"}, {"q", "r"}); }
+  void Init(const bool full_matrices = false);
+
+  /// \brief Set full_matrices.
+  void set_full_matrices(const bool full_matrices);
+
+  /// \brief Get full_matrices.
+  ///
+  /// \return full_matrices.
+  bool get_full_matrices() const;
 };
 abstract::AbstractBasePtr QrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<abstract::AbstractBasePtr> &input_args);

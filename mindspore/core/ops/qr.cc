@@ -28,6 +28,23 @@ abstract::TupleShapePtr QrInferShape(const PrimitivePtr &primitive, const std::v
   const int64_t kDimPenultimateNum = 2;
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = x_shape_map[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(x_shape)) {
+    auto unknow_rank_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknow_rank_ptr, unknow_rank_ptr});
+  }
+  // support dynamic shape
+  if (IsDynamic(x_shape)) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < x_shape.size(); ++i) {
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
+    }
+    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(shape_out);
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr});
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("rank of argument[x]", SizeToLong(x_shape.size()), kGreaterEqual,
                                            kDimLeastNum, primitive->name());
 
@@ -55,6 +72,18 @@ TuplePtr QrInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Qr, BaseOperator);
+
+void Qr::Init(const bool full_matrices) { this->set_full_matrices(full_matrices); }
+
+void Qr::set_full_matrices(const bool full_matrices) {
+  (void)this->AddAttr("full_matrices", api::MakeValue(full_matrices));
+}
+
+bool Qr::get_full_matrices() const {
+  auto value_ptr = GetAttr("full_matrices");
+  return GetValue<bool>(value_ptr);
+}
+
 AbstractBasePtr QrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
