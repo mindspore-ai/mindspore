@@ -265,16 +265,30 @@ function Run_quant_codegen() {
         continue
       fi
       model_info=`echo ${line} | awk -F ' ' '{print $1}'`
+      cosine_threshold=`echo ${line} | awk -F ' ' '{print $2}'`
       model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
       input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+      input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
       input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
       input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
 
+      spec_shapes=""
       IFS="," read -r -a name_array <<< ${input_names}
+      if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+          if [[ ${input_num} == "" ]]; then
+            input_num=1
+          fi
+          IFS=":" read -r -a shape_array <<< ${input_shapes}
+          for i in $(seq 0 $((${input_num}-1)))
+          do
+            spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+          done
+      fi
       data_path=${models_path}"/input_output/"
       model_calib_dir=$1"/"${model_name}_calib
       rm -rf ${model_calib_dir}
       mkdir -p ${model_calib_dir}
+      calibrate_paths=""
       if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
         cp ${data_path}'input/'${model_name}'.ms.bin' ${model_calib_dir}"/0.bin"
         calibrate_paths='"'${name_array[0]}'":'${model_calib_dir}"/"
@@ -283,7 +297,7 @@ function Run_quant_codegen() {
         do
           mkdir -p ${model_calib_dir}"/"${i}
           cp ${data_path}'input/'${model_name}'.ms.bin_'$i  ${model_calib_dir}"/"${i}
-          calibrate_paths=${spec_shapes}'"'${name_array[$i-1]}'":'${model_calib_dir}"/"${i}','
+          calibrate_paths=${calibrate_paths}'"'${name_array[$i-1]}'":'${model_calib_dir}"/"${i}','
         done
       fi
       echo "calib_paths:${calibrate_paths}" >> "$4"
@@ -321,7 +335,6 @@ function Run_quant_codegen() {
 
       output_file=$1"/"${model_name}
       quant_type=""
-      spec_shapes=""
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
@@ -331,10 +344,10 @@ function Run_quant_codegen() {
       echo "model:"${model_name}
       echo ${model_name} >> "$4"
       echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
-        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape='${spec_shapes}\
+        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape='\"${spec_shapes}\"\
         ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
       ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
-        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
+        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}"\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
           converter_result='converter '${model_type}' quant '${model_name}' pass';echo ${converter_result} >> $5
@@ -353,10 +366,19 @@ function Run_quant_codegen() {
       cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${output_file} >> $4
       make || return 1
       # 2. run benchmark
+      input_files=""
+      if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+        input_files=${models_path}/input_output/input/${model_name}.ms.bin
+      else
+        for i in $(seq 1 $input_num)
+        do
+          input_files=${input_files}${models_path}'/input_output/input/'${model_name}'.ms.bin_'$i','
+        done
+      fi
       benchmark_data_file=${models_path}"/input_output/output/"${model_name}.ms.out
       echo "net file: ${output_file}/src/net.bin" >> $4
-      echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1  ${benchmark_data_file} ${thread_num} ${bind_mode} 0" >> $4
-      ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${benchmark_data_file} ${thread_num} ${bind_mode} 0 >> $4
+      echo "./benchmark ${input_files} ${output_file}/src/net.bin 1  ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}" >> $4
+      ./benchmark ${input_files} ${output_file}/src/net.bin 1 ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}>> $4
       if [ $? = 0 ]; then
           run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
       else

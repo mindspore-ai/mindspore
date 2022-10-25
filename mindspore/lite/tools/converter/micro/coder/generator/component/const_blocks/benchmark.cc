@@ -58,7 +58,8 @@ void usage() {
     "args[4]: calibration file\n"
     "args[5]: runtime thread num, default is 1\n"
     "args[6]: runtime thread bind mode, 0: No bind, 1: Bind high cpu, 2: Bind mid cpu, default is 1\n"
-    "args[7]: warm up loop count, default is 3\n\n");
+    "args[7]: warm up loop count, default is 3\n"
+    "args[8]: cosine distance threshold, default is 0.9999\n\n");
 }
 
 uint64_t GetTimeUs() {
@@ -262,7 +263,11 @@ int main(int argc, const char **argv) {
       MSModelDestroy(&model_handle);
       return ret;
     }
-    ret = CompareOutputs(outputs_handle, &calib_tensors, calib_num);
+    float cosine_distance_threshold = 0.9999;
+    if (argc >= 9) {
+      cosine_distance_threshold = atof(argv[8]);
+    }
+    ret = CompareOutputs(outputs_handle, &calib_tensors, calib_num, cosine_distance_threshold);
     if (ret != kMSStatusSuccess) {
       MSModelDestroy(&model_handle);
       return ret;
