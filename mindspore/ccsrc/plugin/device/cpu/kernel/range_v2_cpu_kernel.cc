@@ -24,40 +24,18 @@ constexpr size_t kRangeV2InputsNum = 3;
 constexpr size_t kRangeV2OutputsNum = 1;
 }  // namespace
 
-void RangeV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-}
-
-bool RangeV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool RangeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRangeV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRangeV2OutputsNum, kernel_name_);
-  switch (dtype_) {
-    case kNumberTypeInt32:
-      LaunchKernel<int32_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt64:
-      LaunchKernel<int64_t>(inputs, outputs);
-      break;
-    case kNumberTypeFloat32:
-      LaunchKernel<float>(inputs, outputs);
-      break;
-    case kNumberTypeFloat64:
-      LaunchKernel<double>(inputs, outputs);
-      break;
-    default:
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                              << "', the dtype of input must be int32, int64, float32, float64, but got "
-                              << TypeIdLabel(dtype_) << ".";
-  }
-  return true;
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 template <typename T>
-void RangeV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                       const std::vector<AddressPtr> &outputs) const {
+bool RangeV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                       const std::vector<AddressPtr> &outputs) {
   auto start = static_cast<T *>(inputs[kIndex0]->addr)[kIndex0];
   auto delta = static_cast<T *>(inputs[kIndex2]->addr)[kIndex0];
 
@@ -68,30 +46,37 @@ void RangeV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     output_addr[i] = val;
     val += delta;
   }
+  return true;
 }
 
-std::vector<KernelAttr> RangeV2CpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddOutputAttr(kNumberTypeFloat32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddOutputAttr(kNumberTypeFloat64),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, RangeV2CpuKernelMod::KernelRunFunc>> &RangeV2CpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, RangeV2CpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &RangeV2CpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &RangeV2CpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &RangeV2CpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
+     &RangeV2CpuKernelMod::LaunchKernel<int64_t>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RangeV2, RangeV2CpuKernelMod);
