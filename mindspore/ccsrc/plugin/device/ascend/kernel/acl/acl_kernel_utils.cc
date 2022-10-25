@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 #include <string>
 #include <map>
+#include <set>
 #include <functional>
 #include <algorithm>
 #include "ir/value.h"
@@ -27,6 +28,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kMaxAttrToInputSize = 1024;
+
 static const std::map<::ge::DataType, aclDataType> kMsTypeToAclType = {
   {::ge::DT_BOOL, ACL_BOOL},       {::ge::DT_INT8, ACL_INT8},     {::ge::DT_INT16, ACL_INT16},
   {::ge::DT_INT32, ACL_INT32},     {::ge::DT_INT64, ACL_INT64},   {::ge::DT_UINT8, ACL_UINT8},
@@ -54,10 +57,18 @@ static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatM
 AclOpDesc::AclOpDesc(const std::string &op_type) {
   op_type_ = op_type;
   acl_attr_ = aclopCreateAttr();
+  auto ret = aclrtMallocHost(&attr_to_input_, kMaxAttrToInputSize);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(WARNING) << "Malloc acl attr memory failed! error info:" << ret;
+  }
 }
 
 AclOpDesc::~AclOpDesc() {
   aclopDestroyAttr(acl_attr_);
+  if (attr_to_input_ != nullptr) {
+    aclrtFreeHost(attr_to_input_);
+    attr_to_input_ = nullptr;
+  }
   for (auto *input_desc : input_tensor_desc_) {
     if (input_desc != nullptr) {
       aclDestroyTensorDesc(input_desc);
@@ -194,6 +205,100 @@ void AclOpDesc::SetListAttr(const std::string &attr_name, const ValuePtr &value)
   }
 }
 
+bool AclOpDesc::SelectConversionDataType(const ValuePtr &value, const unsigned int index) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<Int64Imm>()) {
+    AddConstDescAndBuf<int64_t>(GetValue<int64_t>(value), kNumberTypeInt64, index);
+  } else if (value->isa<Int32Imm>()) {
+    AddConstDescAndBuf<int>(GetValue<int>(value), kNumberTypeInt, index);
+  } else if (value->isa<FP32Imm>()) {
+    AddConstDescAndBuf<float>(GetValue<float>(value), kNumberTypeFloat32, index);
+  } else if (value->isa<FP64Imm>()) {
+    AddConstDescAndBuf<double>(GetValue<double>(value), kNumberTypeFloat64, index);
+  } else if (value->isa<BoolImm>()) {
+    AddConstDescAndBuf<bool>(GetValue<bool>(value), kNumberTypeBool, index);
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
+    if (value_sequence.size() <= 0) {
+      return false;
+    }
+    auto val = value_sequence[0];
+    if (val->isa<Int64Imm>()) {
+      auto vec = GetValue<std::vector<int64_t>>(value);
+      AddConstDescAndBuf<std::vector<int64_t>>(vec, kNumberTypeInt64, index);
+    } else if (val->isa<Int32Imm>()) {
+      auto vec = GetValue<std::vector<int>>(value);
+      AddConstDescAndBuf<std::vector<int>>(vec, kNumberTypeInt, index);
+    } else if (val->isa<FP32Imm>()) {
+      auto vec = GetValue<std::vector<float>>(value);
+      AddConstDescAndBuf<std::vector<float>>(vec, kNumberTypeFloat32, index);
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+  return true;
+}
+
+template <typename T>
+void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const size_t index) {
+  size_t real_size = 0;
+  size_t shape_size = 1;
+  aclError ret;
+  void *current_addr = static_cast<void *>(static_cast<int *>(attr_to_input_) + attr_data_offset_ / sizeof(int));
+  if constexpr (is_vector<T>) {
+    real_size = sizeof(typename T::value_type) * val.size();
+    shape_size = val.size();
+    ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, val.data(), real_size,
+                      ACL_MEMCPY_HOST_TO_HOST);
+  } else {
+    real_size = sizeof(T);
+    ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, &val, real_size, ACL_MEMCPY_HOST_TO_HOST);
+  }
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "When convert attr to input, offset is " << attr_data_offset_ << " and current size is "
+                      << real_size << ", please increase limit of kMaxAttrToInputSize.";
+    return;
+  }
+  attr_data_offset_ += real_size;
+
+  ShapeVector shape = {SizeToLong(shape_size)};
+  auto tensor_desc =
+    CreateTensorDesc(GeOpConvertor::GetTensorDesc(shape, type, kOpFormat_DEFAULT, shape, kOpFormat_DEFAULT));
+
+  // Set host memory flag to const input.
+  ret = aclSetTensorPlaceMent(tensor_desc, ACL_MEMTYPE_HOST);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Set host memory flag failed! ret = " << ret;
+    return;
+  }
+  auto data_buf = aclCreateDataBuffer(current_addr, real_size);
+  input_tensor_desc_.insert(input_tensor_desc_.begin() + index - 1, tensor_desc);
+  input_tensor_data_.insert(input_tensor_data_.begin() + index - 1, data_buf);
+}
+
+void AclOpDesc::AddConstInputTensor(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->inputs()[0]);
+  MS_EXCEPTION_IF_NULL(prim);
+
+  const auto &add_index_info = GeOpConvertor::GetNeedAddInput(anf_node, true);
+  for (const auto &[attr_name, index] : add_index_info) {
+    auto value = prim->GetAttr(attr_name);
+    if (value == nullptr) {
+      MS_LOG(WARNING) << "Attr name " << attr_name << " isn't in current node, please check adaptor's attr name!";
+      continue;
+    }
+    if (!SelectConversionDataType(value, index)) {
+      MS_LOG(INFO) << "Currently not support to Add the attr '" << attr_name << "' with value: " << value->ToString()
+                   << ", perhaps you should add more supported type.";
+    }
+  }
+}
+
 aclDataType AclUtils::ConvertTypeIdToAclType(const ::ge::DataType &type) {
   auto iter = kMsTypeToAclType.find(type);
   if (iter == kMsTypeToAclType.end()) {
@@ -229,12 +334,19 @@ bool AclUtils::UpdateTensorDesc(const AnfNodePtr &anf_node, std::vector<GeTensor
 std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
+  const auto &remove_index = GeOpConvertor::GetNeedRemoveInput(anf_node, true);
   std::vector<GeTensorDescPtr> res;
+  std::set<size_t> already_add_index;
   for (size_t i = 0; i < input_num; ++i) {
+    if (remove_index.count(i + 1) != 0) {
+      MS_LOG(INFO) << "Current node's input " << (i + 1) << " need convert to attr!";
+      continue;
+    }
     auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(anf_node, i);
     if (index >= input_num) {
       MS_LOG(EXCEPTION) << "Error real index:" << index;
     }
+    (void)already_add_index.insert(i + 1);
     auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, index);
     auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, index);
     auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, index);
@@ -242,6 +354,14 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, kOpFormat_DEFAULT);
     MS_EXCEPTION_IF_NULL(input_desc);
     (void)res.emplace_back(input_desc);
+  }
+
+  const auto &add_index_info = GeOpConvertor::GetNeedAddInput(anf_node, true);
+  for (const auto &[attr_name, index] : add_index_info) {
+    if (already_add_index.count(index) != 0) {
+      MS_LOG(EXCEPTION) << "Current node's input " << index
+                        << " is convert from attr, but already set input, please check adaptor of attr " << attr_name;
+    }
   }
   return res;
 }

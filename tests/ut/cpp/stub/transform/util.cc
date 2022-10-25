@@ -82,7 +82,7 @@ int OpAdapterImpl::setInput(const OperatorPtr &op, int index,
 }
 void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                      const AnfNodePtr &node) {}
-std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const PrimitivePtr &prim) const { return {}; }
+std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const AnfNodePtr &node) const { return {}; }
 OutHandler OpAdapterImpl::getOutput(const OperatorPtr &op, int index) {
   OutHandler handler;
   return handler;
