@@ -48,7 +48,7 @@ class BACKEND_EXPORT DeviceContextManager {
  public:
   static DeviceContextManager &GetInstance();
   void Register(const std::string &device_name, DeviceContextCreator &&device_context_creator);
-  DeviceContext *GetOrCreateDeviceContext(const DeviceContextKey &device_context_key);
+  DeviceContext *GetOrCreateDeviceContext(const DeviceContextKey &device_context_key, string jit_level = "");
   void UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key);
   void ClearDeviceContexts();
   void WaitTaskFinishOnDevice() const;

@@ -81,6 +81,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
 
   graph->set_run_mode(device::RunMode::kKernelMode);
   graph->set_is_from_single_op(true);
+  MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
   auto deprecated_kernel_executor =
     dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());

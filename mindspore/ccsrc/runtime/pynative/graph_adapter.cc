@@ -357,7 +357,7 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
   }
   auto jit_level_value = func_graph->get_attr(kAttrJitLevel);
   auto jit_level = GetValue<std::string>(jit_level_value);
-  if (jit_level != kAttrJitLevelO2) {
+  if (jit_level != kAttrJitLevelO2 && jit_level != kAttrJitLevelO3) {
     MS_LOG(INFO) << "jit_level is " << jit_level << ", task sink is disabled";
     return false;
   }

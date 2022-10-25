@@ -375,6 +375,8 @@ class TrainOneStepCell(Cell):
                                                            group=server_group_name)
             else:
                 self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree)
+        if network.jit_config_dict:
+            self._jit_config_dict = network.jit_config_dict
 
     def construct(self, *inputs):
         loss = self.network(*inputs)

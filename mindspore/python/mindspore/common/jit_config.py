@@ -24,11 +24,12 @@ class JitConfig:
 
     Args:
         jit_level (str): Option for argument `level` for Optimization of lift graph.
-            Supports ["O0", "O1", "O2"]. Default: "O1".
+            Supports ["O0", "O1", "O2", "O3"]. Default: "O1".
 
             - "O0": Basic optimization.
             - "O1": Manual optimization.
             - "O2": Manual optimization and graph computation fusion.
+            - "O3": Performance optimization, no generalization guaranteed.
 
         task_sink (bool): Determines whether to pass the data through dataset channel. Default: True.
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
@@ -42,8 +43,8 @@ class JitConfig:
         >>> net.set_jit_config(jitconfig)
     """
     def __init__(self, jit_level="O1", task_sink=True, **kwargs):
-        if jit_level not in ["O0", "O1", "O2"]:
-            raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2'].")
+        if jit_level not in ["O0", "O1", "O2", "O3"]:
+            raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2', 'O3'].")
         if not isinstance(task_sink, bool):
             raise TypeError("For 'task_sink' must be bool.")
         self.jit_config_dict = dict()
