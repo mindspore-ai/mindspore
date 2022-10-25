@@ -3074,7 +3074,7 @@ class Select(Primitive):
         - **y** (Tensor) - The second tensor to be selected and the shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape as `condition`.
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.

@@ -20,7 +20,7 @@ mindspore.ops.Select
         - **y** (Tensor) - 第二个被选择的Tensor，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
 
     输出：
-        Tensor，具有与输入 `x` 相同的shape。
+        Tensor，具有与输入 `condition` 相同的shape。
 
     异常：
         - **TypeError** - 如果 `x` 或者 `y` 不是Tensor。

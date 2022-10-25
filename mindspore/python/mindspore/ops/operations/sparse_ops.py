@@ -557,7 +557,7 @@ class SparseTensorDenseAdd(Primitive):
                     of 'x2' don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -617,7 +617,7 @@ class SparseTensorDenseMatmul(Primitive):
             and shape of `dense` don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mindspore.int32)
