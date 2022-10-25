@@ -49,7 +49,7 @@ class CustomAOTCpuKernelMod : public NativeCpuKernelMod {
 
   std::string file_path_;
   std::string func_name_;
-  void *handle_;
+  void *handle_{nullptr};
   int (*init_func_)(int *, int64_t **, const char **, AotExtra *);
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
 
