@@ -53,6 +53,7 @@ class BpropIRBuilder : public Emitter {
   ValuePtr GetAttr(const NodePtr &node, const std::string &attr) const;
 
   std::string name() const { return name_; }
+  std::string GetTargetFromContext() const;
 
   void DumpResult(const std::vector<CNodePtr> &outputs, const DoutUser &dout_user) const;
 

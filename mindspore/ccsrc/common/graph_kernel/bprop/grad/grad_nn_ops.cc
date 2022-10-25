@@ -24,7 +24,7 @@ REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
   auto dout = ib->GetInput(kIndex3);
   auto x_shape = ib->GetShape(x);
   auto w_shape = ib->GetShape(w);
-  auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, ib->EmitValue(MakeValue(x_shape))},
+  auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, ib->Value<ShapeVector>(x_shape)},
                      {{"mode", ib->GetAttr("mode")},
                       {"dilation", ib->GetAttr("dilation")},
                       {"stride", ib->GetAttr("stride")},
@@ -35,7 +35,7 @@ REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
                       {"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad", ib->GetAttr("pad")},
                       {"pad_list", ib->GetAttr("pad_list")}});
-  auto dw = ib->Emit("Conv2DBackpropFilter", {dout, x, ib->EmitValue(MakeValue(w_shape))},
+  auto dw = ib->Emit("Conv2DBackpropFilter", {dout, x, ib->Value<ShapeVector>(w_shape)},
                      {{"mode", ib->GetAttr("mode")},
                       {"dilation", ib->GetAttr("dilation")},
                       {"stride", ib->GetAttr("stride")},

@@ -40,7 +40,7 @@ class Emitter {
 
   NodePtr MakeTuple(const NodePtrList &inputs) const { return Emit(prim::kMakeTuple, inputs); }
   NodePtr TupleGetItem(const NodePtr &input, size_t i) const {
-    return Emit(prim::kTupleGetItem, {input, Scalar(static_cast<int64_t>(i))});
+    return Emit(prim::kTupleGetItem, {input, Value(static_cast<int64_t>(i))});
   }
 
   NodePtr Cast(const NodePtr &node, const TypePtr &type) const { return Emit("Cast", {node, EmitValue(type)}); }
@@ -58,9 +58,9 @@ class Emitter {
 
   NodePtr ZerosLike(const NodePtr &node) const;
 
-  /// \brief Emit a scalar node
+  /// \brief Emit a value node
   template <typename T>
-  NodePtr Scalar(const T &value) const {
+  NodePtr Value(const T &value) const {
     return EmitValue(MakeValue(value));
   }
 
