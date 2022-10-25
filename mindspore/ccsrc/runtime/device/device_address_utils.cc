@@ -152,7 +152,7 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();
       auto address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
-                                                                              kNumberTypeUInt8, ShapeVector());
+                                                                              kObjectTypeString, ShapeVector());
       MS_EXCEPTION_IF_NULL(address);
       address->set_from_persistent_mem(true);
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node)
