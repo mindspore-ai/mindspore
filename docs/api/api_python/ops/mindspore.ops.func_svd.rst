@@ -18,7 +18,7 @@ mindspore.ops.svd
     返回：
         - **s** (Tensor) - 奇异值。shape为 :math:`(*, P)` 。
         - **u** (Tensor) - 左奇异向量。如果 `compute_uv` 为False，该值不会返回。shape为 :math:`(*, M, P)` 。如果 `full_matrices` 为True，则shape为 :math:`(*, M, M)` 。
-        - **v** (Tensor) - 右奇异向量。如果 `compute_uv` 为False，该值不会返回。shape为 :math:`(*, P, N)` 。如果 `full_matrices` 为True，则shape为 :math:`(*, N, N)` 。
+        - **v** (Tensor) - 右奇异向量。如果 `compute_uv` 为False，该值不会返回。shape为 :math:`(*, N, P)` 。如果 `full_matrices` 为True，则shape为 :math:`(*, N, N)` 。
 
     异常：
         - **TypeError** - `full_matrices` 或 `compute_uv` 不是bool类型。
