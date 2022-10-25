@@ -83,6 +83,26 @@ install(
   COMPONENT mindspore
 )
 
+if(MSVC AND DEBUG_MODE)
+  install(
+    FILES  $<TARGET_PDB_FILE:_c_expression>
+    DESTINATION ${INSTALL_BASE_DIR}
+    COMPONENT mindspore
+  )
+
+  install(
+    FILES  $<TARGET_PDB_FILE:mindspore_shared_lib>
+    DESTINATION ${INSTALL_LIB_DIR}
+    COMPONENT mindspore
+  )
+
+  install(
+    FILES  $<TARGET_PDB_FILE:mindspore_core> $<TARGET_PDB_FILE:mindspore_common> $<TARGET_PDB_FILE:mindspore_backend>
+    DESTINATION ${INSTALL_LIB_DIR}
+    COMPONENT mindspore
+  )
+endif()
+
 if(USE_GLOG)
   if(MSVC)
       if(DEBUG_MODE)
@@ -107,6 +127,13 @@ if(ENABLE_MINDDATA)
     DESTINATION ${INSTALL_BASE_DIR}
     COMPONENT mindspore
   )
+  if(MSVC AND DEBUG_MODE)
+    install(
+      FILES $<TARGET_PDB_FILE:_c_dataengine> $<TARGET_PDB_FILE:_c_mindrecord>
+      DESTINATION ${INSTALL_BASE_DIR}
+      COMPONENT mindspore
+    )
+  endif()
   if(MSVC)
     file(GLOB_RECURSE OPENCV_LIB_LIST
       ${opencv_LIBPATH}/opencv_core*

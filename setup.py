@@ -123,6 +123,7 @@ package_data = {
         '*.so*',
         '*.pyd',
         '*.dll',
+        '*.pdb',
         'bin/*',
         'lib/plugin/*',
         'lib/*.so*',
