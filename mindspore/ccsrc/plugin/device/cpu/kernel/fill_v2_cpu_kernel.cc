@@ -19,7 +19,7 @@
 #include <cmath>
 #include <string>
 #include <thread>
-
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -29,32 +29,23 @@ constexpr size_t kFillV2InputsNum = 2;
 constexpr size_t kFillV2OutputsNum = 1;
 }  // namespace
 
-void FillV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool FillV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  input1_dtype_ = inputs[0]->GetDtype();
+  output_dtype_ = outputs[0]->GetDtype();
+  return true;
+}
 
-  // Get the data type and shape of the first input and validate them
-  input1_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto input1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (input1_shape_.size() != 1) {
-    MS_LOG(EXCEPTION) << "the shape size of the input1 must be equal to 1.";
+int FillV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  // Get the data type and shape of the second input and validate them
-  auto input2_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  auto input2_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (input2_shape_.size() != 0) {
-    MS_LOG(EXCEPTION) << "the shape size of the input2 must be equal to 0, the input2 must be a scalar.";
-  }
-  output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-
-  if (input1_dtype_ != kNumberTypeInt32 && input1_dtype_ != kNumberTypeInt64) {
-    MS_LOG(EXCEPTION) << "the datatype of the input1 not support, support datatype: int32, int64.";
-  }
-
-  if (input2_dtype_ != output_dtype_) {
-    MS_LOG(EXCEPTION) << "the data type of the input2 does not match the data type of the output.";
-  }
+  output_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 bool FillV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,

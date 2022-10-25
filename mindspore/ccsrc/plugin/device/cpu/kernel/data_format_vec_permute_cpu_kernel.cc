@@ -16,6 +16,9 @@
 
 #include "plugin/device/cpu/kernel/data_format_vec_permute_cpu_kernel.h"
 #include <algorithm>
+#include <memory>
+#include <map>
+#include "mindspore/core/ops/data_format_vec_permute.h"
 
 namespace mindspore {
 namespace kernel {
@@ -24,55 +27,38 @@ constexpr size_t kDataFormatVecPermuteInputsNum = 1;
 constexpr size_t kDataFormatVecPermuteOutputsNum = 1;
 }  // namespace
 
-void DataFormatVecPermuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  src_format_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "src_format");
-  dst_format_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "dst_format");
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  dim_ = input_shape_.size();
-  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
-    return;
-  }
-  // check attr
-  std::vector<int64_t> shape1 = {4};
-  std::vector<int64_t> shape2 = {4, 2};
-  if (src_format_ != "NHWC" && src_format_ != "NCHW") {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", src_format must be 'NHWC' or 'NCHW' , but got " << src_format_
-                      << ".";
-  }
-  if (dst_format_ != "NHWC" && dst_format_ != "NCHW") {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", dst_format must be 'NHWC' or 'NCHW' , but got " << dst_format_
-                      << ".";
-  }
-  if (input_shape_ == shape1) {
-    if (output_shape_ != shape1) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", output must have the same shape as input, but got "
-                        << output_shape_ << " .";
-    }
-  } else if (input_shape_ == shape2) {
-    if (output_shape_ != shape2) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", output must have the same shape as input, but got "
-                        << output_shape_ << " .";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input shape must be (4, ) or (4, 2), but got " << input_shape_
-                      << " .";
-  }
-  // check input and output type
-  if (input_type_ != output_type_) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input[" << input_type_ << "] and output[" << output_type_
-                      << "] must have the same DataType.";
-  }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool DataFormatVecPermuteCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "DataFormatVecPermute does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+
+  auto kernel_ptr = std::make_shared<ops::DataFormatVecPermute>(base_operator->GetPrim());
+  src_format_ = kernel_ptr->get_src_format();
+  dst_format_ = kernel_ptr->get_dst_format();
+  input_type_ = inputs[0]->GetDtype();
+  output_type_ = outputs[0]->GetDtype();
+  return true;
+}
+
+int DataFormatVecPermuteCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs,
+                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  dim_ = input_shape_.size();
+  return KRET_OK;
 }
 
 template <typename T>
