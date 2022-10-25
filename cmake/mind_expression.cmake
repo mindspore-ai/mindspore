@@ -58,6 +58,7 @@ endif()
 
 if(ENABLE_GPU AND GPU_BACKEND_CUDA)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/cub.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/cucollections.cmake)
     if(ENABLE_MPI)
         include(${CMAKE_SOURCE_DIR}/cmake/external_libs/nccl.cmake)
     endif()
