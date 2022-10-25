@@ -182,13 +182,13 @@ int GatherInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_s
       return lite::RET_ERROR;
     }
   }
-  auto first_shape = in_shapes.front();
+  const auto &first_shape = in_shapes.front();
   auto first_shape_size = static_cast<int>(first_shape.size());
   if (axis < 0) {
     axis = first_shape_size + axis;
   }
   MS_CHECK_TRUE_MSG(axis >= 0 && axis < first_shape_size, lite::RET_ERROR, "Gather's axis out of range.");
-  auto second_shape = in_shapes[1];
+  const auto &second_shape = in_shapes[1];
   ShapeVector out_shape;
   for (int i = 0; i < axis; ++i) {
     out_shape.push_back(first_shape[i]);
@@ -331,10 +331,10 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
   MS_CHECK_TRUE_MSG(second_input != nullptr, lite::RET_ERROR, "Reshape's second input is a nullptr.");
   if (second_input->isa<CNode>()) {
     const auto &second_in_shape = in_shapes[1];
-    if (second_in_shape.size() != 1) {
+    if (second_in_shape.size() != 1 || second_in_shape.front() <= 0) {
       return lite::RET_NOT_SUPPORT;
     }
-    ShapeVector out_shape(second_in_shape.size(), -1);
+    ShapeVector out_shape(second_in_shape.front(), -1);
     out_shapes->clear();
     out_shapes->push_back(out_shape);
     return lite::RET_OK;

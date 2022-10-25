@@ -107,6 +107,7 @@
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
 #include "tools/optimizer/fusion/reshape_like_operator_ablation.h"
 #include "tools/optimizer/fusion/concat_concat_fusion.h"
+#include "tools/optimizer/fusion/strided_slice_fusion.h"
 #include "tools/converter/import/cast_op_adjust.h"
 #include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
 #include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
@@ -331,7 +332,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
 
   // the following pass needs to check the return value.
   fusions = {std::make_shared<opt::MulReduceFusion>(), std::make_shared<opt::ReshapeReduceFusion>(),
-             std::make_shared<opt::AblateReshapeLikeOp>(), std::make_shared<opt::ConcatConcatFusion>()};
+             std::make_shared<opt::AblateReshapeLikeOp>(), std::make_shared<opt::ConcatConcatFusion>(),
+             std::make_shared<opt::StridedSliceFusion>()};
   for (auto &pass : fusions) {
     MS_CHECK_TRUE_MSG(pass != nullptr, RET_ERROR, "pass is a nullptr.");
     if (param->fusion_blacklists.find(pass->name()) != param->fusion_blacklists.end()) {

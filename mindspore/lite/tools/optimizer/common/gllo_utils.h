@@ -157,6 +157,8 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
 
 std::vector<KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node);
 
+bool IsReduceModeMeetOutEqualIn(const PrimitivePtr &prim);
+
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
