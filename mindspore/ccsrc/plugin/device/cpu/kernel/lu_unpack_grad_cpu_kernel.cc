@@ -26,22 +26,36 @@ const size_t kInputNum = 3;
 const size_t kOutputNum = 2;
 }  // namespace
 
-void LuUnpackGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  node_wpt_ = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputNum, kernel_name_);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool LuUnpackGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, LuUnpackGradFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int LuUnpackGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_L_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_U_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  LU_data_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename T>
@@ -49,11 +63,10 @@ bool LuUnpackGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
                                             const std::vector<kernel::AddressPtr> &outputs) {
   auto L_grad_output_data = reinterpret_cast<T *>(outputs[0]->addr);
   auto U_grad_output_data = reinterpret_cast<T *>(outputs[1]->addr);
-  auto LU_data_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 2);
-  auto LU_data_dims = LU_data_shape.size();
-  int64_t LU_data_elem_num = std::accumulate(LU_data_shape.begin(), LU_data_shape.end(), 1, std::multiplies<int>());
-  int64_t LU_data_height = LU_data_shape[LU_data_dims - 2];
-  int64_t LU_data_width = LU_data_shape[LU_data_dims - 1];
+  auto LU_data_dims = LU_data_shape_.size();
+  int64_t LU_data_elem_num = std::accumulate(LU_data_shape_.begin(), LU_data_shape_.end(), 1, std::multiplies<int>());
+  int64_t LU_data_height = LU_data_shape_[LU_data_dims - 2];
+  int64_t LU_data_width = LU_data_shape_[LU_data_dims - 1];
   auto LU_data_stride = LU_data_height * LU_data_width;
   auto matrix_num = LU_data_elem_num / LU_data_stride;
   auto LU_dim_min = std::min(LU_data_height, LU_data_width);
@@ -62,15 +75,13 @@ bool LuUnpackGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     *(U_grad_output_data + i) = static_cast<T>(0);
   }
 
-  auto input_L_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
-  auto input_U_shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
-  auto input_L_dims = input_L_shape.size();
-  auto input_U_dims = input_U_shape.size();
-  int64_t matrix_L_width = input_L_shape[input_L_dims - 2];
-  int64_t matrix_L_height = input_L_shape[input_L_dims - 1];
+  auto input_L_dims = input_L_shape_.size();
+  auto input_U_dims = input_U_shape_.size();
+  int64_t matrix_L_width = input_L_shape_[input_L_dims - 2];
+  int64_t matrix_L_height = input_L_shape_[input_L_dims - 1];
   auto matrix_L_size = matrix_L_width * matrix_L_height;
-  auto matrix_U_width = input_U_shape[input_U_dims - 2];
-  auto matrix_U_height = input_U_shape[input_U_dims - 1];
+  auto matrix_U_width = input_U_shape_[input_U_dims - 2];
+  auto matrix_U_height = input_U_shape_[input_U_dims - 1];
   auto matrix_U_size = matrix_U_width * matrix_U_height;
   auto output_stride = LU_data_stride;
 
