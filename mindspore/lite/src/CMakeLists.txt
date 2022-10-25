@@ -588,12 +588,6 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
     target_link_libraries(mindspore-lite_static
             ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
-    if(MSLITE_ENABLE_ACL)
-        target_link_libraries(mindspore-lite lite_acl_mid
-                mindspore_shared_lib)
-        target_link_libraries(mindspore-lite_static lite_acl_mid
-                mindspore_shared_lib)
-    endif()
 endif()
 
 if(SUPPORT_CUDA AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)

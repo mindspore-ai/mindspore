@@ -551,10 +551,8 @@ if(PLATFORM_ARM64)
                     install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
-                if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-                    install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                            COMPONENT ${RUNTIME_COMPONENT_NAME})
-                endif()
+                install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
 
             if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)
@@ -951,10 +949,8 @@ else()
                         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
-            if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-                install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                        COMPONENT ${RUNTIME_COMPONENT_NAME})
-            endif()
+            install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
 
         if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)
