@@ -56,6 +56,11 @@ class AclOpDesc {
   aclTensorDesc *CreateTensorDesc(const GeTensorDescPtr &tensor_desc);
   aclDataBuffer *CreateDataBuf(const AddressPtr &address, const size_t op_size);
   void SetListAttr(const std::string &attr_name, const ValuePtr &value);
+  void SetAclListAttrs(const std::string &attr_name, const ValuePtr &value);
+  void AclSetAttrListInt(const std::string &attr_name, const ValuePtrList &value_sequence);
+  void AclSetAttrListBool(const std::string &attr_name, const ValuePtrList &value_sequence);
+  void AclSetAttrListFloat(const std::string &attr_name, const ValuePtrList &value_sequence);
+  void AclSetAttrListListInt(const std::string &attr_name, const std::vector<std::vector<int64_t>> &value_lists);
   bool SelectConversionDataType(const ValuePtr &value, const unsigned int index);
 
   template <typename T>

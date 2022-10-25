@@ -49,6 +49,14 @@ ATTR_MAP(TransposeD) = EMPTY_ATTR_MAP;
 // Do not set Transpose operator output descriptor
 REG_ADPT_DESC(TransposeD, prim::kPrimTranspose->name(), ADPT_DESC(TransposeD))
 
+// TransData
+INPUT_MAP(TransData) = {{1, INPUT_DESC(src)}};
+ATTR_MAP(TransData) = {{"src_format", ATTR_DESC(src_format, AnyTraits<std::string>())},
+                       {"dst_format", ATTR_DESC(dst_format, AnyTraits<std::string>())},
+                       {"groups", ATTR_DESC(groups, AnyTraits<int64_t>())}};
+OUTPUT_MAP(TransData) = {{0, OUTPUT_DESC(dst)}};
+REG_ADPT_DESC(TransData, kNameTransData, ADPT_DESC(TransData))
+
 // Transpose
 INPUT_MAP(Transpose) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(perm)}};
 ATTR_MAP(Transpose) = EMPTY_ATTR_MAP;

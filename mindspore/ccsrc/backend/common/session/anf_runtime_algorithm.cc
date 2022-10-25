@@ -663,7 +663,10 @@ KernelType AnfRuntimeAlgorithm::GetKernelType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   // select_kernel_build_info() has checked whether return pointer is null
   auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
+  if (build_info == nullptr) {
+    MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << " has no kernel build info, using UNKNOWN_KERNEL_TYPE";
+    return KernelType::UNKNOWN_KERNEL_TYPE;
+  }
   return build_info->kernel_type();
 }
 

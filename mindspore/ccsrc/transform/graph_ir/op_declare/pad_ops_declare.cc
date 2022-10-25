@@ -37,6 +37,12 @@ ATTR_MAP(BroadcastToD) = {{"shape", ATTR_DESC(shape, AnyTraits<int64_t>(), AnyTr
 OUTPUT_MAP(BroadcastToD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BroadcastToD, kNameBroadcastTo, ADPT_DESC(BroadcastToD))
 
+// DynamicBroadcastTo
+INPUT_MAP(BroadcastTo) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(shape)}};
+OUTPUT_MAP(BroadcastTo) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(BroadcastTo) = EMPTY_ATTR_MAP;
+REG_ADPT_DESC(BroadcastTo, kDynamicBroadcastToOpName, ADPT_DESC(BroadcastTo))
+
 // Diag
 INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Diag) = EMPTY_ATTR_MAP;

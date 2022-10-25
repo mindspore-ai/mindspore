@@ -605,18 +605,38 @@ bool CheckAICoreSupportedAny(const AnfNodePtr &anf_node) {
   return kernel::TbeCheckIsSupportedAny(cnode);
 }
 
+kernel::KernelBuildInfoPtr UpdateKernelType(const kernel::KernelBuildInfoPtr &kernel_info, const KernelType &type) {
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto new_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(kernel_info);
+  MS_EXCEPTION_IF_NULL(new_builder);
+  new_builder->SetKernelType(type);
+  return new_builder->Build();
+}
+
 bool CheckAICoreSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(select_kernel_build_info);
+  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
+  auto tmp_kernel_build_info = select_kernel_build_info;
+  if (kernel_type == KernelType::ACL_KERNEL) {
+    tmp_kernel_build_info = UpdateKernelType(select_kernel_build_info, KernelType::TBE_KERNEL);
+  }
   auto cnode = anf_node->cast<CNodePtr>();
   if (cnode == nullptr) {
     return false;
   }
-  return kernel::TbeCheckIsSupportedSpec(cnode, select_kernel_build_info);
+  return kernel::TbeCheckIsSupportedSpec(cnode, tmp_kernel_build_info);
 }
 
 bool CheckAICPUSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
-  return kernel::IsSupportedByAICPU(anf_node, select_kernel_build_info);
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(select_kernel_build_info);
+  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
+  auto tmp_kernel_build_info = select_kernel_build_info;
+  if (kernel_type == KernelType::ACL_KERNEL) {
+    tmp_kernel_build_info = UpdateKernelType(select_kernel_build_info, KernelType::AICPU_KERNEL);
+  }
+  return kernel::IsSupportedByAICPU(anf_node, tmp_kernel_build_info);
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -390,6 +390,7 @@ constexpr const char kNameLoad[] = "Load";
 constexpr const char kNameDepend[] = "Depend";
 constexpr const char kNameReturn[] = "Return";
 constexpr const char kNameUpdateState[] = "UpdateState";
+constexpr const char kNameTransData[] = "TransData";
 
 class OpAdapterDesc;
 
