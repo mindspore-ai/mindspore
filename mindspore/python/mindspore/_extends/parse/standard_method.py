@@ -3226,6 +3226,13 @@ def asinh(x):
     return F.asinh(x)
 
 
+def arcsinh(x):
+    r"""
+    Computes inverse hyperbolic sine of the input element-wise.
+    """
+    return F.asinh(x)
+
+
 def atan(x):
     r"""
     Computes inverse tangent of the input element-wise.
@@ -3234,6 +3241,13 @@ def atan(x):
 
 
 def atanh(x):
+    r"""
+    Computes inverse hyperbolic tangent of the input element-wise.
+    """
+    return F.atanh(x)
+
+
+def arctanh(x):
     r"""
     Computes inverse hyperbolic tangent of the input element-wise.
     """

@@ -71,8 +71,10 @@ mindspore.Tensor
     mindspore.Tensor.asin
     mindspore.Tensor.addmv
     mindspore.Tensor.asinh
+    mindspore.Tensor.arcsinh
     mindspore.Tensor.atan
     mindspore.Tensor.atanh
+    mindspore.Tensor.arctanh
     mindspore.Tensor.atan2
     mindspore.Tensor.bernoulli
     mindspore.Tensor.bitwise_and
