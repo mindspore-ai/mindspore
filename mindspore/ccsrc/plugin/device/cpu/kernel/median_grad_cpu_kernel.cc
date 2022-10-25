@@ -20,6 +20,7 @@
 #include <type_traits>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/grad/median_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,16 +33,32 @@ constexpr size_t kIndex2 = 2;
 constexpr size_t kHalf = 2;
 }  // namespace
 
-void MedianGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input0_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  input1_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
-  input0_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  input1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  input2_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
-  global_median_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "global_median");
-  axis_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
+bool MedianGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianGradOutputsNum, kernel_name_);
+  kernel_name_ = base_operator->GetPrim()->name();
+  input0_type_ = inputs[kIndex0]->GetDtype();
+  input1_type_ = inputs[kIndex1]->GetDtype();
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MedianGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  global_median_ = kernel_ptr->get_global_median();
+  axis_ = kernel_ptr->get_axis();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int MedianGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  input0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  input2_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
   input0_dim_ = input0_shape_.size();
   input1_dim_ = input1_shape_.size();
   input2_dim_ = input2_shape_.size();
@@ -56,59 +73,75 @@ void MedianGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     input0_num_elements_ *= static_cast<size_t>(input0_shape_[i]);
   }
   if (input0_type_ != input1_type_) {
-    MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the dtype of y_grad should be same with x, but got "
-                            << input0_type_ << ".";
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", the dtype of y_grad should be same with x, but got " << input0_type_
+                  << ".";
+    return false;
   }
   if (input0_dim_ != input2_dim_) {
-    MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the shape of y_grad should be same with y, but got "
-                            << input0_shape_ << ".";
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", the shape of y_grad should be same with y, but got " << input0_shape_
+                  << ".";
+    return false;
   }
   for (size_t i = 0; i < input2_dim_; i++) {
     if (input0_shape_[i] != input2_shape_[i]) {
-      MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the shape of y_grad should be same with y, but got "
-                              << input0_shape_ << ".";
+      MS_LOG(ERROR) << "For " << kernel_name_ << ", the shape of y_grad should be same with y, but got "
+                    << input0_shape_ << ".";
+      return false;
     }
   }
+  return KRET_OK;
 }
 
-bool MedianGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianGradOutputsNum, kernel_name_);
+const std::vector<std::pair<KernelAttr, MedianGradCpuKernelMod::KernelRunFunc>> &MedianGradCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, MedianGradCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MedianGradCpuKernelMod::LaunchKernel<int16_t, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MedianGradCpuKernelMod::LaunchKernel<int32_t, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MedianGradCpuKernelMod::LaunchKernel<int64_t, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MedianGradCpuKernelMod::LaunchKernel<float, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &MedianGradCpuKernelMod::LaunchKernel<double, double>},
+  };
+  return func_list;
+}
+
+template <typename T1, typename T2>
+bool MedianGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<AddressPtr> &workspace,
+                                          const std::vector<AddressPtr> &outputs) {
   if (global_median_ == false) {
-    switch (input1_type_) {
-      case kNumberTypeInt16:
-        return MedianGradCompute<int16_t, float>(inputs, outputs);
-      case kNumberTypeInt32:
-        return MedianGradCompute<int32_t, float>(inputs, outputs);
-      case kNumberTypeInt64:
-        return MedianGradCompute<int64_t, float>(inputs, outputs);
-      case kNumberTypeFloat32:
-        return MedianGradCompute<float, float>(inputs, outputs);
-      case kNumberTypeFloat64:
-        return MedianGradCompute<double, double>(inputs, outputs);
-      default:
-        MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                                << "', the input data type must be in int16, int32, int64, float32, double, but got "
-                                << input1_type_ << ".";
-    }
+    return MedianGradCompute<T1, T2>(inputs, outputs);
   } else {
-    switch (input1_type_) {
-      case kNumberTypeInt16:
-        return GlobalMedianGradCompute<int16_t, float>(inputs, outputs);
-      case kNumberTypeInt32:
-        return GlobalMedianGradCompute<int32_t, float>(inputs, outputs);
-      case kNumberTypeInt64:
-        return GlobalMedianGradCompute<int64_t, float>(inputs, outputs);
-      case kNumberTypeFloat32:
-        return GlobalMedianGradCompute<float, float>(inputs, outputs);
-      case kNumberTypeFloat64:
-        return GlobalMedianGradCompute<double, double>(inputs, outputs);
-      default:
-        MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                                << "', the input data type must be in int16, int32, int64, float32, double, but got "
-                                << input1_type_ << ".";
-    }
+    return GlobalMedianGradCompute<T1, T2>(inputs, outputs);
   }
   return true;
 }
@@ -202,40 +235,6 @@ bool MedianGradCpuKernelMod::MedianGradCompute(const std::vector<AddressPtr> &in
   };
   CPUKernelUtils::ParallelFor(sharder_mediangrad, input0_num_elements_);
   return true;
-}
-
-std::vector<KernelAttr> MedianGradCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt16)
-                                                   .AddInputAttr(kNumberTypeInt16)
-                                                   .AddInputAttr(kNumberTypeInt16)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeFloat32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeFloat32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeFloat32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeFloat32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeFloat64)};
-  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MedianGrad, MedianGradCpuKernelMod);
