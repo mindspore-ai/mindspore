@@ -22,6 +22,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NO_CHANGE;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
@@ -41,8 +42,11 @@ constexpr static int kOutCurrentVarIdx = 4;
 int FusedBatchnormFp16CPUKernel::Batchnorm2Scale(const void *scale_data, const void *bias_data, const void *mean_data,
                                                  const void *var_data, float eps, int kernel_num) {
   auto ret = InitScaleParam();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init scale parameter when converting fused_batchnorm to scale.";
+  if (ret == RET_NO_CHANGE) {
+    MS_LOG(INFO) << "Unsupported to convert fused batch norm to scale.";
+    return RET_NO_CHANGE;
+  } else if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init scale param failed.";
     return RET_ERROR;
   }
 
