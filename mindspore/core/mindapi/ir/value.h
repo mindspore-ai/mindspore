@@ -258,6 +258,26 @@ using FP32ImmPtr = SharedPtr<FP32Imm>;
 
 MIND_API_IMM_TRAIT(FP32Imm, float);
 
+/// \brief FP64Imm defines interface for float64 data.
+class MIND_API FP64Imm : public FloatImm {
+ public:
+  MIND_API_BASE_MEMBER(FP64Imm);
+
+  /// \brief Create FP64Imm with the given float value.
+  ///
+  /// \param[in] value The given float value.
+  explicit FP64Imm(double value);
+
+  /// \brief Get the float value of this FP64Imm.
+  ///
+  /// \return The float value of this FP64Imm.
+  double value() const;
+};
+
+using FP64ImmPtr = SharedPtr<FP64Imm>;
+
+MIND_API_IMM_TRAIT(FP64Imm, double);
+
 // === Utility functions for Value === //
 
 /// \brief Create a Value object from a primitive type value.

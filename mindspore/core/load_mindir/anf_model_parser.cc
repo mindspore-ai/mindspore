@@ -834,6 +834,15 @@ bool MSANFModelParser::SetPrimitiveAttrWithType(const PrimitivePtr &prim, const 
       (void)prim->AddAttr(attr_name, sequence_value);
       break;
     }
+    case mind_ir::AttributeProto_AttributeType_DICT: {
+      auto dict_value = ObtainValueInDictionaryForm(attr_proto);
+      if (dict_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get dictionary value for " << attr_name;
+        return false;
+      }
+      (void)prim->AddAttr(attr_name, dict_value);
+      break;
+    }
     default: {
       ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
       if (value == nullptr) {
@@ -1011,6 +1020,76 @@ bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_
     return false;
   }
   return true;
+}
+
+ValuePtr MSANFModelParser::ObtainValueInDictionaryForm(const mind_ir::AttributeProto &attr_proto) {
+  std::vector<std::pair<std::string, ValuePtr>> key_values;
+  for (int i = 0; i < attr_proto.values_size(); ++i) {
+    const mind_ir::AttributeProto &key_value_proto = attr_proto.values(i);
+    if (!key_value_proto.has_name()) {
+      MS_LOG(EXCEPTION) << "Dict type AttributeProto should has name as key of dictionary";
+    }
+    auto &key = key_value_proto.name();
+    auto &values = key_value_proto.values();
+    if (values.size() != 1) {
+      MS_LOG(EXCEPTION) << "Dict type AttributeProto should has exactly one value, but got " << values.size()
+                        << " value(s).";
+    }
+    auto &value = values[0];
+    switch (value.type()) {
+      case mind_ir::AttributeProto_AttributeType_TENSORS: {
+        const mind_ir::TensorProto &tensor_proto = value.tensors(0);
+        if (tensor_proto.has_raw_data()) {
+          // For real tensor.
+          tensor::TensorPtr tensor_info = GenerateTensorPtrFromTensorProto(tensor_proto);
+          if (tensor_info == nullptr) {
+            MS_LOG(ERROR) << "Failed to get the tensor for ValueNode.";
+            return nullptr;
+          }
+          (void)key_values.emplace_back(std::make_pair(key, tensor_info));
+        } else {
+          // For data type.
+          const int attr_tensor_type = tensor_proto.data_type();
+          auto iter = kDefaultValueSwitchMap.find(attr_tensor_type);
+          if (iter == kDefaultValueSwitchMap.end()) {
+            MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
+            return nullptr;
+          }
+          (void)key_values.emplace_back(std::make_pair(key, TypeIdToType(iter->second)));
+        }
+        break;
+      }
+      case mind_ir::AttributeProto_AttributeType_TUPLE:
+      case mind_ir::AttributeProto_AttributeType_LIST: {
+        auto sequence_value = ObtainValueInSequenceForm(value);
+        if (sequence_value == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the sequence value";
+          return nullptr;
+        }
+        (void)key_values.emplace_back(std::make_pair(key, sequence_value));
+        break;
+      }
+      case mind_ir::AttributeProto_AttributeType_DICT: {
+        auto dict_value = ObtainValueInDictionaryForm(value);
+        if (dict_value == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the dictionary value";
+          return nullptr;
+        }
+        (void)key_values.emplace_back(std::make_pair(key, dict_value));
+        break;
+      }
+      default: {
+        // For string and scalar.
+        auto scalar_value = ParseAttrInScalarForm(value, 0);
+        if (scalar_value == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the scalar for ValueNode.";
+          return nullptr;
+        }
+        (void)key_values.emplace_back(std::make_pair(key, scalar_value));
+      }
+    }
+  }
+  return std::make_shared<ValueDictionary>(key_values);
 }
 
 ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto) {

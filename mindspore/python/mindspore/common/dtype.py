@@ -17,6 +17,7 @@
 """Data type for MindSpore."""
 from __future__ import absolute_import
 
+import enum
 from inspect import isfunction
 import numpy as np
 from mindspore import log as logger
@@ -50,7 +51,7 @@ __method__ = [
     "pytype_to_dtype", "get_py_obj_dtype"
 ]
 
-__all__ = ["Type"]
+__all__ = ["Type", "QuantDtype"]
 __all__.extend(__dtype__)
 __all__.extend(__method__)
 
@@ -325,3 +326,55 @@ def type_size_in_bytes(dtype):
     if not isinstance(dtype, typing.Type):
         raise TypeError("The argument `dtype` should be instance of ", typing.Type)
     return typing.type_size_in_bytes(dtype)
+
+
+@enum.unique
+class QuantDtype(enum.Enum):
+    """
+    An enum for quant datatype, contains `INT1` ~ `INT16`, `UINT1` ~ `UINT16`.
+    """
+    INT1 = 0
+    INT2 = 1
+    INT3 = 2
+    INT4 = 3
+    INT5 = 4
+    INT6 = 5
+    INT7 = 6
+    INT8 = 7
+    INT9 = 8
+    INT10 = 9
+    INT11 = 10
+    INT12 = 11
+    INT13 = 12
+    INT14 = 13
+    INT15 = 14
+    INT16 = 15
+
+    UINT1 = 100
+    UINT2 = 101
+    UINT3 = 102
+    UINT4 = 103
+    UINT5 = 104
+    UINT6 = 105
+    UINT7 = 106
+    UINT8 = 107
+    UINT9 = 108
+    UINT10 = 109
+    UINT11 = 110
+    UINT12 = 111
+    UINT13 = 112
+    UINT14 = 113
+    UINT15 = 114
+    UINT16 = 115
+
+    def __str__(self):
+        return f"{self.name}"
+
+    def value(self) -> int:
+        """
+        Return value of `QuantDtype`.
+
+        Returns:
+            An int as value of `QuantDtype`.
+        """
+        return self._value_

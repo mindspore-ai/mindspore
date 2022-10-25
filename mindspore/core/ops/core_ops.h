@@ -625,6 +625,7 @@ GVAR_DEF(PrimitivePtr, kPrimBatchToSpaceND, std::make_shared<Primitive>("BatchTo
 GVAR_DEF(PrimitivePtr, kPrimBatchToSpaceNDV2, std::make_shared<Primitive>("BatchToSpaceNDV2"));
 GVAR_DEF(PrimitivePtr, kPrimDepthToSpace, std::make_shared<Primitive>("DepthToSpace"));
 GVAR_DEF(PrimitivePtr, kPrimBatchToSpace, std::make_shared<Primitive>("BatchToSpace"));
+GVAR_DEF(PrimitivePtr, kPrimFakeQuantParam, std::make_shared<Primitive>("FakeQuantParam"));
 GVAR_DEF(PrimitivePtr, kPrimSpaceToBatch, std::make_shared<Primitive>("SpaceToBatch"));
 GVAR_DEF(PrimitivePtr, kPrimScatterNd, std::make_shared<Primitive>("ScatterNd"));
 GVAR_DEF(PrimitivePtr, kPrimScatterNdUpdate, std::make_shared<Primitive>("ScatterNdUpdate"));

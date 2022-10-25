@@ -39,6 +39,7 @@ using Int64ImmImpl = mindspore::Int64Imm;
 using UInt8ImmImpl = mindspore::UInt8Imm;
 using FloatImmImpl = mindspore::FloatImm;
 using FP32ImmImpl = mindspore::FP32Imm;
+using FP64ImmImpl = mindspore::FP64Imm;
 
 MIND_API_BASE_IMPL(Value, ValueImpl, Base);
 
@@ -119,4 +120,10 @@ MIND_API_BASE_IMPL(FP32Imm, FP32ImmImpl, FloatImm);
 FP32Imm::FP32Imm(float value) : FloatImm(std::make_shared<FP32ImmImpl>(value)) {}
 
 float FP32Imm::value() const { return ToRef<FP32ImmImpl>(impl_).value(); }
+
+MIND_API_BASE_IMPL(FP64Imm, FP64ImmImpl, FloatImm);
+
+FP64Imm::FP64Imm(double value) : FloatImm(std::make_shared<FP64ImmImpl>(value)) {}
+
+double FP64Imm::value() const { return ToRef<FP64ImmImpl>(impl_).value(); }
 }  // namespace mindspore::api

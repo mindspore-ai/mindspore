@@ -102,5 +102,42 @@ enum TypeId : int {
   // New types should placed at the end of enum,
   // in order to keep fit with the type of existing model on the lite side.
 };
+
+/// \brief QuantDataType defines data type for quantization: int1-int16, uint1-uint16.
+enum QuantDataType : int {
+  kQuantDataTypeInt1 = 0,
+  kQuantDataTypeInt2,
+  kQuantDataTypeInt3,
+  kQuantDataTypeInt4,
+  kQuantDataTypeInt5,
+  kQuantDataTypeInt6,
+  kQuantDataTypeInt7,
+  kQuantDataTypeInt8,
+  kQuantDataTypeInt9,
+  kQuantDataTypeInt10,
+  kQuantDataTypeInt11,
+  kQuantDataTypeInt12,
+  kQuantDataTypeInt13,
+  kQuantDataTypeInt14,
+  kQuantDataTypeInt15,
+  kQuantDataTypeInt16,
+
+  kQuantDataTypeUInt1 = 100,
+  kQuantDataTypeUInt2,
+  kQuantDataTypeUInt3,
+  kQuantDataTypeUInt4,
+  kQuantDataTypeUInt5,
+  kQuantDataTypeUInt6,
+  kQuantDataTypeUInt7,
+  kQuantDataTypeUInt8,
+  kQuantDataTypeUInt9,
+  kQuantDataTypeUInt10,
+  kQuantDataTypeUInt11,
+  kQuantDataTypeUInt12,
+  kQuantDataTypeUInt13,
+  kQuantDataTypeUInt14,
+  kQuantDataTypeUInt15,
+  kQuantDataTypeUInt16,
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_TYPE_ID_H_
