@@ -485,6 +485,148 @@ class Tensor(Tensor_):
 
         return Tensor(Tensor_.from_numpy(array))
 
+    @staticmethod
+    def frombuffer(buffer, dtype=mstype.float64, count=-1, offset=0):
+        r"""
+        Creates a 1-dimensional :class:`Tensor` from an object that implements
+        the Python buffer protocol.
+        Skips the first :attr:`offset` bytes in the buffer, and interprets the rest of
+        the raw bytes as a 1-dimensional tensor of type :attr:`dtype` with :attr:`count`
+        elements.
+
+        Args:
+            buffer (object): a Python object that exposes the buffer interface.
+            dtype (mindspore.dtype): the desired data type of returned tensor.
+            count (int, optional): the number of desired elements to be read. If negative,
+                                    all the elements (until the end of the buffer) will be read. Default: -1.
+            offset (int, optional): the number of bytes to skip at the start of the buffer. Default: 0.
+
+        Returns:
+            a 1-dimensional Tensor from an object that implements the Python buffer protocol.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from array import array
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> input_array = array("d", [1, 2, 3, 4])
+            >>> input_array
+            array('d', [1.0, 2.0, 3.0, 4.0])
+            >>> output = Tensor.frombuffer(input_array, mindspore.int32)
+            >>> print(output)
+            [1 2 3 4]
+        """
+        res = np.frombuffer(buffer=buffer, dtype=np.float64, count=count, offset=offset)
+        result = Tensor(res, dtype=dtype)
+        return result
+
+    @staticmethod
+    def empty_strided(size, stride, dtype=mstype.float64, seed=None):
+        r"""
+        Creates a tensor with the specified :attr:`size` and :attr:`stride` and filled with undefined data.
+
+        Args:
+            size (tuple of python:ints): the shape of the output tensor.
+            stride (tuple of python:ints): the strides of the output tensor.
+            dtype (mindspore.dtype, optional): the desired data type of returned tensor.
+
+        Returns:
+            a tensor with the specified size and stride and filled with undefined data.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> size = (3, 3)
+            >>> stride = (1, 3)
+            >>> output = Tensor.empty_strided(size, stride, seed = 0)
+            >>> print(output)
+            [[0.00000000e+00 7.15189366e+10 0.00000000e+00]
+             [0.00000000e+00 0.00000000e+00 6.45894113e+10]
+             [0.00000000e+00 8.91773001e+10 9.63662761e+10]]
+        """
+        np.random.seed(seed)
+        tensor_ = Tensor(np.random.uniform(low=0, high=10e10, size=size))
+        tensor_array = tensor_.asnumpy()
+        stride_tensor = tensor_.as_strided(shape=size, strides=stride)
+        stride_array = stride_tensor.asnumpy()
+        stride_array.resize(len(stride_array) * len(stride_array[0]))
+        for i in range(size[0]):
+            for j in range(size[1]):
+                if not sum(stride_array - tensor_array[i][j]) < 0.01:
+                    tensor_array[i][j] = 0.0
+        return Tensor(tensor_array, dtype=dtype)
+
+    @staticmethod
+    def poisson(shape, mean, seed=0, seed2=0):
+        r"""
+        Returns a tensor of the same size as `input` with each element sampled from a Poisson
+        distribution with rate parameter given by the corresponding element in `input` i.e.,
+        \text{out}_i \sim \text{Poisson}(\text{input}_i)out*i*∼Poisson(input*i*),
+        and self as a tensor is the μ parameter .the distribution was constructed with.
+        The parameter defines mean number of occurrences of the event.
+        It must be greater than 0. With float32 data type.
+
+        Args:
+            seed (int, option): set the random seed (0 to 2**32)
+            seed2 (int, option): set the random seed2 (0 to 2**32)
+        Inputs:
+            - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+
+        Returns:
+            out (Union[Tensor, int]), with the same shape as input_tensor.
+
+        Raises:
+            TypeError: If neither `seed` nor `seed2` is an int.
+            TypeError: If `shape` is not a tuple.
+            TypeError: If `mean` is not a Tensor whose dtype is not float32.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> shape = (4, 1)
+            >>> mean = Tensor(np.array([5.0, 10.0]), mstype.float32)
+            >>> output = Tensor.Poisson(shape, mean, seed=5)
+            >>> result = output.shape
+            >>> print(result)
+            (4, 2)
+        """
+        return tensor_operator_registry.get('poisson')(seed, seed2)(shape, mean)
+
+    @staticmethod
+    def as_tensor(data, dtype=None):
+        r"""
+        convert data to tensor in mindspore.
+
+        Args:
+            data (array_like): Initial data for the tensor. Can be a list, tuple,
+                            NumPy ndarray, scalar, and other types.
+            dtype (mindspore.dtype, optional): the desired data type of returned tensor.
+                                        Default: if None, infers data type from data.
+
+        Returns:
+            Tensor contains the data and the dtype is in mindspore.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> import mindspore.nn as nn
+            >>> from mindspore import Tensor
+            >>> input_data = np.array([1, 2, 3])
+            >>> ms_tensor = Tensor.as_tensor(input_data)
+            >>> ms_tensor
+            Tensor(shape=[3], dtype=Int64, value= [1, 2, 3])
+        """
+        return Tensor(data, dtype=dtype)
+
     def set_const_arg(self, const_arg=True):
         """
         Specify whether the tensor is a constant when it is used for the argument of a network.
@@ -551,7 +693,6 @@ class Tensor(Tensor_):
             >>> x = x.item((0,1))
             >>> print(x)
             2.0
-
         """
         output = tensor_operator_registry.get('item')(self, index)
         return output
@@ -4843,6 +4984,240 @@ class Tensor(Tensor_):
         self._init_check()
         validator.check_is_int(seed, 'seed')
         return tensor_operator_registry.get('bernoulli')(self, p, seed)
+
+    def multinomial(self, num_samples, seed=0, seed2=0):
+        r"""
+        Returns a tensor sampled from the multinomial probability distribution located in the corresponding
+        row of tensor input.
+
+        Note:
+            The rows of input do not need to sum to one (in which case we use the values as weights),
+            but must be non-negative, finite and have a non-zero sum. self must be the input tensor
+            containing the cumsum of probabilities, must be 1 or 2 dimensions.
+
+        Args:
+            seed (int): Random seed, must be non-negative. Default: 0.
+            seed2 (int): Random seed2, must be non-negative. Default: 0.
+
+        Inputs:
+            - **num_samples** (int32) - number of samples to draw.
+
+        Outputs:
+            Tensor with the same rows as `self`, each row has num_samples sampled indices.
+
+        Raises:
+            TypeError: If neither `seed` nor `seed2` is an int.
+            TypeError: If `self` is not a Tensor whose dtype is float32.
+            TypeError: If dtype of `num_samples` is not int32.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import mindspore
+            >>> x = Tensor([0., 9., 4., 0.], mindspore.float32)
+            >>> output = x.multinomial(num_samples=2,seed=10)
+            >>> print(output)
+            [2 1]
+        """
+        self._init_check()
+        validator.check_non_negative_int(seed, 'seed')
+        validator.check_non_negative_int(seed2, 'seed')
+        return tensor_operator_registry.get('multinomial')(seed, seed2)(self, num_samples)
+
+    def rand_like(self, seed=None):
+        r"""
+        Returns a tensor with the same size as input that is filled with
+        random numbers from a uniform distribution on the interval [0, 1)
+
+        Args:
+            input_tensor (Union[Tensor, int, float]): the input tensor.
+            seed (int, option): set the random seed (0 to 2**32).
+
+        Returns:
+            out (Union[Tensor, float]), with the same shape as input_tensor.
+
+        Raises:
+            TypeError: If dtype of the input_tensor is not int or float.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([[1, 2, 3, 9], [1, 2, 3, 9]]), mindspore.int8)
+            >>> output = input_x.rand_like(seed = 0)
+            >>> print(output)
+                [[0.5488135  0.71518937 0.60276338 0.54488318]
+                [0.4236548  0.64589411 0.43758721 0.891773  ]]
+            >>> input_p = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+            >>> output = input_p.rand_like(seed = 0)
+            >>> print(output)
+                [0.5488135  0.71518937 0.60276338]
+        """
+        input_tensor = self
+        input_tensor = np.array(input_tensor)
+        shape_ = input_tensor.shape
+        input_tensor = input_tensor.reshape(-1)
+        x = len(input_tensor)
+        np.random.seed(seed)
+        return Tensor(np.array([np.random.rand(1) for i in range(x)]).reshape(shape_))
+
+    def randint_like(self, high, low=0, seed=None):
+        r"""
+        Returns a tensor with the same size as the input tensor,
+        and the numerical value is a random number on the interval [low, high],
+        if only one int type data is entered, the default value is high,
+        if two integers are entered, they are low and high respectively.
+
+        Args:
+            input_tensor (Union[Tensor, int, float]): the size of input will determine size of the output tensor.
+            low (int, optional) – Lowest integer to be drawn from the distribution. Default: 0.
+            high (int) – One above the highest integer to be drawn from the distribution.
+            seed (int, optional): set the random seed (0 to 2**32).
+
+        Returns:
+            out (Union[Tensor, int]), with the same shape as input_tensor.
+
+        Raises:
+            TypeError: If dtype of the input_tensor is not int or float.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1., 2., 3., 4., 5.]), mindspore.float32)
+            >>> output = input_x.randint_like(20, seed = 0)
+            >>> print(output)
+                [12 15  0  3  3]
+            >>> output = input_x.randint_like(20, 100, seed = 0)
+            >>> print(output)
+                [64 67 84 87 87]
+        """
+        input_tensor = self
+        input_tensor = np.array(input_tensor)
+        shape_ = input_tensor.shape
+        input_tensor = input_tensor.reshape(-1)
+        if low > high:
+            high, low = low, high
+        x = len(input_tensor)
+        np.random.seed(seed)
+        return Tensor(np.array([np.random.randint(low, high) for i in range(x)]).reshape(shape_))
+
+    def randn_like(self, seed=None):
+        r"""
+        Returns a tensor with the same size as input that is filled with random
+        numbers from a normal distribution with mean 0 and variance 1.
+
+        Args:
+            input_tensor (Union[Tensor, int, float]): the size of input will determine size of the output tensor.
+            seed (int, optional): set the random seed (0 to 2**32).
+
+        Returns:
+            out (Union[Tensor, int]), with the same shape as input_tensor.
+
+        Raises:
+            TypeError: If dtype of the input_tensor is not int or float.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1., 2., 3., 4., 5.]), mindspore.float32)
+            >>> output = input_x.randn_like(seed = 0)
+            >>> print(output)
+                [1.7640524 0.4001572 0.978738  2.2408931 1.867558 ]
+            >>> input_p = Tensor(np.array([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]), mindspore.int32)
+            >>> output = input_p.randn_like(seed = 0)
+            >>> print(output)
+                [[ 1.7640524   0.4001572   0.978738    2.2408931   1.867558  ]
+                [-0.9772779   0.95008844 -0.1513572  -0.10321885  0.41059852]]
+        """
+        input_tensor = np.array(self)
+        shape_ = input_tensor.shape
+        input_tensor = input_tensor.reshape(-1)
+        x = len(input_tensor)
+        np.random.seed(seed)
+        return Tensor([np.random.randn() for i in range(x)]).reshape(shape_)
+
+    def as_strided(self, shape=None, strides=None, subok=False, writeable=True):
+        r"""
+        as_strided(input, size, stride, storage_offset=0) -> Tensor
+        Create a view of an existing `mindspore.Tensor` :attr:`x` with specified
+        :attr:`shape`, :attr:`stride` and :attr:`subok`.
+
+        Args:
+            x (Tensor): the input tensor.
+            shape (tuple or ints): the shape of the output tensor
+            stride (tuple or ints): the stride of the output tensor
+            subok (int, optional): the offset in the underlying storage of the output tensor
+
+        Returns:
+            Tensor viewed by strides and subok.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> X = np.arange(9, dtype=np.int32).reshape(3,3)
+            >>> output = Tensor(X).as_strided((2, 2), (1, 1))
+            >>> print(output)
+            [[0 1]
+             [1 2]]
+        """
+        dtype_ = self.dtype
+        x = self.asnumpy()
+        n = x.strides[1]
+        strides = tuple(np.array(strides)*n)
+        return Tensor(np.lib.stride_tricks.as_strided(x, shape, strides, subok, writeable), dtype=dtype_)
+
+    def randperm(self, max_length=1, pad=-1):
+        r"""
+        Generates n random samples from 0 to n-1 without repeating. If `max_length` > n,
+        the last `max_length-n` elements will be filled with `pad`.
+
+        Args:
+            max_length (int): Number of items expected to get and the number must be greater than 0. Default: 1.
+            pad (int): The pad value to be filled. Default: -1.
+            dtype (mindspore.dtype): The type of output. Default: mindspore.int32.
+
+        Inputs:
+            - **n** (Tensor[int32]) - The input tensor with shape: (1,) and the number must be in [0, `max_length`].
+
+        Outputs:
+            - **output** (Tensor) - The output Tensor with shape: (`max_length`,) and type: `dtype`.
+
+        Raises:
+            TypeError: If neither `max_length` nor `pad` is an int.
+            TypeError: If `self` has non-Int elements.
+            TypeError: If `self` has negative elements.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+        Examples:
+            >>> # The result of every execution is different because this operator will generate n random samples.
+            >>> from mindspore import Tensor
+            >>> import mindspore
+            >>> n = Tensor([20], dtype=mindspore.int32)
+            >>> output = n.randperm(max_length=30, pad=-1)
+            >>> print(output)
+            [15 6 11 19 14 16 9 5 13 18 4 10 8 0 17 2 1 12 3 7
+                -1 -1 -1 -1 -1 -1 -1 -1 -1 -1]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('randperm')(max_length, pad)(self)
 
     def random_categorical(self, num_sample, seed=0, dtype=mstype.int64):
         r"""
