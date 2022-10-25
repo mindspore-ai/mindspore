@@ -370,6 +370,7 @@ constexpr auto kSparseApplyRMSPropOpName = "SparseApplyRMSProp";
 constexpr auto kSparseGatherV2OpName = "SparseGatherV2";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsOpName = "SparseSoftmaxCrossEntropyWithLogits";
 constexpr auto kSparseSparseMinimumOpName = "SparseSparseMinimum";
+constexpr auto kSparseSparseMaximumOpName = "SparseSparseMaximum";
 constexpr auto kSplitOpName = "Split";
 constexpr auto kSplitVOpName = "SplitV";
 constexpr auto kSqrtOpName = "Sqrt";
