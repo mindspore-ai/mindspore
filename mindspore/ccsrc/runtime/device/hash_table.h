@@ -17,38 +17,55 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_HASH_TABLE_H_
 
 #include <string>
+#include <utility>
 
 namespace mindspore {
+using DataLenPair = std::pair<void *, size_t>;
 namespace device {
 // The base class of device hash table.
 template <typename Key, typename Value>
 class HashTable {
  public:
+  enum class Status {
+    kUnchanged = 0,
+    kModified = 1,
+    kErased = 2,
+  };
+
   HashTable() = default;
   virtual ~HashTable() = default;
 
-  // Find elements with specific keys, if the key does not exist, initialize the value for the key based on the
-  // initialzer and insert the key-value pair into map.The initializer can be 'normal', 'zero' or 'one'.
-  bool Find(const Key *key, size_t key_num, const std::string &initializer, Value *outputs) = 0;
-
-  // Find elements with specific keys, if the key does not exist, initialize the value for the key by 'default_value'
-  // and insert the key-value pair into map.
-  bool Find(const Key *key, size_t key_num, const Value &default_value, Value *outputs) = 0;
+  // Find elements with specific keys, if a key does not exist, initialize the value for the key based on the
+  // initialzer and insert the key-value pair into map. The initializer can be 'normal', 'zero' or 'one', and also
+  // could be a specific Value type scalar.
+  virtual bool Find(const Key *keys, size_t key_num, Value *outputs, void *stream) = 0;
 
   // Insert elements with specific keys. If key exists, update the value of the key.
-  bool Insert(const Key *key, size_t key_num, const Value *value) = 0;
+  virtual bool Insert(const Key *keys, size_t key_num, const Value *value, void *stream) = 0;
 
   // Erase elements with specific keys.
-  bool Erase(const Key *key, size_t key_num) = 0;
+  virtual bool Erase(const Key *keys, size_t key_num, void *stream) = 0;
 
   // Reserves space for at least the specified number of elements.
-  bool Reserve(size_t count) = 0;
+  virtual bool Reserve(size_t count) = 0;
+
+  // Export all keys and values in hash map, the order of each element of keys and values is consistent.
+  // Note: Even if the elements of the hash map are unchanged, the order of the key-value pair returned by the function
+  // may be different each time it is called, because there may be multi-threaded concurrent exports inside the
+  // function.
+  virtual bool GetKeysAndValues(Key *keys, Value *values, void *stream) = 0;
+
+  // Import keys, values into the hash map.
+  virtual bool Import(const DataLenPair &input_data) = 0;
+
+  // Export all keys, values and status.
+  virtual bool Export(const DataLenPair &keys, const DataLenPair &values, const DataLenPair &status) = 0;
 
   // Get the max number of elements the container could hold.
-  size_t capacity() const = 0;
+  virtual size_t capacity() const = 0;
 
   // Get the number of elements in the map.
-  size_t size() const = 0;
+  virtual size_t size() const = 0;
 };
 }  // namespace device
 }  // namespace mindspore
