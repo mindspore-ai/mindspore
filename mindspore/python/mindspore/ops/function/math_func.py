@@ -3787,8 +3787,8 @@ def cdist(x, y, p=2.0):
         ValueError: If `p` is a negative float.
         ValueError: If dimension of `x` is not the same as `y`.
         ValueError: If dimension of `x` or `y` is neither 2 nor 3.
-        ValueError: If the batch shape of 'x' is not the same as the shape of 'y'
-        ValueError: If the number of columns of 'x' is not the same as the number of 'y'
+        ValueError: If the batch shape of 'x' is not the same as the shape of 'y'.
+        ValueError: If the number of columns of 'x' is not the same as the number of 'y'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6551,11 +6551,11 @@ def cumprod(input, dim, dtype=None):
 
     Args:
         input (Tensor[Number]): The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         dim (int): The dimensions to compute the cumulative product. Only constant value is allowed.
         dtype: The desired data type of output. Default: None.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and dtype as the `input` unless `dtype` is specified.
 
     Raises:

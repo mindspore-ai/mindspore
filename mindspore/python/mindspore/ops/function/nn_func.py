@@ -2484,8 +2484,8 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
 
         .. math::
             \ell(x, y) = \begin{cases}
-                \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-                \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+                \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+                \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
             \end{cases}
 
         where :math:`L = \{l_1,\dots,l_N\}^\top`.
