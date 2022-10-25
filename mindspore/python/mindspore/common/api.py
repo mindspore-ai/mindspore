@@ -39,7 +39,8 @@ from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTenso
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
     _ms_memory_recycle
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
-from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel
+from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
+    _get_pipeline_stages
 from mindspore._checkparam import Validator
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
@@ -1400,6 +1401,9 @@ class _CellGraphExecutor:
             self._update_param_node_default_input(phase, replace)
         else:
             obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
+            obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
+            if _get_pipeline_stages() > 1 and (not hasattr(obj, "is_first_iteration") or not obj.is_first_iteration):
+                obj.remove_redundant_parameters()
 
         if not do_convert:
             return phase, True
