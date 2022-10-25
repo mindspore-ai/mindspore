@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.common.api import jit
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -80,6 +81,48 @@ def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, le
         success = F.depend(success, pull(push((values, indices), shapes), weight))
     else:
         success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
+    return success
+
+
+@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "MapTensor",
+                    "MapTensor", "MapTensor", "MapTensor", "Bool", "Bool")
+def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
+                                    gradient, weight, moment, ps_parameter, cache_enable):
+    """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
+    success = True
+    indices, values = gradient.get_data()
+    indices = gradient.indices
+    values = gradient.values
+
+    linear_slice = linear.get(indices)
+    moment_slice = moment.get(indices)
+    weight_slice = weight.get(indices)
+
+    op_pow = P.Pow()
+    op_sign = P.Sign()
+    op_greater = P.Greater()
+    op_select = P.Select()
+
+    lr_power_val = -lr_power
+    accu_pow = op_pow(moment_slice, lr_power_val)
+    moment_slice = F.depend(moment_slice, accu_pow)
+    cur_accu = moment_slice + values * values
+    cur_accu_pow = op_pow(cur_accu, lr_power_val)
+    sigma = (cur_accu_pow - accu_pow) / learning_rate[0]
+
+    linear_slice = linear_slice + values - sigma * weight_slice
+
+    update_weight_cond = op_greater(linear_slice, l1)
+    updated_weight = (l1 * op_sign(linear_slice) - linear_slice) / (cur_accu_pow / learning_rate[0] + 2 * l2)
+    zeros = zeros_like(weight_slice)
+
+    weight_slice = op_select(update_weight_cond, updated_weight, zeros)
+    moment_slice = cur_accu
+
+    moment.put(indices, moment_slice)
+    linear.put(indices, linear_slice)
+    weight.put(indices, weight_slice)
+
     return success
 
 

@@ -24,6 +24,7 @@ if(ENABLE_GPU)
         list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_get_data_gpu_kernel.cc")
         list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_get_gpu_kernel.cc")
         list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_put_gpu_kernel.cc")
+        list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_get_grad_gpu_kernel.cc")
     endif()
 
     if(ENABLE_MPI)
