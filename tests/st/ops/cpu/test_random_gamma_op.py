@@ -23,13 +23,19 @@ from mindspore import Tensor
 
 
 class RandomGammaTEST(nn.Cell):
-    def __init__(self, shape, seed=0):
+    def __init__(self, shape=None, seed=0):
         super(RandomGammaTEST, self).__init__()
         self.shape = shape
         self.random_gamma = P.RandomGamma(seed)
 
     def construct(self, alpha):
         return self.random_gamma(self.shape, alpha)
+
+
+class RandomGamma(nn.Cell):
+
+    def construct(self, shape, alpha, seed=0):
+        return F.random_gamma(shape, alpha, seed)
 
 
 @pytest.mark.level0
@@ -44,9 +50,9 @@ def test_random_gamma_op(dtype):
     """
 
     shape = Tensor(np.array([3, 1, 2]), ms.int32)
-    alpha = Tensor(np.array([[3, 4], [5, 6]]), ms.float32)
+    alpha = Tensor(np.array([5, 6]), ms.float32)
     gamma_test = RandomGammaTEST(shape=shape, seed=3)
-    expect = np.array([3, 1, 2, 2, 2])
+    expect = np.array([3, 1, 2, 2])
 
     ms.set_context(mode=ms.GRAPH_MODE, device_target='CPU')
     output = gamma_test(alpha)
@@ -57,6 +63,14 @@ def test_random_gamma_op(dtype):
     output_2 = gamma(shape, alpha)
     print(output_2)
     assert (output_2.shape == expect).all()
+
+    net = RandomGamma()
+    input_dyn_shape = [None]
+    alpha_dyn_shape = [None]
+    net.set_inputs(Tensor(shape=input_dyn_shape, dtype=ms.int32),
+                   Tensor(shape=alpha_dyn_shape, dtype=ms.float32), 1)
+    output = net(shape, alpha, seed=1)
+    print(output)
 
 
 @pytest.mark.level0

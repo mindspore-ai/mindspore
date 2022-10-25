@@ -65,8 +65,6 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
   TypeId alpha_dtype_{kTypeUnknown};
 
   random::GuardedPhiloxRandom generator_;
-  // Dealing with dynamic shapes
-  bool dyamic_shape_{false};
   std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
