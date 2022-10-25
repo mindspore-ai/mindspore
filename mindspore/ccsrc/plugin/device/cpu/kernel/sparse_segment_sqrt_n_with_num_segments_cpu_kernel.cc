@@ -32,20 +32,31 @@ constexpr size_t kSparseSegmentSqrtNWithNumSegmentsOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kSparseSegmentSqrtNWithNumSegmentsInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseSegmentSqrtNWithNumSegmentsOutputsNum, kernel_name_);
-  xdtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  dtype1_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  segment_ids_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
-  num_segments_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex3);
-  y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
+bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                         const std::vector<KernelTensorPtr> &inputs,
+                                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentSqrtNWithNumSegmentsInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentSqrtNWithNumSegmentsOutputsNum, kernel_name_);
+  xdtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype1_ = inputs.at(kIndex1)->GetDtype();
+  return true;
+}
+
+int SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                          const std::vector<KernelTensorPtr> &inputs,
+                                                          const std::vector<KernelTensorPtr> &outputs,
+                                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  MS_EXCEPTION_IF_NULL(base_operator);
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
