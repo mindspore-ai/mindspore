@@ -44,6 +44,26 @@ bool IsDataTakenOverByMemOffload(const DeviceContext *device_context) {
   return ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
 }
 
+void *GetOffloadPtr(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor,
+                    const DeviceContext *device_context) {
+  if (host_tensor->data_type() == device_tensor->type_id()) {
+    return host_tensor->data_c();
+  }
+  const auto shape_size = abstract::ShapeSize(host_tensor->shape());
+  const auto data_size = host_tensor->Size();
+  const trans::TypeIdArgs type_args{host_tensor->data_c(), shape_size, host_tensor->data_type(),
+                                    device_tensor->type_id(), data_size};
+  auto offload_ptr = device_context->device_res_manager_->AllocateOffloadMemory(device_tensor->GetSize());
+  MS_EXCEPTION_IF_NULL(offload_ptr);
+  bool trans_ret = trans::TransDataType(type_args, offload_ptr);
+  if (!trans_ret) {
+    MS_LOG(EXCEPTION) << "Trans data type for offload ptr failed, src type: "
+                      << TypeIdToString(host_tensor->data_type())
+                      << ", dst type: " << TypeIdToString(device_tensor->type_id());
+  }
+  return offload_ptr;
+}
+
 void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor, const AnfNodePtr &node,
                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context,
                     GraphExecutionStrategy strategy) {
@@ -53,7 +73,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
   if (IsDataTakenOverByMemOffload(device_context)) {
-    device_tensor->SetOffloadPtr(host_tensor->data_c());
+    device_tensor->SetOffloadPtr(GetOffloadPtr(host_tensor, device_tensor, device_context));
     return;
   }
   auto allocator_type = node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
