@@ -19,36 +19,32 @@
 
 #include <vector>
 #include "include/common/utils/utils.h"
+#include "mindspore/core/ops/stream_send.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class SendGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SendGpuKernelMod : public NativeGpuKernelMod {
  public:
   SendGpuKernelMod() {}
   ~SendGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *stream_ptr) override {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaEventRecord(record_event_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Recording cuda event failed.");
-    return true;
-  }
-  bool Init(const CNodePtr &kernel_node) override {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    record_event_ = reinterpret_cast<cudaEvent_t>(GetAttr<uintptr_t>(kernel_node, kAttrRecordEvent));
-    InitSizeLists();
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventRecord(record_event_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "Recording cuda event failed.");
     return true;
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    return;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
+            const std::vector<KernelTensorPtr> &) override {
+    MS_ERROR_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    auto prim = base_operator->GetPrim();
+    MS_ERROR_IF_NULL(prim);
+    record_event_ = reinterpret_cast<cudaEvent_t>(GetValue<uintptr_t>(prim->GetAttr(kAttrRecordEvent)));
+    return true;
   }
 
  private:
