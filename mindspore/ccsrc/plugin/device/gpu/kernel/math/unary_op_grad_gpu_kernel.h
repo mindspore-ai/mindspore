@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <complex>
 #include <map>
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -30,7 +31,6 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnKnown = "UnKnown";
-
 class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
  public:
   explicit UnaryGradOpGpuKernelMod(const std::string &kernel_type) : kernel_name_(kernel_type) {}
