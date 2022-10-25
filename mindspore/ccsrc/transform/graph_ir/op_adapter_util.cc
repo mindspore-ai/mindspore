@@ -282,12 +282,19 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
   if (node->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Length of node inputs is empty.";
   }
-  MS_EXCEPTION_IF_NULL(node->inputs()[0]);
-  if (!node->inputs()[0]->isa<ValueNode>()) {
-    MS_LOG(ERROR) << "The anf is not a value node.";
+  MS_EXCEPTION_IF_NULL(node->input(0));
+  auto &input = node->input(0);
+  AnfNodePtr prim_node = nullptr;
+  if (input->isa<ValueNode>()) {
+    prim_node = input;
+  } else if (input->isa<CNode>() && input->cast<CNodePtr>()->input(0)->isa<ValueNode>()) {
+    prim_node = input->cast<CNodePtr>()->input(0);
+  } else {
+    MS_LOG(ERROR) << "The anf is not a value node or cnode.";
     return ret;
   }
-  auto prim = GetValueNode<PrimitivePtr>(node->inputs()[0]);
+  MS_EXCEPTION_IF_NULL(prim_node);
+  auto prim = GetValueNode<PrimitivePtr>(prim_node);
   if (prim == nullptr) {
     MS_LOG(ERROR) << "The anf is not a Primitive.";
     return ret;
