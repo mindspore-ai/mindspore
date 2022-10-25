@@ -19,6 +19,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NO_CHANGE;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
@@ -65,7 +66,7 @@ int FusedBatchnormCPUKernel::InitScaleParam() {
 
   scale_param_->axis_ = kNHWC_C;
   auto in_shape = in_tensors_[0]->shape();
-  CHECK_LESS_RETURN(in_shape.size(), DIMENSION_5D);
+  MS_CHECK_TRUE_RET(in_shape.size() == DIMENSION_4D, RET_NO_CHANGE);
   scale_param_->outer_size_ = 1;
   for (auto i = 0; i < scale_param_->axis_; i++) {
     MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(scale_param_->outer_size_, in_shape[i]), RET_ERROR, "mul overflow.");
@@ -81,8 +82,11 @@ int FusedBatchnormCPUKernel::InitScaleParam() {
 int FusedBatchnormCPUKernel::Batchnorm2Scale(const void *scale_data, const void *bias_data, const void *mean_data,
                                              const void *var_data, float eps, int kernel_num) {
   auto ret = InitScaleParam();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init scale parameter when converting fused_batchnorm to scale.";
+  if (ret == RET_NO_CHANGE) {
+    MS_LOG(INFO) << "Unsupported to convert fused batch norm to scale.";
+    return RET_NO_CHANGE;
+  } else if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init scale param failed.";
     return RET_ERROR;
   }
 
@@ -132,6 +136,10 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
       return RET_OK;
     } else {
       FreeScaleAndOffset();
+      if (ret != RET_NO_CHANGE) {
+        MS_LOG(ERROR) << "convert batch norm to scale failed.";
+        return RET_ERROR;
+      }
     }
   }
 
@@ -189,7 +197,7 @@ int FusedBatchnormCPUKernel::Run() {
 
     trained_ = true;  // trained at least once
   } else {
-    if (out_tensors_.size() >= DIMENSION_5D) {
+    if (op_parameter_->is_train_session_ && out_tensors_.size() >= DIMENSION_5D) {
       (void)memcpy(out_tensors_.at(SECOND_INPUT)->data(), scale_, out_tensors_.at(SECOND_INPUT)->Size());
       (void)memcpy(out_tensors_.at(THIRD_INPUT)->data(), offset_, out_tensors_.at(THIRD_INPUT)->Size());
       (void)memcpy(out_tensors_.at(FOURTH_INPUT)->data(), mean_, out_tensors_.at(FOURTH_INPUT)->Size());
