@@ -308,6 +308,29 @@ def test_margin_ranking_loss():
     loss(input1, input2, target)
 
 
+def test_ctc_loss():
+    """
+    Feature: Test CTCLoss.
+    Description: Test CTCLoss functional.
+    Expectation: Success.
+    """
+    t = 10  # Input sequence length
+    c = 4  # Number of classes
+    n = 2  # Batch size
+    s = 5  # Target sequence length of longest target in batch
+    s_min = 3  # Minimum target length, for demonstration purposes
+    arr = np.random.randn(t * n * c).reshape((t, n, c))
+    inputs = Tensor(arr, dtype=mstype.float32)
+    input_lengths = np.full(shape=n, fill_value=t)
+    input_lengths = Tensor(input_lengths, dtype=mstype.int32)
+    target_lengths = np.full(shape=n, fill_value=s_min)
+    target_lengths = Tensor(target_lengths, dtype=mstype.int32)
+    target = np.random.randint(1, c, size=(n, s))
+    target = Tensor(target, dtype=mstype.int32)
+    ctc_loss = nn.CTCLoss(blank=0, reduction='none', zero_infinity=False)
+    ctc_loss(inputs, target, input_lengths, target_lengths)
+
+
 def test_gaussian_nll_loss():
     """
     Feature: Test GaussianNLLLoss.

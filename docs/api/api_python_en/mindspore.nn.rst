@@ -234,6 +234,7 @@ Loss Function
     mindspore.nn.BCEWithLogitsLoss
     mindspore.nn.CosineEmbeddingLoss
     mindspore.nn.CrossEntropyLoss
+    mindspore.nn.CTCLoss
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
     mindspore.nn.GaussianNLLLoss
