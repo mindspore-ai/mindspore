@@ -90,6 +90,7 @@ void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size,
     }
   }
 }
+
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t kEdgeMaxDims = 5;
   constexpr int64_t kOtherMinDims = 3;
@@ -126,9 +127,9 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     std::vector<int64_t> tmp = paddings_val;
     for (int64_t i = 0; i < paddings_size; ++i) {
       if (i % nTwo == 0) {
-        paddings_val[i] = tmp[i / nTwo];
+        paddings_val[LongToSize(i)] = tmp[LongToSize(i / nTwo)];
       } else {
-        paddings_val[i] = tmp[(i + paddings_size) / nTwo];
+        paddings_val[LongToSize(i)] = tmp[LongToSize((i + paddings_size) / nTwo)];
       }
     }
   }

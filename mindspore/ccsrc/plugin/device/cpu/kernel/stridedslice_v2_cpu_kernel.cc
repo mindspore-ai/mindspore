@@ -29,20 +29,13 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t index_one = 1;
-constexpr size_t index_two = 2;
-constexpr size_t index_three = 3;
-constexpr size_t index_four = 4;
-constexpr size_t index_five = 5;
-constexpr size_t index_six = 6;
-constexpr size_t index_seven = 7;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 constexpr size_t kStridedSliceV2InputsNum = 1;
 constexpr size_t kStridedSliceV2DynamicInputsNum = 4;
 constexpr size_t kStridedSliceV2OutputsNum = 1;
 
-void PadStridedSliceV2ComParameterTo8D(StridedSliceParameter *param) {
+void PadStridedSliceV2ParameterTo8D(StridedSliceParameter *param) {
   int32_t begins[DIMENSION_8D];
   int32_t ends[DIMENSION_8D];
   int32_t strides[DIMENSION_8D];
@@ -93,35 +86,32 @@ int DoStridedSliceV2Com(const void *in_data, void *out_data, StridedSliceParamet
   int *strides = param->strides_;
   int *in_shape = param->in_shape_;
   if (param->num_axes_ < DIMENSION_8D) {
-    PadStridedSliceV2ComParameterTo8D(param);
+    PadStridedSliceV2ParameterTo8D(param);
   }
   int dim_offset[DIMENSION_8D - 1];
-  dim_offset[index_six] = in_shape[index_seven];
-  dim_offset[index_five] = in_shape[index_six] * dim_offset[index_six];
-  dim_offset[index_four] = in_shape[index_five] * dim_offset[index_five];
-  dim_offset[index_three] = in_shape[index_four] * dim_offset[index_four];
-  dim_offset[index_two] = in_shape[index_three] * dim_offset[index_three];
-  dim_offset[1] = in_shape[index_two] * dim_offset[index_two];
+  dim_offset[kIndex6] = in_shape[kIndex7];
+  dim_offset[kIndex5] = in_shape[kIndex6] * dim_offset[kIndex6];
+  dim_offset[kIndex4] = in_shape[kIndex5] * dim_offset[kIndex5];
+  dim_offset[kIndex3] = in_shape[kIndex4] * dim_offset[kIndex4];
+  dim_offset[kIndex2] = in_shape[kIndex3] * dim_offset[kIndex3];
+  dim_offset[1] = in_shape[kIndex2] * dim_offset[kIndex2];
   dim_offset[0] = in_shape[1] * dim_offset[1];
   size_t out_offset = 0;
   int32_t dim0, dim1, dim2, dim3, dim4, dim5, dim6, dim7;
   for (dim0 = begins[0]; LoopContinue(strides[0], dim0, ends[0]); dim0 += strides[0]) {
     for (dim1 = begins[1]; LoopContinue(strides[1], dim1, ends[1]); dim1 += strides[1]) {
-      for (dim2 = begins[index_two]; LoopContinue(strides[index_two], dim2, ends[index_two]);
-           dim2 += strides[index_two]) {
-        for (dim3 = begins[index_three]; LoopContinue(strides[index_three], dim3, ends[index_three]);
-             dim3 += strides[index_three]) {
-          for (dim4 = begins[index_four]; LoopContinue(strides[index_four], dim4, ends[index_four]);
-               dim4 += strides[index_four]) {
-            for (dim5 = begins[index_five]; LoopContinue(strides[index_five], dim5, ends[index_five]);
-                 dim5 += strides[index_five]) {
-              for (dim6 = begins[index_six]; LoopContinue(strides[index_six], dim6, ends[index_six]);
-                   dim6 += strides[index_six]) {
-                for (dim7 = begins[index_seven]; LoopContinue(strides[index_seven], dim7, ends[index_seven]);
-                     dim7 += strides[index_seven]) {
-                  int32_t in_offset = dim0 * dim_offset[0] + dim1 * dim_offset[1] + dim2 * dim_offset[index_two] +
-                                      dim3 * dim_offset[index_three] + dim4 * dim_offset[index_four] +
-                                      dim5 * dim_offset[index_five] + dim6 * dim_offset[index_six] + dim7;
+      for (dim2 = begins[kIndex2]; LoopContinue(strides[kIndex2], dim2, ends[kIndex2]); dim2 += strides[kIndex2]) {
+        for (dim3 = begins[kIndex3]; LoopContinue(strides[kIndex3], dim3, ends[kIndex3]); dim3 += strides[kIndex3]) {
+          for (dim4 = begins[kIndex4]; LoopContinue(strides[kIndex4], dim4, ends[kIndex4]); dim4 += strides[kIndex4]) {
+            for (dim5 = begins[kIndex5]; LoopContinue(strides[kIndex5], dim5, ends[kIndex5]);
+                 dim5 += strides[kIndex5]) {
+              for (dim6 = begins[kIndex6]; LoopContinue(strides[kIndex6], dim6, ends[kIndex6]);
+                   dim6 += strides[kIndex6]) {
+                for (dim7 = begins[kIndex7]; LoopContinue(strides[kIndex7], dim7, ends[kIndex7]);
+                     dim7 += strides[kIndex7]) {
+                  int32_t in_offset = dim0 * dim_offset[0] + dim1 * dim_offset[1] + dim2 * dim_offset[kIndex2] +
+                                      dim3 * dim_offset[kIndex3] + dim4 * dim_offset[kIndex4] +
+                                      dim5 * dim_offset[kIndex5] + dim6 * dim_offset[kIndex6] + dim7;
                   auto out_ptr = static_cast<T *>(out_data);
                   auto int_ptr = static_cast<const T *>(in_data);
                   out_ptr[out_offset] = int_ptr[in_offset];
@@ -606,8 +596,7 @@ void StridedSliceV2CpuKernelMod::ParallelRun(const uint8_t *input_addr, uint8_t 
 }
 
 template <typename T>
-bool StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vector<kernel::AddressPtr> &inputs,
-                                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vector<kernel::AddressPtr> &inputs) {
   auto cnode = cnode_ptr_.lock();
   auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
   auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
@@ -641,12 +630,16 @@ bool StridedSliceV2CpuKernelMod::StridedSliceV2LaunchCal(const std::vector<kerne
   auto cnode = cnode_ptr_.lock();
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num == kStridedSliceV2DynamicInputsNum) {
+    bool flag = false;
     // for begin, end, stride are not const input
     dtype_attr = AnfAlgo::GetInputDeviceDataType(cnode, 1);
     if (dtype_attr == kNumberTypeInt32) {
-      StridedSliceV2LaunchDynamicType<int32_t>(inputs, outputs);
+      flag = StridedSliceV2LaunchDynamicType<int32_t>(inputs);
     } else {
-      StridedSliceV2LaunchDynamicType<int64_t>(inputs, outputs);
+      flag = StridedSliceV2LaunchDynamicType<int64_t>(inputs);
+    }
+    if (!flag) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the begin、end、stride is calculation error.";
     }
 
     parallel_ = MatchParallelPattern();
