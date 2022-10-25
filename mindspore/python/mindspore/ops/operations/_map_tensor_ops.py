@@ -80,7 +80,7 @@ class MapTensorGetKeys(Primitive):
 
 class MapTensorGetValues(Primitive):
     """
-    Get all keys as a tensor.
+    Get all values as a tensor.
     """
     __mindspore_signature__ = (sig.make_sig('map_tensor'),)
 
@@ -91,8 +91,22 @@ class MapTensorGetValues(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
+class MapTensorGetData(Primitive):
+    """
+    Get all keys and values as a tensor.
+    """
+    __mindspore_signature__ = (sig.make_sig('map_tensor'),)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MapTensorGetData"""
+        self.init_prim_io_names(inputs=['map_tensor'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
+
+
 get = MapTensorGet()
 put = MapTensorPut()
 erase = MapTensorErase()
 get_keys = MapTensorGetKeys()
 get_values = MapTensorGetValues()
+get_data = MapTensorGetData()

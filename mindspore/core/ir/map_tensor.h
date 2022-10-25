@@ -58,8 +58,10 @@ class MS_CORE_API MapTensor final : public Tensor {
   MapTensor(TypeId key_dtype, TypeId value_dtype, const ShapeVector &value_shape, const ValuePtr &default_value)
       : key_dtype_(key_dtype), default_value_(default_value) {
     data_type_ = value_dtype;
-    shape_ = value_shape;
-    ShapeVector key_shape = {1};
+    value_shape_ = value_shape;
+    shape_ = {abstract::Shape::kShapeDimAny};
+    (void)shape_.insert(shape_.end(), value_shape.begin(), value_shape.end());
+    ShapeVector key_shape = {abstract::Shape::kShapeDimAny};
     key_tensor_ = std::make_shared<Tensor>(key_dtype, key_shape);
     value_tensor_ = std::make_shared<Tensor>(value_dtype, value_shape);
     status_tensor_ = std::make_shared<Tensor>(kNumberTypeUInt8, key_shape);
@@ -88,7 +90,9 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   TypeId value_dtype() const { return data_type_; }
 
-  const ShapeVector &value_shape() const { return shape_; }
+  size_t size() const { return size_; }
+
+  const ShapeVector &value_shape() const { return value_shape_; }
 
   const ValuePtr &default_value() const { return default_value_; }
 
@@ -149,6 +153,12 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   // Default value. should be a scalar as the initial value or a string as the initializer name.
   ValuePtr default_value_;
+
+  // the shape of values
+  ShapeVector value_shape_;
+
+  // the size of keys, shape_ is (size_, value_shape_).
+  size_t size_;
 
   // Key tensor of data.
   TensorPtr key_tensor_;

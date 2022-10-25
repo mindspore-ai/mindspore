@@ -158,9 +158,19 @@ class MapParameter(Parameter):
         Get all values as a tensor.
 
         Returns:
-            Tensor, the tensor contains all keys.
+            Tensor, the tensor contains all values.
         """
         return None
+
+    def get_data(self):
+        """
+        Get all keys and values as a tensor.
+
+        Returns:
+            Tensor, the tensor contains all keys and values.
+        """
+        return None
+
 
     def put(self, key_tensor, value_tensor):
         """

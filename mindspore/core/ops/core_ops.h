@@ -331,6 +331,7 @@ constexpr auto kMapTensorErase = "MapTensorErase";
 constexpr auto kMapTensorGetDefaultValue = "MapTensorGetDefaultValue";
 constexpr auto kMapTensorGetKeys = "MapTensorGetKeys";
 constexpr auto kMapTensorGetValues = "MapTensorGetValues";
+constexpr auto kMapTensorGetData = "MapTensorGetData";
 constexpr auto kMapTensorGetGrad = "MapTensorGetGrad";
 
 // COOTensor
@@ -1069,6 +1070,7 @@ GVAR_DEF(PrimitivePtr, kPrimMapTensorErase, std::make_shared<Primitive>(kMapTens
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetDefaultValue, std::make_shared<Primitive>(kMapTensorGetDefaultValue));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetKeys, std::make_shared<Primitive>(kMapTensorGetKeys));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetValues, std::make_shared<Primitive>(kMapTensorGetValues));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetData, std::make_shared<Primitive>(kMapTensorGetData));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetGrad, std::make_shared<Primitive>(kMapTensorGetGrad));
 
 // Sparse ops

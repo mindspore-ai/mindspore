@@ -370,6 +370,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"erase", std::string("map_tensor_erase")},            // C.map_tensor_erase
        {"get_keys", std::string("map_tensor_get_keys")},      // C.map_tensor_get_keys
        {"get_values", std::string("map_tensor_get_values")},  // C.map_tensor_get_values
+       {"get_data", std::string("map_tensor_get_data")},      // C.map_tensor_get_data
      }},
     {kObjectTypeJTagged, {}},
     {kObjectTypeSymbolicKeyType, {}},
