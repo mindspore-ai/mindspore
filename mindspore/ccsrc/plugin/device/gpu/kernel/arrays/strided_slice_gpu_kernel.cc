@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t DynamicInputNum = 4;
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
@@ -57,10 +56,6 @@ int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return ret;
   }
 
-  if (inputs.size() == DynamicInputNum) {
-    is_dynamic_attr_ = true;
-  }
-
   auto shape_signed = inputs[0]->GetShapeVector();
   input_shape_ = Convert2SizeTClipNeg(shape_signed);
   null_output_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input");
@@ -71,12 +66,12 @@ int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                       << ", but got " << input_shape_.size();
   }
-  if (is_dynamic_attr_) {
-    GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
-    GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
-    GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
-  }
-  CollectInfo(base_operator, is_dynamic_attr_);
+
+  GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
+  GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
+  GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
+
+  CollectInfo(base_operator);
 
   return ret;
 }
@@ -94,21 +89,6 @@ int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     &StridedSliceGpuKernelMod::LaunchKernel<TYPE_1, TYPE_2>
 
 std::vector<std::pair<KernelAttr, StridedSliceGpuKernelMod::StridedSliceFunc>> StridedSliceGpuKernelMod::func_list_ = {
-  {STRIDEDSLICE_GPU_REG(kNumberTypeFloat64, double)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeFloat32, float)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeFloat16, half)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeInt64, int64_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeInt32, int32_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeInt16, int16_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeInt8, int8_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt64, uint64_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt32, uint32_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt16, uint16_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt8, uint8_t)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeBool, bool)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeComplex64, Complex<float>)},
-  {STRIDEDSLICE_GPU_REG(kNumberTypeComplex128, Complex<double>)},
-
   {STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
   {STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
   {STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat16, kNumberTypeInt64, half, int64_t)},

@@ -28,18 +28,10 @@
 namespace mindspore {
 namespace ops {
 void ResizeNearestNeighbor::Init(const std::vector<int64_t> &size, const bool align_corners) {
-  this->set_size(size);
   this->set_align_corners(align_corners);
-}
-void ResizeNearestNeighbor::set_size(const std::vector<int64_t> &size) {
-  (void)this->AddAttr(kSize, api::MakeValue(size));
 }
 void ResizeNearestNeighbor::set_align_corners(const bool align_corners) {
   (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));
-}
-std::vector<int64_t> ResizeNearestNeighbor::get_size() const {
-  auto value_ptr = GetAttr(kSize);
-  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 bool ResizeNearestNeighbor::get_align_corners() const {
   auto value_ptr = GetAttr(kAlignCorners);

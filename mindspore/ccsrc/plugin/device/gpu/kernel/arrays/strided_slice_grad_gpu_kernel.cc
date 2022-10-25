@@ -34,25 +34,6 @@ bool StridedSliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For 'StridedSliceGrad', it does not support this kernel type:" << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-  auto input_num = inputs.size();
-  if (input_num == DynamicInputNum) {
-    is_dynamic_attr_ = true;
-    return true;
-  }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto begin_value = prim->GetAttr(kAttrBegin);
-  MS_EXCEPTION_IF_NULL(begin_value);
-  begin_ = GetValue<std::vector<int64_t>>(begin_value);
-  auto end_value = prim->GetAttr(kAttrEnd);
-  MS_EXCEPTION_IF_NULL(end_value);
-  end_ = GetValue<std::vector<int64_t>>(end_value);
-  auto strides_value = prim->GetAttr(kAttrStrides);
-  MS_EXCEPTION_IF_NULL(strides_value);
-  strides_ = GetValue<std::vector<int64_t>>(strides_value);
-  auto shapex_value = prim->GetAttr(kAttrShapex);
-  MS_EXCEPTION_IF_NULL(shapex_value);
-  shapex_ = GetValue<std::vector<int64_t>>(shapex_value);
   return true;
 }
 
@@ -60,13 +41,10 @@ int StridedSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs,
                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto shapex = GetDynamicAttrIntValue(inputs, kShapexIndex_, inputsOnHost, kernel_name_, &shapex_);
-  auto begin = GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
-  auto end = GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
-  auto stride = GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
-  if (shapex && begin && end && stride) {
-    get_dynamic_attr_value_ = true;
-  }
+  GetDynamicAttrIntValue(inputs, kShapexIndex_, inputsOnHost, kernel_name_, &shapex_);
+  GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
+  GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
+  GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
   auto ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
@@ -97,9 +75,6 @@ int StridedSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 template <typename T, typename S = int64_t>
 bool StridedSliceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                 const std::vector<AddressPtr> &outputs) {
-  if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of dynamic attr!";
-  }
   T *dy = GetDeviceAddress<T>(inputs, 0);
   T *dx = GetDeviceAddress<T>(outputs, 0);
   FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(cuda_stream_));
@@ -112,147 +87,118 @@ bool StridedSliceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
 }
 
 std::vector<std::pair<KernelAttr, StridedSliceGradGpuKernelMod::StridedSliceGradLaunchFunc>>
-  StridedSliceGradGpuKernelMod::func_list_ = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uchar>},
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<bool>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<float>>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<double>>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<double, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<float, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<float, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int64_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt32),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt16)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt16),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int16_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt8)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt8),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<int8_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeUInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeUInt64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeUInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeUInt32),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeUInt16)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeUInt16),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeUInt8)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeUInt8),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<uchar, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeBool)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeBool),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<bool, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeComplex64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeComplex64),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeComplex128)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeComplex128),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<double>, int64_t>}};
+  StridedSliceGradGpuKernelMod::func_list_ = {{KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeFloat64),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<double, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat32)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeFloat32),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<float, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat16)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeFloat16),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<half, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt64),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt32)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt32),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<int, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt16)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt16),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<int16_t, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt8)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt8),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<int8_t, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeUInt64),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt32)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeUInt32),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt16)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeUInt16),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt8)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeUInt8),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<uchar, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeBool),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<bool, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeComplex64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeComplex64),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeComplex128)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeComplex128),
+                                               &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<double>, int64_t>}};
 
 std::vector<KernelAttr> StridedSliceGradGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

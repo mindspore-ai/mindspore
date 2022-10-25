@@ -60,8 +60,6 @@ class ScatterNdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   std::vector<int64_t> attr_shape_;
   std::vector<size_t> vec_indices_stride_;
 
-  bool get_dynamic_attr_value_{false};
-  bool is_dynamic_attr_{false};
   static constexpr size_t kShapeIndex_{2};
 
   size_t block_size_{1};

@@ -18,37 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(
-  UnsortedSegmentMax,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentMaxGpuKernelMod, float, int)
-
-MS_REG_GPU_KERNEL_TWO(
-  UnsortedSegmentMax,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentMaxGpuKernelMod, float, int64_t)
-
-MS_REG_GPU_KERNEL_TWO(
-  UnsortedSegmentMax,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  UnsortedSegmentMaxGpuKernelMod, half, int)
-
-MS_REG_GPU_KERNEL_TWO(
-  UnsortedSegmentMax,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  UnsortedSegmentMaxGpuKernelMod, half, int64_t)
-
-MS_REG_GPU_KERNEL_TWO(
-  UnsortedSegmentMax,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentMaxGpuKernelMod, int, int)
-
-MS_REG_GPU_KERNEL_TWO(
-  UnsortedSegmentMax,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentMaxGpuKernelMod, int, int64_t)
-
-// Dynamic Mode - registered for int32/int64 3rd input
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
