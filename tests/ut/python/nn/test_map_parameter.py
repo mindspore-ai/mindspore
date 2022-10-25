@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, Tensor, Parameter, ParameterTuple
+from mindspore import context, Tensor, Parameter, ParameterTuple, MapTensor
 from mindspore.experimental import MapParameter
 from mindspore.common.initializer import initializer
 from mindspore.ops import composite as C
@@ -169,3 +169,68 @@ def test_grad_net():
     t = initializer('ones', (2, 3), ms.float32)
     t = t.init_data()
     grad(t)
+
+
+def test_map_tensor():
+    """
+    Feature: MapTensor
+    Description: Test new MapTensor in construct.
+    Expectation: New MapTensor in construct without exceptions.
+    """
+    class MapTensorNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.default_value = 'zeros'
+            self.map_param = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+
+        def construct(self):
+            keys = self.map_param.get_keys()
+            values = self.map_param.get_values()
+            new_map_tensor = MapTensor(keys, values, self.default_value)
+            new_data = new_map_tensor.get_data()
+            return new_map_tensor, new_data
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = MapTensorNet()
+    out = net()
+    print("out:", out)
+
+
+def test_map_tensor_with_keys_values():
+    """
+    Feature: MapTensor
+    Description: Test new MapTensor in construct.
+    Expectation: New MapTensor in construct without exceptions.
+    """
+    class MapTensorNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.default_value = 'zeros'
+
+        def construct(self):
+            keys = Tensor([1, 2], dtype=ms.int32)
+            values = Tensor([[1, 2], [1, 2]], dtype=ms.float32)
+            return MapTensor(keys, values, self.default_value)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = MapTensorNet()
+    out = net()
+    print("out:", out)
+
+
+def test_map_tensor_get_data_api():
+    """
+    Feature: MapTensor
+    Description: Test get_data api for MapTensor.
+    Expectation: get_data api works as expected.
+    """
+    keys = Tensor([1, 2], dtype=ms.int32)
+    values = Tensor([[1, 2], [1, 2]], dtype=ms.float32)
+    map_tensor = MapTensor(keys, values, 'zeros')
+    get_keys = map_tensor.get_keys()
+    print("get_keys:", get_keys)
+    get_values = map_tensor.get_values()
+    print("get_values:", get_values)
+    [the_keys, the_values] = map_tensor.get_data()
+    print("the_keys:", the_keys)
+    print("the_values:", the_values)

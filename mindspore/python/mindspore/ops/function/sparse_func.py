@@ -461,6 +461,8 @@ make_csr_tensor = Primitive('MakeCSRTensor')
 
 make_row_tensor_inner = Primitive('MakeRowTensor')
 
+make_map_tensor = Primitive('MakeMapTensor')
+
 row_tensor_get_values = Primitive('RowTensorGetValues')
 
 row_tensor_get_indices = Primitive('RowTensorGetIndices')
@@ -760,6 +762,7 @@ __all__ = [
     'make_csr_tensor',
     'make_row_tensor',
     'make_row_tensor_inner',
+    'make_map_tensor',
     'row_tensor_get_values',
     'row_tensor_get_indices',
     'row_tensor_get_dense_shape',

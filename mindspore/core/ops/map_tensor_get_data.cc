@@ -38,11 +38,15 @@ AbstractBasePtr MapTensorGetDataInfer(const abstract::AnalysisEnginePtr &, const
 
   // key abstract
   const auto &key_dtype = map_tensor_type->key_dtype();
-  ShapeVector key_shape = {abs_map_tensor->shape()->shape()[0]};
+  ShapeVector shape = abs_map_tensor->shape()->shape();
+  if (shape.empty()) {
+    MS_LOG(EXCEPTION) << "Invalid shape:" << input_args[0]->ToString();
+  }
+  ShapeVector key_shape = {shape[0]};
   auto key_abs = std::make_shared<abstract::AbstractTensor>(key_dtype, key_shape);
 
   // value abstract
-  const auto &value_dtype = map_tensor_type->value_dtype();
+  auto value_dtype = map_tensor_type->value_dtype();
   auto value_abs = std::make_shared<abstract::AbstractTensor>(value_dtype, abs_map_tensor->shape());
 
   AbstractBasePtrList abstract_list{key_abs, value_abs};

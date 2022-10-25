@@ -15,7 +15,7 @@
 """Tensor implementation."""
 from __future__ import absolute_import, annotations
 
-__all__ = ['Tensor', 'RowTensorInner', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
+__all__ = ['Tensor', 'RowTensorInner', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor', 'MapTensor']
 
 import math
 import numbers
@@ -34,6 +34,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import RowTensor as RowTensor_
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore._c_expression import MapTensor_
 from mindspore._checkparam import Rel, check_is_number
 from mindspore._checkparam import Validator as validator
 
@@ -8036,6 +8037,143 @@ class CSRTensor(CSRTensor_):
                           values=Tensor(shape=[2], dtype=Float32, value = [3.0, 3.0]))
         """
         return tensor_operator_registry.get('csr_add')(self, b, alpha, beta)
+
+
+class MapTensor(MapTensor_):
+    """
+    MapTensor is a tensor that stores a map like data structure.
+
+    Args:
+        key_tensor (:class:`mindspore.tensor`): The key Tensor.
+        value_tensor (:class:`mindspore.tensor`): The value Tensor.
+        default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: 'normal'.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, MapTensor
+        >>>
+        >>> key_tensor = Tensor([1, 2, 3], dtype=ms.int32)
+        >>> value_tensor = Tensor([[1, 1, 1], [2, 2, 2], [3, 3, 3]], dtype=ms.float32)
+        >>> default_value = 'zeros'
+        >>> m = MapTensor(key_tensor, value_tensor, default_value)
+        >>> print(t)
+         [[1. 1. 1.]
+          [2. 2. 2.]
+          [3. 3. 3.]]
+        >>> m.put(Tensor([1, 2], dtype=ms.int32), Tensor([[11, 11, 11], [22, 22, 22]], dtype=ms.float32))
+        >>> t = m.get(Tensor([1, 2, 3], dtype=ms.int32))
+        >>> print(t)
+        [[11. 11. 11.]
+         [22. 22. 22.]
+         [3. 3. 3.]]
+        >>> m.erase(Tensor([2, 3], dtype=ms.int32))
+        >>> print(t)
+        [[11. 11. 11.]]
+    """
+
+    def __new__(cls, key_tensor=None, value_tensor=None, default_value="normal", **kwargs):
+        obj = MapTensor_.__new__(cls, key_tensor.dtype, value_tensor.dtype, value_tensor.shape, default_value)
+        MapTensor_.__init__(obj, key_tensor.dtype, value_tensor.dtype, value_tensor.shape, default_value)
+        obj.key_tensor = key_tensor
+        obj.value_tensor = value_tensor
+        obj.default_value = default_value
+        return obj
+
+    def key_dtype(self):
+        """
+        Get key dtype.
+
+        Returns:
+            Dtype of key tensor.
+        """
+        return self.key_tensor.dtype
+
+    def value_dtype(self):
+        """
+        Get value shape.
+
+        Returns:
+            Dtype of value tensor.
+        """
+        return self.value_tensor.dtype
+
+    def value_shape(self):
+        """
+        Get value shape.
+
+        Returns:
+            Shape of value tensor.
+        """
+        return self.value_tensor.shape
+
+    def get(self, key_tensor):
+        """
+        Get value tensor according the key tensor, fill and return the default value in map parameter if key is not
+        existed.
+
+        Args:
+            key_tensor (Tensor): The key tensor.
+
+        Returns:
+            Tensor, the value tensor for the key tensor.
+        """
+        result_tensor = self.get(key_tensor)
+        return Tensor(result_tensor, internal=True)
+
+    def get_keys(self):
+        """
+        Get all keys as a tensor.
+
+        Returns:
+            Tensor, the tensor contains all keys.
+        """
+        return self.key_tensor
+
+    def get_values(self):
+        """
+        Get all values as a tensor.
+
+        Returns:
+            Tensor, the tensor contains all values.
+        """
+        return self.value_tensor
+
+    def get_data(self):
+        """
+        Get all keys and values as a tensor.
+
+        Returns:
+            Tensor, the tensor contains all keys and values.
+        """
+        return (self.key_tensor, self.value_tensor)
+
+
+    def put(self, key_tensor, value_tensor):
+        """
+        Insert or update records according the given key tensor and value tensor.
+
+        Args:
+            key_tensor (Tensor): The key tensor.
+            value_tensor (Tensor): The value tensor.
+
+        Returns:
+            MapParameter, the MapParameter object itself.
+        """
+        self.put(key_tensor, value_tensor)
+        return self
+
+    def erase(self, key_tensor):
+        """
+        Remove records according the given key tensor.
+
+        Args:
+            key_tensor (Tensor): The key tensor.
+
+        Returns:
+            MapParameter, the MapParameter object itself.
+        """
+        self.erase(key_tensor)
+        return self
 
 
 def _vm_compare(*args):

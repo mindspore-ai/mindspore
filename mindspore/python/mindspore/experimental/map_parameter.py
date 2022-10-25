@@ -54,18 +54,15 @@ class MapParameter(Parameter):
         [[0. 0. 0.]
          [0. 0. 0.]
          [0. 0. 0.]]
-        >>> m.put(Tensor([1, 2], dtype=ms.int32), Tensor([[1, 1, 1], [2, 2, 2]], dtype=np.float32))
+        >>> m.put(Tensor([1, 2], dtype=ms.int32), Tensor([[1, 1, 1], [2, 2, 2]], dtype=ms.float32))
         >>> t = m.get(Tensor([1, 2, 3], dtype=ms.int32))
         >>> print(t)
         [[1. 1. 1.]
          [2. 2. 2.]
          [0. 0. 0.]]
         >>> m.erase(Tensor([2, 3], dtype=ms.int32))
-        >>> t = m.get(Tensor([1, 2, 3], dtype=ms.int32), 3)
         >>> print(t)
-        [[1. 1. 1.]
-         [3. 3. 3.]
-         [3. 3. 3.]]
+        [[1. 1. 1.]]
     """
 
     def __new__(cls, key_dtype=ms.int32, value_dtype=ms.float32, value_shape=1, default_value='normal', **kwargs):
