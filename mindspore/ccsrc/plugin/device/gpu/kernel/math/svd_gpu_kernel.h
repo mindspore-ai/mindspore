@@ -31,6 +31,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -46,16 +47,11 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     cuda_stream_ = stream_ptr;
     return launch_kernel_func_(this, inputs, workspace, outputs);
   }
 
   void ResetResource() noexcept {
-    is_null_input_ = false;
-
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -64,7 +60,6 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  template <typename T>
   void InitSizeLists();
 
   template <typename T>
@@ -76,11 +71,10 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   void RunSvdBatched(const size_t m, const size_t n, T *d_input, T *output_s, T *output_u, T *output_v, int *dev_info);
   template <typename T>
-  void TransposeUV(const size_t m, const size_t n, size_t *d_transpose_input_shape, size_t *d_transpose_input_axis,
-                   T *d_output_u, T *d_output_v, T *output_u, T *output_v);
+  void TransposeUV(const size_t m, const size_t n, T *d_output_u, T *d_output_v, T *output_u, T *output_v);
   template <typename T>
   void LaunchSvd(const size_t m, const size_t n, T *d_input, T *output_s, T *output_u, T *output_v, T *d_output_u,
-                 T *d_output_v, int *dev_info, size_t *d_transpose_input_shape, size_t *d_transpose_input_axis);
+                 T *d_output_v, int *dev_info);
   void CheckResult(int *dev_info);
 
   using LaunchKernelFunc =
@@ -88,9 +82,9 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   using InitSizeListsFunc = std::function<void(SvdGpuKernelMod *)>;
   LaunchKernelFunc launch_kernel_func_{nullptr};
-  InitSizeListsFunc init_size_lists_func_{nullptr};
-  static std::vector<std::pair<KernelAttr, std::pair<LaunchKernelFunc, InitSizeListsFunc>>> func_list_;
+  static std::vector<std::pair<KernelAttr, LaunchKernelFunc>> func_list_;
 
+  size_t unit_size_{1};
   bool compute_uv_{false};
   bool full_matrices_{false};
   std::vector<size_t> input_shape_;
@@ -104,9 +98,6 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
   bool m_ge_n_{false};
   bool batched_{false};
 
-  size_t transpose_input_shape_[TRANSPOSE_MAX_DIMENSION] = {0};
-  size_t transpose_input_axis_[TRANSPOSE_MAX_DIMENSION] = {0};
-  bool is_null_input_;
   cusolverDnHandle_t handle_{nullptr};
   void *cuda_stream_{nullptr};
 };
