@@ -1,7 +1,7 @@
 mindspore.ops.hinge_embedding_loss
 ===================================
 
-.. py:function:: mindspore.ops.HingeEmbeddingLoss(inputs, targets, margin=1.0, reduction="mean")
+.. py:function:: mindspore.ops.hinge_embedding_loss(inputs, targets, margin=1.0, reduction="mean")
 
     Hinge Embedding 损失函数。按输入元素计算输出。衡量输入张量x和标签y（包含1或-1）之间的损失值。通常被用来衡量两个输入之间的相似度。
 
@@ -17,8 +17,8 @@ mindspore.ops.hinge_embedding_loss
 
     .. math::
         \ell(x, y) = \begin{cases}
-        \operatorname{mean}(L), & \text{if reduction} = \text{`mean`;}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum`.}
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     其中 :math:`L = \{l_1,\dots,l_N\}^\top`。

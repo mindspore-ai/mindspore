@@ -51,9 +51,9 @@ mindspore.nn.Adam
 
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 
-        当使用Adam时，如果设置`use_lazy`=True，需要注意的是，梯度稀疏时该优化器只更新网络参数的当前的索引位置，稀疏行为不等同于Adam算法。如果想执行稀疏策略，那么需要把target设置为CPU。
+        当使用Adam时，如果设置 `use_lazy` =True，需要注意的是，梯度稀疏时该优化器只更新网络参数的当前的索引位置，稀疏行为不等同于Adam算法。如果想执行稀疏策略，那么需要把target设置为CPU。
 
-        当使用Adam时，如果设置`use_offload`=True，需要注意的是，此优化器目前仅支持图模式。
+        当使用Adam时，如果设置 `use_offload` =True，需要注意的是，此优化器目前仅支持图模式。
 
     参数：
         - **params** (Union[list[Parameter], list[dict]]) - 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：

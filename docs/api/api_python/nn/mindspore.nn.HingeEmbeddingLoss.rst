@@ -17,8 +17,8 @@ mindspore.nn.HingeEmbeddingLoss
 
     .. math::
         \ell(x, y) = \begin{cases}
-        \operatorname{mean}(L), & \text{if reduction} = \text{`mean`;}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum`.}
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     其中 :math:`L = \{l_1,\dots,l_N\}^\top`。

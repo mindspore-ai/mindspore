@@ -2437,16 +2437,16 @@ class HingeEmbeddingLoss(LossBase):
 
         .. math::
             l_n = \begin{cases}
-                x_n, & \text{if}\; y_n = 1,\\
-                \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
+            x_n, & \text{if}\; y_n = 1,\\
+            \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
             \end{cases}
 
         and the total loss functions is
 
         .. math::
             \ell(x, y) = \begin{cases}
-                \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-                \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
             \end{cases}
 
         where :math:`L = \{l_1,\dots,l_N\}^\top`.
@@ -2454,7 +2454,7 @@ class HingeEmbeddingLoss(LossBase):
     Args:
         margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: 1.0.
-        reduction (string): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
+        reduction (str): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
             Default: 'mean'.
 
     Inputs:
