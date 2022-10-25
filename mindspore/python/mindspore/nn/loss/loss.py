@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """loss"""
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 
 import math
 import mindspore
@@ -2313,7 +2313,7 @@ class GaussianNLLLoss(LossBase):
 
     def __init__(self, *, full=False, eps=1e-6, reduction='mean'):
         super(GaussianNLLLoss, self).__init__(reduction)
-        validator.check_float_range(eps, 0, float('inf'), Rel.INC_LEFT, "eps", self.cls_name)
+        validator.check_float_range(eps, 0, float('inf'), Rel.INC_NEITHER, "eps", self.cls_name)
         validator.check_value_type('full', full, [bool], self.cls_name)
         self.full = full
         self.eps = eps
