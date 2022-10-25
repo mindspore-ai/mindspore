@@ -21,42 +21,64 @@
 
 namespace mindspore {
 namespace kernel {
-void RpcSendKernelMod::Init(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::Init(kernel_node);
-  // Assign one piece of workspace memory with the same size of all inputs. It's the data which will be sent to remote.
-  // Only allocate one piece of workspace memory to avoid extra memory copying and serialize inputs data to one message.
-  size_t total_size = 0;
-  if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    // In dynamic shape scenario, workspace size should be updated.
-    size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    for (size_t i = 0; i < input_size; i++) {
-      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_node, i, false);
-      auto real_input = input_node_with_index.first;
-      auto real_input_index = input_node_with_index.second;
-      MS_EXCEPTION_IF_NULL(real_input);
+bool RpcSendKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
 
-      auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-      TypeId data_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+  // The workspace's memory size changes if is_dynamic_shape_.
+  is_dynamic_shape_ = std::any_of(inputs.begin(), inputs.end(),
+                                  [](const auto &kernel_tensor) { return kernel_tensor->IsDynamicShape(); });
+  AssignWorkspaceSize(inputs);
+  return true;
+}
 
-      runtime::rpc::DynamicShapeMessage pb_msg;
-      pb_msg.set_type_id(static_cast<int>(data_type));
-      *pb_msg.mutable_shape_vector() = {shapes.begin(), shapes.end()};
-      std::string pb_msg_str = pb_msg.SerializeAsString();
-      total_size += strlen(kRpcDynamicShapeData);
-      total_size += sizeof(size_t);
-      total_size += pb_msg_str.size();
-      total_size += input_size_list_[i];
-    }
-  } else {
-    total_size = std::accumulate(input_size_list_.begin(), input_size_list_.end(), total_size,
-                                 [](size_t total_size, const auto &input_size) { return total_size + input_size; });
-  }
-  workspace_size_list_.push_back(total_size);
+int RpcSendKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  // After Resize, we still need to process the workspace size list so that it won't be empty.
+  AssignWorkspaceSize(inputs);
+  return ret;
 }
 
 std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
   return support_list;
+}
+
+size_t RpcSendKernelMod::GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_shape_input) {
+  MS_EXCEPTION_IF_NULL(dynamic_shape_input);
+
+  size_t msg_size = 0;
+  auto shapes = dynamic_shape_input->GetShapeVector();
+  TypeId data_type = dynamic_shape_input->GetDtype();
+  size_t input_size = dynamic_shape_input->IsDynamicShape() ? kSizeZero : dynamic_shape_input->GetSizeInBytes();
+
+  runtime::rpc::DynamicShapeMessage pb_msg;
+  pb_msg.set_type_id(static_cast<int>(data_type));
+  *pb_msg.mutable_shape_vector() = {shapes.begin(), shapes.end()};
+  std::string pb_msg_str = pb_msg.SerializeAsString();
+
+  msg_size += strlen(kRpcDynamicShapeData);
+  msg_size += sizeof(size_t);
+  msg_size += pb_msg_str.size();
+  msg_size += input_size;
+  return msg_size;
+}
+
+void RpcSendKernelMod::AssignWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
+  // Assign one piece of workspace memory with the same size of all inputs. It's the data which will be sent to remote.
+  // Only allocate one piece of workspace memory to avoid extra memory copying and serialize inputs data to one message.
+  workspace_size_list_.clear();
+  size_t total_size = 0;
+  total_size = std::accumulate(inputs.begin(), inputs.end(), total_size,
+                               [this](size_t total_size, const KernelTensorPtr &input_tensor) {
+                                 return is_dynamic_shape_ ? (total_size + GetDynamicShapeMsgSize(input_tensor))
+                                                          : (total_size + input_tensor->GetSizeInBytes());
+                               });
+
+  workspace_size_list_.push_back(total_size);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RpcSend, RpcSendKernelMod);

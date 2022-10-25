@@ -118,6 +118,9 @@ class MS_CORE_API AnfUtils {
   static AnfNodePtr GetCustomInferopNode(const AnfNodePtr &base_cnode);
   static mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &GetRealInputNodes(const CNodePtr &cnode);
   static std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape);
+  // Judge whether node's monad output should be skipped. Currently this method returns true in one scenarios:
+  // 1. The node is a RpcRecv node with monad type output.
+  static bool NeedJumpMonadOutput(const AnfNodePtr &node);
 };
 
 //

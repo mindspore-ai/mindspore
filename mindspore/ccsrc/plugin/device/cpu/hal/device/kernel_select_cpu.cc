@@ -73,9 +73,6 @@ void GetOutputFormatsAndDtypes(const CNodePtr &kernel_node, const kernel::Kernel
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     output_formats->emplace_back(kernel_attr.GetOutputAttr(output_index).second);
     auto dtype = kernel_attr.GetOutputAttr(output_index).first;
-    if (dtype == TypeId::kObjectTypeUMonad) {
-      dtype = TypeId::kNumberTypeInt32;
-    }
     output_types->emplace_back(dtype);
   }
 }

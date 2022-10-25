@@ -28,73 +28,14 @@ namespace kernel {
 // data is received and inputs are ready.
 class RpcRecvKernelMod : public RpcKernelMod {
  public:
-  RpcRecvKernelMod() : recv_monad_(false), is_dynamic_shape_(false) {}
+  RpcRecvKernelMod() : recv_monad_(false) {}
   ~RpcRecvKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override {
-    if (recv_monad_) {
-      MS_LOG(DEBUG) << "RpcRecv has a monad as input, no need to launch it.";
-      return true;
-    }
+              const std::vector<AddressPtr> &) override;
 
-    MS_EXCEPTION_IF_NULL(remote_input_);
-    // If the string body is not empty, it means we need to copy data from 'body' instead of raw pointer 'data'.
-    bool use_string_msg = !remote_input_->Body().empty();
-    auto data_ptr = use_string_msg ? (remote_input_->Body().data()) : (static_cast<char *>(remote_input_->data));
-    size_t data_size = use_string_msg ? (remote_input_->Body().size()) : (remote_input_->size);
-
-    if (is_dynamic_shape_) {
-      if (real_data_offset_.empty()) {
-        MS_LOG(EXCEPTION) << "Dynamic shape data must have data offsets to copy from source message.";
-      }
-      for (size_t i = 0; i < inputs.size(); i++) {
-        MS_EXCEPTION_IF_NULL(inputs[i]->addr);
-        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + real_data_offset_[i], inputs[i]->size);
-        if (ret != 0) {
-          MS_LOG(EXCEPTION) << "memcpy_s for recv output " << i << " failed, ret code: " << ret;
-        }
-      }
-    } else {
-      size_t offset = 0;
-      for (size_t i = 0; i < inputs.size(); i++) {
-        MS_EXCEPTION_IF_NULL(inputs[i]->addr);
-        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + offset, inputs[i]->size);
-        if (ret != 0) {
-          MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
-        }
-
-        offset += inputs[i]->size;
-        // Maybe the size of data from remote is smaller than inputs size, need to break in advance to avoid illegal
-        // memory access. For example, the 'umonad' inputs of RpcRecvKernel is not sent from remote.
-        // This should be fixed in graph optimizing step.
-        if (offset == data_size) {
-          break;
-        }
-      }
-    }
-
-    // Pay attention that the remote_input_ is a pointer of MessageBase which is allocated as heap memory by rpc module.
-    // We need to delete it after launching kernel.
-    delete remote_input_;
-    return true;
-  }
-
-  void InitKernel(const CNodePtr &kernel_node) override {
-    auto input0 = common::AnfAlgo::GetInputNode(kernel_node, 0);
-    // If the input is a monad, no need to launch recv kernel.
-    if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
-      recv_monad_ = true;
-    }
-    is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_node);
-    // RpcRecv kernel is similar with Unique, the next op's infer op must be launched after RpcRecv kernel is done.
-    is_need_retrieve_output_shape_ = true;
-  }
-
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   void set_real_data_offset(const std::vector<size_t> &real_data_offset) { real_data_offset_ = real_data_offset; }
 
@@ -106,9 +47,6 @@ class RpcRecvKernelMod : public RpcKernelMod {
 
   // When this kernel receives dynamic shape data, the data must be parsed by offset set by RecvActor.
   std::vector<size_t> real_data_offset_;
-
-  // Whether this kernel receives dynamic shape data.
-  bool is_dynamic_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
