@@ -63,6 +63,11 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   }
   primitive->set_attr("padding_switched", MakeValue(paddings_val));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   std::vector<int64_t> out_shape;
   if (paddings_size == SizeToLong(kPaddingsSizeTwo)) {
     (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 2", SizeToLong(kThree), kEqual,
