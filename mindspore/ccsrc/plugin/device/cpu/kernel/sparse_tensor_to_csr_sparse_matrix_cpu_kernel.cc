@@ -50,24 +50,30 @@ constexpr char kKernelName[] = "SparseTensorToCSRSparseMatrix";
     .AddOutputAttr(kNumberType##t8)
 }  // namespace
 
-void SparseTensorToCSRSparseMatrixCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  indice_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  value_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex1);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  auto x_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kZero);
-  total_nnz_ = x_indices_shape[0];
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex2);
-  rank_ = input_shape[0];
-  int64_t input_num = static_cast<int64_t>(common::AnfAlgo::GetInputTensorNum(kernel_node));
-  CHECK_KERNEL_INPUTS_NUM(input_num, kSparseTensorToCSRSparseMatrixInputsNum, kKernelName);
-  int64_t output_num = static_cast<int64_t>(common::AnfAlgo::GetOutputTensorNum(kernel_node));
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseTensorToCSRSparseMatrixOutputsNum, kKernelName);
-  if (rank_ != kRankWithoutBatch && rank_ != kRankWithBatch) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input x_dense_shape should "
-                      << "have rank 2 or 3, but got " << rank_ << ".";
+bool SparseTensorToCSRSparseMatrixCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                     const std::vector<KernelTensorPtr> &inputs,
+                                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  indice_type_ = inputs.at(kIndex0)->GetDtype();
+  value_type_ = inputs.at(kIndex1)->GetDtype();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorToCSRSparseMatrixInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorToCSRSparseMatrixOutputsNum, kernel_name_);
+  return true;
+}
+
+int SparseTensorToCSRSparseMatrixCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                      const std::vector<KernelTensorPtr> &inputs,
+                                                      const std::vector<KernelTensorPtr> &outputs,
+                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+  auto x_indices_shape = inputs.at(kIndex0)->GetShapeVector();
+  total_nnz_ = x_indices_shape[0];
+  auto input_shape = inputs.at(kIndex2)->GetShapeVector();
+  rank_ = input_shape[0];
+  return KRET_OK;
 }
 
 bool SparseTensorToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -118,23 +124,6 @@ bool SparseTensorToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel:
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of indices should be int32 or int64, "
                         << "but got " << TypeIdToType(indice_type_)->ToString() << ".";
   }
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
-  int64_t output_nm = static_cast<int64_t>(common::AnfAlgo::GetOutputTensorNum(node_));
-  std::vector<TypeId> dtypes(output_nm);
-  for (size_t i = 0; i < static_cast<size_t>(output_nm); i++) {
-    dtypes[i] = static_cast<TypeId>(AnfAlgo::GetOutputDeviceDataType(node_, i));
-  }
-  std::vector<int64_t> dense_shape_dims{rank_};
-  std::vector<int64_t> batch_pointers_dims{batch_size_ + kOne};
-  std::vector<int64_t> row_pointers_dims{batch_size_ * (num_rows_ + kOne)};
-  std::vector<int64_t> col_indices_dims{total_nnz_};
-  std::vector<int64_t> values_dims{total_nnz_};
-  std::vector<std::vector<int64_t>> shapes{dense_shape_dims, batch_pointers_dims, row_pointers_dims, col_indices_dims,
-                                           values_dims};
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, node_.get());
   return true;
 }
 
