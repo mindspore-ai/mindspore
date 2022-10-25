@@ -19,9 +19,9 @@
 template <typename T>
 __global__ void CheckNumerics(const size_t size, const T *input, int32_t *flag_device) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    if (std::isnan(input[pos])) {
+    if (isnan(input[pos])) {
        flag_device[0] = 1;
-    } else if (std::isinf(input[pos])) {
+    } else if (isinf(input[pos])) {
        flag_device[1] = 1;
     }
   }
@@ -31,9 +31,9 @@ __global__ void CheckNumerics(const size_t size, const T *input, int32_t *flag_d
 template <>
 __global__ void CheckNumerics(const size_t size, const half *input, int32_t *flag_device) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    if (std::isnan(__half2float(input[pos]))) {
+    if (isnan(__half2float(input[pos]))) {
        flag_device[0] = 1;
-    } else if (std::isinf(__half2float(input[pos]))) {
+    } else if (isinf(__half2float(input[pos]))) {
        flag_device[1] = 1;
     }
   }

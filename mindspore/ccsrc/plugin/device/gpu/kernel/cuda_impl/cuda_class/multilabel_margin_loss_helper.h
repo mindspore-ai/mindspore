@@ -106,7 +106,7 @@ class MultilabelMarginLossHelperGpuKernel : public GpuKernelHelperBase {
     int *is_target_ptr = nullptr;
     T *output_tmp_ptr = nullptr;
     int kBatchSize = batch_size_;
-    T output_tmp_host[kBatchSize];
+    std::vector<T> output_tmp_host(kBatchSize);
     int flag = GetDeviceAddress<T>(input_ptrs, 0, kernel_name_, &input_ptr);
     if (flag != 0) {
       return flag;
@@ -128,7 +128,7 @@ class MultilabelMarginLossHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpy(output_tmp_ptr, output_tmp_host, batch_size_ * sizeof(T), cudaMemcpyHostToDevice),
+      cudaMemcpy(output_tmp_ptr, output_tmp_host.data(), batch_size_ * sizeof(T), cudaMemcpyHostToDevice),
       "cudaMemcpy workspace failed");
 
     reduction_ = attr_ptr_->reduction;
