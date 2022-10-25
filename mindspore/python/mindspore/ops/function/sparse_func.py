@@ -605,6 +605,7 @@ def sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         dtype=Int32, value=[3 1 4 2]))
     """
     x1, x2 = promote_coo(x1, x2)
+    thresh = thresh.astype(x1.dtype)
     x1_indices = x1.indices
     x1_values = x1.values
     x2_indices = x2.indices
@@ -717,6 +718,8 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
         raise_type_error("For functional operator csr_add, both inputs alpha and beta must be Tensor.")
     csr_add_op = SparseMatrixAdd()
     a, b = promote_csr(a, b)
+    alpha = alpha.astype(a.dtype)
+    beta = beta.astype(a.dtype)
     a_batch_pointers = make_tensor([0, a.values.shape[0]], a.indptr.dtype)
     b_batch_pointers = make_tensor([0, b.values.shape[0]], b.indptr.dtype)
     a_shape = make_tensor(a.shape, a.indptr.dtype)

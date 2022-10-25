@@ -37,7 +37,7 @@ mindspore.COOTensor
         返回：
             COOTensor。
 
-    .. py:method:: add(other, thresh)
+    .. py:method:: add(other: COOTensor, thresh: Tensor)
 
         与另一个COOTensor相加，并返回新的COOTensor。
 
@@ -63,7 +63,7 @@ mindspore.COOTensor
             - **TypeError** - 如果操作数(本COOTensor)的shape数据类型不等于other的shape数据类型。
             - **TypeError** - 如果操作数(本COOTensor/other)的values的数据类型与thresh数据类型不匹配。
 
-    .. py:method:: astype(dtype)
+    .. py:method:: astype(dtype: mstype)
 
         返回指定数据类型的COOTensor。
 

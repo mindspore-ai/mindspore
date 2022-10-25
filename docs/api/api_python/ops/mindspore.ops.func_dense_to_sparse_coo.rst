@@ -1,7 +1,7 @@
 mindspore.ops.dense_to_sparse_coo
 =================================
 
-.. py:function:: mindspore.ops.dense_to_sparse_coo(tensor)
+.. py:function:: mindspore.ops.dense_to_sparse_coo(tensor: Tensor)
 
     将常规Tensor转为稀疏化的COOTensor。
 
