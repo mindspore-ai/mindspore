@@ -19,11 +19,12 @@
 namespace mindspore {
 namespace runtime {
 using namespace test;
-class ControlNodeParserTest : public UT::Common {
+class GraphSchedulerTest : public UT::Common {
  public:
-  ControlNodeParserTest() {}
+  GraphSchedulerTest() {}
 };
 
+namespace {
 FuncGraphPtr BuildFuncGraph() {
   std::vector<int64_t> shp{2, 2};
   auto func_graph = std::make_shared<FuncGraph>();
@@ -37,87 +38,69 @@ FuncGraphPtr BuildFuncGraph() {
   return func_graph;
 }
 
-KernelGraphPtr BuildKernelGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &front_node,
-                                const ValueNodePtr &prim) {
-  auto kernel_graph = std::make_shared<KernelGraph>();
-  auto front_parameter = func_graph->parameters();
-
-  // Build kernel.
-  std::vector<AnfNodePtr> inputs{prim};
-  for (const auto &parameter : front_parameter) {
-    inputs.emplace_back(kernel_graph->NewParameter(parameter->cast<ParameterPtr>()));
-  }
-  auto backend_node = kernel_graph->NewCNode(inputs);
-  std::vector<int64_t> shp{2, 2};
-  abstract::AbstractTensorPtr abs = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
-  backend_node->set_abstract(abs);
-  // build return.
-  std::vector<AnfNodePtr> return_inputs{NewValueNode(prim::kPrimReturn), backend_node};
-  auto return_node = kernel_graph->NewCNode(return_inputs);
-
-  kernel_graph->set_return(return_node);
-  kernel_graph->set_execution_order({backend_node});
-  kernel_graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, {front_node});
-  return kernel_graph;
-}
-
-void BuildGraphs(std::vector<AnfNodePtr> *control_nodes, FuncGraphPtr *func_graph,
-                 std::vector<KernelGraphPtr> *kernel_graphs, FuncGraphToKernelGraphGroup *func_graph_to_kernel_graphs) {
+FuncGraphPtr BuildGraphs() {
   auto root_func_graph = BuildFuncGraph();
   auto true_func_graph = BuildFuncGraph();
   auto false_func_graph = BuildFuncGraph();
   std::vector<int64_t> shp{2, 2};
-  abstract::AbstractTensorPtr abs;
+
   // root graph.
   auto parameters = root_func_graph->parameters();
   // Less.
   std::vector<AnfNodePtr> less_inputs{NewValueNode(prim::kPrimLess), parameters[0], parameters[1]};
   auto less = root_func_graph->NewCNode(less_inputs);
-  abs = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
-  less->set_abstract(abs);
+  AbstractTensorPtr root_less_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
+  less->set_abstract(root_less_abs);
   // True partial.
   std::vector<AnfNodePtr> true_partial_inputs{NewValueNode(prim::kPrimPartial), NewValueNode(true_func_graph),
                                               parameters[0], parameters[1]};
   auto true_partial = root_func_graph->NewCNode(true_partial_inputs);
-  control_nodes->emplace_back(true_partial);
+  auto true_partial_abs = std::make_shared<FuncGraphAbstractClosure>(true_func_graph, AnalysisContext::DummyContext());
+  true_partial->set_abstract(true_partial_abs);
+
   // False partial.
   std::vector<AnfNodePtr> false_partial_inputs{NewValueNode(prim::kPrimPartial), NewValueNode(false_func_graph),
                                                parameters[0], parameters[1]};
   auto false_partial = root_func_graph->NewCNode(false_partial_inputs);
-  control_nodes->emplace_back(false_partial);
+  auto false_partial_abs =
+    std::make_shared<FuncGraphAbstractClosure>(false_func_graph, AnalysisContext::DummyContext());
+  false_partial->set_abstract(false_partial_abs);
+
   // Switch.
   std::vector<AnfNodePtr> switch_inputs{NewValueNode(prim::kPrimSwitch), less, true_partial, false_partial};
   auto switch_node = root_func_graph->NewCNode(switch_inputs);
-  auto switch_abs = std::make_shared<FuncGraphAbstractClosure>(false_func_graph, AnalysisContext::DummyContext());
+  auto switch_abs = std::make_shared<AbstractFuncUnion>(true_partial_abs, false_partial_abs);
   switch_node->set_abstract(switch_abs);
-  control_nodes->emplace_back(switch_node);
+
   // Call.
   std::vector<AnfNodePtr> call_inputs{switch_node};
   auto root_call_node = root_func_graph->NewCNode(call_inputs);
-  control_nodes->emplace_back(root_call_node);
+  auto call_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
+  root_call_node->set_abstract(call_abs);
   // Return.
   std::vector<AnfNodePtr> return_inputs{NewValueNode(prim::kPrimReturn), root_call_node};
-  auto return_node = root_func_graph->NewCNode(return_inputs);
-  control_nodes->emplace_back(return_node);
-  root_func_graph->set_return(return_node);
+  auto root_return_node = root_func_graph->NewCNode(return_inputs);
+  auto root_return_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
+  root_return_node->set_abstract(call_abs);
+  root_func_graph->set_return(root_return_node);
 
   // true graph.
   auto true_parameters = true_func_graph->parameters();
   // Call.
   std::vector<AnfNodePtr> true_call_inputs{NewValueNode(root_func_graph), true_parameters[0], true_parameters[1]};
   auto true_call_node = true_func_graph->NewCNode(true_call_inputs);
-  auto true_call_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
+  auto true_call_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
   true_call_node->set_abstract(true_call_abs);
-  control_nodes->emplace_back(true_call_node);
   // Add.
   std::vector<AnfNodePtr> true_add_inputs{NewValueNode(prim::kPrimAdd), true_parameters[0], true_call_node};
   auto true_add = true_func_graph->NewCNode(true_add_inputs);
-  abs = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
-  true_add->set_abstract(abs);
+  AbstractTensorPtr true_add_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
+  true_add->set_abstract(true_add_abs);
   // Return.
   std::vector<AnfNodePtr> true_return_inputs{NewValueNode(prim::kPrimReturn), true_add};
   auto true_return_node = true_func_graph->NewCNode(true_return_inputs);
-  control_nodes->emplace_back(true_return_node);
+  AbstractTensorPtr true_return_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
+  true_return_node->set_abstract(true_return_abs);
   true_func_graph->set_return(true_return_node);
 
   // false graph.
@@ -125,55 +108,52 @@ void BuildGraphs(std::vector<AnfNodePtr> *control_nodes, FuncGraphPtr *func_grap
   auto false_parameters = false_func_graph->parameters();
   std::vector<AnfNodePtr> false_add_inputs{NewValueNode(prim::kPrimAdd), false_parameters[0], false_parameters[1]};
   auto false_add = false_func_graph->NewCNode(false_add_inputs);
-  abs = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
-  false_add->set_abstract(abs);
+  const auto &false_add_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
+  false_add->set_abstract(false_add_abs);
   // Return.
   std::vector<AnfNodePtr> false_return_inputs{NewValueNode(prim::kPrimReturn), false_add};
   auto false_return_node = false_func_graph->NewCNode(false_return_inputs);
-  control_nodes->emplace_back(false_return_node);
+  AbstractTensorPtr false_return_abs = std::make_shared<AbstractTensor>(kFloat32, shp);
+  false_return_node->set_abstract(false_return_abs);
   false_func_graph->set_return(false_return_node);
-
-  // Build kernel graph.
-  // Root kernel graph.
-  auto root_kernel_graph = BuildKernelGraph(root_func_graph, less, NewValueNode(prim::kPrimLess));
-  kernel_graphs->emplace_back(root_kernel_graph);
-  std::vector<KernelGraphPtr> graphs{root_kernel_graph};
-  (*func_graph_to_kernel_graphs)[root_func_graph].emplace_back(graphs);
-  // True kernel graph.
-  auto true_kernel_graph = BuildKernelGraph(true_func_graph, true_add, NewValueNode(prim::kPrimAdd));
-  kernel_graphs->emplace_back(true_kernel_graph);
-  graphs[0] = true_kernel_graph;
-  (*func_graph_to_kernel_graphs)[true_func_graph].emplace_back(graphs);
-  // False kernel graph.
-  auto false_kernel_graph = BuildKernelGraph(false_func_graph, false_add, NewValueNode(prim::kPrimAdd));
-  kernel_graphs->emplace_back(false_kernel_graph);
-  graphs[0] = false_kernel_graph;
-  (*func_graph_to_kernel_graphs)[false_func_graph].emplace_back(graphs);
-
-  (*func_graph) = root_func_graph;
+  return root_func_graph;
 }
+}  // namespace
 
-/// Feature: control flow support dynamic shape.
-/// Description: Test the parse interface.
+/// Feature: unify runtime.
+/// Description: Test the compile graphs.
 /// Expectation: As expected.
-TEST_F(ControlNodeParserTest, Parse) {
-  std::vector<AnfNodePtr> control_nodes;
-  FuncGraphPtr func_graph;
-  std::vector<KernelGraphPtr> kernel_graphs;
-  FuncGraphToKernelGraphGroup func_graph_to_kernel_graphs;
-  BuildGraphs(&control_nodes, &func_graph, &kernel_graphs, &func_graph_to_kernel_graphs);
+TEST_F(GraphSchedulerTest, Transform) {
+  const char device_name[] = "CPU";
+  uint32_t device_id = 0;
 
+  auto ms_context = MsContext::GetInstance();
+  int last_execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  bool last_enable_mindrt = ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+  uint32_t last_device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  std::string last_device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
+  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+  ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, device_name);
+
+  FuncGraphPtr func_graph = BuildGraphs(); 
   std::vector<FuncGraphPtr> graphs{func_graph};
   FuncGraphManagerPtr manager = std::make_shared<FuncGraphManager>(graphs);
   manager->AddFuncGraph(func_graph);
-
-  auto parser = std::make_shared<ControlNodeParser>();
-  DeviceContextKey device_context_key{"CPU", 0};
+  MS_REGISTER_DEVICE(device_name, TestDeviceContext);
+  DeviceContextKey device_context_key{device_name, device_id};
   auto device_context = std::make_shared<TestDeviceContext>(device_context_key);
-  std::vector<DeviceContext *> device_contexts(kernel_graphs.size(), device_context.get());
 
-  parser->Parse(control_nodes, kernel_graphs, device_contexts, func_graph, func_graph_to_kernel_graphs);
-  ASSERT_EQ(4, parser->control_node_parameters().size());
+  const auto backend = std::make_shared<compile::MindRTBackend>("vm", device_name, 0);
+  const auto actor_info = backend->CompileGraphs(func_graph);
+  ASSERT_EQ(actor_info.find("kernel_graph") != std::string::npos, true);
+
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, last_execution_mode);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_MINDRT, last_enable_mindrt);
+  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, last_device_id);
+  ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, last_device_target);
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -14,104 +14,11 @@
  * limitations under the License.
  */
 
-#include "common/common_test.h"
-#include "abstract/abstract_function.h"
-#include "runtime/graph_scheduler/graph_compiler.h"
-#include "runtime/hardware/device_context.h"
-#include "kernel/kernel.h"
-#include "kernel/common_utils.h"
+#include "graph_scheduler_common_test.h"
 
 namespace mindspore {
 namespace runtime {
-using KernelGraph = session::KernelGraph;
-using FuncGraphAbstractClosure = abstract::FuncGraphAbstractClosure;
-using AnalysisContext = abstract::AnalysisContext;
-using DeviceContextKey = device::DeviceContextKey;
-using DeviceAddress = device::DeviceAddress;
-using DeviceAddressPtr = device::DeviceAddressPtr;
-using DeviceType = device::DeviceType;
-using AddressPtr = kernel::AddressPtr;
-
-class TestDeviceAddress : public DeviceAddress {
- public:
-  TestDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
-  ~TestDeviceAddress() {}
-  virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const {
-    return true;
-  }
-  virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
-                                const std::string &format) const {
-    return true;
-  }
-  virtual void *GetMutablePtr() const { return nullptr; }
-  virtual void ClearDeviceMemory() {}
-};
-
-class TestKernelMod : public kernel::KernelMod {
- public:
-  TestKernelMod() = default;
-  ~TestKernelMod() override = default;
-  virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-    return true;
-  }
-  std::vector<kernel::KernelAttr> GetOpSupport() override { return {}; }
-};
-
-class TestADeviceResManager : public device::DeviceResManager {
- public:
-  TestADeviceResManager() = default;
-  ~TestADeviceResManager() override = default;
-
-  virtual bool AllocateMemory(DeviceAddress *const &address, size_t size) const { return true; }
-  virtual void FreeMemory(DeviceAddress *const &address) const {}
-  virtual void *AllocateMemory(size_t size) const { return nullptr; }
-  virtual void FreeMemory(void *const ptr) const {}
-  virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const ShapeVector &shape) const {
-    return std::make_shared<TestDeviceAddress>(nullptr, 0);
-  }
-};
-
-class TestAKernelExecutor : public device::KernelExecutor {
- public:
-  TestAKernelExecutor() = default;
-  ~TestAKernelExecutor() override = default;
-  virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {
-    for (const auto node : nodes) {
-      MS_EXCEPTION_IF_NULL(node);
-      if (node->kernel_info() == nullptr) {
-        auto kernel_info = std::make_shared<device::KernelInfo>();
-        std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-        kernel_info->set_select_kernel_build_info(builder->Build());
-        node->set_kernel_info(kernel_info);
-      } else {
-        const auto &kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
-        if (kernel_info->select_kernel_build_info() == nullptr) {
-          std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-          kernel_info->set_select_kernel_build_info(builder->Build());
-        }
-      }
-      AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, 0), 0, node.get());
-      auto kernel_mod_ptr = std::make_shared<TestKernelMod>();
-      kernel_mod_ptr->SetInputSizeList({4});
-      kernel_mod_ptr->SetOutputSizeList({4});
-      kernel_mod_ptr->SetWorkspaceSizeList({4});
-      AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
-    }
-  }
-};
-
-class TestADeviceContext : public device::DeviceInterface<TestAKernelExecutor, TestADeviceResManager> {
- public:
-  explicit TestADeviceContext(const DeviceContextKey &device_context_key) : DeviceInterface(device_context_key) {}
-  ~TestADeviceContext() override = default;
-
-  virtual void Initialize() {}
-  virtual DeviceType GetDeviceType() const { return DeviceType::kCPU; }
-  device::RunMode GetRunMode(const FuncGraphPtr &func_graph) const override { return device::RunMode::kKernelMode; }
-};
-
+using namespace test;
 class GraphCompilerTest : public UT::Common {
  public:
   GraphCompilerTest() {}
@@ -166,7 +73,7 @@ TEST_F(GraphCompilerTest, CompileGraph) {
 
   auto compiler = std::make_shared<GraphCompiler>();
   DeviceContextKey device_context_key{"CPU", 0};
-  auto device_context = std::make_shared<TestADeviceContext>(device_context_key);
+  auto device_context = std::make_shared<TestDeviceContext>(device_context_key);
   auto graph_id = compiler->CompileGraph(segment, outputs, device_context.get(), device::RunMode::kKernelMode, false);
   const auto &kernel_graph = compiler->Fetch(graph_id);
   ASSERT_EQ(2, kernel_graph->execution_order().size());
