@@ -1074,6 +1074,7 @@ def set_ps_context(**kwargs):
     Set parameter server training mode context.
 
     Note:
+        Parameter server mode is only supported in graph mode.
         Some other environment variables should also be set for parameter server training mode.
         These environment variables are listed below:
 

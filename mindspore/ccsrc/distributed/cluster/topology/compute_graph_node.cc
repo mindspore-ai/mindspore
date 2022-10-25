@@ -285,7 +285,6 @@ bool ComputeGraphNode::Heartbeat() {
           delete response;
           MS_LOG(EXCEPTION) << "The state of the cluster is error, total nodes num: " << nodes_num
                             << ", abnormal nodes num: " << abnormal_nodes_num;
-          return false;
         }
         delete response;
       }

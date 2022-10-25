@@ -1996,6 +1996,7 @@ class Cell(Cell_):
 
         Note:
             It only works when a running task is in the parameter server mode.
+            It is only supported in graph mode.
 
         Args:
             recurse (bool): Whether sets the trainable parameters of subcells. Default: True.
