@@ -12,7 +12,7 @@ function Convert() {
   fail=0
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
         quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size export_mindir \
-        target_device encryption_flag
+        target_device encryption_flag input_format
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
@@ -136,7 +136,8 @@ function Convert() {
         echo ${model_name} >> "$4"
         echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
              ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'" --fp16='${fp16_weight}\
-             ' --configFile='${config_file}' --trainModel='${train_model}
+             ' --configFile='${config_file}' --trainModel='${train_model}' --exportMindIR='${export_mindir} ' --device='${target_device}\
+             ' --encryption='${encryption_flag} ' --inputDataFormat='${input_format}
         if [[ ${cfg_file_name} =~ "_ascend" ]]; then
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
