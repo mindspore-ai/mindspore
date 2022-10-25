@@ -135,7 +135,7 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::GenerateRandomCrop(int ms_origina
   const float ms_max_area = ms_max_relative_crop_area * ms_original_width * ms_original_height;
   const float ms_bias = 0.5;
 
-  if (ms_aspect_ratio == static_cast<float>(0.0)) {
+  if (common::IsFloatEqual(ms_aspect_ratio, 0.0f)) {
     return false;
   }
   int height = static_cast<int>(lrintf(std::sqrt(ms_min_area / ms_aspect_ratio)));
