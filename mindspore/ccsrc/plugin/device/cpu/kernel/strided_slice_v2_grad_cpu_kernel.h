@@ -66,16 +66,15 @@ class StridedSliceV2GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                              const std::vector<kernel::AddressPtr> &outputs, T *input_addr, T *output_addr);
 
   template <typename T>
-  bool CalStridedSliceV2Grad(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> &outputs, T *input, T *output);
+  bool CalStridedSliceV2Grad(T *input, T *output);
 
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
   std::vector<int> size_;
   ShapeVector input_shape_;
-  int shape_dim_output;
-  int slice_len;
+  int shape_dim_output{0};
+  int slice_len{0};
   std::vector<size_t> input_element_num_;
   ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;

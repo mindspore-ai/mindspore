@@ -33,7 +33,7 @@ class MIND_API ComplexAbs : public BaseOperator {
   /// \brief Constructor.
   ComplexAbs() : BaseOperator(kNameComplexAbs) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ComplexAbs for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

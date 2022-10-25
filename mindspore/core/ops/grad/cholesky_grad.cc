@@ -63,8 +63,8 @@ TypePtr CholeskyGradInferType(const PrimitivePtr &primitive, const std::vector<A
   auto grad_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"x", x_type});
-  (void)args.insert({"grad", grad_type});
+  (void)args.emplace("x", x_type);
+  (void)args.emplace("grad", grad_type);
   return CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 }
 }  // namespace
@@ -75,7 +75,7 @@ AbstractBasePtr CholeskyGradInfer(const abstract::AnalysisEnginePtr &, const Pri
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_type = CholeskyGradInferType(primitive, input_args);
   auto infer_shape = CholeskyGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

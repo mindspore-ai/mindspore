@@ -52,8 +52,8 @@ abstract::ShapePtr CompareAndBitpackInferShape(const PrimitivePtr &primitive,
 
   // check the innermost dimension of `x`'s shape is disvisible by 8.
   if (x_shape[x_rank - 1] != -1) {
-    (void)CheckAndConvertUtils::Check("x innermost dimension % 8", x_shape[x_rank - 1] % SizeToLong(divisible_num),
-                                      kEqual, 0, primitive->name());
+    CheckAndConvertUtils::Check("x innermost dimension % 8", x_shape[x_rank - 1] % SizeToLong(divisible_num), kEqual, 0,
+                                primitive->name());
   }
   std::vector<int64_t> out_shape;
   for (int dim = 0; dim < SizeToLong(x_rank - 1); dim = dim + 1) {

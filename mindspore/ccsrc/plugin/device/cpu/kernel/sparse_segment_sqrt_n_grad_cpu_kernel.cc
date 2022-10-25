@@ -82,7 +82,7 @@ void SparseSegmentSqrtNGradCpuKernelMod::LaunchKernel(const std::vector<kernel::
   auto y_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   for (size_t i = 0; i < num_elements; i++) {
-    y_addr[i] = (T)0;
+    y_addr[i] = static_cast<T>(0);
   }
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {

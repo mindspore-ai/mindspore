@@ -55,7 +55,7 @@ AbstractBasePtr CumulativeLogsumexpInfer(const abstract::AnalysisEnginePtr &, co
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto type = CumulativeLogsumexpInferType(primitive, input_args);
   auto shape = CumulativeLogsumexpInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

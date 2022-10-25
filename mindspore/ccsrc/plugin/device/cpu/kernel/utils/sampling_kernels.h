@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 enum KernelType { Lanczos1, Lanczos3, Lanczos5, Gaussian, Box, Triangle, KeysCubic, MitchellCubic, TypeEnd };
-KernelType KernelTypeFromString(std::string str);
+KernelType KernelTypeFromString(const std::string &str);
 static constexpr float kRValue0 = 0.0f;
 static constexpr float kRValue1 = 1.0f;
 static constexpr float kRValue2 = 2.0f;

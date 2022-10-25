@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t kMaxShapeAdaptiveAvgPool3DGrap = 100;
-abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive,
+abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto orig_input_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
@@ -75,7 +75,7 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive
   }
 }
 
-TypePtr InferTypeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferTypeAdaptiveAvgPool3DGrad(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_grad_dtype = input_args[0]->BuildType();
   auto orig_input_shape_dtype = input_args[1]->BuildType();
   const std::set<TypePtr> input_grad_valid = {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kFloat64};

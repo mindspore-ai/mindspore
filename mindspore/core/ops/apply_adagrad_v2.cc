@@ -58,8 +58,8 @@ abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape, accum_shape});
   }
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  same_shape_args_map.insert({"accum", accum_shape});
-  same_shape_args_map.insert({"grad", grad_shape});
+  (void)same_shape_args_map.emplace("accum", accum_shape);
+  (void)same_shape_args_map.emplace("grad", grad_shape);
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', evaluator arg '" << elem.first
@@ -78,13 +78,13 @@ TuplePtr ApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vector<Abs
   const std::set<TypePtr> valid_types = {kFloat};
   // var, accum, grad  must have the same type
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"accum_type", accum_type});
-  (void)args.insert({"grad_type", grad_type});
+  (void)args.emplace("var_type", var_type);
+  (void)args.emplace("accum_type", accum_type);
+  (void)args.emplace("grad_type", grad_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
   // lr mustr be a scalar
   std::map<std::string, TypePtr> args_lr;
-  (void)args_lr.insert({"lr_type", lr_type});
+  (void)args_lr.emplace("lr_type", lr_type);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, accum_type});
 }

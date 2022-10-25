@@ -81,8 +81,8 @@ TypePtr ScaleAndTranslateGradInferType(const PrimitivePtr &prim, const std::vect
   const std::set<TypePtr> valid_types = {kFloat32};
   std::map<std::string, TypePtr> args;
   // origin_image have the same type as grads
-  (void)args.insert({"grads", grads_type});
-  (void)args.insert({"original_image", original_image_type});
+  (void)args.emplace("grads", grads_type);
+  (void)args.emplace("original_image", original_image_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("scale", scale_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("translation", translation_type, valid_types, prim_name);
@@ -116,7 +116,7 @@ AbstractBasePtr ScaleAndTranslateGradInfer(const abstract::AnalysisEnginePtr &, 
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto infer_type = ScaleAndTranslateGradInferType(primitive, input_args);
   auto infer_shape = ScaleAndTranslateGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

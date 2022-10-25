@@ -29,7 +29,7 @@ namespace ops {
 void CropAndResizeGradImage::Init(ResizeMethod method) { this->set_method(method); }
 
 void CropAndResizeGradImage::set_method(ResizeMethod method) {
-  auto swi = (int64_t)method;
+  auto swi = static_cast<int64_t>(method);
   (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 

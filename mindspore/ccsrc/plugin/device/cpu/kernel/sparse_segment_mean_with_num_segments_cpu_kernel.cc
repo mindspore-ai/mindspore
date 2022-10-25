@@ -106,7 +106,7 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
     }
   }
   for (size_t i = 0; i < num_elements; i++) {
-    y_addr[i] = (T1)0;
+    y_addr[i] = static_cast<T1>(0);
   }
   int oldindex = -1;
   int countnum = 0;
@@ -116,7 +116,7 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
     } else {
       if (countnum != 0) {
         for (size_t j = 0; j < n; j++) {
-          y_addr[j + oldindex * n] /= (T1)countnum;
+          y_addr[j + oldindex * n] /= static_cast<T1>(countnum);
         }
       }
       countnum = 1;
@@ -128,7 +128,7 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
   }
   if (countnum != 0) {
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] /= (T1)countnum;
+      y_addr[j + oldindex * n] /= static_cast<T1>(countnum);
     }
   }
 }

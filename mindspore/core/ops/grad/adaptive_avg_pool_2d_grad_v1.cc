@@ -43,8 +43,7 @@ abstract::ShapePtr AdaptiveAvgPool2DGradV1InferShape(const PrimitivePtr &primiti
   return std::make_shared<abstract::Shape>(orig_input_shapeList);
 }
 
-TypePtr AdaptiveAvgPool2DGradV1InferType(const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AdaptiveAvgPool2DGradV1InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_grad_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> input_grad_valid = {kFloat16, kFloat32, kFloat64};
   CheckAndConvertUtils::CheckTensorTypeValid("input_grad", input_grad_dtype, input_grad_valid,

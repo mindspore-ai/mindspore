@@ -42,7 +42,9 @@ struct SparseGradient {
         value = true;
         break;
       }
-      if (indices_[x * dims_size_ + di] > indices_[y * dims_size_ + di]) break;
+      if (indices_[x * dims_size_ + di] > indices_[y * dims_size_ + di]) {
+        break;
+      }
     }
     return value;
   }

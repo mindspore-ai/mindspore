@@ -82,7 +82,7 @@ bool LoopContinue(int stride, int i, int end) { return stride > 0 ? i < end : i 
 
 template <typename T>
 int DoStridedSliceV2Com(const void *in_data, void *out_data, StridedSliceParameter *param) {
-  if (in_data == NULL || out_data == NULL || param == NULL) {
+  if (in_data == nullptr || out_data == nullptr || param == nullptr) {
     return NNACL_NULL_PTR;
   }
   if (param->num_axes_ > DIMENSION_8D) {

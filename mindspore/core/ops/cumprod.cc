@@ -65,7 +65,8 @@ abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::v
                       << "', the second input type should be tensor or scalar, but got invalid abstract type:"
                       << input_args[kInputIndex1]->type_name() << ".";
   }
-  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-y_rank, y_rank - 1}, prim_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-SizeToLong(y_rank), SizeToLong(y_rank) - 1},
+                                              prim_name);
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
