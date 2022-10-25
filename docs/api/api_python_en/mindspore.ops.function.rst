@@ -28,6 +28,7 @@ Neural Network
     mindspore.ops.crop_and_resize
     mindspore.ops.deformable_conv2d
     mindspore.ops.dropout
+    mindspore.ops.dropout1d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
     mindspore.ops.flatten

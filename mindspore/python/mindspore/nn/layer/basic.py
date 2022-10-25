@@ -36,8 +36,8 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
-           'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout2d',
-           'Dropout3d', 'Roll', 'Identity', 'Unflatten']
+           'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
+           'Dropout2d', 'Dropout3d', 'Roll', 'Identity', 'Unflatten']
 
 
 class L1Regularizer(Cell):
@@ -180,6 +180,84 @@ class Dropout(Cell):
 
     def extend_repr(self):
         return 'keep_prob={}'.format(self.keep_prob)
+
+
+class Dropout1d(Cell):
+    r"""
+    During training, randomly zeroes entire channels of the input tensor with probability `p`
+    from a Bernoulli distribution (For a 3-dimensional tensor with a shape of :math:`NCL`,
+    the channel feature map refers to a 1-dimensional feature map with the shape of :math:`L`).
+
+    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
+    `1D` tensor input[i,j].
+    Each channel will be zeroed out independently on every forward call with probability `p` using samples
+    from a Bernoulli distribution.
+
+    The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology，And it is proved that
+    it can effectively reduce over fitting and prevent neuronal coadaptation.
+    For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
+    <https://arxiv.org/pdf/1207.0580.pdf>`_ .
+
+    `Dropout1d` can improve the independence between channel feature maps.
+
+    Args:
+        p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+            which means an 80% chance of clearing. Default: 0.5.
+
+    Inputs:
+        - **x** (Tensor) - A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size,
+          `C` is the number of channels, `L` is the feature length. The data type must be int8, int16, int32,
+          int64, float16, float32 or float64.
+
+    Returns:
+        Tensor, output, with the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
+        TypeError: If the data type of `p` is not float.
+        ValueError: If `p` is out of the range `[0.0, 1.0]`.
+        ValueError: If `x` shape is not `2D` or `3D`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.random.randn(4, 3), mindspore.float32)
+        >>> output = dropout1d(input_x, 0.5)
+        >>> print(output.shape)
+        (4, 3)
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> dropout = nn.Dropout1d(p=0.5)
+        >>> x = Tensor(np.ones([4, 3]), mindspore.float32)
+        >>> output = dropout(x)
+        >>> print(output.shape)
+        (4, 3)
+    """
+
+    def __init__(self, p=0.5):
+        """Initialize Dropout1d."""
+        super(Dropout1d, self).__init__()
+        Validator.check_value_type('p', p, [float], self.cls_name)
+        if p < 0 or p > 1:
+            raise ValueError(f"For '{self.cls_name}', the 'p' must be a number in range [0, 1], "
+                             f"but got {p}.")
+        self.prob = p
+
+    def construct(self, x):
+        if not self.training:
+            return x
+
+        if self.prob == 0:
+            return x
+
+        out = F.dropout1d(x, self.prob)
+        return out
 
 
 class Dropout2d(Cell):
@@ -1678,5 +1756,5 @@ class Unflatten(Cell):
         new_shape += input_shape[: self.axis]
         new_shape += self.unflattened_size
         if self.axis != -1:
-            new_shape += input_shape[self.axis+1 :]
+            new_shape += input_shape[self.axis + 1:]
         return self.reshape(input_x, new_shape)
