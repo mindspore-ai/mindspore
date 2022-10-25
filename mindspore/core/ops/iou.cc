@@ -55,10 +55,15 @@ class IOUInfer : public abstract::OpInferBase {
         << "For 'BatchMatMul', input x, y must have the same dimension size and must be 2. But got x size = "
         << x_shp.size() << ", y size = " << y_shp.size() << ".";
     }
-    (void)CheckAndConvertUtils::CheckInteger("input numbers", x_shp[kCoordinatesIndex], kEqual, kCoordinatesSize,
-                                             prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("input numbers", y_shp[kCoordinatesIndex], kEqual, kCoordinatesSize,
-                                             prim_name);
+    if (x_shp[kCoordinatesIndex] != -1) {
+      (void)CheckAndConvertUtils::CheckInteger("anchor_boxes.shape[1]", x_shp[kCoordinatesIndex], kEqual,
+                                               kCoordinatesSize, prim_name);
+    }
+    if (y_shp[kCoordinatesIndex] != -1) {
+      (void)CheckAndConvertUtils::CheckInteger("gt_boxes.shape[1]", y_shp[kCoordinatesIndex], kEqual, kCoordinatesSize,
+                                               prim_name);
+    }
+
     ShapeVector ret_shape;
     ret_shape.push_back(y_shp[0]);
     ret_shape.push_back(x_shp[0]);
