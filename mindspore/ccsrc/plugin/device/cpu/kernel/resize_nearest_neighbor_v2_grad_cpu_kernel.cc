@@ -17,6 +17,7 @@
 #include <string>
 #include "plugin/device/cpu/kernel/resize_nearest_neighbor_v2_grad_cpu_kernel.h"
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/grad/resize_nearest_neighbor_v2_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 
@@ -27,34 +28,58 @@ constexpr size_t kResizeNearestNeighborV2GradInputsNum = 2;
 constexpr size_t kResizeNearestNeighborV2GradOutputNum = 1;
 }  // namespace
 
-void ResizeNearestNeighborV2GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  cnode_ptr_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  y_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
-  grads_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
-  auto size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
-  if (grads_shape_.size() != kShape4dDims && !IsDynamicRank(grads_shape_)) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'x' should be " << kShape4dDims
-                             << ", but got " << grads_shape_.size();
-  }
-  if (size_shape.size() != kShape1dDims) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'size' should be " << kShape1dDims
-                             << ", but got " << size_shape.size();
-  }
-  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kAttrAlignCorners);
-  half_pixel_centers_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kAttrHalfPixelCenters);
-  std::string data_format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFormat);
+bool ResizeNearestNeighborV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                   const std::vector<KernelTensorPtr> &inputs,
+                                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborV2Grad>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  align_corners_ = op_prim->get_align_corners();
+  half_pixel_centers_ = op_prim->get_half_pixel_centers();
 
+  std::string data_format = op_prim->get_data_format();
   if (data_format.compare(kOpFormat_NCHW) == 0) {
     dim_idx_map_ = {{'N', kIndex0}, {'C', kIndex1}, {'H', kIndex2}, {'W', kIndex3}};
   } else if (data_format.compare(kOpFormat_NHWC) == 0) {
     dim_idx_map_ = {{'N', kIndex0}, {'H', kIndex1}, {'W', kIndex2}, {'C', kIndex3}};
   } else {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the attr of 'data_format' only support ["
-                             << kOpFormat_NCHW << ", " << kOpFormat_NHWC << "].";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attr of 'data_format' only support [" << kOpFormat_NCHW << ", "
+                  << kOpFormat_NHWC << "].";
+    return false;
   }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int ResizeNearestNeighborV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                    const std::vector<KernelTensorPtr> &inputs,
+                                                    const std::vector<KernelTensorPtr> &outputs,
+                                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  y_type_ = outputs[kIndex0]->GetDtype();
+  y_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  grads_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto size_shape = inputs[kIndex1]->GetShapeVector();
+  if (grads_shape_.size() != kShape4dDims && !IsDynamicRank(grads_shape_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be " << kShape4dDims << ", but got "
+                  << grads_shape_.size();
+    return KRET_RESIZE_FAILED;
+  }
+  if (size_shape.size() != kShape1dDims) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'size' should be " << kShape1dDims << ", but got "
+                  << size_shape.size();
+    return KRET_RESIZE_FAILED;
+  }
+  return KRET_OK;
 }
 
 bool ResizeNearestNeighborV2GradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
