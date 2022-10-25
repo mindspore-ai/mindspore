@@ -1430,9 +1430,9 @@ void KernelGraph::SetInputNodes() {
   input_nodes_.clear();
   for (const auto &input_node : inputs()) {
     auto params = common::AnfAlgo::GetAllOutput(input_node);
-    if (params.size() == 1) {
-      FrontBackendlMapUpdate(input_node, params[0]);
-    } else {
+    auto abs = input_node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (params.size() > 1 || abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractDictionary>()) {
       if (backend_front_anf_map_.find(input_node) == backend_front_anf_map_.end()) {
         MS_EXCEPTION_IF_NULL(input_node);
         MS_LOG(WARNING) << "Cannot find input_node: " << input_node->DebugString() << " in backend_front_anf_map.";
@@ -1443,6 +1443,8 @@ void KernelGraph::SetInputNodes() {
         FrontBackendlMapUpdate(input_node, params[i]);
         tuple_backend_front_anf_index_map_[params[i]] = AnfWithOutIndex(front_node, i);
       }
+    } else if (params.size() == 1) {
+      FrontBackendlMapUpdate(input_node, params[0]);
     }
     std::copy(params.begin(), params.end(), std::back_inserter(input_nodes_));
   }

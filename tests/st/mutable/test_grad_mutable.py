@@ -712,3 +712,48 @@ def test_grad_mutable_unused_dict_tensor():
               np.array([[0., 0., 0.],
                         [0., 0., 0.]]).astype(np.float32)]
     assert compare(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_mutable_single_element_dict_tensor():
+    """
+    Feature: Set Constants mutable.
+    Description: Get gradient with respect to the dict tensor input which has only one element.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, t):
+            y = t['a']
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = GradOperation(get_all=True)
+
+        def construct(self, x, t):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, t)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = mutable({'a': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
+    output = GradNetWrtX(Net())(x, y)
+    assert isinstance(output, tuple)
+    expect = [np.array([[1.4100001, 1.5999999, 6.6],
+                        [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
+              (np.array([[1.7, 1.7, 1.7],
+                         [1.9, 1.9, 1.9],
+                         [1.5, 1.5, 1.5]]).astype(np.float32),)]
+    assert compare(output, expect)
