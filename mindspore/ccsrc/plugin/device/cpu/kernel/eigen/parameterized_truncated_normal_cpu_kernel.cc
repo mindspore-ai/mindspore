@@ -25,6 +25,7 @@
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/parameterized_truncated_normal.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,43 +43,39 @@ const std::map<TypeId, size_t> means_type_size_map = {
   {kNumberTypeFloat16, sizeof(float16)}, {kNumberTypeFloat32, sizeof(float)}, {kNumberTypeFloat64, sizeof(double)}};
 }  // namespace
 
-void ParameterizedTruncatedNormalCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInput0);
-  input_means_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInput1);
-  input_stdevs_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInput2);
-  input_min_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInput3);
-  input_max_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInput4);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInput0);
-  input_means_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInput1);
-  input_stdevs_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInput2);
-  input_min_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInput3);
-  input_max_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInput4);
-  output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kOutputData);
-  seed_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed");
-  seed2_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2");
-}
-
-bool ParameterizedTruncatedNormalCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &,
-                                                      const std::vector<AddressPtr> &outputs) {
+bool ParameterizedTruncatedNormalCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                    const std::vector<KernelTensorPtr> &inputs,
+                                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  if (input_type_ == kNumberTypeInt32 && input_means_type_ == kNumberTypeFloat16) {
-    return BatchGenerate<int32_t, float16>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt64 && input_means_type_ == kNumberTypeFloat16) {
-    return BatchGenerate<int64_t, float16>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt32 && input_means_type_ == kNumberTypeFloat32) {
-    return BatchGenerate<int32_t, float>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt64 && input_means_type_ == kNumberTypeFloat32) {
-    return BatchGenerate<int64_t, float>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt32 && input_means_type_ == kNumberTypeFloat64) {
-    return BatchGenerate<int32_t, double>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt64 && input_means_type_ == kNumberTypeFloat64) {
-    return BatchGenerate<int64_t, double>(inputs, outputs);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ParameterizedTruncatedNormal>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  seed_ = kernel_ptr->get_seed();
+  seed2_ = kernel_ptr->get_seed2();
+  input_type_ = inputs[kInput0]->GetDtype();
+  input_means_type_ = inputs[kInput1]->GetDtype();
+  input_stdevs_type_ = inputs[kInput2]->GetDtype();
+  input_min_type_ = inputs[kInput3]->GetDtype();
+  input_max_type_ = inputs[kInput4]->GetDtype();
+  output_type_ = outputs[kOutputData]->GetDtype();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int ParameterizedTruncatedNormalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                     const std::vector<KernelTensorPtr> &inputs,
+                                                     const std::vector<KernelTensorPtr> &outputs,
+                                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  return true;
+  input_shape_ = inputs[kInput0]->GetDeviceShapeAdaptively();
+  input_means_shape_ = inputs[kInput1]->GetDeviceShapeAdaptively();
+  input_stdevs_shape_ = inputs[kInput2]->GetDeviceShapeAdaptively();
+  input_min_shape_ = inputs[kInput3]->GetDeviceShapeAdaptively();
+  input_max_shape_ = inputs[kInput4]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename T>
@@ -88,8 +85,9 @@ T ParameterizedTruncatedNormalCpuKernelMod::GetBatchSizeCheckDims(const std::vec
 }
 
 template <typename T_shape, typename T>
-bool ParameterizedTruncatedNormalCpuKernelMod::BatchGenerate(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &outputs) {
+bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                            const std::vector<AddressPtr> &,
+                                                            const std::vector<AddressPtr> &outputs) {
   auto output_shape = reinterpret_cast<T_shape *>(inputs[0]->addr);
   size_t input_shape_num = inputs[0]->size / sizeof(T_shape);
   // check shape
@@ -288,51 +286,61 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase3(const int64_t size,
   return;
 }
 
-std::vector<KernelAttr> ParameterizedTruncatedNormalCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt32)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddOutputAttr(kNumberTypeFloat16),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddOutputAttr(kNumberTypeFloat32),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt32)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddOutputAttr(kNumberTypeFloat64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt64)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddOutputAttr(kNumberTypeFloat16),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt64)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddOutputAttr(kNumberTypeFloat32),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt64)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddOutputAttr(kNumberTypeFloat64)};
-  return kernel_attr_list;
+const std::vector<std::pair<KernelAttr, ParameterizedTruncatedNormalCpuKernelMod::KernelRunFunc>>
+  &ParameterizedTruncatedNormalCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, ParameterizedTruncatedNormalCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel<int32_t, float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel<int32_t, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel<int32_t, double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel<int64_t, float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel<int64_t, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel<int64_t, double>},
+  };
+  return func_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ParameterizedTruncatedNormal, ParameterizedTruncatedNormalCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
