@@ -567,6 +567,7 @@ BackendPtr CreateBackend() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string name = context_ptr->backend_policy();
   MS_LOG(INFO) << "CreateBackend is: " << name;
+  context_ptr->Refresh();
 
   if (name == kMsConvert || name == kGeVm) {
     std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -581,7 +582,6 @@ BackendPtr CreateBackend() {
     if (target == kAscendDevice && context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
       backend->set_is_multi_graph_sink(false);
     }
-    context_ptr->Update();
     return backend;
   }
 

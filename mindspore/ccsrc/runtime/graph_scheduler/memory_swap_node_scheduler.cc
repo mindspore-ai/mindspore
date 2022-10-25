@@ -27,9 +27,10 @@
 namespace mindspore {
 namespace runtime {
 constexpr size_t kKindOfSwapActor = 2;
-constexpr float kMaxMemReuseFactor = 0.9;
-constexpr float kMinMemReuseFactor = 0.5;
-constexpr float kRetryFactor = 0.1;
+constexpr size_t kMaxMemReuseFactor = 9;
+constexpr size_t kMinMemReuseFactor = 5;
+constexpr size_t kRetryFactor = 1;
+constexpr size_t kReuseFactorDenominator = 10;
 namespace {
 AbstractActor *GetEntranceActorByKernelGraph(const ControlNodeParserPtr &parser, const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(parser);
@@ -114,7 +115,7 @@ std::vector<std::vector<MemSwapActorPtr>> MemorySwapNodeScheduler::Build(const G
     // Graph with dynamic shape kernel dost not support memory offload.
     if (device_context == nullptr || device_context->GetDeviceType() == device::DeviceType::kCPU ||
         graph->is_dynamic_shape()) {
-      swap_actors.emplace_back(std::move(sub_graph_swap_actors));
+      (void)swap_actors.emplace_back(std::move(sub_graph_swap_actors));
       continue;
     }
     if (mem_allocated == nullptr) {
@@ -124,10 +125,10 @@ std::vector<std::vector<MemSwapActorPtr>> MemorySwapNodeScheduler::Build(const G
       GenMemOffloadStrategy(graph, graph_compiler_info.device_contexts_[i], graph_compiler_info.control_node_parser_,
                             &(mem_allocated->mem_allocated_));
     if (offload_strategy == nullptr) {
-      swap_actors.emplace_back(std::move(sub_graph_swap_actors));
+      (void)swap_actors.emplace_back(std::move(sub_graph_swap_actors));
       continue;
     }
-    swap_actors.emplace_back(std::move(
+    (void)swap_actors.emplace_back(std::move(
       GenSwapActorsForGraph(graph, device_context, offload_strategy, graph_compiler_info.control_node_parser_)));
   }
   return swap_actors;
@@ -139,9 +140,9 @@ MemOffloadStrategyPtr MemorySwapNodeScheduler::GenMemOffloadStrategy(const Kerne
                                                                      std::map<DeviceTensor *, void *> *mem_allocated) {
   const auto &mem_statistic = CollectMemStatistic(graph, device_context, parser);
   const auto total_available_mem_size = device_context->device_res_manager_->GetAvailableMemSize();
-  for (float factor = kMaxMemReuseFactor; factor > kMinMemReuseFactor; factor -= kRetryFactor) {
+  for (size_t factor = kMaxMemReuseFactor; factor > kMinMemReuseFactor; factor -= kRetryFactor) {
     auto mem_offload_strategy = std::make_shared<device::MemOffloadStrategy<DeviceTensor *>>(mem_statistic);
-    mem_offload_strategy->set_mem_size(FloatToSize(total_available_mem_size * factor));
+    mem_offload_strategy->set_mem_size(total_available_mem_size * factor / kReuseFactorDenominator);
     mem_offload_strategy->Execute();
     std::map<DeviceTensor *, void *> mem_allocated_temp(*mem_allocated);
     if (MockStrategy(mem_offload_strategy, device_context, graph->execution_order().size(), &mem_allocated_temp)) {
@@ -208,10 +209,10 @@ void MemorySwapNodeScheduler::CollectKernelInputMemStatistic(size_t kernel_index
     statistic->Record(input_address, device::kGet, input_address->GetSize(), device::kMemPriorityLow, kernel_index);
     if (continuous_input_mem) {
       total_size += input_address->GetSize();
-      size_list.emplace_back(input_address->GetSize());
-      device_tensors.emplace_back(input_address);
+      (void)size_list.emplace_back(input_address->GetSize());
+      (void)device_tensors.emplace_back(input_address);
     }
-    offload_conflict->insert(input_address);
+    (void)offload_conflict->insert(input_address);
     device::MemoryOffloadConflict::GetInstance().AddOffloadBacklog(input_address);
   }
   if (continuous_input_mem) {
@@ -238,10 +239,10 @@ void MemorySwapNodeScheduler::CollectKernelOutputMemStatistic(size_t kernel_inde
     statistic->Record(output_address, device::kGet, output_address->GetSize(), device::kMemPriorityLow, kernel_index);
     if (continuous_output_mem) {
       total_size += output_address->GetSize();
-      size_list.emplace_back(output_address->GetSize());
-      device_tensors.emplace_back(output_address);
+      (void)size_list.emplace_back(output_address->GetSize());
+      (void)device_tensors.emplace_back(output_address);
     }
-    offload_conflict->insert(output_address);
+    (void)offload_conflict->insert(output_address);
     device::MemoryOffloadConflict::GetInstance().AddOffloadBacklog(output_address);
   }
   if (continuous_output_mem) {
@@ -260,7 +261,7 @@ void MemorySwapNodeScheduler::CollectKernelWorkspaceMemStatistic(size_t kernel_i
     const auto &workspace_address = AnfAlgo::GetMutableWorkspaceAddr(node, index).get();
     statistic->Record(workspace_address, device::kGet, workspace_address->GetSize(), device::kMemPriorityLow,
                       kernel_index);
-    offload_conflict->insert(workspace_address);
+    (void)offload_conflict->insert(workspace_address);
     device::MemoryOffloadConflict::GetInstance().AddOffloadBacklog(workspace_address);
   }
 }
@@ -297,7 +298,7 @@ bool MemorySwapNodeScheduler::MockStrategy(const MemOffloadStrategyPtr &strategy
     std::vector<DeviceTensor *> tensor_to_use;
     for (const auto &prev_mem_event : strategy->GetPreComputeEvents(step)) {
       if (prev_mem_event->type == device::kGet) {
-        tensor_to_use.emplace_back(prev_mem_event->key);
+        (void)tensor_to_use.emplace_back(prev_mem_event->key);
       } else if (mem_allocated->count(prev_mem_event->key) == 0) {
         void *ptr = nullptr;
         try {
@@ -322,7 +323,7 @@ bool MemorySwapNodeScheduler::MockStrategy(const MemOffloadStrategyPtr &strategy
         continue;
       }
       device_context->device_res_manager_->FreeMemory(iter->second);
-      mem_allocated->erase(iter);
+      (void)mem_allocated->erase(iter);
     }
   }
   return true;
@@ -349,7 +350,7 @@ std::vector<MemSwapActorPtr> MemorySwapNodeScheduler::GenSwapActorsForGraph(
       real_parameter_map_[swap_in_actor] =
         std::make_pair(entrance_actor, std::move(real_parameter_index_from_entrance));
     }
-    swap_actors.emplace_back(swap_in_actor);
+    (void)swap_actors.emplace_back(swap_in_actor);
     // Collect swap out events scheduled and generator MemorySwapActor
     device::MemEventPtrList<DeviceTensor *> swap_out_events;
     const auto post_events = strategy->GetPostComputeEvents(j);
@@ -361,10 +362,10 @@ std::vector<MemSwapActorPtr> MemorySwapNodeScheduler::GenSwapActorsForGraph(
         const auto &front_node = GetFrontNodeByKernelGraph(iter->second, graph.get());
         MS_EXCEPTION_IF_NULL(entrance_actor);
         const size_t index = entrance_actor->FetchNodePosition(front_node);
-        real_parameter_index_from_entrance_out.emplace_back(index);
-        swap_out_real_parameter.emplace_back(post_event->type == device::kSwapOut);
+        (void)real_parameter_index_from_entrance_out.emplace_back(index);
+        (void)swap_out_real_parameter.emplace_back(post_event->type == device::kSwapOut);
       } else {
-        swap_out_events.emplace_back(post_event);
+        (void)swap_out_events.emplace_back(post_event);
       }
     }
     const auto &swap_out_actor = GenSwapOutActor(graph->execution_order()[j], swap_out_events, swap_out_real_parameter);
@@ -372,7 +373,7 @@ std::vector<MemSwapActorPtr> MemorySwapNodeScheduler::GenSwapActorsForGraph(
       real_parameter_map_[swap_out_actor] =
         std::make_pair(entrance_actor, std::move(real_parameter_index_from_entrance_out));
     }
-    swap_actors.emplace_back(swap_out_actor);
+    (void)swap_actors.emplace_back(swap_out_actor);
   }
   return swap_actors;
 }
@@ -389,9 +390,9 @@ void MemorySwapNodeScheduler::FilterRealParamInPreEvent(const device::MemEventPt
         const auto &front_node = GetFrontNodeByKernelGraph(iter->second, graph.get());
         MS_EXCEPTION_IF_NULL(entrance_actor);
         const size_t index = entrance_actor->FetchNodePosition(front_node);
-        entrance_index->emplace_back(index);
+        (void)entrance_index->emplace_back(index);
       } else {
-        swap_in_events->emplace_back(pre_event);
+        (void)swap_in_events->emplace_back(pre_event);
       }
     }
   }
@@ -406,8 +407,8 @@ MemSwapActorPtr MemorySwapNodeScheduler::GenSwapInActor(
   }
   vector<bool> is_init_swap;
   std::vector<DeviceTensor *> device_tensor;
-  std::transform(swap_events.cbegin(), swap_events.cend(), std::back_inserter(device_tensor),
-                 [](const device::MemEventPtr<DeviceTensor *> &event) { return event->key; });
+  (void)std::transform(swap_events.cbegin(), swap_events.cend(), std::back_inserter(device_tensor),
+                       [](const device::MemEventPtr<DeviceTensor *> &event) { return event->key; });
   std::vector<std::vector<DeviceTensor *>> continuous_device_tensors;
   std::vector<std::vector<size_t>> continuous_device_tensor_sizes;
   for (const auto &continuous_info : continuous_mem_info) {
@@ -417,8 +418,8 @@ MemSwapActorPtr MemorySwapNodeScheduler::GenSwapInActor(
       device_tensors[key_index.second] = key_index.first;
       tensor_sizes[key_index.second] = continuous_info->align_size_list_[key_index.second];
     }
-    continuous_device_tensors.emplace_back(device_tensors);
-    continuous_device_tensor_sizes.emplace_back(tensor_sizes);
+    (void)continuous_device_tensors.emplace_back(device_tensors);
+    (void)continuous_device_tensor_sizes.emplace_back(tensor_sizes);
   }
   const std::string name = kernel->fullname_with_scope() + kMemSwapInActorNameSuffix;
   const auto stream_id = AnfAlgo::GetStreamId(kernel);
@@ -438,12 +439,12 @@ MemSwapActorPtr MemorySwapNodeScheduler::GenSwapOutActor(const CNodePtr &kernel,
   std::vector<DeviceTensor *> device_tensor_to_free;
   for (const auto &event : swap_events) {
     if (event->type == device::kSwapOut) {
-      device_tensor_to_swap.emplace_back(event->key);
+      (void)device_tensor_to_swap.emplace_back(event->key);
     } else if (event->type == device::kFree) {
       // Offload DeviceTensor with max original_ref_count_ which will not be used anymore in current kernel graph.
       // Just free DeviceTensor with max original_ref_count_. original_ref_count_ may have not been set appropriately,
       // judge it in MemorySwapOutActor.
-      device_tensor_to_free.emplace_back(event->key);
+      (void)device_tensor_to_free.emplace_back(event->key);
     }
   }
   const std::string name = kernel->fullname_with_scope() + kMemSwapOutActorNameSuffix;

@@ -53,14 +53,14 @@ void MemorySwapInActor::Run(OpContext<DeviceTensor> *context) {
   }
   for (const auto &device_tensor : device_tensors_to_swap_) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    if (device_tensor->mem_offloaded()) {
-      device_tensor->Load(stream_id_);
+    if (device_tensor->mem_offloaded() && !device_tensor->Load(stream_id_)) {
+      MS_LOG(EXCEPTION) << "Load device tensor from host to device failed.";
     }
   }
   for (const auto &real_parameter : real_parameters_) {
     MS_EXCEPTION_IF_NULL(real_parameter);
-    if (real_parameter->mem_offloaded()) {
-      real_parameter->Load(stream_id_);
+    if (real_parameter->mem_offloaded() && !real_parameter->Load(stream_id_)) {
+      MS_LOG(EXCEPTION) << "Load device tensor from host to device failed.";
     }
   }
   EraseInput(context);
@@ -75,7 +75,9 @@ void MemorySwapOutActor::Run(OpContext<DeviceTensor> *context) {
     if (device_tensor->mem_offloaded() || device_tensor->GetPtr() == nullptr) {
       continue;
     }
-    device_tensor->Offload(stream_id_);
+    if (!device_tensor->Offload(stream_id_)) {
+      MS_LOG(EXCEPTION) << "Offload device tensor from device to host failed.";
+    }
   }
   for (const auto &device_tensor : device_tensors_to_free_) {
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -85,7 +87,9 @@ void MemorySwapOutActor::Run(OpContext<DeviceTensor> *context) {
         device_tensor->original_ref_count() != SIZE_MAX) {
       continue;
     }
-    device_tensor->Offload(stream_id_);
+    if (!device_tensor->Offload(stream_id_)) {
+      MS_LOG(EXCEPTION) << "Offload device tensor from device to host failed.";
+    }
   }
 
   for (size_t i = 0; i < real_parameters_.size(); ++i) {
@@ -95,7 +99,9 @@ void MemorySwapOutActor::Run(OpContext<DeviceTensor> *context) {
       continue;
     }
     if (swap_out_real_parameter_[i] || real_parameter->original_ref_count() == SIZE_MAX) {
-      real_parameter->Offload(stream_id_);
+      if (!real_parameter->Offload(stream_id_)) {
+        MS_LOG(EXCEPTION) << "Offload device tensor from device to host failed.";
+      }
     }
   }
   EraseInput(context);

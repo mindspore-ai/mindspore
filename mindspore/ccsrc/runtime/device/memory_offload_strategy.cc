@@ -28,7 +28,7 @@ constexpr size_t kFirstGetMemEventIndex = 1;
 constexpr size_t kInitOrMallocMemEventIndex = 0;
 
 MemoryOffloadConflict &MemoryOffloadConflict::GetInstance() {
-  static MemoryOffloadConflict instance;
+  static MemoryOffloadConflict instance = MemoryOffloadConflict();
   return instance;
 }
 

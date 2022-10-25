@@ -134,7 +134,7 @@ struct GraphMemStatistic {
   std::map<Key, MemEventPtrList<Key>> mem_events_;
   std::set<Key> manual_offload_keys_;
   std::shared_ptr<ContinuousMemInfoHelper<Key>> continuous_mem_info_helper_;
-  size_t total_compute_index_;
+  size_t total_compute_index_{};
 };
 
 template <typename Key>
@@ -157,7 +157,7 @@ class MemOffloadStrategy {
         mem_events_(mem_statistic.mem_events_),
         manual_offload_keys_(mem_statistic.manual_offload_keys_),
         total_compute_index_(mem_statistic.total_compute_index_),
-        continuous_mem_info_helper_(std::move(mem_statistic.continuous_mem_info_helper_)) {
+        continuous_mem_info_helper_(mem_statistic.continuous_mem_info_helper_) {
     AdjustFirstEventIndex();
   }
 

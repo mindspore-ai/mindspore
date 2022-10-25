@@ -127,12 +127,12 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
   return inst_context_;
 }
 
-void MsContext::Update() {
-  UpdateExecutionMode();
-  UpdateMemoryOffload();
+void MsContext::Refresh() {
+  RefreshExecutionMode();
+  RefreshMemoryOffload();
 }
 
-void MsContext::UpdateExecutionMode() {
+void MsContext::RefreshExecutionMode() {
   const std::string &target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (target == kAscendDevice) {
     if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
@@ -143,7 +143,7 @@ void MsContext::UpdateExecutionMode() {
   }
 }
 
-void MsContext::UpdateMemoryOffload() {
+void MsContext::RefreshMemoryOffload() {
   const bool enable_mem_offload = get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
   if (!enable_mem_offload) {
     return;

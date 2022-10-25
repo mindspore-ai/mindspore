@@ -46,6 +46,8 @@ bool IsDataTakenOverByMemOffload(const DeviceContext *device_context) {
 
 void *GetOffloadPtr(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor,
                     const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(host_tensor);
+  MS_EXCEPTION_IF_NULL(device_tensor);
   if (host_tensor->data_type() == device_tensor->type_id()) {
     return host_tensor->data_c();
   }
