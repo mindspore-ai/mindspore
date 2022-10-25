@@ -34,65 +34,29 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInpuSizes = 2;
 }  // namespace
 
-void NonDeterministicIntsCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  cnode_ptr_ = kernel_node;
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shape})) {
-    return;
-  }
-  if (input_shape[0] < kInpuSizes) {
-    MS_EXCEPTION(ValueError) << "The input tensor shape must >= 2.";
-  }
-  if (input_shape.size() != kInpuDims) {
-    MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "NonDeterministicInts does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
-}
-
-bool NonDeterministicIntsCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool NonDeterministicIntsCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  if (output_type_ == kNumberTypeInt32 && input_type_ == kNumberTypeInt32) {
-    (void)LaunchKernel<int32_t, int32_t>(inputs, outputs);
-  } else if (output_type_ == kNumberTypeInt64 && input_type_ == kNumberTypeInt32) {
-    (void)LaunchKernel<int64_t, int32_t>(inputs, outputs);
-  } else if (output_type_ == kNumberTypeInt32 && input_type_ == kNumberTypeInt64) {
-    (void)LaunchKernel<int32_t, int64_t>(inputs, outputs);
-  } else if (output_type_ == kNumberTypeInt64 && input_type_ == kNumberTypeInt64) {
-    (void)LaunchKernel<int64_t, int64_t>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "The output data type must be one of int32 or int64.";
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  kernel_func_ = func_list_[index].second;
   return true;
 }
 
 template <typename T1, typename T2>
 bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                    const std::vector<AddressPtr> &,
                                                     const std::vector<AddressPtr> &outputs) {
   auto output = reinterpret_cast<T1 *>(outputs[0]->addr);
-  auto input = reinterpret_cast<T2 *>(inputs[0]->addr);
-  size_t input_elem_num = inputs[0]->size / sizeof(T2);
   size_t output_elem_num = outputs[0]->size / sizeof(T1);
-  ShapeVector out_shape;
-  for (size_t i = 0; i < input_elem_num; i++) {
-    if (input[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
-    }
-    out_shape.push_back(input[i]);
-  }
   auto task = [output](size_t start, size_t end) {
     auto max_data = std::numeric_limits<T1>::max();
     std::default_random_engine seed(time(0));
@@ -102,7 +66,6 @@ bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<AddressPtr
     }
   };
   CPUKernelUtils::ParallelFor(task, output_elem_num);
-  common::AnfAlgo::SetOutputInferTypeAndShape({output_type_}, {out_shape}, cnode_ptr_.lock().get());
   return true;
 }
 
