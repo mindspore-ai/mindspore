@@ -122,7 +122,8 @@ const AnfNodePtr UnsortedSegmentSumFission::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(node);
   auto sum = CheckAnfNodeIfCNodeAndInputSize(node, kUnsortedSegmentSumInputNum);
   auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sum, 0);
-  if (x_shape.size() <= 1 || x_shape.back() != 1) {
+  auto y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sum, 1);
+  if (x_shape.size() <= 1 || x_shape.back() != 1 || x_shape.size() <= y_shape.size()) {
     return nullptr;
   }
   size_t pad_dim_size;
