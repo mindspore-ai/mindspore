@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SEARCHSORTED_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SEARCHSORTED_CPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -24,12 +25,16 @@
 
 namespace mindspore {
 namespace kernel {
-class SearchSortedCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
  public:
   SearchSortedCpuKernelMod() = default;
   ~SearchSortedCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -51,7 +56,7 @@ class SearchSortedCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   SearchSortedFunc kernel_func_;
 
   bool right_{false};
-  size_t search_len{0};
+  size_t search_len_{0};
   std::vector<int64_t> sequence_shape_;
   std::vector<int64_t> values_shape_;
   std::vector<int64_t> output_shape_;

@@ -20,6 +20,7 @@
 #include <complex>
 
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/scatter_add_with_axis.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace {
@@ -46,47 +47,68 @@ namespace {
     .AddOutputAttr(kNumberType##t4)
 const int32_t kInputNum = 3;
 const int32_t kOutputNum = 1;
-const uint32_t kInputIndex2 = 2;
 const int32_t KSplitSize = 64 * 1024;
 }  // namespace
 
-void ScatterAddWithAxisCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  indices_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  if (indices_type_ != kNumberTypeInt32 && indices_type_ != kNumberTypeInt64) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dtype of 'indices' must be int32 or int64, but got "
-                             << indices_type_;
+bool ScatterAddWithAxisCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  auto op_prim = std::dynamic_pointer_cast<ops::ScatterAddWithAxis>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  axis_ = op_prim->get_axis();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  return true;
+}
 
-  // check parameters basic attribution are valid
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  updates_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
-  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
+int ScatterAddWithAxisCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  x_type_ = inputs[kIndex0]->GetDtype();
+  indices_type_ = inputs[kIndex1]->GetDtype();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  indices_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  updates_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
 
   // Get and check 3 input dim info
   int64_t value_dim_num_x1 = static_cast<int64_t>(x_shape_.size());
   int64_t value_dim_num_x2 = static_cast<int64_t>(indices_shape_.size());
   int64_t value_dim_num_x3 = static_cast<int64_t>(updates_shape_.size());
   if (value_dim_num_x1 != value_dim_num_x2 || value_dim_num_x2 != value_dim_num_x3) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dim values of three inputs must be same, but got "
-                             << "data: " << value_dim_num_x1 << ", indices: " << value_dim_num_x2
-                             << ", update: " << value_dim_num_x3;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dim values of three inputs must be same, but got "
+                  << "data: " << value_dim_num_x1 << ", indices: " << value_dim_num_x2
+                  << ", update: " << value_dim_num_x3;
+    return KRET_RESIZE_FAILED;
   }
   if (axis_ < value_dim_num_x1 * -1 || axis_ >= value_dim_num_x1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of axis is out of range!";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of axis is out of range!";
+    return KRET_RESIZE_FAILED;
   }
 
   int64_t sub_data_fix = 1;
   int64_t sub_index_fix = 1;
+  data_dim_vec_.clear();
+  index_dim_vec_.clear();
   for (int64_t i = value_dim_num_x2 - 1; i >= 0; --i) {
     size_t j = static_cast<size_t>(i);
     if (x_shape_[j] < indices_shape_[j] || indices_shape_[j] != updates_shape_[j] || updates_shape_[j] <= 0) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << j << " dimension verification failed: "
-                               << "input0[" << x_shape_[j] << "], input1[" << indices_shape_[j] << "], input2["
-                               << updates_shape_[j] << "]";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the " << j << " dimension verification failed: "
+                    << "input0[" << x_shape_[j] << "], input1[" << indices_shape_[j] << "], input2["
+                    << updates_shape_[j] << "]";
+      return KRET_RESIZE_FAILED;
     }
     if (i > 0) {
       sub_data_fix *= x_shape_[j];
@@ -95,6 +117,7 @@ void ScatterAddWithAxisCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       index_dim_vec_.push_back(sub_index_fix);
     }
   }
+  return KRET_OK;
 }
 
 bool ScatterAddWithAxisCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
