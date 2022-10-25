@@ -476,7 +476,7 @@ Parameter操作函数
 图像函数
 ----------------
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -489,7 +489,7 @@ Parameter操作函数
 光谱函数
 ----------------
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
