@@ -16,14 +16,17 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MINIMUMGRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MINIMUMGRAD_CPU_KERNEL_H_
+
 #include <map>
+#include <utility>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
-class MinimumGradCpuKernelMod : public NativeCpuKernelMod {
+class MinimumGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<MinimumGradCpuKernelMod> {
  public:
   MinimumGradCpuKernelMod() = default;
   ~MinimumGradCpuKernelMod() override = default;
@@ -35,11 +38,19 @@ class MinimumGradCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
- private:
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   ShapeVector x_shape_;
   ShapeVector y_shape_;
