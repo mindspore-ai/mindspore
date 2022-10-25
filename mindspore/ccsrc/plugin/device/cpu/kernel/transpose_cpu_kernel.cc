@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "nnacl/errorcode.h"
 #include "include/common/thread_pool.h"
+#include "mindspore/core/ops/transpose.h"
 #include "plugin/device/cpu/kernel/transpose_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/check_convert_utils.h"
@@ -56,37 +57,39 @@ void TransposeFwdCpuKernelMod::CheckPermValue() {
 
 template <typename T>
 void TransposeFwdCpuKernelMod::InitPerm(const std::vector<kernel::AddressPtr> &inputs) {
-  auto cnode = cnode_ptr_.lock();
-  auto perm_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex1);
   auto perm_ptr = static_cast<T *>(inputs[kIndex1]->addr);
-  std::vector<T> perm{perm_ptr, perm_ptr + perm_shape[0]};
+  std::vector<T> perm{perm_ptr, perm_ptr + perm_shape_[0]};
   perm_.clear();
   (void)std::transform(perm.begin(), perm.end(), std::back_inserter(perm_),
                        [](const T &value) { return static_cast<int64_t>(value); });
   CheckPermValue();
 }
 
-void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  cnode_ptr_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1 && input_num != kDynamicPermInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kDynamicPermInputNum
-                      << ", but got " << input_num;
+bool TransposeFwdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  if (!IsDynamicRank(output_shape_) && output_shape_.size() != input_shape_.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the output_shape's size must be equal to input_shape's size, but got "
-                      << output_shape_.size() << " vs " << input_shape_.size();
+  launch_func_ = launch_list_[index].second;
+  return true;
+}
+
+int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  dtype_ = inputs[kIndex0]->GetDtype();
   num_axes_ = input_shape_.size();
-  if (num_axes_ == 0) {
-    MS_LOG(EXCEPTION) << "Transpose's input shape is empty.";
-  }
   strides_.resize(num_axes_);
   out_strides_.resize(num_axes_);
   strides_[num_axes_ - 1] = 1LL;
@@ -95,39 +98,16 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     strides_[i - 1] = input_shape_[i] * strides_[i];
     out_strides_[i - 1] = output_shape_[i] * out_strides_[i];
   }
-  launch_map_[kNumberTypeBool] = &TransposeFwdCpuKernelMod::LaunchKernel<bool>;
-  launch_map_[kNumberTypeInt8] = &TransposeFwdCpuKernelMod::LaunchKernel<int8_t>;
-  launch_map_[kNumberTypeInt16] = &TransposeFwdCpuKernelMod::LaunchKernel<int16_t>;
-  launch_map_[kNumberTypeInt32] = &TransposeFwdCpuKernelMod::LaunchKernel<int32_t>;
-  launch_map_[kNumberTypeInt64] = &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>;
-  launch_map_[kNumberTypeUInt8] = &TransposeFwdCpuKernelMod::LaunchKernel<uint8_t>;
-  launch_map_[kNumberTypeUInt16] = &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>;
-  launch_map_[kNumberTypeUInt32] = &TransposeFwdCpuKernelMod::LaunchKernel<uint32_t>;
-  launch_map_[kNumberTypeUInt64] = &TransposeFwdCpuKernelMod::LaunchKernel<uint64_t>;
-  launch_map_[kNumberTypeFloat16] = &TransposeFwdCpuKernelMod::LaunchKernel<float16>;
-  launch_map_[kNumberTypeFloat32] = &TransposeFwdCpuKernelMod::LaunchKernel<float>;
-  launch_map_[kNumberTypeFloat64] = &TransposeFwdCpuKernelMod::LaunchKernel<double>;
-  launch_map_[kNumberTypeComplex64] = &TransposeFwdCpuKernelMod::LaunchKernel<complex64>;
-  launch_map_[kNumberTypeComplex128] = &TransposeFwdCpuKernelMod::LaunchKernel<complex128>;
-  auto iter = launch_map_.find(dtype_);
-  if (iter != launch_map_.end()) {
-    launch_func_ = iter->second;
-  } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+  if (inputs.size() == kDynamicPermInputNum) {
+    perm_type_ = inputs[kIndex1]->GetDtype();
+    perm_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+    return KRET_OK;
   }
-  if (input_num == kDynamicPermInputNum) {
-    perm_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
-    return;
-  }
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  auto value_ptr = prim->GetAttr("perm");
-  if (value_ptr->isa<tensor::Tensor>()) {
-    perm_ = CheckAndConvertUtils::CheckTensorIntValue("perm", value_ptr, kernel_name_);
-  } else {
-    perm_ = CheckAndConvertUtils::CheckIntOrTupleInt("perm", value_ptr, kernel_name_);
-  }
+  auto prim = std::dynamic_pointer_cast<ops::Transpose>(base_operator);
+  MS_ERROR_IF_NULL(prim);
+  perm_ = prim->get_perm();
   CheckPermValue();
+  return KRET_OK;
 }
 
 bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -143,6 +123,101 @@ bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
   }
   launch_func_(this, inputs, outputs);
   return true;
+}
+
+std::vector<std::pair<KernelAttr, TransposeFwdCpuKernelMod::TypeKernel>> TransposeFwdCpuKernelMod::launch_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &TransposeFwdCpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &TransposeFwdCpuKernelMod::LaunchKernel<complex128>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+   &TransposeFwdCpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
+   &TransposeFwdCpuKernelMod::LaunchKernel<complex128>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   &TransposeFwdCpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   &TransposeFwdCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   &TransposeFwdCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   &TransposeFwdCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   &TransposeFwdCpuKernelMod::LaunchKernel<complex128>},
+};
+
+std::vector<KernelAttr> TransposeFwdCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    launch_list_.begin(), launch_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, TransposeFwdCpuKernelMod::TypeKernel> &pair) { return pair.first; });
+  return support_list;
 }
 
 template <typename T>

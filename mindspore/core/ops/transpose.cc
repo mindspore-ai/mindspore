@@ -116,7 +116,7 @@ class TransposeInfer : public abstract::OpInferBase {
       p = (p >= 0) ? p : (p_value_raw.size() + p);
       p_value.emplace_back(p);
     }
-    if (!IsDynamicRank(x_shape) && x_shape.size() != p_value.size()) {
+    if (x_shape.size() != p_value.size()) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dim of 'input_x' and 'perm' must be equal, but got "
                                << x_shape.size() << " and " << p_value.size() << " respectively.";
     }
