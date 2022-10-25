@@ -17,6 +17,7 @@
 #include <random>
 #include "securec/include/securec.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/random_util.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -69,7 +70,10 @@ double Uint64ToDouble(uint32_t x0, uint32_t x1) {
 float Uint32ToFloat(uint32_t x) {
   uint32_t val = (127 << 23) | (x & 0x7fffffu);
   float f;
-  memcpy(&f, &val, sizeof(val));
+  auto ret = memcpy_s(&f, sizeof(f), &val, sizeof(val));
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Uint32ToFloat failed, memcpy_s errorno: " << ret;
+  }
   return f - 1.0f;
 }
 
