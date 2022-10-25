@@ -1732,7 +1732,9 @@ class TransformerEncoderLayer(Cell):
 
             if self.post_layernorm_residual:
                 output = self.add_3d(output_x, mlp_logit)
+                output = F.reshape(output, (-1, x_shape[-1]))
                 output = self.layernorm1(output)
+                output = F.reshape(output, x_shape)
             else:
                 output = self.add_3d(x, mlp_logit)
         else:
