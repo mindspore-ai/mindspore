@@ -162,15 +162,16 @@ CNodePtr GatherV2DsFission::CreateSlice(const FuncGraphPtr &graph, const CNodePt
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(gather_v2);
   MS_EXCEPTION_IF_NULL(gather_v2_padding_8);
-  std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)), gather_v2_padding_8};
+  auto gather_v2_shape = common::AnfAlgo::GetOutputInferShape(gather_v2, 0);
+  std::vector<int64_t> offsets(gather_v2_shape.size(), 0);
+  auto offsets_input = CreateShapeValueNode(graph, offsets, true);
+  auto size_input = CreateShapeValueNode(graph, gather_v2_shape, true);
+  std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)), gather_v2_padding_8,
+                                          offsets_input, size_input};
   auto slice = NewCNode(slice_inputs, graph);
   MS_EXCEPTION_IF_NULL(slice);
   slice->set_scope(gather_v2->scope());
   slice->set_abstract(gather_v2->abstract());
-  auto gather_v2_shape = common::AnfAlgo::GetOutputInferShape(gather_v2, 0);
-  std::vector<size_t> offsets(gather_v2_shape.size(), 0);
-  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
-  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(gather_v2_shape), slice);
   return slice;
 }
 
