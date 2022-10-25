@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <list>
 #include <algorithm>
 #include "ir/func_graph.h"
+#include "ir/meta_func_graph.h"
 
 namespace mindspore {
 FuncGraphLoopBreaker::~FuncGraphLoopBreaker() {
@@ -47,13 +48,42 @@ void FuncGraphLoopBreaker::BreakLoop() {
   int func_graph_cnt = 0;
   for (auto item : func_set_) {
     if (item->isa<FuncGraph>()) {
-      MS_LOG(ERROR) << "Unfree graph info:" << item->ToString();
+      MS_LOG(INFO) << "Unfree graph info:" << item->ToString();
       func_graph_cnt++;
     }
   }
   if (func_graph_cnt > 0) {
-    MS_LOG(EXCEPTION) << "Size of not recycled graph after break loop should be 0, but got:" << func_set_.size() << "\n"
-                      << "Please check the usage of clear_compile_cache or contact to the maintenance engineers.";
+    MS_LOG(INFO) << "Size of not recycled graph after break loop should be 0, but got:" << func_graph_cnt << "\n"
+                 << "Please check the usage of clear_compile_cache or contact to the maintenance engineers.";
+  }
+}
+
+void FuncGraphLoopBreaker::CleanMetaFuncGraphCache() {
+  std::list<FuncGraphBasePtr> func_list;
+
+  // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
+  (void)std::transform(func_set_.begin(), func_set_.end(), std::back_inserter(func_list),
+                       [](FuncGraphBase *fun) -> FuncGraphBasePtr { return fun->shared_from_base<FuncGraphBase>(); });
+  for (auto item : func_list) {
+    if (item->isa<MetaFuncGraph>()) {
+      item->DoBreakLoop();
+    }
+  }
+}
+
+void FuncGraphLoopBreaker::ClearCellGraphs(const std::string &phase) {
+  std::list<FuncGraphBasePtr> func_list;
+
+  // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
+  (void)std::transform(func_set_.begin(), func_set_.end(), std::back_inserter(func_list),
+                       [](FuncGraphBase *fun) -> FuncGraphBasePtr { return fun->shared_from_base<FuncGraphBase>(); });
+  for (auto item : func_list) {
+    if (item->isa<FuncGraph>()) {
+      auto func_graph = item->cast<FuncGraphPtr>();
+      if (func_graph->phase() == phase) {
+        func_graph->DoBreakLoop();
+      }
+    }
   }
 }
 }  // namespace mindspore

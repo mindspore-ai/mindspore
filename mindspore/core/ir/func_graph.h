@@ -388,6 +388,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   const std::vector<AnfNodePtr> &inputs() const;
   bool IsDerived() const { return is_derived_; }
 
+  const std::string &phase() const { return phase_; }
+
  protected:
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   // Whether the instance is base or derived.
@@ -485,6 +487,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   bool is_tensor_condition_branch_ = false;
   // Corresponding python obj.
   ValuePtr python_obj_ = nullptr;
+  std::string phase_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {
