@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IDENTITYN_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IDENTITYN_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_IDENTITYN_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_IDENTITYN_CPU_KERNEL_H_
 
 #include <vector>
 #include <set>
-
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/identity_n.h"
 
 namespace mindspore {
 namespace kernel {
-class IdentityNCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class IdentityNCpuKernelMod : public NativeCpuKernelMod {
  public:
   IdentityNCpuKernelMod() = default;
   ~IdentityNCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t in_num_;
-  size_t out_num_;
   const std::set<TypeId> support_types_ = {
     kNumberTypeBool,  kNumberTypeUInt8,  kNumberTypeInt8,  kNumberTypeUInt16,  kNumberTypeInt16,   kNumberTypeUInt32,
     kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
@@ -48,4 +49,4 @@ class IdentityNCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IDENTITYN_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_IDENTITYN_CPU_KERNEL_H_
