@@ -268,6 +268,52 @@ class DATASET_API Normalize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Pad the image according to padding parameters.
+class DATASET_API Pad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] padding A vector representing the number of pixels to pad the image.
+  ///    If the vector has one value, it pads all sides of the image with that value.
+  ///    If the vector has two values, it pads left and right with the first and
+  ///    top and bottom with the second value.
+  ///    If the vector has four values, it pads left, top, right, and bottom with
+  ///    those values respectively.
+  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Only valid if the
+  ///    padding_mode is BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
+  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
+  /// \param[in] padding_mode The method of padding (default=BorderType.kConstant).
+  ///    Can be any of
+  ///    [BorderType.kConstant, BorderType.kEdge, BorderType.kReflect, BorderType.kSymmetric]
+  ///    - BorderType.kConstant, means it fills the border with constant values
+  ///    - BorderType.kEdge, means it pads with the last value on the edge
+  ///    - BorderType.kReflect, means it reflects the values on the edge omitting the last value of edge
+  ///    - BorderType.kSymmetric, means it reflects the values on the edge repeating the last value of edge
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto pad_op = vision::Pad({10, 10, 10, 10}, {255, 255, 255});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, pad_op},  // operations
+  ///                            {"image"});           // input columns
+  /// \endcode
+  explicit Pad(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value = {0},
+               BorderType padding_mode = BorderType::kConstant);
+
+  /// \brief Destructor.
+  ~Pad() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply a Random Affine transformation on the input image in RGB or Greyscale mode.
 class DATASET_API RandomAffine final : public TensorTransform {
  public:
@@ -310,6 +356,37 @@ class DATASET_API RandomAffine final : public TensorTransform {
   /// \brief Destructor.
   ~RandomAffine() = default;
 
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Rescale the pixel value of input image.
+class DATASET_API Rescale final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] rescale Rescale factor.
+  /// \param[in] shift Shift factor.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto rescale_op = vision::Rescale(1.0, 0.0);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, rescale_op},  // operations
+  ///                            {"image"});               // input columns
+  /// \endcode
+  Rescale(float rescale, float shift);
+
+  /// \brief Destructor.
+  ~Rescale() = default;
+
+ protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -516,6 +593,31 @@ class DATASET_API Rotate final : public TensorTransform {
   std::shared_ptr<RotateOperation> op_;
   struct Data;
   std::shared_ptr<Data> data_;
+};
+
+/// \brief Swap the red and blue channels of the input image.
+class DATASET_API SwapRedBlue final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto swap_red_blue_op = vision::SwapRedBlue();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, swap_red_blue_op},  // operations
+  ///                            {"image"});                     // input columns
+  /// \endcode
+  SwapRedBlue();
+
+  /// \brief Destructor.
+  ~SwapRedBlue() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 };
 }  // namespace vision
 }  // namespace dataset
