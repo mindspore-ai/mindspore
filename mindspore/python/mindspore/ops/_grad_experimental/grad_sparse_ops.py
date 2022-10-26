@@ -38,6 +38,7 @@ from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops._utils.utils import is_shape_unknown
+from mindspore import context
 
 # Unused parameters are placeholders.
 dyn_shape_op = P.TensorShape()
@@ -216,10 +217,12 @@ def get_bprop_sparse_segment_sqrt_n_with_num_segments(self):
 @bprop_getters.register(SparseSegmentSum)
 def get_bprop_sparse_segment_sum(self):
     """Grad definition for `SparseSegmentSum` operation."""
-    input_grad = G.SparseSegmentSumGrad()
+    gather = P.Gather()
+    unsorted_segment_sum = P.UnsortedSegmentSum()
     shape = P.Shape()
 
-    def bprop(x, indices, segment_ids, out, dout):
+    def bprop_gpu(x, indices, segment_ids, out, dout):
+        input_grad = G.SparseSegmentSumGrad()
         shape_x = shape(x)
         if is_shape_unknown(shape_x):
             shape_x = dyn_shape_op(x)
@@ -230,16 +233,34 @@ def get_bprop_sparse_segment_sum(self):
         all_d = (dx, zeros_like(indices), zeros_like(segment_ids))
         return all_d
 
+    def bprop(x, indices, segment_ids, out, dout):
+        shape_x = shape(x)
+        if is_shape_unknown(shape_x):
+            shape_x = dyn_shape_op(x)
+        output_dim0 = P.Cast()(shape_x[0], mstype.int32)
+        segment_ids = F.cast(segment_ids, mstype.int32)
+        input0 = gather(dout, segment_ids, 0)
+        input0 = F.cast(input0, mstype.float32)
+        indices = F.cast(indices, mstype.int32)
+        dx = unsorted_segment_sum(input0, indices, output_dim0)
+        dx = F.cast(dx, F.dtype(dout))
+        return dx, zeros_like(indices), zeros_like(segment_ids)
+
+    if context.get_context('device_target') == "GPU":
+        return bprop_gpu
+
     return bprop
 
 
 @bprop_getters.register(SparseSegmentSumWithNumSegments)
 def get_bprop_sparse_segment_sum_with_num_segments(self):
     """Grad definition for `SparseSegmentSumWithNumSegments` operation."""
-    input_grad = G.SparseSegmentSumGrad()
+    gather = P.Gather()
+    unsorted_segment_sum = P.UnsortedSegmentSum()
     shape = P.Shape()
 
-    def bprop(x, indices, segment_ids, num_segments, out, dout):
+    def bprop_gpu(x, indices, segment_ids, num_segments, out, dout):
+        input_grad = G.SparseSegmentSumGrad()
         shape_x = shape(x)
         if is_shape_unknown(shape_x):
             shape_x = dyn_shape_op(x)
@@ -249,6 +270,23 @@ def get_bprop_sparse_segment_sum_with_num_segments(self):
         dx = input_grad(dout, indices, segment_ids, output_dim0)
         all_d = (dx, zeros_like(indices), zeros_like(segment_ids), zeros_like(num_segments))
         return all_d
+
+    def bprop(x, indices, segment_ids, num_segments, out, dout):
+        shape_x = shape(x)
+        if is_shape_unknown(shape_x):
+            shape_x = dyn_shape_op(x)
+        output_dim0 = P.Cast()(shape_x[0], mstype.int32)
+        segment_ids = F.cast(segment_ids, mstype.int32)
+        input0 = gather(dout, segment_ids, 0)
+        input0 = F.cast(input0, mstype.float32)
+        indices = F.cast(indices, mstype.int32)
+        dx = unsorted_segment_sum(input0, indices, output_dim0)
+        dx = F.cast(dx, F.dtype(dout))
+        all_d = (dx, zeros_like(indices), zeros_like(segment_ids), zeros_like(num_segments))
+        return all_d
+
+    if context.get_context('device_target') == "GPU":
+        return bprop_gpu
 
     return bprop
 

@@ -30,6 +30,12 @@ namespace {
 abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
+  auto params_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  // Dynamic rank.
+  if (params_shape_ptr->IsDimUnknown() || indices_shape_ptr->IsDimUnknown()) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   abstract::AbstractTensorPtr indices =
