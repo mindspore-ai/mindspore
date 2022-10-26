@@ -776,10 +776,8 @@ class _NumpySlicesDataset:
             data = self.process_dict(data)
 
         if isinstance(data, tuple):
-            self.data = ()
+            self.data = data
             data_len = len(data)
-            for i in range(data_len):
-                self.data = self.data + (np.array(data[i]),)
         else:
             self.data = (np.array(data),)
 
@@ -798,7 +796,7 @@ class _NumpySlicesDataset:
                 self.column_list.append("column_" + str(i))
 
     def __getitem__(self, index):
-        data_row = [d[index, ...] for d in self.data]
+        data_row = [d[index] for d in self.data]
         data_res = tuple(data_row)
         return data_res
 

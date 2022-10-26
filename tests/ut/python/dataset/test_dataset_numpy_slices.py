@@ -373,6 +373,50 @@ def test_numpy_slice_empty_output_shape():
     assert dataset.output_shapes() == []
 
 
+def test_numpy_slice_with_diff_shape():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if NumpySlicesDataset produces diff shape data
+    Expectation: The dataset is processed success
+    """
+    data1 = np.array([1], dtype=np.uint8)
+    data2 = np.array([5, 6], dtype=np.uint8)
+    data3 = np.array([9, 10, 11], dtype=np.uint8)
+    data4 = np.array([13, 14, 15, 16], dtype=np.uint8)
+
+    data = [data1, data2, data3, data4]
+
+    label = [1, 2, 3, 4]
+
+    dataset = de.NumpySlicesDataset((data, label), ["data", "label"], num_shards=4, shard_id=2, shuffle=False)
+
+    for item in dataset.create_dict_iterator(output_numpy=True):
+        assert (item["data"] == data3).all()
+
+
+def test_numpy_slice_with_diff_shape_dict():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if NumpySlicesDataset produces diff shape data by dict
+    Expectation: The dataset is processed success
+    """
+    data1 = np.array([1], dtype=np.uint8)
+    data2 = np.array([5, 6], dtype=np.uint8)
+    data3 = np.array([9, 10, 11], dtype=np.uint8)
+    data4 = np.array([13, 14, 15, 16], dtype=np.uint8)
+
+    data = [data1, data2, data3, data4]
+
+    label = [1, 2, 3, 4]
+
+    dict_data = {"data": data, "label": label}
+
+    dataset = de.NumpySlicesDataset(dict_data, num_shards=4, shard_id=2, shuffle=False)
+
+    for item in dataset.create_dict_iterator(output_numpy=True):
+        assert (item["data"] == data3).all()
+
+
 if __name__ == "__main__":
     test_numpy_slices_list_1()
     test_numpy_slices_list_2()
@@ -394,3 +438,5 @@ if __name__ == "__main__":
     test_numpy_slices_invalid_empty_column_names()
     test_numpy_slices_invalid_empty_data_column()
     test_numpy_slice_empty_output_shape()
+    test_numpy_slice_with_diff_shape()
+    test_numpy_slice_with_diff_shape_dict()
