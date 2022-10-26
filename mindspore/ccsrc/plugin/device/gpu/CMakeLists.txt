@@ -75,6 +75,10 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib64/libcufft.so
             ${CUDA_PATH}/lib64/libcusparse.so)
     endif()
+
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND ${CUDA_VERSION} VERSION_GREATER "11.0")
+        target_link_libraries(mindspore_gpu PRIVATE gpu_hash_table)
+    endif()
 endif()
 
 if(ENABLE_DEBUGGER)

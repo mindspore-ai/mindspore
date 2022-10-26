@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_KERNEL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_KERNEL_CUH_
 
+#if CUDA_VERSION > 11000
 #include <cuco/dynamic_map.cuh>
 #include <curand_kernel.h>
 
@@ -219,4 +220,5 @@ __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const i
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
+#endif
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_KERNEL_CUH_
