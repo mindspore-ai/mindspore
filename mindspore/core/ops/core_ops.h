@@ -1385,6 +1385,7 @@ GVAR_DEF(PrimitivePtr, kPrimQuantDTypeCast, std::make_shared<Primitive>("QuantDT
 GVAR_DEF(PrimitivePtr, kPrimWhile, std::make_shared<Primitive>("While"));
 GVAR_DEF(PrimitivePtr, kPrimPull, std::make_shared<Primitive>("Pull"));
 GVAR_DEF(PrimitivePtr, kPrimPush, std::make_shared<Primitive>("Push"));
+GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatus, std::make_shared<Primitive>("NPUGetFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUAllocFloatStatus, std::make_shared<Primitive>("NPUAllocFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimPyFunc, std::make_shared<Primitive>("PyFunc"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicLossScale, std::make_shared<Primitive>("_DynamicLossScale"));
