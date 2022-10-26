@@ -2253,7 +2253,7 @@ class CTCLoss(LossBase):
 
     Args:
         blank (int): The blank label. Default: 0.
-        reduction (string): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
 
     Inputs:

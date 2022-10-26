@@ -20,3 +20,5 @@ mindspore.ops.cdist
         - **ValueError** - `p` 是负数。
         - **ValueError** - `input_x` 与 `input_y` 维度不同。
         - **ValueError** - `input_x` 与 `input_y` 的维度不是2，也不是3。
+        - **ValueError** - 单批次训练下 `x` 和 `y` 的shape不一样。
+        - **ValueError** - `x` 和 `y` 的列数不一样。
