@@ -61,8 +61,8 @@ bool CumulativeLogsumexpCpuKernelMod::Launch(const std::vector<kernel::AddressPt
 }
 
 template <typename t>
-void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(t *input_data, t *output_data, uint32_t outer, uint32_t inner,
-                                                        uint32_t depth) {
+void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(const t *input_data, t *output_data, const uint32_t outer,
+                                                        const uint32_t inner, const uint32_t depth) {
   for (size_t outer_index = 0; outer_index < outer; ++outer_index) {
     size_t outer_index_adj;
     if (reverse_) {
@@ -104,13 +104,8 @@ void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(t *input_data, t *output
             double a = temp;
             double b, min, max;
             b = static_cast<double>(input_data[index]);
-            if (a < b) {
-              min = a;
-              max = b;
-            } else {
-              min = b;
-              max = a;
-            }
+            min = (a < b) ? a : b;
+            max = (a >= b) ? a : b;
             temp = log(one + exp(min - max)) + max;
           }
         } else {
@@ -121,13 +116,8 @@ void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(t *input_data, t *output
             double a = temp;
             double b, min, max;
             b = static_cast<double>(input_data[index]);
-            if (a < b) {
-              min = a;
-              max = b;
-            } else {
-              min = b;
-              max = a;
-            }
+            min = (a < b) ? a : b;
+            max = (a >= b) ? a : b;
             output_data[index] = static_cast<t>(log(one + exp(min - max)) + max);
             temp = log(one + exp(min - max)) + max;
           }
