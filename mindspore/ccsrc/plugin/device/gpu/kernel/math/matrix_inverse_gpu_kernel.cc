@@ -68,8 +68,9 @@ int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     batch_size_ *= input_shape[i];
   }
   auto dtype = inputs[kIndex0]->GetDtype();
-  dtype_size_ = GetTypeByte(TypeIdToType(dtype));
-  input_size_ = dtype_size_;
+  int typesize = GetTypeByte(TypeIdToType(dtype));
+  dtype_size_ = sizeof(TypeIdToType(dtype));
+  input_size_ = typesize;
   for (auto dim : input_shape) {
     input_size_ *= dim;
   }
