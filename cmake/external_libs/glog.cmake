@@ -1,6 +1,6 @@
 if(BUILD_LITE)
     if(MSVC)
-        set(glog_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+        set(glog_CXXFLAGS "${CMAKE_CXX_FLAGS} -Dgoogle=mindspore_private")
         set(glog_CFLAGS "${CMAKE_C_FLAGS}")
         set(glog_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
         if(DEBUG_MODE)
