@@ -26,7 +26,7 @@ mindspore.nn.KLDivLoss
 
     .. note::
         - 目前Ascend平台不支持数据类型float64。
-        - 仅当 `reduction` 设置为"batchmean"时输出才与KL散度的数学定义一致。
+        - 仅当 `reduction` 设置为"batchmean"时输出才与Kullback-Leibler散度的数学定义一致。
 
     参数：
         - **reduction** (str) - 指定输出结果的计算方式。默认值: "mean"。

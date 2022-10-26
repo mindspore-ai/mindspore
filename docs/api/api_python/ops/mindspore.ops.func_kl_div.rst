@@ -26,7 +26,7 @@ mindspore.ops.kl_div
 
     .. note::
         - 目前Ascend平台不支持数据类型float64。
-        - 仅当 `reduction` 设置为"batchmean"时输出才与KL散度的数学定义一致。
+        - 仅当 `reduction` 设置为"batchmean"时输出才与Kullback-Leibler散度的数学定义一致。
 
     参数：
         - **logits** (Tensor) - 数据类型支持float16、float32或float64。

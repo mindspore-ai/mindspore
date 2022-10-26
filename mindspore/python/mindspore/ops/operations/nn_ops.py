@@ -5545,9 +5545,9 @@ class KLDivLoss(Primitive):
     :math:`\ell(x, target)` represents `output`.
 
     Note:
-        On Ascend, float64 dtype is not currently supported.
-        The output aligns with the mathematical definition of KL divergence
-        only when `reduction` is set to 'batchmean'.
+        - On Ascend, float64 dtype is not currently supported.
+        - The output aligns with the mathematical definition of Kullback-Leibler divergence
+          only when `reduction` is set to 'batchmean'.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.

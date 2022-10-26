@@ -895,7 +895,8 @@ def kl_div(logits, labels, reduction='mean'):
 
     Note:
         - Currently it does not support float64 input on `Ascend`.
-        - It behaves the same as the mathematical definition only when `reduction` is set to `batchmean`.
+        - The output aligns with the mathematical definition of Kullback-Leibler divergence
+          only when `reduction` is set to 'batchmean'.
 
     Args:
         logits (Tensor): The input Tensor. The data type must be float16, float32 or float64.
