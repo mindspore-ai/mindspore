@@ -200,6 +200,7 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
       const auto &kernels = graph->execution_order();
       CreateKernel(kernels);
+      DoSomas(NOT_NULL(graph));
     }
   } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id()
@@ -288,7 +289,6 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
   SetAtomicCleanToNodes(graph, node_atomics_persistent_cache_);
   CreateKernel(atomic_nodes);
   LaunchDeviceLibrary();
-  DoSomas(graph);
 }
 
 bool AscendKernelExecutor::PySyncRuning() const {
