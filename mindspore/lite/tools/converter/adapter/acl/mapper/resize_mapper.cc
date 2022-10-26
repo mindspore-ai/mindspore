@@ -67,7 +67,7 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(dst_prim);
   auto pytorch_half_pixel_ptr = src_prim->GetAttr("coordinate_transform_mode");
   if (pytorch_half_pixel_ptr != nullptr &&
-      GetValue<int64_t>(pytorch_half_pixel_ptr) == (int64_t)mindspore::CoordinateTransformMode::HALF_PIXEL) {
+      GetValue<int64_t>(pytorch_half_pixel_ptr) == mindspore::CoordinateTransformMode::HALF_PIXEL) {
     dst_prim->set_attr("half_pixel_centers", MakeValue(true));
   }
   dst_prim->SetAttrs(src_prim->attrs());
