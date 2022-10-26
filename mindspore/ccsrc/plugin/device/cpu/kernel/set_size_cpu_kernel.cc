@@ -15,104 +15,48 @@
  */
 
 #include "plugin/device/cpu/kernel/set_size_cpu_kernel.h"
-
 #include <algorithm>
 #include <unordered_set>
-
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/set_size.h"
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kIndicesShapeSize = 2;
-constexpr size_t kSetSizeInputsNum = 3;
-constexpr size_t kSetSizeOutputsNum = 1;
-}  // namespace
+bool SetSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  constexpr size_t input_num = 3;
+  constexpr size_t output_num = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SetSize>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  validate_indices_ = kernel_ptr->get_validate_indices();
 
-void SetSizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  validate_indices_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "validate_indices");
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  val_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (indices_shape.size() != kIndicesShapeSize) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', it requires 'set_indices' should be a "
-                             << kIndicesShapeSize << "-D Tensor, but got " << indices_shape.size() << "-D.";
-  }
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', it requires 'set_values' should be a 1-D Tensor "
-                                "and the first dimension length "
-                                "should be equal to the first dimension length of "
-                                "'set_indices', but got 'set_values' shape: "
-                             << Vector2Str(values_shape) << " and 'set_indices' shape: " << Vector2Str(indices_shape)
-                             << ".";
-  }
-  auto shape_index = 2;
-  shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, shape_index);
-  if (shape_.size() != 1 || shape_[0] != indices_shape[1]) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', it requires 'set_shape' should be a 1-D Tensor "
-                                "and the first dimension length "
-                                "should be equal to the second dimension length of "
-                                "'set_indices', but got 'set_shape' shape: "
-                             << Vector2Str(shape_) << " and 'set_indices' shape: " << Vector2Str(indices_shape) << ".";
-  }
-  values_size_ = SizeToLong(values_shape[0]);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dims_ = shape_[0];
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
-bool SetSizeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSetSizeInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSetSizeOutputsNum, kernel_name_);
-  if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
-    return true;
+int SetSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret << ".";
-  }
-  for (unsigned int i = 0; i < values_size_ && validate_indices_; ++i) {
-    if (!IndicesValid(i, inputs)) {
-      return false;
-    }
-  }
-  switch (val_dtype_) {
-    case kNumberTypeInt8:
-      (void)SetSizeCompute<int8_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt16:
-      (void)SetSizeCompute<int16_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt32:
-      (void)SetSizeCompute<int32_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt64:
-      (void)SetSizeCompute<int64_t>(inputs, outputs);
-      break;
-    case kNumberTypeUInt8:
-      (void)SetSizeCompute<uint8_t>(inputs, outputs);
-      break;
-    case kNumberTypeUInt16:
-      (void)SetSizeCompute<uint16_t>(inputs, outputs);
-      break;
-    default:
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', set_values type error.";
-      break;
-  }
-  return true;
+  auto values_shape = inputs[kIndex1]->GetShapeVector();
+  shape_ = inputs[kIndex2]->GetShapeVector();
+  values_size_ = SizeToLong(values_shape[0]);
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+  dims_ = shape_[0];
+  return KRET_OK;
 }
 
 bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::AddressPtr> &inputs) const {
   bool valid = true;
   bool different = false;
   bool increasing = true;
-  const auto *indices_t = static_cast<int64_t *>(inputs[0]->addr);
-  const auto *shape_t = static_cast<int64_t *>(inputs[2]->addr);
+  const auto *indices_t = static_cast<int64_t *>(inputs[kIndex0]->addr);
+  const auto *shape_t = static_cast<int64_t *>(inputs[kIndex2]->addr);
   for (int64_t di = 0; di < dims_; ++di) {
     if (indices_t[(n * dims_) + di] < 0 || indices_t[(n * dims_) + di] >= shape_t[di]) {
       valid = false;
@@ -148,8 +92,23 @@ bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::Addr
 }
 
 template <typename T>
-bool SetSizeCpuKernelMod::SetSizeCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) const {
+bool SetSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
+  if (outputs[0]->size == 0) {
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
+    return true;
+  }
+  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret << ".";
+  }
+  for (unsigned int i = 0; i < values_size_ && validate_indices_; ++i) {
+    if (!IndicesValid(i, inputs)) {
+      return false;
+    }
+  }
+
   auto output_t = static_cast<int32_t *>(outputs[0]->addr);
   auto indices_t = static_cast<int64_t *>(inputs[0]->addr);
   auto vals_t = static_cast<T *>(inputs[1]->addr);
@@ -183,39 +142,48 @@ bool SetSizeCpuKernelMod::SetSizeCompute(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-std::vector<KernelAttr> SetSizeCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt8)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt16)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeUInt8)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddInputAttr(kNumberTypeUInt16)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt32)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, SetSizeCpuKernelMod::KernelRunFunc>> &SetSizeCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, SetSizeCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SetSizeCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SetSizeCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SetSizeCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SetSizeCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SetSizeCpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SetSizeCpuKernelMod::LaunchKernel<uint16_t>},
+  };
+  return func_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SetSize, SetSizeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

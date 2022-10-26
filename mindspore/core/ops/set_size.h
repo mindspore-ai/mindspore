@@ -29,9 +29,11 @@ constexpr auto kNameSetSize = "SetSize";
 class MIND_API SetSize : public BaseOperator {
  public:
   SetSize() : BaseOperator(kNameSetSize) { InitIOName({"set_indices", "set_values", "set_shape"}, {"size"}); }
-  void Init() const {}
+  void Init(const bool validate_indices = true);
   MIND_API_BASE_MEMBER(SetSize);
-  void set_set_shape(const std::vector<int64_t> &set_shape);
+  void set_validate_indices(const bool &validate_indices);
+
+  bool get_validate_indices() const;
 };
 abstract::AbstractBasePtr SetSizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<abstract::AbstractBasePtr> &input_args);
