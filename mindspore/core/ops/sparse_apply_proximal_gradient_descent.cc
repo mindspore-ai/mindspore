@@ -38,12 +38,15 @@ abstract::ShapePtr SparseApplyProximalGradientDescentInferShape(const PrimitiveP
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
 
   auto scalar_shape = 0;
-  (void)CheckAndConvertUtils::CheckInteger("alpha_shape size", alpha_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, scalar_shape, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("alpha_shape size", SizeToLong(alpha_shape.size()), kEqual, scalar_shape,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", SizeToLong(l1_shape.size()), kEqual, scalar_shape,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", SizeToLong(l2_shape.size()), kEqual, scalar_shape,
+                                           prim_name);
 
   // Var dimension must be equal or greater than 1.
-  (void)CheckAndConvertUtils::CheckInteger("var dimension", var_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
 
   if (var_shape.size() != grad_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -59,7 +62,7 @@ abstract::ShapePtr SparseApplyProximalGradientDescentInferShape(const PrimitiveP
   }
 
   // Indices must be rank 1.
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
   if (indices_shape[0] != grad_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', grad.shape[0] must be equal to indices.shape[0], but got grad.shape[0]: "

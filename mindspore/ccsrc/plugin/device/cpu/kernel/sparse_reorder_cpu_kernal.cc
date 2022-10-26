@@ -95,11 +95,11 @@ bool SparseReorderCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   }
 
   SparseGradient<I, T> sparse_tensor_;
-  const auto *indices_addr = reinterpret_cast<I *>(inputs[0]->addr);
-  const auto *values_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  const auto *shape_addr = reinterpret_cast<I *>(inputs[2]->addr);
-  auto *y_indices_addr = reinterpret_cast<I *>(outputs[0]->addr);
-  auto *y_values_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  const auto *indices_addr = static_cast<I *>(inputs[0]->addr);
+  const auto *values_addr = static_cast<T *>(inputs[1]->addr);
+  const auto *shape_addr = static_cast<I *>(inputs[2]->addr);
+  auto *y_indices_addr = static_cast<I *>(outputs[0]->addr);
+  auto *y_values_addr = static_cast<T *>(outputs[1]->addr);
   const size_t indices_length = inputs[0]->size / sizeof(I);
   const size_t values_length = inputs[1]->size / sizeof(T);
   size_t rank = indices_shape_[1];
@@ -131,7 +131,7 @@ bool SparseReorderCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   }
   sparse_tensor_.indices_ = y_indices_addr;
   sparse_tensor_.value_ = y_values_addr;
-  sparse_tensor_.dims_size_ = rank;
+  sparse_tensor_.dims_size_ = static_cast<int64_t>(rank);
   std::vector<int64_t> reorder(indices_shape_[0]);
   std::iota(reorder.begin(), reorder.end(), 0);
   // Sort to get order of indices

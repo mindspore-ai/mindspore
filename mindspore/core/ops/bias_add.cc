@@ -51,34 +51,36 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   const int64_t x_size = 2;
   (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(input_shape.size()), kGreaterEqual, x_size, prim_name);
   auto data_format_ptr = primitive->GetAttr("format");
-  int64_t data_format = Format::NCHW;
+  int64_t data_format = static_cast<int64_t>(Format::NCHW);
   if (data_format_ptr != nullptr) {
     data_format = CheckAndConvertUtils::GetAndCheckFormat(data_format_ptr);
   }
   auto attr_value_str = FormatEnumToString(Format(data_format));
-  primitive->AddAttr("data_format", data_format_ptr);
+  (void)primitive->AddAttr("data_format", data_format_ptr);
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   auto is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-  if ((data_format == Format::NCDHW) && input_shape.size() != x_max_rank && (is_ascend || is_cpu)) {
+  if ((data_format == static_cast<int64_t>(Format::NCDHW)) && input_shape.size() != x_max_rank &&
+      (is_ascend || is_cpu)) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', NCDHW format only support 5-dims input in Ascend or CPU target, but got "
                              << attr_value_str << ".";
   }
-  if ((data_format == Format::NHWC || data_format == Format::NCHW) &&
+  if ((data_format == static_cast<int64_t>(Format::NHWC) || data_format == static_cast<int64_t>(Format::NCHW)) &&
       (input_shape.size() > x_max_rank || input_shape.size() < x_min_rank)) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the dimension of 'input_x' tensor must be 2D-5D when data_format is "
                              << attr_value_str << ".";
   }
 
-  if ((data_format == Format::NHWC) && bias_shape[0] != input_shape[input_shape.size() - 1]) {
+  if ((data_format == static_cast<int64_t>(Format::NHWC)) && bias_shape[0] != input_shape[input_shape.size() - 1]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape should be equal to input_x["
                              << (input_shape.size() - 1) << "] shape when data_format is " << attr_value_str << ".";
   }
-  if ((data_format == Format::NCHW || data_format == Format::NCDHW) && bias_shape[0] != input_shape[1]) {
+  if ((data_format == static_cast<int64_t>(Format::NCHW) || data_format == static_cast<int64_t>(Format::NCDHW)) &&
+      bias_shape[0] != input_shape[1]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', bias[0] shape should be equal to input_x[1] "
                                 "shape when data_format is "

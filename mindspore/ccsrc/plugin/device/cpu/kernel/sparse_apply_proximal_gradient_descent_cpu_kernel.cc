@@ -82,20 +82,20 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
                                                            const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResouce();
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != KRET_OK) {
+  if (ret != static_cast<int>(KRET_OK)) {
     return ret;
   }
   enum input_index : size_t { Var_no, Alpha_no, L1_no, L2_no, Grad_no, Indices_no };
-  ShapeVector var_shape = inputs[Var_no]->GetShapeVector();
-  ShapeVector alpha_shape = inputs[Alpha_no]->GetShapeVector();
-  ShapeVector l1_shape = inputs[L1_no]->GetShapeVector();
-  ShapeVector l2_shape = inputs[L2_no]->GetShapeVector();
-  ShapeVector grad_shape = inputs[Grad_no]->GetShapeVector();
-  ShapeVector indices_shape = inputs[Indices_no]->GetShapeVector();
+  auto var_shape = inputs[static_cast<size_t>(Var_no)]->GetShapeVector();
+  auto alpha_shape = inputs[static_cast<size_t>(Alpha_no)]->GetShapeVector();
+  auto l1_shape = inputs[static_cast<size_t>(L1_no)]->GetShapeVector();
+  auto l2_shape = inputs[static_cast<size_t>(L2_no)]->GetShapeVector();
+  auto grad_shape = inputs[static_cast<size_t>(Grad_no)]->GetShapeVector();
+  auto indices_shape = inputs[static_cast<size_t>(Indices_no)]->GetShapeVector();
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, var must be at least 1D.";
   } else {
-    var_first_dim_size_ = var_shape[0];
+    var_first_dim_size_ = LongToSize(var_shape[0]);
   }
   if (var_shape.size() != grad_shape.size()) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, rank(grad) should be same as rank(var), but "
@@ -107,13 +107,13 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
       MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, the shape of var and grad must equal in dimension "
                         << i << ".";
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, indices must be 1D, but got " << indices_shape.size()
                       << "D.";
   }
-  indices_size_ = indices_shape[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, grad.shape[0] must be equal to indices.shape[0], but "
                          "got grad.shape[0]: "
@@ -131,23 +131,23 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, l2 is not a scalar, got shape: "
                       << Vector2Str(l2_shape) << ".";
   }
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
 template <typename I, typename T>
-bool SparseApplyProximalGradientDescentCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                                  const std::vector<AddressPtr> &,
-                                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseApplyProximalGradientDescentCpuKernelMod::LaunchKernel(
+  const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  const std::vector<kernel::AddressPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyProximalGradientDescentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyProximalGradientDescentOutputsNum, kernel_name_);
 
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[4]->addr);
-  auto indices = reinterpret_cast<I *>(inputs[5]->addr);
-  auto alpha_scalar = reinterpret_cast<T *>(inputs[1]->addr)[0];
-  auto l1_scalar = reinterpret_cast<T *>(inputs[2]->addr)[0];
-  auto l2_scalar = reinterpret_cast<T *>(inputs[3]->addr)[0];
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto var = static_cast<T *>(inputs[0]->addr);
+  auto grad = static_cast<T *>(inputs[4]->addr);
+  auto indices = static_cast<I *>(inputs[5]->addr);
+  auto alpha_scalar = static_cast<T *>(inputs[1]->addr)[0];
+  auto l1_scalar = static_cast<T *>(inputs[2]->addr)[0];
+  auto l2_scalar = static_cast<T *>(inputs[3]->addr)[0];
+  auto output = static_cast<T *>(outputs[0]->addr);
 
   for (size_t i = 0; i < indices_size_; i++) {
     I index = indices[i];
@@ -163,18 +163,18 @@ bool SparseApplyProximalGradientDescentCpuKernelMod::LaunchKernel(const std::vec
       auto prox_v = var[j];
       prox_v -= grad[k] * learning_rate;
       if (l1_scalar > static_cast<T>(0.0)) {
-        var[j] = (T)Sign(static_cast<double>(prox_v)) *
-                 (T)std::fmax(std::fabs(static_cast<double>(prox_v)) -
-                                static_cast<double>(learning_rate) * static_cast<double>(l1_scalar),
-                              static_cast<double>(0.0)) /
+        var[j] = static_cast<T>(Sign(static_cast<double>(prox_v))) *
+                 static_cast<T>(std::fmax(std::fabs(static_cast<double>(prox_v)) -
+                                            static_cast<double>(learning_rate) * static_cast<double>(l1_scalar),
+                                          static_cast<double>(0.0))) /
                  (static_cast<T>(1.0) + l2_scalar * learning_rate);
       } else {
-        var[j] = prox_v / (static_cast<T>(1.0) + l2_scalar * learning_rate);
+        var[j] = static_cast<T>(prox_v) / (static_cast<T>(1.0) + l2_scalar * learning_rate);
       }
     }
   }
 
-  size_t copy_size = var_first_dim_size_ * var_outer_dim_size_ * sizeof(T);
+  auto copy_size = var_first_dim_size_ * var_outer_dim_size_ * sizeof(T);
   auto ret = memcpy_s(output, copy_size, var, copy_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, memcpy_s error, errorno: " << ret << ".";

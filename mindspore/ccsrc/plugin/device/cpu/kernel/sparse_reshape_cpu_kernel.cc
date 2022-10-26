@@ -87,14 +87,14 @@ bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
                                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseReshapeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseReshapeOutputsNum, kernel_name_);
-  auto in0 = reinterpret_cast<int64_t *>(inputs[0]->addr);
-  auto in1 = reinterpret_cast<int64_t *>(inputs[1]->addr);
-  auto in2 = reinterpret_cast<int64_t *>(inputs[2]->addr);
-  auto out0 = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  auto out1 = reinterpret_cast<int64_t *>(outputs[1]->addr);
-  const int64_t input_rank = inputs[1]->size / sizeof(int64_t);
-  const int64_t output_rank = inputs[2]->size / sizeof(int64_t);
-  const int64_t nnz = indices_shape_[0];
+  auto in0 = static_cast<int64_t *>(inputs[0]->addr);
+  auto in1 = static_cast<int64_t *>(inputs[1]->addr);
+  auto in2 = static_cast<int64_t *>(inputs[2]->addr);
+  auto out0 = static_cast<int64_t *>(outputs[0]->addr);
+  auto out1 = static_cast<int64_t *>(outputs[1]->addr);
+  const int64_t input_rank = SizeToLong(inputs[1]->size) / sizeof(int64_t);
+  const int64_t output_rank = SizeToLong(inputs[2]->size) / sizeof(int64_t);
+  const int64_t nnz = SizeToLong(indices_shape_[0]);
 
   int64_t dense_size = 1;
   int64_t dividend = 1;
@@ -123,7 +123,7 @@ bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     }
   }
   if (ui != -1) {
-    CheckAndConvertUtils::CheckInteger("divident", dividend, kGreaterThan, 0, kernel_name_);
+    (void)CheckAndConvertUtils::CheckInteger("divident", dividend, kGreaterThan, 0, kernel_name_);
     const int64_t missing = dense_size / dividend;
     if (dividend * missing != dense_size) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the requested shape should be a multiple of " << dividend
@@ -138,8 +138,8 @@ bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
                       << ", but got the input newshape is a tensor with " << dense_size;
   }
 
-  int64_t input_size = inputs[0]->size;
-  int64_t output_size = outputs[0]->size;
+  int64_t input_size = SizeToLong(inputs[0]->size);
+  int64_t output_size = SizeToLong(outputs[0]->size);
   bool same = SameConvert(input_size, output_size, input_rank, output_rank, in0, in1, out0, out1);
   if (same) {
     return true;
@@ -149,22 +149,22 @@ bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   std::vector<int64_t> output_strides(output_rank);
   input_strides[input_rank - 1] = 1;
   for (int64_t d = input_rank - 2; d >= 0; d--) {
-    input_strides[d] = input_strides[d + 1] * *(in1 + d + 1);
+    input_strides[d] = SizeToLong(input_strides[d + 1]) * *(in1 + d + 1);
   }
   output_strides[output_rank - 1] = 1;
   for (int64_t d = output_rank - 2; d >= 0; d--) {
-    output_strides[d] = output_strides[d + 1] * *(out1 + d + 1);
+    output_strides[d] = SizeToLong(output_strides[d + 1]) * *(out1 + d + 1);
   }
 
   auto task = [&input_strides, &output_strides, &input_rank, &output_rank, &in0, &out0](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       int64_t id = 0;
       for (int64_t j = 0; j < input_rank; j++) {
-        id += *(in0 + ((int64_t)i) * input_rank + j) * input_strides[j];
+        id += *(in0 + ((int64_t)i) * input_rank + j) * SizeToLong(input_strides[j]);
       }
       for (int64_t j = 0; j < output_rank; j++) {
-        *(out0 + ((int64_t)i) * output_rank + j) = id / output_strides[j];
-        id %= output_strides[j];
+        *(out0 + ((int64_t)i) * output_rank + j) = id / SizeToLong(output_strides[j]);
+        id %= SizeToLong(output_strides[j]);
       }
     }
   };

@@ -77,13 +77,13 @@ bool MinimumGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradGradOutputsNum, kernel_name_);
 
-  auto x1_addr = reinterpret_cast<T *>(inputs[kInputIndex0]->addr);
-  auto x2_addr = reinterpret_cast<T *>(inputs[kInputIndex1]->addr);
-  auto grad_y1_addr = reinterpret_cast<T *>(inputs[kInputIndex2]->addr);
-  auto grad_y2_addr = reinterpret_cast<T *>(inputs[kInputIndex3]->addr);
-  auto sopd_x1_addr = reinterpret_cast<T *>(outputs[kOutputIndex0]->addr);
-  auto sopd_x2_addr = reinterpret_cast<T *>(outputs[kOutputIndex1]->addr);
-  auto sopd_grads_addr = reinterpret_cast<T *>(outputs[kOutputIndex2]->addr);
+  auto x1_addr = static_cast<T *>(inputs[kInputIndex0]->addr);
+  auto x2_addr = static_cast<T *>(inputs[kInputIndex1]->addr);
+  auto grad_y1_addr = static_cast<T *>(inputs[kInputIndex2]->addr);
+  auto grad_y2_addr = static_cast<T *>(inputs[kInputIndex3]->addr);
+  auto sopd_x1_addr = static_cast<T *>(outputs[kOutputIndex0]->addr);
+  auto sopd_x2_addr = static_cast<T *>(outputs[kOutputIndex1]->addr);
+  auto sopd_grads_addr = static_cast<T *>(outputs[kOutputIndex2]->addr);
 
   auto ret_sopd_x1 = memset_s(sopd_x1_addr, 1, 0, 1);
   if (ret_sopd_x1 != EOK) {

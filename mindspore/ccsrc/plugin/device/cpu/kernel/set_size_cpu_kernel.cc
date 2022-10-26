@@ -59,7 +59,7 @@ void SetSizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                                 "'set_indices', but got 'set_shape' shape: "
                              << Vector2Str(shape_) << " and 'set_indices' shape: " << Vector2Str(indices_shape) << ".";
   }
-  values_size_ = values_shape[0];
+  values_size_ = SizeToLong(values_shape[0]);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dims_ = shape_[0];
 }
@@ -83,22 +83,22 @@ bool SetSizeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   }
   switch (val_dtype_) {
     case kNumberTypeInt8:
-      SetSizeCompute<int8_t>(inputs, outputs);
+      (void)SetSizeCompute<int8_t>(inputs, outputs);
       break;
     case kNumberTypeInt16:
-      SetSizeCompute<int16_t>(inputs, outputs);
+      (void)SetSizeCompute<int16_t>(inputs, outputs);
       break;
     case kNumberTypeInt32:
-      SetSizeCompute<int32_t>(inputs, outputs);
+      (void)SetSizeCompute<int32_t>(inputs, outputs);
       break;
     case kNumberTypeInt64:
-      SetSizeCompute<int64_t>(inputs, outputs);
+      (void)SetSizeCompute<int64_t>(inputs, outputs);
       break;
     case kNumberTypeUInt8:
-      SetSizeCompute<uint8_t>(inputs, outputs);
+      (void)SetSizeCompute<uint8_t>(inputs, outputs);
       break;
     case kNumberTypeUInt16:
-      SetSizeCompute<uint16_t>(inputs, outputs);
+      (void)SetSizeCompute<uint16_t>(inputs, outputs);
       break;
     default:
       MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', set_values type error.";
@@ -107,12 +107,12 @@ bool SetSizeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   return true;
 }
 
-bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::AddressPtr> &inputs) {
+bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::AddressPtr> &inputs) const {
   bool valid = true;
   bool different = false;
   bool increasing = true;
-  const auto *indices_t = reinterpret_cast<int64_t *>(inputs[0]->addr);
-  const auto *shape_t = reinterpret_cast<int64_t *>(inputs[2]->addr);
+  const auto *indices_t = static_cast<int64_t *>(inputs[0]->addr);
+  const auto *shape_t = static_cast<int64_t *>(inputs[2]->addr);
   for (int64_t di = 0; di < dims_; ++di) {
     if (indices_t[(n * dims_) + di] < 0 || indices_t[(n * dims_) + di] >= shape_t[di]) {
       valid = false;
@@ -149,13 +149,13 @@ bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::Addr
 
 template <typename T>
 bool SetSizeCpuKernelMod::SetSizeCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_t = reinterpret_cast<int32_t *>(outputs[0]->addr);
-  auto indices_t = reinterpret_cast<int64_t *>(inputs[0]->addr);
-  auto vals_t = reinterpret_cast<T *>(inputs[1]->addr);
+                                         const std::vector<kernel::AddressPtr> &outputs) const {
+  auto output_t = static_cast<int32_t *>(outputs[0]->addr);
+  auto indices_t = static_cast<int64_t *>(inputs[0]->addr);
+  auto vals_t = static_cast<T *>(inputs[1]->addr);
   auto vals_num = values_size_;
   std::vector<int64_t> strides(dims_ - 1);
-  auto shape_t = reinterpret_cast<int64_t *>(inputs[2]->addr);
+  auto shape_t = static_cast<int64_t *>(inputs[2]->addr);
   if (dims_ > 1) {
     int t = 2;
     strides[dims_ - t] = 1;
@@ -178,7 +178,7 @@ bool SetSizeCpuKernelMod::SetSizeCompute(const std::vector<kernel::AddressPtr> &
     all_values[ix].insert(*(vals_t + n));
   }
   for (int i = 0; i < output_size; ++i) {
-    output_t[i] = all_values[i].size();
+    output_t[i] = SizeToLong(all_values[i].size());
   }
   return true;
 }
