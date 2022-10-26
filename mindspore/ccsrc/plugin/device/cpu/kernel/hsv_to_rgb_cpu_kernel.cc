@@ -17,27 +17,41 @@
 #include <vector>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
+namespace {
+const size_t kZero = 0;
+const size_t kOne = 1;
+const size_t kNumDims = 3;
+const size_t kInputsNum = 1;
+const size_t kOutputsNum = 1;
+}  // namespace
 namespace mindspore {
 namespace kernel {
-void HSVToRGBCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  const size_t kNumDims = 3;
-  const size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  const size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "Needs " << kInputNum << " input, but got " << input_num << ".";
+bool HSVToRGBCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = kInputsNum;
+  constexpr size_t output_num = kOutputsNum;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  if (output_num != kOutputNum) {
-    MS_LOG(EXCEPTION) << "Needs " << kOutputNum << " output, but got " << output_num << ".";
+  input_dtype = inputs[kZero]->GetDtype();
+  return true;
+}
+int HSVToRGBCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({shape})) {
-    return;
-  }
-  input_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (LongToUlong(shape.cend()[-1]) != kNumDims) {
-    MS_LOG(EXCEPTION) << "The last dimension of the input tensor must be size 3.";
-  }
+  shape = inputs[kZero]->GetDeviceShapeAdaptively();
+  return ret;
 }
 
 template <typename T1>

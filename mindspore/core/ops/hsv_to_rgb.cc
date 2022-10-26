@@ -27,6 +27,18 @@ namespace ops {
 namespace {
 abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  // dynamic rank
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+  // dynamic shape
+  if (IsDynamic(input_shape)) {
+    ShapeVector out_shape_dyn;
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      out_shape_dyn.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(out_shape_dyn);
+  }
   const int64_t kNumDims = 4;
   const int64_t kLastDim = 3;
   const int64_t input_dims = SizeToLong(input_shape.size());
