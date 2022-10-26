@@ -87,11 +87,13 @@ def _compile_akg_task_ascend(json_strs, attrs):
         _compile_subprocess(compiler, akg_compile_dir, info_path, "AKG", attrs, compile_log, log_level)
 
         # Load composite optimized json str and compile it with TBE
-        tbe_support = check_tbe_support(json_desc)
-        if tbe_support:
-            composite_graph_path = os.path.join(composite_graph_dir, op_name + ".info")
-            if not os.path.isfile(composite_graph_path):
-                composite_graph_path = info_path
+        composite_graph_path = os.path.join(composite_graph_dir, op_name + ".info")
+        if not os.path.isfile(composite_graph_path):
+            composite_graph_path = info_path
+        with open(composite_graph_path, 'r') as f:
+            composite_graph = f.read()
+        if "buffer_stitch" not in json_desc and "parallel_fusion" not in json_desc and \
+                check_tbe_support(json.loads(composite_graph)):
             _compile_subprocess(compiler, tbe_compile_dir, composite_graph_path, "TBE", attrs, compile_log, log_level)
 
         print_compile_log(compile_log)
