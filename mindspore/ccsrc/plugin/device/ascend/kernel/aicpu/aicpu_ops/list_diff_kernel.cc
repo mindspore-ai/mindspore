@@ -51,7 +51,7 @@ uint32_t ListDiffKernel::ListDiffTask() {
 
   std::unordered_set<T> y_set;
   y_set.reserve(y_size_);
-  for (int64_t i = 0; i < y_size_; ++i) {
+  for (size_t i = 0; i < y_size_; ++i) {
     (void)y_set.insert(y_addr[i]);
   }
 
@@ -85,14 +85,14 @@ uint32_t ListDiffKernel::ParseKernelParam() {
   x_size_ = 0;
   const auto &x_shape = x.tensor_shape();
   for (int i = 0; i < x_shape.dim_size(); ++i) {
-    x_size_ += static_cast<int64_t>(x_shape.dim(i).size());
+    x_size_ += x_shape.dim(i).size();
   }
 
   aicpuops::Tensor y = node_def_.inputs(kDim1);
   const auto &y_shape = y.tensor_shape();
   y_size_ = 0;
   for (int i = 0; i < y_shape.dim_size(); ++i) {
-    y_size_ += static_cast<int64_t>(y_shape.dim(i).size());
+    y_size_ += y_shape.dim(i).size();
   }
 
   return kAicpuKernelStateSucess;

@@ -55,8 +55,8 @@ class CumProdKernel : public KernelBase {
   size_t stride_{0};
   size_t stride2_{0};
   size_t dims_[3]{1};
-  int exclusive_{0};
-  int reverse_{0};
+  bool exclusive_{false};
+  bool reverse_{false};
   size_t axis_{0};
   size_t lens_{1};
 };

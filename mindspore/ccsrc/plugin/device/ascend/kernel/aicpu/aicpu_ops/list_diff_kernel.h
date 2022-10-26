@@ -33,9 +33,9 @@ class ListDiffKernel : public KernelBase {
   uint32_t ListDiffTask();
   aicpuops::DataType input_type_{aicpuops::DataType::MS_UNKNOWN};
   aicpuops::DataType idx_type_{aicpuops::DataType::MS_UNKNOWN};
-  int64_t x_size_;
-  int64_t y_size_;
-  int64_t out_size_;
+  size_t x_size_{0};
+  size_t y_size_{0};
+  int64_t out_size_{0};
 };
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_LIST_DIFF_KERNELS_H_
