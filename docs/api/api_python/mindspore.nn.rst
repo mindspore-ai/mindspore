@@ -196,6 +196,8 @@ Dropout层
     mindspore.nn.AvgPool3d
     mindspore.nn.FractionalMaxPool2d
     mindspore.nn.FractionalMaxPool3d
+    mindspore.nn.LPPool1d
+    mindspore.nn.LPPool2d
     mindspore.nn.MaxPool1d
     mindspore.nn.MaxPool2d
     mindspore.nn.MaxPool3d
