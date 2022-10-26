@@ -52,8 +52,7 @@ abstract::ShapePtr NuclearNormInferShape(const PrimitivePtr &primitive,
   auto keepdim = GetValue<bool>(primitive->GetAttr("keepdim"));
   auto temp_shape = input_shape;
   for (size_t i = 0; i < dim_list.size(); ++i) {
-    (void)CheckAndConvertUtils::CheckInRange("dim value", dim_list[i], kIncludeLeft, {-input_rank, input_rank},
-                                             prim_name);
+    CheckAndConvertUtils::CheckInRange("dim value", dim_list[i], kIncludeLeft, {-input_rank, input_rank}, prim_name);
     if (dim_list[i] < 0) {
       dim_list[i] += input_rank;
     }
@@ -63,9 +62,9 @@ abstract::ShapePtr NuclearNormInferShape(const PrimitivePtr &primitive,
   }
   for (size_t i = 0; i < dim_list.size(); ++i) {
     if (!keepdim) {
-      temp_shape[dim_list[i]] = -1;
+      temp_shape[LongToSize(dim_list[i])] = -1;
     } else {
-      temp_shape[dim_list[i]] = 1;
+      temp_shape[LongToSize(dim_list[i])] = 1;
     }
   }
   if (!keepdim) {
@@ -83,9 +82,10 @@ TypePtr NuclearNormInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto op_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
   const int64_t DIMSIZE1 = 1;
-  (void)CheckAndConvertUtils::CheckInteger("The input number", input_args.size(), kEqual, DIMSIZE1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("The input number", SizeToLong(input_args.size()), kEqual, DIMSIZE1,
+                                           op_name);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
 }

@@ -41,31 +41,33 @@ class NuclearNormCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename T>
-  void GivensL(T *S_, const size_t dim[2], size_t m, T a, T b);
+  void GivensL(T *S_, const size_t dim[], const size_t m, const T a, const T b);
 
   template <typename T>
-  void GivensR(T *S_, const size_t dim[2], size_t m, T a, T b);
+  void GivensR(T *S_, const size_t dim[], const size_t m, const T a, const T b);
 
   template <typename T>
-  void SVD_head(size_t i, std::vector<T> *house_vec, const size_t dim[2], T *U_, T *S_);
+  void SVD_head(size_t i, std::vector<T> *house_vec, const size_t dim[], T *U_, T *S_);
 
   template <typename T>
-  void SVD(const size_t dim[2], T *U_, T *S_, T *V_, T eps);
+  void SVD(const size_t dim[], T *U_, T *S_, T *V_, T eps);
 
   template <typename T>
-  void SVD_tail(const size_t dim[2], T *U_, T *S_, T *V_, T eps);
+  void SVD_tail(const size_t dim[], T *U_, T *S_, T *V_, T eps);
 
   template <typename T>
-  void SVD_tail_cal(const size_t dim[2], T *U_, T *S_, T *V_, T eps, size_t n, size_t k0, T alpha, T beta, T S_max);
+  void SVD_tail_cal(const size_t dim[], T *U_, T *S_, T *V_, const T eps, const size_t n, const size_t k0, T alpha,
+                    T beta, const T S_max);
 
   template <typename T>
-  void svd(int *M, int *N, T *A, int *LDA, T *S, T *U, int *LDU, T *VT, int *LDVT);
+  void svd(int *M, int *N, const T *A, const int *LDA, T *S, T *U, const int *LDU, T *VT, const int *LDVT);
 
   template <typename T>
-  void svd_tail(int *M, int *N, T *S, T *S_, T *U, T *VT, T *U_, T *V_, const size_t dim[2], int *LDU, int *LDVT);
+  void svd_tail(const int *M, const int *N, T *S, const T *S_, T *U, T *VT, const T *U_, const T *V_,
+                const size_t dim[], const int *LDU, const int LDVT);
 
   template <typename T>
-  T ComputeMatrixNuclearNorm(int dim0, int dim1, T mat[]);
+  T ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, const T *mat);
 
   template <typename T, int32_t RANK>
   bool ComputeTensorNuclearNorm(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -79,7 +81,7 @@ class NuclearNormCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   std::vector<int64_t> input_shape;
   TypeId input_dtype{kTypeUnknown};
-  std::vector<int64_t> dim = {0, 1};
+  std::vector<int64_t> dim_ = {0, 1};
   bool keepdim = false;
 };
 }  // namespace kernel
