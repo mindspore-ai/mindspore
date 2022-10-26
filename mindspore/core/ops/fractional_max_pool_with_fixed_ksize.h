@@ -38,6 +38,14 @@ class MIND_API FractionalMaxPoolWithFixedKsize : public BaseOperator {
   FractionalMaxPoolWithFixedKsize() : BaseOperator(kNameFractionalMaxPoolWithFixedKsize) {
     InitIOName({"input_x", "random_samples"}, {"y", "argmax"});
   }
+  void Init(const std::vector<int64_t> &ksize, const std::vector<int64_t> &output_shape,
+            const std::string &data_format);
+  void set_ksize(const std::vector<int64_t> &ksize);
+  void set_output_shape(const std::vector<int64_t> &output_shape);
+  void set_data_format(const std::string &data_format);
+  std::vector<int64_t> get_ksize() const;
+  std::vector<int64_t> get_output_shape() const;
+  std::string get_data_format() const;
 };
 
 abstract::AbstractBasePtr FractionalMaxPoolWithFixedKsizeInfer(

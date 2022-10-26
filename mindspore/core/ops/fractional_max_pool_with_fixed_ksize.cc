@@ -45,6 +45,29 @@ constexpr size_t kOutputShapeDimSize1 = 1;
 constexpr size_t kOutputShapeDimSize2 = 2;
 constexpr size_t kOutputShapeIndex0 = 0;
 constexpr size_t kOutputShapeIndex1 = 1;
+constexpr auto kKsize = "ksize";
+constexpr auto kOutputShape = "output_shape";
+
+void FractionalMaxPoolWithFixedKsizeShapeCheck(const ShapeVector &x_shape, const ShapeVector &random_samples_shape) {
+  if (x_shape.size() != kInputDimSize) {
+    MS_EXCEPTION(ValueError) << "For FractionalMaxPoolWithFixedKsize, the dimension of input_x must be 4, but got "
+                             << x_shape.size();
+  }
+  if (random_samples_shape.size() != kRandomSamplesDimSize) {
+    MS_EXCEPTION(ValueError) << "For FractionalMaxPoolWithFixedKsize, the dimension of random_samples must be 3, "
+                             << "but got " << random_samples_shape.size();
+  }
+  if (random_samples_shape[kRandomSamplesDimIndex2] != kRandomSamplesLastDimSize) {
+    MS_EXCEPTION(ValueError) << "For FractionalMaxPoolWithFixedKsize, the last dimension size of random_samples must "
+                             << "be 2, but got " << random_samples_shape[kRandomSamplesDimIndex2];
+  }
+  if (x_shape[kInputsDimIndex0] != random_samples_shape[kInputsDimIndex0]) {
+    MS_EXCEPTION(ValueError) << "The first dimension size of input_x and random_samples must be equal.";
+  }
+  if (x_shape[kInputsDimIndex1] != random_samples_shape[kInputsDimIndex1]) {
+    MS_EXCEPTION(ValueError) << "The second dimension size of input_x and random_samples must be equal.";
+  }
+}
 
 abstract::TupleShapePtr FractionalMaxPoolWithFixedKsizeInferShape(const PrimitivePtr &primitive,
                                                                   const std::vector<AbstractBasePtr> &input_args) {
@@ -54,28 +77,26 @@ abstract::TupleShapePtr FractionalMaxPoolWithFixedKsizeInferShape(const Primitiv
   }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  if (x_shape.size() != kInputDimSize) {
-    MS_EXCEPTION(ValueError) << "For FractionalMaxPoolWithFixedKsize, the dimension of input_x must be 4, but got "
-                             << x_shape.size();
-  }
-
   auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
-  if (random_samples_shape.size() != kRandomSamplesDimSize) {
-    MS_EXCEPTION(ValueError) << "For FractionalMaxPoolWithFixedKsize, the dimension of random_samples must be 3, "
-                             << "but got " << random_samples_shape.size();
+  // dynamic rank
+  if (IsDynamicRank(x_shape) || IsDynamicRank(random_samples_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny}),
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny})});
   }
-  if (random_samples_shape[kRandomSamplesDimIndex2] != kRandomSamplesLastDimSize) {
-    MS_EXCEPTION(ValueError) << "For FractionalMaxPoolWithFixedKsize, the last dimension size of random_samples must "
-                             << "be 2, but got " << random_samples_shape[kRandomSamplesDimIndex2];
+  // dynamic shape
+  if (IsDynamic(x_shape) || IsDynamic(random_samples_shape)) {
+    ShapeVector out_shape_dyn_0;
+    ShapeVector out_shape_dyn_1;
+    for (size_t i = 0; i < x_shape.size(); ++i) {
+      out_shape_dyn_0.push_back(abstract::Shape::kShapeDimAny);
+      out_shape_dyn_1.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      std::make_shared<abstract::Shape>(out_shape_dyn_0), std::make_shared<abstract::Shape>(out_shape_dyn_1)});
   }
 
-  if (x_shape[kInputsDimIndex0] != random_samples_shape[kInputsDimIndex0]) {
-    MS_EXCEPTION(ValueError) << "The first dimension size of input_x and random_samples must be equal.";
-  }
-  if (x_shape[kInputsDimIndex1] != random_samples_shape[kInputsDimIndex1]) {
-    MS_EXCEPTION(ValueError) << "The second dimension size of input_x and random_samples must be equal.";
-  }
-
+  FractionalMaxPoolWithFixedKsizeShapeCheck(x_shape, random_samples_shape);
   auto ksize = GetValue<std::vector<int64_t>>(primitive->GetAttr("ksize"));
   if (std::any_of(ksize.begin(), ksize.end(), [](int64_t ksize) { return ksize <= 0; })) {
     MS_EXCEPTION(ValueError) << "invalid ksize, ksize items must be all positive.";
@@ -144,7 +165,7 @@ TuplePtr FractionalMaxPoolWithFixedKsizeInferType(const PrimitivePtr &primitive,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(FractionalMaxPoolWithFixedKsize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FractionalMaxPoolWithFixedKsize, BaseOperator);
 AbstractBasePtr FractionalMaxPoolWithFixedKsizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -155,6 +176,35 @@ AbstractBasePtr FractionalMaxPoolWithFixedKsizeInfer(const abstract::AnalysisEng
   auto shapes = FractionalMaxPoolWithFixedKsizeInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
+
+void FractionalMaxPoolWithFixedKsize::Init(const std::vector<int64_t> &ksize, const std::vector<int64_t> &output_shape,
+                                           const std::string &data_format) {
+  this->set_ksize(ksize);
+  this->set_output_shape(output_shape);
+  this->set_data_format(data_format);
+}
+
+void FractionalMaxPoolWithFixedKsize::set_ksize(const std::vector<int64_t> &ksize) {
+  (void)this->AddAttr(kKsize, api::MakeValue(ksize));
+}
+
+std::vector<int64_t> FractionalMaxPoolWithFixedKsize::get_ksize() const {
+  return GetValue<std::vector<int64_t>>(GetAttr(kKsize));
+}
+
+void FractionalMaxPoolWithFixedKsize::set_output_shape(const std::vector<int64_t> &output_shape) {
+  (void)this->AddAttr(kOutputShape, api::MakeValue(output_shape));
+}
+
+std::vector<int64_t> FractionalMaxPoolWithFixedKsize::get_output_shape() const {
+  return GetValue<std::vector<int64_t>>(GetAttr(kOutputShape));
+}
+
+void FractionalMaxPoolWithFixedKsize::set_data_format(const std::string &data_format) {
+  (void)this->AddAttr(kFormat, api::MakeValue(data_format));
+}
+
+std::string FractionalMaxPoolWithFixedKsize::get_data_format() const { return GetValue<std::string>(GetAttr(kFormat)); }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPoolWithFixedKsize, prim::kPrimFractionalMaxPoolWithFixedKsize,
                              FractionalMaxPoolWithFixedKsizeInfer, nullptr, true);
