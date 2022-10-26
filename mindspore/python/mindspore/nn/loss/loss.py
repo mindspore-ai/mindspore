@@ -2258,12 +2258,12 @@ class CTCLoss(LossBase):
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape (T, N, C) or (T, C), where T is input length, N is batch size and
-          C is number of classes (including blank).
+          C is number of classes (including blank). T, N and C are positive integers.
         - **targets** (Tensor) - A tensor of shape (N, S) or (sum( `target_lengths` )), where S is max target length,
           means the target sequences.
-        - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N), or a number.
+        - **input_lengths** (Union[tuple, Tensor, int]) - A tuple or Tensor of shape(N), or a number.
           It means the lengths of the input.
-        - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N), or a number.
+        - **target_lengths** (Union[tuple, Tensor, int]) - A tuple or Tensor of shape(N), or a number.
           It means the lengths of the target.
 
     Outputs:
@@ -2275,8 +2275,8 @@ class CTCLoss(LossBase):
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
         ValueError: If `reduction` is not "none", "mean" or "sum".
         ValueError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
-        ValueError: If the value of `blank` is not in range [0, C).
-        ValueError: If any value of `input_lengths` is larger than C.
+        ValueError: If the value of `blank` is not in range [0, C). C is number of classes of `log_probs` .
+        ValueError: If any value of `input_lengths` is larger than C. C is number of classes of `log_probs` .
         ValueError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
