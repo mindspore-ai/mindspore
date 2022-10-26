@@ -645,7 +645,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
     auto value = GetValue<std::string>(node_value);
     size_t tensor_size = value.size();
     ShapeVector shape = {1, SizeToLong(tensor_size)};
-    if (!device_tensor->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value.data())) {
+    if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, value.data())) {
       std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
     }
