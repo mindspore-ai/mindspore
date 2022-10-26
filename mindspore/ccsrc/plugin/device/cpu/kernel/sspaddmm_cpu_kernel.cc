@@ -46,35 +46,38 @@ void SspaddmmCPUKernelMod::CheckSparseIndices(const TypeId &indices_dtype, void 
   }
 }
 
-void SspaddmmCPUKernelMod::CheckParam(const CNodePtr &kernel_node) const {
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kKernelName);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kKernelName);
+bool SspaddmmCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  output_values_dtype_ = inputs.at(kIndex1)->GetDtype();
+  input_indices_dtype_ = inputs.at(kIndex0)->GetDtype();
+  input_shape_dtype_ = inputs.at(kIndex2)->GetDtype();
+  mat1_indices_dtype_ = inputs.at(kIndex3)->GetDtype();
+  mat1_shape_dtype_ = inputs.at(kIndex5)->GetDtype();
+  alpha_dtype_ = inputs.at(kIndex7)->GetDtype();
+  beta_dtype_ = inputs.at(kIndex8)->GetDtype();
+  return true;
 }
 
-void SspaddmmCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
-
-  output_values_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
-  input_indices_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  input_shape_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex2);
-  mat1_indices_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex3);
-  mat1_shape_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex5);
-  alpha_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex7);
-  beta_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex8);
-
-  auto input_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  auto mat1_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex3);
-  auto y_indices_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
-  auto mat2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex6);
-
+int SspaddmmCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_indices_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto mat1_indices_shape = inputs.at(kIndex3)->GetShapeVector();
+  auto mat2_shape = inputs.at(kIndex6)->GetShapeVector();
+  auto y_indices_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
   input_values_num_ = LongToSize(input_indices_shape[1]);
   mat1_values_num_ = LongToSize(mat1_indices_shape[1]);
   y_values_num_ = LongToSize(y_indices_shape[1]);
   mat2_row_ = LongToSize(mat2_shape[0]);
   mat2_col_ = LongToSize(mat2_shape[1]);
+  return KRET_OK;
 }
 
 bool SspaddmmCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

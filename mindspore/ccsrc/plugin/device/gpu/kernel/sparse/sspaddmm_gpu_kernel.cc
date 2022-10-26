@@ -25,6 +25,7 @@ constexpr int OUTPUT_NUM = 3;
 
 bool SspaddmmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_ptr_ = std::dynamic_pointer_cast<ops::Sspaddmm>(base_operator);
   kernel_name_ = kernel_ptr_->name();
   if (inputs.empty() || outputs.empty()) {
