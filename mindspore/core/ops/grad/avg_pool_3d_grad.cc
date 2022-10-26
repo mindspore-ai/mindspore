@@ -113,14 +113,12 @@ abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
 TypePtr AvgPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                           op_name);
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  size_t grad_index = input_args.size() - 1;
-  auto grad_dtype = input_args[grad_index]->BuildType();
+  auto grad_dtype = input_args.back()->BuildType();
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
