@@ -129,7 +129,7 @@ class Context:
             >>> print(context)
             thread_num: 0,
             inter_op_parallel_num: 0,
-            thread_affinity_mode: 1,
+            thread_affinity_mode: 0,
             thread_affinity_core_list: [],
             enable_parallel: False,
             device_list: 0, .
@@ -170,7 +170,7 @@ class CPUDeviceInfo(DeviceInfo):
         >>> print(context)
         thread_num: 0,
         inter_op_parallel_num: 0,
-        thread_affinity_mode: 1,
+        thread_affinity_mode: 0,
         thread_affinity_core_list: [],
         enable_parallel: False,
         device_list: 0, .
@@ -215,7 +215,7 @@ class GPUDeviceInfo(DeviceInfo):
         >>> print(context)
         thread_num: 0,
         inter_op_parallel_num: 0,
-        thread_affinity_mode: 1,
+        thread_affinity_mode: 0,
         thread_affinity_core_list: [],
         enable_parallel: False,
         device_list: 1, 0, .
@@ -294,7 +294,7 @@ class AscendDeviceInfo(DeviceInfo):
         >>> print(context)
         thread_num: 0,
         inter_op_parallel_num: 0,
-        thread_affinity_mode: 1,
+        thread_affinity_mode: 0,
         thread_affinity_core_list: [],
         enable_parallel: False,
         device_list: 3, 0, .

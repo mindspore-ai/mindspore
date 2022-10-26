@@ -397,14 +397,6 @@ def test_model_resize_06():
 
 
 def test_model_resize_07():
-    with pytest.raises(ValueError) as raise_info:
-        model = get_model()
-        inputs = model.get_inputs()
-        model.resize(inputs, [[1, 112, 112]])
-    assert "one of inputs' size does not match one of dims's size" in str(raise_info.value)
-
-
-def test_model_resize_08():
     model = get_model()
     inputs = model.get_inputs()
     assert inputs[0].get_shape() == [1, 224, 224, 3]

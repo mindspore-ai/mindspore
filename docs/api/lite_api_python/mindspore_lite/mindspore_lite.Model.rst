@@ -23,6 +23,7 @@ mindspore_lite.Model
             - **TypeError** - `model_type` 不是ModelType类型。
             - **TypeError** - `context` 不是Context类型。
             - **RuntimeError** - `model_path` 文件路径不存在。
+            - **RuntimeError** - 从文件加载并构建模型失败。
 
     .. py:method:: get_input_by_tensor_name(tensor_name)
 
@@ -96,4 +97,4 @@ mindspore_lite.Model
             - **TypeError** - `dims` 是list类型，但元素不是list类型。
             - **TypeError** - `dims` 是list类型，元素是list类型，但元素的元素不是int类型。
             - **ValueError** -  `inputs` 的size不等于 `dims` 的size。
-            - **ValueError** -  `inputs` 的元素的size不等于 `dims` 的元素的size。
+            - **RuntimeError** - 调整输入形状的大小失败。

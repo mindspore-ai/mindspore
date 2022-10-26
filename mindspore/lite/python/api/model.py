@@ -85,6 +85,7 @@ class Model:
             TypeError: `model_type` is not a ModelType.
             TypeError: `context` is not a Context.
             RuntimeError: `model_path` does not exist.
+            RuntimeError: build from file failed.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -128,7 +129,7 @@ class Model:
             TypeError: `dims` is a list, but the elements are not list.
             TypeError: `dims` is a list, the elements are list, but the element's elements are not int.
             ValueError: The size of `inputs` is not equal to the size of `dims` .
-            ValueError: The size of the elements of `inputs` is not equal to the size of the elements of `dims` .
+            RuntimeError: resize input failed.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -164,9 +165,6 @@ class Model:
             raise ValueError(f"inputs' size does not match dims's size, but got "
                              f"inputs: {len(inputs)} and dims: {len(dims)}.")
         for i, element in enumerate(inputs):
-            if len(element.get_shape()) != len(dims[i]):
-                raise ValueError(f"one of inputs' size does not match one of dims's size, but got "
-                                 f"input: {element.get_shape()} and dim: {len(dims[i])} at {i} index.")
             _inputs.append(element._tensor)
         ret = self._model.resize(_inputs, dims)
         if not ret.IsOk():
