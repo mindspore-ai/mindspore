@@ -20,6 +20,7 @@
 #include <queue>
 #include <set>
 #include <map>
+#include <vector>
 #include "include/common/utils/utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "utils/ms_context.h"
@@ -27,6 +28,17 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+namespace {
+constexpr size_t kMaxDims = 8;
+
+int64_t CheckRange(int64_t idx, int64_t dim_size) {
+  if (idx < -dim_size || idx >= dim_size) {
+    MS_EXCEPTION(IndexError) << "index {" << idx << "} is out of bounds for dimension with size {" << dim_size << "}";
+  }
+  return idx < 0 ? (idx + dim_size) : idx;
+}
+}  // namespace
+
 bool BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, std::vector<CNodePtr> *outputs,
                          DoutUser *dout_user) {
   MS_EXCEPTION_IF_NULL(outputs);
@@ -169,6 +181,38 @@ ShapeVector BpropIRBuilder::GetShape(const NodePtr &node) const {
   return {};
 }
 
+std::vector<ShapeVector> BpropIRBuilder::GetShapes(const NodePtr &node) const {
+  auto abs = node->get()->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  auto shape = abs->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->isa<abstract::SequenceShape>()) {
+    auto seq_shape_ptr = shape->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(seq_shape_ptr);
+    const auto &shape_list = seq_shape_ptr->shape();
+    if (shape_list.empty()) {
+      return {};
+    }
+    std::vector<ShapeVector> res;
+    res.reserve(shape_list.size());
+    for (const auto &item : shape_list) {
+      MS_EXCEPTION_IF_NULL(item);
+      if (item->isa<abstract::NoShape>()) {
+        res.push_back({});
+      } else if (!item->isa<abstract::Shape>()) {
+        MS_LOG(EXCEPTION) << "Invalid Shape Type(" << item->ToString() << ") In Shape List";
+      }
+      auto shape_ptr = item->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      res.push_back(shape_ptr->shape());
+    }
+    return res;
+  } else {
+    MS_LOG(EXCEPTION) << "The output of node " << node->get()->ToString() << " is not a tuple.";
+  }
+  return {};
+}
+
 TypePtr BpropIRBuilder::GetDtype(const NodePtr &node) const {
   auto abs = node->get()->abstract();
   MS_EXCEPTION_IF_NULL(abs);
@@ -188,10 +232,41 @@ ValuePtr BpropIRBuilder::GetAttr(const NodePtr &node, const std::string &attr) c
   return p->GetAttr(attr);
 }
 
+int64_t BpropIRBuilder::GetSize(const NodePtr &node) const {
+  auto shape = GetShape(node);
+  return std::accumulate(shape.begin(), shape.end(), 1LL, std::multiplies<int64_t>());
+}
+
 std::string BpropIRBuilder::GetTargetFromContext() const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   return context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+}
+
+NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) const {
+  auto data_shape = GetShape(node);
+  auto n = data_shape.size();
+  if (n < 1 || n > kMaxDims) {
+    MS_EXCEPTION(ValueError) << "Expect Tensor to have dimension between 1 and " << kMaxDims << ", but got: " << n;
+  }
+  std::vector<int64_t> begin_strides(n, 0);
+  std::vector<int64_t> end_strides = data_shape;
+  std::vector<int64_t> step_strides(n, 1);
+  begin_strides[0] = CheckRange(idx, data_shape[0]);
+  end_strides[0] = begin_strides[0] + 1;
+  constexpr int64_t begin_mask = 252;  // sum 2^i, i in [2, 8)
+  constexpr int64_t end_mask = 252;
+  constexpr int64_t ellipsis_mask = 0;
+  constexpr int64_t new_axis_mask = 0;
+  constexpr int64_t shrink_axis_mask = 1;
+  return Emit(
+    prim::kStridedSlice,
+    {node, EmitValue(MakeValue(begin_strides)), EmitValue(MakeValue(end_strides)), EmitValue(MakeValue(step_strides))},
+    {{kAttrBeginMask, MakeValue(begin_mask)},
+     {kAttrEndMask, MakeValue(end_mask)},
+     {kAttrEllipsisMask, MakeValue(ellipsis_mask)},
+     {kAttrNewAxisMask, MakeValue(new_axis_mask)},
+     {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
 }
 }  // namespace bprop
 }  // namespace expander

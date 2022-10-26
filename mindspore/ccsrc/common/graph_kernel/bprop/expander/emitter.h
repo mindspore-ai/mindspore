@@ -21,6 +21,7 @@
 #include <string>
 #include "ir/func_graph.h"
 #include "ops/core_ops.h"
+#include "include/common/utils/utils.h"
 #include "common/graph_kernel/bprop/expander/node.h"
 #include "common/graph_kernel/bprop/expander/infer.h"
 
@@ -49,12 +50,28 @@ class Emitter {
   NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const {
     return Emit(prim::kReshape, {node, Tensor(shape)});
   }
+  NodePtr Abs(const NodePtr &node) const { return Emit(prim::kAbs, {node}); }
+  NodePtr Neg(const NodePtr &node) const { return Emit(prim::kNeg, {node}); }
+  NodePtr Reciprocal(const NodePtr &node) const { return Emit(prim::kReciprocal, {node}); }
+  NodePtr Square(const NodePtr &node) const { return Emit(prim::kSquare, {node}); }
+  NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
 
   NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kAdd, {lhs, rhs}); }
   NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kSub, {lhs, rhs}); }
   NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kMul, {lhs, rhs}); }
+  NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kDivOpName, {lhs, rhs}); }
   NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kRealDiv, {lhs, rhs}); }
+  NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kPowOpName, {lhs, rhs}); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
+  NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
+    return Emit(kSelectOpName, {cond, lhs, rhs});
+  }
+  NodePtr Less(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kLessOpName, {lhs, rhs}); }
+  NodePtr LessEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kLessEqualOpName, {lhs, rhs}); }
+  NodePtr Greater(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kGreaterOpName, {lhs, rhs}); }
+  NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kGreaterEqualOpName, {lhs, rhs}); }
+  NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kEqualOpName, {lhs, rhs}); }
+  NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("NotEqual", {lhs, rhs}); }
 
   NodePtr ZerosLike(const NodePtr &node) const;
 
@@ -88,7 +105,7 @@ using EmitterPtr = std::shared_ptr<Emitter>;
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs);
 NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs);
 NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs);
-NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs);
+NodePtr operator-(const NodePtr &node);
 }  // namespace expander
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_EXPANDER_EMITTER_H_

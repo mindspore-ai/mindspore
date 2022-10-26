@@ -39,8 +39,10 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
   }
   AnfNodePtrList cnode_inputs = {NewValueNode(primc)};
   cnode_inputs.reserve(inputs.size() + 1);
-  (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs),
-                       [](const NodePtr &no) { return no->get(); });
+  (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
+    MS_EXCEPTION_IF_NULL(no);
+    return no->get();
+  });
   auto cnode = func_graph_->NewCNode(cnode_inputs);
   auto node = NewNode(cnode->cast<AnfNodePtr>());
   infer_->Infer(node);
@@ -60,11 +62,11 @@ NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bo
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   if (node->isa<ValueNode>()) {
-    auto value_node = node->get()->cast<ValueNodePtr>();
+    auto value_node = node->get<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto v = value_node->value();
     MS_EXCEPTION_IF_NULL(v);
-    if (v->isa<ValueTuple>() || v->isa<ValueList>()) {
+    if (v->isa<ValueSequence>()) {
       auto sh = GetValue<std::vector<int64_t>>(v);
       return Emit(prim::kZerosLike, {Tensor(sh)});
     } else if (v->isa<Scalar>() || v->isa<Type>()) {
@@ -77,6 +79,6 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Add(lhs, rhs); }
 NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Sub(lhs, rhs); }
 NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Mul(lhs, rhs); }
-NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->RealDiv(lhs, rhs); }
+NodePtr operator-(const NodePtr &node) { return node->emitter()->Neg(node); }
 }  // namespace expander
 }  // namespace mindspore
