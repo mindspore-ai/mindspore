@@ -123,8 +123,6 @@ bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 const std::vector<std::pair<KernelAttr, BiasAddGradCpuKernelMod::KernelRunFunc>> &BiasAddGradCpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, BiasAddGradCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &BiasAddGradCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &BiasAddGradCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),

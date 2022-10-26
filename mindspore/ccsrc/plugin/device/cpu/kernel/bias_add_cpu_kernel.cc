@@ -224,7 +224,6 @@ std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc> BiasAddCpuKernelMod::M
 
 const std::vector<std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc>> &BiasAddCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc>> func_list = {
-    MakeKernelFunc<float16>(kNumberTypeFloat16),
     MakeKernelFunc<float>(kNumberTypeFloat32),
     MakeKernelFunc<double>(kNumberTypeFloat64),
     MakeKernelFunc<int8_t>(kNumberTypeInt8),
