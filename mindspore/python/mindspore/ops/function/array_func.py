@@ -4549,6 +4549,16 @@ def expand(input_x, size):
     return expand_op(input_x, size)
 
 
+@constexpr
+def _check_fold_param(param, param_name):
+    """Check the parameters of fold op."""
+    validator.check_value_type(param_name, param, [int, list, tuple], 'fold')
+    param = (param, param) if isinstance(param, int) else param
+    validator.check(param_name + " size", len(param), "", 2, Rel.EQ, 'fold')
+    validator.check_positive_int_sequence(param, param_name, 'fold')
+    return param
+
+
 def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     """
     Combines an array of sliding local blocks into a large containing tensor.
@@ -4590,27 +4600,22 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         >>> print(output.shape)
         (16, 16, 8, 8)
     """
-    validator.check_value_type('kernel_size', kernel_size, [int, list, tuple], 'fold')
-    validator.check_value_type('dilation', dilation, [int, list, tuple], 'fold')
-    validator.check_value_type('padding', padding, [int, list, tuple], 'fold')
-    validator.check_value_type('stride', stride, [int, list, tuple], 'fold')
-
-    kernel_size = (kernel_size, kernel_size) if isinstance(kernel_size, int) else kernel_size
-    dilation = (dilation, dilation) if isinstance(dilation, int) else dilation
-    padding = (padding, padding) if isinstance(padding, int) else padding
-    stride = (stride, stride) if isinstance(stride, int) else stride
-
-    validator.check("kernel_size size", len(kernel_size), "", 2, Rel.EQ, 'fold')
-    validator.check_positive_int_sequence(kernel_size, "kernel_size", 'fold')
-    validator.check("dilation size", len(dilation), "", 2, Rel.EQ, 'fold')
-    validator.check_positive_int_sequence(dilation, "dilation", 'fold')
-    validator.check("padding size", len(padding), "", 2, Rel.EQ, 'fold')
-    validator.check_non_negative_int_sequence(padding, "padding", 'fold')
-    validator.check("stride size", len(stride), "", 2, Rel.EQ, 'fold')
-    validator.check_positive_int_sequence(stride, "stride", 'fold')
-
+    kernel_size = _check_fold_param(kernel_size, "kernel_size")
+    dilation = _check_fold_param(kernel_size, "dilation")
+    padding = _check_fold_param(kernel_size, "padding")
+    stride = _check_fold_param(kernel_size, "stride")
     fold_op = _get_cache_prim(Col2Im)(kernel_size, dilation, padding, stride)
     return fold_op(input, output_size)
+
+
+@constexpr
+def _check_unfold_params(param, param_name, param_size):
+    """Check the parameters of unfold op."""
+    validator.check_value_type(param_name, param, [int, tuple, list], 'unfold')
+    param = (param, param) if isinstance(param, int) else param
+    validator.check(param_name + " size", len(param), "", param_size, Rel.IN, 'unfold')
+    validator.check_positive_int_sequence(param, param_name, 'unfold')
+    return param
 
 
 def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
@@ -4656,32 +4661,23 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         >>> print(output.shape)
         (4, 36, 30, 30)
     """
-    validator.check_value_type('ksizes', kernel_size, [int, tuple, list], 'unfold')
-    validator.check_value_type('stride', stride, [int, tuple, list], 'unfold')
-    validator.check_value_type('dilation', dilation, [int, tuple, list], 'unfold')
-    validator.check_value_type('padding', padding, [int, tuple, list], 'unfold')
-
-    kernel_size = (kernel_size, kernel_size) if isinstance(kernel_size, int) else kernel_size
-    stride = (stride, stride) if isinstance(stride, int) else stride
-    dilation = (dilation, dilation) if isinstance(dilation, int) else dilation
-    padding = (padding, padding, padding, padding) if isinstance(padding, int) else padding
-
-    validator.check("ksizes size", len(kernel_size), "", [1, 2], Rel.IN, 'unfold')
-    validator.check_positive_int_sequence(kernel_size, "ksizes", 'unfold')
-    validator.check("stride size", len(stride), "", [1, 2], Rel.IN, 'unfold')
-    validator.check_positive_int_sequence(stride, "stride", 'unfold')
-    validator.check("dilation size", len(dilation), "", [1, 2], Rel.IN, 'unfold')
-    validator.check_positive_int_sequence(dilation, "dilation", 'unfold')
-
-    validator.check("padding size", len(padding), "", [1, 2, 4], Rel.IN, 'unfold')
-    validator.check_non_negative_int_sequence(padding, "padding", 'unfold')
-
+    kernel_size = _check_unfold_params(kernel_size, "kernel_size", [1, 2])
+    dilation = _check_unfold_params(dilation, "dilation", [1, 2])
+    padding = _check_unfold_params(padding, "padding", [1, 2, 4])
+    stride = _check_unfold_params(stride, "stride", [1, 2])
     unfold_op = _get_cache_prim(Im2Col)(ksizes=kernel_size,
                                         strides=stride,
                                         dilations=dilation,
                                         padding_mode="CALCULATED",
                                         pads=padding)
     return unfold_op(input)
+
+
+@constexpr
+def _check_diagonal_axes(dim1, dim2, x_ndim):
+    """Check the parameters of unfold op."""
+    axes = validator.check_axis_valid((dim1, dim2), x_ndim)
+    return axes
 
 
 def diagonal(input, offset=0, dim1=0, dim2=1):
@@ -4719,7 +4715,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
         raise ValueError(f"ops.diagonal requires an array of at least two dimensions")
     dtype = input.dtype
 
-    axes = validator.check_axis_valid((dim1, dim2), x_ndim)
+    axes = _check_diagonal_axes(dim1, dim2, x_ndim)
     perm = ()
     for i in np.arange(x_ndim):
         if i not in axes:

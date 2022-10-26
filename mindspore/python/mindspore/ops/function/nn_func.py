@@ -413,6 +413,20 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
+@constexpr
+def _check_avg_pool3d_padding(padding):
+    """Check the padding value in avg_pool3d op."""
+    if isinstance(padding, int):
+        validator.check_non_negative_int(padding, 'padding', 'avg_pool3d')
+    elif isinstance(padding, tuple):
+        if len(padding) != 6:
+            raise ValueError("For avg_pool3d, padding should be int or tuple of length 6.")
+        for item in padding:
+            validator.check_non_negative_int(item, 'padding', 'avg_pool3d')
+    else:
+        raise TypeError("For avg_pool3d, padding should be int or tuple of length 6.")
+
+
 def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True,
                divisor_override=0):
     r"""
@@ -479,15 +493,8 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if len(input_x.shape) != 5:
         raise ValueError("For avg_pool3d, input must have 5 dim, but got {}.".format(len(input_x.shape)))
 
-    if isinstance(padding, int):
-        validator.check_non_negative_int(padding, 'padding', 'avg_pool3d')
-    elif isinstance(padding, tuple):
-        if len(padding) != 6:
-            raise ValueError("For avg_pool3d, padding should be int or tuple of length 6.")
-        for item in padding:
-            validator.check_non_negative_int(item, 'padding', 'avg_pool3d')
-    else:
-        raise TypeError("For avg_pool3d, padding should be int or tuple of length 6.")
+    _check_avg_pool3d_padding(padding)
+
     avg_pool_op = _get_cache_prim(P.AvgPool3D)(kernel_size=kernel_size,
                                                strides=stride,
                                                pad_mode='pad',
@@ -2898,6 +2905,13 @@ def adaptive_avg_pool1d(input_x, output_size):
     return input_x
 
 
+@constexpr
+def _check_adaptive_max_pool1d_output_size(output_size):
+    """Check the output_size value in adaptive_max_pool1d op."""
+    validator.check_int(output_size, 1, Rel.GE, "output_size", 'adaptive_max_pool1d')
+    validator.check_value_type('output_size', output_size, [int], 'adaptive_max_pool1d')
+
+
 def adaptive_max_pool1d(input_x, output_size):
     r"""
     1D adaptive maximum pooling for temporal data.
@@ -2940,11 +2954,10 @@ def adaptive_max_pool1d(input_x, output_size):
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For adaptive_max_pool1d, the input input_x must be tensor")
 
+    _check_adaptive_max_pool1d_output_size(output_size)
+
     x_in_shape = input_x.shape
     x_dtype = _get_cache_prim(P.DType)()(input_x)
-
-    validator.check_int(output_size, 1, Rel.GE, "output_size", 'adaptive_max_pool1d')
-    validator.check_value_type('output_size', output_size, [int], 'adaptive_max_pool1d')
 
     if len(x_in_shape) != 3:
         raise ValueError("For adaptive_max_pool1d input must have 3 dim, but got {}.".format(len(x_in_shape)))
