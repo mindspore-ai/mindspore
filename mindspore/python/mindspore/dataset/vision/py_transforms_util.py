@@ -14,16 +14,17 @@
 # ==============================================================================
 """Built-in py_transforms_utils functions.
 """
+import colorsys
 import io
 import math
 import numbers
 import random
-import colorsys
-import numpy as np
-from PIL import Image, ImageOps, ImageEnhance, __version__
 
-from .utils import Inter
+import numpy as np
+from PIL import Image, ImageOps, ImageEnhance
+
 from ..core.py_util_helpers import is_numpy
+from .utils import Inter, FLIP_LEFT_RIGHT, FLIP_TOP_BOTTOM, PERSPECTIVE, AFFINE
 
 augment_error_message = "img should be PIL image. Got {}. Use Decode() for encoded data or ToPIL() for decoded data."
 
@@ -204,7 +205,7 @@ def horizontal_flip(img):
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
 
-    return img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img.transpose(FLIP_LEFT_RIGHT)
 
 
 def vertical_flip(img):
@@ -220,7 +221,7 @@ def vertical_flip(img):
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
 
-    return img.transpose(Image.FLIP_TOP_BOTTOM)
+    return img.transpose(FLIP_TOP_BOTTOM)
 
 
 def random_horizontal_flip(img, prob):
@@ -1035,7 +1036,7 @@ def perspective(img, start_points, end_points, interpolation=Inter.BICUBIC):
         raise TypeError(augment_error_message.format(type(img)))
 
     coeffs = _input_to_coeffs(start_points, end_points)
-    return img.transform(img.size, Image.PERSPECTIVE, coeffs, interpolation)
+    return img.transform(img.size, PERSPECTIVE, coeffs, interpolation)
 
 
 def get_erase_params(np_img, scale, ratio, value, bounded, max_attempts):
@@ -1234,11 +1235,11 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
     # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
     kwarg_fill_value = tuple(fill_value) if isinstance(fill_value, list) else fill_value
 
-    if __version__ >= '5':
+    if Image.__version__ >= '5':
         kwargs = {"fillcolor": kwarg_fill_value}
     else:
         kwargs = {}
-    return img.transform(output_size, Image.AFFINE, matrix, resample, **kwargs)
+    return img.transform(output_size, AFFINE, matrix, resample, **kwargs)
 
 
 def mix_up_single(batch_size, img, label, alpha=0.2):
