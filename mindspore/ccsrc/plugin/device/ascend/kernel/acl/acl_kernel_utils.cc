@@ -104,7 +104,7 @@ aclTensorDesc *AclOpDesc::CreateTensorDesc(const GeTensorDescPtr &tensor_desc) {
 
   auto acl_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), acl_ori_format);
   MS_EXCEPTION_IF_NULL(acl_desc);
-  if (aclSetTensorShape(acl_desc, dev_shape.size(), dev_shape.data())) {
+  if (!dev_shape.empty() && aclSetTensorShape(acl_desc, dev_shape.size(), dev_shape.data())) {
     MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
   }
   if (aclSetTensorFormat(acl_desc, acl_format)) {
@@ -140,7 +140,10 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
 }
 
 void AclOpDesc::AddTensorAttr(const std::string &attr_name, const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
+  if (value == nullptr) {
+    MS_LOG(INFO) << "Attr: " << attr_name << " has no value, skip!";
+    return;
+  }
   if (acl_attr_ == nullptr) {
     MS_LOG(EXCEPTION) << "Acl attr create failed!";
   }
@@ -165,6 +168,83 @@ void AclOpDesc::AddTensorAttr(const std::string &attr_name, const ValuePtr &valu
 
   if (ret) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value: " << value->ToString() << " failed!";
+  }
+}
+
+void AclOpDesc::AclSetAttrListBool(const std::string &attr_name, const ValuePtrList &value_sequence) {
+  std::vector<std::vector<int64_t>> value_lists;
+  for (const auto &val : value_sequence) {
+    if (!val->isa<ValueSequence>()) {
+      continue;
+    }
+    auto uint8_value = GetValue<std::vector<uint8_t>>(val);
+    std::vector<int64_t> tmp;
+    (void)std::transform(uint8_value.begin(), uint8_value.end(), std::back_inserter(tmp),
+                         [](uint8_t num) { return static_cast<int64_t>(num); });
+    (void)value_lists.emplace_back(tmp);
+  }
+  AclSetAttrListListInt(attr_name, value_lists);
+}
+
+void AclOpDesc::AclSetAttrListListInt(const std::string &attr_name,
+                                      const std::vector<std::vector<int64_t>> &value_lists) {
+  auto list_size = value_lists.size();
+  int64_t *values[list_size];
+  std::vector<int> num_values;
+  for (size_t i = 0; i < list_size; i++) {
+    values[i] = const_cast<int64_t *>(value_lists[i].data());
+    (void)num_values.emplace_back(SizeToInt(value_lists[i].size()));
+  }
+  aclError ret = aclopSetAttrListListInt(acl_attr_, attr_name.c_str(), list_size, num_values.data(), values);
+  if (ret) {
+    MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << " failed!";
+  }
+}
+
+void AclOpDesc::AclSetAttrListInt(const std::string &attr_name, const ValuePtrList &value_sequence) {
+  std::vector<std::vector<int64_t>> value_lists;
+  for (const auto &val : value_sequence) {
+    if (!val->isa<ValueSequence>()) {
+      continue;
+    }
+    (void)value_lists.emplace_back(GetValue<std::vector<int64_t>>(val));
+  }
+  AclSetAttrListListInt(attr_name, value_lists);
+}
+
+void AclOpDesc::AclSetAttrListFloat(const std::string &attr_name, const ValuePtrList &value_sequence) {
+  std::vector<std::vector<int64_t>> value_lists;
+  for (const auto &val : value_sequence) {
+    if (!val->isa<ValueSequence>()) {
+      continue;
+    }
+    auto float_value = GetValue<std::vector<float>>(val);
+    std::vector<int64_t> tmp;
+    (void)std::transform(float_value.begin(), float_value.end(), std::back_inserter(tmp), FloatToLong);
+    (void)value_lists.emplace_back(tmp);
+  }
+  AclSetAttrListListInt(attr_name, value_lists);
+}
+
+void AclOpDesc::SetAclListAttrs(const std::string &attr_name, const ValuePtr &value) {
+  const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
+  if (value_sequence.size() <= 0) {
+    return;
+  }
+  auto val = value_sequence[0];
+  if (val->isa<ValueSequence>()) {
+    const auto &sub_value_sequence = val->cast<ValueSequencePtr>()->value();
+    auto sub_val = sub_value_sequence[0];
+    if (sub_val->isa<BoolImm>()) {
+      AclSetAttrListBool(attr_name, value_sequence);
+    } else if (sub_val->isa<Int64Imm>()) {
+      AclSetAttrListInt(attr_name, value_sequence);
+    } else if (sub_val->isa<FP32Imm>()) {
+      AclSetAttrListFloat(attr_name, value_sequence);
+    } else {
+      MS_LOG(INFO) << "Currently not support to Add the attr '" << attr_name << "' with value: " << value->ToString()
+                   << ", perhaps you should add more supported type.";
+    }
   }
 }
 
@@ -195,6 +275,8 @@ void AclOpDesc::SetListAttr(const std::string &attr_name, const ValuePtr &value)
     auto value_list = GetValue<std::vector<std::string>>(value);
     ret = aclopSetAttrListString(acl_attr_, attr_name.c_str(), value_list.size(),
                                  reinterpret_cast<const char **>(value_list.data()));
+  } else if (val->isa<ValueSequence>()) {
+    SetAclListAttrs(attr_name, value);
   } else {
     MS_LOG(INFO) << "Currently not support to Add the attr '" << attr_name << "' with value: " << value->ToString()
                  << ", perhaps you should add more supported type.";

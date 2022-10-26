@@ -420,6 +420,7 @@ constexpr auto kUnsortedSegmentSumOpName = "UnsortedSegmentSum";
 constexpr auto kUnsortedSegmentSumDOpName = "UnsortedSegmentSumD";
 constexpr auto kUpdateCacheOpName = "UpdateCache";
 constexpr auto kUpdateStateOpName = "UpdateState";
+constexpr auto kDynamicBroadcastToOpName = "DynamicBroadcastTo";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
