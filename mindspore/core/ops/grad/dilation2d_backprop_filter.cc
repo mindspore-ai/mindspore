@@ -56,7 +56,8 @@ abstract::ShapePtr Dilation2DBackpropFilterInferShape(const PrimitivePtr &primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                           primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

@@ -18,7 +18,7 @@
 
 #include <set>
 #include <memory>
-
+#include <string>
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
@@ -29,7 +29,7 @@ namespace ops {
 void CropAndResizeGradImage::Init(ResizeMethod method) { this->set_method(method); }
 
 void CropAndResizeGradImage::set_method(ResizeMethod method) {
-  auto swi = (int64_t)method;
+  auto swi = static_cast<int64_t>(method);
   (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 
@@ -58,15 +58,16 @@ constexpr int64_t ImageKMaxshapeNum = 2;
 
 void CheckShapes(const std::string &prim_name, const ShapeVector &input_shape0, const ShapeVector &input_shape1,
                  const ShapeVector &input_shape2, const ShapeVector &input_shape3) {
-  (void)CheckAndConvertUtils::CheckInteger("grads rank", input_shape0.size(), kEqual, ImagekGradsShapeLen, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, ImagekGradsShapeLen,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", input_shape1[1], kEqual, ImagekCoordinateLen,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("box_index rank", input_shape2.size(), kEqual, ImagekBoxIndShapeLen,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("image_size rank", input_shape3.size(), kEqual, ImagekImageSizeShapeLen,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape2.size()), kEqual,
+                                           ImagekBoxIndShapeLen, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("image_size rank", SizeToLong(input_shape3.size()), kEqual,
+                                           ImagekImageSizeShapeLen, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("length of image_size", input_shape3[0], kEqual, ImagekGradsShapeLen,
                                            prim_name);
 
@@ -97,7 +98,7 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
       const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
       std::vector<int64_t> output_size_value_vec(ImagekOutputSizeLen);
       if (const_output_size_shape.size() == ImagekOutputSizeD) {
-        auto value = static_cast<int32_t *>(output_size_tensor->data_c());
+        auto value = reinterpret_cast<int *>(output_size_tensor->data_c());
         MS_EXCEPTION_IF_NULL(value);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
           if (value[i] > 0) {

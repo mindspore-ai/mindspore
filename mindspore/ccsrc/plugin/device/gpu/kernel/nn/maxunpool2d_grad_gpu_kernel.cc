@@ -23,7 +23,6 @@ constexpr size_t kInputIndex = 0;
 constexpr size_t kInputGradIndex = 1;
 constexpr size_t kInputIndicesIndex = 2;
 template <typename T, typename S>
-//
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreateMaxUnpool2DGradKernelPtr(const std::string &kernel_name,
                                                                               const uint32_t &device_id) {
   return std::make_unique<cukernel::MaxUnpool2DGradHelperGpuKernel<T, S>>(kernel_name, device_id);
