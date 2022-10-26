@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_V1_H_
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -29,6 +30,7 @@ class MIND_API AdaptiveAvgPool2DV1 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdaptiveAvgPool2DV1);
   AdaptiveAvgPool2DV1() : BaseOperator(kNameAdaptiveAvgPool2DV1) { InitIOName({"x"}, {"y"}); }
+  explicit AdaptiveAvgPool2DV1(const std::string &kName) : BaseOperator(kName) { InitIOName({"x"}, {"y"}); }
 };
 abstract::AbstractBasePtr AdaptiveAvgPool2DV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<abstract::AbstractBasePtr> &input_args);

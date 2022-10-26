@@ -17,47 +17,59 @@
 #include "plugin/device/cpu/kernel/concat_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/concat.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kConcatOutputsNum = 1;
 }  // namespace
-void ConcatCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  cnode_ptr_ = kernel_node;
-  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-  auto input_1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (axis_ < 0) {
-    axis_ = axis_ + SizeToInt(input_1_shape.size());
-  }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool ConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Concat does not support this kernel data type: " << kernel_attr;
   }
-
   kernel_func_ = func_list_[index].second;
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Concat>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  ori_axis_ = kernel_ptr->get_axis();
+  return true;
+}
+
+int ConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  inputs_shape_.clear();
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    inputs_shape_.push_back(inputs[i]->GetShapeVector());
+  }
+  axis_ = ori_axis_;
+  if (axis_ < 0) {
+    axis_ = axis_ + SizeToInt(inputs_shape_[0].size());
+  }
+  return KRET_OK;
 }
 
 template <typename T>
 bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto node_ = cnode_ptr_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
-  }
-  const size_t input_num = common::AnfAlgo::GetInputTensorNum(node_);
+  const size_t input_num = inputs.size();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOutputsNum, kernel_name_);
 
   std::vector<ShapeVector> input_flat_shape_list;
   input_flat_shape_list.reserve(input_num);
   for (size_t i = 0; i < input_num; i++) {
-    auto input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
+    auto input_shape_i = inputs_shape_[i];
     auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
     (void)input_flat_shape_list.emplace_back(flat_shape);
   }

@@ -20,7 +20,7 @@ Note:
 
 import math
 
-from ..primitive import PrimitiveWithInfer, prim_attr_register
+from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
@@ -1053,7 +1053,7 @@ class AngleEnergy(PrimitiveWithInfer):
         return angle_k_type
 
 
-class AngleAtomEnergy(PrimitiveWithInfer):
+class AngleAtomEnergy(Primitive):
     """
     Add the potential energy caused by angle terms to the total potential
     energy of each atom. Assume the number of angles is m and the
@@ -1102,39 +1102,6 @@ class AngleAtomEnergy(PrimitiveWithInfer):
                                         'angle_theta0'],
                                 outputs=['ene'])
         self.add_prim_attr('angle_numbers', self.angle_numbers)
-
-    def infer_shape(self, uint_crd_f_shape, scaler_f_shape, atom_a_shape, atom_b_shape, atom_c_shape, angle_k_shape,
-                    angle_theta0_shape):
-        cls_name = self.name
-        n = uint_crd_f_shape[0]
-        m = self.angle_numbers
-        validator.check_int(len(uint_crd_f_shape), 2, Rel.EQ, "uint_crd_f_dim", cls_name)
-        validator.check_int(len(scaler_f_shape), 1, Rel.EQ, "scaler_f_dim", cls_name)
-        validator.check_int(len(atom_a_shape), 1, Rel.EQ, "atom_a_dim", cls_name)
-        validator.check_int(len(atom_b_shape), 1, Rel.EQ, "atom_b_dim", cls_name)
-        validator.check_int(len(atom_c_shape), 1, Rel.EQ, "atom_c_dim", cls_name)
-        validator.check_int(len(angle_k_shape), 1, Rel.EQ, "angle_k_dim", cls_name)
-        validator.check_int(len(angle_theta0_shape), 1, Rel.EQ, "angle_theta0_dim", cls_name)
-
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape[1]", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], m, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], m, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], m, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(angle_k_shape[0], m, Rel.EQ, "angle_k_shape", cls_name)
-        validator.check_int(angle_theta0_shape[0], m, Rel.EQ, "angle_theta0_shape", cls_name)
-        return [n,]
-
-    def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, angle_k_type,
-                    angle_theta0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('angle_k', angle_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('angle_theta0', angle_theta0_type, [mstype.float32], self.name)
-        return angle_k_type
 
 
 class AngleForceWithAtomEnergy(PrimitiveWithInfer):
