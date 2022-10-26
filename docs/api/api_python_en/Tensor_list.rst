@@ -75,6 +75,8 @@ Element-wise Methods
     mindspore.Tensor.addr
     mindspore.Tensor.asin
     mindspore.Tensor.addmv
+    mindspore.Tensor.arcsinh
+    mindspore.Tensor.arctanh
     mindspore.Tensor.asinh
     mindspore.Tensor.atan
     mindspore.Tensor.atanh
