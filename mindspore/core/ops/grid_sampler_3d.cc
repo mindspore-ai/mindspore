@@ -27,6 +27,18 @@ abstract::ShapePtr GridSampler3DInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto grid_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  // dynamic rank
+  if (IsDynamicRank(input_x_shape) || IsDynamicRank(grid_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+  // dynamic shape
+  if (IsDynamic(input_x_shape) || IsDynamic(grid_shape)) {
+    ShapeVector out_shape_dyn;
+    for (size_t i = 0; i < input_x_shape.size(); ++i) {
+      out_shape_dyn.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(out_shape_dyn);
+  }
   const size_t kFive = 5;
   if (input_x_shape.size() != kFive) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'input_x' must be a 5-D tensor, but got "
