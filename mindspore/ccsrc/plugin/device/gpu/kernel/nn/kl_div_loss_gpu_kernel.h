@@ -59,7 +59,7 @@ class KLDivLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     string reduction = GetAttr<string>(kernel_node, "reduction");
     reduction_ = kReductionModeMap[reduction];
     workspace_size_ = sizeof(T);
-    if (reduction_ == ReductionMode::kNone) {
+    if (reduction_ != ReductionMode::kNone) {
       workspace_size_ *= input_size_;
     }
     InitSizeLists();
