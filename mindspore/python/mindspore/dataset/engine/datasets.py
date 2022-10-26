@@ -909,10 +909,6 @@ class Dataset:
                 "mindspore.numpy module and etc, which do not support multi-thread compiling, recommend to replace it "
                 "with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' into 1.")
 
-        if column_order is not None:
-            logger.warning("The parameter column_order will be deprecated in the future. "
-                           "Please use '.project' operation instead.")
-
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
                           python_multiprocessing, cache, callbacks, max_rowsize, offload)
 
