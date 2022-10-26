@@ -6222,6 +6222,14 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('asinh')(self)
 
+    def arcsinh(self):
+        r"""
+        See `Tensor.asinh()
+            <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.asinh.html>`_.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('asinh')(self)
+
     def atan(self):
         r"""
         Computes the trigonometric inverse tangent of the input element-wise.
@@ -6273,6 +6281,14 @@ class Tensor(Tensor_):
             >>> output = ops.atanh(x)
             >>> print(output)
             [ 0. -0.54930615]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('atanh')(self)
+
+    def arctanh(self):
+        r"""
+        See `Tensor.atanh()
+            <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.atanh.html>`_.
         """
         self._init_check()
         return tensor_operator_registry.get('atanh')(self)
