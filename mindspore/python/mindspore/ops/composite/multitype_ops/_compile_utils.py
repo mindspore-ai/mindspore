@@ -18,7 +18,7 @@ from __future__ import absolute_import
 
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops import functional as F
-from mindspore.ops  import operations as P
+from mindspore.ops import operations as P
 from mindspore.ops.composite import base
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, TopTypeof
@@ -122,6 +122,10 @@ def _tensor_mul(self, other):
     return F.mul(self, other)
 
 
+def _tensor_matmul(self, other):
+    return F.matmul(self, other)
+
+
 def _tensor_div(self, other):
     if isinstance(self, (tuple, list)):
         self = sequence_to_tensor(self, F.dtype(other))
@@ -161,6 +165,7 @@ def _tensor_floordiv(self, other):
 tensor_operator_registry.register('__add__', _tensor_add)
 tensor_operator_registry.register('__sub__', _tensor_sub)
 tensor_operator_registry.register('__mul__', _tensor_mul)
+tensor_operator_registry.register('__matmul__', _tensor_matmul)
 tensor_operator_registry.register('__truediv__', _tensor_div)
 tensor_operator_registry.register('__mod__', _tensor_mod)
 tensor_operator_registry.register('__pow__', _tensor_pow)
