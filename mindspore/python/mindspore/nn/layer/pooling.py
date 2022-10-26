@@ -249,16 +249,18 @@ class MaxPool3d(Cell):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
-            of three int numbers that represent depth, height and width respectively. Default: 1.
+            of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer.
         stride (Union[int, tuple[int]]): The moving stride of pooling operation, an int number that represents
             the moving stride of pooling kernel in the directions of depth, height and the width,
-            or a tuple of three int numbers that represent depth, height and width of movement respectively. Default: 1.
+            or a tuple of three int numbers that represent depth, height and width of movement respectively.
+            The value must be a positive integer. If the value is None, the default value `kernel_size` is used.
         padding (Union[int, tuple[int]]): Pooling padding length. An int number that represents the depth,
             height and width of movement are both stride, or a tuple of three int numbers that represent depth,
-            height and width of movement respectively.
+            height and width of movement respectively. The value cannot be negative. Default: 0.
         dilation (Union[int, tuple[int]]): Control the spacing of elements in the pooling kernel. Default: 1.
         return_indices (bool): If True, output is a Tuple of 2 Tensors, representing the maxpool result and where
-            the max values are generated. Otherwise, only the maxpool result is returned.
+            the max values are generated. Otherwise, only the maxpool result is returned. Default: False.
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Inputs:
@@ -328,6 +330,7 @@ class MaxPool3d(Cell):
     def __init__(self, kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False):
         """Initialize MaxPool3d."""
         super(MaxPool3d, self).__init__()
+        stride = stride if (stride is not None) else kernel_size
         self.return_indices = return_indices
         self.max_pool = MaxPool3DWithArgmax(kernel_size, stride, padding, dilation, ceil_mode)
         self.expand_dims = P.ExpandDims()
@@ -523,13 +526,16 @@ class AvgPool3d(Cell):
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
             is an int number that represents depth, height and width are both kernel_size, or a tuple
             of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: None.
-        padding (Union(int, tuple[int])): The padding value to be filled. Default: 0. If `padding` is an integer,
-                    the paddings of head, tail, top, bottom, left and right are the same, equal to padding.
-                    If `padding` is a tuple of six integers, the padding of head, tail, top, bottom, left and right
-                    equal to padding[0], padding[1], padding[2], padding[3], padding[4] and padding[5] correspondingly.
+            represent depth, height and width of movement respectively. The value must be a positive integer.
+            If the value is None, the default value `kernel_size` is used.
+        padding (Union(int, tuple[int])): The padding value to be filled. Default: 0. The value cannot be negative.
+            If `padding` is an integer, the paddings of head, tail, top, bottom, left and right are the same,
+            equal to padding.
+            If `padding` is a tuple of six integers, the padding of head, tail, top, bottom, left and right
+            equal to padding[0], padding[1], padding[2], padding[3], padding[4] and padding[5] correspondingly.
         ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
         count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
