@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 2;
 constexpr size_t OUTPUT_NUM = 1;
-constexpr size_t SUPPORT_SIZE = 3;
+constexpr size_t SUPPORT_SIZE = 2;
 
 bool SoftmaxGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
@@ -55,9 +55,9 @@ int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   ResetResource();
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   shape_size_ = input_shape.size();
-  if (shape_size_ > SUPPORT_SIZE) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input must be less than and equal to 3, but got " << shape_size_;
+  if (shape_size_ != SUPPORT_SIZE) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be equal to 2, but got "
+                      << shape_size_;
   }
   if (kernel_name_ == "LogSoftmaxGrad") {
     algo_ = CUDNN_SOFTMAX_LOG;
