@@ -11,8 +11,8 @@ mindspore.ops.SquaredDifference
         out_{i} = (x_{i} - y_{i}) * (x_{i} - y_{i}) = (x_{i} - y_{i})^2
 
     输入：
-        - **x** (Union[Tensor, Number, bool]) - 第一个输入，为数值型，或为bool，或数据类型为float16、float32、int32或bool的Tensor。
-        - **y** (Union[Tensor, Number, bool]) - 第二个输入，通常为数值型，如果第一个输入是数据类型为float16、float32、int32或bool的Tensor时，第二个输入是bool。
+        - **x** (Union[Tensor, Number, bool]) - 第一个输入，为数值型，或为bool，或为Tensor。
+        - **y** (Union[Tensor, Number, bool]) - 第二个输入，通常为数值型，或为Tensor，当第一个输入是Tensor时或为bool。
 
     输出：
         Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数字较高的类型。

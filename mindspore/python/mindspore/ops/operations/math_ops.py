@@ -2016,10 +2016,9 @@ class SquaredDifference(Primitive):
         out_{i} = (x_{i} - y_{i}) * (x_{i} - y_{i}) = (x_{i} - y_{i})^2
 
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is float16, float32, int32 or bool.
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool, or a tensor.
         - **y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor or a tensor whose data type is float16, float32, int32 or bool.
+          is a tensor, or a tensor.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,

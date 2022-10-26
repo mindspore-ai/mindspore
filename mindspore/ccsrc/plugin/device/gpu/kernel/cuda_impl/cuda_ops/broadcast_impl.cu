@@ -942,9 +942,34 @@ struct AbsGradFunc<half2> {
 
 template <typename T>
 struct SquaredDifferenceFunc {
-  __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     T diff = lhs - rhs;
     return diff * diff;
+  }
+  __device__ __host__ __forceinline__ Complex<T> operator()(const Complex<T> &lhs, const Complex<T> &rhs) {
+    Complex<T> diff = lhs - rhs;
+    Complex<T> conj_diff(diff.real(), -diff.imag());
+    return conj_diff * diff;
+  }
+};
+
+template <>
+struct SquaredDifferenceFunc<Complex<double>> {
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
+    Complex<double> diff = lhs - rhs;
+    Complex<double> conj_diff(diff.real(), -diff.imag());
+    return conj_diff * diff;
+  }
+};
+
+template <>
+struct SquaredDifferenceFunc<Complex<float>> {
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs,
+                                                                 const Complex<float> &rhs) {
+    Complex<float> diff = lhs - rhs;
+    Complex<float> conj_diff(diff.real(), -diff.imag());
+    return conj_diff * diff;
   }
 };
 
@@ -1213,6 +1238,9 @@ void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_XLOGY:
       return ElewiseArithComplexKernel<T1, T2, T3, XLogyFunc<Complex<T3>>>
+        <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_SQUARED_DIFFERENCE:
+      return ElewiseArithComplexKernel<T1, T2, T3, SquaredDifferenceFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
@@ -1657,6 +1685,11 @@ void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_XLOGY:
       return BroadcastComplexArithKernel<T1, T2, T3, XLogyFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_SQUARED_DIFFERENCE:
+      return BroadcastComplexArithKernel<T1, T2, T3, SquaredDifferenceFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
