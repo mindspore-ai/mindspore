@@ -35,7 +35,7 @@ struct score_index {
   score_index() {}
   score_index(int bi, float s, int sbi) : box_index(bi), score(s), suppress_begin_index(sbi) {}
   bool operator<(const score_index &b) const {
-    return (score < b.score) || ((score == b.score) && (box_index > b.box_index));
+    return (score < b.score) || (mindspore::common::IsFloatEqual(score, b.score) && (box_index > b.box_index));
   }
 };
 struct result_para {
@@ -63,8 +63,8 @@ class CombinedNonMaxSuppressionCpuKernelMod : public DeprecatedNativeCpuKernelMo
 
  private:
   size_t nms_perbath(float *, float *, float *, float *, float *, int *);
-  void regular_input2buffer(std::vector<std::vector<float>> *, float *, const int);
-  float IOU(std::vector<std::vector<float>> *, int, int);
+  void regular_input2buffer(std::vector<std::vector<float>> *, float *, int);
+  float IOU(std::vector<std::vector<float>> *, int, int) const;
   void non_max_suppression(std::vector<std::vector<float>> *, std::vector<float> *, std::vector<int> &);
   void nms_perclass(float *, float *, std::vector<non_max_suppression_local::result_para> &, int &);
   void CheckInput();

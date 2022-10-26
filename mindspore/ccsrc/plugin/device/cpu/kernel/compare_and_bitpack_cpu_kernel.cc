@@ -57,7 +57,7 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     for (int64_t i = 0; i < data_num; ++i) {
       uint8_t *out = output + i;
       bool *input0_data = reinterpret_cast<bool *>(inputs[0]->addr);
-      const int64_t block = *reinterpret_cast<const int64_t *>(input0_data + 8 * i);
+      int64_t block = *reinterpret_cast<int64_t *>(input0_data + 8 * i);
       *out = ((((block & (1LL << (shift_num7 * shift_num8))) >> (shift_num7 * shift_num8 - shift_num7))) |
               (((block & (1LL << (shift_num6 * shift_num8))) >> (shift_num6 * shift_num8 - shift_num6))) |
               (((block & (1LL << (shift_num5 * shift_num8))) >> (shift_num5 * shift_num8 - shift_num5))) |

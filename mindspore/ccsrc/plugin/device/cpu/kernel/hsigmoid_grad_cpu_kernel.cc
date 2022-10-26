@@ -35,11 +35,11 @@ bool HSigmoidGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidGradOutputsNum, kernel_name_);
-  T *dy = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  T *dy = static_cast<T *>(inputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
-  T *x = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  T *x = static_cast<T *>(inputs[kIndex1]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  T *out = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *out = static_cast<T *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(out, false);
 
   auto zero = static_cast<T>(0);

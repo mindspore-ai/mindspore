@@ -308,7 +308,7 @@ void ScaleAndTranslateGradCpuKernelMod::ComputeGradSpansCore(const Spans *spans,
       int64_t input_index = starts_vec(output_index);
       for (int64_t j = 0; j < spans->span_size; ++j, ++input_index) {
         const float weight = weights_vec(output_index * spans->span_size + j);
-        if (weight != static_cast<float>(0.0f) && input_index < forward_input_size) {
+        if (!mindspore::common::IsFloatEqual(weight, static_cast<float>(0)) && input_index < forward_input_size) {
           grad_components[input_index].push_back(GradComponent{output_index, weight});
         }
       }
@@ -400,8 +400,8 @@ bool ScaleAndTranslateGradCpuKernelMod::ComputeGradSpans(const KernelType kernel
                                                          const std::string kernel_name) {
   Spans spans;
   ScaleAndTranslateCpuKernelMod scale_and_translate_mod;
-  scale_and_translate_mod.ComputeSpans(kernel_type, forward_output_size, forward_input_size, scale, translate,
-                                       antialias, &spans, kernel_name);
+  (void)scale_and_translate_mod.ComputeSpans(kernel_type, forward_output_size, forward_input_size, scale, translate,
+                                             antialias, &spans, kernel_name);
   ComputeGradSpansCore(&spans, forward_output_size, forward_input_size, grad_spans);
   return true;
 }
