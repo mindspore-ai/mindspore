@@ -148,6 +148,7 @@ bool IsOneOfComputeDepend(const std::string &name) {
                                                 kSegmentProdOpName,
                                                 kNonZeroOpName,
                                                 kSparseSparseMinimumOpName,
+                                                kSparseSparseMaximumOpName,
                                                 kRpcRecvOpName,
                                                 kAdaptiveMaxPool3DGradOpName};
 
