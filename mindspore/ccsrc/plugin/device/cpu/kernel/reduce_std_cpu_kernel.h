@@ -42,12 +42,10 @@ class ReduceStdCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   template <typename T>
-  void RunReduceStd(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  void RunReduceStd(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T>
   void RunReduceStdWithSAxis(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> &workspace,
                              const std::vector<kernel::AddressPtr> &outputs);
 
  protected:
