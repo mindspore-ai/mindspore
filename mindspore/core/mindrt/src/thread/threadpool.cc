@@ -179,6 +179,11 @@ void Worker::WaitUntilActive() {
   if (active_num_ > 0) {
     active_num_--;
   }
+  // When active_num > 0, status = kThreadIdle, a task may enqueue,
+  // because of spint_count = 0, the status may switch to kThreadIdle without handle this task,
+  // then a new task may enqueue to override the old one, which cause task missed.
+  // So, after wait, the status_ should be kThreadBusy.
+  status_.store(kThreadBusy);
 }
 
 void Worker::set_scale(float lhs_scale, float rhs_scale) {

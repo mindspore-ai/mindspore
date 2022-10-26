@@ -643,6 +643,35 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
 #endif
 }
 
+bool GraphScheduler::CheckSingleThreadRunningCondition(ActorSet *const actor_set,
+                                                       GraphExecutionStrategy strategy) const {
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+  return false;
+#endif
+
+  // The step mode uses the default multi thread.
+  if (strategy == GraphExecutionStrategy::kStep) {
+    return false;
+  }
+
+  // The constraint condition of not supporting the single thread execution.
+  if ((actor_set->control_actors_ != nullptr) || (actor_set->copy_actors_.size() > 0) ||
+      (actor_set->super_kernel_actors_.size() > 0) || (actor_set->loop_count_actor_->loop_count() > 1) ||
+      (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum)) {
+    return false;
+  }
+
+#ifdef ENABLE_RPC_ACTOR
+  // If there're rpc actors, do not use single thread execution because the callbacks of recv actors are
+  // multi-thread.
+  if (HaveRpcActors(actor_set)) {
+    return false;
+  }
+#endif
+
+  return true;
+}
+
 void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,
                                                double execution_time) const {
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -650,28 +679,20 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
   ++actor_set->execution_count_;
   MS_LOG(DEBUG) << "Execution count: " << actor_set->execution_count_ << ", execution time cost: " << execution_time
                 << " ms in multi thread or not: " << actor_set->is_multi_thread_execution_ << ".";
-#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
-  return;
-#endif
 
-  // The step mode uses the default multi thread.
-  if (strategy == GraphExecutionStrategy::kStep) {
+  if (!CheckSingleThreadRunningCondition(actor_set, strategy)) {
     return;
   }
 
-  // The constraint condition of not supporting the single thread execution.
-  if ((actor_set->control_actors_ != nullptr) || (actor_set->copy_actors_.size() > 0) ||
-      (actor_set->super_kernel_actors_.size() > 0) || (actor_set->loop_count_actor_->loop_count() > 1) ||
-      (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum)) {
+  // When the constraint condition of single thread execution is met,
+  // if the actor threads num are less than or equal to 1, it will be run in sync mode.
+  MS_EXCEPTION_IF_NULL(ActorMgr::GetActorMgrRef());
+  auto thread_pool = ActorMgr::GetActorMgrRef()->GetActorThreadPool();
+  MS_EXCEPTION_IF_NULL(thread_pool);
+  if (thread_pool->GetActorThreadNum() <= 1) {
+    actor_set->is_multi_thread_execution_ = false;
     return;
   }
-#ifdef ENABLE_RPC_ACTOR
-  // If there're rpc actors, do not use single thread execution because the callbacks of recv actors are
-  // multi-thread.
-  if (HaveRpcActors(actor_set)) {
-    return;
-  }
-#endif
 
   if ((actor_set->is_multi_thread_execution_) &&
       (actor_set->execution_count_ >= ActorDispatcher::kMultiThreadExecutionCountBegin) &&
