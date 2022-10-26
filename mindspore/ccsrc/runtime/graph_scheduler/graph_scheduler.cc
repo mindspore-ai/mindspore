@@ -1530,7 +1530,7 @@ void GraphScheduler::LinkDataArrowForKernelActor(AbstractActor *const from_actor
   if (IsSkippedKernelActor(from_kernel)) {
     real_from_kernel_with_output_idx = common::AnfAlgo::GetPrevNodeOutput(from_kernel, 0, false);
     MS_EXCEPTION_IF_NULL(real_from_kernel_with_output_idx.first);
-    LinkControlArrowBySkippedNode(to_actor, from_kernel);
+    LinkControlArrowBySkippedNode(to_actor, from_kernel, graph);
 
     MS_EXCEPTION_IF_NULL(to_kernel_with_input_idx.first);
     MS_LOG(INFO) << "Link data arrow for inplace node, aggregate node: "
@@ -1785,9 +1785,11 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
   }
 }
 
-void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node) const {
+void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node,
+                                                   const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(skipped_node);
+  MS_EXCEPTION_IF_NULL(graph);
 
   // Link the control arrow from all the inputs of skipped node to the user of skipped node.
   auto input_num = common::AnfAlgo::GetInputTensorNum(skipped_node);
@@ -1795,7 +1797,19 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(skipped_node, i, false);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
     auto from_actor = FetchActor(kernel_with_index.first->fullname_with_scope());
-    MS_EXCEPTION_IF_NULL(from_actor);
+    // Get the from actor by the internal parameter.
+    if (IsInternalParameter(kernel_with_index.first, graph)) {
+      auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(kernel_with_index.first);
+      if (graph_output_to_actor_.count(front_output_with_index) > 0) {
+        from_actor = graph_output_to_actor_.at(front_output_with_index).first;
+      }
+    }
+    if (from_actor == nullptr) {
+      MS_LOG(INFO) << "Skip control arrow by skipped node: " << skipped_node->fullname_with_scope()
+                   << ", with input index: " << i << ", to actor: " << to_actor->GetAID().Name();
+      continue;
+    }
+
     MS_LOG(INFO) << "Link control arrow by skipped node: " << skipped_node->fullname_with_scope()
                  << ", from actor: " << from_actor->GetAID().Name() << ", to actor: " << to_actor->GetAID().Name();
     SchedulerHelper::AddControlArrow(from_actor, to_actor);
