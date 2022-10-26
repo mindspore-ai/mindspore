@@ -43,15 +43,6 @@ namespace {
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 
-std::string GetOriginFuncGraphName(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-  MS_EXCEPTION_IF_NULL(kg);
-  FuncGraphPtr origin_graph = kg->GetFuncGraph();
-  MS_EXCEPTION_IF_NULL(origin_graph);
-  return origin_graph->ToString();
-}
-
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
 
@@ -205,48 +196,6 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   }
 }
 
-void ReorderInputsAsFrontGraph(const KernelGraphPtr &kernel_graph, const FuncGraphPtr &origin_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  const auto &front_map = kernel_graph->front_backend_anf_map();
-  const auto &origin_parameters = origin_graph->get_inputs();
-  std::vector<AnfNodePtr> new_parameters;
-  std::vector<AnfNodePtr> deleted_parameters;
-
-  for (const auto &param : origin_parameters) {
-    auto iter = front_map.find(param);
-    if (iter == front_map.end()) {
-      MS_LOG(EXCEPTION) << "Invalid kernel graph " << kernel_graph->ToString() << " cannot find parameters "
-                        << param->DebugString();
-    }
-    new_parameters.push_back(iter->second);
-  }
-  if (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE) {
-    for (auto iter = new_parameters.begin(); iter != new_parameters.end();) {
-      const auto &anf_node = *iter;
-      MS_EXCEPTION_IF_NULL(anf_node);
-      auto para = anf_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(para);
-      if (!para->has_default()) {
-        MS_LOG(INFO) << "Erase input " << para->DebugString() << " at sink mode.";
-        deleted_parameters.push_back(anf_node);
-        iter = new_parameters.erase(iter);
-      } else {
-        ++iter;
-      }
-    }
-  }
-  for (auto deleted_param : deleted_parameters) {
-    auto new_cnode = kernel_graph->NewCNode(
-      std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>("FakeGetNext" + deleted_param->DebugString()))});
-    MS_EXCEPTION_IF_NULL(new_cnode);
-    new_cnode->set_abstract(deleted_param->abstract());
-    kernel_graph->ReplaceNode(deleted_param, new_cnode);
-  }
-  kernel_graph->set_parameters(new_parameters);
-  kernel_graph->SetGraphInputs(new_parameters);
-  kernel_graph->SetInputNodes();
-}
-
 void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_type, const ShapeVector &output_shape) {
   MS_EXCEPTION_IF_NULL(node);
   size_t total_output_num = common::AnfAlgo::GetOutputTensorNum(node);
@@ -351,11 +300,8 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   MS_EXCEPTION_IF_NULL(graph);
   KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
   MS_EXCEPTION_IF_NULL(kg);
-  FuncGraphPtr origin_graph = kg->GetFuncGraph();
-  MS_EXCEPTION_IF_NULL(origin_graph);
-  ReorderInputsAsFrontGraph(kg, origin_graph);
-  opt::GeOptimization(origin_graph);
-  (void)BuildDFGraph(origin_graph, GetParams(origin_graph), false);
+  opt::GeOptimization(kg);
+  (void)BuildDFGraph(kg, GetParams(kg), false);
   SetDynamicShapeAttr(kg);
   AllocInputHostMemory(kg);
   AllocOutputHostMemory(kg);
@@ -364,7 +310,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     kg->set_is_loop_count_sink(true);
   }
   // copy init weight to device
-  RunGEInitGraph(origin_graph);
+  RunGEInitGraph(kg);
   return true;
 }
 
@@ -372,7 +318,8 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                                std::vector<tensor::Tensor> *outputs,
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "GE run graph " << graph->ToString() << " start.";
+  auto graph_name = graph->ToString();
+  MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
   // copy input from device to host
   const auto &cur_inputs = graph->get_inputs();
   std::vector<tensor::TensorPtr> input_tensors;
@@ -391,7 +338,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
 
   // call ge rungraph
   transform::RunOptions run_options;
-  run_options.name = GetOriginFuncGraphName(graph);
+  run_options.name = graph_name;
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";

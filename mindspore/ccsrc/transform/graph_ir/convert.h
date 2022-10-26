@@ -73,7 +73,6 @@ class DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
     MS_EXCEPTION_IF_NULL(anf_graph);
-    df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
     auto env_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
     auto env_training = mindspore::common::GetEnv("MS_GE_TRAIN");
     if (env_ge == "1" && env_training == "1") {
@@ -87,8 +86,12 @@ class DfGraphConvertor {
     } else {
       ConfigManager::GetInstance().set_parallel_strategy(ParallelStrategy::ONE_DEVICE);
     }
-
-    MS_LOG(INFO) << "Create DfGraphConvertor with training: " << training_ << ", distribute: " << distribute_;
+    is_kernel_graph_ = anf_graph_->IsDerived();
+    df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
+    std::string graph_type = is_kernel_graph_ ? "kernel_graph" : "func_graph";
+    std::string graph_name = anf_graph_->ToString();
+    MS_LOG(INFO) << "Create DfGraphConvertor with graph: " << graph_name << "(type: " << graph_type << ")"
+                 << ", training: " << training_ << ", distribute: " << distribute_;
   }
 
   ~DfGraphConvertor() {}
@@ -174,8 +177,7 @@ class DfGraphConvertor {
   Status TryConvertValueNodeToMultiConst(const ValueNodePtr node);
   OperatorPtr ConvertValueNode(ValueNodePtr node);
   void SaveParamFormat(CNodePtr node);
-  void GetIfNodeInput(const AnfNodePtr &node);
-  void GetBranchNodeInput(const CNodePtr node, const CNodePtr input_node);
+  void GetBranchNodeInput(const CNodePtr node);
   void ConvertTopK(const CNodePtr node);
   void ConvertResizeBilinear(const FuncGraphPtr anf_graph) const;
   void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const;
@@ -225,7 +227,7 @@ class DfGraphConvertor {
   bool IsDataInput(const AnfNodePtr &node, const AnfNodePtr &input, size_t input_index) const;
   void SetMakeTupleInput(const OpAdapterPtr &adpt, const CNodePtr &make_tuple_node);
   void SetMergeInput(const OpAdapterPtr &adpt, const CNodePtr &merge_node);
-  bool IsMergeInput(const CNodePtr &node) const;
+  bool IsMergeOrSwitchLayerInput(const CNodePtr &node) const;
   void SetDynamicInputHandleByMultiInput(const OpAdapterPtr &adpt, const CNodePtr &node,
                                          const CNodePtr &from_node_input);
   void SetNodeControlInput(const AnfNodePtr &node, const AnfNodePtr &input);
@@ -238,6 +240,8 @@ class DfGraphConvertor {
   std::string GetGNodeType(const ::ge::GNode &node) const;
   bool IsIdentityRedundant(const ::ge::GNode &node) const;
   void RemoveIdentity(::ge::GNode identity_node);
+
+  std::shared_ptr<std::vector<DfGraph>> BuildBranchGraphs(const CNodePtr &cnode);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};
@@ -297,6 +301,7 @@ class DfGraphConvertor {
   mindspore::HashMap<size_t, OutHandler> bypass_node_prev_handle_cache_;
   mindspore::HashMap<size_t, OutHandler> bypass_node_handle_cache_;
   size_t case_call_input_size_ = 0;
+  bool is_kernel_graph_ = false;
 };
 }  // namespace transform
 }  // namespace mindspore

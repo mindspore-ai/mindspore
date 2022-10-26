@@ -762,11 +762,6 @@ AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
   }
 }
 
-const std::vector<AnfNodePtr> &KernelGraph::inputs() const {
-  MS_EXCEPTION_IF_NULL(inputs_);
-  return *inputs_;
-}
-
 void KernelGraph::FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf) {
   MS_EXCEPTION_IF_NULL(front_anf);
   MS_EXCEPTION_IF_NULL(backend_anf);

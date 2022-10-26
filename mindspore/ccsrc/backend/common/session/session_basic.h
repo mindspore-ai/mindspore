@@ -117,15 +117,6 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
 #ifndef ENABLE_SECURITY
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 #endif
-
-  bool CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph);
-
-  std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
-                                                    std::vector<KernelGraphPtr> *all_out_graph,
-                                                    DeviceType device_target);
-
-  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
-
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   bool IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name) const;
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -161,15 +152,6 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
 #endif
 
  private:
-  CNodePtr CreateSwitchInput(const CNodePtr &cnode, const AnfNodePtr &node_input, KernelGraph *graph);
-  std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
-  std::vector<AnfNodePtr> CreateValueNode(const CNodePtr &cnode, KernelGraph *graph);
-  void CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs);
-  std::vector<AnfNodePtr> CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph) const;
-
-  std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
-  void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
-
   void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                          std::map<AnfNodePtr, size_t> *parameter_index) const;
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
@@ -300,17 +282,12 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
                                             const std::vector<tensor::TensorPtr> &graph_inputs,
                                             InputTensorInfo *input_tensor_info, size_t input_index) const;
 
-  ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
-  ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const;
-  void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
-
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) const;
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const;
   void GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) const;
   mindspore::HashMap<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
-  mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
   uint32_t device_id_;

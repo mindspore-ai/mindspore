@@ -71,8 +71,7 @@ using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::Ker
 class BACKEND_EXPORT KernelGraph : public FuncGraph {
  public:
   KernelGraph()
-      : inputs_(std::make_shared<std::vector<AnfNodePtr>>()),
-        somas_info_(std::make_shared<SomasInfo>()),
+      : somas_info_(std::make_shared<SomasInfo>()),
         graph_id_(0),
         stream_distinction_label_(kInvalidDistincLabel),
         device_target_(DeviceType::kUnknown),
@@ -81,7 +80,10 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
         start_label_(nullptr),
         end_goto_(nullptr),
         current_epoch_(0),
-        is_dynamic_shape_(false) {}
+        is_dynamic_shape_(false) {
+    inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
+    is_derived_ = true;
+  }
 
   KernelGraph(const KernelGraph &graph) : FuncGraph(graph) {
     inputs_ = graph.inputs_;
@@ -135,13 +137,13 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     has_optimizer_ = graph.has_optimizer_;
     is_dynamic_shape_ = graph.is_dynamic_shape_;
     front_outputs_ = graph.front_outputs_;
+    is_derived_ = true;
   }
 
   ~KernelGraph() override;
 
   MS_DECLARE_PARENT(KernelGraph, FuncGraph);
 
-  const std::vector<AnfNodePtr> &inputs() const;
   std::vector<AnfNodePtr> *MutableInputs() const { return inputs_.get(); }
   void SetGraphInputs(const std::vector<AnfNodePtr> &inputs) {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>(inputs);
@@ -501,7 +503,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void PostNewCNode(const CNodePtr &cnode) const;
 
   // members
-  std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::shared_ptr<SomasInfo> somas_info_;
   std::vector<AnfNodePtr> child_graph_result_;
   std::vector<CNodePtr> execution_order_;

@@ -161,13 +161,10 @@ class OpAdapter : public BaseOpAdapter {
     // GE will generate unique name automatically
     if (anf != nullptr && anf->fullname_with_scope() != "") {
       auto name = anf->fullname_with_scope();
-      MS_LOG(DEBUG) << name;
-      string user_data_key = "subgraph_node";
-      if (anf->has_user_data(user_data_key) && *(anf->user_data<bool>(user_data_key))) {
-        auto norm_name = TransformUtil::NormOpName(name);
-        if (norm_name != name) {
-          MS_LOG(DEBUG) << "normalize anf name : " << name << " to operator name : " << norm_name;
-        }
+      string user_data_key = "orig_name";
+      if (anf->has_user_data(user_data_key) && !(anf->user_data<string>(user_data_key))->empty()) {
+        auto norm_name = *(anf->user_data<string>(user_data_key));
+        MS_LOG(DEBUG) << "Change anf name : " << name << " to operator name : " << norm_name;
         name = norm_name;
       }
       op = std::make_shared<OpType>(name);

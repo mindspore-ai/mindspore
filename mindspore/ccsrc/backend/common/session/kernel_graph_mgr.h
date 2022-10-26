@@ -50,6 +50,10 @@ class BACKEND_EXPORT KernelGraphMgr {
                                                     DeviceType device_target = DeviceType::kUnknown,
                                                     bool common_opt = true);
 
+  std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
+                                                    std::vector<KernelGraphPtr> *all_out_graph,
+                                                    DeviceType device_target);
+
   void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) const;
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
@@ -69,6 +73,9 @@ class BACKEND_EXPORT KernelGraphMgr {
 
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) const;
+  bool CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph);
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
+
   GraphId GraphSum() const { return graph_sum_; }
   void ClearPartialParameterMap() { partial_parameters_map_.clear(); }
 
@@ -81,6 +88,19 @@ class BACKEND_EXPORT KernelGraphMgr {
                             const std::shared_ptr<KernelGraph> &backend_graph);
   std::string AddPartialParametersMap(const AnfNodePtr &partial_node);
 
+  CNodePtr CreateSwitchInput(const CNodePtr &cnode, const AnfNodePtr &node_input, KernelGraph *graph);
+  std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
+  std::vector<AnfNodePtr> CreateValueNode(const CNodePtr &cnode, KernelGraph *graph);
+  void CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs);
+  std::vector<AnfNodePtr> CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph) const;
+
+  std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
+  void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
+
+  ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
+  ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const;
+  void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
+
  protected:
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
 
@@ -90,6 +110,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> partial_parameters_map_;
   mindspore::HashMap<AnfNodePtr, std::string> partial_target_map_;
   mindspore::HashMap<AnfNodePtr, ParameterPtr> default_param_map_;
+  mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
   static GraphId graph_sum_;
 };
 }  // namespace session
