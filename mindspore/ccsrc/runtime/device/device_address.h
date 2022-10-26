@@ -166,37 +166,31 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
 
   // Return the valid device ptr.
-  virtual void *GetValidPtr(size_t stream_id) { return ptr_; }
+  virtual void *GetValidPtr(size_t) { return ptr_; }
 
   // Offload data from device to host and free device memory
-  virtual bool Offload(size_t stream_id) {
+  virtual bool Offload(size_t) {
     MS_LOG(WARNING) << "Not implemented.";
     return true;
   }
 
   // Load data from host to device and free host memory
-  virtual bool Load(size_t stream_id) {
+  virtual bool Load(size_t) {
     MS_LOG(WARNING) << "Not implemented.";
     return true;
   }
 
   // Set host ptr data offloaded to
-  virtual void SetOffloadPtr(void *offload_ptr) {}
+  virtual void SetOffloadPtr(void *) {}
 
   // Get offloaded host ptr
   virtual void *GetOffloadPtr() const { return nullptr; }
 
   // Asynchronously copy host memory to device side.
-  virtual bool AsyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
-                                 size_t stream_id) const {
-    return true;
-  }
+  virtual bool AsyncHostToDevice(const ShapeVector &, size_t, TypeId, const void *, size_t) const { return true; }
 
   // Asynchronously copy device memory to host side.
-  virtual bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr,
-                                 size_t stream_id) const {
-    return true;
-  }
+  virtual bool AsyncDeviceToHost(const ShapeVector &, size_t, TypeId, void *, size_t) const { return true; }
 
  protected:
   const void *ptr() const { return ptr_; }

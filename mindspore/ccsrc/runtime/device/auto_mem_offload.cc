@@ -316,7 +316,7 @@ bool MindRTAutoOffloadAdapter::Malloc(DeviceAddress *device_address) {
   device_address->set_ptr(device_ptr);
   device_address->set_from_mem_pool(true);
   std::unique_lock<std::shared_mutex> unq_lock(all_mem_mutex_);
-  all_mem_.insert(device_address);
+  (void)all_mem_.insert(device_address);
   return true;
 }
 

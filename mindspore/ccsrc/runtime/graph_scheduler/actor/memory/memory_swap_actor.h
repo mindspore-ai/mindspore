@@ -54,7 +54,7 @@ class MemorySwapInActor : public MemorySwapActor {
       : MemorySwapActor(name, recorder_aid, stream_id, device_tensors_to_swap),
         continuous_device_tensors_(std::move(continuous_device_tensors)),
         continuous_device_tensor_sizes_(std::move(continuous_device_tensor_sizes)) {
-    device_contexts_.emplace_back(device_context);
+    (void)device_contexts_.emplace_back(device_context);
     real_parameters_.resize(real_parameter_size);
   }
   ~MemorySwapInActor() override = default;

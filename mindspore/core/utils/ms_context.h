@@ -148,7 +148,7 @@ class MS_CORE_API MsContext {
   using DeviceTypeSeter = void (*)(std::shared_ptr<MsContext> &);
   static std::shared_ptr<MsContext> GetInstance();
 
-  void Update();
+  void Refresh();
 
   bool enable_dump_ir() const;
   std::string backend_policy() const;
@@ -178,8 +178,8 @@ class MS_CORE_API MsContext {
   }
 
  private:
-  void UpdateExecutionMode();
-  void UpdateMemoryOffload();
+  void RefreshExecutionMode();
+  void RefreshMemoryOffload();
 
  private:
   static DeviceSeter seter_;

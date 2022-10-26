@@ -660,8 +660,8 @@ void DumpCustomActors(const std::vector<CustomActorPtr> &actors, std::ofstream &
 
 void DumpSwapActors(const std::vector<std::vector<MemSwapActorPtr>> &actors, std::ofstream &ofs) {
   size_t swap_actor_num = 0;
-  std::for_each(actors.cbegin(), actors.cend(),
-                [&swap_actor_num](const std::vector<MemSwapActorPtr> &actor) { swap_actor_num += actor.size(); });
+  (void)std::for_each(actors.cbegin(), actors.cend(),
+                      [&swap_actor_num](const std::vector<MemSwapActorPtr> &actor) { swap_actor_num += actor.size(); });
   ofs << "\n\n[Swap actors:" << swap_actor_num << "]\n";
   for (const auto &as : actors) {
     for (const auto &swap_actor : as) {

@@ -62,7 +62,7 @@ std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *act
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(fusion_actor));
   }
   for (auto &swap_actors : actor_set->swap_actors_) {
-    std::for_each(swap_actors.cbegin(), swap_actors.cend(), [&](const MemSwapActorPtr &swap_actor) {
+    (void)std::for_each(swap_actors.cbegin(), swap_actors.cend(), [&](const MemSwapActorPtr &swap_actor) {
       if (swap_actor != nullptr) {
         (void)actors.emplace_back(static_cast<AbstractActorPtr>(swap_actor));
       }
