@@ -2511,23 +2511,23 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
 
         .. math::
             l_n = \begin{cases}
-                x_n, & \text{if}\; y_n = 1,\\
-                \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
+            x_n, & \text{if}\; y_n = 1,\\
+            \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
             \end{cases}
 
         and the total loss functions is
 
         .. math::
             \ell(x, y) = \begin{cases}
-                \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-                \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
             \end{cases}
 
         where :math:`L = \{l_1,\dots,l_N\}^\top`.
 
     Args:
-        inputs (Tensor) - Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
-        targets (Tensor) - Same shape as the logits, contains -1 or 1.
+        inputs (Tensor): Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
+        targets (Tensor): Same shape as the logits, contains -1 or 1.
         margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: 1.0.
         reduction (string): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.

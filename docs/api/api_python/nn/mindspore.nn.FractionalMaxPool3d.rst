@@ -35,7 +35,6 @@ mindspore.nn.FractionalMaxPool3d
         - **ValueError** - `kernal_size` 不是长度为3的元组。
         - **ValueError** - `output_shape` 和 `kernel_size` 不是正数。
         - **ValueError** - `output_size` 和 `output_ratio` 同时为 `None` 。
-        - **ValueError** - `data_format` 数据格式不是 `NCDHW` 。
         - **ValueError** - `input_x` 和 `random_samples` 的第一维度大小不相等。
         - **ValueError** - `input_x` 和 `random_samples` 第二维度大小不相等。
         - **ValueError** - `random_samples` 第三维度大小不是3。

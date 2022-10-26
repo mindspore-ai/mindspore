@@ -6817,7 +6817,7 @@ class Tensor(Tensor_):
             dim (int): The dimensions to compute the cumulative product. Only constant value is allowed.
             dtype: The desired data type of output. Default: None.
 
-        Outputs:
+        Returns:
             Tensor, has the same shape and dtype as the input tensor unless `dtype` is specified.
 
         Raises:

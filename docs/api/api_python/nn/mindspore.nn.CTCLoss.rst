@@ -14,7 +14,7 @@ mindspore.nn.CTCLoss
 
     输入：
         - **log_probs** (Tensor) - 输入Tensor，shape :math:`(T, N, C)` 或 :math:`(T, C)` 。其中T表示输入长度，N表示批次大小，C是分类数。T，N，C均为正整数。
-        - **target** (Tensor) - 目标Tensor，shape :math:`(N, S)` 或 (sum( `target_lengths` ))。其中S表示最大目标长度。
+        - **targets** (Tensor) - 目标Tensor，shape :math:`(N, S)` 或 (sum( `target_lengths` ))。其中S表示最大目标长度。
         - **input_lengths** (Union[tuple, Tensor, int]) - shape为N的Tensor或tuple或者是一个正整数。表示输入长度。
         - **target_lengths** (Union[tuple, Tensor, int]) - shape为N的Tensor或tuple或者是一个正整数。表示目标长度。
 

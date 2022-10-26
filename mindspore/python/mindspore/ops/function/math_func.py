@@ -619,7 +619,7 @@ def div(input, other, rounding_mode=None):
     Args:
         input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
         rounding_mode (str, optional): Type of rounding applied to the result. Three types are defined as,
 
@@ -3787,8 +3787,8 @@ def cdist(x, y, p=2.0):
         ValueError: If `p` is a negative float.
         ValueError: If dimension of `x` is not the same as `y`.
         ValueError: If dimension of `x` or `y` is neither 2 nor 3.
-        ValueError: If the batch shape of 'x' is not the same as the shape of 'y'.
-        ValueError: If the number of columns of 'x' is not the same as the number of 'y'.
+        ValueError: If the batch shape of `x` is not the same as the shape of `y`.
+        ValueError: If the number of columns of `x` is not the same as the number of `y`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
