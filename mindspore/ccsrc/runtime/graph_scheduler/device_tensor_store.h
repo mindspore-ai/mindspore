@@ -83,7 +83,7 @@ class DeviceTensorStore {
     }
   }
 
-  DeviceTensor *Fetch(AnfNode *key, DeviceTensorType value_type) const {
+  DeviceTensorPtr Fetch(AnfNode *key, DeviceTensorType value_type) const {
     MS_EXCEPTION_IF_NULL(key);
     std::shared_lock<std::shared_mutex> lock(map_mutex_);
     const auto &iter = device_tensors_.find(key);
@@ -91,7 +91,7 @@ class DeviceTensorStore {
       for (const auto &device_tensor : iter->second) {
         MS_EXCEPTION_IF_NULL(device_tensor);
         if (device_tensor->GetDeviceType() == value_type) {
-          return device_tensor.get();
+          return device_tensor;
         }
       }
     }

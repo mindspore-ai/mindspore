@@ -525,8 +525,9 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
   }
 
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                device_contexts_[0]->GetDeviceType());
+    auto device_tensor = DeviceTensorStore::GetInstance()
+                           .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
+                           .get();
     if (device_tensor == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
@@ -630,6 +631,20 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
     }
   }
 
+  // Check the address of ref node.
+  for (const auto &ref : kernel_info_->out_in_ref_map()) {
+    size_t input_index = ref.second;
+    size_t output_index = ref.first;
+    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.inputs_.size() > input_index), "The ref input index is out of range.");
+    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.outputs_.size() > output_index), "The ref output index is out of range.");
+    MS_EXCEPTION_IF_NULL(launch_info_.inputs_[input_index]);
+    MS_EXCEPTION_IF_NULL(launch_info_.outputs_[output_index]);
+    if (launch_info_.inputs_[input_index]->addr != launch_info_.outputs_[output_index]->addr) {
+      MS_LOG(ERROR) << "Input address and output address are not equal of ref kernel actor: " << GetAID().Name();
+      return false;
+    }
+  }
+
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_LOG(DEBUG) << "Begin launch kernel of actor: " << GetAID().Name();
   auto ret = device_contexts_[0]->kernel_executor_->LaunchKernel(
@@ -666,7 +681,7 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
 
   // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
   // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
-  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
+  // current actor is in front of SendMemoryAllocReq of the next actor. One is to reuse the memory more fully, the
   // other is to ensure the execution order and avoid the illegal memory timing problem.
   if (memory_free_list_.size() > 0) {
     SendMemoryFreeReq(context);

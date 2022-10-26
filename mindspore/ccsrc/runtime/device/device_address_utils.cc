@@ -282,8 +282,15 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   MS_EXCEPTION_IF_NULL(cur_node_output_addr);
 
   if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
+    if (origin_node_output_addr->GetDeviceType() != cur_node_output_addr->GetDeviceType()) {
+      MS_LOG(EXCEPTION) << "Device type is not equal: ref origin kernel is " << origin_pair.first->fullname_with_scope()
+                        << ", index is " << origin_pair.second << ", device type is "
+                        << origin_node_output_addr->GetDeviceType() << "; cur kernel is "
+                        << cur_pair.first->fullname_with_scope() << ", index is " << cur_pair.second
+                        << ", device type is " << cur_node_output_addr->GetDeviceType();
+    }
     MS_LOG(INFO) << "Update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
-                 << ", index is " << origin_pair.second << ", cur kernel is " << cur_pair.first->fullname_with_scope()
+                 << ", index is " << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope()
                  << ", index is " << cur_pair.second;
     AnfAlgo::SetOutputAddr(origin_node_output_addr, cur_pair.second, cur_pair.first.get());
     // Update the reference count of device address.
@@ -293,7 +300,7 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
     origin_node_output_addr->ResetRefCount();
   } else {
     MS_LOG(INFO) << "No need update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
-                 << ", index is " << origin_pair.second << ", cur kernel is " << cur_pair.first->fullname_with_scope()
+                 << ", index is " << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope()
                  << ", index is " << cur_pair.second;
   }
 }

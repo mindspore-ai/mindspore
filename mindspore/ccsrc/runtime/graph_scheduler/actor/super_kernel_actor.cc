@@ -126,8 +126,9 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
 
   // Check device tensor store.
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto input_device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                      device_contexts_[0]->GetDeviceType());
+    auto input_device_tensor = DeviceTensorStore::GetInstance()
+                                 .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
+                                 .get();
     // Ge backend maybe nullptr.
     if (input_device_tensor == nullptr) {
       MS_LOG(WARNING) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()

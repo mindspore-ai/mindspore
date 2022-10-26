@@ -125,6 +125,9 @@ class BACKEND_EXPORT GraphScheduler {
   // Cache the information of graph output node to actor between “build” and “link”, for linking between the tail of
   // previous graph and the head of next graph.
   void CacheGraphOutputToActor(const GraphCompilerInfo &graph_compiler_info);
+  // The input and output of ref node may be in the different subgraphs, so need the global subgraphs info to update the
+  // device address of ref node.
+  void UpdateDeviceAddressByRefInternalParameter(const GraphCompilerInfo &graph_compiler_info);
 
   // The processing of actors linking.
   // 1. The processing of linking data arrows.
