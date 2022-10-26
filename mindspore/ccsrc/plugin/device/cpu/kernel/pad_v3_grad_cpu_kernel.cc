@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/pad_v3_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/grad/pad_v3_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,35 +43,55 @@ constexpr int64_t padding_pos_4 = 4;
 const std::vector<std::string> mode_list = {"reflect", "edge"};
 }  // namespace
 
-void PadV3GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
+bool PadV3GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3Grad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  mode_ = kernel_ptr->get_mode();
   const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), mode_) != mode_list.end();
   if (is_mode_available == false) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be, 'reflect' or 'edge', but got " << mode_;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'mode' should be 'constant', 'reflect' or 'edge', but got "
+                  << mode_;
+    return false;
   }
-  paddings_contiguous_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "paddings_contiguous");
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  input_dim_ = SizeToLong(input_shape.size());
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
 
-  auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  paddings_contiguous_ = kernel_ptr->get_paddings_contiguous();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
+}
+
+int PadV3GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  input_dim_ = SizeToLong(input_shape.size());
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+
+  auto padding_shape = inputs[kIndex1]->GetShapeVector();
   // get padding_num
   if (padding_shape.size() != 1) {
     paddings_num_ = 1;
   } else {
     paddings_num_ = SizeToLong(padding_shape[0]);
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: ";
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename S>
@@ -189,9 +210,6 @@ int64_t PadV3GradCpuKernelMod::IndexCalculate(int64_t pad_value, int64_t now, in
 template <typename T, typename S>
 bool PadV3GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-
   if (!GetPaddings<S>(inputs)) {
     MS_LOG(EXCEPTION) << "get paddings failed";
   }
