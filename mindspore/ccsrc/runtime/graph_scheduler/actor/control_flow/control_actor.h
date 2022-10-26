@@ -79,6 +79,7 @@ class ControlActor : public MemoryAwareActor {
   // Free memory by the dynamic ref count decremented. It corresponds to the EraseInput.
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
+  void set_start_time(timeval start_time) { start_time_ = start_time; }
   const AnfNodePtr &node() const { return node_; }
 
  protected:
@@ -168,6 +169,13 @@ class ControlActor : public MemoryAwareActor {
   // Backend parameters in the kernel graph.In the dynamic shape, when parameters are passed between the kernel
   // graphs, the shape in the backend parameters needs to be updated.
   std::vector<std::vector<AnfNodePtr>> backend_parameters_;
+
+  // Count the time cost bewtween this actor to the end actors, when this actor is executed, set current time to the
+  // start_time_ of the end actors and then when the end actors are executed, it will count the time cost between its
+  // start_time_ and its current time, for example, set exit actor of kernel graph to its entrance actor to count the
+  // execution time of the kernel graph.
+  std::set<ControlActor *> end_actors_;
+  timeval start_time_;
 
   // local node for control actor, such as return node for exit actor, switch node for switch actor.
   AnfNodePtr node_;

@@ -110,6 +110,18 @@ size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
 
 void ControlActor::Run(OpContext<DeviceTensor> *const context) {
   try {
+    // The exit actor is the output of kernel graph when the node_ is null.
+    if (type_ == KernelTransformType::kExitActor && node_ == nullptr) {
+      timeval current_time;
+      constexpr uint64_t kUSecondInSecond = 1000000;
+      (void)gettimeofday(&current_time, nullptr);
+      MS_LOG(DEBUG) << "Kernel graph group exit actor:" << GetAID() << " cost time:"
+                    << (kUSecondInSecond * static_cast<uint64_t>(current_time.tv_sec) +
+                        static_cast<uint64_t>(current_time.tv_usec)) -
+                         (kUSecondInSecond * static_cast<uint64_t>(start_time_.tv_sec) +
+                          static_cast<uint64_t>(start_time_.tv_usec));
+    }
+
     FetchInput(context);
 
     // Note that IncreaseDynamicRefCounts must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
@@ -450,6 +462,14 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(output_partial);
     ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial,
                           IntToSize(partial_arrow->to_input_index_), context);
+  }
+
+  // Update the start time in end actor.
+  for (const auto &actor : end_actors_) {
+    MS_EXCEPTION_IF_NULL(actor);
+    timeval start_time;
+    (void)gettimeofday(&start_time, nullptr);
+    actor->set_start_time(start_time);
   }
 }
 
