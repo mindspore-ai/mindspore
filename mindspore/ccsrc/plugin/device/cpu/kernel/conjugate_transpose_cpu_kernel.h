@@ -114,7 +114,7 @@ class ConjugateTransposeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                      const int *output_shape);
   template <typename T>
   void TransposeDims(const T *in_data, T *out_data, const int *output_shape, const TransposeParameter *transpose_param,
-                     int task_id, int thread_num);
+                     const int task_id, const int thread_num);
 
   TransposeParameter transpose_param_;
   std::vector<int64_t> input_shape_;

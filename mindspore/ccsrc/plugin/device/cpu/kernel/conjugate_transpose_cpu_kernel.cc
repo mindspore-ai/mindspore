@@ -86,10 +86,10 @@ bool ConjugateTransposeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 template <typename T>
 void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &outputs) {
-  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *input_addr = static_cast<T *>(inputs[0]->addr);
 
   if (perm_type_ == kNumberTypeInt32) {
-    auto perm_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+    auto perm_addr = static_cast<int32_t *>(inputs[1]->addr);
     auto perm_size = SizeToInt(inputs[1]->size / sizeof(int32_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
@@ -101,7 +101,7 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
       axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
-    auto perm_addr = reinterpret_cast<int64_t *>(inputs[1]->addr);
+    auto perm_addr = static_cast<int64_t *>(inputs[1]->addr);
     auto perm_size = SizeToInt(inputs[1]->size / sizeof(int64_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
@@ -131,7 +131,7 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     transpose_param_.out_strides_[i - 1] = SizeToInt(output_shape_[i]) * transpose_param_.out_strides_[i];
   }
 
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = static_cast<T *>(outputs[0]->addr);
   transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
   std::vector<int> output_shape(SizeToInt(output_shape_.size()));
   for (size_t i = 0; i < output_shape_.size(); ++i) {
@@ -159,10 +159,10 @@ void ConjugateTransposeCpuKernelMod::ConjComplexFunc(T *input, T *output, size_t
 template <typename T>
 void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
                                                          const std::vector<AddressPtr> &outputs) {
-  auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *input_addr = static_cast<T *>(inputs[0]->addr);
 
   if (perm_type_ == kNumberTypeInt32) {
-    auto perm_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+    auto perm_addr = static_cast<int32_t *>(inputs[1]->addr);
     auto perm_size = SizeToInt(inputs[1]->size / sizeof(int32_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
@@ -174,7 +174,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
       axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
-    auto perm_addr = reinterpret_cast<int64_t *>(inputs[1]->addr);
+    auto perm_addr = static_cast<int64_t *>(inputs[1]->addr);
     auto perm_size = SizeToInt(inputs[1]->size / sizeof(int64_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
@@ -204,7 +204,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
     transpose_param_.out_strides_[i - 1] = SizeToInt(output_shape_[i]) * transpose_param_.out_strides_[i];
   }
 
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = static_cast<T *>(outputs[0]->addr);
   transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
   auto task = std::bind(ConjComplexFunc<T>, input_addr, input_addr, 0, transpose_param_.data_num_);
   ParallelLaunchAutoSearch(task, transpose_param_.data_num_, this, &parallel_search_info_);
@@ -235,10 +235,10 @@ int ConjugateTransposeCpuKernelMod::DoTranspose(const T *in_data, T *out_data, c
   const int *perm = transpose_param->perm_;
   const int *strides = transpose_param->strides_;
   const int *out_strides = transpose_param->out_strides_;
-  int data_size = transpose_param->data_num_ * sizeof(T);
+  int data_size = static_cast<int32_t>(transpose_param->data_num_) * static_cast<int32_t>(sizeof(T));
   int num_axes = transpose_param->num_axes_;
   bool needTranspose = false;
-  for (size_t i = 1; i < (unsigned int)num_axes; ++i) {
+  for (size_t i = 1; i < static_cast<uint32_t>(num_axes); ++i) {
     if (perm[i] - perm[i - 1] != 1) {
       needTranspose = true;
       break;
@@ -248,7 +248,7 @@ int ConjugateTransposeCpuKernelMod::DoTranspose(const T *in_data, T *out_data, c
     (void)memcpy(out_data, in_data, data_size);
     return NNACL_OK;
   }
-  for (size_t i = 0; i < (unsigned int)num_axes; ++i) {
+  for (size_t i = 0; i < static_cast<uint32_t>(num_axes); ++i) {
     if (perm[i] < 0) {
       return NNACL_PARAM_INVALID;
     }
@@ -278,10 +278,10 @@ void ConjugateTransposeCpuKernelMod::TransposeDim2(const T *in_data, T *out_data
   const int stride1 = strides[perm[kIndex1]];
   const int output0 = output_shape[kIndex0];
   const int output1 = output_shape[kIndex1];
-  for (size_t i = 0; i < (unsigned int)output0; ++i) {
+  for (size_t i = 0; i < static_cast<uint32_t>(output0); ++i) {
     size_t out_stride0_i = i * output1;
     size_t stride0_i = i * 1 * stride0;
-    for (size_t j = 0; j < (unsigned int)output1; ++j) {
+    for (size_t j = 0; j < static_cast<uint32_t>(output1); ++j) {
       out_data[out_stride0_i + j] = in_data[stride0_i + j * stride1];
     }
   }
@@ -298,13 +298,13 @@ void ConjugateTransposeCpuKernelMod::TransposeDim3(const T *in_data, T *out_data
   const int output0 = output_shape[kIndex0];
   const int output1 = output_shape[kIndex1];
   const int output2 = output_shape[kIndex2];
-  for (size_t i = 0; i < (unsigned int)output0; ++i) {
+  for (size_t i = 0; i < static_cast<uint32_t>(output0); ++i) {
     size_t out_stride0_i = i * out_stride0;
     size_t stride0_i = i * stride0;
-    for (size_t j = 0; j < (unsigned int)output1; ++j) {
+    for (size_t j = 0; j < static_cast<uint32_t>(output1); ++j) {
       size_t out_stride1_j = j * out_stride1;
       size_t stride1_j = j * stride1;
-      for (size_t k = 0; k < (unsigned int)output2; ++k) {
+      for (size_t k = 0; k < static_cast<uint32_t>(output2); ++k) {
         out_data[out_stride0_i + out_stride1_j + k] = in_data[stride0_i + stride1_j + k * stride2];
       }
     }
@@ -325,16 +325,16 @@ void ConjugateTransposeCpuKernelMod::TransposeDim4(const T *in_data, T *out_data
   const int output1 = output_shape[kIndex1];
   const int output2 = output_shape[kIndex2];
   const int output3 = output_shape[kIndex3];
-  for (size_t i = 0; i < (unsigned int)output0; ++i) {
+  for (size_t i = 0; i < static_cast<uint32_t>(output0); ++i) {
     size_t out_stride0_i = i * out_stride0;
     size_t stride0_i = i * stride0;
-    for (size_t j = 0; j < (unsigned int)output1; ++j) {
+    for (size_t j = 0; j < static_cast<uint32_t>(output1); ++j) {
       size_t out_stride1_j = j * out_stride1;
       size_t stride1_j = j * stride1;
-      for (size_t k = 0; k < (unsigned int)output2; ++k) {
+      for (size_t k = 0; k < static_cast<uint32_t>(output2); ++k) {
         size_t out_stride2_k = k * out_stride2;
         size_t stride2_k = k * stride2;
-        for (size_t m = 0; m < (unsigned int)output3; ++m) {
+        for (size_t m = 0; m < static_cast<uint32_t>(output3); ++m) {
           out_data[out_stride0_i + out_stride1_j + out_stride2_k + m] =
             in_data[stride0_i + stride1_j + stride2_k + m * stride3];
         }
@@ -360,19 +360,19 @@ void ConjugateTransposeCpuKernelMod::TransposeDim5(const T *in_data, T *out_data
   const int output2 = output_shape[kIndex2];
   const int output3 = output_shape[kIndex3];
   const int output4 = output_shape[kIndex4];
-  for (size_t i = 0; i < (unsigned int)output0; ++i) {
+  for (size_t i = 0; i < static_cast<uint32_t>(output0); ++i) {
     size_t out_stride0_i = i * out_stride0;
     size_t stride0_i = i * stride0;
-    for (size_t j = 0; j < (unsigned int)output1; ++j) {
+    for (size_t j = 0; j < static_cast<uint32_t>(output1); ++j) {
       size_t out_stride1_j = j * out_stride1;
       size_t stride1_j = j * stride1;
-      for (size_t k = 0; k < (unsigned int)output2; ++k) {
+      for (size_t k = 0; k < static_cast<uint32_t>(output2); ++k) {
         size_t out_stride2_k = k * out_stride2;
         size_t stride2_k = k * stride2;
-        for (size_t m = 0; m < (unsigned int)output3; ++m) {
+        for (size_t m = 0; m < static_cast<uint32_t>(output3); ++m) {
           size_t out_stride3_m = m * out_stride3;
           size_t stride3_m = m * stride3;
-          for (size_t n = 0; n < (unsigned int)output4; ++n) {
+          for (size_t n = 0; n < static_cast<uint32_t>(output4); ++n) {
             out_data[out_stride0_i + out_stride1_j + out_stride2_k + out_stride3_m + n] =
               in_data[stride0_i + stride1_j + stride2_k + stride3_m + n * stride4];
           }
@@ -402,22 +402,22 @@ void ConjugateTransposeCpuKernelMod::TransposeDim6(const T *in_data, T *out_data
   const int output3 = output_shape[kIndex3];
   const int output4 = output_shape[kIndex4];
   const int output5 = output_shape[kIndex5];
-  for (size_t i = 0; i < (unsigned int)output0; ++i) {
+  for (size_t i = 0; i < static_cast<uint32_t>(output0); ++i) {
     size_t out_stride0_i = i * out_stride0;
     size_t stride0_i = i * stride0;
-    for (size_t j = 0; j < (unsigned int)output1; ++j) {
+    for (size_t j = 0; j < static_cast<uint32_t>(output1); ++j) {
       size_t out_stride1_j = j * out_stride1;
       size_t stride1_j = j * stride1;
-      for (size_t k = 0; k < (unsigned int)output2; ++k) {
+      for (size_t k = 0; k < static_cast<uint32_t>(output2); ++k) {
         size_t out_stride2_k = k * out_stride2;
         size_t stride2_k = k * stride2;
-        for (size_t m = 0; m < (unsigned int)output3; ++m) {
+        for (size_t m = 0; m < static_cast<uint32_t>(output3); ++m) {
           size_t out_stride3_m = m * out_stride3;
           size_t stride3_m = m * stride3;
-          for (size_t n = 0; n < (unsigned int)output4; ++n) {
+          for (size_t n = 0; n < static_cast<uint32_t>(output4); ++n) {
             size_t out_stride4_n = n * out_stride4;
             size_t stride4_n = n * stride4;
-            for (size_t g = 0; g < (unsigned int)output5; ++g) {
+            for (size_t g = 0; g < static_cast<uint32_t>(output5); ++g) {
               out_data[out_stride0_i + out_stride1_j + out_stride2_k + out_stride3_m + out_stride4_n + g] =
                 in_data[stride0_i + stride1_j + stride2_k + stride3_m + stride4_n + g * stride5];
             }
@@ -451,25 +451,25 @@ void ConjugateTransposeCpuKernelMod::TransposeDim7(const T *in_data, T *out_data
   const int output4 = output_shape[kIndex4];
   const int output5 = output_shape[kIndex5];
   const int output6 = output_shape[kIndex6];
-  for (size_t i = 0; i < (unsigned int)output0; ++i) {
+  for (size_t i = 0; i < static_cast<uint32_t>(output0); ++i) {
     size_t out_stride0_i = i * out_stride0;
     size_t stride0_i = i * stride0;
-    for (size_t j = 0; j < (unsigned int)output1; ++j) {
+    for (size_t j = 0; j < static_cast<uint32_t>(output1); ++j) {
       size_t out_stride1_j = j * out_stride1;
       size_t stride1_j = j * stride1;
-      for (size_t k = 0; k < (unsigned int)output2; ++k) {
+      for (size_t k = 0; k < static_cast<uint32_t>(output2); ++k) {
         size_t out_stride2_k = k * out_stride2;
         size_t stride2_k = k * stride2;
-        for (size_t m = 0; m < (unsigned int)output3; ++m) {
+        for (size_t m = 0; m < static_cast<uint32_t>(output3); ++m) {
           size_t out_stride3_m = m * out_stride3;
           size_t stride3_m = m * stride3;
-          for (size_t n = 0; n < (unsigned int)output4; ++n) {
+          for (size_t n = 0; n < static_cast<uint32_t>(output4); ++n) {
             size_t out_stride4_n = n * out_stride4;
             size_t stride4_n = n * stride4;
-            for (size_t g = 0; g < (unsigned int)output5; ++g) {
+            for (size_t g = 0; g < static_cast<uint32_t>(output5); ++g) {
               size_t out_stride5_g = g * out_stride5;
               size_t stride5_g = g * stride5;
-              for (size_t s = 0; s < (unsigned int)output6; ++s) {
+              for (size_t s = 0; s < static_cast<uint32_t>(output6); ++s) {
                 out_data[out_stride0_i + out_stride1_j + out_stride2_k + out_stride3_m + out_stride4_n + out_stride5_g +
                          s] =
                   in_data[stride0_i + stride1_j + stride2_k + stride3_m + stride4_n + stride5_g + s * stride6];
@@ -515,13 +515,13 @@ void ConjugateTransposeCpuKernelMod::TransposeDims(const T *in_data, T *out_data
   int num_axes = transpose_param->num_axes_;
   size_t data_size = (*out_strides) * output_shape[0];
   size_t offset_size = UP_DIV(data_size, thread_num);
-  size_t task_offset = offset_size * task_id;
-  int count = data_size - task_offset;
+  size_t task_offset = offset_size * static_cast<size_t>(task_id);
+  int count = static_cast<int32_t>(data_size) - static_cast<int32_t>(task_offset);
   if (count <= 0) {
     return;
   }
-  count = MSMIN(offset_size, (unsigned int)count);
-  for (int idx = task_offset; (unsigned int)idx < task_offset + count; ++idx) {
+  count = MSMIN(offset_size, static_cast<uint32_t>(count));
+  for (int idx = static_cast<int32_t>(task_offset); static_cast<uint32_t>(idx) < task_offset + count; ++idx) {
     int pos = idx;
     int output_idx = 0;
     int input_idx = 0;

@@ -18,9 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_COMPLEXABS_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
-#include <map>
-#include <string>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
