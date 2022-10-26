@@ -926,7 +926,7 @@ void DfGraphConvertor::GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &gra
   }
 
   auto cond_graph_node = graphs.at(0);
-  auto graph = cond_graph_node->func_graph()->cast<FuncGraphPtr>();
+  auto graph = cond_graph_node->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
   const auto &cond_params = graph->inputs();
   auto nodes = GetOrderedCNodes(graph, cond_graph_node);
@@ -985,7 +985,7 @@ void DfGraphConvertor::GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &gra
 
 void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
   auto cond_graph_node = graphs.at(0);
-  auto cond_graph = cond_graph_node->func_graph()->cast<FuncGraphPtr>();
+  auto cond_graph = cond_graph_node->func_graph();
   MS_EXCEPTION_IF_NULL(cond_graph);
   const auto &cond_params = cond_graph->inputs();
 
@@ -1027,7 +1027,7 @@ void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
 
 void DfGraphConvertor::ConvertWhileCond(const AnfNodePtr &node) {
   MS_LOG(DEBUG) << "begin to convert while node cond graph";
-  auto func_graph = node->func_graph()->cast<FuncGraphPtr>();
+  auto func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
 
   DfGraphConvertor converter(func_graph);

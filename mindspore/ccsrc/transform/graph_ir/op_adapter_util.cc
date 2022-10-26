@@ -288,6 +288,7 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
   if (input->isa<ValueNode>()) {
     prim_node = input;
   } else if (input->isa<CNode>() && input->cast<CNodePtr>()->input(0)->isa<ValueNode>()) {
+    // process cnode1, its input(index 0) is a conde0(partial etc.)
     prim_node = input->cast<CNodePtr>()->input(0);
   } else {
     MS_LOG(ERROR) << "The anf is not a value node or cnode.";

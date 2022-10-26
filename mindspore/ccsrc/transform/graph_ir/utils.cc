@@ -105,7 +105,7 @@ bool IsWhileNode(const AnfNodePtr &node) {
   }
   auto graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
-  bool in_kg = graph->IsDerived();
+  bool in_kg = graph->type_name() == kKernelGraphClassName;
   auto cnode = node->cast<CNodePtr>();
   ValueNodePtr graph_node = nullptr;
   if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1)->isa<ValueNode>()) {
@@ -176,7 +176,7 @@ bool IsIfNode(const AnfNodePtr &node) {
   }
   auto graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
-  bool in_kg = graph->IsDerived();
+  bool in_kg = graph->type_name() == kKernelGraphClassName;
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CNodePtr switch_node = nullptr;
@@ -222,7 +222,7 @@ bool IsCaseNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
-  bool in_kg = graph->IsDerived();
+  bool in_kg = graph->type_name() == kKernelGraphClassName;
   if (in_kg && IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
     return true;
   }
