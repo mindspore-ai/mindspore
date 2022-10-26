@@ -73,7 +73,7 @@ int KLDivLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   input_size_ = 1;
   input_size_ *= SizeOf(input_shape);
   size_t workspace_size = type_size_;
-  if (reduction_ == ReductionMode::kNone) {
+  if (reduction_ != ReductionMode::kNone) {
     workspace_size *= input_size_;
   }
   workspace_size_list_.push_back(workspace_size);
