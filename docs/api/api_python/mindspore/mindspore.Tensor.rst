@@ -70,11 +70,11 @@ mindspore.Tensor
     mindspore.Tensor.addcmul
     mindspore.Tensor.asin
     mindspore.Tensor.addmv
-    mindspore.Tensor.asinh
     mindspore.Tensor.arcsinh
+    mindspore.Tensor.arctanh
+    mindspore.Tensor.asinh
     mindspore.Tensor.atan
     mindspore.Tensor.atanh
-    mindspore.Tensor.arctanh
     mindspore.Tensor.atan2
     mindspore.Tensor.bernoulli
     mindspore.Tensor.bitwise_and
