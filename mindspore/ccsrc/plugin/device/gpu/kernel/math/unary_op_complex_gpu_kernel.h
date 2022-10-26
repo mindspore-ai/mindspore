@@ -27,10 +27,11 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kInputOutputNum = 1;
 template <typename T, typename S>
-class UnaryOpComplexGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UnaryOpComplexGpuKernelMod() { ResetResource(); }
+  UnaryOpComplexGpuKernelMod() {}
   ~UnaryOpComplexGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -67,51 +68,41 @@ class UnaryOpComplexGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    GetOpType(kernel_node);
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    MS_ERROR_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    GetOpType(base_operator->GetPrim()->name());
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputOutputNum, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputOutputNum, kernel_name_);
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
     }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
-    }
-    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= static_cast<size_t>(input_shape[i]);
-      output_size_ *= static_cast<size_t>(input_shape[i]);
-    }
-    InitSizeLists();
-    return true;
-  }
-  void ResetResource() noexcept override {
-    input_size_ = 1;
-    output_size_ = 1;
-    workspace_size_ = 0;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
+    return KRET_OK;
   }
 
- protected:
-  void InitSizeLists() override {
+ private:
+  void InitSizeLists() {
+    input_size_list_.clear();
+    output_size_list_.clear();
     input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(output_size_ * sizeof(S));
   }
 
- private:
-  void GetOpType(const CNodePtr &kernel_node) {
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  void GetOpType(const std::string kernel_name) {
     static std::map<std::string, cukernel::UnaryOptype> kComplexSupportedTypeMap = {
       {"Real", cukernel::UNARY_OP_REAL}, {"Imag", cukernel::UNARY_OP_IMAG}, {"Conj", cukernel::UNARY_OP_CONJ}};
     auto iter = kComplexSupportedTypeMap.find(kernel_name);
@@ -124,10 +115,10 @@ class UnaryOpComplexGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  size_t input_size_;
-  size_t output_size_;
+  size_t input_size_{kInputOutputNum};
+  size_t output_size_{kInputOutputNum};
   size_t workspace_size_;
-  bool is_null_input_;
+  bool is_null_input_{false};
   cukernel::UnaryOptype unary_op_type_;
 };
 }  // namespace kernel
