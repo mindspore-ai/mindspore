@@ -48,7 +48,9 @@ std::string GetStackActorNameByExitName(const std::string &exit_name) {
 // Parameter and ref node can not copy the device tensor.
 bool is_need_copy_device_tensor(const AnfNodePtr &backend_node, size_t index) {
   MS_EXCEPTION_IF_NULL(backend_node);
-  if (!backend_node->isa<CNode>()) {
+  // Skip the parameter and Load node.
+  const auto &real_backend_node = common::AnfAlgo::VisitKernelWithReturnType(backend_node, index, false).first;
+  if (real_backend_node != nullptr && (!real_backend_node->isa<CNode>())) {
     return false;
   }
 
