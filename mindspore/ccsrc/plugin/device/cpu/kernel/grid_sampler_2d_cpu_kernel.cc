@@ -23,19 +23,50 @@ const size_t kZero = 0;
 const size_t kOne = 1;
 const size_t kTwo = 2;
 const size_t kThree = 3;
+const size_t kInputsNum = 2;
+const size_t kOutputsNum = 1;
 }  // namespace
 
 namespace mindspore {
 namespace kernel {
-void GridSampler2DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  grid_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({x_shape_, grid_shape_, output_shape_})) {
-    return;
+bool GridSampler2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = kInputsNum;
+  constexpr size_t output_num = kOutputsNum;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  dtype_ = inputs[kZero]->GetDtype();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler2D>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  interpolation_mode_ = kernel_ptr->get_interpolation_mode();
+  padding_mode_ = kernel_ptr->get_padding_mode();
+  align_corners_ = kernel_ptr->get_align_corners();
+  return true;
+}
+
+int GridSampler2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
+  grid_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
   output_number_ = LongToSize(output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] * output_shape_[kThree]);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+
   size_t stride_tmp = 1;
   auto stride_compute = [this, &stride_tmp](std::vector<size_t> &stride, ShapeVector shape) {
     for (int32_t i = 3; i > -1; i--) {
@@ -47,9 +78,7 @@ void GridSampler2DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   stride_compute(x_stride_, x_shape_);
   stride_compute(grid_stride_, grid_shape_);
   stride_compute(output_stride_, output_shape_);
-  interpolation_mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "interpolation_mode");
-  padding_mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "padding_mode");
-  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
+  return ret;
 }
 
 bool GridSampler2DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

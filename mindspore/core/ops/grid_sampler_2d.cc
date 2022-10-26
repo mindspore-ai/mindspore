@@ -29,6 +29,18 @@ abstract::ShapePtr GridSampler2DInferShape(const PrimitivePtr &, const std::vect
   const int64_t normal_shape_size = 4;
   const int64_t label3 = 3;
   const int64_t num2 = 2;
+  // dynamic rank
+  if (IsDynamicRank(input_x_shape) || IsDynamicRank(grid_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+  // dynamic shape
+  if (IsDynamic(input_x_shape) || IsDynamic(grid_shape)) {
+    ShapeVector out_shape_dyn;
+    for (size_t i = 0; i < input_x_shape.size(); ++i) {
+      out_shape_dyn.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(out_shape_dyn);
+  }
   if (input_x_shape.size() != normal_shape_size) {
     MS_EXCEPTION(ValueError) << "Input_x must be a 4-dimensional tensor, but got "
                              << std::to_string(input_x_shape.size()) << "-dimensional tensor.";
