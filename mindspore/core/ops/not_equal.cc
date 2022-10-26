@@ -38,7 +38,20 @@ void NotEqualImpl(void *x1, void *x2, void *result, size_t size) {
   T *x2_data = static_cast<T *>(x2);
   auto result_data = static_cast<bool *>(result);
   for (size_t i = 0; i < size; ++i) {
-    result_data[i] = x1_data[i] != x2_data[i];
+    result_data[i] = !(x1_data[i] == x2_data[i]);
+  }
+}
+
+template <typename T>
+void NotEqualFloatImpl(void *x1, void *x2, void *result, size_t size) {
+  MS_EXCEPTION_IF_NULL(x1);
+  MS_EXCEPTION_IF_NULL(x2);
+  MS_EXCEPTION_IF_NULL(result);
+  T *x1_data = static_cast<T *>(x1);
+  T *x2_data = static_cast<T *>(x2);
+  auto result_data = static_cast<bool *>(result);
+  for (size_t i = 0; i < size; ++i) {
+    result_data[i] = std::abs(x1_data[i] - x2_data[i]) > std::numeric_limits<T>::epsilon();
   }
 }
 
@@ -108,7 +121,7 @@ ValuePtr NotEqualInferValue(const PrimitivePtr &prim, const std::vector<Abstract
       break;
     }
     case kNumberTypeFloat: {
-      NotEqualImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      NotEqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     case kNumberTypeFloat16: {
@@ -116,11 +129,11 @@ ValuePtr NotEqualInferValue(const PrimitivePtr &prim, const std::vector<Abstract
       break;
     }
     case kNumberTypeFloat32: {
-      NotEqualImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      NotEqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     case kNumberTypeFloat64: {
-      NotEqualImpl<double>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      NotEqualFloatImpl<double>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     case kNumberTypeComplex64: {
