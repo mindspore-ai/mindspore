@@ -51,7 +51,7 @@ ms_compile_cache = set()
 cells_compile_cache = {}
 
 BROADCAST_PHASE = "_broadcast_"
-_PYNATIVE_PARRALLEL_FUNC_NAME = "after_shard"
+_PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
 
 def _convert_python_data(data):
@@ -353,7 +353,7 @@ class _MindsporeFunctionExecutor:
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
-        if _is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
+        if _is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
             self._parallel_process_for_ms_function(phase)
 
         if _is_pynative_parallel() and _pynative_executor.get_optimizer():
@@ -561,9 +561,8 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None):
             if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
             # only the function or cell instance wrapped by shard will fall into this branch
-            if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
-                process_obj = args[0]
-                args = args[1:]
+            if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
+                process_obj = hash_args
             out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args)
             return out
 
