@@ -358,6 +358,9 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::string bprop_hash() const { return bprop_hash_; }
   void set_bprop_hash(const std::string &bprop_hash) { bprop_hash_ = bprop_hash; }
 
+  std::string bprop_filepath() const { return bprop_filepath_; }
+  void set_bprop_filepath(const std::string &bprop_filepath) { bprop_filepath_ = bprop_filepath; }
+
   bool modify_output() const { return modify_output_; }
   void set_modify_output(bool modify_output) { modify_output_ = modify_output; }
   const mindspore::HashSet<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
@@ -466,8 +469,10 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // If the graph was changed, it should be dropped in cache data_converter::object_map_
   // which used by ConvertToFuncGraph.
   bool dropped_ = false;
-  // If the graph is a bprop graph, it should has a hash of the bprop directory.
+  // If the graph is a bprop graph, it should has a hash of the bprop function.
   std::string bprop_hash_;
+  // If the graph is a bprop graph, it should has a filepath of the bprop function.
+  std::string bprop_filepath_;
 
   // If the graph is decorated with @jit and runs grad process in pynative mode,
   // forward nodes used in grad graph will be added to output for holding output values.

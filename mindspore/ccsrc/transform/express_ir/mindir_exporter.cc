@@ -41,6 +41,7 @@ namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
 using IntPtr = std::shared_ptr<Int>;
 using UIntPtr = std::shared_ptr<UInt>;
+using ComplexPtr = std::shared_ptr<Complex>;
 using ModelProtoPtr = std::shared_ptr<mind_ir::ModelProto>;
 
 // anf type to mindir type map
@@ -81,6 +82,11 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_float_
   {16, mind_ir::TensorProto_DataType_FLOAT16},
   {32, mind_ir::TensorProto_DataType_FLOAT},
   {64, mind_ir::TensorProto_DataType_FLOAT64},
+};
+
+static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_complex_map = {
+  {64, mind_ir::TensorProto_DataType_COMPLEX64},
+  {128, mind_ir::TensorProto_DataType_COMPLEX128},
 };
 
 static std::set<std::string> g_export_attr_blacklist = {kAttrDump};
@@ -146,6 +152,7 @@ class IrExportBuilder {
   mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsFloatType(int bits) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsUIntType(int bits) const;
+  mind_ir::TensorProto_DataType GetMindirDataBitsComplexType(int bits) const;
   std::string GetNodeName(const AnfNodePtr &node) const;
   std::string GetUniqueNodeName(const AnfNodePtr &node);
   std::string GetOpTypeName(const AnfNodePtr &node);
@@ -165,6 +172,7 @@ class IrExportBuilder {
   std::set<std::string> nodeName_;
   size_t unique_id_{0};
   bool top_graph{true};
+  std::map<FuncGraphPtr, mind_ir::GraphProto *> graph_protos_;
 };
 
 bool IrExportBuilder::SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
@@ -337,12 +345,14 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   mind_ir::GraphProto *graph_proto = model_->mutable_graph();
   graph_proto->set_name(func_graph->ToString());
   graph_proto->set_bprop_hash(func_graph->bprop_hash());
+  graph_proto->set_bprop_filepath(func_graph->bprop_filepath());
   todo_.clear();
   nodeName_.clear();
   primitive_name_map_.clear();
   // Build the main funcGraph
   (void)nodeName_.insert(func_graph->ToString());
   top_graph = true;
+
   if (!BuildFuncGraph(func_graph, graph_proto)) {
     MS_LOG(ERROR) << "Build func_graph " << func_graph->ToString() << " failed.";
     return false;
@@ -378,10 +388,12 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   nodeName_.clear();
   node_name_map_.clear();
   primitive_name_map_.clear();
+  graph_protos_.clear();
   return true;
 }
 
 bool IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
+  graph_protos_[func_graph] = graph_proto;
   // Export funcGraph name.
   graph_proto->set_name(func_graph->ToString());
   // Export parameters
@@ -487,6 +499,15 @@ mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsUIntType(int bit
 mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsFloatType(int bits) const {
   auto iter = g_data_bits_float_map.find(bits);
   if (iter == g_data_bits_float_map.end()) {
+    MS_LOG(ERROR) << "Convert bits float error, unsupported bits! " << bits;
+    return mind_ir::TensorProto_DataType_UNDEFINED;
+  }
+  return iter->second;
+}
+
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsComplexType(int bits) const {
+  auto iter = g_data_bits_complex_map.find(bits);
+  if (iter == g_data_bits_complex_map.end()) {
     MS_LOG(ERROR) << "Convert bits float error, unsupported bits! " << bits;
     return mind_ir::TensorProto_DataType_UNDEFINED;
   }
@@ -647,7 +668,13 @@ bool IrExportBuilder::BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphP
         return false;
       }
     } else {
-      if (!BuildCNode(cnode, graph_proto)) {
+      auto iter = graph_protos_.find(node->func_graph());
+      if (iter == graph_protos_.end()) {
+        MS_LOG(ERROR) << "Can not find the graph proto of func_graph " << node->func_graph()->ToString();
+        return false;
+      }
+      auto owner_graph_proto = iter->second;
+      if (!BuildCNode(cnode, owner_graph_proto)) {
         MS_LOG(ERROR) << "Build proto for cnode " << cnode->DebugString() << " failed.";
         return false;
       }
@@ -693,8 +720,18 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
       MS_LOG(ERROR) << "There is not the name: " << nodeName;
       return "";
     }
+  } else if (IsValueNode<MindIRClassType>(node)) {
+    auto class_type = GetValueNode<MindIRClassTypePtr>(node)->name();
+    // class 'XXX' -> XXX
+    constexpr int64_t path_begin_index = 7;
+    auto str = std::string(class_type.begin() + path_begin_index, class_type.end() - 1);
+    type_name = "REF::ClassType::" + str;
+  } else if (IsValueNode<MetaFuncGraph>(node)) {
+    auto meta_fg = GetValueNode<MetaFuncGraphPtr>(node);
+    MS_EXCEPTION_IF_NULL(meta_fg);
+    type_name = "REF::MetaFuncGraph::" + meta_fg->name();
   } else {
-    MS_LOG(ERROR) << "Need to support op type: " << node->type_name();
+    MS_LOG(ERROR) << "Need to support op type: " << node->DebugString();
     return "";
   }
   MS_LOG(DEBUG) << "ExportType: " << type_name;
@@ -795,11 +832,12 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   }
 
   // Build cnode
-  mind_ir::NodeProto *node_proto = graph_proto->add_node();
   std::string output_name = GetUniqueNodeName(node);
   if (nodeName_.count(output_name) > 0) {
-    MS_LOG(EXCEPTION) << "There is a duplicate name: " << output_name;
+    MS_LOG(INFO) << "There is a duplicate name: " << output_name;
+    return true;
   }
+  mind_ir::NodeProto *node_proto = graph_proto->add_node();
   (void)nodeName_.insert(output_name);
   node_proto->add_output(output_name);
   node_proto->set_name(output_name);
@@ -938,6 +976,14 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
       return false;
     }
     tensor_proto->set_data_type(data_type);
+  } else if (value->isa<Complex>()) {
+    tensor_proto->set_name("value0");
+    auto complex_value = value->cast<ComplexPtr>();
+    auto data_type = GetMindirDataBitsComplexType(complex_value->nbits());
+    if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
+      return false;
+    }
+    tensor_proto->set_data_type(data_type);
   } else if (value->isa<Bool>()) {
     tensor_proto->set_name("value0");
     tensor_proto->set_data_type(mind_ir::TensorProto_DataType_BOOL);
@@ -996,6 +1042,13 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
       MS_LOG(ERROR) << "Unsupported Monad type: " << value->type_name();
       return false;
     }
+  } else if (value->isa<MindIRClassType>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_CLASS_TYPE);
+    auto class_type = GetValue<MindIRClassTypePtr>(value)->name();
+    // class 'XXX' -> XXX
+    constexpr int64_t path_begin_index = 7;
+    auto str = std::string(class_type.begin() + path_begin_index, class_type.end() - 1);
+    attr_proto->set_s(str);
   } else {
     MS_LOG(ERROR) << "Unsupported type: " << value->type_name();
     return false;

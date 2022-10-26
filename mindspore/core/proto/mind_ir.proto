@@ -41,6 +41,7 @@ message AttributeProto {
     CSR_TENSOR = 30;
     COO_TENSOR = 31;
     ROW_TENSOR = 32;
+    CLASS_TYPE = 33;
   }
   optional string name = 1;
   optional float f = 2;
@@ -123,6 +124,7 @@ message GraphProto {
   repeated ValueInfoProto output = 6;
   optional string bprop_hash = 7;
   repeated AttributeProto attribute = 8;
+  optional string bprop_filepath = 9;
 }
 
 

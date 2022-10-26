@@ -80,14 +80,13 @@ std::string CNode::fullname_with_scope() {
     return fullname_with_scope_;
   }
 
-  auto prim = input_value->cast<PrimitivePtr>();
   MS_EXCEPTION_IF_NULL(scope());
   fullname_with_scope_ = scope()->name() + "/";
-  if (prim != nullptr) {
+  if (input_value->isa<Primitive>()) {
+    auto prim = input_value->cast_ptr<Primitive>();
     fullname_with_scope_ += prim->name();
-  } else {
-    auto func_graph = input_value->cast<FuncGraphPtr>();
-    MS_EXCEPTION_IF_NULL(func_graph);
+  } else if (input_value->isa<FuncGraph>()) {
+    auto func_graph = input_value->cast_ptr<FuncGraph>();
     auto fg_flag = func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
     if (fg_flag != nullptr) {
       auto fg_name = GetValue<std::string>(fg_flag);
@@ -95,6 +94,9 @@ std::string CNode::fullname_with_scope() {
     } else {
       fullname_with_scope_ += func_graph->ToString();
     }
+  } else {
+    // For the node after parse, the value maybe ClassType or others.
+    fullname_with_scope_ += input_value->ToString();
   }
   fullname_with_scope_ += "-op" + id_generator::get_id(shared_from_base<CNode>());
   return fullname_with_scope_;

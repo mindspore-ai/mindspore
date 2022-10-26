@@ -40,7 +40,7 @@ std::string ConvertToString(const uint32_t *input, const int &size);
 
 std::string Encrypt(const std::string &message);
 
-std::string GetHashFromString(const std::string &data);
+MS_CORE_API std::string GetHashFromString(const std::string &data);
 
 MS_CORE_API std::string GetHashFromFile(const std::string &path);
 

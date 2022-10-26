@@ -1117,6 +1117,13 @@ bool MSANFModelParser::GetAttrValueForValueNodeWithType(const std::string &value
       anfnode_build_map_[value_node_name] = new_value_node;
       break;
     }
+    case mind_ir::AttributeProto_AttributeType_CLASS_TYPE: {
+      auto class_type = static_cast<std::string>(attr_proto.s());
+      auto mindir_class_type = std::make_shared<MindIRClassType>(class_type);
+      new_value_node = NewValueNode(mindir_class_type);
+      anfnode_build_map_[value_node_name] = new_value_node;
+      break;
+    }
     default: {
       ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
       if (value == nullptr) {
@@ -1495,6 +1502,10 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const
     outputFuncGraph->set_bprop_hash(importProto.bprop_hash());
   }
 
+  if (importProto.has_bprop_filepath()) {
+    outputFuncGraph->set_bprop_filepath(importProto.bprop_filepath());
+  }
+
   if (!BuildAttrForFuncGraph(outputFuncGraph, importProto)) {
     MS_LOG(ERROR) << "Build attribute for graph fail!";
   }
@@ -1686,6 +1697,16 @@ const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_p
 }
 
 AnfNodePtr MSANFModelParser::GetAnfNode(const std::string &node_name) {
+  if (node_name.find("MetaFuncGraph::") == 0) {
+    auto fg_name = node_name.substr(std::string("MetaFuncGraph::").length());
+    auto mindir_meta_fg = std::make_shared<MindIRMetaFuncGraph>(fg_name);
+    return NewValueNode(mindir_meta_fg);
+  }
+  if (node_name.find("ClassType::") == 0) {
+    auto class_type = node_name.substr(std::string("ClassType::").length());
+    auto mindir_class_type = std::make_shared<MindIRClassType>(class_type);
+    return NewValueNode(mindir_class_type);
+  }
   auto it = anfnode_build_map_.find(node_name);
   if (it == anfnode_build_map_.end()) {
     return nullptr;

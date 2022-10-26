@@ -1,9 +1,10 @@
 
-0.1.1	MindSpore*2.0.0:ü
-m
-bprop.1:doutbprop.1:[CNode]2:1bprop.1:[CNode]2:1"REF::S-Prim-MakeTuple:2:Default/S-Prim-MakeTuple-op0bprop.1*
-	bprop.1:x*
-bprop.1:out*
-bprop.1:dout2
-bprop.1:[CNode]2:1:@fb1b2d67c8314c0299663147bd8d9a2086ab7fee5f7f63739434f955370511c0Pb&
+0.1.1	MindSpore*2.0.0:›
+s
+bprop.29:doutbprop.29:[CNode]30:1bprop.29:[CNode]30:1"REF::S-Prim-MakeTuple:2:Default/S-Prim-MakeTuple-op15bprop.29*
+
+bprop.29:x*
+bprop.29:out*
+bprop.29:dout2
+bprop.29:[CNode]30:1:@403d64b65284847b0b5f01f2121501208c9d8fb5c1da4b332a158de570991518J/grad_comm_ops.pyPb&
 S-Prim-MakeTuple:2S-Prim-MakeTupleh

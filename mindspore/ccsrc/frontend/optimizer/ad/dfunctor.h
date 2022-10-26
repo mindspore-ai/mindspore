@@ -154,12 +154,7 @@ class KPrim {
   }
   FuncGraphPtr GetPossibleBprop(const PrimitivePtr &prim);
 
-#ifndef _WIN32
-  static void ExportBpropMindir(const py::object &obj);
-#endif
-
  private:
-  FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr) const;
   FuncGraphPtr GetFprop(const PrimitivePtr &prim) const;
   FuncGraphPtr GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &value_node,
                             const pipeline::ResourceBasePtr &resources);
