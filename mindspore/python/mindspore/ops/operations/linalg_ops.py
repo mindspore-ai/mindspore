@@ -83,7 +83,7 @@ class Svd(Primitive):
         - **u**  (Tensor) - Left singular vectors. If compute_uv is False, u will be an empty tensor.
           The shape is :math:`(*, M, P)`. If full_matrices is True, the shape will be :math:`(*, M, M)`.
         - **v**  (Tensor) - Right singular vectors. If compute_uv is False, v will be an empty tensor.
-          The shape is :math:`(*, P, N)`. If full_matrices is True, the shape will be :math:`(*, N, N)`.
+          The shape is :math:`(*, N, P)`. If full_matrices is True, the shape will be :math:`(*, N, N)`.
 
     Raises:
         TypeError: If full_matrices or compute_uv is not the type of bool.
