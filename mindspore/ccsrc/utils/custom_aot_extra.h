@@ -31,6 +31,8 @@ class AotKernelData {
 
 class AotExtra {
  public:
+  AotExtra() = default;
+  virtual ~AotExtra() = default;
   virtual bool HasAttr(std::string name) = 0;
 
   template <typename T>
@@ -68,6 +70,7 @@ class AotExtra {
 class AotExtraImpl : public AotExtra {
  public:
   AotExtraImpl() : prim_(nullptr) {}
+  virtual ~AotExtraImpl() = default;
   void SetKernelPrim(const PrimitivePtr &prim) { prim_ = prim; }
   bool HasAttr(std::string name) final { return prim_ != nullptr && prim_->HasAttr(name); }
 

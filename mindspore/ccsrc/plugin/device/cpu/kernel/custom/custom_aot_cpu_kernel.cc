@@ -64,7 +64,7 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     auto dtype = inputs[i]->GetDtype();
     (void)shape_list_.emplace_back(in_shape);
     ndims_.push_back(SizeToInt(in_shape.size()));
-    type_list_.emplace_back(TypeIdToString(dtype, true));
+    (void)type_list_.emplace_back(TypeIdToString(dtype, true));
   }
 
   for (size_t i = 0; i < outputs.size(); i++) {
@@ -72,7 +72,7 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     auto dtype = outputs[i]->GetDtype();
     (void)shape_list_.emplace_back(out_shape);
     ndims_.push_back(SizeToInt(out_shape.size()));
-    type_list_.emplace_back(TypeIdToString(dtype, true));
+    (void)type_list_.emplace_back(TypeIdToString(dtype, true));
   }
 
   (void)std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
@@ -123,14 +123,14 @@ bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   std::vector<void *> params;
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    params.push_back(reinterpret_cast<void *>(inputs[i]->addr));
+    params.push_back(static_cast<void *>(inputs[i]->addr));
   }
   for (size_t i = 0; i < outputs.size(); i++) {
-    params.push_back(reinterpret_cast<void *>(outputs[i]->addr));
+    params.push_back(static_cast<void *>(outputs[i]->addr));
   }
 
   for (size_t i = 0; i < workspace.size(); i++) {
-    params.push_back(reinterpret_cast<void *>(workspace[i]->addr));
+    params.push_back(static_cast<void *>(workspace[i]->addr));
   }
 
 #if !defined(_WIN32) && !defined(_WIN64)

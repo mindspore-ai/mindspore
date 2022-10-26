@@ -29,6 +29,8 @@ class AotKernelData {
 
 class AotExtra {
  public:
+  AotExtra() = default;
+  virtual ~AotExtra() = default;
   virtual bool HasAttr(std::string name) = 0;
 
   template <typename T>

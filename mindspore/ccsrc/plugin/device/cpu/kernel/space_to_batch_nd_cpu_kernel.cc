@@ -150,6 +150,12 @@ int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   output_shape_ = outputs.at(kIndex0)->GetShapeVector();
 
+  if (input_shape_.size() < block_size_.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the input size should be no less than the block size, but get input size: "
+                      << input_shape_.size() << " block size: " << block_size_.size();
+  }
+
   input_size_ = 1;
   output_size_ = 1;
   for (size_t i = 0; i < input_shape_.size(); ++i) {

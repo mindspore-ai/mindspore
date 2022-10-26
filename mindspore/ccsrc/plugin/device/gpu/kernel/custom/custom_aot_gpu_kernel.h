@@ -55,13 +55,13 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     std::vector<void *> params;
 
     for (size_t i = 0; i < inputs.size(); i++) {
-      params.push_back(reinterpret_cast<void *>(inputs[i]->addr));
+      params.push_back(static_cast<void *>(inputs[i]->addr));
     }
     for (size_t i = 0; i < outputs.size(); i++) {
-      params.push_back(reinterpret_cast<void *>(outputs[i]->addr));
+      params.push_back(static_cast<void *>(outputs[i]->addr));
     }
     for (size_t i = 0; i < workspace.size(); i++) {
-      params.push_back(reinterpret_cast<void *>(workspace[i]->addr));
+      params.push_back(static_cast<void *>(workspace[i]->addr));
     }
     if (!handle_) {
 #ifdef _MSC_VER
@@ -142,17 +142,17 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     for (size_t i = 0; i < inputs.size(); i++) {
       auto in_shape = inputs[i]->GetShapeVector();
       auto dtype = inputs[i]->GetDtype();
-      type_list_.emplace_back(TypeIdToString(dtype, true));
+      (void)type_list_.emplace_back(TypeIdToString(dtype, true));
       ndims_.push_back(SizeToInt(in_shape.size()));
-      shape_list_.emplace_back(in_shape);
+      (void)shape_list_.emplace_back(in_shape);
     }
 
     for (size_t i = 0; i < outputs.size(); i++) {
       auto out_shape = outputs[i]->GetShapeVector();
       auto dtype = outputs[i]->GetDtype();
-      shape_list_.emplace_back(out_shape);
+      (void)shape_list_.emplace_back(out_shape);
       ndims_.push_back(SizeToInt(out_shape.size()));
-      type_list_.emplace_back(TypeIdToString(dtype, true));
+      (void)type_list_.emplace_back(TypeIdToString(dtype, true));
     }
 
     std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
