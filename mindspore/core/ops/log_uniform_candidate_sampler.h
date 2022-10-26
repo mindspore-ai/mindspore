@@ -70,10 +70,6 @@ class MIND_API LogUniformCandidateSampler : public BaseOperator {
 
   inline int64_t get_seed() { return GetValue<int64_t>(GetAttr(kSeed)); }
 };
-
-abstract::AbstractBasePtr LogUniformCandidateSamplerInfer(const abstract::AnalysisEnginePtr &,
-                                                          const PrimitivePtr &primitive,
-                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

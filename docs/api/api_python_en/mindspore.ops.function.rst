@@ -94,6 +94,7 @@ Sampling Functions
     :template: classtemplate.rst
 
     mindspore.ops.grid_sample
+    mindspore.ops.log_uniform_candidate_sampler
     mindspore.ops.uniform_candidate_sampler
 
 Distance Functions

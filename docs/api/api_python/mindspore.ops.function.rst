@@ -93,6 +93,7 @@ mindspore.ops.function
     :template: classtemplate.rst
 
     mindspore.ops.grid_sample
+    mindspore.ops.log_uniform_candidate_sampler
     mindspore.ops.uniform_candidate_sampler
 
 距离函数
@@ -104,17 +105,6 @@ mindspore.ops.function
     :template: classtemplate.rst
 
     mindspore.ops.cdist
-
-
-采样函数
-^^^^^^^^^^
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.log_uniform_candidate_sampler
 
 数学运算函数
 ^^^^^^^^^^^^^^^^^
