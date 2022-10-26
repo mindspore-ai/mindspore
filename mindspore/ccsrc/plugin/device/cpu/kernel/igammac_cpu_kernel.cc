@@ -47,6 +47,7 @@ constexpr size_t kInputIndex11 = 11;
 constexpr size_t kInputIndex12 = 12;
 constexpr size_t kInputIndex13 = 13;
 constexpr size_t kInputIndex14 = 14;
+constexpr size_t kOutputIndex0 = 0;
 static constexpr double kBaseLanczosCoeff = 0.99999999999980993227684700473478;
 static constexpr double M_pi = 3.141592653589793238462643383279;
 static constexpr std::array<double, 8> kLanczosCoefficients = {
@@ -336,12 +337,35 @@ void IgammacCpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPtr> &
   }
 }
 
-void IgammacCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  a_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  z_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool IgammacCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = kInputNum;
+  constexpr size_t output_num = kOutputNum;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  dtype_ = inputs[kInputIndex0]->GetDtype();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int IgammacCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  a_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+  z_shape_ = outputs[kOutputIndex0]->GetDeviceShapeAdaptively();
+  return ret;
 }
 
 bool IgammacCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
