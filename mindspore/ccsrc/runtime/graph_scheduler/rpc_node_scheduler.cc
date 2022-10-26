@@ -218,15 +218,15 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
 
 void RpcNodeScheduler::Abort() {
   MS_LOG(INFO) << "Start aborting rpc actors.";
-  MS_EXCEPTION_IF_NULL(rpc_actors_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(rpc_actors_);
   for (const auto &recv_actor : rpc_actors_->recv_actors_) {
     MS_EXCEPTION_IF_NULL(recv_actor);
     ActorDispatcher::Send(recv_actor->GetAID(), &RecvActor::StopRpcAtException);
   }
+  MS_LOG(INFO) << "End aborting rpc actors.";
 
   // Set op_context success to exit output actor.
   SET_OPCONTEXT_SUCCESS_RET(*op_context_);
-  MS_LOG(INFO) << "End aborting rpc actors.";
 }
 
 void RpcNodeScheduler::UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) const {
