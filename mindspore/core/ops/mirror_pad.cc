@@ -92,19 +92,21 @@ class MirrorPadInfer : public abstract::OpInferBase {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
       }
       if (mode == "SYMMETRIC") {
-        if (paddings_attr[i].first > x_shape[i] || paddings_attr[i].second > x_shape[i])
+        if (paddings_attr[i].first > x_shape[i] || paddings_attr[i].second > x_shape[i]) {
           MS_EXCEPTION(ValueError) << "For '" << prim_name
                                    << "', paddings must be no greater "
                                       "than the dimension size: ["
                                    << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] greater than ["
                                    << x_shape[i] << "]";
+        }
       } else if (mode == "REFLECT") {
-        if (paddings_attr[i].first >= x_shape[i] || paddings_attr[i].second >= x_shape[i])
+        if (paddings_attr[i].first >= x_shape[i] || paddings_attr[i].second >= x_shape[i]) {
           MS_EXCEPTION(ValueError) << "For '" << prim_name
                                    << "', paddings must be no greater "
                                       "than the dimension size: ["
                                    << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] not less than ["
                                    << x_shape[i] << "]";
+        }
       }
     }
     std::vector<int64_t> out_shape;

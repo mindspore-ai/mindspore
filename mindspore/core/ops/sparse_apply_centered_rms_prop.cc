@@ -49,9 +49,9 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
   (void)CheckAndConvertUtils::CheckInteger("epsilon_shape size", epsilon_shape.size(), kEqual, scalar_shape, prim_name);
 
   std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.insert({"shape of mg", mg_shape});
-  (void)same_shape_args_map.insert({"ms", ms_shape});
-  (void)same_shape_args_map.insert({"mom", mom_shape});
+  (void)same_shape_args_map.emplace("shape of mg", mg_shape);
+  (void)same_shape_args_map.emplace("ms", ms_shape);
+  (void)same_shape_args_map.emplace("mom", mom_shape);
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kInputNoBatch = 2;
   const int64_t kInputWithBatch = 3;
   const size_t kBatchIndex = 3;
@@ -44,13 +44,13 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &primitive, const std::vec
   int64_t rank = static_cast<int64_t>(x_shape.size());
   if (*(x_shape.end() - 1) > *(x_shape.end() - static_cast<int64_t>(kTwo))) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-2] must be greater than or equal to x.shape[-1]"
-                             << ", while row number of x is " << static_cast<size_t>(x_shape[-kRowIndex])
-                             << " and column number of x is " << static_cast<size_t>(x_shape[-kColIndex]) << ".";
+                             << ", while row number of x is " << x_shape[x_shape.size() - kRowIndex]
+                             << " and column number of x is " << x_shape[x_shape.size() - kColIndex] << ".";
   }
   if (*(x_shape.end() - 1) < *(tau_shape.end() - 1)) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-1] must be greater than or equal to tau.shape[-1]"
-                             << ", while column number of x is" << static_cast<size_t>(x_shape[-kColIndex]) << " and "
-                             << "column number of tau is " << static_cast<size_t>(tau_shape[-kColIndex]) << ".";
+                             << ", while column number of x is" << x_shape[x_shape.size() - kColIndex] << " and "
+                             << "column number of tau is " << tau_shape[tau_shape.size() - kColIndex] << ".";
   }
   if ((x_shape.size() - 1) != tau_shape.size()) {
     MS_EXCEPTION(ValueError) << "For Orgqr,  tau should have one dimension less than x"
@@ -86,7 +86,7 @@ AbstractBasePtr OrgqrInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = OrgqrInferType(primitive, input_args);
   auto infer_shape = OrgqrInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

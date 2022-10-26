@@ -42,7 +42,7 @@ abstract::TupleShapePtr MultilabelMarginLossInferShape(const PrimitivePtr &primi
   ShapeVector out_shape0 = {batch};
   ShapeVector out_shape1 = target;
   int64_t reduction;
-  (void)CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
+  CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   mindspore::Reduction reduction_ = static_cast<mindspore::Reduction>(reduction);
   if (reduction_ == REDUCTION_SUM || reduction_ == MEAN) {
     out_shape0.resize(0);
@@ -73,7 +73,7 @@ AbstractBasePtr MultilabelMarginLossInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = MultilabelMarginLossInferType(primitive, input_args);
   auto infer_shape = MultilabelMarginLossInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

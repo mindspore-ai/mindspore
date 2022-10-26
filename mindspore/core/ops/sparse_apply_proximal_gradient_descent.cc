@@ -83,11 +83,11 @@ TypePtr SparseApplyProximalGradientDescentInferType(const PrimitivePtr &primitiv
   auto indices_type = input_args[5]->BuildType();
 
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var", var_type});
-  (void)args.insert({"alpha", alpha_type});
-  (void)args.insert({"l1", l1_type});
-  (void)args.insert({"l2", l2_type});
-  (void)args.insert({"grad", grad_type});
+  (void)args.emplace("var", var_type);
+  (void)args.emplace("alpha", alpha_type);
+  (void)args.emplace("l1", l1_type);
+  (void)args.emplace("l2", l2_type);
+  (void)args.emplace("grad", grad_type);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, common_valid_types, prim_name);
 
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
@@ -113,7 +113,7 @@ AbstractBasePtr SparseApplyProximalGradientDescentInfer(const abstract::Analysis
                                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int Inputs_num = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, Inputs_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, Inputs_num, primitive->name());
   auto infer_type = SparseApplyProximalGradientDescentInferType(primitive, input_args);
   auto infer_shape = SparseApplyProximalGradientDescentInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

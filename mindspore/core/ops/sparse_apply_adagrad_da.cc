@@ -48,8 +48,8 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
                                            prim_name);
 
   std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.insert({"shape of grad_accum", grad_accum_shape});
-  (void)same_shape_args_map.insert({"shape of grad_square_accum", grad_square_accum_shape});
+  (void)same_shape_args_map.emplace("shape of grad_accum", grad_accum_shape);
+  (void)same_shape_args_map.emplace("shape of grad_square_accum", grad_square_accum_shape);
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }

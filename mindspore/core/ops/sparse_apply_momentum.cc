@@ -44,7 +44,7 @@ abstract::ShapePtr SparseApplyMomentumInferShape(const PrimitivePtr &primitive,
                                            scalar_shape, prim_name);
 
   std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.insert({"shape of accum", accum_shape});
+  (void)same_shape_args_map.emplace("shape of accum", accum_shape);
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }
@@ -87,11 +87,11 @@ TypePtr SparseApplyMomentumInferType(const PrimitivePtr &primitive, const std::v
   auto momentum_type = input_args[5]->BuildType();
 
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var", var_type});
-  (void)args.insert({"accum", accum_type});
-  (void)args.insert({"grad", grad_type});
-  (void)args.insert({"lr", lr_type});
-  (void)args.insert({"momentum", momentum_type});
+  (void)args.emplace("var", var_type);
+  (void)args.emplace("accum", accum_type);
+  (void)args.emplace("grad", grad_type);
+  (void)args.emplace("lr", lr_type);
+  (void)args.emplace("momentum", momentum_type);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, common_valid_types, prim_name);
 
   const std::set<TypePtr> valid_types2 = {kInt32, kInt64};
@@ -128,7 +128,7 @@ AbstractBasePtr SparseApplyMomentumInfer(const abstract::AnalysisEnginePtr &, co
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int Inputs_num = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, Inputs_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, Inputs_num, primitive->name());
   auto infer_type = SparseApplyMomentumInferType(primitive, input_args);
   auto infer_shape = SparseApplyMomentumInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

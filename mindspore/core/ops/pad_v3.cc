@@ -60,7 +60,7 @@ void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_siz
     }
   }
 }
-void ReflectModeCheck(std::string prim_name, const int64_t paddings_size, std::vector<int64_t> x_shape,
+void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size, std::vector<int64_t> x_shape,
                       std::vector<int64_t> paddings_arg, const int64_t size) {
   constexpr int64_t kReflectMaxDims = 4;
   constexpr int64_t padding_pos_2 = 2;

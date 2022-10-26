@@ -94,12 +94,12 @@ abstract::TupleShapePtr InstanceNormV2InferShape(const PrimitivePtr &primitive,
   constexpr float momentum_min = 0.0;
   constexpr float momentum_max = 1.0;
   auto momentum_range = std::make_pair(momentum_min, momentum_max);
-  (void)CheckAndConvertUtils::CheckInRange(kMomentum, momentum, kIncludeBoth, momentum_range, prim_name);
+  CheckAndConvertUtils::CheckInRange(kMomentum, momentum, kIncludeBoth, momentum_range, prim_name);
   auto epsilon_ptr = primitive->GetAttr(kEpsilon);
   MS_EXCEPTION_IF_NULL(epsilon_ptr);
   auto epsilon = GetValue<float>(epsilon_ptr);
   // momentum_range is equal to epsilon_range, but epsilon_range just include left.
-  (void)CheckAndConvertUtils::CheckInRange(kEpsilon, epsilon, kIncludeLeft, momentum_range, prim_name);
+  CheckAndConvertUtils::CheckInRange(kEpsilon, epsilon, kIncludeLeft, momentum_range, prim_name);
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
   auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(mean_shape_ptr)[kShape];
