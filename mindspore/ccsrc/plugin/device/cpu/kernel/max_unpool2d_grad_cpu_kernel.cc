@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "plugin/device/cpu/kernel/max_unpool2d_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/grad/max_unpool2d_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,29 +32,41 @@ constexpr size_t kInputIndex2 = 2;
 constexpr size_t kInputIndex3 = 3;
 }  // namespace
 
-void MaxUnpool2DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex0);
-  grads_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex1);
-  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kInputIndex0);
-  data_format_ = common::AnfAlgo::GetNodeAttr<string>(kernel_node, FORMAT);
+bool MaxUnpool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
 
-  if (AnfAlgo::IsShapesDynamic({input_shape_, grads_shape_, indices_shape_, output_shape_})) {
-    return;
-  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2DGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  data_format_ = kernel_ptr->get_format();
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, MaxUnpool2DGradFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "MaxUnpool2DGrad does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "MaxUnpool2DGrad does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int MaxUnpool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  grads_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  indices_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename DATA_T>
@@ -66,10 +79,6 @@ void MaxUnpool2DGradCpuKernelMod::OutPutInitKernel(DATA_T *raw_output, size_t le
 template <typename DATA_T, typename INDICES_T>
 bool MaxUnpool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &outputs) {
-  auto node = node_wpt_.lock();
-  if (!node) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxUnpool2DGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxUnpool2DGradOutputsNum, kernel_name_);
 

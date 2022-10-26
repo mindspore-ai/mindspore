@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MAXUNPOOL3DGRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MAXUNPOOL3DGRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAXUNPOOL3DGRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAXUNPOOL3DGRAD_CPU_KERNEL_H_
 #include <functional>
 #include <memory>
+#include <map>
 #include <vector>
 #include <string>
 #include <utility>
@@ -25,12 +26,16 @@
 
 namespace mindspore {
 namespace kernel {
-class MaxUnpool3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MaxUnpool3DGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   MaxUnpool3DGradCpuKernelMod() = default;
   ~MaxUnpool3DGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -50,7 +55,6 @@ class MaxUnpool3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   template <typename DATA_T>
   void OutPutInitKernel(DATA_T *rawOutput, size_t length);
-  CNodeWeakPtr node_wpt_;
   ShapeVector input_shape_;
   ShapeVector grads_shape_;
   ShapeVector indices_shape_;
@@ -60,4 +64,4 @@ class MaxUnpool3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MAXUNPOOL3DGRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAXUNPOOL3DGRAD_CPU_KERNEL_H_

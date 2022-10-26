@@ -104,6 +104,30 @@ abstract::ShapePtr MaxUnpool2DInferShape(const PrimitivePtr &primitive,
   auto argmax_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto data_format = GetValue<std::string>(primitive->GetAttr("format"));
+  auto attr_output_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_shape"));
+  if (attr_output_shape.size() != kDim4 && attr_output_shape.size() != kDim0) {
+    MS_EXCEPTION(ValueError) << "MaxUnpool2D: Output_shape size must be 0 or 4.";
+  }
+
+  if (IsDynamic(in_shape)) {
+    if (attr_output_shape.size() == kDim4) {
+      return std::make_shared<abstract::Shape>(attr_output_shape);
+    }
+
+    std::vector<int64_t> out_shape = {-1, -1, -1, -1};
+    if (IsDynamicRank(in_shape)) {
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+
+    (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, SizeToLong(kDim4), op_name);
+    if (data_format == "NCHW") {
+      out_shape = {in_shape[kInputIndex0], in_shape[kInputIndex1], -1, -1};
+    } else {
+      out_shape = {in_shape[kInputIndex0], -1, -1, in_shape[kInputIndex3]};
+    }
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, SizeToLong(kDim4), op_name);
   (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, SizeToLong(kDim4),
                                            op_name);
@@ -112,16 +136,11 @@ abstract::ShapePtr MaxUnpool2DInferShape(const PrimitivePtr &primitive,
   auto ksize = GetValue<std::vector<int64_t>>(primitive->GetAttr("ksize"));
   auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr("strides"));
   auto pads = GetValue<std::vector<int64_t>>(primitive->GetAttr("pads"));
-  auto attr_output_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_shape"));
 
   (void)CheckAndConvertUtils::CheckInteger("ksize_rank", SizeToLong(ksize.size()), kEqual, SizeToLong(kDim4), op_name);
   (void)CheckAndConvertUtils::CheckInteger("strides_rank", SizeToLong(strides.size()), kEqual, SizeToLong(kDim4),
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("pads_rank", SizeToLong(pads.size()), kEqual, SizeToLong(kDim4), op_name);
-
-  if (attr_output_shape.size() != kDim4 && attr_output_shape.size() != kDim0) {
-    MS_EXCEPTION(ValueError) << "MaxUnpool2D: Output_shape size must be 0 or 4.";
-  }
 
   return MaxUnpool2DInferShapeCompute(data_format, in_shape, ksize, strides, pads, attr_output_shape, op_name);
 }
