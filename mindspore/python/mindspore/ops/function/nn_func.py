@@ -3655,7 +3655,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>>import mindspore as ms
+        >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
         >>> import numpy as np
