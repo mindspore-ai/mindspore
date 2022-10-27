@@ -17,13 +17,13 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_
 #include <string>
 #include <vector>
+#include "include/api/status.h"
+#include "src/common/file_utils.h"
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <dlfcn.h>
 #include <dirent.h>
 #include <memory>
 #include <fstream>
-#include "utils/file_utils.h"
-#include "include/api/status.h"
 
 namespace mindspore {
 inline Status FindSoPath(const std::string &parent_dir, const std::string &target_so, std::string *target_so_path) {
@@ -51,12 +51,12 @@ inline Status FindSoPath(const std::string &parent_dir, const std::string &targe
     return Status(kMEFailed, "Could not find target so " + target_so + " in " + parent_dir);
   }
   std::string unreal_path = parent_dir + found_target_so;
-  auto realpath = FileUtils::GetRealPath(unreal_path.c_str());
-  if (!realpath.has_value()) {
+  auto realpath = lite::RealPath(unreal_path.c_str());
+  if (realpath.empty()) {
     return Status(kMEFailed, "Get target so " + target_so + " real path failed, path: " + unreal_path);
   }
 
-  *target_so_path = realpath.value();
+  *target_so_path = realpath;
   return kSuccess;
 }
 
@@ -133,21 +133,22 @@ inline void DLSoClose(void *handle) {
   } while (false)
 }  // namespace mindspore
 #else
-inline Status FindSoPath(const std::string &benchmark_so_path, const std::string &target_so,
-                         std::string *target_so_path) {
+inline mindspore::Status FindSoPath(const std::string &benchmark_so_path, const std::string &target_so,
+                                    std::string *target_so_path) {
   MS_LOG(ERROR) << "Not support FindSoPath";
-  return kMEFailed;
+  return mindspore::kMEFailed;
 }
 
-inline Status DLSoPath(const std::string &benchmark_so, const std::string &target_so, std::string *target_so_path) {
+inline mindspore::Status DLSoPath(const std::string &benchmark_so, const std::string &target_so,
+                                  std::string *target_so_path) {
   MS_LOG(ERROR) << "Not support dlopen so";
-  return kMEFailed;
+  return mindspore::kMEFailed;
 }
 
-inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name, void **handle, void **function,
-                       bool runtime_convert = false) {
+inline mindspore::Status DLSoOpen(const std::string &dl_path, const std::string &func_name, void **handle,
+                                  void **function, bool runtime_convert = false) {
   MS_LOG(ERROR) << "Not support dlopen so";
-  return kMEFailed;
+  return mindspore::kMEFailed;
 }
 #endif
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_

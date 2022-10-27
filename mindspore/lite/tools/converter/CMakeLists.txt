@@ -166,7 +166,15 @@ set(LITE_SRC ${API_SRC}
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/populate/base_operator_populate_register.cc
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
+        ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
         )
+
+if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
+            )
+endif()
 
 if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
     set(LITE_SRC
