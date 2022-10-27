@@ -40,4 +40,11 @@ ATTR_MAP(TensorArrayGather) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
                                {"element_shape", ATTR_DESC(element_shape, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(TensorArrayGather) = {{0, OUTPUT_DESC(value)}};
 REG_ADPT_DESC(TensorArrayGather, kNameTensorArrayGather, ADPT_DESC(TensorArrayGather))
+
+// DynamicStitch
+INPUT_MAP(DynamicStitch) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(DynamicStitch) = {{1, DYN_INPUT_DESC(indices)}, {2, DYN_INPUT_DESC(x)}};
+ATTR_MAP(DynamicStitch) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DynamicStitch) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DynamicStitch, kNameDynamicStitch, ADPT_DESC(DynamicStitch))
 }  // namespace mindspore::transform

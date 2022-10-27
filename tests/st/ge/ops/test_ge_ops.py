@@ -16,73 +16,79 @@ import pytest
 import tests.st.ge.ge_test_utils as utils
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_avg_pool_grad():
+def test_broadcast_gradient_args():
     """
-    Description: Auto-diff AvgPool in ge backend
-    Expectation: success
+    Feature: for DynamicBroadcastGradientArgs op
+    Description: inputs are two shapes
+    Expectation: the result is correct
     """
-    utils.run_testcase('pass_avg_pool_grad')
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_dropout():
-    """
-    Description: run dropout and dropoutgrad in ge backend
-    Expectation: success
-    """
-    utils.run_testcase('pass_dropout')
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_tensor_array():
-    """
-    Description: run TensorArray in ge backend
-    Expectation: success
-    """
-    utils.run_testcase('pass_tensor_array')
+    utils.run_testcase('broadcast_gradient_args')
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_reduce_axis_update():
+def test_conv2d_backprop_filter():
     """
-    Description: test axis of reduce operator is empty
-    Expectation: success
+    Feature: for Conv2DBackpropFilter op
+    Description: inputs are integers
+    Expectation: the result is correct
     """
-    utils.run_testcase('pass_reduce_axis_update')
+    utils.run_testcase('conv2d_backprop_filter')
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_convert_attr_to_input():
+def test_conv2d_backprop_input():
     """
-    Description: test convert attr to input
-    Expectation: success
+    Feature: for Conv2DBackpropInput op
+    Description: inputs are integers
+    Expectation: the result is correct
     """
-    utils.run_testcase('pass_convert_attr_to_input')
+    utils.run_testcase('conv2d_backprop_input')
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_convert_resize_nearest_neighbor_x_dtype():
+def test_conv2d_transpose():
     """
-    Description: test convert ReszieNearestNeighborX dytpe
-    Expectation: success
+    Feature: for Conv2DTranspose op
+    Description: inputs are integers
+    Expectation: the result is correct
     """
-    utils.run_testcase('pass_convert_resize_nearest_neighbor_x_dtype')
+    utils.run_testcase('conv2d_transpose')
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_broadcast_to():
+    """
+    Feature: for DynamicBroadcastTo op
+    Description: inputs are data and shape
+    Expectation: the result is correct
+    """
+    utils.run_testcase('dynamic_broadcast_to')
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_unique():
+    """
+    Feature: for Unique op
+    Description: inputs are integers
+    Expectation: the result is correct
+    """
+    utils.run_testcase('unique')

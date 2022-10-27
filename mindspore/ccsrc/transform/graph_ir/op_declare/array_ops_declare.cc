@@ -160,5 +160,15 @@ REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
 
-// IdentityN
+// Unique
+INPUT_MAP(Unique) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Unique) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Unique) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(idx)}};
+REG_ADPT_DESC(Unique, kNameUnique, ADPT_DESC(Unique))
+
+// BroadcastGradientArgs
+INPUT_MAP(BroadcastGradientArgs) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(BroadcastGradientArgs) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BroadcastGradientArgs) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
+REG_ADPT_DESC(BroadcastGradientArgs, kNameDynamicBroadcastGradientArgs, ADPT_DESC(BroadcastGradientArgs))
 }  // namespace mindspore::transform

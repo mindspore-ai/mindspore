@@ -35,6 +35,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "runtime/config.h"
 #include "runtime/dev.h"
 #include "distributed/init.h"
@@ -43,6 +44,8 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
+using mindspore::transform::OptionMap;
+
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 
@@ -101,6 +104,38 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   return res;
 }
 
+std::string ShapesToString(const ShapeArray &shapes) {
+  std::stringstream buffer;
+  for (size_t i = 0; i < shapes.size(); ++i) {
+    if (i != 0) {
+      buffer << ",";
+    }
+    buffer << "[";
+    const auto &shape = shapes[i];
+    for (size_t j = 0; j < shape.size(); ++j) {
+      if (j != 0) {
+        buffer << ",";
+      }
+      buffer << shape[j];
+    }
+    buffer << "]";
+  }
+  return buffer.str();
+}
+
+OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape) {
+  OptionMap options{};
+  if (common::GetEnv("GE_TRAIN") == "1") {
+    (void)options.emplace("ge.exec.variable_acc", "1");
+  }
+  if (!is_dynamic_shape) {
+    return options;
+  }
+  (void)options.emplace("ge.exec.dynamicGraphExecuteMode", "dynamic_execute");
+  (void)options.emplace("ge.exec.dataInputsShapeRange", ShapesToString(input_shapes));
+  return options;
+}
+
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph);
@@ -121,11 +156,9 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   std::string graph_name = anf_graph->ToString();
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + GetGraphName(anf_graph);
-  if (common::GetEnv("GE_TRAIN") == "1") {
-    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), {{"ge.exec.variable_acc", "1"}});
-  } else {
-    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
-  }
+  const auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
+  MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
   (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
   (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
@@ -488,7 +521,7 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   {
     // Release GIL before calling into (potentially long-running) C++ code
     mindspore::ScopedLongRunning long_running;
-    if (ge::GEInitialize(ge_options) != ge::GRAPH_SUCCESS) {
+    if (::ge::GEInitialize(ge_options) != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "Initialize GE failed!";
     }
   }
@@ -670,7 +703,7 @@ bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &inst_context)
       std::string exName(abi::__cxa_current_exception_type()->name());
       MS_LOG(ERROR) << "Error occurred when deleting GE graph runner and session fail. Exception name: " << exName;
     }
-    if (ge::GEFinalize() != ge::GRAPH_SUCCESS) {
+    if (::ge::GEFinalize() != ::ge::GRAPH_SUCCESS) {
       MS_LOG(WARNING) << "Finalize GE failed!";
     }
     inst_context->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);

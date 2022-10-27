@@ -29,5 +29,8 @@ DECLARE_OP_USE_OUTPUT(TensorArrayWrite)
 
 DECLARE_OP_ADAPTER(TensorArrayGather)
 DECLARE_OP_USE_OUTPUT(TensorArrayGather)
+
+DECLARE_OP_ADAPTER(DynamicStitch)
+DECLARE_OP_USE_OUTPUT(DynamicStitch)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_DATA_FLOW_OPS_DECLARE_H_

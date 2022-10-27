@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import ge_test_utils as utils
+import tests.st.ge.ge_test_utils as utils
 
 
 @pytest.mark.level0
