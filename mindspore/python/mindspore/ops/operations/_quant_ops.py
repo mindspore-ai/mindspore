@@ -22,6 +22,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from mindspore.common import dtype as mstype
+from mindspore.common.dtype import QuantDtype
 
 if context.get_context('device_target') == "Ascend":
     import mindspore.ops._op_impl._custom_op
@@ -61,8 +62,55 @@ __all__ = ["MinMaxUpdatePerLayer",
            "ActsULQInputGrad",
            "ActULQClampMinGrad",
            "ActULQClampMaxGrad",
-           "WtsARQ"
+           "WtsARQ",
+           "FakeQuantParam",
            ]
+
+
+class FakeQuantParam(Primitive):
+    r"""
+    Define the operation for storing quant parameter. This operation passes through input tensor to output tensor
+        without any calculation.
+
+    Args:
+        quant_dtype (QuantDtype) - The valid data type of the input tensor.
+        quant_algo_name (str) - Define the name of quant algorithm. Use
+            `FakeQuantParam.attr_value_linear_quant_algo_name` for linear quantization specially.
+        is_per_channel (bool) - Define whether quant parameter is per-channel or per-layer.
+        kwargs (dict): Other quant parameter in key-value form. Please use classmethod `linear_quant_param` to create a
+            linear quantization specially because key of scale and zero-point is pre-defined by MindSpore.
+
+    Inputs:
+        - *input_x* (Tensor) : Input tensor.
+
+    Outputs:
+        - Tensor: Output tensor same with `input_x`.
+
+    Examples:
+        >>> input_tensor = mindspore.Tensor(numpy.random.rand(1, 16, 5, 5), mindspore.dtype.float32)
+        >>> fake_quant_param_op = FakeQuantParam.linear_quant_param(mindspore.common.dtype.QuantDtype.INT8,
+        >>>                                                         0.5, 1)
+        >>> output_tensor = fake_quant_param_op(input_tensor)
+    """
+
+    attr_key_linear_quant_scale = "linear_quant_scale"
+    attr_key_linear_quant_zero_point = "linear_quant_zero_point"
+
+    attr_value_linear_quant_algo_name = "linear_quant_algo"
+
+    @prim_attr_register
+    def __init__(self, quant_dtype: QuantDtype, quant_algo_name: str, is_per_channel: bool, **kwargs):
+        self.add_prim_attr("quant_algo_name", quant_algo_name)
+        self.add_prim_attr("is_per_channel", is_per_channel)
+        self.add_prim_attr("quant_dtype", quant_dtype.value())
+        for key, value in kwargs.items():
+            self.add_prim_attr(key, value)
+
+    @classmethod
+    def linear_quant_param(cls, quant_dtype, scale, zp, is_per_channel=False, **kwargs):
+        kwargs[FakeQuantParam.attr_key_linear_quant_scale] = scale
+        kwargs[FakeQuantParam.attr_key_linear_quant_zero_point] = zp
+        return cls(quant_dtype, FakeQuantParam.attr_value_linear_quant_algo_name, is_per_channel, **kwargs)
 
 
 class MinMaxUpdatePerLayer(PrimitiveWithInfer):

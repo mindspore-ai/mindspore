@@ -146,6 +146,7 @@ class IrExportBuilder {
   bool SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetSequenceToAttributeProto(const ValueSequencePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetDictToAttributeProto(const ValueDictionaryPtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
 
   mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id) const;
@@ -1028,6 +1029,12 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
       return false;
     }
     MS_LOG(DEBUG) << "Attr string: " << value->type_name();
+  } else if (value->isa<ValueDictionary>()) {
+    if (!SetDictToAttributeProto(value->cast<ValueDictionaryPtr>(), attr_proto)) {
+      MS_LOG(ERROR) << "Set dictionary to AttributeProto failed.";
+      return false;
+    }
+    MS_LOG(DEBUG) << "Attr string: " << value->type_name();
   } else if (value->isa<tensor::Tensor>()) {
     return SetTensorToAttributeProto(value, attr_proto);
   } else if (value->isa<None>()) {
@@ -1257,6 +1264,44 @@ bool IrExportBuilder::SetSequenceToAttributeProto(const ValueSequencePtr &value,
       }
     } else {
       if (!SetSeqElemToAttributeProto(item, attr_values)) {
+        MS_LOG(ERROR) << "Set seq elem to AttributeProto failed.";
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool IrExportBuilder::SetDictToAttributeProto(const ValueDictionaryPtr &value_dict,
+                                              mind_ir::AttributeProto *const attr_proto) {
+  if (value_dict == nullptr || attr_proto == nullptr) {
+    MS_LOG(EXCEPTION) << "ValueDictionaryPtr or AttributeProto is null!";
+  }
+  attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DICT);
+  const auto &values = value_dict->value();
+  if (values.empty()) {
+    MS_LOG(DEBUG) << "SetDictToAttributeProto dictionary size is 0";
+    return true;
+  }
+  for (const auto &item : values) {
+    mind_ir::AttributeProto *dict_item_proto = attr_proto->add_values();
+    const auto &key = item.first;
+    dict_item_proto->set_name(key);
+    const auto &value = item.second;
+    MS_EXCEPTION_IF_NULL(value);
+    mind_ir::AttributeProto *dict_item_value = dict_item_proto->add_values();
+    if (value->isa<ValueSequence>()) {
+      if (!SetSequenceToAttributeProto(value->cast<ValueSequencePtr>(), dict_item_value)) {
+        MS_LOG(ERROR) << "Set sequence to AttributeProto failed.";
+        return false;
+      }
+    } else if (value->isa<ValueDictionary>()) {
+      if (!SetDictToAttributeProto(value->cast<ValueDictionaryPtr>(), dict_item_value)) {
+        MS_LOG(ERROR) << "Set dictionary to AttributeProto failed.";
+        return false;
+      }
+    } else {
+      if (!SetSeqElemToAttributeProto(value, dict_item_value)) {
         MS_LOG(ERROR) << "Set seq elem to AttributeProto failed.";
         return false;
       }

@@ -76,6 +76,7 @@ if(ENABLE_MINDDATA)
             ./runtime/graph_scheduler/*.cc
             ./plugin/device/cpu/hal/*.cc
             ./place/*.cc
+            ./ops/test_ops_fake_quant_param.cc
             )
     if(NOT ENABLE_SECURITY)
         file(GLOB_RECURSE UT_SRCS_DEBUG RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

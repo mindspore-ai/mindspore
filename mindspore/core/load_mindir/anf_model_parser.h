@@ -122,6 +122,7 @@ class MSANFModelParser {
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   ValuePtr ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto);
+  ValuePtr ObtainValueInDictionaryForm(const mind_ir::AttributeProto &attr_proto);
   bool little_endian() const { return little_endian_; }
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> GetAbstractForNode(
     const mind_ir::AttributeProto &attr_proto);
