@@ -49,7 +49,7 @@ class Cell(Cell_):
     base class.
 
     Layers in `mindspore.nn` are also the subclass of Cell, such as :class:`mindspore.nn.Conv2d`,
-    :class:`mindspore.nn.ReLU` and :class:`mindspore.nn.BatchNorm`, etc. Cell will be compiled into a calculation
+    and :class:`mindspore.nn.ReLU`, etc. Cell will be compiled into a calculation
     graph in GRAPH_MODE (static graph mode) and used as the basic module of neural networks in
     PYNATIVE_MODE (dynamic graph mode).
 

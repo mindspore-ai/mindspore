@@ -5,7 +5,7 @@
 
     MindSpore中神经网络的基本构成单元。模型或神经网络层应当继承该基类。
 
-    `mindspore.nn` 中神经网络层也是Cell的子类，如 :class:`mindspore.nn.Conv2d`、:class:`mindspore.nn.ReLU`、 :class:`mindspore.nn.BatchNorm` 等。Cell在GRAPH_MODE(静态图模式)下将编译为一张计算图，在PYNATIVE_MODE(动态图模式)下作为神经网络的基础模块。
+    `mindspore.nn` 中神经网络层也是Cell的子类，如 :class:`mindspore.nn.Conv2d` 、 :class:`mindspore.nn.ReLU` 等。Cell在GRAPH_MODE(静态图模式)下将编译为一张计算图，在PYNATIVE_MODE(动态图模式)下作为神经网络的基础模块。
 
     参数：
         - **auto_prefix** (bool) - 是否自动为Cell及其子Cell生成NameSpace。`auto_prefix` 的设置影响网络参数的命名，如果设置为True，则自动给网络参数的名称添加前缀，否则不添加前缀。默认值：True。
