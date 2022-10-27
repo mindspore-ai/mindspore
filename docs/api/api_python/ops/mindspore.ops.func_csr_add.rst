@@ -1,7 +1,7 @@
 mindspore.ops.csr_add
 =================================
 
-.. py:function:: mindspore.ops.csr_add(a, b, alpha, beta)
+.. py:function:: mindspore.ops.csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor)
 
     返回alpha * csr_a + beta * csr_b的结果，其中csr_a和csr_b是CSRTensor，alpha和beta是Tensor。
 
