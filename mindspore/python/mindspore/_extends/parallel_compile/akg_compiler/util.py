@@ -17,6 +17,7 @@ import os
 import json
 import shutil
 from mindspore import log as logger
+from mindspore._extends.parallel_compile.akg_compiler.tbe_topi import get_op_reg_info
 
 
 def update_attr(attr, new_attr):
@@ -138,4 +139,10 @@ def check_tbe_support(json_desc):
     if not json_desc.get("input_desc"):
         logger.info("TBE not supports empty inputs")
         return False
+
+    for op in json_desc["op_desc"]:
+        op_name = op["name"]
+        if not get_op_reg_info(op_name, "func", False):
+            logger.info("TBE op not registered: {}".format(op_name))
+            return False
     return True
