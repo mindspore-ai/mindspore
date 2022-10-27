@@ -395,6 +395,13 @@ def tile(x, multiples):
     return F.tile(x, multiples)
 
 
+def short(x):
+    """
+    Return a copy of the tensor, cast to int16 type, equivalent to self.astype(ms.int16).
+    """
+    return F.cast(x, mstype.int16)
+
+
 def transpose(x, *axis):
     r"""
     Return a view of the tensor with axes transposed.
@@ -471,6 +478,13 @@ def reshape(x, *shape):
     """
     new_shape = check_reshape_shp_const(shape)
     return F.reshape(x, new_shape)
+
+
+def reshape_as(x, other):
+    """
+    Rearranges the input Tensor based on the `other` shape.
+    """
+    return F.reshape(x, other.shape)
 
 
 def reverse(x, axis):
@@ -1049,6 +1063,21 @@ def round_(x):
     Returns half to even of a tensor element-wise.
     """
     return F.round(x)
+
+
+def roll(x, shifts, dims):
+    """
+    Rolls the elements of a tensor along an axis.
+    """
+    dims = dims if dims is not None else 0
+    return F.Roll(shifts, dims)(x)
+
+
+def rot90(x, k, dims):
+    """
+    Rotate a n-D tensor by 90 degrees in the plane specified by dims axis.
+    """
+    return F.rot90(x, k, dims)
 
 
 def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
@@ -1835,6 +1864,14 @@ def repeat(x, repeats, axis=None):
         if rep != 0:
             repeated_subs.append(repeat_elements(sub_item, rep, axis))
     return P.Concat(axis)(repeated_subs)
+
+
+def repeat_interleave(x, repeats, dims=None):
+    """
+    Repeat elements of a tensor along an axis, like `np.repeat`.
+    """
+    dims = dims if dims is not None else 0
+    return F.repeat_elements(x, repeats, dims)
 
 
 def hardshrink(x, lambd=0.5):

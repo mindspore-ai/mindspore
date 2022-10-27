@@ -38,7 +38,9 @@ from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
+from mindspore.ops.operations._inner_ops import Roll
 from mindspore.ops.composite import _Vmap
+from mindspore.ops.composite.array_ops import repeat_elements
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -532,6 +534,9 @@ tensor_operator_registry.register('sinh', sinh)
 tensor_operator_registry.register('sort', P.Sort)
 tensor_operator_registry.register('trunc', trunc)
 tensor_operator_registry.register('imag', imag)
+tensor_operator_registry.register('repeat_interleave', repeat_elements)
+tensor_operator_registry.register('roll', Roll)
+tensor_operator_registry.register('rot90', rot90)
 
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

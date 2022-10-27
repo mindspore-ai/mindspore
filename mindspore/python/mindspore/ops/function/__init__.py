@@ -295,6 +295,7 @@ from .math_func import (
     isinf,
     logical_xor,
     imag,
+    roll,
 )
 from .nn_func import (
     adaptive_avg_pool1d,

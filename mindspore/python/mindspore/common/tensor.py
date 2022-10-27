@@ -1636,6 +1636,34 @@ class Tensor(Tensor_):
         new_shape = validator.check_reshape_shp(shape)
         return tensor_operator_registry.get('reshape')()(self, new_shape)
 
+    def reshape_as(self, other):
+        """
+        Change the shape of the Tensor to the shape of `other` without changing the data.
+
+        Args:
+            other(Tensor): The result tensor has the same shape as `other`.
+
+        Returns:
+            Tensor, has the same shape as `other`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], dtype=ms.float32)
+            >>> y = Tensor(np.arange(6).reshape(3,2))
+            >>> output = x.reshape_as(y)
+            >>> print(output)
+            [[-0.1  0.3]
+             [ 3.6  0.4]
+             [ 0.5 -3.2]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('reshape')()(self, other.shape)
+
     def ravel(self):
         """
         Return a contiguous flattened tensor.
@@ -1669,6 +1697,52 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('round')()(self)
+
+    def roll(self, shifts, dims):
+        """
+        For details, please refer to :func:`mindspore.ops.roll`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('roll')(shifts, dims)(self)
+
+    def rot90(self, k, dims):
+        r"""
+        Rotate a n-D tensor by 90 degrees in the plane specified by dims axis.
+        Rotation direction is from the first towards the second axis if k > 0,
+        and from the second towards the first for k < 0.
+
+        Args:
+            k (int): Number of times to rotate.
+            dims (Union[list(int), tuple(int)]): Axis to rotate.
+
+        Returns:
+            Tensor.
+
+        Raises:
+            TypeError: If `x` is not a Tensor.
+            TypeError: If `k` is not an integer.
+            TypeError: If `dims` is not a list or a tuple of integers.
+            ValueError: If the length of `dims` is not `2`.
+            ValueError: If any dims is out of range of [-self.ndim, self.ndim).
+            RuntimeError: If rotation dims are not different.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[0, 1], [2, 3]])).astype(np.float32)
+            >>> k = 1
+            >>> dims = [0, 1]
+            >>> output = x.rot90(k, dims)
+            >>> print(output)
+            [[1. 3.]
+            [0. 2.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('rot90')(self, k, dims)
 
     def flatten(self, order='C'):
         r"""
@@ -2956,6 +3030,38 @@ class Tensor(Tensor_):
                 repeated_subs.append(tensor_operator_registry.get('repeat_elements')(sub, rep, axis))
         return tensor_operator_registry.get('concatenate')(axis)(repeated_subs)
 
+    def repeat_interleave(self, repeats, dims=None):
+        """
+        Repeat elements of a tensor along an axis, like `numpy.repeat`.
+
+        Args:
+            repeats (int): The number of times to repeat, must be positive.
+            dims (int): The axis along which to repeat, if None, defaults to 0.
+
+        Returns:
+            One tensor with values repeated along the specified axis. If x has shape
+            (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
+            si * repeats, ..., sn). The output type will be the same as the type of `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor, ops
+            >>> import mindspore
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
+            >>> output = x.repeat_interleave(repeats=2, dims=0)
+            >>> print(output)
+            [[0 1 2]
+             [0 1 2]
+             [3 4 5]
+             [3 4 5]]
+        """
+        self._init_check()
+        dims = dims if dims is not None else 0
+        return tensor_operator_registry.get('repeat_interleave')(self, repeats, dims)
+
     def bernoulli(self, p=0.5, seed=-1):
         r"""
         For details, please refer to :func:`mindspore.ops.bernoulli`.
@@ -3695,6 +3801,29 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('long')()(self, mstype.int64)
 
+    def short(self):
+        r"""
+        Return a copy of the tensor, cast to int16 type, equivalent to self.astype(mstype.int16).
+        If the value in tensor is float or half, the decimal will be discarded.
+        For details, please refer to :func:`mindspore.Tensor.astype`.
+
+        Returns:
+            Tensor, converted to the `int16` dtype.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> x = ms.Tensor(np.array([1,2,3,4,5]), ms.int32)
+            >>> output = x.short()
+            >>> output
+            Tensor(shape=[5], dtype=Int16, value= [1, 2, 3, 4, 5])
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cast')(self, mstype.int16)
+
     def cholesky(self, upper=False):
         r"""
         For details, please refer to :func:`mindspore.ops.cholesky`.
@@ -3805,7 +3934,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('expm1')(self)
 
-
     def index_add(self, dim, index, source, *, alpha=1):
         r"""
         For details, please refer to :func:`mindspore.ops.index_add`.
@@ -3815,14 +3943,12 @@ class Tensor(Tensor_):
         source = tensor_operator_registry.get('__mul__')(source, alpha)
         return tensor_operator_registry.get('index_add')(self, indices=index, y=source, axis=dim)
 
-
     def greater(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.greater`.
         """
         self._init_check()
         return tensor_operator_registry.get('greater')(self, other)
-
 
     def greater_equal(self, other):
         r"""
@@ -3831,14 +3957,12 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('greater_equal')(self, other)
 
-
     def igamma(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.igamma`.
         """
         self._init_check()
         return tensor_operator_registry.get('igamma')(self, other)
-
 
     def igammac(self, other):
         r"""
@@ -3847,14 +3971,12 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('igammac')(self, other)
 
-
     def isinf(self):
         r"""
         For details, please refer to :func:`mindspore.ops.isinf`.
         """
         self._init_check()
         return tensor_operator_registry.get('isinf')(self)
-
 
     def isnan(self):
         r"""
@@ -3863,14 +3985,12 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('isnan')(self)
 
-
     def le(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.le`.
         """
         self._init_check()
         return tensor_operator_registry.get('le')(self, other)
-
 
     def less(self, other):
         r"""
@@ -3879,14 +3999,12 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('less')(self, other)
 
-
     def logical_and(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.logical_and`.
         """
         self._init_check()
         return tensor_operator_registry.get('logical_and')(self, other)
-
 
     def logical_not(self):
         r"""
@@ -3895,7 +4013,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('logical_not')(self)
 
-
     def logical_or(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.logical_or`.
@@ -3903,14 +4020,12 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('logical_or')(self, other)
 
-
     def logical_xor(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.logical_xor`.
         """
         self._init_check()
         return tensor_operator_registry.get('logical_xor')(self, other)
-
 
     def lstsq(self, A):
         r"""
@@ -3964,7 +4079,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('lstsq')(self, A)
 
-
     def mvlgamma(self, p):
         r"""
         Computes the multivariate log-gamma function with dimension p element-wise.
@@ -4001,7 +4115,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('mvlgamma')(self, p)
-
 
     def matmul(self, tensor2):
         r"""
@@ -4044,7 +4157,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('matmul')(self, tensor2)
-
 
     def maximum(self, other):
         r"""
@@ -4089,7 +4201,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('maximum')(self, other)
 
-
     def mul(self, value):
         r"""
         Multiplies two tensors element-wise.
@@ -4129,7 +4240,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('mul')(self, value)
 
-
     def neg(self):
         r"""
         Returns a tensor with negative values of the input tensor element-wise.
@@ -4152,7 +4262,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('neg')(self)
-
 
     def ne(self, other):
         r"""
@@ -4400,7 +4509,6 @@ class MapTensor(MapTensor_):
             Tensor, the tensor contains all keys and values.
         """
         return (self.key_tensor, self.value_tensor)
-
 
     def put(self, key_tensor, value_tensor):
         """
