@@ -46,22 +46,22 @@ void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, in
 void PackNHWCToNC4HW4NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel);
 void PackNHWCToNC8HW8NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel);
 
-void RowMajor2ColMajor_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2RowMajor_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Row4Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Row6Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Row8Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Row12Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Row16Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Row32Major_parallel(const float *src_ptr, float *dst_ptr, int col, int row, int col_start, int col_end);
-void RowMajor2Row64Major_parallel(const float *src_ptr, float *dst_ptr, int col, int row, int col_start, int col_end);
-void RowMajor2Col4Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Col6Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Col8Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Col12Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Col16Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Col32Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
-void RowMajor2Col64Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2ColMajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2RowMajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Row4MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Row6MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Row8MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Row12MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Row16MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Row32MajorParallel(const float *src_ptr, float *dst_ptr, int col, int row, int col_start, int col_end);
+void RowMajor2Row64MajorParallel(const float *src_ptr, float *dst_ptr, int col, int row, int col_start, int col_end);
+void RowMajor2Col4MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Col6MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Col8MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Col12MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Col16MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Col32MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
+void RowMajor2Col64MajorParallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end);
 
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2RowMajor(const float *src_ptr, float *dst_ptr, int row, int col);
