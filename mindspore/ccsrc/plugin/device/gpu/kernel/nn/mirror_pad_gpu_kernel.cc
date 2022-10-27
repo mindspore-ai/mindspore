@@ -96,20 +96,6 @@ int MirrorPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     output_size_ *= LongToSizeClipNeg(x);
     output_shape_.push_back(LongToInt(x));
   }
-
-  int max_width = input_shape_[kIndexForMaxWidth];
-  // basic error check for padding value
-  if (mode_ == 1) {  // symmetric
-    max_width = max_width + (kSymmetricCoef * max_width);
-  } else {  // reflect
-    max_width = max_width + (kSymmetricCoef * (max_width - 1));
-  }
-  if (output_shape_[(output_shape_.size() - kMaxIndexOffset) + 0] > max_width ||
-      output_shape_[(output_shape_.size() - kMaxIndexOffset) + 1] > max_width) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the output.shape[-1] and output.shape[-2] cannot be greater "
-                      << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
-                      << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
-  }
   input_size_list_.push_back(num_input_ * in_type_size_);
   input_size_list_.push_back(kSymmetricCoef * num_paddings_ * sizeof(int64_t));  // for 64 bit int defined in API
   output_size_list_.push_back(output_size_);
