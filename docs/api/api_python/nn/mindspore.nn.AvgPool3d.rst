@@ -18,9 +18,9 @@ mindspore.nn.AvgPool3d
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     参数：
-        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。如果为int，则同时代表池化核的深度，高度和宽度。如果为tuple，其值必须包含三个int，分别表示池化核的深度，高度和宽度。
-        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长。如果为int，则同时代表池化核的深度，高度和宽度方向上的移动步长。如果为tuple，其值必须包含三个整数值，分别表示池化核的深度，高度和宽度方向上的移动步长。默认值：None。
-        - **padding** (Union(int, tuple[int])) - 需要填充的pad值，默认值：0。如果 `padding` 为整数，则分别在头，尾，上，下，左，右都填充padding，如果 `padding` 是一个六个整数的元组，则分别在头，尾，上，下，左，右填充padding[0]，padding[1]，padding[2]，padding[3]，padding[4]，padding[5]。
+        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。如果为int，则同时代表池化核的深度，高度和宽度。如果为tuple，其值必须包含三个int，分别表示池化核的深度，高度和宽度。取值必须为正整数。
+        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长。如果为int，则同时代表池化核的深度，高度和宽度方向上的移动步长。如果为tuple，其值必须包含三个整数值，分别表示池化核的深度，高度和宽度方向上的移动步长。取值必须为正整数。如果值为None，则使用默认值 `kernel_size`。
+        - **padding** (Union(int, tuple[int])) - 需要填充的pad值，默认值：0。取值不能为负数。如果 `padding` 为整数，则分别在头，尾，上，下，左，右都填充padding，如果 `padding` 是一个六个整数的元组，则分别在头，尾，上，下，左，右填充padding[0]，padding[1]，padding[2]，padding[3]，padding[4]，padding[5]。
         - **ceil_mode** (bool) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
         - **count_include_pad** (bool) - 平均计算是否包括零填充。默认值：True。
         - **divisor_override** (int) - 如果被指定为非0参数，该参数将会在平均计算中被用作除数，否则将会使用 `kernel_size` 作为除数，默认值：None。
