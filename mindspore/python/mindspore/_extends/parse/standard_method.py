@@ -3359,6 +3359,13 @@ def map_tensor_get_values(map_tensor):
     return _map_tensor_ops.get_values(map_tensor)
 
 
+def map_tensor_get_data(map_tensor):
+    r"""
+    Get all keys and values as a tensor.
+    """
+    return _map_tensor_ops.get_data(map_tensor)
+
+
 def conj(input):
     r"""
     Computes complex conjugate of the input element-wise.

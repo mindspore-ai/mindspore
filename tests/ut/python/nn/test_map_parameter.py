@@ -50,6 +50,9 @@ def test_basic_operations():
     m[Tensor([1, 2, 3], dtype=ms.int32)] = Tensor([[11, 11], [22, 22], [33, 33]], dtype=ms.float32)
     m.erase(Tensor([1, 2, 3], dtype=ms.int32))
 
+    data = m.get_data()
+    assert data is None
+
     print(m)
 
 
@@ -74,6 +77,8 @@ def test_simple_graph_compile():
             self.m.erase(self.key)
             keys = self.m.get_keys()
             values = self.m.get_values()
+            keys_values = self.m.get_data()
+            print(keys_values)
             self.m.put(keys, values)
             return self.p + value1 + value2
 
