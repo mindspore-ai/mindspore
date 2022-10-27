@@ -17,7 +17,7 @@
 """standard_method"""
 
 from __future__ import absolute_import
-from mindspore import Tensor, CSRTensor, COOTensor, RowTensor
+from mindspore import Tensor, CSRTensor, COOTensor, RowTensorInner
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops.function.sparse_func import sparse_add
@@ -1933,7 +1933,7 @@ def str_func(*data):
     if data_len == 0:
         return ''
     data = data[0]
-    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error("str() does not support sparse tensor input.")
     if not F.isconstant(data):
         const_utils.raise_type_error("str() does not support non-constant input.")
@@ -1953,7 +1953,7 @@ def bool_func(*data):
     if data_len == 0:
         return False
     data = data[0]
-    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error("bool() does not support sparse tensor input.")
     if isinstance(data, (Tensor, Tensor_)):
         tensor_shape = F.shape(data)
@@ -1986,7 +1986,7 @@ def int_func(*data):
     target = data[0]
     if not F.isconstant(target):
         const_utils.raise_type_error("int() does not support non-constant input.")
-    if isinstance(target, (CSRTensor, COOTensor, RowTensor)):
+    if isinstance(target, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error("int() does not support sparse tensor input.")
     return cast_to_int(*data)
 
@@ -2008,7 +2008,7 @@ def float_func(*data):
     data = data[0]
     if not F.isconstant(data):
         const_utils.raise_type_error("float() does not support non-constant input.")
-    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error("float() does not support sparse tensor input.")
     return cast_to_float(data)
 
@@ -2021,7 +2021,7 @@ def list_func(*data):
     if data_len == 0:
         return F.make_list()
     data = data[0]
-    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error("list() does not support single sparse tensor input.")
     if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
         data_type = F.typeof(data)
@@ -2042,7 +2042,7 @@ def tuple_func(*data):
     if data_len == 0:
         return F.make_tuple()
     data = data[0]
-    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error("tuple() does not support single sparse tensor input.")
     if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
         data_type = F.typeof(data)

@@ -17,13 +17,13 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, RowTensor, nn, context
+from mindspore import Tensor, RowTensorInner, nn, context
 from mindspore.common import dtype as mstype
 
 
 def compare_row(row1, row2):
-    assert isinstance(row1, RowTensor)
-    assert isinstance(row2, RowTensor)
+    assert isinstance(row1, RowTensorInner)
+    assert isinstance(row2, RowTensorInner)
     assert (row1.indices.asnumpy() == row1.indices.asnumpy()).all()
     assert (row2.values.asnumpy() == row2.values.asnumpy()).all()
     assert row1.dense_shape == row2.dense_shape
@@ -38,7 +38,7 @@ def compare_row(row1, row2):
 def test_make_row():
     """
     Feature: Test RowTensor Constructor in Graph and PyNative.
-    Description: Test RowTensor(indices, values, shape) and RowTensor(RowTensor)
+    Description: Test RowTensorInner(indices, values, shape) and RowTensorInner(RowTensor)
     Expectation: Success.
     """
     indices = Tensor([0, 1], dtype=mstype.int32)
@@ -46,11 +46,11 @@ def test_make_row():
     dense_shape = (3, 2)
 
     def test_pynative():
-        return RowTensor(indices, values, dense_shape)
+        return RowTensorInner(indices, values, dense_shape)
 
     row1 = test_pynative()
     compare_row(row1, row1)
-    row2 = RowTensor(row_tensor=row1)
+    row2 = RowTensorInner(row_tensor=row1)
     compare_row(row1, row2)
 
 
@@ -71,7 +71,7 @@ def test_row_tensor_with_control_if():
             indices = x.indices
             values = x.values * 2
             shape = x.dense_shape
-            return RowTensor(indices, values, shape)
+            return RowTensorInner(indices, values, shape)
 
     class RowTensorValuesAdd2(nn.Cell):
 
@@ -79,7 +79,7 @@ def test_row_tensor_with_control_if():
             indices = x.indices
             values = x.values + 2
             shape = x.dense_shape
-            return RowTensor(indices, values, shape)
+            return RowTensorInner(indices, values, shape)
 
     class RowTensorWithControlIf(nn.Cell):
         def __init__(self, shape):
@@ -89,7 +89,7 @@ def test_row_tensor_with_control_if():
             self.shape = shape
 
         def construct(self, a, b, indices, values):
-            x = RowTensor(indices, values, self.shape)
+            x = RowTensorInner(indices, values, self.shape)
             if a > b:
                 x = self.op1(x)
             else:

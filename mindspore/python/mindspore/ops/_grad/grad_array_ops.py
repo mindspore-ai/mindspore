@@ -29,7 +29,7 @@ from mindspore.ops import functional as F
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
-from mindspore.common.tensor import RowTensor
+from mindspore.common.tensor import RowTensorInner
 from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
 from .._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, dyn_fill
 from .._grad.grad_base import sum_grad_reduce_axis
@@ -124,7 +124,7 @@ def dout_cast_row_tensor(dout, x):
     cast = P.Cast()
     get_dtype = P.DType()
     values = cast(dout.values, get_dtype(x))
-    return RowTensor(dout.indices, values, dout.dense_shape)
+    return RowTensorInner(dout.indices, values, dout.dense_shape)
 
 
 @bprop_getters.register(P.Cast)
@@ -356,7 +356,7 @@ def get_bprop_embedding_lookup(self):
         actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
         # Reshape the 'actual_dout' on device
         actual_dout = reshape_op(dout, actual_dout_shape_changed)
-        return RowTensor(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
+        return RowTensorInner(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
 
     return bprop_sparse
 
@@ -694,7 +694,7 @@ def get_bprop_sparse_gather_v2(self):
             values_shape = indices_size + x_tail_shp
             values = reshape(dout, values_shape)
             indices_new = reshape(indices, indices_size)
-            return RowTensor(indices_new, values, x_shp), zeros_like(indices), zeros_like(axis)
+            return RowTensorInner(indices_new, values, x_shp), zeros_like(indices), zeros_like(axis)
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
         if F.rank(indices) == 0:
