@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
+#include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/fill.h"
 #include "plugin/device/cpu/kernel/fill_cpu_kernel.h"
@@ -97,6 +98,13 @@ const std::vector<std::pair<KernelAttr, FillCpuKernelMod::KernelRunFunc>> &FillC
      &FillCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &FillCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &FillCpuKernelMod::LaunchKernel<std::complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &FillCpuKernelMod::LaunchKernel<std::complex<double>>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      &FillCpuKernelMod::LaunchKernel<bool>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
@@ -121,6 +129,13 @@ const std::vector<std::pair<KernelAttr, FillCpuKernelMod::KernelRunFunc>> &FillC
      &FillCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &FillCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &FillCpuKernelMod::LaunchKernel<std::complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &FillCpuKernelMod::LaunchKernel<std::complex<double>>},
   };
   return func_list;
 }
