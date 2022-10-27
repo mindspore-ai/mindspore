@@ -71,8 +71,6 @@ class CELU(Cell):
 
         \text{CELU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
 
-    It returns element-wise :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))`.
-
     The picture about CELU looks like this `CELU <https://arxiv.org/abs/1704.07483>`_.
 
     Args:
@@ -169,7 +167,7 @@ class Softmax2d(Cell):
     r"""
     Applies SoftMax over features to each spatial location.
 
-    When given a Tensor of Channels x Height x Width, it will
+    When given a Tensor with shape of :math:`(Channels, Height, Width)` , it will
     apply `Softmax` to each location :math:`(Channels, h_i, w_j)`.
 
     Inputs:

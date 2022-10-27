@@ -11,7 +11,7 @@ mindspore.nn.MicroBatchInterleaved
 
     参数：
         - **network** (Cell) - 需要封装的网络。
-        - **interleave_num** (int) - batch size的拆分份数，默认值为2。
+        - **interleave_num** (int，可选) - batch size的拆分份数，默认值：2。
 
     输入：
         tuple[Tensor]，与传入的 `network` 的输入一致。

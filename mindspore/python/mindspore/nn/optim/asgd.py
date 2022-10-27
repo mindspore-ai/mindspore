@@ -45,7 +45,7 @@ class ASGD(Optimizer):
 
     :math:`\lambda` represents the decay term, :math:`\mu` and :math:`\eta` are tracked to
     update :math:`ax` and :math:`w`, :math:`t0` represents the point of starting averaging,
-    :math:`\alpha` represents the power for eta update, :math:`ax` represents the averaged
+    :math:`\alpha` represents the power for :math:`\eta` update, :math:`ax` represents the averaged
     parameter value, :math:`t` represents the current step, :math:`g` represents `gradients`,
     :math:`w` represents `params`.
 
@@ -81,7 +81,7 @@ class ASGD(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
+        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): learning_rate. Default: 0.1.
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
 
@@ -96,7 +96,7 @@ class ASGD(Optimizer):
               LearningRateSchedule with step as the input to get the learning rate of current step.
 
         lambd (float): The decay term. Default: 1e-4.
-        alpha (float): The power for eta update. Default: 0.75.
+        alpha (float): The power for :math:`eta` update. Default: 0.75.
         t0 (float): The point of starting averaging. Default: 1e6.
         weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
 

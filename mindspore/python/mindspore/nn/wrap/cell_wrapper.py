@@ -514,7 +514,7 @@ class MicroBatchInterleaved(Cell):
 
     Args:
         network (Cell): The target network to wrap.
-        interleave_num (int): split num of batch size. Default: 2.
+        interleave_num (int, optional): split num of batch size. Default: 2.
 
     Inputs:
         tuple[Tensor]. It's the same with the input of the `network` .
