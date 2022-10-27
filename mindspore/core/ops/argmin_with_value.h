@@ -28,7 +28,7 @@ constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 class MIND_API ArgMinWithValue : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ArgMinWithValue);
-  ArgMinWithValue() : BaseOperator(kNameArgMinWithValue) { InitIOName({"input_x"}, {"index", "output_x"}); }
+  ArgMinWithValue() : BaseOperator(kNameArgMinWithValue) { InitIOName({"x"}, {"index", "values"}); }
 
   int64_t axis() const;
   bool keep_dims() const;

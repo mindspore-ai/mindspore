@@ -22,6 +22,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -57,8 +58,8 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
   auto x_rank = SizeToLong(x_shape.size());
   if (x_rank == 0) {
     if (axis != -1 && axis != 0) {
-      MS_EXCEPTION(ValueError) << "For ArgMinWithValue with 0d input tensor, axis must be one of 0 or -1, but got"
-                               << axis << ".";
+      MS_EXCEPTION(ValueError) << "For ArgMinWithValue with 0d input tensor, axis must be one of 0 or -1, but got "
+                               << axis << " .";
     }
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
   }
@@ -69,6 +70,10 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
   }
   if (axis < 0) {
     axis += x_rank;
+  }
+  if (axis < 0 || axis >= x_rank) {
+    MS_EXCEPTION(ValueError) << "For ArgMinWithValue, axis must be in range [-x_rank, x_rank), but got " << axis
+                             << " .";
   }
   (void)primitive->AddAttr("dimension", MakeValue(axis));
   // Calculate all the shapes.
@@ -90,14 +95,20 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
 TuplePtr ArgMinWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  const std::set<TypePtr> valid_types = {kInt16, kInt32, kUInt16, kUInt32, kFloat16, kFloat32, kFloat64};
+  std::set<TypePtr> valid_types;
   TypePtr input_x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_x_type, valid_types, prim->name());
+  auto context = MsContext::GetInstance();
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  if (is_gpu) {
+    valid_types = {kInt16, kInt32, kUInt16, kUInt32, kFloat16, kFloat32, kFloat64};
+  } else {
+    valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+  }
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, prim->name());
   auto index_type = std::make_shared<TensorType>(kInt32);
   return std::make_shared<Tuple>(std::vector<TypePtr>{index_type, input_x_type});
 }
 }  // namespace
-
 AbstractBasePtr ArgMinWithValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -107,7 +118,6 @@ AbstractBasePtr ArgMinWithValueInfer(const abstract::AnalysisEnginePtr &, const 
   auto types = ArgMinWithValueInferType(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-
 MIND_API_OPERATOR_IMPL(ArgMinWithValue, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(ArgMinWithValue, prim::kPrimArgMinWithValue, ArgMinWithValueInfer, nullptr, true);
 }  // namespace ops

@@ -32,6 +32,7 @@ from ..operations.array_ops import (
     Fills,
     Col2Im,
     ArgMaxWithValue,
+    ArgMinWithValue,
     ScatterNdMax,
     ScatterNdMul,
     IndexFill,
@@ -4345,12 +4346,9 @@ def min(x, axis=0, keep_dims=False):
         - If there are multiple minimum values, the index of the first minimum value is used.
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
-    Also see: class: `mindspore.ops.ArgMinWithValue`.
-
     Args:
-        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)` . And the data type only support
-          mindspore.uint16, mindspore.uint32, mindspore.int16, mindspore.int32, mindspore.float16, mindspore.float32.
+        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)` .Complex tensor is not supported.
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
                           the output will reduce dimension if false. Default: False.
@@ -4359,13 +4357,13 @@ def min(x, axis=0, keep_dims=False):
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
         tensor.
 
-        - **index** (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
-          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index.
+        - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int32. If `keep_dims`
+          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
+          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index, and same dtype as x.
 
     Raises:
-        TypeError: If data type `x` is not uint16, uint32, int16, int32, float16, float32.
+        TypeError: If `x` is not Tensor.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
@@ -4381,8 +4379,8 @@ def min(x, axis=0, keep_dims=False):
         >>> print(index, output)
         [0] [0.0]
     """
-    argmin_with_value_op = P.ArgMinWithValue(axis, keep_dims)
-    return argmin_with_value_op(x)
+    argmin_with_value_ = ArgMinWithValue(axis=axis, keep_dims=keep_dims)
+    return argmin_with_value_(x)
 
 
 def unsorted_segment_sum(input_x, segment_ids, num_segments):

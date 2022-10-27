@@ -2203,18 +2203,19 @@ class ArgMinWithValue(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)` .
+          :math:`(x_1, x_2, ..., x_N)` .Complex tensor is not supported.
 
     Outputs:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
         tensor.
 
-        - **index** (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
-          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index.
+        - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int32. If `keep_dims`
+          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
+          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index, and same dtype as x.
 
     Raises:
+        TypeError: If `x` is not Tensor.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
@@ -2234,10 +2235,12 @@ class ArgMinWithValue(Primitive):
     @prim_attr_register
     def __init__(self, axis=0, keep_dims=False):
         """Initialize ArgMinWithValue"""
+        self.init_prim_io_names(inputs=['x'], outputs=['index', 'values'])
+        validator.check_value_type("axis", axis, [int], self.name)
+        validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         self.axis = axis
         self.keep_dims = keep_dims
-        validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
-        validator.check_value_type('axis', axis, [int], self.name)
+        self.add_prim_attr('dimension', self.axis)
 
 
 class Tile(PrimitiveWithInfer):
