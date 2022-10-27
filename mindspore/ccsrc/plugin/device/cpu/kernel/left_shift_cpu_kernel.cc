@@ -31,23 +31,40 @@ const size_t kLeftShiftInputsNum = 2;
 const size_t kLeftShiftOutputsNum = 1;
 }  // namespace
 
-void LeftShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kLeftShiftInputsNum, common::AnfAlgo::GetCNodeName(kernel_node));
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kLeftShiftOutputsNum, common::AnfAlgo::GetCNodeName(kernel_node));
-  input_type_1_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_type_2_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+bool LeftShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLeftShiftInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLeftShiftOutputsNum, kernel_name_);
+  input_type_1_ = inputs[0]->GetDtype();
+  input_type_2_ = outputs[0]->GetDtype();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'x2' must be the same as the type of 'x1', "
                          "but got "
                       << TypeIdLabel(input_type_2_);
   }
-  input_shape_1_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  input_shape_2_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int LeftShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_1_ = inputs[0]->GetShapeVector();
+  input_shape_2_ = inputs[1]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  return ret;
 }
 
 bool LeftShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
