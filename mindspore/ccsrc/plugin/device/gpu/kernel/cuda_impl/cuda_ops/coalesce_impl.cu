@@ -27,11 +27,19 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/coalesce_impl.cuh"
 #include "include/cuda_fp16.h"
 
+#ifndef _MSC_VER
 #define CUDA_KERNEL_ASSERT_COALESCE(cond)                                                                \
   if (!(cond)) {                                                                                         \
     printf("For Coalesce, values of elements of x_indices can not exceed the limit set by x_shape\n");   \
     __assert_fail(#cond, __FILE__, static_cast<unsigned int>(__LINE__), __FUNCTION__);                   \
   }
+#else
+#define CUDA_KERNEL_ASSERT_COALESCE(cond) \
+  if (!(cond)) {                                                                                         \
+    printf("For Coalesce, values of elements of x_indices can not exceed the limit set by x_shape\n");   \
+    assert(0);                                                                                           \
+  }
+#endif
 
 __global__ void FlattenIndicesKernel(int64_t *flatten_input_indices, const size_t indices_num,
                                      const size_t values_num, const int64_t *input_indices,
