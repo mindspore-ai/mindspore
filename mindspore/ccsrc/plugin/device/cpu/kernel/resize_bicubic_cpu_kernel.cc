@@ -20,6 +20,8 @@
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/resize_bicubic.h"
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -30,9 +32,6 @@ constexpr size_t kResizeBicubicInputs1ShapeSize = 1;
 constexpr size_t kResizeBicubicInputs1Dim = 2;
 constexpr size_t kResizeBicubicAttrSize = 2;
 constexpr int64_t cached_values_hand_max = 4;
-constexpr size_t indexid4 = 4;
-constexpr size_t indexid3 = 3;
-constexpr size_t indexid2 = 2;
 constexpr size_t caseid2 = 2;
 constexpr size_t caseid3 = 3;
 constexpr int64_t calnum8 = 8;
@@ -43,17 +42,15 @@ constexpr int64_t calnum2 = 2;
 constexpr int64_t kTableSize = (1 << 10);
 std::vector<int64_t> shape0;
 std::vector<int64_t> shape1;
-AnfNodePtr kernel_node_ptr;
 bool align_corners = false;
 bool half_pixel_centers = false;
 struct ResizerState {
-  void CalculateSize_kernel_node(const CNodePtr &kernel_node) {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    shape0 = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  void CalculateSize_kernel_node(const std::vector<KernelTensorPtr> &inputs) {
+    shape0 = inputs[kIndex0]->GetDeviceShapeAdaptively();
     batch_size = shape0[0];
     in_height = shape0[1];
-    in_width = shape0[indexid2];
-    channels = shape0[indexid3];
+    in_width = shape0[kIndex2];
+    channels = shape0[kIndex3];
   }
   void CalculateSize_inputs(const std::vector<kernel::AddressPtr> &inputs) {
     auto *input_addr = static_cast<int32_t *>(inputs[1]->addr);
@@ -128,16 +125,16 @@ class CachedInterpolationCalculator {
       case 1:
         indexes_[1] = x_1;
       case caseid2:
-        indexes_[indexid2] = x_2;
+        indexes_[kIndex2] = x_2;
       case caseid3:
-        indexes_[indexid3] = x_3;
+        indexes_[kIndex3] = x_3;
         break;
     }
     return new_indices_hand;
   }
 
  private:
-  int64_t indexes_[4];
+  int64_t indexes_[kIndex4];
 };
 
 inline int64_t Bound(int64_t val, int64_t limit) { return std::min(limit - 1, std::max(int64_t{0}, val)); }
@@ -353,75 +350,50 @@ inline void interpolate_with_caching(const T1 *input_data, const ResizerState &R
   }
 }
 
-void ResizeBicubicCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_node_ptr = kernel_node;
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape0 = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  shape1 = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  align_corners = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  half_pixel_centers = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "half_pixel_centers");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (shape0.size() != kResizeBicubicInputs0ShapeSize) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', images shape size should be "
-                             << kResizeBicubicInputs0ShapeSize << ", but got " << shape0.size();
-  }
-  if (shape1.size() != kResizeBicubicInputs1ShapeSize) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', size shape size should be "
-                             << kResizeBicubicInputs1ShapeSize << ", but got " << shape1.size();
-  }
-  sta.CalculateSize_kernel_node(kernel_node);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool ResizeBicubicCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBicubicInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBicubicOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-
   kernel_func_ = func_list_[index].second;
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBicubic>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  align_corners = kernel_ptr->get_align_corners();
+  half_pixel_centers = kernel_ptr->get_half_pixel_centers();
+  return true;
 }
 
-bool ResizeBicubicCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_addr = outputs[0]->addr;
+int ResizeBicubicCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  shape0 = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  shape1 = inputs[kIndex1]->GetDeviceShapeAdaptively();
+
+  sta.CalculateSize_kernel_node(inputs);
+  return KRET_OK;
+}
+
+template <typename T1, typename T2>
+bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &outputs) {
+  auto output_addr = static_cast<T2 *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size;
   if (memset_s(output_addr, output_size, 0, output_size) != EOK) {
     MS_EXCEPTION(ValueError) << "Memset Failed!";
   }
-  if ((inputs[1]->size) / sizeof(int32_t) != calnum2) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', size's size should be " << kResizeBicubicInputs1Dim
-                             << ", but got " << (inputs[1]->size) / sizeof(int32_t);
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBicubicInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBicubicOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    return LaunchKernel<float16, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt8) {
-    return LaunchKernel<int8_t, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt8) {
-    return LaunchKernel<uint8_t, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt16) {
-    return LaunchKernel<int16_t, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt16) {
-    return LaunchKernel<uint16_t, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    return LaunchKernel<int32_t, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    return LaunchKernel<int64_t, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    return LaunchKernel<double, float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    return LaunchKernel<float, float>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', unsupported input data type: " << dtype_;
-  }
-}
-template <typename T1, typename T2>
-bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) const {
   auto input0_addr = static_cast<T1 *>(inputs[0]->addr);
-  auto output_addr = static_cast<T2 *>(outputs[0]->addr);
   sta.CalculateSize_inputs(inputs);
   if (sta.out_height == sta.in_height && sta.out_width == sta.in_width) {
     for (int64_t i = 0; i < sta.bhwc_size; ++i) {
@@ -429,10 +401,6 @@ bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     }
   }
   interpolate_with_caching(input0_addr, sta, half_pixel_centers, output_addr);
-  std::vector<int64_t> out_shape = {sta.batch_size, sta.out_height, sta.out_width, sta.channels};
-  std::vector<TypeId> out_dtypes(1);
-  out_dtypes[0] = kNumberTypeFloat32;
-  common::AnfAlgo::SetOutputInferTypeAndShape(out_dtypes, {out_shape}, kernel_node_ptr.get());
   return true;
 }
 

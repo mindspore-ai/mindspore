@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/resize_nearest_neighbor_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/resize_nearest_neighbor.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,63 +28,46 @@ constexpr size_t kResizeNearestNeighborInputsShapeSize = 4;
 constexpr size_t kResizeNearestNeighborAttrSize = 2;
 }  // namespace
 
-void ResizeNearestNeighborCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (IsDynamic(shape_signed)) {
-    return;
-  }
-  auto input_shape = Convert2SizeTClipNeg(shape_signed);
-  std::vector<int64_t> output_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
-  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (input_shape.size() != kResizeNearestNeighborInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be "
-                      << kResizeNearestNeighborInputsShapeSize << ", but got " << input_shape.size();
-  }
+bool ResizeNearestNeighborCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborOutputNum, kernel_name_);
 
-  if (output_size.size() != kResizeNearestNeighborAttrSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'size' must be " << kResizeNearestNeighborAttrSize
-                      << ", but got " << output_size.size();
-  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeNearestNeighbor>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  align_corners_ = kernel_ptr->get_align_corners();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
 
-  batch_size_ = input_shape[0];
-  channel_ = input_shape[1];
-  in_height_ = input_shape[2];
-  in_width_ = input_shape[3];
-  out_height_ = LongToSize(output_size[0]);
-  out_width_ = LongToSize(output_size[1]);
+int ResizeNearestNeighborCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs,
+                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
+  batch_size_ = input_shape[kIndex0];
+  channel_ = input_shape[kIndex1];
+  in_height_ = input_shape[kIndex2];
+  in_width_ = input_shape[kIndex3];
+
+  auto output_shape = LongVecToSizeVec(outputs[kIndex0]->GetShapeVector());
+  out_height_ = output_shape[kIndex2];
+  out_width_ = output_shape[kIndex3];
+
   height_scale_ = Scaling(in_height_, out_height_, align_corners_);
   width_scale_ = Scaling(in_width_, out_width_, align_corners_);
   output_size_ = batch_size_ * channel_ * out_height_ * out_width_;
-}
-
-bool ResizeNearestNeighborCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborOutputNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' must be float16, float32, float64, int32, or int64, but got "
-                      << TypeIdLabel(dtype_);
-  }
-  return true;
+  return KRET_OK;
 }
 
 template <typename T>
-void ResizeNearestNeighborCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+bool ResizeNearestNeighborCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                     const std::vector<AddressPtr> &,
                                                      const std::vector<AddressPtr> &outputs) {
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
@@ -109,6 +93,24 @@ void ResizeNearestNeighborCpuKernelMod::LaunchKernel(const std::vector<AddressPt
       pos0 * channel_ * in_height_ * in_width_ + pos1 * in_height_ * in_width_ + in_y * in_width_ + in_x;
     output_addr[i] = input_addr[input_pos];
   }
+  return true;
+}
+
+const std::vector<std::pair<KernelAttr, ResizeNearestNeighborCpuKernelMod::KernelRunFunc>>
+  &ResizeNearestNeighborCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, ResizeNearestNeighborCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &ResizeNearestNeighborCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &ResizeNearestNeighborCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &ResizeNearestNeighborCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &ResizeNearestNeighborCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &ResizeNearestNeighborCpuKernelMod::LaunchKernel<int64_t>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeNearestNeighbor, ResizeNearestNeighborCpuKernelMod);

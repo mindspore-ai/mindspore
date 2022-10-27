@@ -30,7 +30,6 @@ namespace ops {
 namespace {
 abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t size_num = 2;
-  constexpr size_t indexid2 = 2;
   constexpr size_t indexid3 = 3;
   constexpr int64_t image_shape_size = 4;
   constexpr int64_t size_shape_size = 1;
@@ -51,6 +50,11 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
   auto input1_shape_tensor = input1_shape_value_ptr->cast<tensor::TensorPtr>();
   auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(images_shape) || IsDynamicRank(size_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
                                            image_shape_size, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("size dimension", SizeToLong(size_shape.size()), kEqual, size_shape_size,
@@ -77,19 +81,11 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
     auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
     auto x_shape = x_shape_ptr->shape();
     if (x_shape_ptr->IsDynamic()) {
-      auto x_min_shape = x_shape_ptr->min_shape();
-      auto x_max_shape = x_shape_ptr->max_shape();
-      x_min_shape[1] = 0;
-      x_min_shape[indexid2] = 0;
-      x_max_shape[1] = 1;
-      x_max_shape[indexid2] = 1;
-      return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
+      return std::make_shared<abstract::Shape>(x_shape);
     }
     ShapeVector out_shape = {images_shape[0], abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
                              images_shape[indexid3]};
-    ShapeVector shape_min = {images_shape[0], 0, 0, images_shape[indexid3]};
-    ShapeVector shape_max = {images_shape[0], 1, 1, images_shape[indexid3]};
-    return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 }
 TypePtr ResizeAreaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
