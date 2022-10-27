@@ -43,6 +43,8 @@ class TensorRTContext {
   bool HasTensor(const std::string &name) const;
   ITensorHelper MsName2Tensor(const std::string &ms_name);
   template <typename T>
+  nvinfer1::ITensor *ConvertTo0DTensor(T value);
+  template <typename T>
   nvinfer1::ITensor *ConvertTo1DTensor(T value);
   template <typename T>
   nvinfer1::ITensor *ConvertTo1DTensor(const std::vector<T> &values);

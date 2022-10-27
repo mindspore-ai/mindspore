@@ -122,6 +122,11 @@ nvinfer1::IPluginV2DynamicExt *SelectPlugin::clone() const noexcept {
   return plugin;
 }
 
+nvinfer1::DataType SelectPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
+  noexcept {
+  return inputTypes[1];
+}
+
 size_t SelectPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }
 
 void SelectPlugin::serialize(void *buffer) const noexcept {

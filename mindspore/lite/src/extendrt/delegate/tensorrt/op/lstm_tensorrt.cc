@@ -112,37 +112,43 @@ int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
 }
 
 int LSTMTensorRT::AddLSTMLayers(TensorRTContext *ctx) {
-  mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
-  mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
-
   nvinfer1::ITensor *data_out{nullptr};
-  nvinfer1::ITensor *hidden_init = ctx->network()->addInput(
-    hidden_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
-    nvinfer1::Dims3(params_.layer_count_ * params_.directional_cnt_, params_.batch_size_, params_.hidden_size_));
-  if (hidden_init == nullptr) {
-    MS_LOG(ERROR) << "add hidden_init input tensor failed for " << op_name_;
-    return RET_ERROR;
-  }
-  op_binding_tensor_.push_back(BindingHelper{hidden_init_name_, hidden_in_init.MutableData(),
-                                             nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
-  nvinfer1::ITensor *cell_init = ctx->network()->addInput(
-    cell_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
-    nvinfer1::Dims3(params_.layer_count_ * params_.directional_cnt_, params_.batch_size_, params_.hidden_size_));
-  if (cell_init == nullptr) {
-    MS_LOG(ERROR) << "add cell_init input tensor failed for " << op_name_;
-    return RET_ERROR;
-  }
-  op_binding_tensor_.push_back(
-    BindingHelper{cell_init_name_, cell_in_init.MutableData(), nvinfer1::DataType::kFLOAT, cell_in_init.DataSize()});
+  nvinfer1::ITensor *hidden_init{nullptr};
+  nvinfer1::ITensor *cell_init{nullptr};
+  if (in_tensors_[HIDDEN_IN_TENSOR_INIT].Data() != nullptr && in_tensors_[CELL_IN_TENSOR_INIT].Data() != nullptr) {
+    mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
+    mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
 
-  sequence_size_input_ =
-    ctx->network()->addInput((op_name_ + "_seq_input").c_str(), nvinfer1::DataType::kINT32, nvinfer1::Dims{});
-  if (sequence_size_input_ == nullptr) {
-    MS_LOG(ERROR) << "add sequence_size_input_ input tensor failed for " << op_name_;
-    return RET_ERROR;
+    hidden_init = ctx->network()->addInput(
+      hidden_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
+      nvinfer1::Dims3(params_.layer_count_ * params_.directional_cnt_, params_.batch_size_, params_.hidden_size_));
+    if (hidden_init == nullptr) {
+      MS_LOG(ERROR) << "add hidden_init input tensor failed for " << op_name_;
+      return RET_ERROR;
+    }
+    op_binding_tensor_.push_back(BindingHelper{hidden_init_name_, hidden_in_init.MutableData(),
+                                               nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
+    cell_init = ctx->network()->addInput(
+      cell_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
+      nvinfer1::Dims3(params_.layer_count_ * params_.directional_cnt_, params_.batch_size_, params_.hidden_size_));
+    if (cell_init == nullptr) {
+      MS_LOG(ERROR) << "add cell_init input tensor failed for " << op_name_;
+      return RET_ERROR;
+    }
+    op_binding_tensor_.push_back(
+      BindingHelper{cell_init_name_, cell_in_init.MutableData(), nvinfer1::DataType::kFLOAT, cell_in_init.DataSize()});
+
+    sequence_size_input_ =
+      ctx->network()->addInput((op_name_ + "_seq_input").c_str(), nvinfer1::DataType::kINT32, nvinfer1::Dims{});
+    if (sequence_size_input_ == nullptr) {
+      MS_LOG(ERROR) << "add sequence_size_input_ input tensor failed for " << op_name_;
+      return RET_ERROR;
+    }
+  } else {
+    hidden_init = input(ctx, HIDDEN_IN_TENSOR_INIT).trt_tensor_;
+    cell_init = input(ctx, CELL_IN_TENSOR_INIT).trt_tensor_;
+    sequence_size_input_ = ctx->ConvertTo0DTensor(input(ctx, 0).trt_tensor_->getDimensions().d[0]);
   }
-  op_binding_tensor_.push_back(
-    BindingHelper{(op_name_ + "_seq_input"), &params_.sequence_size_, nvinfer1::DataType::kINT32, sizeof(int)});
 
   nvinfer1::ITensor *max_sequence_size =
     ctx->network()
@@ -470,6 +476,9 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(TensorRTContext *ctx, const Lstm
 }
 
 int LSTMTensorRT::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
+  if (in_tensors_[HIDDEN_IN_TENSOR_INIT].Data() == nullptr && in_tensors_[CELL_IN_TENSOR_INIT].Data() == nullptr) {
+    return RET_OK;
+  }
   if (op_binding_tensor_.size() == 0) {
     MS_LOG(DEBUG) << "unsing serialized engine, add input tensor for " << op_name_;
     mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
