@@ -43,7 +43,7 @@ def test_replicationpad1d_2d(mode):
     Description: Infer process of ReplicationPad1d with 2 types of parameters.
     Expectation: success
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode)
     # Test functionality with 2D tensor as input
     x = Tensor(np.array([[0, 1, 2, 3], [4, 5, 6, 7]]).astype(np.float16))
     net = Net1d((3, 1))
@@ -69,7 +69,7 @@ def test_replicationpad1d_3d(mode):
     Description: Infer process of ReplicationPad1d with 2 types of parameters.
     Expectation: success
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode)
     # Test functionality with 3D tensor input
     x = Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
     net = Net1d((3, 1))
@@ -96,7 +96,7 @@ def test_replicationpad2d_3d(mode):
     Description: Infer process of ReplicationPad2d with three type parameters.
     Expectation: success
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode)
     # Test functionality with 3D tensor as input
     x = Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
     net = Net2d((1, 1, 2, 0))
@@ -124,7 +124,7 @@ def test_replicationpad2d_4d(mode):
     Description: Infer process of ReplicationPad2d with three type parameters.
     Expectation: success
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode)
     # Test functionality with 4D tensor as input
     x = Tensor(np.array([[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]]).astype(np.int32))
     net = Net2d((1, 1, 2, 0))
@@ -152,7 +152,7 @@ def test_replicationpad3d_4d(mode):
     Description: Infer process of ReplicationPad3d with three type parameters.
     Expectation: success
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode)
     # Test functionality with 4D tensor as input
     x = Tensor(np.array([[[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]]]).astype(np.int32))
     net = Net3d((1, 1, 2, 0, 1, 1))
@@ -186,7 +186,7 @@ def test_replicationpad3d_5d(mode):
     Description: Infer process of ReplicationPad3d with three type parameters.
     Expectation: success
     """
-    context.set_context(mode=mode, device_target="GPU")
+    context.set_context(mode=mode)
     # Test functionality with 5D tensor as input
     x = Tensor(np.array([[[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]]]).astype(np.float32))
     net = Net3d((1, 1, 2, 0, 1, 1))

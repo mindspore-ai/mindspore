@@ -84,8 +84,9 @@ class Node:
         """
         self._node_type: NodeType = node_type
         self._ast_node: Optional[ast.AST] = ast_node
-        self._attribute: {str, object} = \
-            Node._get_cell_or_prim_op_attribute(instance) if node_type == NodeType.CallModule else {}
+        self._attribute: {str, object} = {}
+        if node_type in (NodeType.CallModule, NodeType.CallCell, NodeType.CallPrimitive):
+            self._attribute = Node._get_cell_or_prim_op_attribute(instance)
         self._instance = instance
         self._name = name
         self._func: Optional[ScopedValue] = func

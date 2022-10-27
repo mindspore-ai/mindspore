@@ -131,7 +131,7 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     else:
         (min_shapes, max_shapes) = dataset_helper.dynamic_min_max_shapes()
     if network.get_inputs() and None not in network.get_inputs():
-        _check_inputs(network, dataset_shapes, dataset_types)
+        _check_inputs(network.get_inputs(), dataset_shapes, dataset_types)
         min_shapes, max_shapes = None, None
     elif context.get_context("mode") == context.PYNATIVE_MODE:
         dataset_shapes = tuple([(-2,)] * len(dataset_shapes))
@@ -141,11 +141,10 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     return network
 
 
-def _check_inputs(network, dataset_shapes, dataset_types):
+def _check_inputs(network_shapes, dataset_shapes, dataset_types):
     """
     Check if set inputs are correct.
     """
-    network_shapes = network.get_inputs()
     for tensor_index, ele_dataset_shape in enumerate(dataset_shapes):
         set_inputs_shape = list(network_shapes[tensor_index].shape)
         inputs_shape = list(ele_dataset_shape)
