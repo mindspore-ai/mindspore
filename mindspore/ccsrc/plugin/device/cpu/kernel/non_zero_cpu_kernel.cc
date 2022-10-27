@@ -17,6 +17,7 @@
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/non_zero_cpu_kernel.h"
 #include <algorithm>
 #include <typeinfo>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -28,63 +29,68 @@ constexpr size_t kInputMinDim = 1;
 constexpr size_t kOutputDim = 2;
 }  // namespace
 
-void NonZeroCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shape})) {
-    return;
-  }
-  input_shape_ = Convert2SizeT(input_shape);
-  output_shape_ = Convert2SizeTClipNeg(output_shape);
-  input_rank_ = input_shape_.size();
-  node_wpt_ = kernel_node;
-  if (input_shape_.size() < kInputMinDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be greater than or equal to "
-                      << kInputMinDim << ", but got " << input_shape_.size() << ".";
-  }
-
-  if (output_shape_.size() != kOutputDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be equal to " << kOutputDim
-                      << ", but got " << output_shape_.size() << ".";
-  }
-
-  if (output_shape_[1] != input_rank_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape[1] of output should be equal to rank of input"
-                      << ", but got output_shape[1]=" << output_shape_[1] << " and x_rank=" << input_rank_ << ".";
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, NonZeroFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+bool NonZeroCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "NonZero does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  is_need_retrieve_output_shape_ = true;  // NonZero is a dynamic shape operator.
+  data_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  index_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype());
+  return true;
+}
+
+int NonZeroCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  ResetResource();
+  outputs_ = outputs;
+  auto input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
+                       [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>{});
+  if (input_size_ == 0) {
+    return KRET_UNKNOWN_SHAPE;
+  }
+  input_rank_ = input_shape_.size();
+
+  input_size_list_.push_back(input_size_ * data_size_);
+  output_size_list_.push_back(input_size_ * input_shape_.size() * index_size_);
+  return KRET_OK;
+}
+
+void NonZeroCpuKernelMod::ResetResource() noexcept {
+  real_output_size_ = 0;
+  input_shape_.clear();
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
 }
 
 template <typename T>
 bool NonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  if (input_size_ == 0) {
+    return true;
+  }
+
   auto input_addr = static_cast<T *>(inputs[0]->addr);
   auto output_addr = static_cast<int64_t *>(outputs[0]->addr);
-
-  size_t input_num = inputs[0]->size / sizeof(T);
-  size_t non_zero_num = NonZeroCompute(input_addr, output_addr, input_num);
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_ << ".";
-  }
-  ShapeVector output_shape = {SizeToLong(non_zero_num), SizeToLong(input_rank_)};
-  std::vector<TypeId> dtype = {AnfAlgo::GetOutputDeviceDataType(node_, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtype, {output_shape}, node_.get());
-
+  real_output_size_ = NonZeroCompute(input_addr, output_addr, input_size_);
   return true;
+}
+
+void NonZeroCpuKernelMod::SyncData() {
+  std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(input_shape_.size())};
+  outputs_[kIndex0]->SetShapeVector(new_output_shape);
 }
 
 template <typename T>
