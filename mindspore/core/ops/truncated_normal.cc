@@ -27,10 +27,24 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const uint32_t kInputDims = 1;
+const uint32_t kInputSizes = 2;
 abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "Input[0] only support tensor!";
+  }
+  auto shape_input_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_input = shape_input_map[kShape];
+  if (IsDynamicRank(shape_input)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
+  if (shape_input.size() != kInputDims) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The input tensor must be a 1-D tensor.";
+  }
+  if (shape_input[kInputIndex0] < kInputSizes) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input tensor shape must >= 2, but got "
+                             << shape_input[kInputIndex0];
   }
   MS_EXCEPTION_IF_NULL(primitive);
   const uint32_t kInpuDims = 1;
@@ -53,14 +67,6 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   auto shape_v = shape_ptr->shape();
   if (shape_v.size() != kInpuDims) {
     MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
-  }
-  auto shape_input_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto shape_input = shape_input_map[kShape];
-  if (IsDynamicRank(shape_input)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
-  }
-  if (shape_input[0] == 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input can not be an empty tensor.";
   }
   if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;

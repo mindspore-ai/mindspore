@@ -23,6 +23,7 @@
 #include <algorithm>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
+#include "mindspore/core/ops/truncated_normal.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
 
@@ -36,54 +37,44 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputSizes = 2;
 }  // namespace
 
-void TruncatedNormalCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (IsDynamic(input_shape)) {
-    return;
-  }
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  seed_ = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
-  seed2_ = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
-  if (input_shape[0] < kInputSizes) {
-    MS_EXCEPTION(ValueError) << "The input tensor shape must >= 2.";
-  }
-  if (input_shape.size() != kInputDims) {
-    MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool TruncatedNormalCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto op_prim = std::dynamic_pointer_cast<ops::TruncatedNormal>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
+  seed_ = op_prim->get_seed();
+  seed2_ = op_prim->get_seed2();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "TruncatedNormal does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "TruncatedNormal does not support this kernel data type: " << kernel_attr;
+    return false;
   }
 
   kernel_func_ = func_list_[index].second;
+  return true;
 }
 
-bool TruncatedNormalCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
+int TruncatedNormalCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_type_ = inputs[kIndex0]->GetDtype();
+  output_type_ = outputs[kIndex0]->GetDtype();
+  return KRET_OK;
+}
+
+bool TruncatedNormalCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  if (input_type_ == kNumberTypeInt32 && output_type_ == kNumberTypeFloat16) {
-    LaunchKernel<int32_t, float16, float>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt32 && output_type_ == kNumberTypeFloat32) {
-    LaunchKernel<int32_t, float, float>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt32 && output_type_ == kNumberTypeFloat64) {
-    LaunchKernel<int32_t, double, double>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt64 && output_type_ == kNumberTypeFloat16) {
-    LaunchKernel<int64_t, float16, float>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt64 && output_type_ == kNumberTypeFloat32) {
-    LaunchKernel<int64_t, float, float>(inputs, outputs);
-  } else if (input_type_ == kNumberTypeInt64 && output_type_ == kNumberTypeFloat64) {
-    LaunchKernel<int64_t, double, double>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "The output data type must be one of float16, float32 and float64.";
-  }
-  return true;
+  MS_ERROR_IF_NULL(kernel_func_);
+  return kernel_func_(this, inputs, outputs);
 }
 
 template <typename T1, typename T2, typename T3>
