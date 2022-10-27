@@ -77,6 +77,7 @@ RER_GPU_STATIC_CONST_TO_ATTR(kSpaceToBatchOpName, 1);
 RER_GPU_STATIC_CONST_TO_ATTR(kSparseApplyAdagradOpName, 2);
 RER_GPU_STATIC_CONST_TO_ATTR(kSparseGatherV2OpName, 2);
 RER_GPU_STATIC_CONST_TO_ATTR(kStridedSliceAssignOpName, 1, 2, 3);
+RER_GPU_STATIC_CONST_TO_ATTR(kStridedSliceOpName, 1, 2, 3);
 RER_GPU_STATIC_CONST_TO_ATTR(kSubscalarOpName, 1);
 RER_GPU_STATIC_CONST_TO_ATTR(kTensorCopySlicesOpName, 2, 3, 4);
 RER_GPU_STATIC_CONST_TO_ATTR(kTileOpName, 1);
