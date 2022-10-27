@@ -28,47 +28,70 @@ namespace {
 constexpr size_t kMulNoNanInputsNum = 2;
 constexpr size_t kMulNoNanOutputsNum = 1;
 constexpr size_t kNumber2 = 2;
-#define MULNONAN_COMPUTE_CASE(DTYPE, TYPE, INPUTS, OUTPUTS) \
-  case (DTYPE): {                                           \
-    LaunchKernel<TYPE>(INPUTS, OUTPUTS);                    \
-    break;                                                  \
-  }
 }  // namespace
 
-void MulNoNanCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  input0_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-}
-
-bool MulNoNanCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool MulNoNanCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMulNoNanInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMulNoNanOutputsNum, kernel_name_);
-  switch (input_dtype_) {
-    MULNONAN_COMPUTE_CASE(kNumberTypeInt8, int8_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeInt16, int16_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeInt32, int32_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeInt64, int64_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeUInt16, uint16_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeUInt32, uint32_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeUInt64, uint64_t, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeFloat16, float16, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeFloat32, float, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeFloat64, double, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeComplex64, std::complex<float>, inputs, outputs)
-    MULNONAN_COMPUTE_CASE(kNumberTypeComplex128, std::complex<double>, inputs, outputs)
-    default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input 'x' "
-                        << TypeIdToType(input_dtype_)->ToString() << " not support.";
+
+  input_dtype_ = inputs[kIndex0]->GetDtype();
+  output_dtype_ = outputs[kIndex0]->GetDtype();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int MulNoNanCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  return true;
+
+  input0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
+}
+
+const std::vector<std::pair<KernelAttr, MulNoNanCPUKernelMod::KernelRunFunc>> &MulNoNanCPUKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, MulNoNanCPUKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &MulNoNanCPUKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &MulNoNanCPUKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &MulNoNanCPUKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &MulNoNanCPUKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &MulNoNanCPUKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &MulNoNanCPUKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &MulNoNanCPUKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &MulNoNanCPUKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &MulNoNanCPUKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &MulNoNanCPUKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &MulNoNanCPUKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &MulNoNanCPUKernelMod::LaunchKernel<std::complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &MulNoNanCPUKernelMod::LaunchKernel<std::complex<double>>},
+  };
+  return func_list;
 }
 
 template <typename T>
@@ -143,7 +166,8 @@ void MulNoNanCPUKernelMod::BcastCompute(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-void MulNoNanCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool MulNoNanCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                        const std::vector<AddressPtr> &outputs) {
   size_t input0_elements_nums = inputs[0]->size / sizeof(T);
   size_t input1_elements_nums = inputs[1]->size / sizeof(T);
   bool no_bcast = (input0_shape_ == input1_shape_) || (input0_elements_nums == 1) || (input1_elements_nums == 1);
@@ -152,6 +176,7 @@ void MulNoNanCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   } else {
     BcastCompute<T>(inputs, outputs);
   }
+  return true;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MulNoNan, MulNoNanCPUKernelMod);
