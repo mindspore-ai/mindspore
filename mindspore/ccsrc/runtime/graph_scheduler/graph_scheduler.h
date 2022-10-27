@@ -96,6 +96,9 @@ class BACKEND_EXPORT GraphScheduler {
   void SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,
                                  double execution_time) const;
 
+  // Check whether the single thread execution condition is met.
+  bool CheckSingleThreadRunningCondition(ActorSet *const actor_set, GraphExecutionStrategy strategy) const;
+
   // The Global actors contain memory manager actor, recorder actor and debug actor.
   void BuildAndScheduleGlobalActor();
 
