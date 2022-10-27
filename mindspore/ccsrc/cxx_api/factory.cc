@@ -16,13 +16,12 @@
 
 #include "cxx_api/factory.h"
 namespace mindspore {
+DeviceType device_target = kInvalidDeviceType;
+DeviceType &DeviceTypeCreator::get() { return device_target; }
+
 GraphImplFactory &GraphImplFactory::Instance() {
-  std::call_once(once_flag_, []() {
-    if (instance_ == nullptr) {
-      instance_ = std::make_shared<GraphImplFactory>();
-    }
-  });
-  return *instance_;
+  static GraphImplFactory instance;
+  return instance;
 }
 
 void GraphImplFactory::Register(const std::string &device_name, GraphImplCreator &&creator) {
@@ -43,12 +42,8 @@ std::shared_ptr<GraphCell::GraphImpl> GraphImplFactory::Create(enum DeviceType d
 }
 
 ModelImplFactory &ModelImplFactory::Instance() {
-  std::call_once(once_flag_, []() {
-    if (instance_ == nullptr) {
-      instance_ = std::make_shared<ModelImplFactory>();
-    }
-  });
-  return *instance_;
+  static ModelImplFactory instance;
+  return instance;
 }
 
 void ModelImplFactory::Register(const std::string &device_name, ModelImplCreator &&creator) {

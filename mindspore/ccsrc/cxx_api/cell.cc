@@ -29,9 +29,9 @@ GraphCell::GraphCell(Graph &&graph) : graph_(std::make_shared<Graph>(graph)) { M
 
 void GraphCell::SetContext(const std::shared_ptr<Context> &context) {
   if (executor_ == nullptr) {
-    executor_ = GraphImplFactory::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(DeviceTypeCreator::get());
     if (executor_ == nullptr) {
-      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      MS_LOG(ERROR) << "Create graph impl for device target " << DeviceTypeCreator::get() << " failed.";
       return;
     }
     executor_->SetGraph(graph_);
@@ -41,9 +41,9 @@ void GraphCell::SetContext(const std::shared_ptr<Context> &context) {
 
 Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   if (executor_ == nullptr) {
-    executor_ = GraphImplFactory::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(DeviceTypeCreator::get());
     if (executor_ == nullptr) {
-      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      MS_LOG(ERROR) << "Create graph impl for device target " << DeviceTypeCreator::get() << " failed.";
       return kMEFailed;
     }
     executor_->SetGraph(graph_);
@@ -53,9 +53,9 @@ Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
 
 Status GraphCell::Load(uint32_t device_id) {
   if (executor_ == nullptr) {
-    executor_ = GraphImplFactory::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(DeviceTypeCreator::get());
     if (executor_ == nullptr) {
-      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      MS_LOG(ERROR) << "Create graph impl for device target " << DeviceTypeCreator::get() << " failed.";
       return kMEFailed;
     }
     executor_->SetGraph(graph_);
@@ -65,9 +65,9 @@ Status GraphCell::Load(uint32_t device_id) {
 
 std::vector<MSTensor> GraphCell::GetInputs() {
   if (executor_ == nullptr) {
-    executor_ = GraphImplFactory::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(DeviceTypeCreator::get());
     if (executor_ == nullptr) {
-      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      MS_LOG(ERROR) << "Create graph impl for device target " << DeviceTypeCreator::get() << " failed.";
       return {};
     }
     executor_->SetGraph(graph_);
@@ -77,9 +77,9 @@ std::vector<MSTensor> GraphCell::GetInputs() {
 
 std::vector<MSTensor> GraphCell::GetOutputs() {
   if (executor_ == nullptr) {
-    executor_ = GraphImplFactory::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(DeviceTypeCreator::get());
     if (executor_ == nullptr) {
-      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      MS_LOG(ERROR) << "Create graph impl for device target " << DeviceTypeCreator::get() << " failed.";
       return {};
     }
     executor_->SetGraph(graph_);

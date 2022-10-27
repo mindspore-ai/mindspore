@@ -30,7 +30,6 @@ namespace mindspore {
 constexpr auto Ascend310 = "Ascend310";
 constexpr auto Ascend910 = "Ascend910";
 constexpr auto kMS = "MS";
-inline enum DeviceType g_device_target = kInvalidDeviceType;
 
 static inline LogStream &operator<<(LogStream &stream, DeviceType device_type) {
   std::map<DeviceType, std::string> type_str_map = {
@@ -45,6 +44,11 @@ static inline LogStream &operator<<(LogStream &stream, DeviceType device_type) {
 }
 
 using GraphImplCreator = std::function<std::shared_ptr<GraphCell::GraphImpl>()>;
+
+class MS_API DeviceTypeCreator {
+ public:
+  static DeviceType &get();
+};
 
 class MS_API GraphImplFactory {
  public:
@@ -61,8 +65,6 @@ class MS_API GraphImplFactory {
   ~GraphImplFactory() = default;
 
  private:
-  inline static std::shared_ptr<GraphImplFactory> instance_;
-  inline static std::once_flag once_flag_;
   std::vector<GraphImplCreator> creators_;
 };
 
@@ -91,8 +93,6 @@ class MS_API ModelImplFactory {
   ~ModelImplFactory() = default;
 
  private:
-  inline static std::shared_ptr<ModelImplFactory> instance_;
-  inline static std::once_flag once_flag_;
   std::vector<ModelImplCreator> creators_;
 };
 

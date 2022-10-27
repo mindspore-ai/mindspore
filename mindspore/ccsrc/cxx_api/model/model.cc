@@ -44,7 +44,7 @@ Status Model::Build(GraphCell graph_cell, const std::shared_ptr<Context> &model_
     return kMEFailed;
   }
 
-  g_device_target = device_target;
+  DeviceTypeCreator::get() = device_target;
 
   impl_->SetGraph(std::make_shared<Graph>(*graph_cell.GetGraph()));
   impl_->SetContext(model_context);
