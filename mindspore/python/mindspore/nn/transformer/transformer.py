@@ -356,7 +356,7 @@ class FeedForward(Cell):
             hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
-                If user want to run the net in the parallel mode, the custom activation must also provide
+                If user wants to run the net in the parallel mode, the custom activation must also provide
                 the `activation_shard` function. Please see examples. Default: gelu.
             expert_num (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
                 and the first dimension in BatchMatMul indicate expert_num. Default: 1.
@@ -409,8 +409,9 @@ class FeedForward(Cell):
             >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
             >>> output = model(tensor)
             >>> print(output.shape)
+            (2, 20, 15)
             >>> # Example 3 using custom hidden activation with activation_shard
-            >>> # If user wants to run on the SEMI/AUTO parallel mode, the custom activation must provide
+            >>> # If user wantss to run on the SEMI/AUTO parallel mode, the custom activation must provide
             >>> # a class function named activation_shard. It accepts the argument parallel_config (OpParallelConfig,
             >>> # MoEParallelConfig) and set the shard for the primitives used in the construct.
             >>> class MyActivationWithShard(nn.Cell):
@@ -427,6 +428,7 @@ class FeedForward(Cell):
             >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
             >>> output = model(tensor)
             >>> print(output.shape)
+            (2, 20, 15)
     """
     @_LogActionOnce(logger=logger, key='FeedForward',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
@@ -1115,11 +1117,7 @@ class MultiHeadAttention(Cell):
         self._check_inputs(query_tensor, key_tensor, value_tensor, attention_mask, key_past,
                            value_past, batch_valid_length)
         ori_shape = F.shape(query_tensor)
-        batch_size = None
-        if len(F.shape(query_tensor)) == 2:
-            batch_size = F.shape(query_tensor)[0] // self.src_seq_length
-        else:
-            batch_size = F.shape(query_tensor)[0]
+        batch_size = self._get_batch_size_from_query(query_tensor)
         query_tensor, key_tensor, value_tensor = self._convert_to_2d_tensor(query_tensor,
                                                                             key_tensor,
                                                                             value_tensor,
@@ -1136,18 +1134,21 @@ class MultiHeadAttention(Cell):
         query = self.transpose(
             F.reshape(
                 query,
-                (batch_size, -1, self.n_head, self.size_per_head)),
+                (batch_size, self._get_seq_length_under_incremental(self.src_seq_length),
+                 self.n_head, self.size_per_head)),
             (0, 2, 1, 3))
         # the returned shape is [bs, size_per_head, seq_length, num_heads]
         key = self.transpose(
             F.reshape(
-                key, (batch_size, -1, self.n_head, self.size_per_head)),
+                key, (batch_size, self._get_seq_length_under_incremental(self.tgt_seq_length),
+                      self.n_head, self.size_per_head)),
             (0, 2, 3, 1))
         # the returned shape is [bs, num_heads, seq_length, size_per_head]
         value = self.transpose(
             F.reshape(
                 value,
-                (batch_size, -1, self.n_head, self.size_per_head)),
+                (batch_size, self._get_seq_length_under_incremental(self.tgt_seq_length),
+                 self.n_head, self.size_per_head)),
             (0, 2, 1, 3))
         # support input shape is [bs, seq, seq] or [bs, heads, seq, seq]
         if attention_mask is not None and len(F.shape(attention_mask)) == 3:
@@ -1200,6 +1201,24 @@ class MultiHeadAttention(Cell):
         output = F.reshape(output, ori_shape)
         output = F.cast(output, ori_dtype)
         return output, layer_present
+
+    def _get_batch_size_from_query(self, query):
+        r"""Get the batch size from query tensor"""
+        batch_size = None
+        # For the incremental prediction, the seq length for the input is 1.
+        if len(F.shape(query)) == 2 and self.is_first_iteration:
+            batch_size = F.shape(query)[0] // self.src_seq_length
+        else:
+            batch_size = F.shape(query)[0]
+        return batch_size
+
+    def _get_seq_length_under_incremental(self, length):
+        r"""Return the length of the tensor.
+            For the incremental prediction, the seq length for the input is 1.
+        """
+        if self.is_first_iteration:
+            return length
+        return 1
 
     def _check_inputs(self, query_tensor, key_tensor, value_tensor, attention_mask, key_past=None,
                       value_past=None, batch_valid_length=None):
@@ -1384,7 +1403,7 @@ class TransformerEncoderLayer(Cell):
             hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
-                If user want to run the net in the parallel mode, the custom activation must also provide
+                If user wants to run the net in the parallel mode, the custom activation must also provide
                 the `activation_shard` function. Please see the examples of the
                 class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
@@ -1811,7 +1830,7 @@ class TransformerDecoderLayer(Cell):
             hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
-                If user want to run the net in the parallel mode, the custom activation must also provide
+                If user wants to run the net in the parallel mode, the custom activation must also provide
                 the `activation_shard` function. Please see the examples of the
                 class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig
@@ -2319,7 +2338,7 @@ class TransformerEncoder(Cell):
             hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
-                If user want to run the net in the parallel mode, the custom activation must also provide
+                If user wants to run the net in the parallel mode, the custom activation must also provide
                 the `activation_shard` function. Please see the examples of the
                 class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
@@ -2582,7 +2601,7 @@ class TransformerDecoder(Cell):
             hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
-                If user want to run the net in the parallel mode, the custom activation must also provide
+                If user wants to run the net in the parallel mode, the custom activation must also provide
                 the `activation_shard` function. Please see the examples of the
                 class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             lambda_func(function): A function can determine the fusion index,
@@ -2827,7 +2846,7 @@ class Transformer(Cell):
             hidden_act (str, nn.Cell): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. User can provide custom activition to the argument.
-                If user want to run the net in the parallel mode, the custom activation must also provide
+                If user wants to run the net in the parallel mode, the custom activation must also provide
                 the `activation_shard` function. Please see the examples of the
                 class:`mindspore.nn.transformer.FeedForward`. Default: gelu.
             post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
