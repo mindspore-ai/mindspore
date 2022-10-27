@@ -2908,6 +2908,28 @@ def top_k(input_x, k, sorted=True):
     return F.top_k(input_x, k, sorted)
 
 
+def subtract(x, other, *, alpha=1):
+    r"""
+    Computes the element-wise subtraction of input tensors.
+    """
+    return F.sub(x, other * alpha)
+
+
+def true_divide(divident, divisor):
+    r"""
+    Computes the element-wise division of input tensors.
+    """
+    return F.div(divident, divisor, None)
+
+
+# pylint: disable=redefined-outer-name
+def triu(x, diagonal=0):
+    r"""
+    Returns the triangular matrix based on the diagonal.
+    """
+    return F.Triu(diagonal)(x)
+
+
 #############
 # Iteration #
 #############
@@ -3227,7 +3249,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     r"""
     Computes the outer-product of `vec1` and `vec2` and adds it to `x`.
     """
-    return F.addr(x, vec1, vec2, beta=1, alpha=1)
+    return F.addr(x, vec1, vec2, beta=beta, alpha=alpha)
 
 
 def addmv(x, mat, vec, beta=1, alpha=1):

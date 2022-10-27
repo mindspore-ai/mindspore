@@ -630,7 +630,7 @@ class Tensor(Tensor_):
     def ndimension(self):
         r"""
         Refer to `Tensor.ndim()
-        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.ndim.html>` _.
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.ndim.html>`_.
         """
         return len(self._shape)
 
@@ -970,6 +970,67 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('add')()(self, y)
 
+    def subtract(self, other, *, alpha=1):
+        r"""
+        Performs the element-wise subtraction of input tensors.
+
+        .. math::
+            output[i] = x[i] - alpha * y[i]
+
+        Args:
+            other (Tensor, Number): The tensor or number to be subtracted.
+            alpha (Number): The multiplier for `other`. Default: 1.
+
+        Returns:
+            Tensor, has the same shape and dtype as input tensors.
+
+        Raises:
+            TypeError: `other` is not Tensor, number.Number.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([4, 5, 6]), mindspore.float32)
+            >>> y = Tensor(np.array([1, 2, 3]), mindspore.float32)
+            >>> z = x.subtract(y, alpha=1)
+            >>> print(z)
+            [3. 3. 3.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sub')(self, alpha * other)
+
+    def true_divide(self, value):
+        r"""
+        Alias for Tensor.div() with :math:`rounding_mode=None`.
+        Refer to `Tensor.div()
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.div.html>`_.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('div')(self, value, None)
+
+    def triu(self, diagonal=0):
+        r"""
+        Returns a triangular matrix based on the diagonal. Default is the main diagonal.
+
+        Args:
+            diagonal (int): The index of diagonal. Default: 0.
+
+        Returns:
+            Tensor, a tensor has the same shape and data type as input.
+
+        Raises:
+            TypeError: If `diagonal` is not an int.
+            TypeError: If `x` is not an Tensor.
+            ValueError: If length of shape of x is less than 1.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+        """
+        self._init_check()
+        validator.check_value_type('diagonal', diagonal, [int], 'triu')
+        return tensor_operator_registry.get('triu')(diagonal)(self)
+
     def addr(self, vec1, vec2, beta=1, alpha=1):
         r"""
         Executes the outer-product of `vec1` and `vec2` and adds it to the input tensor.
@@ -1015,7 +1076,7 @@ class Tensor(Tensor_):
         """
 
         self._init_check()
-        return tensor_operator_registry.get('addr')(self, vec1, vec2, beta=1, alpha=1)
+        return tensor_operator_registry.get('addr')(self, vec1, vec2, beta=beta, alpha=alpha)
 
     def all(self, axis=(), keep_dims=False):
         """
@@ -4273,8 +4334,8 @@ class Tensor(Tensor_):
     def det(self):
         r"""
         Refer to `Tensor.matrix_determinant()
-        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.matrix_determinant.html
-        >` _.
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.matrix_determinant.html
+        >`_.
         """
         self._init_check()
         return tensor_operator_registry.get('matrix_determinant')(self)
@@ -5214,7 +5275,7 @@ class Tensor(Tensor_):
         dtype_ = self.dtype
         x = self.asnumpy()
         n = x.strides[1]
-        strides = tuple(np.array(strides)*n)
+        strides = tuple(np.array(strides) * n)
         return Tensor(np.lib.stride_tricks.as_strided(x, shape, strides, subok, writeable), dtype=dtype_)
 
     def randperm(self, max_length=1, pad=-1):
@@ -6368,7 +6429,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('bmm')(self, mat2)
 
-
     def to(self, dtype):
         r"""
         Performs tensor dtype conversion.
@@ -6396,7 +6456,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('to')()(self, dtype)
 
-
     def bool(self):
         r"""
         Converts input tensor dtype to `bool`.
@@ -6417,7 +6476,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('bool')()(self, mstype.bool_)
 
-
     def float(self):
         r"""
         Converts input tensor dtype to `float32`.
@@ -6436,7 +6494,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('float')()(self, mstype.float32)
-
 
     def half(self):
         r"""
@@ -6457,7 +6514,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('half')()(self, mstype.float16)
 
-
     def int(self):
         r"""
         Converts input tensor dtype to `int32`. If the value in tensor is float or half, the decimal will be discarded.
@@ -6477,7 +6533,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('int')()(self, mstype.int32)
 
-
     def long(self):
         r"""
         Converts input tensor dtype to `int64`. If the value in tensor is float or half, the decimal will be discarded.
@@ -6496,7 +6551,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('long')()(self, mstype.int64)
-
 
     def cholesky(self, upper=False):
         r"""
@@ -6541,7 +6595,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('cholesky')(upper=upper)(self)
 
-
     def cholesky_inverse(self, upper=False):
         r"""
         Returns the inverse of the positive definite matrix using cholesky matrix factorization.
@@ -6583,7 +6636,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('cholesky_inverse')(upper=upper)(self)
 
-
     def conj(self):
         r"""
         Returns a tensor of complex numbers that are the complex conjugate of each element in input.
@@ -6610,7 +6662,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('conj')(self)
-
 
     def cross(self, other, dim=None):
         r"""
@@ -6647,7 +6698,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('cross')(self, other, dim)
 
-
     def erfinv(self):
         r"""
         Computes the inverse error function of input. The inverse error function is defined in the range `(-1, 1)` as:
@@ -6673,7 +6723,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('erfinv')(self)
-
 
     def less_equal(self, other):
         r"""
@@ -6708,7 +6757,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('less_equal')(self, other)
-
 
     def fold(self, output_size, kernel_size, dilation=1, padding=0, stride=1):
         r"""
@@ -6752,7 +6800,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('fold')(self, output_size, kernel_size, dilation, padding, stride)
-
 
     def unfold(self, kernel_size, dilation=1, padding=0, stride=1):
         r"""
@@ -6799,7 +6846,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('unfold')(self, kernel_size, dilation, padding, stride)
 
-
     def expand(self, size):
         r"""
         Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
@@ -6839,7 +6885,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('expand')(self, size)
 
-
     def cumprod(self, dim, dtype=None):
         r"""
         Computes the cumulative product of the tensor along dimension `dim`. For example, if input tensor is a
@@ -6870,7 +6915,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('cumprod')(self, dim, dtype)
-
 
     def div(self, other, rounding_mode=None):
         r"""
@@ -6917,7 +6961,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('div')(self, other, rounding_mode)
 
-
     def equal(self, other):
         r"""
         Computes the equivalence between the tensor input tensor `input` and the
@@ -6958,7 +7001,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('equal')(self, other)
-
 
     def expm1(self):
         r"""

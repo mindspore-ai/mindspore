@@ -57,6 +57,7 @@ mindspore.Tensor
     mindspore.Tensor.less_equal
     mindspore.Tensor.igamma
     mindspore.Tensor.igammac
+    mindspore.Tensor.true_divide
 
 逐元素运算
 ^^^^^^^^^^^^^
@@ -104,6 +105,7 @@ mindspore.Tensor
     mindspore.Tensor.square
     mindspore.Tensor.std
     mindspore.Tensor.sub
+    mindspore.Tensor.subtract
     mindspore.Tensor.svd
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
@@ -158,10 +160,10 @@ Reduction方法
     :toctree: Tensor
     :nosignatures:
 
+    mindspore.Tensor.det
     mindspore.Tensor.ger
     mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.matrix_determinant
-    mindspore.Tensor.det
 
 Tensor操作方法
 ----------------
@@ -253,6 +255,7 @@ Array操作
     mindspore.Tensor.to_tensor
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
+    mindspore.Tensor.triu
     mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad

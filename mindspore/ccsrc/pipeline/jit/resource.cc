@@ -280,6 +280,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"sqrt", std::string("sqrt")},                                      // P.Sqrt()
        {"square", std::string("square")},                                  // P.Square()
        {"sub", std::string("sub")},                                        // P.Sub()
+       {"true_divide", std::string("true_divide")},                        // true_divide()
+       {"triu", std::string("triu")},                                      // triu()
+       {"subtract", std::string("subtract")},                              // true_divide()
        {"exp", std::string("exp")},                                        // P.Exp()
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
        {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()
