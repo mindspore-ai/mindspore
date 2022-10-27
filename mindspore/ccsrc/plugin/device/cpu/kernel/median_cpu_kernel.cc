@@ -20,6 +20,7 @@
 #include <type_traits>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/median.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,71 +31,74 @@ constexpr size_t kIndex0 = 0;
 constexpr size_t kHalf = 2;
 }  // namespace
 
-void MedianCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  global_median_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "global_median");
-  axis_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
-  keepdim_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "keep_dims");
+bool MedianCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianOutputsNum, kernel_name_);
+  kernel_name_ = base_operator->GetPrim()->name();
+  input_type_ = inputs[kIndex0]->GetDtype();
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Median>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  global_median_ = kernel_ptr->get_global_median();
+  axis_ = kernel_ptr->get_axis();
+  keepdim_ = kernel_ptr->get_keep_dims();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int MedianCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
   input_dim_ = input_shape_.size();
   input_num_elements_ = 1;
-
   if (input_dim_ != 0) {
     if (axis_ > static_cast<int>(input_dim_ - 1) || axis_ < static_cast<int>(-input_dim_)) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the axis must be in [" << -input_dim_ << ","
-                               << input_dim_ << "), but got " << axis_ << ".";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the axis must be in [" << -input_dim_ << "," << input_dim_
+                    << "), but got " << axis_ << ".";
+      return false;
     }
     for (size_t i = 0; i < input_dim_; i++) {
       input_num_elements_ *= static_cast<size_t>(input_shape_[i]);
     }
   } else {
     if (axis_ > 0 || axis_ < -1) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the axis must be in [" << -1 << "," << 1
-                               << "), but got " << axis_ << ".";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the axis must be in [" << -1 << "," << 1 << "), but got " << axis_
+                    << ".";
+      return false;
     }
   }
+  return KRET_OK;
 }
 
-bool MedianCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianOutputsNum, kernel_name_);
+const std::vector<std::pair<KernelAttr, MedianCpuKernelMod::KernelRunFunc>> &MedianCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, MedianCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+     &MedianCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+     &MedianCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &MedianCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+     &MedianCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+     &MedianCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
+}
+
+template <typename T>
+bool MedianCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                      const std::vector<AddressPtr> &outputs) {
   if (global_median_ == false) {
-    switch (input_type_) {
-      case kNumberTypeInt16:
-        return MedianCompute<int16_t>(inputs, outputs);
-      case kNumberTypeInt32:
-        return MedianCompute<int32_t>(inputs, outputs);
-      case kNumberTypeInt64:
-        return MedianCompute<int64_t>(inputs, outputs);
-      case kNumberTypeFloat32:
-        return MedianCompute<float>(inputs, outputs);
-      case kNumberTypeFloat64:
-        return MedianCompute<double>(inputs, outputs);
-      default:
-        MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                                << "', the input data type must be in int16, int32, int64, float32, double, but got "
-                                << input_type_ << ".";
-    }
+    return MedianCompute<T>(inputs, outputs);
   } else {
-    switch (input_type_) {
-      case kNumberTypeInt16:
-        return GlobalMedianCompute<int16_t>(inputs, outputs);
-      case kNumberTypeInt32:
-        return GlobalMedianCompute<int32_t>(inputs, outputs);
-      case kNumberTypeInt64:
-        return GlobalMedianCompute<int64_t>(inputs, outputs);
-      case kNumberTypeFloat32:
-        return GlobalMedianCompute<float>(inputs, outputs);
-      case kNumberTypeFloat64:
-        return GlobalMedianCompute<double>(inputs, outputs);
-      default:
-        MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                                << "', the input data type must be in int16, int32, int64, float32, double, but got "
-                                << input_type_ << ".";
-    }
+    return GlobalMedianCompute<T>(inputs, outputs);
   }
   return true;
 }
@@ -171,16 +175,6 @@ bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, co
   delete[] temp_median_vec;
   delete[] temp_median_index_vec;
   return true;
-}
-
-std::vector<KernelAttr> MedianCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64)};
-  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Median, MedianCpuKernelMod);
