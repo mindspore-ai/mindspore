@@ -25,6 +25,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kResizeBilinearInputsNum = 1;
 constexpr size_t kResizeBilinearV2InputsNum = 2;
 constexpr size_t kResizeBilinearOutputsNum = 1;
 constexpr size_t kResizeBilinearInputsShapeSize = 4;
@@ -37,9 +38,9 @@ bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
 
-  if (inputs.size() != kResizeBilinearV2InputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearV2InputsNum
-                  << ", but got " << inputs.size();
+  if (inputs.size() != kResizeBilinearInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearInputsNum << " or "
+                  << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
     return false;
   }
   if (outputs.size() != kResizeBilinearOutputsNum) {
