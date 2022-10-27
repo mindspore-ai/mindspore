@@ -29,6 +29,8 @@ namespace ops {
 constexpr size_t kBboxesShapeSize = 2;
 constexpr int64_t kBboxesShapeIn2ndDimAscendAfterPad = 8;
 constexpr int64_t kBboxesShapeIn2ndDimNormal = 5;
+constexpr int64_t kDynamicShapeDim = -1;
+
 void NMSWithMask::set_iou_threshold(const std::vector<float> &iou_thredshold) {
   (void)this->AddAttr(kNmsIouThreshold, api::MakeValue(iou_thredshold));
 }
@@ -63,7 +65,8 @@ abstract::TupleShapePtr NMSWithMaskInferShape(const PrimitivePtr &primitive,
 
   (void)CheckAndConvertUtils::CheckValue<size_t>("shape of bboxes", bboxes_shape.size(), kEqual, kBboxesShapeSize,
                                                  op_name);
-  if (bboxes_shape[1] != kBboxesShapeIn2ndDimNormal && bboxes_shape[1] != kBboxesShapeIn2ndDimAscendAfterPad) {
+  if (bboxes_shape[1] != kDynamicShapeDim && bboxes_shape[1] != kBboxesShapeIn2ndDimNormal &&
+      bboxes_shape[1] != kBboxesShapeIn2ndDimAscendAfterPad) {
     MS_EXCEPTION(ValueError) << " For " << op_name
                              << ", the 2nd dim in shape of bboxes should equal to 5 or 8, but got " << bboxes_shape[1];
   }
