@@ -167,8 +167,8 @@ class Softmax2d(Cell):
     r"""
     Applies SoftMax over features to each spatial location.
 
-    When given a Tensor with shape of :math:`(Channels, Height, Width)` , it will
-    apply `Softmax` to each location :math:`(Channels, h_i, w_j)`.
+    When given a Tensor with shape of :math:`(C, H, W)` , it will
+    apply `Softmax` to each location :math:`(c, h, w)`.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.

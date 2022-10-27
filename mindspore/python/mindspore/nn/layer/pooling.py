@@ -1277,9 +1277,9 @@ class FractionalMaxPool2d(Cell):
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).
             Default: None.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
+        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
             Default: False.
-        _random_samples (Tensor): The random step of FractionalMaxPool2d, which is a 3D tensor.
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
             Tensor of data type : float16, float32, double, and value is between (0, 1).
             Supported shape :math:`(N, C, 2)`.
             Default: None.
@@ -1408,9 +1408,9 @@ class FractionalMaxPool3d(Cell):
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).
             Default: None.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
+        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
             Default: False.
-        _random_samples (Tensor): The random step of FractionalMaxPool3d, which is a 3D tensor.
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
             Tensor of data type : float16, float32, double, and value is between (0, 1).
             Supported shape :math:`(N, C, 3)`
 
