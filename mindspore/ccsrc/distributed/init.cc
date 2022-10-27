@@ -65,11 +65,15 @@ bool InitializeCluster() {
 
   // Set the callback for the cluster node.
   auto callback = std::make_shared<std::function<void(void)>>([]() {
+    MS_LOG(INFO) << "Callback on exception is called.";
     if (!collective::CollectiveManager::instance()->Finalize()) {
       MS_LOG(EXCEPTION) << "Failed to finalize the collective communication lib.";
     }
     // Abort graph scheduler to avoid hang in rpc communication.
-    runtime::GraphScheduler::GetInstance().rpc_node_scheduler()->Abort();
+    auto &graph_scheduler = runtime::GraphScheduler::GetInstance();
+    if (graph_scheduler.initialized() && graph_scheduler.rpc_node_scheduler() != nullptr) {
+      graph_scheduler.rpc_node_scheduler()->Abort();
+    }
   });
   node->set_abnormal_callback(callback);
 
