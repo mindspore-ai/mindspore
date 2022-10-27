@@ -25,12 +25,30 @@ constexpr size_t kSubAndFilterInputsNum = 3;
 constexpr size_t kSubAndFilterOutputNum = 2;
 }  // namespace
 
-void SubAndFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool SubAndFilterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  x_dtype_ = inputs.at(kIndex0)->GetDtype();
+  x_dtype_size_ = abstract::TypeIdSize(x_dtype_);
   is_need_retrieve_output_shape_ = true;
+  return true;
+}
+
+int SubAndFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  ResetResource();
+  outputs_ = outputs;
+  auto input_x_shape = inputs.at(kIndex0)->GetShapeVector();
+  batch_size_ = SizeOf(input_x_shape);
+  MS_LOG(INFO) << "SubAndFilter batch_size:" << batch_size_;
+  input_size_list_.emplace_back(batch_size_ * x_dtype_size_);
+  input_size_list_.emplace_back(x_dtype_size_);
+  input_size_list_.emplace_back(x_dtype_size_);
+  output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
+  output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
+  return KRET_OK;
 }
 
 bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -38,13 +56,13 @@ bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSubAndFilterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSubAndFilterOutputNum, kernel_name_);
-  if (input_x_dtype_ == kNumberTypeInt32) {
+  if (x_dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
-  } else if (input_x_dtype_ == kNumberTypeInt64) {
+  } else if (x_dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int32 or int64, but got "
-                      << TypeIdToType(input_x_dtype_)->ToString();
+                      << TypeIdToType(x_dtype_)->ToString();
   }
   return true;
 }
@@ -52,13 +70,6 @@ bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
 template <typename T>
 void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto node = node_wpt_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-
-  batch_size_ = SizeOf(indices_shape);
-  MS_LOG(INFO) << "SubAndFilter batch_size:" << batch_size_;
-
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   T max_num = *reinterpret_cast<T *>(inputs[1]->addr);
   T offset = *reinterpret_cast<T *>(inputs[2]->addr);
@@ -76,14 +87,15 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     count++;
   }
   MS_LOG(INFO) << "SubAndFilter output count is " << count;
-  ShapeVector out_shape;
-  (void)out_shape.emplace_back(count);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
-  std::vector<TypeId> dtypes(output_num);
-  for (size_t i = 0; i < output_num; i++) {
-    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node, i);
-  }
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, out_shape}, node.get());
+  out_size_ = count;
+}
+
+void SubAndFilterCpuKernelMod::SyncData() {
+  ShapeVector out_shape = {out_size_};
+  outputs_[0]->SetShapeVector(out_shape);
+  outputs_[0]->SetDtype(TypeIdToType(x_dtype_));
+  outputs_[1]->SetShapeVector(out_shape);
+  outputs_[1]->SetDtype(TypeIdToType(x_dtype_));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SubAndFilter, SubAndFilterCpuKernelMod);

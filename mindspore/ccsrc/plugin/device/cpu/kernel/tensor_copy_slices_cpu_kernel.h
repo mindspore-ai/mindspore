@@ -19,18 +19,24 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 
 namespace mindspore {
 namespace kernel {
-class TensorCopySlicesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class TensorCopySlicesCpuKernelMod : public NativeCpuKernelMod {
  public:
   TensorCopySlicesCpuKernelMod() = default;
   ~TensorCopySlicesCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -75,6 +81,9 @@ class TensorCopySlicesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> update_shape_;
   std::vector<int64_t> output_shape_;
+  std::vector<int64_t> begin_shape_;
+  std::vector<int64_t> end_shape_;
+  std::vector<int64_t> stride_shape_;
   void FillSlice(std::vector<int64_t> *begin, std::vector<int64_t> *end);
   void InitOffsetAndCopySize(const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
                              const std::vector<int64_t> &stride);

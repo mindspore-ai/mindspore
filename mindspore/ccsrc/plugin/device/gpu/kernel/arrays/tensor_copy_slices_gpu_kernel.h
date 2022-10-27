@@ -22,6 +22,8 @@
 #include <vector>
 #include <numeric>
 #include <functional>
+#include <map>
+#include "ops/tensor_copy_slices.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "kernel/common_utils.h"
@@ -30,11 +32,12 @@
 namespace mindspore {
 namespace kernel {
 constexpr int DynamicInputNum = 5;
+constexpr int OutputNum = 1;
+
 template <typename T, typename S = int64_t>
-class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TensorCopySlicesGpuKernelMod()
-      : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false), kernel_name_("TensorCopySlices") {}
+  TensorCopySlicesGpuKernelMod() : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false) {}
   ~TensorCopySlicesGpuKernelMod() {}
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -46,73 +49,71 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *update_addr = GetDeviceAddress<T>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "TensorCopySlices cudaMemcpyAsync outputs failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "TensorCopySlices cudaMemcpyAsync outputs failed");
     CopySlices(update_shape_, begin_, strides_, output_shape_, update_addr, output_addr,
                reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num == DynamicInputNum) {
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    return true;
+  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    ResetResource();
+    if (inputs.size() == DynamicInputNum) {
       is_dynamic_attr_ = true;
     }
-
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OutputNum, kernel_name_);
+    auto shape_signed = inputs.at(kIndex0)->GetShapeVector();
     input_shape_ = Convert2SizeTClipNeg(shape_signed);
-    auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    if (AnfAlgo::IsShapesDynamic({shape_signed, update_shape})) {
-      return true;
-    }
+    auto update_shape = inputs.at(kIndex1)->GetShapeVector();
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(update_shape, kernel_name_, "update");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     if (input_shape_.size() > kMaxDims) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << kMaxDims
                         << ", but got " << input_shape_.size();
     }
-
     if (is_dynamic_attr_) {
-      TryGetIntValue(kernel_node, kBeginIndex_, &begin_);
-      TryGetIntValue(kernel_node, kEndIndex_, &end_);
-      TryGetIntValue(kernel_node, kStrideIndex_, &strides_);
+      TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_, false);
+      TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_, false);
+      TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_, false);
     } else {
-      begin_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
-      end_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
-      strides_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+      auto prim = base_operator->GetPrim();
+      MS_EXCEPTION_IF_NULL(prim);
+      begin_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrBegin));
+      end_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrEnd));
+      strides_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrStrides));
     }
-
     if (begin_.size() > input_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the size of 'begin' cannot be greater than the dimension of input, but got the "
                         << "size of 'begin': " << begin_.size() << ", the dimension of input: " << input_shape_.size();
     }
-
-    FillEmptyDims(kernel_node);
+    FillEmptyDims();
     output_shape_ = input_shape_;
     FillUpdateDim();
-    CheckAtrrAndShapeValid(kernel_node);
-
+    CheckAtrrAndShapeValid(update_shape);
     GetSize();
     InitSizeLists();
-    return true;
+
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     input_size_ = 1;
     output_size_ = 1;
     update_size_ = 1;
@@ -121,13 +122,10 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_shape_.clear();
     output_shape_.clear();
     update_shape_.clear();
-    input_size_list_.clear();
-    output_size_list_.clear();
   }
 
  protected:
-  void CheckAtrrAndShapeValid(const CNodePtr &kernel_node) {
-    auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  void CheckAtrrAndShapeValid(const ShapeVector &update_shape) {
     int64_t total_update_num =
       std::accumulate(update_shape.begin(), update_shape.end(), int64_t(1), std::multiplies<int64_t>());
     if (begin_.size() != end_.size() || end_.size() != strides_.size()) {
@@ -142,7 +140,8 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       total_input_num *= ((end_[i] - begin_[i]) / strides_[i]);
     }
     if (total_input_num != total_update_num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', invalid 'update_shape':" << update_shape
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', total input_num :" << total_input_num
+                        << ", total_update_num: " << total_update_num << ", invalid 'update_shape':" << update_shape
                         << ". Maybe you need to broadcast it.";
     }
   }
@@ -163,7 +162,7 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void InitSizeLists() override {
+  void InitSizeLists() {
     input_size_list_.clear();
     output_size_list_.clear();
     input_size_list_.push_back(input_size_);
@@ -172,7 +171,7 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return;
   }
 
-  void FillEmptyDims(const CNodePtr &kernel_node) {
+  void FillEmptyDims() {
     for (size_t i = 0; i < kMaxDims; i++) {
       if (i < begin_.size()) {
         int64_t dim = input_shape_[i];
@@ -226,7 +225,6 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   inline static size_t kMaxDims = 8;
   bool is_null_input_;
   bool is_dynamic_attr_{false};
-  std::string kernel_name_;
   static constexpr size_t kBeginIndex_{2};
   static constexpr size_t kEndIndex_{3};
   static constexpr size_t kStrideIndex_{4};
