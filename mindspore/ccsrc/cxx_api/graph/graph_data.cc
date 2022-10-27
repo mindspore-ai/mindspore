@@ -52,7 +52,7 @@ Graph::GraphData::GraphData(const Buffer &om_data, enum ModelType model_type)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_target == kAscendDevice) {
+  if (device_target == kAscendDevice || device_target == kDavinciMultiGraphInferenceDevice) {
     const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
       {device_target, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
     MS_EXCEPTION_IF_NULL(device_context);
