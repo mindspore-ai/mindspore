@@ -287,6 +287,7 @@ int Generator::CodeMSModelImplement() {
   }
   ofs << "#include \"weight.h\"\n\n";
 
+  CodeMSTensorHandleArrayDestroyState(ofs, *config_);
   CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelCalcWorkspaceSize(ofs, ctx_, *config_);
   CodeMSModelSetWorkspace(ofs, ctx_, *config_);

@@ -51,6 +51,11 @@ MSModelHandle MSModelCreate() {
   }
 
 )RAW";
+
+const char handle_array_destroy_state[] = R"RAW(
+void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs);
+)RAW";
+
 const char handle_array_destroy[] = R"RAW(
 void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
   if (inputs.handle_list == NULL) {
@@ -187,6 +192,12 @@ void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderCont
     }
   }
   ofs << "}\n\n";
+}
+
+void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator &config) {
+  if (config.target() != kCortex_M) {
+    ofs << handle_array_destroy_state;
+  }
 }
 
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
