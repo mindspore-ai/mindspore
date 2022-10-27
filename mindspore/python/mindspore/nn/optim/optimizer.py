@@ -26,7 +26,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.container import CellList
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
-from mindspore.common.tensor import Tensor, RowTensor
+from mindspore.common.tensor import Tensor, RowTensorInner
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore import log as logger
@@ -837,7 +837,7 @@ def _tensor_apply_decay_with_sparse(weight_decay, if_apply, weight, gradient):
         indices = gradient.indices
         values = op_add((op_gather(weight, indices, 0) * F.cast(weight_decay, F.dtype(weight)), gradient.values))
         shape = gradient.dense_shape
-        return RowTensor(indices, values, shape)
+        return RowTensorInner(indices, values, shape)
     return gradient
 
 
@@ -863,7 +863,7 @@ def _tensor_apply_grad_centralization_with_sparse(if_apply, gradient):
             if grad_shape[1] % 16 != 0:
                 return gradient
             values = op_gc(gradient.values, axis)
-            return RowTensor(indices, values, shape)
+            return RowTensorInner(indices, values, shape)
     return gradient
 
 
@@ -903,7 +903,7 @@ def tensor_grad_scale_with_tensor(scale, grad):
 @_grad_scale.register("Tensor", "RowTensor")
 def tensor_grad_scale_with_sparse(scale, grad):
     """Get grad with scale."""
-    return RowTensor(grad.indices, grad.values * F.cast(scale, F.dtype(grad.values)), grad.dense_shape)
+    return RowTensorInner(grad.indices, grad.values * F.cast(scale, F.dtype(grad.values)), grad.dense_shape)
 
 
 @_indices_deduplicate.register("RowTensor")
@@ -915,7 +915,7 @@ def rowtensor_deduplicate_indices_slices(grad):
     unique_indices, index_position = P.Unique()(indices)
     summed_values = P.UnsortedSegmentSum()(values, index_position, P.TensorShape()(unique_indices)[0])
 
-    return RowTensor(unique_indices, summed_values, grad.dense_shape)
+    return RowTensorInner(unique_indices, summed_values, grad.dense_shape)
 
 
 @_indices_deduplicate.register("Tensor")

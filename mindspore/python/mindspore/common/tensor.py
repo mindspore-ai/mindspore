@@ -15,7 +15,7 @@
 """Tensor implementation."""
 from __future__ import absolute_import, annotations
 
-__all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
+__all__ = ['Tensor', 'RowTensorInner', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 
 import math
 import numbers
@@ -7181,54 +7181,9 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('igammac')(self, other)
 
 
-class RowTensor(RowTensor_):
+class RowTensorInner(RowTensor_):
     """
-    A sparse representation of a set of tensor slices at given indices.
-
-    An RowTensor is typically used to represent a subset of a larger
-    tensor dense of shape [L0, D1, .. , DN] where L0 >> D0.
-
-    The values in indices are the indices in the first dimension of the slices
-    that have been extracted from the larger tensor.
-
-    The dense tensor dense represented by an RowTensor slices has
-    `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
-
-    For example, if indices is [0], values is [[1, 2]], shape is
-    (3, 2), then the dense representation of the row tensor will be:
-
-    .. code-block::
-
-        [[1, 2],
-         [0, 0],
-         [0, 0]]
-
-    Note:
-        This is an experimental feature and is subjected to change.
-
-    Args:
-        indices (Tensor): A 1-D integer Tensor of shape [D0]. Default: None.
-        values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn]. Default: None.
-        shape (tuple(int)): An integer tuple which contains the shape
-            of the corresponding dense tensor. Default: None.
-        row_tensor (RowTensor): A RowTensor object. Default: None.
-
-    Returns:
-        RowTensor, composed of `indices`, `values`, and `shape`.
-
-    Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import Tensor, RowTensor
-        >>> indices = Tensor([0])
-        >>> values = Tensor([[1, 2]], dtype=ms.float32)
-        >>> shape = (3, 2)
-        >>> x = RowTensor(indices, values, shape)
-        >>> print(x.values)
-        [[1. 2.]]
-        >>> print(x.indices)
-        [0]
-        >>> print(x.dense_shape)
-        (3, 2)
+    Implementation for RowTensor, for MindSpore developers only.
     """
 
     def __init__(self, indices=None, values=None, shape=None, row_tensor=None):
@@ -7266,6 +7221,61 @@ class RowTensor(RowTensor_):
     def dense_shape(self):
         """Return RowTensor's shape."""
         return self._shape
+
+
+class RowTensor(RowTensorInner):
+    """
+    A sparse representation of a set of tensor slices at given indices.
+
+    An RowTensor is typically used to represent a subset of a larger
+    tensor dense of shape [L0, D1, .. , DN] where L0 >> D0.
+
+    The values in indices are the indices in the first dimension of the slices
+    that have been extracted from the larger tensor.
+
+    The dense tensor dense represented by an RowTensor slices has
+    `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
+
+    For example, if indices is [0], values is [[1, 2]], shape is
+    (3, 2), then the dense representation of the row tensor will be:
+
+    .. code-block::
+
+        [[1, 2],
+         [0, 0],
+         [0, 0]]
+
+    Note:
+        RowTensor is deprecated from version 2.0, and will be removed in future version.
+
+    Args:
+        indices (Tensor): A 1-D integer Tensor of shape [D0]. Default: None.
+        values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn]. Default: None.
+        shape (tuple(int)): An integer tuple which contains the shape
+            of the corresponding dense tensor. Default: None.
+        row_tensor (RowTensor): A RowTensor object. Default: None.
+
+    Returns:
+        RowTensor, composed of `indices`, `values`, and `shape`.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, RowTensor
+        >>> indices = Tensor([0])
+        >>> values = Tensor([[1, 2]], dtype=ms.float32)
+        >>> shape = (3, 2)
+        >>> x = RowTensor(indices, values, shape)
+        >>> print(x.values)
+        [[1. 2.]]
+        >>> print(x.indices)
+        [0]
+        >>> print(x.dense_shape)
+        (3, 2)
+    """
+    def __init__(self, indices=None, values=None, shape=None, row_tensor=None):
+        """Init RowTensor"""
+        logger.warning("'RowTensor' is deprecated from version 1.7 and will be removed in a future version.")
+        super().__init__(indices, values, shape, row_tensor)
 
 
 class SparseTensor(COOTensor_):

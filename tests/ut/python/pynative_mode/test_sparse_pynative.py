@@ -21,7 +21,7 @@
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, Tensor, RowTensor, COOTensor
+from mindspore import context, Tensor, RowTensorInner, COOTensor
 from mindspore.ops import composite as C
 
 @pytest.fixture(scope="module", autouse=True)
@@ -52,7 +52,7 @@ def test_row_tensor_attr():
             super(RowTensorGetAttr, self).__init__()
             self.dense_shape = dense_shape
         def construct(self, indices, values):
-            x = RowTensor(indices, values, self.dense_shape)
+            x = RowTensorInner(indices, values, self.dense_shape)
             return x.values, x.indices, x.dense_shape
     indices = Tensor([0])
     values = Tensor([[1, 2]], dtype=ms.float32)

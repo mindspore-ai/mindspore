@@ -15,6 +15,7 @@
 """Sparse related tools."""
 from __future__ import absolute_import
 
+from mindspore import log as logger
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 
@@ -27,6 +28,10 @@ class SparseToDense(Cell):
     MindSpore uses three independent dense tensors: indices, value and dense shape to represent the sparse tensor.
     Separate indexes, values and dense shape tensors can be wrapped in a Sparse Tensor object
     before :class:`mindspore.ops.SparseToDense` is called.
+
+    Note:
+        'nn.SparseToDense' is deprecated from version 2.0, and will be removed in a future version, please use
+        COOTensor.to_dense() instead.
 
     Inputs:
         - **coo_tensor** (:class:`mindspore.COOTensor`) - the sparse COOTensor to convert.
@@ -68,6 +73,8 @@ class SparseToDense(Cell):
 
     def __init__(self):
         """Initialize SparseToDense."""
+        logger.warning("'nn.SparseToDense' is deprecated from version 2.0 and will be removed in a future version. " +
+                       "Please use 'COOTensor.to_dense()' instead.")
         super(SparseToDense, self).__init__()
         self.sparse_to_dense = P.SparseToDense()
 

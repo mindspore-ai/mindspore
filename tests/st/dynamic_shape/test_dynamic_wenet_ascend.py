@@ -28,7 +28,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
 import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor, RowTensor
+from mindspore.common.tensor import Tensor, RowTensorInner
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, _calculate_correct_fan, One
 
@@ -99,7 +99,7 @@ def tensor_grad_scale(scale, grad):
 
 @_grad_scale.register("Tensor", "RowTensor")
 def tensor_grad_scale_row_tensor(scale, grad):
-    return RowTensor(grad.indices, grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)), grad.dense_shape)
+    return RowTensorInner(grad.indices, grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)), grad.dense_shape)
 
 
 clip_grad = C.MultitypeFuncGraph("clip_grad")

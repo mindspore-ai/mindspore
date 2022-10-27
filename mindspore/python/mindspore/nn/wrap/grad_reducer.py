@@ -19,7 +19,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.cell import Cell
 from mindspore.communication.management import GlobalComm, get_group_size
-from mindspore.common.tensor import RowTensor
+from mindspore.common.tensor import RowTensorInner
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
@@ -188,7 +188,7 @@ def _tensors_allreduce_with_sparse(degree, mean, allgather, allreduce, allreduce
         dout = allgather(grad.values)
         if mean:
             dout = F.tensor_mul(dout, F.cast(degree, F.dtype(dout)))
-        grad = RowTensor(indices, dout, grad.dense_shape)
+        grad = RowTensorInner(indices, dout, grad.dense_shape)
     return grad
 
 
@@ -218,7 +218,7 @@ def _tensors_allreduce_with_sparse_ps(degree, mean, allgather, allreduce, allred
         dout = allgather(grad.values)
         if mean:
             dout = F.tensor_mul(dout, F.cast(degree, F.dtype(dout)))
-        grad = RowTensor(indices, dout, grad.dense_shape)
+        grad = RowTensorInner(indices, dout, grad.dense_shape)
     return grad
 
 
@@ -284,7 +284,7 @@ def _tensors_cast_datatype_with_sparse(datatype, grad):
         RowTensor, the gradient after operation.
     """
     dout = F.cast(grad.values, datatype)
-    return RowTensor(grad.indices, dout, grad.dense_shape)
+    return RowTensorInner(grad.indices, dout, grad.dense_shape)
 
 
 class DistributedGradReducer(Cell):

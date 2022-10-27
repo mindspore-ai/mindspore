@@ -30,7 +30,7 @@ from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops._utils.utils import generate_shape_index
-from mindspore import Tensor, RowTensor, context
+from mindspore import Tensor, RowTensorInner, context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
@@ -141,7 +141,7 @@ def get_bprop_sparse_gather_v2(self):
             values_shape = indices_size + x_tail_shp
             values = reshape(dout, values_shape)
             indices = reshape(indices, indices_size)
-            return RowTensor(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
+            return RowTensorInner(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
         if F.rank(indices) == 0:
@@ -249,7 +249,7 @@ def test_row_tensor_make_row_tensor():
             self.dense_shape = (3, 2)
 
         def construct(self, indices, values):
-            ret = (RowTensor(indices, values, self.dense_shape),)
+            ret = (RowTensorInner(indices, values, self.dense_shape),)
             return ret[0]
 
     indices = Tensor([1, 2])
@@ -263,7 +263,7 @@ class RowTensorGetAttr(nn.Cell):
         self.dense_shape = dense_shape
 
     def construct(self, indices, values):
-        x = RowTensor(indices, values, self.dense_shape)
+        x = RowTensorInner(indices, values, self.dense_shape)
         return x.values, x.indices, x.dense_shape
 
 
@@ -420,7 +420,7 @@ class RowTensorValuesDouble(nn.Cell):
         indices = x.indices
         values = x.values * 2
         dense_shape = x.dense_shape
-        return RowTensor(indices, values, dense_shape)
+        return RowTensorInner(indices, values, dense_shape)
 
 
 class RowTensorValuesAdd2(nn.Cell):
@@ -432,7 +432,7 @@ class RowTensorValuesAdd2(nn.Cell):
         indices = x.indices
         values = x.values + 2
         dense_shape = x.dense_shape
-        return RowTensor(indices, values, dense_shape)
+        return RowTensorInner(indices, values, dense_shape)
 
 
 class RowTensorWithControlIf(nn.Cell):
@@ -443,7 +443,7 @@ class RowTensorWithControlIf(nn.Cell):
         self.dense_shape = dense_shape
 
     def construct(self, a, b, indices, values):
-        x = RowTensor(indices, values, self.dense_shape)
+        x = RowTensorInner(indices, values, self.dense_shape)
         if a > b:
             x = self.op1(x)
         else:

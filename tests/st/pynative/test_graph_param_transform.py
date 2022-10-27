@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-from mindspore import RowTensor
+from mindspore import RowTensorInner
 from mindspore import context, nn, Tensor, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore.common import jit
@@ -83,7 +83,7 @@ def test_row_tensor_in_while():
             indices = x.indices
             values = x.values * 2
             dense_shape = x.dense_shape
-            return RowTensor(indices, values, dense_shape)
+            return RowTensorInner(indices, values, dense_shape)
 
     class RowTensorValuesAdd2(nn.Cell):
 
@@ -91,7 +91,7 @@ def test_row_tensor_in_while():
             indices = x.indices
             values = x.values + 2
             dense_shape = x.dense_shape
-            return RowTensor(indices, values, dense_shape)
+            return RowTensorInner(indices, values, dense_shape)
 
     class RowTensorWithControlWhile(nn.Cell):
         def __init__(self, dense_shape):
@@ -102,7 +102,7 @@ def test_row_tensor_in_while():
 
         @jit
         def construct(self, a, b, indices, values):
-            x = RowTensor(indices, values, self.dense_shape)
+            x = RowTensorInner(indices, values, self.dense_shape)
             x = self.op2(x)
             while a > b:
                 x = self.op1(x)

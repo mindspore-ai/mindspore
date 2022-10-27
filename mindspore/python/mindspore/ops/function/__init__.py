@@ -374,6 +374,7 @@ from .sparse_func import (
     make_coo_tensor,
     make_csr_tensor,
     make_row_tensor,
+    make_row_tensor_inner,
     row_tensor_get_values,
     row_tensor_get_indices,
     row_tensor_get_dense_shape,

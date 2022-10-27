@@ -449,11 +449,17 @@ def make_sparse_tensor(indices, values, dense_shape):
     return make_coo_tensor(indices, values, dense_shape)
 
 
+def make_row_tensor(indices, values, dense_shape):
+    """Call make_row_tensor_inner in this function."""
+    print_info("WARNING: 'RowTensor' is deprecated from version 2.0 and will be removed in a future version.")
+    return make_row_tensor_inner(indices, values, dense_shape)
+
+
 make_coo_tensor = Primitive('MakeCOOTensor')
 
 make_csr_tensor = Primitive('MakeCSRTensor')
 
-make_row_tensor = Primitive('MakeRowTensor')
+make_row_tensor_inner = Primitive('MakeRowTensor')
 
 row_tensor_get_values = Primitive('RowTensorGetValues')
 
@@ -753,6 +759,7 @@ __all__ = [
     'make_coo_tensor',
     'make_csr_tensor',
     'make_row_tensor',
+    'make_row_tensor_inner',
     'row_tensor_get_values',
     'row_tensor_get_indices',
     'row_tensor_get_dense_shape',

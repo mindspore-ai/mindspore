@@ -23,7 +23,7 @@ from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_gr
 from mindspore.communication.management import get_group_size, create_group
 from mindspore.nn.cell import Cell
 from mindspore.nn import SequentialCell
-from mindspore.common import Tensor, RowTensor
+from mindspore.common import Tensor, RowTensorInner
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.ops import functional as F
@@ -70,9 +70,9 @@ def tensor_grad_scale(scale, grad):
 @_grad_scale.register("Tensor", "RowTensor")
 def tensor_grad_scale_row_tensor(scale, grad):
     """grad scale function for row tensor"""
-    return RowTensor(grad.indices,
-                     grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
-                     grad.dense_shape)
+    return RowTensorInner(grad.indices,
+                          grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
+                          grad.dense_shape)
 
 
 _grad_overflow = C.MultitypeFuncGraph("_grad_overflow")

@@ -20,7 +20,7 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell
 from mindspore.nn.cell import Cell
-from mindspore.common import Tensor, RowTensor
+from mindspore.common import Tensor, RowTensorInner
 from mindspore.common.parameter import Parameter
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
@@ -39,9 +39,9 @@ def tensor_grad_scale(scale, grad):
 
 @_grad_scale.register("Tensor", "RowTensor")
 def tensor_grad_scale_row_tensor(scale, grad):
-    return RowTensor(grad.indices,
-                     grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
-                     grad.dense_shape)
+    return RowTensorInner(grad.indices,
+                          grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
+                          grad.dense_shape)
 
 _grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
 grad_overflow = P.FloatStatus()

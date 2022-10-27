@@ -23,7 +23,7 @@ from mindspore.communication import get_rank, get_group_size
 from mindspore.parallel._utils import _get_enable_parallel_optimizer, _get_grad_accumulation_shard
 from mindspore.ops import operations as P
 from mindspore.ops.operations._inner_ops import Send, Receive
-from mindspore.common.tensor import RowTensor
+from mindspore.common.tensor import RowTensorInner
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce,
                                                NeighborExchange, AlltoAll, NeighborExchangeV2, Broadcast,
@@ -66,7 +66,7 @@ def get_bprop_all_reduce(self):
             else:
                 indices = all_gather(dout.indices)
                 grad = all_gather(dout.values)
-                dx = RowTensor(indices, grad, dout.dense_shape)
+                dx = RowTensorInner(indices, grad, dout.dense_shape)
             return (dx,)
     else:
 
@@ -82,7 +82,7 @@ def get_bprop_all_reduce(self):
                 z = equal(x, out)
                 z = cast(z, dtype(grad))
                 grad = mul(grad, z)
-                dx = RowTensor(indices, grad, dout.dense_shape)
+                dx = RowTensorInner(indices, grad, dout.dense_shape)
             return (dx,)
     return bprop
 
@@ -482,14 +482,14 @@ def get_bprop_mirror_operator(self):
                 float_one = F.scalar_cast(1.0, F.dtype(grad))
                 num = F.scalar_cast(dev_num, F.dtype(grad))
                 grad = mul(grad, cast(F.scalar_to_tensor(float_one/num), F.dtype(grad)))
-                dx = RowTensor(indices, grad, dout.dense_shape)
+                dx = RowTensorInner(indices, grad, dout.dense_shape)
         else:
             if F.issubclass_(F.typeof(dout), mstype.tensor):
                 dx = all_reduce(dout)
             else:
                 indices = all_gather(dout.indices)
                 grad = all_gather(dout.values)
-                dx = RowTensor(indices, grad, dout.dense_shape)
+                dx = RowTensorInner(indices, grad, dout.dense_shape)
 
         return (dx,)
     return bprop

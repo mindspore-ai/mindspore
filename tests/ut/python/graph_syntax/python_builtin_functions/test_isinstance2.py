@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, jit, jit_class, context
+from mindspore import Tensor, CSRTensor, COOTensor, RowTensorInner, jit, jit_class, context
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -541,8 +541,8 @@ def test_isinstance_x_row_tensor():
         indices = Tensor([0])
         values = Tensor([[1, 2]])
         shape = (3, 2)
-        x = RowTensor(indices, values, shape)
-        return isinstance(x, (Tensor, COOTensor, (list, tuple), RowTensor, MSClass2))
+        x = RowTensorInner(indices, values, shape)
+        return isinstance(x, (Tensor, COOTensor, (list, tuple), RowTensorInner, MSClass2))
 
     assert foo()
 
@@ -558,7 +558,7 @@ def test_isinstance_x_row_tensor_2():
         indices = Tensor([0])
         values = Tensor([[1, 2]])
         shape = (3, 2)
-        x = RowTensor(indices, values, shape)
+        x = RowTensorInner(indices, values, shape)
         return isinstance(x, (Tensor, COOTensor, (list, tuple)))
 
     assert not foo()
