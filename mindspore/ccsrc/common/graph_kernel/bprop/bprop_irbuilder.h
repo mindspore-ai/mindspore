@@ -47,13 +47,20 @@ class BpropIRBuilder : public Emitter {
   NodePtr GetInput(size_t i) const;
   const NodePtrList &GetInputs() const { return *inputs_ptr_; }
 
+  // For node that has single output
   ShapeVector GetShape(const NodePtr &node) const;
+  // For node that has multiple outputs
+  std::vector<ShapeVector> GetShapes(const NodePtr &node) const;
   TypePtr GetDtype(const NodePtr &node) const;
   TypeId GetDtypeId(const NodePtr &node) const { return GetDtype(node)->type_id(); }
   ValuePtr GetAttr(const NodePtr &node, const std::string &attr) const;
+  int64_t GetSize(const NodePtr &node) const;
 
   std::string name() const { return name_; }
   std::string GetTargetFromContext() const;
+
+  // Tensor getitem by a single integer number on the outermost axis.
+  NodePtr TensorGetItem(const NodePtr &node, int64_t idx) const;
 
   void DumpResult(const std::vector<CNodePtr> &outputs, const DoutUser &dout_user) const;
 

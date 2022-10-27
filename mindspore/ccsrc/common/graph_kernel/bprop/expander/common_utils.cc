@@ -19,6 +19,8 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <limits>
+
 #include "ops/core_ops.h"
 
 namespace mindspore::expander::bprop {
@@ -159,5 +161,45 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
     reduce_dy = ib->Reshape(reduce_dy, shape_y);
   }
   return {reduce_dx, reduce_dy};
+}
+
+std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step) {
+  auto size = (stop - start) / step;
+  size = ((stop - start) % step == 0) ? size : size + 1;
+  std::vector<int64_t> range(size);
+  std::generate(range.begin(), range.end(), [n = start - step, step]() mutable {
+    n = n + step;
+    return n;
+  });
+  return range;
+}
+
+std::vector<int64_t> Range(int64_t stop) { return Range(0, stop); }
+
+std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64_t axis) {
+  auto rk = static_cast<int64_t>(x_shape.size());
+  if (axis < 0) {
+    axis += rk;
+  }
+  std::vector<int64_t> reverse_axis;
+  for (int64_t i = 0; i < rk; ++i) {
+    reverse_axis.emplace_back(i);
+  }
+  reverse_axis[axis] = rk - 1;
+  reverse_axis[rk - 1] = axis;
+  return reverse_axis;
+}
+
+NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type) {
+  switch (type->type_id()) {
+    case kNumberTypeFloat16:
+      return ib->Tensor(0.000977, type);
+    case kNumberTypeFloat32:
+      return ib->Tensor(std::numeric_limits<float>::epsilon(), type);
+    case kNumberTypeFloat64:
+      return ib->Tensor(std::numeric_limits<double>::epsilon(), type);
+    default:
+      return ib->Tensor(0, type);
+  }
 }
 }  // namespace mindspore::expander::bprop
