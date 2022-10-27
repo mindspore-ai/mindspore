@@ -129,11 +129,11 @@ void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const st
   }
 }
 
-void DenseToDenseSetOperationCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_ptr_ = kernel_node;
-  std::string set_operation_str = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "set_operation");
+bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                const std::vector<KernelTensorPtr> &inputs,
+                                                const std::vector<KernelTensorPtr> &outputs) {
+  std::string kernel_name = base_operator->GetPrim()->name();
+  std::string set_operation_str = GetValue<std::string>(base_operator->GetAttr(SET_OPERATION));
   (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
   if (set_operation_str == "a-b") {
     set_operation_ = A_MINUS_B;
@@ -144,32 +144,39 @@ void DenseToDenseSetOperationCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
   } else if (set_operation_str == "union") {
     set_operation_ = UNION;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ","
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << ","
                       << ", the attr set_operation must be any one of "
                          "['a-b','b-a','intersection','union'], "
                       << "but got " << set_operation_str << ".";
   }
+
+  x1_shape_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
+  x2_shape_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
+  outputs_ = outputs;
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  is_need_retrieve_output_shape_ = true;
+  return true;
 }
 
-bool DenseToDenseSetOperationCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &,
-                                                  const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto data_type = AnfAlgo::GetInputDeviceDataType(node_ptr_, kInputX1);
-  bool result = false;
-  switch (data_type) {
-    DTOD_SET_OPE_COMPUTE_CASE(kNumberTypeInt8, int8_t)
-    DTOD_SET_OPE_COMPUTE_CASE(kNumberTypeInt16, int16_t)
-    DTOD_SET_OPE_COMPUTE_CASE(kNumberTypeInt32, int32_t)
-    DTOD_SET_OPE_COMPUTE_CASE(kNumberTypeInt64, int64_t)
-    DTOD_SET_OPE_COMPUTE_CASE(kNumberTypeUInt8, uint8_t)
-    DTOD_SET_OPE_COMPUTE_CASE(kNumberTypeUInt16, uint16_t)
-    default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input " << TypeIdToType(data_type)->ToString()
-                        << " not support.";
+int DenseToDenseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                 const std::vector<KernelTensorPtr> &inputs,
+                                                 const std::vector<KernelTensorPtr> &outputs,
+                                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  return result;
+  outputs_ = outputs;
+  x1_shape_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
+  x2_shape_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename T>
@@ -205,13 +212,7 @@ bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kern
   size_t output_shape_size = output_shape.size();
   auto num_values_signed = SizeToLong(num_values);
   auto output_shape_size_signed = SizeToLong(output_shape_size);
-  std::vector<ShapeVector> infer_shape = {
-    {num_values_signed, output_shape_size_signed}, {num_values_signed}, {output_shape_size_signed}};
-  std::vector<TypeId> infer_type(kOutputNum);
-  for (size_t i = 0; i < kOutputNum; i++) {
-    infer_type[i] = AnfAlgo::GetOutputDeviceDataType(node_ptr_, i);
-  }
-  common::AnfAlgo::SetOutputInferTypeAndShape(infer_type, infer_shape, node_ptr_.get());
+  real_infer_shape_ = {{num_values_signed, output_shape_size_signed}, {num_values_signed}, {output_shape_size_signed}};
   Eigen::DSizes<Eigen::DenseIndex, kNum2> out_indices_dsize(num_values, output_shape_size);
   Eigen::DSizes<Eigen::DenseIndex, 1> out_values_dsize(num_values);
   Eigen::DSizes<Eigen::DenseIndex, 1> out_shape_dsize(output_shape_size);
@@ -246,11 +247,9 @@ template <typename T>
 bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                         const std::vector<kernel::AddressPtr> &outputs) {
   ShapeVector group_shape;
-  const auto x1_shape = AnfAlgo::GetInputDeviceShape(node_ptr_, kInputX1);
-  const auto x2_shape = AnfAlgo::GetInputDeviceShape(node_ptr_, kInputX2);
-  GetCommonShape(x1_shape, x2_shape, &group_shape);
-  const auto x1_strides = GetStrides(x1_shape);
-  const auto x2_strides = GetStrides(x2_shape);
+  GetCommonShape(x1_shape_, x2_shape_, &group_shape);
+  const auto x1_strides = GetStrides(x1_shape_);
+  const auto x2_strides = GetStrides(x2_shape_);
   std::map<std::vector<size_t>, std::set<T>> res_sets_map;
   size_t res_num = 0;
   size_t max_size = 0;
@@ -260,8 +259,8 @@ bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel
   std::vector<size_t> group_idxs;
   for (int64_t group_idx = 0; group_idx < num_elements; ++group_idx) {
     GetGroupIdx(group_idx, group_shape, &group_idxs);
-    GetGroupSet<T>(inputs[kInputX1], LongToSize(x1_shape.back()), x1_strides, group_idxs, &x1_set);
-    GetGroupSet<T>(inputs[kInputX2], LongToSize(x2_shape.back()), x2_strides, group_idxs, &x2_set);
+    GetGroupSet<T>(inputs[kInputX1], LongToSize(x1_shape_.back()), x1_strides, group_idxs, &x1_set);
+    GetGroupSet<T>(inputs[kInputX2], LongToSize(x2_shape_.back()), x2_strides, group_idxs, &x2_set);
     std::set<T> res_set;
     SetCompute(x1_set, x2_set, &res_set);
     if (!res_set.empty()) {
@@ -277,45 +276,64 @@ bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel
   return PopulateOutput<T>(inputs, outputs, group_shape, res_num, &res_sets_map);
 }
 
-std::vector<KernelAttr> DenseToDenseSetOperationCpuKernelMod::GetOpSupport() {
-  static const std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
-                                                             .AddInputAttr(kNumberTypeInt8)
-                                                             .AddInputAttr(kNumberTypeInt8)
-                                                             .AddOutputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeInt8)
-                                                             .AddOutputAttr(kNumberTypeInt64),
-                                                           KernelAttr()
-                                                             .AddInputAttr(kNumberTypeInt16)
-                                                             .AddInputAttr(kNumberTypeInt16)
-                                                             .AddOutputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeInt16)
-                                                             .AddOutputAttr(kNumberTypeInt64),
-                                                           KernelAttr()
-                                                             .AddInputAttr(kNumberTypeInt32)
-                                                             .AddInputAttr(kNumberTypeInt32)
-                                                             .AddOutputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeInt32)
-                                                             .AddOutputAttr(kNumberTypeInt64),
-                                                           KernelAttr()
-                                                             .AddInputAttr(kNumberTypeInt64)
-                                                             .AddInputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeInt64),
-                                                           KernelAttr()
-                                                             .AddInputAttr(kNumberTypeUInt8)
-                                                             .AddInputAttr(kNumberTypeUInt8)
-                                                             .AddOutputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeUInt8)
-                                                             .AddOutputAttr(kNumberTypeInt64),
-                                                           KernelAttr()
-                                                             .AddInputAttr(kNumberTypeUInt16)
-                                                             .AddInputAttr(kNumberTypeUInt16)
-                                                             .AddOutputAttr(kNumberTypeInt64)
-                                                             .AddOutputAttr(kNumberTypeUInt16)
-                                                             .AddOutputAttr(kNumberTypeInt64)};
-  return kernel_attr_list;
+void DenseToDenseSetOperationCpuKernelMod::SyncData() {
+  for (uint32_t i = 0; i < real_infer_shape_.size(); i++) {
+    outputs_[i]->SetShapeVector(real_infer_shape_[i]);
+  }
 }
+
+std::vector<std::pair<KernelAttr, DenseToDenseSetOperationCpuKernelMod::DenseSetFunc>>
+  DenseToDenseSetOperationCpuKernelMod::func_list_ = {{KernelAttr()
+                                                         .AddInputAttr(kNumberTypeInt8)
+                                                         .AddInputAttr(kNumberTypeInt8)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt8)
+                                                         .AddOutputAttr(kNumberTypeInt64),
+                                                       &DenseToDenseSetOperationCpuKernelMod::LaunchKernel<int8_t>},
+                                                      {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeInt16)
+                                                         .AddInputAttr(kNumberTypeInt16)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt16)
+                                                         .AddOutputAttr(kNumberTypeInt64),
+                                                       &DenseToDenseSetOperationCpuKernelMod::LaunchKernel<int16_t>},
+                                                      {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeInt32)
+                                                         .AddInputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt64),
+                                                       &DenseToDenseSetOperationCpuKernelMod::LaunchKernel<int32_t>},
+                                                      {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeInt64)
+                                                         .AddInputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64),
+                                                       &DenseToDenseSetOperationCpuKernelMod::LaunchKernel<int64_t>},
+                                                      {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeUInt8)
+                                                         .AddInputAttr(kNumberTypeUInt8)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeUInt8)
+                                                         .AddOutputAttr(kNumberTypeInt64),
+                                                       &DenseToDenseSetOperationCpuKernelMod::LaunchKernel<uint8_t>},
+                                                      {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeUInt16)
+                                                         .AddInputAttr(kNumberTypeUInt16)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeUInt16)
+                                                         .AddOutputAttr(kNumberTypeInt64),
+                                                       &DenseToDenseSetOperationCpuKernelMod::LaunchKernel<uint16_t>}};
+
+std::vector<KernelAttr> DenseToDenseSetOperationCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, DenseToDenseSetOperationCpuKernelMod::DenseSetFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DenseToDenseSetOperation, DenseToDenseSetOperationCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -30,19 +30,31 @@
 namespace mindspore {
 namespace kernel {
 enum SetOperation { A_MINUS_B = 0, B_MINUS_A = 1, INTERSECTION = 2, UNION = 3 };
-class DenseToDenseSetOperationCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DenseToDenseSetOperationCpuKernelMod : public NativeCpuKernelMod {
  public:
   DenseToDenseSetOperationCpuKernelMod() = default;
   ~DenseToDenseSetOperationCpuKernelMod() = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
   std::vector<KernelAttr> GetOpSupport() override;
+  void SyncData() override;
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
   template <typename T>
   bool PopulateOutput(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
                       const ShapeVector &output_shape, const size_t num_values,
@@ -51,7 +63,18 @@ class DenseToDenseSetOperationCpuKernelMod : public DeprecatedNativeCpuKernelMod
   void SetCompute(const std::set<T> &set1, const std::set<T> &set2, std::set<T> *result);
   SetOperation set_operation_ = A_MINUS_B;
   bool validate_indices_ = true;
-  CNodePtr node_ptr_;
+  std::vector<KernelTensorPtr> outputs_{};
+  ShapeVector x1_shape_;
+  ShapeVector x2_shape_;
+  std::vector<ShapeVector> real_infer_shape_;
+
+  using DenseSetFunc =
+    std::function<bool(DenseToDenseSetOperationCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &)>;
+  DenseSetFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, DenseSetFunc>> func_list_;
+
+  // cudaStream_t cuda_stream_;
 };
 }  // namespace kernel
 }  // namespace mindspore
