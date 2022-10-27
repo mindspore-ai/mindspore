@@ -55,6 +55,10 @@ abstract::ShapePtr ParameterizedTruncatedNormalInferShape(const PrimitivePtr &pr
   auto op_name = primitive->name();
   const int64_t kShapeSize = 2;
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (IsDynamic(shape_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("rank of argument[shape]", SizeToLong(shape_shape.size()), kEqual, 1,
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("size of argument[shape]", shape_shape[0], kGreaterEqual, kShapeSize,
@@ -98,6 +102,25 @@ TypePtr ParameterizedTruncatedNormalInferType(const PrimitivePtr &primitive,
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(ParameterizedTruncatedNormal, BaseOperator);
+
+void ParameterizedTruncatedNormal::Init(const int64_t seed, const int64_t seed2) {
+  this->set_seed(seed);
+  this->set_seed2(seed2);
+}
+int64_t ParameterizedTruncatedNormal::get_seed() const {
+  auto value_ptr = this->GetAttr(kSeed);
+  return GetValue<int64_t>(value_ptr);
+}
+void ParameterizedTruncatedNormal::set_seed(const int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+
+int64_t ParameterizedTruncatedNormal::get_seed2() const {
+  auto value_ptr = this->GetAttr(kSeed2);
+  return GetValue<int64_t>(value_ptr);
+}
+void ParameterizedTruncatedNormal::set_seed2(const int64_t seed2) {
+  (void)this->AddAttr(kSeed2, api::MakeValue(seed2));
+}
+
 AbstractBasePtr ParameterizedTruncatedNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

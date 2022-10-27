@@ -34,6 +34,22 @@ class MIND_API ParameterizedTruncatedNormal : public BaseOperator {
   ParameterizedTruncatedNormal() : BaseOperator(kParameterizedTruncatedNormal) {
     InitIOName({"shape", "mean", "stdevs", "min", "max"}, {"y"});
   }
+
+  void Init(const int64_t seed = 0, const int64_t seed2 = 0);
+
+  /// \brief Set seed.
+  void set_seed(const int64_t seed);
+  /// \brief Get seed.
+  ///
+  /// \return seed.
+  int64_t get_seed() const;
+
+  /// \brief Set seed2.
+  void set_seed2(const int64_t seed2);
+  /// \brief Get seed2.
+  ///
+  /// \return seed2.
+  int64_t get_seed2() const;
 };
 
 abstract::AbstractBasePtr ParameterizedTruncatedNormalInfer(const abstract::AnalysisEnginePtr &,
