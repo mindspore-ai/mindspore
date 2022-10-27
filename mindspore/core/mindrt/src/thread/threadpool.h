@@ -169,7 +169,7 @@ class MS_CORE_API ThreadPool {
   void DisableOccupiedActorThread() { occupied_actor_thread_ = false; }
   void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
   void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }
-  size_t GetKernelThreadNum() const { return kernel_thread_num_; }
+  size_t GetKernelThreadNum() const { return kernel_thread_num_ + actor_thread_num_; }
   size_t GetActorThreadNum() const { return actor_thread_num_; }
   void SetKernelThreadMaxSpinCount(int spin_count);
   void SetSpinCountMaxValue();
