@@ -76,7 +76,7 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
     MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
     auto num_segments_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim->name());
-    size_t dim_zero = num_segments_value_ptr_tensor.back();
+    size_t dim_zero = static_cast<size_t>(num_segments_value_ptr_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
                                << ", num_segments must bigger than the last number of segment_ids, "

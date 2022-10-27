@@ -68,9 +68,15 @@ int RaggedRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   broadcast_starts_ = starts_dim == 0;
   broadcast_limits_ = limits_dim == 0;
   broadcast_deltas_ = deltas_dim == 0;
-  if (!broadcast_starts_) in_sizes_.push_back(starts_shape[0]);
-  if (!broadcast_limits_) in_sizes_.push_back(limits_shape[0]);
-  if (!broadcast_deltas_) in_sizes_.push_back(deltas_shape[0]);
+  if (!broadcast_starts_) {
+    in_sizes_.push_back(starts_shape[0]);
+  }
+  if (!broadcast_limits_) {
+    in_sizes_.push_back(limits_shape[0]);
+  }
+  if (!broadcast_deltas_) {
+    in_sizes_.push_back(deltas_shape[0]);
+  }
   return KRET_OK;
 }
 
@@ -154,7 +160,7 @@ void RaggedRangeCpuKernelMod::RaggedRangeLaunch(const size_t nrows, const std::v
 template <typename T, typename TSPLITS>
 TSPLITS RaggedRangeCpuKernelMod::RangeSize(const T start, const T limit, const T delta) const {
   int64_t res;
-  if (((delta > (T)0) && (limit < start)) || ((delta < (T)0) && (limit > start))) {
+  if (((delta > static_cast<T>(0)) && (limit < start)) || ((delta < static_cast<T>(0)) && (limit > start))) {
     res = 0;
   } else {
     res =

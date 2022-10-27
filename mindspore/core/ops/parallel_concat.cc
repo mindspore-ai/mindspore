@@ -47,7 +47,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   }
 
   auto axis = 0;
-  int64_t all_shp = element0_shape[axis];
+  int64_t all_shp = static_cast<int64_t>(element0_shape[axis]);
   for (size_t i = 0; i < elements.size(); ++i) {
     auto shape_i = elements[i]->BuildShape();
     if (shape_i->IsDynamic()) {

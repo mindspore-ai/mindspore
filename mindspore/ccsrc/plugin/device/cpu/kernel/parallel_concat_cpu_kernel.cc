@@ -52,7 +52,7 @@ int ParallelConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   }
   ResetResource();
   std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
-  size_t output_elements = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t output_elements = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements == 0) {
     is_null_input_ = true;
   }
@@ -78,10 +78,10 @@ bool ParallelConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
                                               const std::vector<kernel::AddressPtr> &outputs) {
   std::vector<T *> input_addr_list;
   for (size_t j = 0; j < input_num_; ++j) {
-    auto *tmp_addr = reinterpret_cast<T *>(inputs[j]->addr);
+    auto *tmp_addr = static_cast<T *>(inputs[j]->addr);
     (void)input_addr_list.emplace_back(tmp_addr);
   }
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = static_cast<T *>(outputs[0]->addr);
 
   size_t output_dim_1 = 0;
   for (size_t j = 0; j < input_num_; ++j) {
