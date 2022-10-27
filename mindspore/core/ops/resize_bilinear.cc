@@ -37,6 +37,11 @@ bool ResizeBilinear::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
+bool ResizeBilinear::get_half_pixel_centers() const {
+  auto value_ptr = GetAttr(kHalfPixelCenters);
+  return GetValue<bool>(value_ptr);
+}
+
 void ResizeBilinear::Init(const std::vector<int64_t> &size, const bool align_corners) {
   this->set_size(size);
   this->set_align_corners(align_corners);

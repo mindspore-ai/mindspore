@@ -216,7 +216,7 @@ struct HalfPixelFunc {
 };
 
 void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, const float scale,
-                                 CachedInterpolation *interpolation);
+                                 CachedInterpolation *interpolation, bool half_pixel_centers);
 
 template <typename T>
 inline T ComputeScales(const double &scale, const size_t &input_size, const size_t &output_size) {

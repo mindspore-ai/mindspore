@@ -59,6 +59,7 @@ class ResizeBilinearCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
                            const std::vector<AddressPtr> &outputs) const;
   TypeId dtype_{kTypeUnknown};
   bool align_corners_{false};
+  bool half_pixel_centers_{false};
   bool is_null_input_{false};
   float height_scale{1.0};
   float width_scale{1.0};

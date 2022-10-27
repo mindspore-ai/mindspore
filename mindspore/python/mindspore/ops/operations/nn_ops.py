@@ -3797,8 +3797,8 @@ class ResizeBilinear(PrimitiveWithInfer):
         if half_pixel_centers and align_corners:
             raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
         target = context.get_context("device_target")
-        if half_pixel_centers and target.lower() != "ascend":
-            raise ValueError(f"Currently `half_pixel_centers`=True only support in Ascend device_target, "
+        if half_pixel_centers and (target.lower() != "ascend" or target.lower() != "CPU"):
+            raise ValueError(f"Currently `half_pixel_centers`=True only support in Ascend and CPU device_target, "
                              f"but got {target}")
         for i, value in enumerate(size):
             validator.check_positive_int(value, f'{i}th value of size', self.name)
