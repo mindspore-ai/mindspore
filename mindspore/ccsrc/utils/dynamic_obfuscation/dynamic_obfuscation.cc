@@ -241,16 +241,16 @@ CNodePtr DynamicObfuscator::password_mode_control(FuncGraphPtr func_graph) {
   ShapeVector y_shape{1, 1};
   tensor::TensorPtr y_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeInt32, y_shape);
   if (!has_build_appended_input) {
-    MS_LOG(INFO) << "Build parameter y and y_append.";
+    MS_LOG(INFO) << "Build parameter y_password and y_append.";
     auto y = func_graph->add_parameter();
-    y->set_name("y");
+    y->set_name("y_password");
     y->set_abstract(y_tensor->ToAbstract());
     auto y_append = func_graph->add_parameter();
     y_append->set_name("y_append");
     y_append->set_abstract(y_tensor->ToAbstract());
     has_build_appended_input = true;
   }
-  auto y = func_graph->GetParameterByName("y");
+  auto y = func_graph->GetParameterByName("y_password");
   auto y_append = func_graph->GetParameterByName("y_append");
 
   if (used_control_node_ == 0) {

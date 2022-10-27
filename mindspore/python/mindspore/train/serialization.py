@@ -411,6 +411,11 @@ def load(file_name, **kwargs):
               - Option: 'AES-GCM', 'AES-CBC' or customized decryption. Default: 'AES-GCM'.
               - For details of using the customized decryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
+
+            - obf_func (function): A python function used for loading obfuscated MindIR model, which can refer to
+              `obfuscate_model()
+              <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.obfuscate_model.html>` .
+
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
 
@@ -572,6 +577,7 @@ def obfuscate_model(obf_config, **kwargs):
         ValueError: If obf_ratio is not provided in obf_config.
         ValueError: If both customized_func and obf_password are not provided in obf_config.
         ValueError: If both obf_password is not in (0, 9223372036854775807].
+        ValueError: If file_path is not exist or file_path is not end with '.mindir'.
 
     Examples:
         >>> obf_config = {'original_model_path': "./net.mindir",
@@ -586,6 +592,12 @@ def obfuscate_model(obf_config, **kwargs):
     if not isinstance(obf_config, dict):
         raise TypeError("'obf_config' must be a dict, but got {}.".format(type(obf_config)))
     file_path = _check_param_type(obf_config, "original_model_path", str, True)
+    if not file_path.endswith(".mindir"):
+        raise ValueError("For 'obfuscate_model', the argument 'file_path'(MindIR file) should end with '.mindir', "
+                         "please input the correct 'file_path'.")
+    if not os.path.exists(file_path):
+        raise ValueError("For 'obfuscate_model', the argument 'file_path'(MindIR file) does not exist, "
+                         "please check whether the 'file_path' is correct.")
     saved_path = _check_param_type(obf_config, "save_model_path", str, True)
     model_inputs = _check_param_type(obf_config, "model_inputs", list, True)
     for item in model_inputs:
