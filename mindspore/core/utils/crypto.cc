@@ -17,6 +17,7 @@
 #include "utils/crypto.h"
 #include <regex>
 #include <vector>
+#include <unordered_set>
 #include <fstream>
 #include <algorithm>
 #include "utils/log_adapter.h"
@@ -555,8 +556,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
   MS_EXCEPTION_IF_NULL(model_data);
   MS_EXCEPTION_IF_NULL(key);
   std::unordered_set<std::string> dic = {"AES-GCM", "AES-CBC", "SM4-CBC"};
-  auto iter = dic.find(dec_mode);
-  if (iter == dic.end()) {
+  if (dic.find(dec_mode) == dic.cend()) {
     MS_LOG(ERROR) << "Mode only support AES-GCM|AES-CBC|SM4-CBC.";
     return nullptr;
   }

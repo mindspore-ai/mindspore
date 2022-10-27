@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_UTILS_CRYPTO_H
 
 #include <string>
-#include <unordered_set>
 #include <memory>
 #include "utils/macros.h"
 
