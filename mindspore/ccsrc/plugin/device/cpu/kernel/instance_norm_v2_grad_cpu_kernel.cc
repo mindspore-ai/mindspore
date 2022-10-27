@@ -108,7 +108,7 @@ bool InstanceNormV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
         float mean = float_init_zero, invstd = float_init_zero;
         mean = is_training_ ? save_mean_matrix(idx, c_idx) : running_mean_matrix(idx, c_idx);
         float _invstd_ = std::sqrt(running_var_matrix(idx, c_idx) + epsilon_);
-        MS_EXCEPTION_IF_ZERO("_invstd_", _invstd_);
+        MS_EXCEPTION_IF_ZERO("_invstd_", static_cast<int64_t>(_invstd_));
         invstd = is_training_ ? save_invstd_matrix(idx, c_idx) : float_init_one / _invstd_;
 
         double sum = double_init_zero, dotp = double_init_zero;

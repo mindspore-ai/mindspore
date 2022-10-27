@@ -51,7 +51,7 @@ struct InvStd {
 }  // namespace
 
 template <typename T>
-void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::AddressPtr &x, float *_mean_, float *_var_sum) {
+void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::AddressPtr &x, float *_mean_, float *_var_sum) const {
   const int64_t batch = x_shape_4d_[kIndex0];
   const int64_t channel = x_shape_4d_[kIndex3];
   const int64_t image_size = x_shape_4d_[kIndex1] * x_shape_4d_[kIndex2];
@@ -135,7 +135,7 @@ void InstanceNormV2CpuKernelMod::CollectLinearAndConstant(const typename TTypes<
       } else {
         mean = running_mean(idx);
         float _std_ = std::sqrt(running_var(idx) + static_cast<float>(epsilon_));
-        MS_EXCEPTION_IF_ZERO("_std_", _std_);
+        MS_EXCEPTION_IF_ZERO("_std_", static_cast<int64_t>(_std_));
         invstd = float_init_one / _std_;
       }
       _alpha_[idx] = invstd * gamma(idx);
