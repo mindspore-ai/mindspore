@@ -114,6 +114,7 @@ constexpr char NCHW[] = "NCHW";
 constexpr char NCDHW[] = "NCDHW";
 constexpr char USE_LOCKING[] = "use_locking";
 constexpr char OP[] = "op";
+constexpr char SET_OPERATION[] = "set_operation";
 
 constexpr size_t NC_LEN = 2;
 constexpr size_t SHAPE_4D = 4;

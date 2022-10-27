@@ -36,18 +36,31 @@ constexpr size_t kDenseToCSRSparseMatrixOutputsNum = 5;
 constexpr int64_t kInitPrevBatch = -1;
 }  // namespace
 
-void DenseToCSRSparseMatrixCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  indices_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex1);
-  values_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  auto dense_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0));
-  auto indices_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1));
+bool DenseToCSRSparseMatrixCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  indices_type_ = inputs[kInputIndex1]->GetDtype();
+  values_type_ = inputs[kInputIndex0]->GetDtype();
+  return true;
+}
+
+int DenseToCSRSparseMatrixCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                               const std::vector<KernelTensorPtr> &inputs,
+                                               const std::vector<KernelTensorPtr> &outputs,
+                                               const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto dense_shape = inputs[kInputIndex0]->GetShapeVector();
+  auto indices_shape = inputs[kInputIndex1]->GetShapeVector();
   rank_ = dense_shape.size();
   total_nnz_ = indices_shape[kZero];
   batch_size_ = (rank_ == kDefaultRank) ? kOne : dense_shape[kZero];
   num_rows_ = (rank_ == kDefaultRank) ? dense_shape[kZero] : dense_shape[kOne];
   num_cols_ = (rank_ == kDefaultRank) ? dense_shape[kOne] : dense_shape[kTwo];
+  return KRET_OK;
 }
 
 bool DenseToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

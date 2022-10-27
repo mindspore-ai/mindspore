@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "utils/ms_utils.h"
 #include "Eigen/Eigenvalues"
@@ -48,24 +49,35 @@ void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
   batch_size_ /= (row_size_ * col_size_);
 }
 
-void EigCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (common::AnfAlgo::HasNodeAttr(COMPUTE_V, kernel_node)) {
-    compute_v_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, COMPUTE_V);
+bool EigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                           const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  if (base_operator->HasAttr(COMPUTE_V)) {
+    compute_v_ = GetValue<bool>(base_operator->GetAttr(COMPUTE_V));
   }
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  InitMatrixInfo(input_shape);
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Eig does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int EigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs,
+                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  auto input_shape = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
+  InitMatrixInfo(input_shape);
+  return KRET_OK;
 }
 
 template <typename T, typename C>

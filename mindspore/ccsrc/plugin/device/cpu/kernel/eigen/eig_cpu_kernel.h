@@ -20,6 +20,7 @@
 #include <vector>
 #include <complex>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -29,16 +30,21 @@ namespace kernel {
 using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
 
-class EigCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class EigCpuKernelMod : public NativeCpuKernelMod {
  public:
   EigCpuKernelMod() = default;
   ~EigCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

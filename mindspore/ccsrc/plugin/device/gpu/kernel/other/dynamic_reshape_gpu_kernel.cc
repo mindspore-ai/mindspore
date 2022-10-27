@@ -23,56 +23,59 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
+std::vector<std::pair<KernelAttr, DynamicReshapeKernelMod::LaunchFunc>> DynamicReshapeKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+   &DynamicReshapeKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
+   &DynamicReshapeKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+   &DynamicReshapeKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+   &DynamicReshapeKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &DynamicReshapeKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &DynamicReshapeKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   &DynamicReshapeKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   &DynamicReshapeKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   &DynamicReshapeKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   &DynamicReshapeKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &DynamicReshapeKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &DynamicReshapeKernelMod::LaunchKernel<int64_t>}};
 
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
-  DynamicReshapeKernelMod, Complex<float>, int)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
-  DynamicReshapeKernelMod, Complex<double>, int)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  DynamicReshapeKernelMod, double, int)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  DynamicReshapeKernelMod, float, int)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  DynamicReshapeKernelMod, int, int)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  DynamicReshapeKernelMod, int64_t, int)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
-  DynamicReshapeKernelMod, Complex<float>, int64_t)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
-  DynamicReshapeKernelMod, Complex<double>, int64_t)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  DynamicReshapeKernelMod, double, int64_t)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  DynamicReshapeKernelMod, float, int64_t)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  DynamicReshapeKernelMod, int64_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(
-  DynamicReshape,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  DynamicReshapeKernelMod, int, int64_t)
+template <typename S>
+bool DynamicReshapeKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
+  auto data_addr = GetDeviceAddress<unsigned char>(inputs, 0);
+  auto shape_addr = GetDeviceAddress<S>(inputs, 1);
+  auto output_addr = GetDeviceAddress<unsigned char>(outputs, 0);
+
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(output_addr, data_addr, input_size_list_[0], cudaMemcpyDeviceToDevice, cuda_stream),
+    "DynamicReshape cpy data failed");
+  std::vector<S> real_output_shape_ = std::vector<S>(input_size_list_[1] / sizeof(S), 0);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&real_output_shape_[0], shape_addr, input_size_list_[1], cudaMemcpyDeviceToHost, cuda_stream),
+    "DynamicReshape cpy real output shape value failed");
+  std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape_),
+                 [](const S &value) { return static_cast<int64_t>(value); });
+  return true;
+}
+
+std::vector<KernelAttr> DynamicReshapeKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, DynamicReshapeKernelMod::LaunchFunc> &pair) { return pair.first; });
+  return support_list;
+}
 }  // namespace kernel
 }  // namespace mindspore
