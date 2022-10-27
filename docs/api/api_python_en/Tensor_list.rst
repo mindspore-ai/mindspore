@@ -60,6 +60,8 @@ Mathematical Methods
     mindspore.Tensor.equal
     mindspore.Tensor.expm1
     mindspore.Tensor.less_equal
+    mindspore.Tensor.igamma
+    mindspore.Tensor.igammac
 
 Element-wise Methods
 ^^^^^^^^^^^^^^^^^^^^
@@ -145,6 +147,8 @@ Comparison Methods
     mindspore.Tensor.any
     mindspore.Tensor.approximate_equal
     mindspore.Tensor.ge
+    mindspore.Tensor.greater
+    mindspore.Tensor.greater_equal
     mindspore.Tensor.gt
     mindspore.Tensor.has_init
     mindspore.Tensor.isclose
@@ -210,6 +214,7 @@ Array Methods
     mindspore.Tensor.gather
     mindspore.Tensor.gather_elements
     mindspore.Tensor.gather_nd
+    mindspore.Tensor.index_add
     mindspore.Tensor.index_fill
     mindspore.Tensor.init_data
     mindspore.Tensor.inplace_update

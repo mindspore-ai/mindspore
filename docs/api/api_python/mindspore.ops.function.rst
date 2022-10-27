@@ -125,6 +125,8 @@ mindspore.ops.function
     mindspore.ops.cumprod
     mindspore.ops.erfinv
     mindspore.ops.less_equal
+    mindspore.ops.igamma
+    mindspore.ops.igammac
 
 逐元素运算
 ^^^^^^^^^^^^^
@@ -235,6 +237,8 @@ Reduction函数
     mindspore.ops.approximate_equal
     mindspore.ops.equal
     mindspore.ops.ge
+    mindspore.ops.greater
+    mindspore.ops.greater_equal
     mindspore.ops.gt
     mindspore.ops.intopk
     mindspore.ops.isclose

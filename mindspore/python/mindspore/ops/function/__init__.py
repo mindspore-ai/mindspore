@@ -285,6 +285,10 @@ from .math_func import (
     erfinv,
     less_equal,
     cumprod,
+    greater,
+    greater_equal,
+    igamma,
+    igammac,
 )
 from .nn_func import (
     adaptive_avg_pool1d,

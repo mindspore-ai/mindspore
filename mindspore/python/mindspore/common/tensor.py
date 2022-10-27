@@ -34,7 +34,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import RowTensor as RowTensor_
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._checkparam import Rel
+from mindspore._checkparam import Rel, check_is_number
 from mindspore._checkparam import Validator as validator
 
 np_types = (np.int8, np.int16, np.int32, np.int64,
@@ -6966,6 +6966,200 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('expm1')(self)
+
+
+    def index_add(self, dim, index, source, *, alpha=1):
+        r"""
+        Adds tensor `alpha` times `source`  to specified `dim` and `index` of input tensor.
+        The `dim` should be in [0,  len(x.dim) - 1], and `dim` should be in [0, the size of input tensor - 1]
+        at the axis dimension.
+
+        Args:
+            dim (int): The dimension along which to index.
+            index (Tensor): Add the value of input tensor and `source` along the dimension of the `dim` according to
+                the specified index value, with data type int32.
+                The `index` must be 1D with the same size as the size of `source` in the `dim` dimension. The values
+                of `index` should be in [0, b), where the b is the size of input tensor in the `dim` dimension.
+            source (Tensor): The input tensor with the value to add. Must have same data type as input tensor.
+                The shape must be the same as input tensor except the `dim` th dimension.
+            alpha (number.Number): the scalar multiplier for `source`. Default: 1.
+
+        Returns:
+            Tensor, has the same shape and dtype as input tensor.
+
+        Raises:
+            TypeError: If neither input tensor is not a Parameter.
+            TypeError: If neither `index` nor `source` is a Tensor.
+            ValueError: If `dim` is out of input tensor rank's range.
+            ValueError: If input tensor rank is not the same as `source` rank.
+            ValueError: If shape of `index` is not 1D or size of `index` is not equal to dimension of source[dim].
+            ValueError: If `source`'s shape is not the same as input tensor except the `dim` th dimension.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor, Parameter
+            >>> from mindspore import ops
+            >>> x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="name_x")
+            >>> index = Tensor(np.array([0, 2]), mindspore.int32)
+            >>> source = Tensor(np.array([[0.5, 1.0], [1.0, 1.5], [2.0, 2.5]]), mindspore.float32)
+            >>> output = x.index_add(dim=1, index=index, source=source)
+            >>> print(output)
+            [[1.5  2.  4. ]
+             [5.   5.  7.5]
+             [9.   8.  11.5]]
+        """
+        self._init_check()
+        check_is_number(alpha, (int, float))
+        source = tensor_operator_registry.get('__mul__')(source, alpha)
+        return tensor_operator_registry.get('index_add')(self, indices=index, y=source, axis=dim)
+
+
+    def greater(self, other):
+        r"""
+        Computes the boolean value of :math:`input > other` element-wise.
+
+        Args:
+            other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+                the second input should be a number.Number or bool value, or a Tensor whose data type is
+                number or bool\_. When the first input is Scalar, the second input must be a Tensor whose
+                data type is number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = x.greater(y)
+            >>> print(output)
+            [False True False]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('greater')(self, other)
+
+
+    def greater_equal(self, other):
+        r"""
+        Computes the boolean value of :math:`input >= other` element-wise.
+
+        Args:
+            other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+                the second input should be a number.Number or bool value, or a Tensor whose data type is
+                number or bool\_. When the first input is Scalar, the second input must be a Tensor whose
+                data type is number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = x.greater_equal(y)
+            >>> print(output)
+            [True True False]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('greater_equal')(self, other)
+
+
+    def igamma(self, other):
+        r"""
+        Calculates lower regularized incomplete Gamma function.
+        If we define input tensor as `a` and `other` as `x`, the lower regularized incomplete Gamma function
+        is defined as:
+
+        .. math::
+            P(a, x) = gamma(a, x) / Gamma(a) = 1 - Q(a, x)
+
+        where
+
+        .. math::
+            gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
+
+        is the lower incomplete Gamma function.
+
+        Above :math:`Q(a, x)` is the upper regularized complete Gamma function.
+
+        .. warning::
+            This is an experimental prototype that is subject to change and/or deletion.
+
+        Args:
+            other (Tensor): The second input tensor. With float32 or float64 type. `other` should have
+              the same dtype with `input`.
+
+        Outputs:
+            Tensor, has the same dtype as `input` and `other`.
+
+        Raises:
+            TypeError: If `other` is not a Tensor.
+            TypeError: If dtype of input `other` and a is not float32 nor float64.
+            TypeError: If `other` has different dtype with input tensor.
+            ValueError: If input tensor could not be broadcast to a tensor with shape of `other`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+            >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+            >>> output = ops.igamma(a, x)
+            >>> print(output)
+            [0.593994 0.35276785 0.21486944 0.13337152]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('igamma')(self, other)
+
+
+    def igammac(self, other):
+        r"""
+        Calculates upper regularized incomplete Gamma function.
+
+        If we define `input` as `a` and `other` as `x`, the upper regularized incomplete Gamma function is defined as:
+        \(Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)\)
+        where
+        \(Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt\)
+        is the upper incomplete Gama function.
+
+        Note, above P(a, x) (Igamma) is the lower regularized complete Gamma function.
+
+        .. warning::
+            This is an experimental prototype that is subject to change and/or deletion.
+
+        Args:
+            other (Tensor): The second input tensor. With float32 or float64 type. `other` should have
+              the same dtype with `input`.
+
+        Outputs:
+            Tensor, has the same dtype as `input` and `other`.
+
+        Raises:
+            TypeError: If `other` is not a Tensor.
+            TypeError: If dtype of input `other` and a is not float32 nor float64.
+            TypeError: If `other` has different dtype with input tensor.
+            ValueError: If input tensor could not be broadcast to a tensor with shape of `other`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+            >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+            >>> output = ops.igammac(a, x)
+            >>> print (output)
+            [0.40600586 0.6472318 0.7851304 0.8666283]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('igammac')(self, other)
 
 
 class RowTensor(RowTensor_):

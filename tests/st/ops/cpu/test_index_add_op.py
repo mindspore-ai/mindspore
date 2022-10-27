@@ -22,6 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore.ops.functional import vmap
+from mindspore.common import dtype as mstype
 
 
 class NetIndexAdd(nn.Cell):
@@ -398,3 +399,23 @@ def test_index_add_vmap_cpu():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     vmap_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_index_add_tensor_api_modes(mode):
+    """
+    Feature: Test index_add tensor api.
+    Description: Test index_add tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Parameter(Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32), name="name_x")
+    index = Tensor([0, 2], mstype.int32)
+    source = Tensor([[0.5, 1.0], [1.0, 1.5], [2.0, 2.5]], mstype.float32)
+    dim = 1
+    output = x.index_add(dim, index, source)
+    expected = np.array([[1.5, 2., 4.], [5., 5., 7.5], [9., 8., 11.5]], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)
