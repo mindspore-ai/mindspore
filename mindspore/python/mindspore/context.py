@@ -789,6 +789,8 @@ def set_context(**kwargs):
     |                         |  support_binary              |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  memory_optimize_level       |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  memory_offload              |  GPU/Ascend                |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -938,6 +940,14 @@ def set_context(**kwargs):
 
             - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver).
             - O1: priority memory option, enable SOMAS.
+        memory_offload (str): Whether to enable the memory offload function. When it is enabled, the idle data will be
+            temporarily copied to the host side in the case of insufficient device memory. The value must be in the
+            range of ['ON', 'OFF'], and the default value is 'OFF'.
+
+            - ON: Enable the memory Offload function. On Ascend hardware platform, this parameter does not take effect
+              when the environment variable "GRAPH_OP_RUN=1" is not set; This parameter does not take effect when
+              memory_optimize_level is set 'O1'.
+            - OFF: Turn off the memory Offload function.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -968,6 +978,7 @@ def set_context(**kwargs):
         >>> ms.set_context(inter_op_parallel_num=4)
         >>> ms.set_context(disable_format_transform=True)
         >>> ms.set_context(memory_optimize_level='O0')
+        >>> ms.set_context(memory_offload='ON')
     """
     ctx = _context()
     # set device target first
