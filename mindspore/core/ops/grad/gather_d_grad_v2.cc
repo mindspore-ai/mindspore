@@ -27,9 +27,11 @@ namespace {
 abstract::BaseShapePtr GatherDGradV2InferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const size_t gather_d_grad_v2_input_num = 4;
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == gather_d_grad_v2_input_num,
-                             "GatherDGradV2's input size should be 4 but got " + std::to_string(input_args.size()));
+  const size_t op_input_num = 4;
+  const size_t op_input_num_with_dim_attr = 3;
+  auto input_num = input_args.size();
+  MS_EXCEPTION_IF_CHECK_FAIL(input_num == op_input_num || input_num == op_input_num_with_dim_attr,
+                             "GatherDGradV2's input size should be 3 or 4 but got " + std::to_string(input_num));
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -40,18 +42,21 @@ abstract::BaseShapePtr GatherDGradV2InferShape(const PrimitivePtr &primitive,
 TypePtr GatherDGradV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const size_t gather_d_grad_v2_input_num = 4;
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == gather_d_grad_v2_input_num,
-                             "GatherDGradV2's input size should be 4 but got " + std::to_string(input_args.size()));
+  const size_t op_input_num = 4;
+  const size_t op_input_num_with_dim_attr = 3;
+  auto input_num = input_args.size();
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    input_num == op_input_num || input_num == op_input_num_with_dim_attr,
+    "GatherDGradV2's input size should be 3 or 4 but got " + std::to_string(input_args.size()));
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), {kTensorType},
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("index", input_args[kInputIndex2]->BuildType(), {kInt32, kInt64},
-                                                   prim_name);
-  auto out_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("grad", input_args[kInputIndex3]->BuildType(), {kTensorType}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("index", input_args[input_num - kInputIndex2]->BuildType(),
+                                                   {kInt32, kInt64}, prim_name);
+  auto out_type = CheckAndConvertUtils::CheckTensorTypeValid("grad", input_args[input_num - kInputIndex1]->BuildType(),
+                                                             {kTensorType}, prim_name);
   return out_type;
 }
 }  // namespace
