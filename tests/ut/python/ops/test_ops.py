@@ -2666,18 +2666,18 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 4, 6, 6], [3, 4, 3, 3], [3, 4, 3, 3]],
         'desc_bprop': [[3, 4, 6, 6]],
         'skip': ['backward']}),
-    ('MaxPool3D', {
+    ('MaxPool3D_1', {
         'block': P.MaxPool3D(kernel_size=2, strides=2, pad_mode="VALID"),
         'desc_inputs': [[100, 3, 28, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14, 14]]}),
-    ('MaxPool3D', {
+    ('MaxPool3D_2', {
         'block': P.MaxPool3D(kernel_size=4, strides=2, pad_mode="PAD", pad_list=2, ceil_mode=False),
         'desc_inputs': [[100, 3, 28, 28, 28]],
-        'desc_bprop': [[100, 3, 14, 14, 14]]}),
-    ('MaxPool3D', {
+        'desc_bprop': [[100, 3, 15, 15, 15]]}),
+    ('MaxPool3D_3', {
         'block': P.MaxPool3D(kernel_size=4, strides=2, pad_mode="PAD", pad_list=2, ceil_mode=True),
         'desc_inputs': [[100, 3, 28, 28, 28]],
-        'desc_bprop': [[100, 3, 14, 14, 14]]}),
+        'desc_bprop': [[100, 3, 15, 15, 15]]}),
     ('MaxPool3DGrad', {
         'block': G.MaxPool3DGrad(kernel_size=2, strides=2, pad_mode="VALID"),
         'desc_inputs': [[3, 4, 6, 6, 6], [3, 4, 3, 3, 3], [3, 4, 3, 3, 3]],
@@ -2971,7 +2971,7 @@ test_case_nn_ops = [
     ('DepthwiseConv2dNative_1', {
         'block': P.DepthwiseConv2dNative(3, (3, 3), pad_mode="pad", pad=1, stride=2),
         'desc_inputs': [[10, 32, 32, 32], [1, 32, 3, 3]],
-        'desc_bprop': [[10, 32, 16, 16]]}),
+        'desc_bprop': [[10, 96, 16, 16]]}),
     ('DepthwiseConv2dNative_2', {
         'block': P.DepthwiseConv2dNative(1, (3, 3), pad_mode="same", pad=0, stride=1),
         'desc_inputs': [[2592, 2048, 4, 4], [1, 2048, 3, 3]],
@@ -3210,7 +3210,8 @@ test_case_nn_ops = [
     ('ResizeBilinear', {
         'block': P.ResizeBilinear((5, 5)),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)],
-        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)]}),
+        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]],
+                              mstype.float16)]}),
     ('ResizeBilinearGrad', {
         'block': G.ResizeBilinearGrad(),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32), Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
@@ -3220,7 +3221,8 @@ test_case_nn_ops = [
         'block': ResizeNearestNeighborV2(),
         'desc_inputs': [Tensor(np.random.rand(16, 16, 32, 32).astype(np.float32)),
                         Tensor(np.array([8, 8]).astype(np.int32))],
-        'desc_bprop': [Tensor(np.random.rand(16, 16, 8, 8).astype(np.float32))]}),
+        'desc_bprop': [Tensor(np.random.rand(16, 16, 8, 8).astype(np.float32))],
+        'skip': ['backward']}),
     ('ResizeNearestNeighborV2Grad', {
         'block': ResizeNearestNeighborV2Grad(),
         'desc_inputs': [Tensor(np.random.rand(16, 16, 8, 8).astype(np.float32)),
@@ -3530,7 +3532,7 @@ test_case_array_ops = [
         'block': P.Transpose(),
         'desc_const': [(0, 1, 2, 3)],
         'desc_inputs': [[1, 2, 3, 4]],
-        'desc_bprop': [[1, 2, 4, 3]]}),
+        'desc_bprop': [[1, 2, 3, 4]]}),
     ('AddN', {
         'block': NetForTupleInput(P.AddN()),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],

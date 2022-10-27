@@ -55,10 +55,6 @@ bool BaseShape::operator==(const BaseShape &other) const { return tid() == other
 
 bool BaseShape::operator!=(const BaseShape &other) const { return !(*this == other); }
 
-const ShapeValueDType Shape::kShapeDimAny = -1;
-const ShapeValueDType Shape::kShapeRankAny = -2;
-const size_t Shape::kDynamicRankLen = 1;
-
 std::string Shape::ToString() const {
   std::ostringstream buffer;
   bool has_dyn_shape = IsDynamic();
