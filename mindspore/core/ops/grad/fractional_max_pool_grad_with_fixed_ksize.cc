@@ -49,6 +49,21 @@ abstract::ShapePtr FractionalMaxPoolGradWithFixedKsizeInferShape(const Primitive
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex1]->GetShapeTrack())[kShape];
   auto argmax_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex2]->GetShapeTrack())[kShape];
+  // dynamic rank
+  if (IsDynamicRank(origin_input_shape) || IsDynamicRank(out_backprop_shape) || IsDynamicRank(argmax_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+  // dynamic shape
+  if (IsDynamic(origin_input_shape) || IsDynamic(out_backprop_shape) || IsDynamic(argmax_shape)) {
+    if (!IsDynamic(origin_input_shape)) {
+      return std::make_shared<abstract::Shape>(origin_input_shape);
+    }
+    ShapeVector output_shape_dyn;
+    for (size_t i = 0; i < origin_input_shape.size(); ++i) {
+      output_shape_dyn.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(output_shape_dyn);
+  }
   if (origin_input_shape.size() != kInputsDimSize) {
     MS_EXCEPTION(ValueError) << "For FractionalMaxPoolGradWithFixedKsize, the dimension of origin_input must be 4.";
   }
@@ -98,7 +113,7 @@ TypePtr FractionalMaxPoolGradWithFixedKsizeInferType(const PrimitivePtr &primiti
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(FractionalMaxPoolGradWithFixedKsize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FractionalMaxPoolGradWithFixedKsize, BaseOperator);
 AbstractBasePtr FractionalMaxPoolGradWithFixedKsizeInfer(const abstract::AnalysisEnginePtr &,
                                                          const PrimitivePtr &primitive,
                                                          const std::vector<AbstractBasePtr> &input_args) {
@@ -109,6 +124,16 @@ AbstractBasePtr FractionalMaxPoolGradWithFixedKsizeInfer(const abstract::Analysi
   auto infer_shape = FractionalMaxPoolGradWithFixedKsizeInferShape(primitive, input_args);
   auto infer_type = FractionalMaxPoolGradWithFixedKsizeInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+void FractionalMaxPoolGradWithFixedKsize::Init(const std::string data_format) { set_data_format(data_format); }
+
+void FractionalMaxPoolGradWithFixedKsize::set_data_format(const std::string data_format) {
+  (void)this->AddAttr(kFormat, api::MakeValue(data_format));
+}
+
+std::string FractionalMaxPoolGradWithFixedKsize::get_data_format() const {
+  return GetValue<std::string>(GetAttr(kFormat));
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPoolGradWithFixedKsize, prim::kPrimFractionalMaxPoolGradWithFixedKsize,
