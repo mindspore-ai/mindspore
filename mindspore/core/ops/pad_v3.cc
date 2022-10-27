@@ -20,6 +20,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -90,24 +91,50 @@ void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size,
     }
   }
 }
+
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t kEdgeMaxDims = 5;
   constexpr int64_t kOtherMinDims = 3;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto paddings = input_args[1]->BuildValue();
-  MS_EXCEPTION_IF_NULL(paddings);
-  std::vector<int64_t> paddings_arg;
-  if (paddings->isa<tensor::Tensor>()) {
-    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings, prim_name);
-  } else {
-    paddings_arg = CheckAndConvertUtils::CheckTupleInt("paddings tuple value", paddings, prim_name);
+  auto input_shape_ptr = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(input_shape_ptr);
+  if (input_shape_ptr->IsDimUnknown()) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  int64_t size = SizeToLong(x_shape.size());
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape];
+  auto dim_size = x_shape.size();
+  if (input_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
+  }
+
+  std::vector<int64_t> paddings_arg;
+  auto padding_type = input_args[kInputIndex1]->BuildType();
+  if (padding_type->isa<TensorType>()) {
+    auto paddings_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    MS_EXCEPTION_IF_NULL(paddings_shape_ptr);
+    if (paddings_shape_ptr->IsDynamic()) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
+    }
+    auto paddings = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(paddings);
+    auto paddings_value = paddings->BuildValue();
+    MS_EXCEPTION_IF_NULL(paddings_value);
+    if (!paddings_value->isa<tensor::Tensor>()) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
+    }
+    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name);
+  } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {
+    auto value = input_args[1]->BuildValue();
+    paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", value, prim_name);
+  } else {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
+  }
+
+  int64_t size = SizeToLong(dim_size);
   int64_t paddings_size = SizeToLong(paddings_arg.size());
   std::vector<int64_t> paddings_val;
-  auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
+  auto mode = GetValue<std::string>(primitive->GetAttr(kAttrMode));
   if (mode != kConstant) {
     (void)CheckAndConvertUtils::CheckInteger("input dims for edge or reflect mode", size, kGreaterEqual, kOtherMinDims,
                                              prim_name);
@@ -149,7 +176,6 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     (void)CheckAndConvertUtils::CheckInteger("output size", now_dim_size, kGreaterThan, 0, prim_name);
     (void)out_shape.emplace_back(now_dim_size);
   }
-
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
@@ -185,6 +211,7 @@ bool PadV3::get_paddings_contiguous() const { return GetValue<bool>(GetAttr("pad
 std::string PadV3::get_mode() const { return GetValue<string>(GetAttr("mode")); }
 std::vector<int64_t> PadV3::get_paddings() const { return GetValue<std::vector<int64_t>>(GetAttr("padding_switched")); }
 
+REGISTER_HOST_DEPENDS(kNamePadV3, {kInputIndex1});
 MIND_API_OPERATOR_NAME_IMPL(PadV3, kNamePadV3, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(PadV3, prim::kPrimPadV3, PadV3Infer, nullptr, true);
 }  // namespace ops

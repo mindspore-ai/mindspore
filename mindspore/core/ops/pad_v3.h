@@ -31,9 +31,6 @@ class MIND_API PadV3 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PadV3);
   PadV3() : BaseOperator(kNamePadV3) { InitIOName({"x", "paddings", "constant_values"}, {"y"}); }
-  void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_size, const int64_t size);
-  void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size, std::vector<int64_t> x_shape,
-                        std::vector<int64_t> paddings_arg, const int64_t size);
   std::string get_mode() const;
   bool get_paddings_contiguous() const;
   std::vector<int64_t> get_paddings() const;

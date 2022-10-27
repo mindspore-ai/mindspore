@@ -4528,7 +4528,6 @@ class PadV3(Primitive):
         validator.check_string(mode, ['constant', 'reflect', 'edge'], 'mode', self.name)
         validator.check_bool(paddings_contiguous, "paddings_contiguous", self.name)
         self.mode = mode
-        self.set_const_input_indexes([1])
         self.paddings_contiguous = paddings_contiguous
 
 

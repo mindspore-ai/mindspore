@@ -35,16 +35,43 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   constexpr size_t paddings_pos_3 = 3;
   constexpr size_t paddings_pos_4 = 4;
   constexpr size_t paddings_pos_5 = 5;
+  auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  // support dynamic rank
+  if (x_shape_ptr->IsDimUnknown()) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  if (x_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
+  }
+
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto paddings = input_args[1]->BuildValue();
-  MS_EXCEPTION_IF_NULL(paddings);
+
   std::vector<int64_t> paddings_arg;
-  if (paddings->isa<tensor::Tensor>()) {
-    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings, prim_name);
+  auto padding_type = input_args[kInputIndex1]->BuildType();
+  if (padding_type->isa<TensorType>()) {
+    auto paddings_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    MS_EXCEPTION_IF_NULL(paddings_shape_ptr);
+    if (paddings_shape_ptr->IsDynamic()) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
+    }
+    auto paddings = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(paddings);
+    auto paddings_value = paddings->BuildValue();
+    MS_EXCEPTION_IF_NULL(paddings_value);
+    if (!paddings_value->isa<tensor::Tensor>()) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
+    }
+    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name);
+  } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {
+    auto value = input_args[1]->BuildValue();
+    paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", value, prim_name);
   } else {
-    paddings_arg = CheckAndConvertUtils::CheckTupleInt("paddings tuple value", paddings, prim_name);
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
   }
+
   int64_t paddings_size = SizeToLong(paddings_arg.size());
   std::vector<int64_t> paddings_val;
   for (int64_t i = 0; i < paddings_size; ++i) {
@@ -62,11 +89,6 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
     }
   }
   primitive->set_attr("padding_switched", MakeValue(paddings_val));
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  // support dynamic rank
-  if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
-  }
 
   std::vector<int64_t> out_shape;
   if (paddings_size == SizeToLong(kPaddingsSizeTwo)) {
@@ -95,12 +117,6 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
                              << paddings_size;
   }
   (void)CheckAndConvertUtils::CheckPositiveVector("out_shape", out_shape, prim_name);
-  auto x_shape_ptr = input_args[0]->isa<abstract::AbstractTensor>()
-                       ? input_args[0]->cast<abstract::AbstractTensorPtr>()->BuildShape()
-                       : input_args[0]->cast<abstract::AbstractTuplePtr>()->BuildShape();
-  if (!x_shape_ptr->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
@@ -131,6 +147,7 @@ std::vector<int64_t> PadV3Grad::get_paddings() const {
   return GetValue<std::vector<int64_t>>(GetAttr("padding_switched"));
 }
 
+REGISTER_HOST_DEPENDS(kNamePadV3Grad, {kInputIndex1});
 MIND_API_OPERATOR_NAME_IMPL(PadV3Grad, kNamePadV3Grad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(PadV3Grad, prim::kPrimPadV3Grad, PadV3GradInfer, nullptr, true);
 }  // namespace ops

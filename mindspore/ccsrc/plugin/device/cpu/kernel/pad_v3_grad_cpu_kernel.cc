@@ -127,10 +127,6 @@ bool PadV3GradCpuKernelMod::GetPaddings(const std::vector<AddressPtr> &inputs) {
     paddings_[1] = tmp[padding_pos_2];
     paddings_[padding_pos_2] = tmp[1];
   }
-  output_shape_.end()[-kwidth] -= (paddings_[kpad_l] + paddings_[kpad_l + 1]);
-  output_shape_.end()[-kheight] -= (paddings_[kpad_t] + paddings_[kpad_t + 1]);
-  output_shape_.end()[-kchannel] -= (paddings_[kpad_f] + paddings_[kpad_f + 1]);
-
   return true;
 }
 
