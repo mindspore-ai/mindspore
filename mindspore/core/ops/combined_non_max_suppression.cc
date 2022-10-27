@@ -157,7 +157,7 @@ AbstractBasePtr CombinedNonMaxSuppressionInfer(const abstract::AnalysisEnginePtr
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   const int64_t kInputNum = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_shape = CombinedNonMaxSuppressionInferShape(primitive, input_args);
   auto infer_type = CombinedNonMaxSuppressionInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

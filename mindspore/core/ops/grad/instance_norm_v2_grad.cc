@@ -103,7 +103,7 @@ abstract::TupleShapePtr InstanceNormV2GradInferShape(const PrimitivePtr &primiti
   constexpr float epsilon_max = 1.0;
   auto epsilon_range = std::make_pair(epsilon_min, epsilon_max);
   // momentum_range is equal to epsilon_range, but epsilon_range just include left.
-  (void)CheckAndConvertUtils::CheckInRange(kEpsilon, epsilon, kIncludeLeft, epsilon_range, prim_name);
+  CheckAndConvertUtils::CheckInRange(kEpsilon, epsilon, kIncludeLeft, epsilon_range, prim_name);
   auto dx_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dy_shape_ptr)[kShape];
   auto pd_gamma_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(gamma_shape_ptr)[kShape];
   auto pd_beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(gamma_shape_ptr)[kShape];

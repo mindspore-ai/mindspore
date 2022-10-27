@@ -74,12 +74,6 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   std::string pad_mode = GetValue<std::string>(primitive->GetAttr("pad_mode"));
   std::vector<int64_t> kernel_size{filter_shape[h_axis - 1], filter_shape[w_axis - 1]};
   int64_t depth = filter_shape[c_axis - 1];
-  // if (depth != x_shape[c_axis]) {
-  //   MS_EXCEPTION(ValueError) << "For " << prim_name
-  //                            << ", the number of input channels for x must be the same as the depth of filter, but
-  //                            got "
-  //                            << x_shape[c_axis] << " vs " << depth;
-  // }
   std::vector<int64_t> stride = GetValue<std::vector<int64_t>>(primitive->GetAttr("stride"));
   std::vector<int64_t> dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr("dilation"));
   int window_h = static_cast<int>((kernel_size[0] - 1) * dilation[h_axis] + 1);

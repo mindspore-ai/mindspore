@@ -63,7 +63,9 @@ abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
   (void)primitive->AddAttr("data_format", data_format_ptr);
 
   int64_t data_format = static_cast<int64_t>(Format::NCHW);
-  if (data_format_ptr == nullptr) data_format = static_cast<int64_t>(Format::NCHW);
+  if (data_format_ptr == nullptr) {
+    data_format = static_cast<int64_t>(Format::NCHW);
+  }
   auto attr_value_str = GetValue<std::string>(data_format_ptr);
 
   if (attr_value_str == "NCHW") {

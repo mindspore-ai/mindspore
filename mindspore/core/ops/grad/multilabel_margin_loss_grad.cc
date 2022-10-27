@@ -37,7 +37,7 @@ abstract::ShapePtr MultilabelMarginLossGradInferShape(const PrimitivePtr &primit
                              << "while x_shape is : " << x << ", target_shape is : " << target << ".";
   }
   int64_t reduction;
-  (void)CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
+  CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   return std::make_shared<abstract::Shape>(x);
 }
 
@@ -61,7 +61,7 @@ AbstractBasePtr MultilabelMarginLossGradInfer(const abstract::AnalysisEnginePtr 
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = MultilabelMarginLossGradInferType(primitive, input_args);
   auto infer_shape = MultilabelMarginLossGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

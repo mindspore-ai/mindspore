@@ -20,7 +20,6 @@ namespace mindspore {
 namespace kernel {
 namespace {
 template <typename T, typename S>
-//
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreateMaxUnpool2DKernelPtr(const std::string &kernel_name,
                                                                           const uint32_t &device_id) {
   return std::make_unique<cukernel::MaxUnpool2DHelperGpuKernel<T, S>>(kernel_name, device_id);

@@ -77,7 +77,7 @@ TypePtr BincountInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 AbstractBasePtr BincountInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = BincountInferType(primitive, input_args);
   auto infer_shape = BincountInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);

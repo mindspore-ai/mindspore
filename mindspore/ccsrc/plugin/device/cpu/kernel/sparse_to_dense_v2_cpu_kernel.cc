@@ -88,7 +88,6 @@ int SparseToDenseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 template <typename I, typename T>
 void SparseToDenseV2CpuKernelMod::CheckValidate(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &workspace,
                                                 const std::vector<kernel::AddressPtr> &outputs, const bool dim_flag) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSize4, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSize1, kernel_name_);
@@ -149,9 +148,9 @@ bool SparseToDenseV2CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
                                                const std::vector<kernel::AddressPtr> &workspace,
                                                const std::vector<kernel::AddressPtr> &outputs) {
   if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2TwoDims) {
-    (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, workspace, outputs, true);
+    (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, outputs, true);
   } else if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2OneDim) {
-    (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, workspace, outputs, false);
+    (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, outputs, false);
   }
   const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
   const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);

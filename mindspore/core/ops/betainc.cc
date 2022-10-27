@@ -51,9 +51,9 @@ TypePtr BetaincInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   auto x_type = input_args[kInputIndex2]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args_type;
-  (void)args_type.insert({"a", a_type});
-  (void)args_type.insert({"b", b_type});
-  (void)args_type.insert({"x", x_type});
+  (void)args_type.emplace("a", a_type);
+  (void)args_type.emplace("b", b_type);
+  (void)args_type.emplace("x", x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args_type, valid_types, prim->name());
   return a_type;
 }
@@ -64,7 +64,7 @@ AbstractBasePtr BetaincInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto infer_type = BetaincInferType(primitive, input_args);
   auto infer_shape = BetaincInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

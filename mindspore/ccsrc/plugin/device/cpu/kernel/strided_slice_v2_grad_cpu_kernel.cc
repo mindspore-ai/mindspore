@@ -339,8 +339,8 @@ void ParseStrideSliceGradMasksST(const CNodePtr &kernel_node, std::vector<T> *be
 }
 
 template <typename T>
-void FillEmptyDimsSTGrad(const CNodePtr &kernel_node, std::vector<T> *begin, std::vector<T> *end,
-                         std::vector<T> *stride, ShapeVector *input_shape, ShapeVector *output_shape) {
+void FillEmptyDimsSTGrad(std::vector<T> *begin, std::vector<T> *end, std::vector<T> *stride, ShapeVector *input_shape,
+                         ShapeVector *output_shape) {
   std::vector<T> &_begin = *begin;
   std::vector<T> &_end = *end;
   std::vector<T> &_stride = *stride;
@@ -444,7 +444,7 @@ void StridedSliceV2GradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   }
 
   for (size_t i = 0; i < expand_dims; ++i) {
-    if (SignOfStride(i)) {
+    if (SignOfStride(i) == 1) {
       int ax = (end_[i] - begin_[i]) * SignOfStride(i);
       if (ax < 0) {
         ax = 0;
@@ -482,10 +482,10 @@ void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::Addres
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index_four);
   shape_dim_output = SizeToInt(output_shape_.size());
   slice_len = SizeToInt(begin.size());
-  FillEmptyDimsSTGrad<T>(cnode, &begin, &end, &strides, &input_shape_, &output_shape_);
+  FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
   ParseStrideSliceGradMasksST<T>(cnode, &begin, &end, &strides, &input_shape_, output_shape_, shape_dim_output,
                                  slice_len);
-  FillEmptyDimsSTGrad<T>(cnode, &begin, &end, &strides, &input_shape_, &output_shape_);
+  FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_), [](const T &value) { return value; });
   (void)std::transform(strides.begin(), strides.end(), std::back_inserter(strides_),
                        [](const T &value) { return value; });
@@ -556,13 +556,11 @@ bool StridedSliceV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
       InitParams<int64_t>(inputs);
     }
   }
-  return CalStridedSliceV2Grad<T>(inputs, outputs, input_addr, output_addr);
+  return CalStridedSliceV2Grad<T>(input_addr, output_addr);
 }
 
 template <typename T>
-bool StridedSliceV2GradCpuKernelMod::CalStridedSliceV2Grad(const std::vector<kernel::AddressPtr> &inputs,
-                                                           const std::vector<kernel::AddressPtr> &outputs, T *input,
-                                                           T *output) {
+bool StridedSliceV2GradCpuKernelMod::CalStridedSliceV2Grad(T *input, T *output) {
   int length = SizeToInt(input_shape_.size());
   int input_num = 1;
   for (int le = 0; le < length; le++) {

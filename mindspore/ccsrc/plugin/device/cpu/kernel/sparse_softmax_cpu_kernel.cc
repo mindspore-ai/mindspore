@@ -84,7 +84,7 @@ int SparseSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 template <typename I, typename T>
 bool SparseSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &workspace,
+                                             const std::vector<kernel::AddressPtr> &,
                                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxOutputsNum, kernel_name_);
@@ -107,7 +107,7 @@ bool SparseSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     visited.push_back(0);
   }
   T exp_sum = static_cast<T>(0);
-  int equal_judge;
+  int equal_judge = 0;
   for (size_t i = 0; i < values_size_; ++i) {
     if (visited[i] == 1) {
       continue;

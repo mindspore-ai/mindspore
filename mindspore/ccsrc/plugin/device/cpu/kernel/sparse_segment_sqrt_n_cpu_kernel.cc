@@ -118,7 +118,7 @@ void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
 
   for (size_t i = 0; i < k; i++) {
-    y_addr[i] = (T1)0;
+    y_addr[i] = static_cast<T1>(0);
   }
   if (segment_ids_addr[0] != 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
