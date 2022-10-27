@@ -32,7 +32,7 @@ constexpr size_t kSparseSegmentMeanGradOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-void SparseSegmentMeanGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
+void SparseSegmentMeanGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kSparseSegmentMeanGradInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -69,11 +69,11 @@ void SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) / x_shape_[kIndex0];
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
-  int32_t k = *reinterpret_cast<int32_t *>(inputs[kIndex3]->addr);
-  auto x_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto indices_addr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
-  auto y_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  int32_t k = *static_cast<int32_t *>(inputs[kIndex3]->addr);
+  auto x_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  auto indices_addr = static_cast<int32_t *>(inputs[kIndex1]->addr);
+  auto segment_ids_addr = static_cast<int32_t *>(inputs[kIndex2]->addr);
+  auto y_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   for (size_t i = 0; i < num_elements; i++) {
     y_addr[i] = static_cast<T>(0);
@@ -111,7 +111,8 @@ void SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   size_t i = m;
   for (size_t j = 1; j <= countnum; j++) {
     for (size_t l = 0; l < n; l++) {
-      y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / static_cast<T>(countnum);
+      y_addr[static_cast<size_t>(indices_addr[i - j]) * n + l] +=
+        x_addr[static_cast<size_t>(beginindex) * n + l] / static_cast<T>(countnum);
     }
   }
 }

@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/adaptive_avg_pool_2d_grad_v1_cpu_kernel.h"
 #include <cmath>
+#include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -80,7 +81,7 @@ CTask AdaptiveAvgPool2DGradV1OutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
           double grad_delta = static_cast<double>(local_grad) / span_h / span_w;
           for (int64_t in_h = in_start_h; in_h < in_end_h; in_h++) {
             for (int64_t in_w = in_start_w; in_w < in_end_w; in_w++) {
-              grad_input_p_d[in_h * args.in_size_w + in_w] += grad_delta;
+              grad_input_p_d[in_h * static_cast<int64_t>(args.in_size_w) + in_w] += grad_delta;
             }
           }
         }
@@ -96,9 +97,9 @@ bool AdaptiveAvgPool2DGradV1CpuKernelMod::Launch(const std::vector<kernel::Addre
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
+    (void)LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    (void)LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of input x "
                       << "should be float16 or float32 but got " << TypeIdLabel(dtype_) << ".";
@@ -110,7 +111,7 @@ bool AdaptiveAvgPool2DGradV1CpuKernelMod::Launch(const std::vector<kernel::Addre
 template <typename SCALAR_T>
 bool AdaptiveAvgPool2DGradV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                        const std::vector<kernel::AddressPtr> &outputs) {
-  int32_t orig_input_shape_dims = orig_input_shape_dim_sizes.size();
+  int32_t orig_input_shape_dims = static_cast<int32_t>(orig_input_shape_dim_sizes.size());
   if (orig_input_shape_dims != k3D && orig_input_shape_dims != k4D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', Non-empty [3D] or [4D] tensor expected for orig_input, "
@@ -138,13 +139,13 @@ bool AdaptiveAvgPool2DGradV1CpuKernelMod::LaunchKernel(const std::vector<kernel:
   args.in_size_w = orig_input_shape_dim_sizes[orig_input_shape_dims + kIdxR1st];
   args.out_size_h = grad_output_dim_sizes.end()[kIdxR2nd];
   args.out_size_w = grad_output_dim_sizes.end()[kIdxR1st];
-  auto input_data_ptr_ret = reinterpret_cast<SCALAR_T *>(outputs[0]->addr);
+  auto input_data_ptr_ret = static_cast<SCALAR_T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_data_ptr_ret);
   int64_t output_num =
     std::accumulate(grad_input_dim_sizes.cbegin(), grad_input_dim_sizes.cend(), 1, std::multiplies<int64_t>{});
   std::unique_ptr<double[]> input_data_ptr = std::make_unique<double[]>(output_num);
-  std::fill_n(input_data_ptr.get(), output_num, 0.0);
-  auto output_data_ptr = reinterpret_cast<SCALAR_T *>(inputs[0]->addr);
+  (void)std::fill_n(input_data_ptr.get(), output_num, 0.0);
+  auto output_data_ptr = static_cast<SCALAR_T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_data_ptr);
   // resize output
   if (orig_input_shape_dims == k3D) {

@@ -85,7 +85,7 @@ bool MaxUnpool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     return false;
   }
   auto *raw_input = static_cast<DATA_T *>(inputs[kInputIndex0]->addr);
-  auto *raw_indices = reinterpret_cast<INDICES_T *>(inputs[kInputIndex1]->addr);
+  auto *raw_indices = static_cast<INDICES_T *>(inputs[kInputIndex1]->addr);
   auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->addr);
   if (data_format_ == "NHWC") {
     size_t num_batch = LongToSize(input_shape_[kInputIndex0]);

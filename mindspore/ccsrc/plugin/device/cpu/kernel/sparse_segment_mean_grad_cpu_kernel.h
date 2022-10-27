@@ -17,10 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_MEAN_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_MEAN_GRAD_CPU_KERNEL_H_
 #include <functional>
-#include <numeric>
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -45,7 +41,7 @@ class SparseSegmentMeanGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  void CheckParam(const CNodePtr &kernel_node) const;
   ShapeVector x_shape_;
   ShapeVector segment_ids_shape_;
   ShapeVector y_shape_;

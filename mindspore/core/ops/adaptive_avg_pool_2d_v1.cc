@@ -37,22 +37,23 @@ abstract::ShapePtr AdaptiveAvgPool2DV1InferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     const int64_t input_num_dims = SizeToLong(x_shape.size());
-    CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {3, 4}, op_name);
+    (void)CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {3, 4}, op_name);
   } else {
     return std::make_shared<abstract::Shape>(x_shape);
   }
 
   if (!IsDynamicShape(x_shape)) {
     for (size_t i = 0; i < x_shape.size(); i++) {
-      CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1,
-                                         op_name);
+      (void)CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1,
+                                               op_name);
     }
   }
 
   const auto &output_size_ptr = primitive->GetAttr("output_size");
   MS_EXCEPTION_IF_NULL(output_size_ptr);
   const auto &output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
-  CheckAndConvertUtils::CheckInteger("length of output_size", output_size.size(), kEqual, kOutputSizeLen2, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("length of output_size", static_cast<int64_t>(output_size.size()), kEqual,
+                                           kOutputSizeLen2, op_name);
 
   // Update the output shape by output size and input shape.
   auto input_size_iter = x_shape.rbegin();
@@ -70,7 +71,7 @@ TypePtr AdaptiveAvgPool2DV1InferType(const PrimitivePtr &primitive, const std::v
   auto op_name = primitive->name();
   auto x_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
   return x_dtype;
 }
 }  // namespace
@@ -81,7 +82,7 @@ AbstractBasePtr AdaptiveAvgPool2DV1Infer(const abstract::AnalysisEnginePtr &, co
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = AdaptiveAvgPool2DV1InferType(primitive, input_args);
   auto shapes = AdaptiveAvgPool2DV1InferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

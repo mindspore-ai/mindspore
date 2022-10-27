@@ -73,7 +73,7 @@ int MaxPool3DGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename DATA_T>
-void MaxPool3DGradWithArgmaxCpuKernelMod::OutPutInitKernel(DATA_T *output, size_t length) {
+void MaxPool3DGradWithArgmaxCpuKernelMod::OutPutInitKernel(DATA_T *output, size_t length) const {
   for (size_t s = 0; s < length; s++) {
     output[s] = (DATA_T)0;
   }
@@ -107,7 +107,7 @@ void MaxPool3DGradWithArgmaxCpuKernelMod::MaxPool3DGradWithArgmaxSingleCompute(
 }
 
 template <typename DATA_T>
-bool MaxPool3DGradWithArgmaxCpuKernelMod::CheckIfLessOne(const std::vector<DATA_T> &inputs) {
+bool MaxPool3DGradWithArgmaxCpuKernelMod::CheckIfLessOne(const std::vector<DATA_T> &inputs) const {
   const size_t ksize = static_cast<size_t>(inputs[kZero]);
   const size_t strides = static_cast<size_t>(inputs[kOne]);
   const size_t dilation = static_cast<size_t>(inputs[kTwo]);
@@ -121,7 +121,7 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::CheckIfLessOne(const std::vector<DATA_
 }
 
 template <typename DATA_T>
-bool MaxPool3DGradWithArgmaxCpuKernelMod::CheckIfLessZero(const std::vector<DATA_T> &inputs) {
+bool MaxPool3DGradWithArgmaxCpuKernelMod::CheckIfLessZero(const std::vector<DATA_T> &inputs) const {
   const size_t width = static_cast<size_t>(inputs[kZero]);
   const size_t height = static_cast<size_t>(inputs[kOne]);
   const size_t depth = static_cast<size_t>(inputs[kTwo]);
@@ -134,7 +134,7 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::CheckIfLessZero(const std::vector<DATA
 }
 
 void MaxPool3DGradWithArgmaxCpuKernelMod::CheckPadsValue(size_t k_width, size_t p_width, size_t k_height,
-                                                         size_t p_height, size_t k_depth, size_t p_depth) {
+                                                         size_t p_height, size_t k_depth, size_t p_depth) const {
   if (k_width / kTwo < p_width && k_height / kTwo < p_height && k_depth / kTwo < p_depth) {
     MS_EXCEPTION(ValueError)
       << "for " << kernel_name_
@@ -145,7 +145,7 @@ void MaxPool3DGradWithArgmaxCpuKernelMod::CheckPadsValue(size_t k_width, size_t 
 }
 
 void MaxPool3DGradWithArgmaxCpuKernelMod::CheckDilationValue(size_t d_width, size_t in_width, size_t d_height,
-                                                             size_t in_height, size_t d_depth, size_t in_depth) {
+                                                             size_t in_height, size_t d_depth, size_t in_depth) const {
   if (d_width >= in_width && d_height >= in_height && d_depth >= in_depth) {
     MS_EXCEPTION(ValueError)
       << "for " << kernel_name_
@@ -161,19 +161,19 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<Address
                                                        const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPool3DGradWithArgmaxInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPool3DGradWithArgmaxOutputsNum, kernel_name_);
-  auto input_grads = reinterpret_cast<DATA_T *>(inputs[kOne]->addr);
-  auto input_argmax = reinterpret_cast<INDICES_T *>(inputs[kTwo]->addr);
-  auto output_y = reinterpret_cast<DATA_T *>(outputs[kZero]->addr);
+  auto input_grads = static_cast<DATA_T *>(inputs[kOne]->addr);
+  auto input_argmax = static_cast<INDICES_T *>(inputs[kTwo]->addr);
+  auto output_y = static_cast<DATA_T *>(outputs[kZero]->addr);
   auto input_shape_vec = x_shape_;
   auto output_shape_vec = grads_shape_;
-  const size_t in_width = input_shape_vec[kFour];
-  const size_t in_height = input_shape_vec[kThree];
-  const size_t in_depth = input_shape_vec[kTwo];
-  const size_t in_channel = input_shape_vec[kOne];
-  const size_t in_batch = input_shape_vec[kZero];
-  const size_t out_width = output_shape_vec[kFour];
-  const size_t out_height = output_shape_vec[kThree];
-  const size_t out_depth = output_shape_vec[kTwo];
+  const size_t in_width = static_cast<size_t>(input_shape_vec[kFour]);
+  const size_t in_height = static_cast<size_t>(input_shape_vec[kThree]);
+  const size_t in_depth = static_cast<size_t>(input_shape_vec[kTwo]);
+  const size_t in_channel = static_cast<size_t>(input_shape_vec[kOne]);
+  const size_t in_batch = static_cast<size_t>(input_shape_vec[kZero]);
+  const size_t out_width = static_cast<size_t>(output_shape_vec[kFour]);
+  const size_t out_height = static_cast<size_t>(output_shape_vec[kThree]);
+  const size_t out_depth = static_cast<size_t>(output_shape_vec[kTwo]);
   const size_t in_stride = in_width * in_height * in_depth;
   const size_t out_stride = out_width * out_height * out_depth;
   const size_t batch = in_batch * in_channel;
@@ -221,31 +221,31 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<Address
     dilation_temp_list.push_back(dilation_list_[kOne]);
     dilation_temp_list.push_back(dilation_list_[kTwo]);
   }
-  const size_t k_width = ksize_temp_list[kTwo];
-  const size_t k_height = ksize_temp_list[kOne];
-  const size_t k_depth = ksize_temp_list[kZero];
-  const size_t s_width = strides_temp_list[kTwo];
-  const size_t s_height = strides_temp_list[kOne];
-  const size_t s_depth = strides_temp_list[kZero];
-  const size_t p_width = pads_temp_list[kTwo];
-  const size_t p_height = pads_temp_list[kOne];
-  const size_t p_depth = pads_temp_list[kZero];
-  const size_t d_width = dilation_temp_list[kTwo];
-  const size_t d_height = dilation_temp_list[kOne];
-  const size_t d_depth = dilation_temp_list[kZero];
+  const size_t k_width = static_cast<size_t>(ksize_temp_list[kTwo]);
+  const size_t k_height = static_cast<size_t>(ksize_temp_list[kOne]);
+  const size_t k_depth = static_cast<size_t>(ksize_temp_list[kZero]);
+  const size_t s_width = static_cast<size_t>(strides_temp_list[kTwo]);
+  const size_t s_height = static_cast<size_t>(strides_temp_list[kOne]);
+  const size_t s_depth = static_cast<size_t>(strides_temp_list[kZero]);
+  const size_t p_width = static_cast<size_t>(pads_temp_list[kTwo]);
+  const size_t p_height = static_cast<size_t>(pads_temp_list[kOne]);
+  const size_t p_depth = static_cast<size_t>(pads_temp_list[kZero]);
+  const size_t d_width = static_cast<size_t>(dilation_temp_list[kTwo]);
+  const size_t d_height = static_cast<size_t>(dilation_temp_list[kOne]);
+  const size_t d_depth = static_cast<size_t>(dilation_temp_list[kZero]);
   const size_t length = batch * out_stride;
-  CheckPadsValue(k_width, p_width, k_height, p_height, k_depth, p_depth);
-  CheckDilationValue(d_width, in_width, d_height, in_height, d_depth, in_depth);
-  CheckIfLessOne(strides_temp_list);
-  CheckIfLessOne(dilation_temp_list);
-  CheckIfLessOne(ksize_temp_list);
-  CheckIfLessZero(pads_temp_list);
+  (void)CheckPadsValue(k_width, p_width, k_height, p_height, k_depth, p_depth);
+  (void)CheckDilationValue(d_width, in_width, d_height, in_height, d_depth, in_depth);
+  (void)CheckIfLessOne(strides_temp_list);
+  (void)CheckIfLessOne(dilation_temp_list);
+  (void)CheckIfLessOne(ksize_temp_list);
+  (void)CheckIfLessZero(pads_temp_list);
   if (p_width * p_height * p_depth < kZero) {
     MS_EXCEPTION(ValueError) << "for " << kernel_name_
                              << ", pads should be no less than zero, but get p_width * p_height * p_depth = "
                              << p_width * p_height * p_depth;
   }  // attributes limitations
-  OutPutInitKernel(output_y, length);
+  (void)OutPutInitKernel(output_y, length);
   for (size_t i = 0; i < batch; i++) {
     MaxPool3DGradWithArgmaxSingleCompute(input_grads + i * out_stride, input_argmax + i * out_stride,
                                          output_y + i * in_stride, in_depth, in_height, in_width, out_depth, out_height,

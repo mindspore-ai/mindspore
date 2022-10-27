@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/adaptive_avg_pool_2d_v1_cpu_kernel.h"
 #include <cmath>
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -107,9 +106,9 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::Launch(const std::vector<kernel::AddressPt
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
+    (void)LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    (void)LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of input x "
                       << "should be float16 or float32 but got " << TypeIdLabel(dtype_) << ".";
@@ -131,7 +130,7 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   }
 
   size_t input_dims = input_dim_sizes_.size();
-  auto input_x = reinterpret_cast<SCALAR_T *>(inputs[0]->addr);
+  auto input_x = static_cast<SCALAR_T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_x);
 
   auto node_ = node_wpt_.lock();
@@ -139,7 +138,7 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' node_wpt_, it should not be expired.";
   }
 
-  auto output_y = reinterpret_cast<SCALAR_T *>(outputs[0]->addr);
+  auto output_y = static_cast<SCALAR_T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_y);
 
   AdaptiveCalcArgs<SCALAR_T> args;

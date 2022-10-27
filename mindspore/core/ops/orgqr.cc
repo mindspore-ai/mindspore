@@ -58,11 +58,11 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<Abstr
                              << "rank of tau is " << tau_shape.size() << ".";
   }
   if (rank == kInputWithBatch) {
-    if (x_shape[static_cast<size_t>(rank - kBatchIndex)] != tau_shape[static_cast<size_t>(rank - kBatchIndex)]) {
+    if (x_shape[static_cast<size_t>(rank) - kBatchIndex] != tau_shape[static_cast<size_t>(rank) - kBatchIndex]) {
       MS_EXCEPTION(ValueError) << "For Orgqr, x and tau should share the same batch size"
-                               << ", while x is of batch size " << x_shape[static_cast<size_t>(rank - kBatchIndex)]
+                               << ", while x is of batch size " << x_shape[static_cast<size_t>(rank) - kBatchIndex]
                                << ","
-                               << " and tau is of batch size " << tau_shape[static_cast<size_t>(rank - kBatchIndex)]
+                               << " and tau is of batch size " << tau_shape[static_cast<size_t>(rank) - kBatchIndex]
                                << ".";
     }
   }
