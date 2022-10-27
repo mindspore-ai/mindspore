@@ -199,6 +199,11 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt32, uint32_t, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, uint64_t, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt32, uint64_t, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt32, complex64, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeInt32, complex64, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt32, complex128, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeInt32, complex128,
+                                         int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, double, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt64, double, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, float, int)},
@@ -218,7 +223,12 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, uint32_t, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt64, uint32_t, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, uint64_t, int)},
-    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, uint64_t, int64_t)}};
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, uint64_t, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt64, complex64, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeInt64, complex64, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt64, complex128, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeInt64, complex128,
+                                         int64_t)}};
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentMin, UnsortedSegmentArithmeticCpuKernelMod);
