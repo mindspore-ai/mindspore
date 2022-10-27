@@ -20,31 +20,50 @@
 
 namespace mindspore {
 namespace kernel {
-void UpperBoundCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  sorted_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({sorted_x_shape_, values_shape_, output_shape_})) {
-    return;
+bool UpperBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  constexpr size_t input_num = 2;
+  constexpr size_t output_num = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int UpperBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  sorted_x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  values_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+
   size_t size_exp = 2;
   if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||
       sorted_x_shape_[0] != values_shape_[0]) {
-    MS_LOG(EXCEPTION) << "The shape of input is invalid.";
+    MS_LOG(ERROR) << "The shape of input is invalid.";
+    return KRET_RESIZE_FAILED;
   }
   sorted_x_num_ = static_cast<size_t>(sorted_x_shape_[0] * sorted_x_shape_[1]);
   values_num_ = static_cast<size_t>(values_shape_[0] * values_shape_[1]);
   output_num_ = static_cast<size_t>(output_shape_[0] * output_shape_[1]);
   if (values_num_ != output_num_) {
-    MS_LOG(EXCEPTION) << "Infer the shape of output error.";
+    MS_LOG(ERROR) << "Infer the shape of output error.";
+    return KRET_RESIZE_FAILED;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "UpperBound does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename I, typename O>
