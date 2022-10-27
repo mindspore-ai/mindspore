@@ -26,30 +26,50 @@ constexpr size_t kLogSoftmaxGradInputsNum = 2;
 constexpr size_t kLogSoftmaxGradOutputsNum = 1;
 }  // namespace
 
-void LogSoftmaxGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (IsDynamic(src_shape)) {
-    return;
+bool LogSoftmaxGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSoftmaxGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxGradOutputsNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  int axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  if (axis >= SizeToInt(src_shape.size())) {
-    axis = SizeToInt(src_shape.size()) - 1;
+  return true;
+}
+
+int LogSoftmaxGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  while (axis < 0) {
-    axis += SizeToInt(src_shape.size());
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  axis_ = kernel_ptr->get_axis();
+  auto src_shape = inputs[0]->GetDeviceShapeAdaptively();
+  if (axis_ >= SizeToLong(src_shape.size())) {
+    axis_ = SizeToLong(src_shape.size()) - 1;
+  }
+  while (axis_ < 0) {
+    axis_ += SizeToLong(src_shape.size());
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
-  auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_training, src_desc, axis);
+  auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_training, src_desc, axis_);
   auto prim_desc = CreateDesc<dnnl::logsoftmax_forward::primitive_desc>(desc, engine_);
   // backward description
-  auto backward_desc = CreateDesc<dnnl::logsoftmax_backward::desc>(src_desc, src_desc, axis);
+  auto backward_desc = CreateDesc<dnnl::logsoftmax_backward::desc>(src_desc, src_desc, axis_);
   auto backward_prim_desc = CreateDesc<dnnl::logsoftmax_backward::primitive_desc>(backward_desc, engine_, prim_desc);
   primitive_ = CreatePrimitive<dnnl::logsoftmax_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc);
   AddArgument(DNNL_ARG_DIFF_DST, src_desc);
+  return ret;
 }
 
 bool LogSoftmaxGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
