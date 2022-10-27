@@ -36,17 +36,17 @@ uint32_t CumProdKernel::ParseKernelParam() {
   shape_.clear();
   const auto &x_shape = x.tensor_shape();
   for (int i = 0; i < x_shape.dim_size(); ++i) {
-    shape_.push_back(SizeToInt(x_shape.dim(i).size()));
+    shape_.push_back(static_cast<int64_t>(x_shape.dim(i).size()));
   }
   aicpuops::Tensor out = node_def_.outputs(kDim0);
   dst_shape_.clear();
   const auto &out_shape = out.tensor_shape();
   for (int i = 0; i < out_shape.dim_size(); ++i) {
-    dst_shape_.push_back(SizeToInt(out_shape.dim(i).size()));
+    dst_shape_.push_back(static_cast<int64_t>(out_shape.dim(i).size()));
   }
   auto node_def_attrs = node_def_.attrs();
-  exclusive_ = node_def_attrs[kExclusive].i();
-  reverse_ = node_def_attrs[kReverse].i();
+  exclusive_ = static_cast<bool>(node_def_attrs[kExclusive].i());
+  reverse_ = static_cast<bool>(node_def_attrs[kReverse].i());
   return kAicpuKernelStateSucess;
 }
 
@@ -93,7 +93,7 @@ uint32_t CumProdKernel::CumProdTask() {
     AICPU_LOGE("CumProdKernel's axis must be integer.");
     return kAicpuKernelStateFailed;
   }
-  axis_ = IntToSize(*axis_addr);
+  axis_ = LongToSize(*axis_addr);
   Reshape();
   auto out_addr = reinterpret_cast<T *>(io_addrs_[kDim2]);
   LaunchCumProd<T>(x_addr, out_addr);
@@ -104,16 +104,16 @@ void CumProdKernel::Reshape() {
   while (axis_ < 0) {
     axis_ += shape_.size();
   }
-  dims_[kDim1] = IntToSize(shape_[axis_]);
+  dims_[kDim1] = LongToSize(shape_[axis_]);
   for (size_t i = 0; i < axis_; i++) {
-    dims_[kDim0] *= IntToSize(shape_[i]);
+    dims_[kDim0] *= LongToSize(shape_[i]);
   }
   for (size_t i = axis_ + 1; i < shape_.size(); i++) {
-    dims_[kDim2] *= IntToSize(shape_[i]);
+    dims_[kDim2] *= LongToSize(shape_[i]);
   }
   stride_ = dims_[kDim1] * dims_[kDim2];
   stride2_ = dims_[kDim2];
-  lens_ = shape_[kDim0] > 0 ? IntToSize(shape_[kDim0]) : 1;
+  lens_ = shape_[kDim0] > 0 ? LongToSize(shape_[kDim0]) : 1;
 }
 
 template <typename T>
@@ -168,11 +168,11 @@ void CumProdKernel::CumProdKernelReverse(const T *input, T *output) const {
     }
     size_t offset = k1 * stride_ + k2;
     for (int j = SizeToInt(dims_[kDim1] - 1); j >= 0; --j) {
-      size_t read_index = IntToSize(j * stride2_ + offset);
+      size_t read_index = IntToSize(j) * stride2_ + offset;
       if (j == SizeToInt(dims_[kDim1] - 1)) {
         output[read_index] = input[read_index];
       } else {
-        size_t read_index2 = IntToSize((j + 1) * stride2_ + offset);
+        size_t read_index2 = IntToSize((j + 1)) * stride2_ + offset;
         output[read_index] = output[read_index2] * static_cast<T>(input[read_index]);
       }
     }
@@ -212,11 +212,11 @@ void CumProdKernel::RightMove(const T *input, T *output) const {
     }
     size_t offset = k1 * stride_ + k2;
     for (int j = SizeToInt(dims_[kDim1] - 1); j >= 0; --j) {
-      size_t read_index = j * stride2_ + offset;
+      size_t read_index = IntToSize(j) * stride2_ + offset;
       if (j == SizeToInt(dims_[kDim1] - 1)) {
         output[read_index] = static_cast<T>(1);
       } else {
-        size_t read_index2 = IntToSize((j + 1) * stride2_ + offset);
+        size_t read_index2 = IntToSize((j + 1)) * stride2_ + offset;
         output[read_index] = input[read_index2];
       }
     }
