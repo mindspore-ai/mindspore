@@ -296,7 +296,7 @@ class _LayerNorm(Cell):
             Tensor of shape :math:`(batch, seq_length, hidden_size)`.
     """
 
-    def __init__(self, normalized_shape, eps=1e-5, param_init_type=mstype.float32, is_self_defined=True):
+    def __init__(self, normalized_shape, eps=1e-5, param_init_type=mstype.float32, is_self_defined=False):
         super(_LayerNorm, self).__init__()
         if param_init_type not in [mstype.float32, mstype.float16]:
             raise TypeError("The type of parameter 'param_init_type' should in [float32, float16], "
