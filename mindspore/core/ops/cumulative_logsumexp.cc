@@ -60,6 +60,16 @@ AbstractBasePtr CumulativeLogsumexpInfer(const abstract::AnalysisEnginePtr &, co
   auto shape = CumulativeLogsumexpInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
+
+bool CumulativeLogsumexp::get_exclusive() const {
+  auto value_ptr = this->GetAttr(KExclusive);
+  return GetValue<bool>(value_ptr);
+}
+
+bool CumulativeLogsumexp::get_reverse() const {
+  auto value_ptr = this->GetAttr(KReverse);
+  return GetValue<bool>(value_ptr);
+}
 REGISTER_PRIMITIVE_EVAL_IMPL(CumulativeLogsumexp, prim::kPrimCumulativeLogsumexp, CumulativeLogsumexpInfer, nullptr,
                              true);
 }  // namespace ops

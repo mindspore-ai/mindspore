@@ -51,23 +51,37 @@ constexpr char kKernelName[] = "CSRSparseMatrixToSparseTensor";
     .AddOutputAttr(kNumberType##t8)
 }  // namespace
 
-void CSRSparseMatrixToSparseTensorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  indice_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  value_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex4);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto x_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex4);
-  auto dense_shape_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
+bool CSRSparseMatrixToSparseTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                     const std::vector<KernelTensorPtr> &inputs,
+                                                     const std::vector<KernelTensorPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCSRSparseMatrixToSparseTensorInputsNum, kKernelName);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCSRSparseMatrixToSparseTensorOutputsNum, kKernelName);
+  indice_type_ = inputs[kInputIndex0]->GetDtype();
+  value_type_ = inputs[kInputIndex4]->GetDtype();
+  kernel_name_ = base_operator->GetPrim()->name();
+  return true;
+}
+
+int CSRSparseMatrixToSparseTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                      const std::vector<KernelTensorPtr> &inputs,
+                                                      const std::vector<KernelTensorPtr> &outputs,
+                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto x_indices_shape = inputs[kInputIndex4]->GetShapeVector();
+  auto dense_shape_shape = inputs[kInputIndex0]->GetShapeVector();
   total_nnz_ = static_cast<size_t>(x_indices_shape[kZero]);
   rank_ = static_cast<size_t>(dense_shape_shape[kZero]);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kCSRSparseMatrixToSparseTensorInputsNum, kKernelName);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kCSRSparseMatrixToSparseTensorOutputsNum, kKernelName);
   if (rank_ != kRankWithoutBatch && rank_ != kRankWithBatch) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input dense_shape should "
-                      << "have rank 2 or 3, but got " << rank_ << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the input dense_shape should "
+                  << "have rank 2 or 3, but got " << rank_ << ".";
+    return KRET_RESIZE_FAILED;
   }
+  return KRET_OK;
 }
 
 bool CSRSparseMatrixToSparseTensorCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -22,6 +22,7 @@
 #include <string>
 #include <set>
 #include <unordered_map>
+#include <map>
 #include <functional>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -34,13 +35,11 @@ constexpr int IDX_INP_SHAPE = 1;
 constexpr int IDX_PARAM = 2;
 constexpr int IDX_OUT_SHAPE = 3;
 template <typename T>
-class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  EinsumGradGpuKernelMod() { ResetResource(); }
+  EinsumGradGpuKernelMod() {}
   ~EinsumGradGpuKernelMod() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+
   // inputs: 0, data0; 1, data1;...k,datak; k+1, dout
   // workspace: 0, mid_res0; 1,mid_res1; ... k-1,mid_resk-1; k,work0; k + 1,work1; k+2, shape0;k+3; shape1,k+4; shape2,
   // outputs: 0 dinput0; 1dinput1; ... k, dinputk
@@ -68,79 +67,51 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    node_name_ = node_name;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    node_name_ = base_operator->GetPrim()->name();
+    size_t input_num = inputs.size();
     if (input_num < INPUT_NUM_MIN) {
       MS_LOG(ERROR) << "For " << node_name_ << ", input number should be no less than 2, but got " << input_num;
       return false;
     }
-    type_id_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+    type_id_ = inputs[0]->GetDtype();
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
+    }
+
+    size_t input_num = inputs.size();
     for (size_t idx = 0; idx < input_num - 1; ++idx) {
-      TypeId cur_type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, idx);
+      TypeId cur_type_id = inputs[idx]->GetDtype();
       if (cur_type_id != type_id_) {
         MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
         return false;
       }
-      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
+      auto in_shape = inputs[idx]->GetDeviceShapeAdaptively();
       input_shapes_.push_back(in_shape);
     }
-    std::string equation = GetAttr<std::string>(kernel_node, "equation");
+
+    std::string equation = GetValue<std::string>(base_operator->GetAttr("equation"));
     single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());
-    bool flag = func_helper_.Preprocess(equation, node_name, input_shapes_, &out_shape_, &single_op_, &res_op_);
+    bool flag = func_helper_.Preprocess(equation, node_name_, input_shapes_, &out_shape_, &single_op_, &res_op_);
     if (!flag) {
       return false;
     }
-    InitSizeLists();
-    return true;
+    InitWorkSizeLists();
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    input_shapes_.clear();
-    out_shape_.clear();
-    single_op_.clear();
-    res_op_.clear();
-    reduce_sum_wrok_size_ = 0;
-    work_size_ = 0;
-    shape_size_ = 0;
-  }
   // inputs: (0, data0; 1, data1;...k,datak); k+1, dout
   // workspace: 0, mid_res0; 1,mid_res1; ... k-1,mid_resk-1; k,work0; k + 1,work1; k+2, shape0;k+3; shape1,k+4; shape2,
   // outputs: 0 dinput0; 1dinput1; ... k, dinputk
- protected:
-  void InitSizeLists() override {
-    InitInpOutSizeLists();
-    InitWorkSizeLists();
-  }
-  void InitInpOutSizeLists() {
-    size_t size = 0;
-    // if (T == float16) { reduce_sum_work_size = size * 2; } else { reduce_sum_work_size = size; }
-    size_t mul_val = (type_id_ == kNumberTypeFloat16) ? HALF_TYPE_WORK_SIZE_MUL : 1;
-    for (auto &op_vec : single_op_) {
-      auto &inp_shape = std::get<IDX_INP_SHAPE>(op_vec[0]);
-      size = func_helper_.GetShapeSize(inp_shape);
-      work_size_ = work_size_ > size ? work_size_ : size;
-      shape_size_ = inp_shape.size() > shape_size_ ? inp_shape.size() : shape_size_;
-      input_size_list_.emplace_back(size);
-      output_size_list_.emplace_back(size);
-
-      for (auto &cur_op : op_vec) {
-        auto name = std::get<IDX_NAME>(cur_op);
-        auto shape = std::get<IDX_INP_SHAPE>(cur_op);
-        size = func_helper_.GetShapeSize(shape);
-        if (name == "ReduceSum") {
-          reduce_sum_wrok_size_ = reduce_sum_wrok_size_ > size * mul_val ? reduce_sum_wrok_size_ : size * mul_val;
-        }
-      }
-    }
-    size = func_helper_.GetShapeSize(out_shape_);
-    input_size_list_.emplace_back(size);
-  }
+ private:
   void InitWorkSizeLists() {
     size_t size = 0;
     size_t mul_val = (type_id_ == kNumberTypeFloat16) ? HALF_TYPE_WORK_SIZE_MUL : 1;
@@ -175,6 +146,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.emplace_back(shape_size_ * sizeof(size_t));
     workspace_size_list_.emplace_back(shape_size_ * sizeof(size_t));
   }
+
   void LaunchForward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     SingleOpForward(inputs, workspace, outputs, stream_ptr);
@@ -188,6 +160,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     ResOpBackward(inputs, workspace, outputs, stream_ptr);
     SingleOpBackward(inputs, workspace, outputs, stream_ptr);
   }
+
   void ResOpBackward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     size_t max_x_idx = inputs.size() - DIM_TWO;
@@ -263,6 +236,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       --two_op_cnt;
     }
   }
+
   void SingleOpBackward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     size_t max_x_idx = inputs.size() - DIM_TWO;
@@ -290,6 +264,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
     }
   }
+
   void SingleOpForward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     // 正向
@@ -324,6 +299,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
     }
   }
+
   void ResOpForward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     T *single_fir_ptr = GetDeviceAddress<T>(outputs, 0);
@@ -372,7 +348,6 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
- private:
   EinsumHelper<T> func_helper_;
   std::string node_name_;
   TypeId type_id_;

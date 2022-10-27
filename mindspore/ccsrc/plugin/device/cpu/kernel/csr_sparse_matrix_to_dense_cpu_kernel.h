@@ -28,18 +28,23 @@
 
 namespace mindspore {
 namespace kernel {
-class CSRSparseMatrixToDenseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CSRSparseMatrixToDenseCpuKernelMod : public NativeCpuKernelMod {
  public:
   CSRSparseMatrixToDenseCpuKernelMod() = default;
   ~CSRSparseMatrixToDenseCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncData() override;
 
  private:
   template <typename valueT, typename indiceT>
@@ -50,7 +55,8 @@ class CSRSparseMatrixToDenseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t num_cols_{0};
   TypeId values_type{kTypeUnknown};
   TypeId indices_type{kTypeUnknown};
-  CNodeWeakPtr node_wpt_;
+  std::vector<KernelTensorPtr> outputs_{};
+  std::vector<int64_t> y_dims_;
 };
 }  // namespace kernel
 }  // namespace mindspore
