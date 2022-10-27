@@ -36,6 +36,20 @@ abstract::ShapePtr ZetaInferShape(const PrimitivePtr &primitive, const std::vect
   auto q_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("Zeta", input_args, 1);
   auto x_shape = x_shape_ptr->shape();
   auto q_shape = q_shape_ptr->shape();
+  // support dynamic rank
+  if (IsDynamicRank(x_shape) || IsDynamicRank(q_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
+  // support dynamic rank
+  if (IsDynamic(x_shape) || IsDynamic(q_shape)) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < x_shape.size(); ++i) {
+      shape_out.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::Shape>(shape_out);
+  }
+
   CheckAndConvertUtils::Check("input_x size", int64_t(x_shape.size()), kGreaterEqual, int64_t(q_shape.size()),
                               prim_name);
   if (x_shape.size() != 0 && x_shape[0] == 0) {

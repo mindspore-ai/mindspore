@@ -22,20 +22,17 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
-namespace {
-const std::size_t kZetaInputNum{2u};
-const std::size_t kZetaOutputNum{1u};
-}  // namespace
-
 namespace mindspore {
 namespace kernel {
-void ZetaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input0_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool ZetaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  constexpr size_t input_num = 2;
+  constexpr size_t output_num = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 template <typename T>
@@ -45,6 +42,7 @@ inline T ScalarZeta(T a, T b) {
 
 template <typename T>
 bool ZetaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
   T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
@@ -57,56 +55,14 @@ bool ZetaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
   return true;
 }
 
-template <typename T>
-bool ZetaCpuKernelMod::CheckZeta(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> &outputs, std::size_t inputs_num,
-                                 std::size_t outputs_num) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(inputs[1]);
-  if (!IsSameShape(input0_shape_, input1_shape_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'x' should be same with the shape of 'q', "
-                      << "but got the shape of 'x': " << Vector2Str(input0_shape_)
-                      << " and 'q': " << Vector2Str(input1_shape_);
-  }
-  if (!IsSameShape(input0_shape_, output_shape_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of output should be same with the shape of the 'x', "
-                      << "but got the shape of the output: " << Vector2Str(output_shape_)
-                      << " and 'x': " << Vector2Str(input0_shape_);
-  }
-  return true;
-}
-
-bool ZetaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                              const std::vector<kernel::AddressPtr> &workspace,
-                              const std::vector<kernel::AddressPtr> &outputs) {
-  switch (dtype_) {
-    case (kNumberTypeFloat32):
-      if (CheckZeta<float>(inputs, outputs, kZetaInputNum, kZetaOutputNum) == false) {
-        return false;
-      }
-      return LaunchKernel<float>(inputs, outputs);
-      break;
-    case (kNumberTypeFloat64):
-      if (CheckZeta<double>(inputs, outputs, kZetaInputNum, kZetaOutputNum) == false) {
-        return false;
-      }
-      return LaunchKernel<double>(inputs, outputs);
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "the datatype of the input not support, support datatype: "
-                           "float32, float64.";
-  }
-  return true;
-}
-
-std::vector<KernelAttr> ZetaCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+const std::vector<std::pair<KernelAttr, ZetaCpuKernelMod::KernelRunFunc>> &ZetaCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, ZetaCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &ZetaCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &ZetaCpuKernelMod::LaunchKernel<double>},
   };
-  return support_list;
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Zeta, ZetaCpuKernelMod);
