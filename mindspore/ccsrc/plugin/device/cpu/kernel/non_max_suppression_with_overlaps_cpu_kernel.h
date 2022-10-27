@@ -14,30 +14,42 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NON_MAX_SUPPRESSION_WITH_OVERLAPS_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NON_MAX_SUPPRESSION_WITH_OVERLAPS_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NON_MAX_SUPPRESSION_WITH_OVERLAPS_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NON_MAX_SUPPRESSION_WITH_OVERLAPS_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
+#include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class NonMaxSuppressionWithOverlapsCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class NonMaxSuppressionWithOverlapsCpuKernelMod : public NativeCpuKernelMod {
  public:
   NonMaxSuppressionWithOverlapsCpuKernelMod() = default;
   ~NonMaxSuppressionWithOverlapsCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  void SyncData() override;
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
-  int num_boxes_ = static_cast<int>(0);
-  CNodeWeakPtr node_wpt_;
+  int num_boxes_{0};
+  std::vector<KernelTensorPtr> outputs_{};
+  int64_t real_output_size_{0};  // Dynamic shape related.
 };
 };  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NON_MAX_SUPPRESSION_WITH_OVERLAPS_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NON_MAX_SUPPRESSION_WITH_OVERLAPS_CPU_KERNEL_H_
