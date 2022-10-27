@@ -828,6 +828,125 @@ AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp, min_shp, max_shp));
 }
 
+static ShapeVector GetShape(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list,
+                            const std::string &op_name) {
+  ShapeVector shape;
+  if (args_spec_list.size() == kSizeTwo) {
+    auto input_value = args_spec_list[1]->BuildValue();
+    if (input_value->isa<tensor::Tensor>()) {
+      shape = CheckAndConvertUtils::CheckTensorIntValue("shape", input_value, op_name);
+    } else {
+      shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", input_value, op_name);
+    }
+  } else {
+    ValuePtr sh = primitive->GetAttr("shape");
+    MS_EXCEPTION_IF_NULL(sh);
+    if (sh->isa<ValueTuple>()) {
+      auto reshape_value_tuple = sh->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(reshape_value_tuple);
+      auto reshape_tuple = reshape_value_tuple->value();
+      (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(shape),
+                           [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+    } else if (sh->isa<tensor::Tensor>()) {
+      shape = CheckAndConvertUtils::CheckTensorIntValue("shape", sh, "Reshape");
+    } else {
+      MS_EXCEPTION(ValueError) << "In stage of execution， the primitive[Reshape]'s input['shape'] must be a tuple or "
+                               << "constant Tensor.";
+    }
+  }
+  return shape;
+}
+
+AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  // padding_axis_value is for the condition that the number of -1 in shape > 1, , but just paddingshape
+  std::vector<int> padding_axis_value;
+  ValuePtr padding_axis = primitive->GetAttr("reshape_padding_axis");
+  if (padding_axis != nullptr) {
+    padding_axis_value = GetValue<std::vector<int>>(padding_axis);
+  }
+
+  ShapeVector shape = GetShape(primitive, args_spec_list, op_name);
+  ShapeVector x_shape = x->shape()->shape();
+  ShapeVector x_max_shape = x->shape()->max_shape();
+  ShapeVector x_min_shape = x->shape()->min_shape();
+  if (x_max_shape.empty()) {
+    x_max_shape = x_shape;
+  }
+  if (x_min_shape.empty()) {
+    x_min_shape = x_shape;
+  }
+
+  auto max_shape = shape;
+  auto min_shape = shape;
+  int64_t x_num = 1;
+  int64_t x_min_num = 1;
+  int64_t x_max_num = 1;
+  for (int64_t value : x_shape) {
+    x_num = LongMulWithOverflowCheck(value, x_num);
+  }
+  for (int64_t value : x_min_shape) {
+    x_min_num = LongMulWithOverflowCheck(value, x_min_num);
+  }
+  for (int64_t value : x_max_shape) {
+    x_max_num = LongMulWithOverflowCheck(value, x_max_num);
+  }
+
+  auto it_first = find(shape.begin(), shape.end(), -1);
+  if (it_first != shape.end()) {
+    if (!padding_axis_value.empty()) {
+      // the condition that the number of -1 in shape is > 1, but just paddingshape
+      for (size_t index = 0; index < padding_axis_value.size(); ++index) {
+        shape[IntToSize(padding_axis_value[index])] = x_shape[index];
+        min_shape[IntToSize(padding_axis_value[index])] = x_min_shape[index];
+        max_shape[IntToSize(padding_axis_value[index])] = x_max_shape[index];
+      }
+    } else {
+      auto it_second = find(it_first + 1, shape.end(), -1);
+      if (it_second != shape.end()) {
+        MS_LOG(EXCEPTION) << "At most one component of input shape can be -1, but got " << shape;
+      }
+      auto index = LongToSize(std::distance(shape.begin(), it_first));
+      int64_t infer_value = x_num;
+      int64_t infer_min_value = x_min_num;
+      int64_t infer_max_value = x_max_num;
+      for (size_t i = 0; i < shape.size(); ++i) {
+        int64_t value = shape[i];
+        if (value != -1 && value != 0) {
+          infer_value = infer_value / value;
+          infer_min_value = infer_min_value / value;
+          infer_max_value = infer_max_value / value;
+        }
+      }
+      shape[index] = infer_value;
+      min_shape[index] = infer_min_value;
+      max_shape[index] = infer_max_value;
+    }
+  }
+
+  int64_t shape_num = 1;
+  for (int64_t value : shape) {
+    shape_num = LongMulWithOverflowCheck(value, shape_num);
+  }
+  if (shape_num != x_num) {
+    MS_LOG(EXCEPTION) << "The accumulate of x_shape must be equal to out_shape, but got x_shape: " << x_shape
+                      << ", and out_shape: " << shape;
+  }
+
+  if (IsDynamic(min_shape) || IsDynamic(max_shape)) {
+    min_shape.clear();
+    max_shape.clear();
+  }
+
+  AbstractTensorPtr ret =
+    std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  return ret;
+}
+
 AbstractBasePtr InferImplMapUniform(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // Inputs: one tensor.
