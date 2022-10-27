@@ -23,6 +23,25 @@ from PIL import Image
 import mindspore
 import mindspore._c_dataengine as cde
 
+if Image.__version__ >= "9.1.0":
+    FLIP_LEFT_RIGHT = Image.Transpose.FLIP_LEFT_RIGHT
+    FLIP_TOP_BOTTOM = Image.Transpose.FLIP_TOP_BOTTOM
+    PERSPECTIVE = Image.Transform.PERSPECTIVE
+    AFFINE = Image.Transform.AFFINE
+    NEAREST = Image.Resampling.NEAREST
+    ANTIALIAS = Image.Resampling.LANCZOS
+    LINEAR = Image.Resampling.BILINEAR
+    CUBIC = Image.Resampling.BICUBIC
+else:
+    FLIP_LEFT_RIGHT = Image.FLIP_LEFT_RIGHT
+    FLIP_TOP_BOTTOM = Image.FLIP_TOP_BOTTOM
+    PERSPECTIVE = Image.PERSPECTIVE
+    AFFINE = Image.AFFINE
+    NEAREST = Image.NEAREST
+    ANTIALIAS = Image.ANTIALIAS
+    LINEAR = Image.LINEAR
+    CUBIC = Image.CUBIC
+
 
 class AutoAugmentPolicy(str, Enum):
     """
@@ -285,16 +304,11 @@ class Inter(IntEnum):
         """
         Function to return Python type for Interpolation Mode.
         """
-        if Image.__version__ >= "9.1.0":
-            python_values = {Inter.NEAREST: Image.Resampling.NEAREST,
-                             Inter.ANTIALIAS: Image.Resampling.LANCZOS,
-                             Inter.LINEAR: Image.Resampling.BILINEAR,
-                             Inter.CUBIC: Image.Resampling.BICUBIC}
-        else:
-            python_values = {Inter.NEAREST: Image.NEAREST,
-                             Inter.ANTIALIAS: Image.ANTIALIAS,
-                             Inter.LINEAR: Image.LINEAR,
-                             Inter.CUBIC: Image.CUBIC}
+        python_values = {Inter.NEAREST: NEAREST,
+                         Inter.ANTIALIAS: ANTIALIAS,
+                         Inter.LINEAR: LINEAR,
+                         Inter.CUBIC: CUBIC}
+
         return python_values.get(inter_type)
 
     @staticmethod
