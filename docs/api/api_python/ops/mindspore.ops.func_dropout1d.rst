@@ -1,7 +1,7 @@
 mindspore.ops.dropout1d
 ========================
 
-.. py:function:: mindspore.ops.dropout1d(x, p=0.5)
+.. py:function:: mindspore.ops.dropout1d(x, p=0.5, training=True)
 
     在训练期间，以服从伯努利分布的概率 `p` 随机将输入Tensor的某些通道归零。（对于shape为 `NCL` 的三维Tensor，
     其通道特征图指的是后一维 `L` 的一维特征图）。

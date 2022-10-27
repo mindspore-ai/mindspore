@@ -210,7 +210,7 @@ class Dropout1d(Cell):
           `C` is the number of channels, `L` is the feature length. The data type must be int8, int16, int32,
           int64, float16, float32 or float64.
 
-    Returns:
+    Outputs:
         Tensor, output, with the same shape and data type as `x`.
 
     Raises:
