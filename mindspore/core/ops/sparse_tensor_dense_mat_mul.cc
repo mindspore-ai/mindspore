@@ -39,7 +39,7 @@ void CheckShapeRank(const size_t cur_rank, const size_t expected_rank, const std
 }
 }  // namespace
 
-bool checkType(std::string name, TypePtr dtype, std::set<TypePtr> vtypes, const PrimitivePtr &primitive) {
+bool checkType(std::string name, TypePtr dtype, const std::set<TypePtr> &vtypes, const PrimitivePtr &primitive) {
   std::map<std::string, TypePtr> types;
   (void)types.emplace(name, dtype);
   try {
@@ -50,7 +50,7 @@ bool checkType(std::string name, TypePtr dtype, std::set<TypePtr> vtypes, const 
   return true;
 }
 
-bool checkContainer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args, std::string *info) {
+bool checkContainer(const std::vector<AbstractBasePtr> &input_args, std::string *const info) {
   const int kTwo = 2;
   const int kOne = 1;
   const int kZero = 0;
@@ -139,7 +139,7 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   auto x1_shape = input_args[2];
   auto x1_shape_value = x1_shape->BuildValue();
   std::string info;
-  if (!checkContainer(primitive, input_args, &info)) {
+  if (!checkContainer(input_args, &info)) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << info;
   }
   if (x1_shape->isa<abstract::AbstractTuple>()) {
@@ -176,8 +176,12 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
     x2_row = x2_shape[0];
     x2_col = x2_shape[1];
   }
-  if (adjoint_av) std::swap(x1_row, x1_col);
-  if (adjoint_bv) std::swap(x2_row, x2_col);
+  if (adjoint_av) {
+    std::swap(x1_row, x1_col);
+  }
+  if (adjoint_bv) {
+    std::swap(x2_row, x2_col);
+  }
   int64_t y_row = x1_row, y_col = x2_col;
   std::vector<int64_t> y_shape{y_row, y_col};
   return std::make_shared<abstract::Shape>(y_shape);
@@ -185,7 +189,7 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
 
 TypePtr SparseTensorDenseMatmulInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   std::map<std::string, TypePtr> types;

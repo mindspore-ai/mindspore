@@ -40,7 +40,7 @@ std::vector<int64_t> TenToTwoV2(int64_t num) {
     output.push_back(0);
     return output;
   }
-  while (num) {
+  while (num != 0) {
     output.push_back(num % n_two);
     num /= n_two;
   }
@@ -50,8 +50,7 @@ std::vector<int64_t> TenToTwoV2(int64_t num) {
 
 void GetAndCheckAttrMaskV2(const PrimitivePtr &primitive, std::vector<int64_t> *begin_pos,
                            std::vector<int64_t> *end_pos, std::vector<int64_t> *ellipsis_pos,
-                           std::vector<int64_t> *new_axis_pos, std::vector<int64_t> *shrink_axis_pos,
-                           bool slice_dynamic) {
+                           std::vector<int64_t> *new_axis_pos, std::vector<int64_t> *shrink_axis_pos) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto begin_mask = GetValue<int64_t>(primitive->GetAttr(kBeginMask));
   auto end_mask = GetValue<int64_t>(primitive->GetAttr(kEndMask));
@@ -157,7 +156,7 @@ void EllipsisInferShapeV2(const PrimitivePtr &primitive, const std::vector<int64
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMaskV2(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, false);
+  GetAndCheckAttrMaskV2(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
   size_t num = 0;
   for (size_t n = j + 1; n < slice_len; n++) {
     if (new_axis_pos[n] == 1) {
@@ -214,7 +213,7 @@ std::vector<int64_t> ComputeInferShapeV2(const PrimitivePtr &primitive, const st
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMaskV2(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, true);
+  GetAndCheckAttrMaskV2(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
 
   size_t i = 0;
   size_t j = 0;
@@ -282,7 +281,7 @@ ShapeMap DynamicComputeInferShapeV2(const PrimitivePtr &primitive, const std::ve
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMaskV2(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, false);
+  GetAndCheckAttrMaskV2(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
 
   size_t i = 0;
   size_t j = 0;

@@ -122,14 +122,14 @@ TypePtr SparseToDenseV2InferType(const PrimitivePtr &prim, const std::vector<Abs
   auto infer_type_default_value = input_args[kInputIndex3]->BuildType();
   const std::set<TypePtr> valid_types = {kInt64, kInt32};
   std::map<std::string, TypePtr> types;
-  (void)types.insert({"indices", infer_type_indices});
-  (void)types.insert({"output_shape", infer_type_output_shape});
+  (void)types.emplace("indices", infer_type_indices);
+  (void)types.emplace("output_shape", infer_type_output_shape);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   const std::set<TypePtr> valid_types_value = {kInt64, kInt32,   kInt16,   kInt8,    kUInt16,
                                                kUInt8, kFloat16, kFloat32, kFloat64, kBool};
   std::map<std::string, TypePtr> types_value;
-  (void)types_value.insert({"values", infer_type_values});
-  (void)types_value.insert({"default_value", infer_type_default_value});
+  (void)types_value.emplace("values", infer_type_values);
+  (void)types_value.emplace("default_value", infer_type_default_value);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types_value, valid_types_value, prim_name);
   return infer_type_values;
 }
@@ -156,7 +156,7 @@ AbstractBasePtr SparseToDenseV2Infer(const abstract::AnalysisEnginePtr &, const 
     MS_EXCEPTION_IF_NULL(item);
   }
   const int64_t input_num = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto infertype = SparseToDenseV2InferType(primitive, input_args);
   auto infershape = SparseToDenseV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);

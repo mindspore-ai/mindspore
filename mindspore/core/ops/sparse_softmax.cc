@@ -88,8 +88,8 @@ TypePtr SparseSoftmaxInferType(const PrimitivePtr &prim, const std::vector<Abstr
   auto infer_type_shape = input_args[kInputIndex2]->BuildType();
   const std::set<TypePtr> valid_types = {kInt64};
   std::map<std::string, TypePtr> types;
-  (void)types.insert({"indices", infer_type_indices});
-  (void)types.insert({"shape", infer_type_shape});
+  (void)types.emplace("indices", infer_type_indices);
+  (void)types.emplace("shape", infer_type_shape);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   const std::set<TypePtr> valid_types_values = {kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("values", infer_type_values, valid_types_values, prim_name);
@@ -102,7 +102,7 @@ AbstractBasePtr SparseSoftmaxInfer(const abstract::AnalysisEnginePtr &, const Pr
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infertype = SparseSoftmaxInferType(primitive, input_args);
   auto infershape = SparseSoftmaxInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);

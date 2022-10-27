@@ -58,7 +58,7 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
   std::reverse(negative.begin(), negative.end());
   ShapeVector out_shape;
   for (size_t i = 0; i < dims; i++) {
-    out_shape.push_back((int64_t)std::max(std::max(x[i], positive[i]), negative[i]));
+    out_shape.push_back(std::max(std::max(x[i], positive[i]), negative[i]));
     if ((x[i] != out_shape[i] && x[i] != SizeToLong(kDim1)) ||
         (positive[i] != out_shape[i] && positive[i] != SizeToLong(kDim1)) ||
         (negative[i] != out_shape[i] && negative[i] != SizeToLong(kDim1))) {
@@ -67,7 +67,7 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
   }
   (void)out_shape.erase(out_shape.begin() + 1);
   int64_t reduction;
-  (void)CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
+  CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   mindspore::Reduction reduction_ = static_cast<mindspore::Reduction>(reduction);
   if (reduction_ == REDUCTION_SUM || reduction_ == MEAN) {
     out_shape.resize(0);
@@ -117,7 +117,7 @@ AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, cons
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = TripletMarginLossInferType(primitive, input_args);
   auto infer_shape = TripletMarginLossInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

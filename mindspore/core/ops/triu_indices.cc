@@ -28,8 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr TriuIndicesInferShape(const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr TriuIndicesInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) {
   auto row_ptr = primitive->GetAttr("row");
   MS_EXCEPTION_IF_NULL(row_ptr);
   auto col_ptr = primitive->GetAttr("col");
@@ -48,7 +47,7 @@ abstract::ShapePtr TriuIndicesInferShape(const PrimitivePtr &primitive,
     auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col, row + offset));
     auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row, row + offset));
     auto n_row_trapezoid = (m_last_row - m_first_row + 1);
-    tril_size = static_cast<int64_t>(((m_first_row + m_last_row) * n_row_trapezoid) >> 1);
+    tril_size = static_cast<int64_t>(LongToUlong((m_first_row + m_last_row) * n_row_trapezoid) >> 1);
     auto diff_row = n_row_all - n_row_trapezoid;
     if (diff_row > 0) {
       tril_size += diff_row * col;
@@ -59,7 +58,7 @@ abstract::ShapePtr TriuIndicesInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(y_shape);
 }
 
-TypePtr TriuIndicesInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr TriuIndicesInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) {
   auto dtype_attr = primitive->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_attr);
   auto infer_type = dtype_attr->cast<TypePtr>();
