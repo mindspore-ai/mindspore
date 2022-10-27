@@ -125,30 +125,24 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Addr
   for (size_t i = 0; i < dimension; ++i) {
     transpose_shape[i] = input_shape_[axes[i]];
   }
-
   TransposeIterator base_iter(std::move(transpose_shape), std::move(axes), input_shape_);
   auto task = [this, &base_iter, input_addr, output_mean_addr, output_std_addr, stride](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start * stride);
     for (size_t i = start; i < end; ++i) {
-      float mean = 0.0;
+      std::vector<float> src_data(stride);
       for (size_t j = 0; j < stride; ++j) {
-        mean += static_cast<float>(input_addr[iter.GetPos()]);
+        src_data[j] = static_cast<float>(input_addr[iter.GetPos()]);
         iter.GenNextPos();
       }
-      mean = mean / SizeToFloat(stride);
+      float mean = 0.0f;
+      ReduceMeanWithAxis(src_data.data(), &mean, stride);
       output_mean_addr[i] = static_cast<T>(mean);
-    }
-    iter = base_iter;
-    iter.SetPos(start * stride);
-    for (size_t i = start; i < end; ++i) {
-      float deviation = 0.0;
-      for (size_t j = 0; j < stride; ++j) {
-        deviation += std::pow(static_cast<float>(input_addr[iter.GetPos()] - output_mean_addr[i]), kPowExp);
-        iter.GenNextPos();
-      }
-      float length = unbiased_ ? static_cast<float>(stride - 1) : static_cast<float>(stride);
-      deviation = std::sqrt(deviation / length);
+
+      float deviation = 0.0f;
+      float size = unbiased_ ? static_cast<float>(stride - 1) : static_cast<float>(stride);
+      ReduceDeviation(src_data.data(), stride, mean, &deviation);
+      deviation = std::sqrt(deviation / SizeToFloat(size));
       output_std_addr[i] = static_cast<T>(deviation);
     }
   };

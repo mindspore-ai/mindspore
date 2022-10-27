@@ -199,6 +199,20 @@ static inline int64_t  ReduceSumDim2Axis0@SIMD_INSTRUCTION@(int64_t index, size_
   return index;
 }
 
+static inline int64_t FloatReduceDeviation@SIMD_INSTRUCTION@(int64_t index, const float *src_data, float mean, size_t size, float *deviation) {
+  SIMD_F32 fs_deviation = SIMD_MOV_F32(0);
+  SIMD_F32 fs_mean = SIMD_MOV_F32(mean);
+  for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 fs_sub = SIMD_LD_F32(src_data + index);
+
+    fs_sub = SIMD_SUB_F32(fs_sub, fs_mean);
+    SIMD_F32 fs_pow = SIMD_MUL_F32(fs_sub, fs_sub);
+    fs_deviation = SIMD_ADD_F32(fs_deviation, fs_pow);
+  }
+  *deviation += SIMD_GET_SUM_F32(fs_deviation);
+  return index;
+}
+
 @SIMD_INSTRUCTION_END@
 #ifdef __cplusplus
 }
