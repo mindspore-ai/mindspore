@@ -31,6 +31,7 @@ from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
+from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore._checkparam import Rel
@@ -8374,6 +8375,104 @@ def nansum(x, axis, keepdims=False, *, dtype=None):
     if (res_dtype is not None) and (res_dtype == mstype.bool_):
         res = res.astype(res_dtype)
     return res
+
+
+def diag_embed(x, offset=0, dim1=-2, dim2=-1):
+    r"""
+    Creates a tensor with diagonals filled by `x`. The remaining elements are filled by 0.
+    If the shape of `x` is :math:`[x_{0}, x_{1}, ..., x_{n-1}, x_{n}]`, the output shape is: the vector obtained
+    by inserting :math:`x_{n}+|offset|` into the vector :math:`[x_{0}, x_{1}, ..., x_{n-1}]`
+    at position `dim1` and `dim2`.
+
+    Args:
+        x (Tensor): Values to fill diagonal.
+        offset (int): Offset of the diagonal. :math:`offset=0` refers to the main diagonal. If :math:`offset>0`,
+            fill the diagonals that are `offset` units upward from the main diagonal. If :math:`offset<0`, fill the
+            diagonals that are `offset` units downward from the main diagonal. Default: 0.
+        dim1 (int): The first dimension in `x` with respect to which to fill diagonal. Default: -2.
+        dim2 (int): The second dimension in `x` with respect to which to fill diagonal. Default: -1.
+
+    Returns:
+        Tensor, has the same dtype as `x`, but the shape of output is one dimension higher than the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not supported.
+        TypeError: If `offset` is not an int.
+        TypeError: If `dim1` is not an int.
+        TypeError: If `dim2` is not an int.
+        ValueError: If the dimension of input is not 1-6D.
+        ValueError: If `dim1` is not in range of [-len(x.shape), len(x.shape)).
+        ValueError: If `dim2` is not in range of [-len(x.shape), len(x.shape)).
+        ValueError: If `dim1` and `dim2` are identical.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([2,3,4]), mindspore.float32)
+        >>> output = ops.diag_embed(x)
+        >>> print(output)
+        [[2. 0. 0.]
+         [0. 3. 0.]
+         [0. 0. 4.]]
+    """
+
+    transpose_op = Transpose()
+    matrix_set_diag_op = MatrixSetDiagV3(align="LEFT_RIGHT")
+    zeros = ops.Zeros()
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("For 'diag_embed', 'x' must be Tensor.")
+    dtypeop = P.DType()
+    input_dtype = dtypeop(x)
+    if not (input_dtype in (mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16,
+                            mstype.uint32, mstype.uint64, mstype.float16, mstype.float32, mstype.float64)):
+        raise TypeError("For 'diag_embed', the dtype of 'x' must be int8, int16, int32, int64, "
+                        f"uint8, uint16, uint32, uint64, float16, float32 or float64, but got '{input_dtype}'.")
+    _check_attr_dtype("offset", offset, [int], "diag_embed")
+    _check_attr_dtype("dim1", dim1, [int], "diag_embed")
+    _check_attr_dtype("dim2", dim2, [int], "diag_embed")
+    if len(x.shape) > 6:
+        raise ValueError("For 'diag_embed', the dimension of 'x' must be 1-6D.")
+    x_shape = x.shape
+    output_dim = len(x_shape) + 1
+    if dim1 < -output_dim or dim1 > (output_dim - 1):
+        raise ValueError(f"For 'diag_embed', 'dim1' must be in range of [{-output_dim}, {output_dim - 1}), "
+                         f"but got {dim1}.")
+    if dim2 < -output_dim or dim2 > (output_dim - 1):
+        raise ValueError(f"For 'diag_embed', 'dim2' must be in range of [{-output_dim}, {output_dim - 1}), "
+                         f"but got {dim2}.")
+    if dim1 < 0:
+        dim1_ = dim1 + output_dim
+    else:
+        dim1_ = dim1
+    if dim2 < 0:
+        dim2_ = dim2 + output_dim
+    else:
+        dim2_ = dim2
+    if dim1_ == dim2_:
+        raise ValueError("For 'diag_embed', 'dim1' must not be identical to 'dim2'.")
+    batch_shape = x_shape[:-1]
+    if offset > 0:
+        dsize = x_shape[-1] + offset
+    else:
+        dsize = x_shape[-1] - offset
+    diag_plane = (dsize, dsize)
+    output_shape_trans = batch_shape + diag_plane
+    output = zeros(output_shape_trans, x.dtype)
+    k = P.Cast()(offset, mstype.int32)
+    output = matrix_set_diag_op(output, x, k)
+    dim = 0
+    perm = ()
+    for i in range(output_dim):
+        if i == dim1_:
+            perm = perm + (output_dim - 2,)
+        elif i == dim2_:
+            perm = perm + (output_dim - 1,)
+        else:
+            perm = perm + (dim,)
+            dim = dim + 1
+    return transpose_op(output, perm)
 
 
 __all__ = [
