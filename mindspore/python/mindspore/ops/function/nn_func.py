@@ -740,6 +740,69 @@ def celu(x, alpha=1.0):
     return celu_op(x)
 
 
+def dropout1d(x, p=0.5, training=True):
+    r"""
+    During training, randomly zeroes some channels of the input tensor with probability `p`
+    from a Bernoulli distribution(For a 3-dimensional tensor with a shape of :math:`NCL`,
+    the channel feature map refers to a 1-dimensional feature map with the shape of :math:`L`).
+
+    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
+    `1D` tensor input[i,j].
+    Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
+    probability `p`.
+
+    The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology，And it is proved that
+    it can effectively reduce over fitting and prevent neuronal coadaptation.
+    For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
+    <https://arxiv.org/pdf/1207.0580.pdf>`_ .
+
+    `dropout1d` can improve the independence between channel feature maps.
+
+    Args:
+        x (Tensor): A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size, `C` is the
+            number of channels, `L` is the feature length. The data type must be int8, int16, int32, int64, float16,
+            float32 or float64.
+        p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+            which means an 80% chance of clearing. Default: 0.5.
+        training (bool): Apply dropout if is True. Default: True.
+
+    Returns:
+        Tensor, output, with the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
+        TypeError: If the data type of `p` is not float.
+        ValueError: If `p` is out of the range `[0.0, 1.0]`.
+        ValueError: If `x` shape is not `2D` or `3D`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.random.randn(4, 3), mindspore.float32)
+        >>> output = dropout1d(input_x, 0.5)
+        >>> print(output.shape)
+        (4, 3)
+    """
+    if not training:
+        p = 0
+    dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
+
+    if len(x.shape) == 2:
+        x = x.expand_dims(0)
+        x = x.expand_dims(-1)
+        out, _ = dropout_2d_op(x)
+        out = out.squeeze(-1)
+        out = out.squeeze(0)
+    else:
+        x = x.expand_dims(-1)
+        out, _ = dropout_2d_op(x)
+        out = out.squeeze(-1)
+    return out
+
+
 def dropout2d(x, p=0.5):
     r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
@@ -3707,6 +3770,7 @@ __all__ = [
     'kl_div',
     'celu',
     'deformable_conv2d',
+    'dropout1d',
     'dropout2d',
     'dropout3d',
     'fast_gelu',

@@ -156,6 +156,7 @@ Dropout层
     :template: classtemplate.rst
 
     mindspore.nn.Dropout
+    mindspore.nn.Dropout1d
     mindspore.nn.Dropout2d
     mindspore.nn.Dropout3d
 
