@@ -4160,7 +4160,7 @@ class FloatStatus(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class NPUAllocFloatStatus(PrimitiveWithInfer):
+class NPUAllocFloatStatus(Primitive):
     """
     Allocates a flag to store the overflow status.
 
@@ -4185,12 +4185,6 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUAllocFloatStatus"""
-
-    def infer_shape(self):
-        return [8]
-
-    def infer_dtype(self):
-        return mstype.float32
 
 
 class NPUGetFloatStatus(PrimitiveWithInfer):
