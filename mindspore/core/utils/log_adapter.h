@@ -27,7 +27,9 @@
 #include <thread>
 #include <functional>
 #include "utils/macros.h"
+#ifndef BUILD_LITE
 #include "utils/os.h"
+#endif
 #include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
