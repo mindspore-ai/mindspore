@@ -177,8 +177,8 @@ def addn(x):
 
     Args:
         x (Union(tuple[Tensor], list[Tensor])): A tuple or list composed of Tensor, the data type is
-            `bool_ <https://www.mindspore.cn/docs/api/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_ or
-            `number <https://www.mindspore.cn/docs/api/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_ .
+            `bool_ <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_ or
+            `number <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_ .
 
     Returns:
         Tensor, has the same shape and dtype as each Tensor of `x`.

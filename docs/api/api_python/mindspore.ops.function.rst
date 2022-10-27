@@ -14,11 +14,9 @@ mindspore.ops.function
 
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
-    mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.bias_add
     mindspore.ops.ctc_greedy_decoder
-    mindspore.ops.conv2d
     mindspore.ops.deformable_conv2d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
@@ -29,10 +27,6 @@ mindspore.ops.function
     mindspore.ops.kl_div
     mindspore.ops.pad
     mindspore.ops.padding
-    mindspore.ops.pdist
-    mindspore.ops.prelu
-    mindspore.ops.relu
-    mindspore.ops.relu6
 
 损失函数
 ^^^^^^^^^^
@@ -55,7 +49,6 @@ mindspore.ops.function
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.celu
     mindspore.ops.dropout
     mindspore.ops.fast_gelu
     mindspore.ops.gumbel_softmax
@@ -65,7 +58,6 @@ mindspore.ops.function
     mindspore.ops.mish
     mindspore.ops.selu
     mindspore.ops.soft_shrink
-    mindspore.ops.softmax
     mindspore.ops.softsign
     mindspore.ops.tanh
 
@@ -79,16 +71,6 @@ mindspore.ops.function
 
     mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
-
-距离函数
-^^^^^^^^^^
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.cdist
 
 逐元素运算
 ^^^^^^^^^^^^^
@@ -145,19 +127,14 @@ mindspore.ops.function
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
-    mindspore.ops.logit
-    mindspore.ops.log_matrix_determinant
-    mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
     mindspore.ops.round
     mindspore.ops.sin
     mindspore.ops.sinh
-    mindspore.ops.sqrt
     mindspore.ops.square
     mindspore.ops.sub
-    mindspore.ops.svd
     mindspore.ops.tan
     mindspore.ops.trunc
     mindspore.ops.truncate_div
@@ -260,7 +237,6 @@ Tensor创建
 
     mindspore.ops.eye
     mindspore.ops.fill
-    mindspore.ops.fills
     mindspore.ops.linspace
     mindspore.ops.narrow
     mindspore.ops.one_hot
@@ -296,14 +272,12 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_max_pool2d
-    mindspore.ops.affine_grid
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
     mindspore.ops.count_nonzero
     mindspore.ops.diag
-    mindspore.ops.dyn_shape
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
@@ -342,8 +316,6 @@ Array操作
     mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_div
-    mindspore.ops.tensor_scatter_max
-    mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tensor_scatter_elements
@@ -403,10 +375,7 @@ Array操作
 
     mindspore.ops.dense_to_sparse_coo
     mindspore.ops.dense_to_sparse_csr
-    mindspore.ops.csr_add
-    mindspore.ops.csr_softmax
     mindspore.ops.csr_to_coo
-    mindspore.ops.sparse_add
 
 梯度剪裁
 ^^^^^^^^
@@ -458,26 +427,6 @@ Parameter操作函数
     mindspore.ops.jvp
     mindspore.ops.vjp
     mindspore.ops.vmap
-
-调试函数
-----------------
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.print_
-
-图像函数
-----------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.iou
 
 其他函数
 ----------------
