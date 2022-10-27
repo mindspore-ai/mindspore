@@ -32,6 +32,48 @@
 namespace mindspore {
 namespace opt {
 namespace {
+int DoStack(const CNodePtr &cnode, const ShapeVector &out_shape, ShapeVector *out_data) {
+  MS_ASSERT(cnode != nullptr && out_data != nullptr);
+  if (!CheckPrimitiveType(cnode, prim::kPrimStack)) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  if (out_shape.size() != 1 || out_shape.front() <= 0) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  auto origin_inputs = cnode->inputs();
+  if (lite::RemoveIfDepend(cnode) != RET_OK) {
+    cnode->set_inputs(origin_inputs);
+    return lite::RET_NOT_SUPPORT;
+  }
+  if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
+    cnode->set_inputs(origin_inputs);
+    return lite::RET_NOT_SUPPORT;
+  }
+  RemoveIfMonad(cnode);
+  auto current_inputs = cnode->inputs();
+  for (size_t i = 1; i < current_inputs.size(); ++i) {
+    if (utils::isa<CNode>(current_inputs[i])) {
+      out_data->push_back(-1);
+      continue;
+    }
+    lite::DataInfo data_info;
+    if (lite::FetchConstData(cnode, i, converter::kFmkTypeMs, &data_info, false) != lite::RET_OK) {
+      cnode->set_inputs(origin_inputs);
+      MS_LOG(ERROR) << "etch stack's const data failed.";
+      return lite::RET_ERROR;
+    }
+    if (data_info.data_ptr_ == nullptr ||
+        (data_info.data_type_ != kNumberTypeInt && data_info.data_type_ != kNumberTypeInt32) ||
+        std::accumulate(data_info.shape_.begin(), data_info.shape_.end(), 1, std::multiplies<>()) != 1) {
+      cnode->set_inputs(origin_inputs);
+      return lite::RET_NOT_SUPPORT;
+    }
+    out_data->push_back(*static_cast<int *>(data_info.data_ptr_));
+  }
+  cnode->set_inputs(origin_inputs);
+  return lite::RET_OK;
+}
+
 int ArithmeticInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
                          std::vector<ShapeVector> *out_shapes) {
   MS_ASSERT(cnode != nullptr);
@@ -327,6 +369,7 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
     MS_LOG(ERROR) << "Reshape should have two inputs.";
     return lite::RET_ERROR;
   }
+  out_shapes->clear();
   auto second_input = cnode->input(kInputIndexTwo);
   MS_CHECK_TRUE_MSG(second_input != nullptr, lite::RET_ERROR, "Reshape's second input is a nullptr.");
   if (second_input->isa<CNode>()) {
@@ -334,8 +377,14 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
     if (second_in_shape.size() != 1 || second_in_shape.front() <= 0) {
       return lite::RET_NOT_SUPPORT;
     }
-    ShapeVector out_shape(second_in_shape.front(), -1);
-    out_shapes->clear();
+    ShapeVector out_shape;
+    auto ret = DoStack(second_input->cast<CNodePtr>(), second_in_shape, &out_shape);
+    if (ret == lite::RET_NOT_SUPPORT) {
+      out_shape = ShapeVector(second_in_shape.front(), -1);
+    } else if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "Do stack failed.";
+      return ret;
+    }
     out_shapes->push_back(out_shape);
     return lite::RET_OK;
   }
@@ -366,7 +415,6 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
       out_shape[i] = in_shape[i];
     }
   }
-  out_shapes->clear();
   out_shapes->push_back(out_shape);
   return lite::RET_OK;
 }
@@ -434,6 +482,11 @@ int StackInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_sh
     MS_LOG(ERROR) << "Stack all-inputs should hava same rank.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
+  if (std::any_of(in_shapes.begin(), in_shapes.end(), [](const ShapeVector &in_shape) {
+        return std::any_of(in_shape.begin(), in_shape.end(), [](int64_t val) { return val == 0; });
+      })) {
+    return lite::RET_NOT_SUPPORT;
+  }
   auto prim = GetCNodePrimitive(cnode);
   auto axis = prim->GetAttr(ops::kAxis) == nullptr ? 0 : GetValue<int64_t>(prim->GetAttr(ops::kAxis));
   if (axis < 0) {
@@ -486,9 +539,7 @@ int CheckStridedSlice(const CNodePtr &cnode, int64_t in_rank, lite::DataInfo *be
   MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "StridedSlice's primitive is a nullptr.");
   int64_t ellipsis_mask = prim->GetAttr(ops::kEllipsisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kEllipsisMask)) : 0;
   int64_t new_axis_mask = prim->GetAttr(ops::kNewAxisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kNewAxisMask)) : 0;
-  int64_t shrink_mask =
-    prim->GetAttr(ops::kShrinkAxisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kShrinkAxisMask)) : 0;
-  if (((ellipsis_mask | new_axis_mask) | shrink_mask) != 0) {
+  if ((ellipsis_mask | new_axis_mask) != 0) {
     return lite::RET_NOT_SUPPORT;
   }
   for (size_t i = C2NUM; i < kInputSizeFive; ++i) {
@@ -542,10 +593,15 @@ int StridedSliceInferShape(const CNodePtr &cnode, const std::vector<ShapeVector>
   auto prim = GetCNodePrimitive(cnode);
   int64_t begin_mask = prim->GetAttr(ops::kBeginMask) ? GetValue<int64_t>(prim->GetAttr(ops::kBeginMask)) : 0;
   int64_t end_mask = prim->GetAttr(ops::kEndMask) ? GetValue<int64_t>(prim->GetAttr(ops::kEndMask)) : 0;
+  int64_t shrink_mask =
+    prim->GetAttr(ops::kShrinkAxisMask) ? GetValue<int64_t>(prim->GetAttr(ops::kShrinkAxisMask)) : 0;
   const auto &in_shape = in_shapes.front();
   ShapeVector out_shape;
   int index = 0;
   for (; index < begins.shape_.front(); ++index) {
+    if (shrink_mask & (1 << index)) {
+      continue;
+    }
     int b_mask = begin_mask & (1 << index);
     int e_mask = end_mask & (1 << index);
     if (b_mask && e_mask) {
@@ -688,7 +744,7 @@ int DynamicShapePreprocessor::ProcessOps(const FuncGraphPtr &func_graph) {
       cnode->set_inputs(origin_inputs);
       continue;
     }
-    if (lite::RemoveIfMakeTuple(cnode)) {
+    if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
       cnode->set_inputs(origin_inputs);
       continue;
     }

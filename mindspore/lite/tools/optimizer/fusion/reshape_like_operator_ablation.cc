@@ -103,7 +103,8 @@ int AblateReshapeLikeOp::DoAblation(const FuncGraphPtr &func_graph, const CNodeP
       return lite::RET_ERROR;
     }
     const auto &in_shape = iter->second.first.front();
-    if (out_shape == in_shape) {
+    if (out_shape == in_shape &&
+        std::count_if(out_shape.begin(), out_shape.end(), [](int64_t val) { return val < 0; }) <= 1) {
       if (!manager->Replace(cnode, link_ops[i]->input(1))) {
         MS_LOG(ERROR) << "Manager: Replace op failed, old node: " << cnode->fullname_with_scope()
                       << ", new node: " << link_ops[i]->input(1)->fullname_with_scope();
