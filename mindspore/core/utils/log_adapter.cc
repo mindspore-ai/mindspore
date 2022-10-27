@@ -36,6 +36,7 @@ namespace mindspore {
 constexpr int kNameMaxLength = 18;
 constexpr size_t kStep = 2;
 constexpr auto kSplitLine = "\n----------------------------------------------------\n";
+constexpr auto kFrameworkErrorTitle = "Framework Error Message:";
 #if defined(__ANDROID__) || defined(ANDROID)
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
@@ -279,6 +280,11 @@ void PrintMessage(std::ostringstream &oss, const std::string &title, const std::
 void CombineExceptionMessageWithSameTitle(std::ostringstream &oss, const std::string &title,
                                           const std::string &content) {
   if (title.empty() || content.empty()) {
+    return;
+  }
+  // ignore the passed framework title if content has a formatted title itself
+  if (title.find(kFrameworkErrorTitle) != std::string::npos && content.find(kSplitLine) == 0) {
+    oss << '\n' << content;
     return;
   }
   std::string message = oss.str();

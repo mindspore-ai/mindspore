@@ -59,7 +59,8 @@ bool AscendMemAdapter::Initialize() {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    MS_LOG(EXCEPTION) << "Malloc device memory failed, free memory size is less than half of total memory size."
+    MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Malloc device memory failed, free memory size is less "
+                         "than half of total memory size."
                       << "Device " << device_id << " Device HBM total size:" << device_hbm_total_size_
                       << " Device HBM free size:" << device_hbm_free_size_
                       << " may be other processes occupying this card, check as: ps -ef|grep python";
@@ -77,7 +78,8 @@ bool AscendMemAdapter::Initialize() {
   } else {
     if (user_define_ms_size >= device_hbm_free_size_) {
       MS_LOG(EXCEPTION)
-        << "The Free Device Memory Size is " << (SizeToFloat(device_hbm_free_size_) / kGBToByte)
+        << "#umsg#Framework Error Message:#umsg#The Free Device Memory Size is "
+        << (SizeToFloat(device_hbm_free_size_) / kGBToByte)
         << " GB, variable_memory_max_size/max_device_memory should be in range (0-"
         << (SizeToFloat(device_hbm_free_size_) / kMBToByte) << "]MB, but got "
         << (SizeToFloat(user_define_ms_size) / kMBToByte)
@@ -146,7 +148,8 @@ uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &ta
   auto new_static_offset = static_mem_offset_ - size;
   if (new_static_offset < max_dynamic_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
-    MS_LOG(EXCEPTION) << "Out of Memory!!! Request memory size: " << size << ", Memory Statistic:" << DevMemStatistics()
+    MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Out of Memory!!! Request memory size: " << size
+                      << ", Memory Statistic:" << DevMemStatistics()
                       << "\nPlease try to reduce 'batch_size' or check whether exists extra large shape. For more "
                          "details, please refer to 'Out of Memory' at https://www.mindspore.cn .";
   }
@@ -163,7 +166,8 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
   auto new_dynamic_offset = cur_dynamic_mem_offset_ + size;
   if (new_dynamic_offset > static_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
-    MS_LOG(EXCEPTION) << "Out of Memory!!! Request memory size: " << size << ", Memory Statistic:" << DevMemStatistics()
+    MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Out of Memory!!! Request memory size: " << size
+                      << ", Memory Statistic:" << DevMemStatistics()
                       << "\nPlease try to reduce 'batch_size' or check whether exists extra large shape. For more "
                          "details, please refer to 'Out of Memory' at https://www.mindspore.cn .";
   }
@@ -259,7 +263,8 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
       size_t free = 0;
       size_t total = 0;
       (void)rtMemGetInfoEx(RT_MEMORYINFO_HBM, &free, &total);
-      MS_LOG(EXCEPTION) << "Malloc device memory failed, size[" << size << "], ret[" << ret << "], "
+      MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Malloc device memory failed, size[" << size << "], ret["
+                        << ret << "], "
                         << "Device " << device_id << " Available HBM size:" << total << " free size:" << free
                         << " may be other processes occupying this card, check as: ps -ef|grep python";
     } else {

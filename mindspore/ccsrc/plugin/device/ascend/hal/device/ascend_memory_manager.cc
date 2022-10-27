@@ -81,7 +81,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
     // create protect area [kMemAlignSize -- data -- kMemAlignSize] for communication node memory
     return communication_mem ? alloc_address + kMemAlignSize : alloc_address;
   }
-  MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
+  MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Fail to alloc memory, size: " << align_size
                     << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
 }
 
@@ -108,7 +108,7 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
   if (base_ptr != nullptr) {
     return base_ptr + kMemAlignSize;
   }
-  MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
+  MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Fail to alloc memory, size: " << align_size
                     << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
 }
 
