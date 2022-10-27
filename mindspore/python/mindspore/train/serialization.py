@@ -288,7 +288,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
-                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
+                        mode, currently supports 'AES-GCM' and 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
 
     Raises:
         TypeError: If the parameter save_obj is not `nn.Cell` or list type. And if the parameter `integrated_save`
@@ -408,7 +408,7 @@ def load(file_name, **kwargs):
             - dec_key (bytes): Byte-type key used for decryption. The valid length is 16, 24, or 32.
             - dec_mode (Union[str, function]): Specifies the decryption mode, to take effect when dec_key is set.
 
-              - Option: 'AES-GCM', 'AES-CBC' or customized decryption. Default: 'AES-GCM'.
+              - Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC' or customized decryption. Default: 'AES-GCM'.
               - For details of using the customized decryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
     Returns:
@@ -653,7 +653,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
                                       is not required. Default: None.
         dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption
-                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
+                        mode, currently supports 'AES-GCM' and 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
         specify_prefix (Union[str, list[str], tuple[str]]): Parameters starting with the specify_prefix
             will be loaded. Default: None.
 
@@ -1052,7 +1052,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
             - enc_mode (Union[str, function]): Specifies the encryption mode, to take effect when enc_key is set.
 
               - For 'AIR' and 'ONNX' models, only customized encryption is supported.
-              - For 'MINDIR', all options are supported. Option: 'AES-GCM', 'AES-CBC' or Customized encryption.
+              - For 'MINDIR', all options are supported. Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC'
+                or Customized encryption.
                 Default: 'AES-GCM'.
               - For details of using the customized encryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
@@ -1158,9 +1159,9 @@ def _check_key_mode_type(file_format, **kwargs):
     if file_format in ('AIR', 'ONNX'):
         raise ValueError(f"AIR/ONNX only support customized encryption, but got {enc_mode}.")
 
-    if enc_mode in ('AES-CBC', 'AES-GCM'):
+    if enc_mode in ('AES-CBC', 'AES-GCM', 'SM4-CBC'):
         return enc_key, enc_mode
-    raise ValueError(f"MindIR only support AES-GCM/AES-CBC encryption, but got {enc_mode}")
+    raise ValueError(f"MindIR only support AES-GCM/AES-CBC/SM4-CBC encryption, but got {enc_mode}")
 
 
 def _save_air(net, file_name, *inputs, **kwargs):

@@ -114,7 +114,7 @@ bool ParseEncryptData(const Byte *encrypt_data, size_t encrypt_len, std::vector<
 
 bool ParseMode(const std::string &mode, std::string *alg_mode, std::string *work_mode) {
   std::smatch results;
-  std::regex re("([A-Z]{3})-([A-Z]{3})");
+  std::regex re("([A-Z]{3}|[A-Z]{2}\\d)-([A-Z]{3})");
   if (!(std::regex_match(mode.c_str(), re) && std::regex_search(mode, results, re))) {
     MS_LOG(ERROR) << "Mode " << mode << " is invalid.";
     return false;
@@ -124,8 +124,8 @@ bool ParseMode(const std::string &mode, std::string *alg_mode, std::string *work
   return true;
 }
 
-int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std::string &work_mode, const Byte *key,
-                  int32_t, const Byte *iv, int iv_len, bool is_encrypt) {
+int InitCipherCtxAES(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std::string &work_mode, const Byte *key,
+                     const Byte *iv, int iv_len, bool is_encrypt) {
   int32_t ret = 0;
 
   if (work_mode == "GCM") {
@@ -185,13 +185,53 @@ int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std
   return 0;
 }
 
-EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, int32_t key_len, const Byte *iv,
-                                int iv_len, bool is_encrypt) {
+int InitCipherCtxSM4(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std::string &work_mode, const Byte *key,
+                     const Byte *iv, int iv_len, bool is_encrypt) {
+  int32_t ret = 0;
+
+  if (work_mode == "CBC") {
+    if (is_encrypt) {
+      ret = EVP_EncryptInit_ex(ctx, funcPtr(), nullptr, key, iv);
+    } else {
+      ret = EVP_DecryptInit_ex(ctx, funcPtr(), nullptr, key, iv);
+    }
+  }
+
+  if (ret != 1) {
+    MS_LOG(ERROR) << "EVP_EncryptInit_ex/EVP_DecryptInit_ex failed";
+    EVP_CIPHER_CTX_free(ctx);
+    return 1;
+  }
+  if (work_mode == "CBC") {
+    ret = EVP_CIPHER_CTX_set_padding(ctx, 1);
+    if (ret != 1) {
+      MS_LOG(ERROR) << "EVP_CIPHER_CTX_set_padding failed";
+      EVP_CIPHER_CTX_free(ctx);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std::string &alg_mode,
+                  const std::string &work_mode, const Byte *key, int32_t, const Byte *iv, int iv_len, bool is_encrypt) {
+  if (alg_mode == "AES") {
+    return InitCipherCtxAES(ctx, funcPtr, work_mode, key, iv, iv_len, is_encrypt);
+  } else if (alg_mode == "SM4") {
+    return InitCipherCtxSM4(ctx, funcPtr, work_mode, key, iv, iv_len, is_encrypt);
+  }
+
+  return 1;
+}
+
+EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &alg_mode, const std::string &work_mode, const Byte *key,
+                                int32_t key_len, const Byte *iv, int iv_len, bool is_encrypt) {
   constexpr int32_t key_length_16 = 16;
   constexpr int32_t key_length_24 = 24;
   constexpr int32_t key_length_32 = 32;
   const EVP_CIPHER *(*funcPtr)() = nullptr;
-  if (work_mode == "GCM") {
+  std::string alg_work_mode = alg_mode + "-" + work_mode;
+  if (alg_work_mode == "AES-GCM") {
     switch (key_len) {
       case key_length_16:
         funcPtr = EVP_aes_128_gcm;
@@ -206,7 +246,7 @@ EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, i
         MS_LOG(ERROR) << "The key length must be 16, 24 or 32, but got key length is " << key_len << ".";
         return nullptr;
     }
-  } else if (work_mode == "CBC") {
+  } else if (alg_work_mode == "AES-CBC") {
     switch (key_len) {
       case key_length_16:
         funcPtr = EVP_aes_128_cbc;
@@ -221,13 +261,23 @@ EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, i
         MS_LOG(ERROR) << "The key length must be 16, 24 or 32, but got key length is " << key_len << ".";
         return nullptr;
     }
+  } else if (alg_work_mode == "SM4-CBC") {
+    switch (key_len) {
+      case key_length_16:
+        funcPtr = EVP_sm4_cbc;
+        break;
+      default:
+        MS_LOG(ERROR) << "The key length must be 16, but got key length is " << key_len << ".";
+        return nullptr;
+    }
   } else {
-    MS_LOG(ERROR) << "Work mode " << work_mode << " is invalid.";
+    MS_LOG(ERROR) << "Crypto Algorithm " << alg_mode << " and "
+                  << "Work mode " << work_mode << " is invalid.";
     return nullptr;
   }
 
   auto ctx = EVP_CIPHER_CTX_new();
-  if (InitCipherCtx(ctx, funcPtr, work_mode, key, key_len, iv, iv_len, is_encrypt) != 0) {
+  if (InitCipherCtx(ctx, funcPtr, alg_mode, work_mode, key, key_len, iv, iv_len, is_encrypt) != 0) {
     MS_LOG(ERROR) << "InitCipherCtx failed.";
     return nullptr;
   }
@@ -253,7 +303,7 @@ bool BlockEncrypt(Byte *encrypt_data, size_t *encrypt_data_len, const std::vecto
     return false;
   }
 
-  auto ctx = GetEvpCipherCtx(work_mode, key, key_len, iv.data(), static_cast<int32_t>(iv.size()), true);
+  auto ctx = GetEvpCipherCtx(alg_mode, work_mode, key, key_len, iv.data(), static_cast<int32_t>(iv.size()), true);
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "Failed to get EVP_CIPHER_CTX.";
     return false;
@@ -338,7 +388,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
   if (!ParseEncryptData(encrypt_data, encrypt_len, &iv, &cipher_data)) {
     return false;
   }
-  auto ctx = GetEvpCipherCtx(work_mode, key, key_len, iv.data(), SizeToInt(iv.size()), false);
+  auto ctx = GetEvpCipherCtx(alg_mode, work_mode, key, key_len, iv.data(), SizeToInt(iv.size()), false);
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "Failed to get EVP_CIPHER_CTX.";
     return false;
@@ -376,8 +426,8 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
                                 size_t key_len, const std::string &enc_mode) {
   MS_EXCEPTION_IF_NULL(plain_data);
   MS_EXCEPTION_IF_NULL(key);
-  if (enc_mode != "AES-GCM" && enc_mode != "AES-CBC") {
-    MS_LOG(ERROR) << "mode only support AES-GCM|AES-CBC.";
+  if (enc_mode != "AES-GCM" && enc_mode != "AES-CBC" && enc_mode != "SM4-CBC") {
+    MS_LOG(ERROR) << "Mode only support AES-GCM|AES-CBC|SM4-CBC.";
     return nullptr;
   }
   size_t block_enc_buf_len = MAX_BLOCK_SIZE + RESERVED_BYTE_PER_BLOCK;
@@ -402,8 +452,10 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
     }
     if (enc_mode == "AES-GCM") {
       IntToByte(&int_buf, static_cast<int32_t>(GCM_MAGIC_NUM));
-    } else {
+    } else if (enc_mode == "AES-CBC") {
       IntToByte(&int_buf, static_cast<int32_t>(CBC_MAGIC_NUM));
+    } else if (enc_mode == "SM4-CBC") {
+      IntToByte(&int_buf, static_cast<int32_t>(SM4_CBC_MAGIC_NUM));
     }
     size_t capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);  // avoid dest size over 2gb
     errno_t ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, int_buf.data(), sizeof(int32_t));
@@ -435,8 +487,8 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_data_path, const Byte *key,
                                 size_t key_len, const std::string &dec_mode) {
   MS_EXCEPTION_IF_NULL(key);
-  if (dec_mode != "AES-GCM" && dec_mode != "AES-CBC") {
-    MS_LOG(ERROR) << "mode only support AES-GCM|AES-CBC.";
+  if (dec_mode != "AES-GCM" && dec_mode != "AES-CBC" && dec_mode != "SM4-CBC") {
+    MS_LOG(ERROR) << "Mode only support AES-GCM|AES-CBC|SM4-CBC.";
     return nullptr;
   }
   std::ifstream fid(encrypt_data_path, std::ios::in | std::ios::binary);
@@ -464,6 +516,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
       return nullptr;
     } else if (dec_mode == "AES-CBC" && cipher_flag != CBC_MAGIC_NUM) {
       MS_LOG(ERROR) << "File \"" << encrypt_data_path << "\" is not an encrypted AES-CBC file and cannot be decrypted";
+      return nullptr;
+    } else if (dec_mode == "SM4-CBC" && cipher_flag != SM4_CBC_MAGIC_NUM) {
+      MS_LOG(ERROR) << "File \"" << encrypt_data_path << "\" is not an encrypted SM4-CBC file and cannot be decrypted";
       return nullptr;
     }
 
@@ -499,8 +554,10 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
                                 size_t key_len, const std::string &dec_mode) {
   MS_EXCEPTION_IF_NULL(model_data);
   MS_EXCEPTION_IF_NULL(key);
-  if (dec_mode != "AES-GCM" && dec_mode != "AES-CBC") {
-    MS_LOG(ERROR) << "mode only support AES-GCM|AES-CBC.";
+  std::unordered_set<std::string> dic = {"AES-GCM", "AES-CBC", "SM4-CBC"};
+  auto iter = dic.find(dec_mode);
+  if (iter == dic.end()) {
+    MS_LOG(ERROR) << "Mode only support AES-GCM|AES-CBC|SM4-CBC.";
     return nullptr;
   }
   std::vector<char> block_buf;
@@ -524,6 +581,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
       return nullptr;
     } else if (dec_mode == "AES-CBC" && cipher_flag != CBC_MAGIC_NUM) {
       MS_LOG(ERROR) << "model_data is not encrypted AES-CBC and therefore cannot be decrypted.";
+      return nullptr;
+    } else if (dec_mode == "SM4-CBC" && cipher_flag != SM4_CBC_MAGIC_NUM) {
+      MS_LOG(ERROR) << "model_data is not encrypted SM4-CBC and therefore cannot be decrypted.";
       return nullptr;
     }
     unsigned char tag[Byte16];
