@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,20 +52,15 @@ abstract::TupleShapePtr SparseSplitInferShape(const PrimitivePtr &prim,
   ShapeVector output_indices_vec = {-1, shape_shape_vec[0]};
   ShapeVector output_values_vec = {-1};
 
-  ShapeVector min_output_indices_vec = {0, shape_shape_vec[0]};
-  ShapeVector min_output_values_vec = {0};
-
   auto num_splits = GetValue<int64_t>(prim->GetAttr("num_split"));
 
   std::vector<abstract::BaseShapePtr> shape_tuple;
   for (auto i = 0; i < num_splits; i++) {
-    abstract::ShapePtr output_indices_shape =
-      std::make_shared<abstract::Shape>(output_indices_vec, min_output_indices_vec, indices_shape_vec);
+    abstract::ShapePtr output_indices_shape = std::make_shared<abstract::Shape>(output_indices_vec);
     shape_tuple.push_back(output_indices_shape);
   }
   for (auto i = 0; i < num_splits; i++) {
-    abstract::ShapePtr output_values_shape =
-      std::make_shared<abstract::Shape>(output_values_vec, min_output_values_vec, values_shape_vec);
+    abstract::ShapePtr output_values_shape = std::make_shared<abstract::Shape>(output_values_vec);
     shape_tuple.push_back(output_values_shape);
   }
   for (auto i = 0; i < num_splits; i++) {

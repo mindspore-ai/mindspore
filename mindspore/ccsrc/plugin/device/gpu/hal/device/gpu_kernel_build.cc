@@ -39,6 +39,10 @@ void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<ke
 
   auto kernel_attr = kernel::GetKernelAttrFromNode(apply_kernel);
   auto [is_match, index] = kernel::MatchKernelAttr(kernel_attr, kernel_attrs);
+  if (kernel_attrs[0].GetSkipCheck()) {
+    is_match = true;
+    index = 0;
+  }
   if (!is_match) {
     MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
                       << " does not support this kernel data type: " << kernel_attr;
