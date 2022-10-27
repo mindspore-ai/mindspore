@@ -106,6 +106,9 @@ CNodePtr UnsortedSegmentSumDFission::CreateUnsortedSegmentSum(const FuncGraphPtr
   }
 
   common::AnfAlgo::SetNodeAttr(kAttrNumSegments, MakeValue(shape[0]), unsorted_segment_sum);
+  if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, origin_node)) {
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kUnsortedSegmentSumOpName), unsorted_segment_sum);
+  }
   return unsorted_segment_sum;
 }
 

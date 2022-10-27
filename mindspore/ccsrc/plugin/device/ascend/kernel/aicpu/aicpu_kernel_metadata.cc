@@ -33,9 +33,14 @@ void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
+  if (op_name == kUnsortedSegmentSumDOpName) {
+    op_name = kUnsortedSegmentSumOpName;
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+    prim->set_name(kUnsortedSegmentSumOpName);
+  }
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kImplyAICPU);
   if (op_info_ptr == nullptr) {
-    MS_LOG(DEBUG) << "Aicpu does not have op [" << op_name << "]";
+    MS_LOG(DEBUG) << "Aicpu does not have op [" << op_name << "].";
     return;
   }
   // For compatibility with the current framework
@@ -44,7 +49,7 @@ void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<
     return;
   }
   if (!ParseMetadata(kernel_node, op_info_ptr, AICPU, kernel_info_list)) {
-    MS_LOG(WARNING) << "Aicpu parsed metadata op [" << op_name << "] failed";
+    MS_LOG(WARNING) << "Aicpu parsed metadata op [" << op_name << "] failed.";
     return;
   }
 }
