@@ -124,6 +124,10 @@ int RemoveTransitivityOp::HandleReduce(const FuncGraphPtr &func_graph, const CNo
   if (IsQuantParameterNode(prim)) {
     return lite::RET_OK;
   }
+  auto attr = prim->GetAttr(ops::kCoeff);
+  if (attr != nullptr && fabs(GetValue<float>(attr) - 1.f) > FLT_EPSILON) {
+    return lite::RET_OK;
+  }
   auto &in_shapes = shape_container.at(reduce).first;
   auto &out_shapes = shape_container.at(reduce).second;
   if (in_shapes.empty() || out_shapes.empty()) {

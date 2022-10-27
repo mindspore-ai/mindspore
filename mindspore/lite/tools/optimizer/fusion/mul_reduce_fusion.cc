@@ -177,7 +177,7 @@ int MulReduceFusion::PostProcessSqueezeWithConcat(const FuncGraphPtr &func_graph
   MS_ASSERT(concat_prim != nullptr);
   concat_prim->AddAttr(ops::kAxis, MakeValue<int64_t>(concat_axis_));
   auto &node_users = manager->node_users();
-  auto &concat_users = node_users[cnode];
+  auto concat_users = node_users[cnode];
   CNodePtr post_squeeze{nullptr};
   for (auto &user : concat_users) {
     if (CheckPrimitiveType(user.first, prim::kPrimReshape)) {
@@ -185,7 +185,7 @@ int MulReduceFusion::PostProcessSqueezeWithConcat(const FuncGraphPtr &func_graph
     }
     if (post_squeeze == nullptr) {
       auto squeeze = std::make_shared<ops::Squeeze>();
-      MS_CHECK_TRUE_MSG(post_squeeze != nullptr, lite::RET_ERROR, "Squeeze create failed.");
+      MS_CHECK_TRUE_MSG(squeeze != nullptr, lite::RET_ERROR, "Squeeze create failed.");
       squeeze->set_axis(std::vector<int64_t>{axis_});
       auto squeeze_prim = squeeze->GetPrim();
       MS_CHECK_TRUE_MSG(squeeze_prim != nullptr, lite::RET_ERROR, "Squeeze create failed.");
