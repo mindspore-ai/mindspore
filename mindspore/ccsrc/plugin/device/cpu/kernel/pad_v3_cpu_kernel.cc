@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/pad_v3_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/pad_v3_grad.h"
+#include "mindspore/core/ops/pad_v3.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,13 +41,14 @@ bool PadV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3Grad>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   mode_ = kernel_ptr->get_mode();
   const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), mode_) != mode_list.end();
   if (is_mode_available == false) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'mode' should be 'constant', 'reflect' or 'edge', but got "
                   << mode_;
+    return false;
   }
   if (mode_ == "constant" || inputs.size() == kConstantInputsNum) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConstantInputsNum, kernel_name_);
