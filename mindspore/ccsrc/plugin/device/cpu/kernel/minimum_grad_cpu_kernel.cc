@@ -63,9 +63,11 @@ void CheckShape(ShapeVector *shape) {
 bool MinimumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradOutputsNum, kernel_name_);
   kernel_name_ = base_operator->GetPrim()->name();
   dtype_ = inputs[kIndex0]->GetDtype();
-  return true;
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 int MinimumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -86,25 +88,53 @@ int MinimumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-bool MinimumGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt32) {
-    LaunchKernel<uint32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt64) {
-    LaunchKernel<uint64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
-  }
-  return true;
+const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>> &MinimumGradCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &MinimumGradCpuKernelMod::LaunchKernel<int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddOutputAttr(kNumberTypeUInt32)
+       .AddOutputAttr(kNumberTypeUInt32),
+     &MinimumGradCpuKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MinimumGradCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
+     &MinimumGradCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddOutputAttr(kNumberTypeUInt64)
+       .AddOutputAttr(kNumberTypeUInt64),
+     &MinimumGradCpuKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &MinimumGradCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
 }
 
 template <typename T>
@@ -132,7 +162,8 @@ void MinimumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, con
 }
 
 template <typename T>
-void MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
                                            const std::vector<AddressPtr> &outputs) {
   auto *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *y_addr = reinterpret_cast<T *>(inputs[1]->addr);
@@ -167,6 +198,7 @@ void MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   MinimumGradRecTask<T>(x_addr, y_addr, dout_addr, dx_addr, dy_addr, 0, 0, 0, 0, x_cargo, y_cargo, dout_cargo, x_shape,
                         y_shape, dout_shape_sizet);
+  return true;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MinimumGrad, MinimumGradCpuKernelMod);

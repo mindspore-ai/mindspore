@@ -32,32 +32,41 @@ constexpr size_t kOutputIndex1 = 1;
 constexpr size_t kOutputIndex2 = 2;
 }  // namespace
 
-void MaximumGradGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex0);
-  x2_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex1);
-  grad_y1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
-  grad_y2_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex3);
-  if (x1_shape_ != grad_y1_shape_) {
-    MS_LOG(EXCEPTION) << "For MaximumGradGrad, the shape of x1 should be same with that of grad_y1. But got x1: "
-                      << x1_shape_ << " and grad_y1: " << grad_y1_shape_ << ".";
+bool MaximumGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', kernel data type '" << kernel_attr << "' is not supported.";
+    return false;
   }
-  if (x2_shape_ != grad_y2_shape_) {
-    MS_LOG(EXCEPTION) << "For MaximumGradGrad, the shape of x2 should be same with that of grad_y2. But got x2: "
-                      << x2_shape_ << " and grad_y2: " << grad_y2_shape_ << ".";
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int MaximumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+
+  x1_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  x2_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  grad_y1_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  grad_y2_shape_ = inputs[kIndex3]->GetDeviceShapeAdaptively();
+
+  tensor_size_ = 1;
   output_shape_ = CPUKernelUtils::GetBroadcastShape(x1_shape_, x2_shape_);
   for (const uint64_t &d : output_shape_) {
     tensor_size_ *= d;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "For MaximumGradGrad, kernel data type '" << kernel_attr << "' is not supported.";
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
