@@ -166,7 +166,7 @@ int AdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     return KRET_RESIZE_FAILED;
   }
 
-  if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
+  if (batch_rank_ > 0 && lr_shape.size() != static_cast<size_t>(batch_rank_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
