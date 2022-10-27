@@ -655,6 +655,7 @@ REGISTER(CumSumInfo);
 REGISTER(CumProdInfo);
 REGISTER(EluInfo);
 REGISTER(ReLUInfo);
+REGISTER(identityInfo);
 REGISTER(RepeatElementsInfo);
 REGISTER(ReLU6Info);
 REGISTER(SoftsignInfo);
