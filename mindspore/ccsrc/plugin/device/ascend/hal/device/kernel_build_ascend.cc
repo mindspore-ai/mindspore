@@ -105,15 +105,10 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
       }
     }
   }
-  auto bin_map = kernel::tbe::KernelMeta::GetInstance();
-  MS_EXCEPTION_IF_NULL(bin_map);
   if (!tbe_nodes.empty()) {
     std::lock_guard<std::mutex> lock(compile_mtx);
     auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
     build_manager.TbeSingleOpCompile(tbe_nodes);
-    auto config_path = TbeUtils::GetOpDebugPath();
-    std::string dir = config_path + "kernel_meta/";
-    (void)bin_map->ReadIndex(dir);
   }
   bool akg_ret = true;
   if (!akg_nodes.empty()) {

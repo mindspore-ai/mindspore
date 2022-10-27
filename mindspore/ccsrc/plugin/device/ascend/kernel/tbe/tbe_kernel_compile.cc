@@ -97,6 +97,7 @@ constexpr auto kTuneDumpPath = "tune_dump_path";
 constexpr auto kTuneBankPath = "tune_bank_path";
 constexpr auto kTbeImplPath = "tbe_impl_path";
 constexpr auto kParaDebugPath = "para_debug_path";
+constexpr auto kTbePrebuildRes = "kernel_meta/tbe_prebuild_res/";
 constexpr auto kMS_BUILD_PROCESS_NUM = "MS_BUILD_PROCESS_NUM";
 constexpr auto kMS_PARA_DEBUG_PATH = "PARA_DEBUG_PATH";
 constexpr auto kTBE_IMPL_PATH = "TBE_IMPL_PATH";
@@ -383,6 +384,8 @@ void TbeKernelCompileManager::SavePreBuildResult(int task_id, const std::string 
   pre_res.core_type = core_type;
   pre_res.output_data_desc = output_data_desc;
   prebuild_res_map_[json_name] = pre_res;
+  // save pre_build result to json file
+  TbeUtils::SavePrebuildInfo(json_name, pre_build_result);
 }
 
 void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const std::string &compile_info,
@@ -563,6 +566,10 @@ void TbeKernelCompileManager::UpdateFusionTypeAndOutputDataDesc(const std::vecto
     MS_EXCEPTION_IF_NULL(node);
     auto full_name = node->fullname_with_scope();
     auto kernel_name = pre_build_full_name_to_json_name_[full_name];
+    if (prebuild_res_map_.find(kernel_name) == prebuild_res_map_.end()) {
+      MS_LOG(WARNING) << kernel_name << " not in prebuild_res_map_. Op name: " << full_name;
+      continue;
+    }
     auto pre_res = prebuild_res_map_[kernel_name];
     auto fusion_type = pre_res.fusion_type;
     auto fusion_name = GetFusionNameByType(fusion_type);
@@ -640,6 +647,10 @@ void TbeKernelCompileManager::DistributePreBuildTask(const std::vector<CNodePtr>
     auto json_name = json_creator->GetJsonName();
     auto full_name = node->fullname_with_scope();
     pre_build_full_name_to_json_name_[full_name] = json_name;  // cache kernel name
+    if (prebuild_res_map_.find(json_name) != prebuild_res_map_.end()) {
+      // cache exist, no need pre_build
+      continue;
+    }
     if (TbeUtils::IsOneOf(pre_build_single_processed_kernels_, json_name)) {
       // same op skip prebuild
       continue;
@@ -831,6 +842,67 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   return check_info == kFullySupported;
 }
 
+void TbeKernelCompileManager::LoadPreBuildResult() {
+  static bool has_load = false;
+  if (!has_load) {
+    auto config_path = TbeUtils::GetOpDebugPath();
+    auto bin_dir = config_path + kTbePrebuildRes;
+    DIR *dir = opendir(bin_dir.c_str());
+    if (dir == nullptr) {
+      MS_LOG(INFO) << "Open dir failed. Dir:" << bin_dir;
+      return;
+    }
+    struct dirent *entry;
+    constexpr size_t SUFFIX_LENS = 5;
+    while ((entry = readdir(dir)) != nullptr) {
+      string bin_dir_tmp = bin_dir;
+      std::string tbe_prebuild_json = entry->d_name;
+      if (tbe_prebuild_json.length() <= SUFFIX_LENS) {
+        continue;
+      }
+      std::string suffix = tbe_prebuild_json.substr(tbe_prebuild_json.length() - SUFFIX_LENS);
+      if (suffix != kJsonSuffix) {
+        continue;
+      }
+      auto sp = tbe_prebuild_json.rfind('/');
+      if (sp != std::string::npos) {
+        continue;
+      }
+      sp = tbe_prebuild_json.rfind('.');
+      if (sp == std::string::npos) {
+        continue;
+      }
+      auto kernel_name = tbe_prebuild_json.substr(0, sp);
+      (void)bin_dir_tmp.append("/");
+      (void)bin_dir_tmp.append(tbe_prebuild_json);
+      std::ifstream file(bin_dir_tmp.c_str());
+      if (!file.is_open()) {
+        MS_LOG(WARNING) << "File is not open. File: " << bin_dir_tmp;
+        continue;
+      }
+      std::string pre_build_result =
+        std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+      nlohmann::json result;
+      if (!ParseJson(pre_build_result, &result)) {
+        MS_LOG(WARNING) << "Parse pre-build result error. Origin result: " << pre_build_result;
+        continue;
+      }
+      auto op_pattern = GetJsonValue<std::string>(result, "op_pattern");
+      auto fusion_type = kernel::GetFusionTypeByName(op_pattern);
+      auto output_data_desc = GetJsonValue<nlohmann::json>(result, "op_params");
+      auto core_type = GetJsonValue<nlohmann::json>(result, "core_type");
+      struct PreBuildResult pre_res;
+      pre_res.json_name = kernel_name;
+      pre_res.fusion_type = fusion_type;
+      pre_res.core_type = core_type;
+      pre_res.output_data_desc = output_data_desc;
+      prebuild_res_map_[kernel_name] = pre_res;
+    }
+    (void)closedir(dir);
+    has_load = true;
+  }
+}
+
 void TbeKernelCompileManager::TbeInitialize() {
   if (tbe_init_flag_) {
     MS_LOG(DEBUG) << "TbeInitialize already complete, no need do again";
@@ -854,6 +926,7 @@ void TbeKernelCompileManager::TbeInitialize() {
   auto json_ret = TurnStrToJson(init_ret);
   PrintInitResult(json_ret);
   // load cache before kernel build
+  LoadPreBuildResult();
   TbeUtils::LoadCache();
 }
 
@@ -874,7 +947,6 @@ void TbeKernelCompileManager::ClearOldTask() {
   task_map_.clear();
   all_fusion_ops_.clear();
   job_id_to_node_.clear();
-  prebuild_res_map_.clear();
   success_fusion_ops_.clear();
   kernel_io_size_info_.clear();
   full_name_to_json_name_.clear();
