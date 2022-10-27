@@ -47,12 +47,14 @@ class GPUAllocator {
   }
 
   // Allocate GPU memory from dynamic memory pool.
+  // The name of the allocate function cannot be changed and is used to call std::allocator_traits::allocate.
   value_type *allocate(std::size_t n) {
     auto ptr = GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(value_type) * n);
     return reinterpret_cast<value_type *>(ptr);
   }
 
   // Free GPU memory.
+  // The name of the deallocate function cannot be changed and is used to call std::allocator_traits::deallocate.
   void deallocate(value_type *ptr, std::size_t) {
     GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(ptr));
   }

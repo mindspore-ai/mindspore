@@ -47,7 +47,7 @@ class HashTable {
   virtual bool Erase(const Key *keys, size_t key_num, void *stream) = 0;
 
   // Reserves space for at least the specified number of elements.
-  virtual bool Reserve(size_t count) = 0;
+  virtual bool Reserve(size_t new_capacity, void *stream) = 0;
 
   // Export all keys and values in hash map, the order of each element of keys and values is consistent.
   // Note: Even if the elements of the hash map are unchanged, the order of the key-value pair returned by the function
@@ -66,6 +66,9 @@ class HashTable {
 
   // Get the number of elements in the map.
   virtual size_t size() const = 0;
+
+  // Clear all elements of hash table.
+  virtual bool Clear() = 0;
 };
 }  // namespace device
 }  // namespace mindspore

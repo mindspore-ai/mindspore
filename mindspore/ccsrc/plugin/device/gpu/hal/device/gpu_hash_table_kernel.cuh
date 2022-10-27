@@ -25,6 +25,7 @@ namespace device {
 namespace gpu {
 namespace cg = cooperative_groups;
 using CudaAtomicSize = cuda::atomic<std::size_t, cuda::thread_scope_device>;
+using CudaAtomicInt = cuda::atomic<int32_t, cuda::thread_scope_device>;
 
 // Check whether the key exist in map already.
 template <typename CG, typename Key, typename View>
@@ -42,13 +43,20 @@ __device__ __forceinline__ void CheckKeyExist(const CG &g, const Key &key, View 
 
 // Get a valid position in block and return the offset index.
 template <typename CG>
-__device__ __forceinline__ int32_t GetInsertIndex(const CG &g, const int32_t *idle_slot, CudaAtomicSize *idle_index,
-                                                  CudaAtomicSize *current_index) {
-  int32_t candidate_index;
+__device__ __forceinline__ int32_t GetInsertIndex(const CG &g, const int32_t *erased_slot,
+                                                  CudaAtomicInt *erased_counter, CudaAtomicSize *current_index) {
+  int32_t candidate_index = 0;
   if (g.thread_rank() == 0) {
-    if (idle_index->load(cuda::std::memory_order_relaxed) != 0) {
+    if (erased_counter->load(cuda::std::memory_order_relaxed) > 0) {
       // Idle slot position is preferred.
-      candidate_index = idle_slot[idle_index->fetch_sub(1)];
+      int32_t idle_index = erased_counter->fetch_sub(1) - 1;
+      // Idle slot position compete fail.
+      if (idle_index < 0) {
+        erased_counter->store(0, cuda::std::memory_order_relaxed);
+        candidate_index = current_index->fetch_add(1);
+      } else {
+        candidate_index = erased_slot[idle_index];
+      }
     } else {
       // If idle slot is empty, use new position in blocks.
       candidate_index = current_index->fetch_add(1);
@@ -63,7 +71,7 @@ __device__ __forceinline__ int32_t GetInsertIndex(const CG &g, const int32_t *id
 // otherwise find a valid position in block.
 template <uint32_t block_size, uint32_t tile_size, typename Key, typename MutableView, typename View>
 __global__ void LookupIndices(const Key *keys, size_t key_num, bool insert_miss_key, size_t submaps_num,
-                              size_t submap_idx, const int32_t *idle_slot, CudaAtomicSize *idle_index,
+                              size_t submap_idx, const int32_t *erased_slot, CudaAtomicInt *erased_counter,
                               MutableView *submap_mutable_views, View *submap_views, CudaAtomicSize *insert_success_num,
                               CudaAtomicSize *current_index, int32_t *indices) {
   typedef cub::BlockReduce<size_t, block_size> BlockReduce;
@@ -83,7 +91,7 @@ __global__ void LookupIndices(const Key *keys, size_t key_num, bool insert_miss_
 
     // 2. Handle the key doesn't exist in map.
     if (index_in_block == empty_value && insert_miss_key) {
-      index_in_block = GetInsertIndex(tile, idle_slot, idle_index, current_index);
+      index_in_block = GetInsertIndex(tile, erased_slot, erased_counter, current_index);
       if (submap_mutable_views[submap_idx].insert(tile, cuco::pair_type<Key, int32_t>{key, index_in_block}) &&
           tile.thread_rank() == 0) {
         insert_success_num_per_thread++;
@@ -120,7 +128,7 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num; pos += total_thread_num) {
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
-    if (idle_flags_ptr[block_idx][offset_in_block] != true) {
+    if (!idle_flags_ptr[block_idx][offset_in_block]) {
       return;
     }
 
@@ -161,7 +169,7 @@ __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_element
        pos += blockDim.x * gridDim.x) {
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
-    if (idle_flags_ptr[block_idx][offset_in_block] != true) {
+    if (!idle_flags_ptr[block_idx][offset_in_block]) {
       return;
     }
 
