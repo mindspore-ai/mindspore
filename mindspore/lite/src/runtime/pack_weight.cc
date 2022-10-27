@@ -42,31 +42,32 @@ STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_si
     MS_LOG(ERROR) << "model const weight is nullptr.";
     return RET_ERROR;
   }
+  const char *new_model_buf;
   if (copy_buf_) {
-    auto new_model_buf = static_cast<char *>(allocator->Malloc(model_size));
-    if (new_model_buf == nullptr) {
+    auto numa_model_buf = static_cast<char *>(allocator->Malloc(model_size));
+    if (numa_model_buf == nullptr) {
       MS_LOG(ERROR) << "new model buf is nullptr in pack weight manager.";
       return RET_ERROR;
     }
-    memcpy(new_model_buf, model_buf, model_size);
-    if (numa_model_buf_.find(model_buf) == numa_model_buf_.end()) {
-      numa_model_buf_[model_buf] = {numa_id};
-      model_buf_map_[model_buf] = {new_model_buf};
-    } else {
-      numa_model_buf_[model_buf].push_back(numa_id);
-      model_buf_map_[model_buf].push_back(new_model_buf);
-    }
-    buf_model_weight_[new_model_buf] = model_const_weight;
-    buf_model_weight_[new_model_buf]->allocator = allocator;
-    model_const_weight->numa_id = numa_id;
+    memcpy(numa_model_buf, model_buf, model_size);
+    new_model_buf = numa_model_buf;
   } else {
-    buf_model_weight_[model_buf] = model_const_weight;
-    buf_model_weight_[model_buf]->allocator = allocator;
+    new_model_buf = model_buf;
   }
+  if (numa_model_buf_.find(model_buf) == numa_model_buf_.end()) {
+    numa_model_buf_[model_buf] = {numa_id};
+    model_buf_map_[model_buf] = {new_model_buf};
+  } else {
+    numa_model_buf_[model_buf].push_back(numa_id);
+    model_buf_map_[model_buf].push_back(new_model_buf);
+  }
+  buf_model_weight_[new_model_buf] = model_const_weight;
+  buf_model_weight_[new_model_buf]->allocator = allocator;
+  model_const_weight->numa_id = numa_id;
   return RET_OK;
 }
 
-char *PackWeight::GetNumaModelBuf(const char *model_buf, int numa_id) {
+const char *PackWeight::GetNumaModelBuf(const char *model_buf, int numa_id) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   if (model_buf_map_.find(model_buf) == model_buf_map_.end() ||
       find(numa_model_buf_[model_buf].begin(), numa_model_buf_[model_buf].end(), numa_id) ==
@@ -232,7 +233,7 @@ void PackWeight::DeleteOriginModelBufInfo(const char *model_buf) {
   model_buf_map_.erase(model_buf);
 }
 
-void PackWeight::FreePackWeight(std::vector<char *> model_bufs, bool all) {
+void PackWeight::FreePackWeight(std::vector<const char *> model_bufs, bool all) {
   MS_LOG(INFO) << "free pack weight by other model buf.";
   std::lock_guard<std::mutex> lock(mtx_weight_);
   for (auto &item : buf_model_weight_) {
@@ -258,7 +259,15 @@ void PackWeight::FreePackWeight(std::vector<char *> model_bufs, bool all) {
         item.second = nullptr;
       }
     }
+  } else {
+    for (auto &item : buf_model_weight_) {
+      if (item.second != nullptr) {
+        delete item.second;
+        item.second = nullptr;
+      }
+    }
   }
+
   for (auto &buf : model_bufs) {
     buf_model_weight_.erase(buf);
   }

@@ -783,7 +783,8 @@ Status ModelPool::InitNumaParameter(const std::shared_ptr<RunnerConfig> &runner_
   return kSuccess;
 }
 
-Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config) {
+Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config,
+                                bool copy_model) {
   std::shared_ptr<ModelWorker> model_worker = nullptr;
   if (model_pool_config.size() != workers_num_) {
     MS_LOG(ERROR) << "model pool config size is wrong.";
@@ -792,7 +793,7 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
   bool create_worker_success = true;
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = model_pool_config[i]->numa_id;
-    auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id);
+    auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id, copy_model);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
     auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
     model_bufs_.push_back(new_model_buf);
@@ -933,7 +934,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "read file failed.";
     return kLiteNullptr;
   }
-  status = CreateWorkers(graph_buf_, size, model_pool_config);
+  status = CreateWorkers(graph_buf_, size, model_pool_config, numa_available_ && (used_numa_node_num_ > 1));
   if (status != kSuccess) {
     lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
     MS_LOG(ERROR) << "create worker failed.";
