@@ -2196,8 +2196,9 @@ class KLDivLoss(LossBase):
     :math:`\ell(x, target)` represents `output`.
 
     Note:
-        Currently it does not support float64 input on `Ascend`.
-        It behaves the same as the mathematical definition only when `reduction` is set to `batchmean`.
+        - Currently it does not support float64 input on `Ascend`.
+        - The output aligns with the mathematical definition of Kullback-Leibler divergence
+          only when `reduction` is set to 'batchmean'.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
