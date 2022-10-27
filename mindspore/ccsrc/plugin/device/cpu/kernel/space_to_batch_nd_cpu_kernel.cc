@@ -142,9 +142,8 @@ bool SpaceToBatchNDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost) == static_cast<int>(KRET_RESIZE_FAILED)) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return static_cast<int>(KRET_RESIZE_FAILED);
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
   // get input_shape
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
