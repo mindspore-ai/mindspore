@@ -14,10 +14,8 @@ Neural Network
 
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
-    mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.bias_add
-    mindspore.ops.conv2d
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
     mindspore.ops.dropout2d
@@ -29,11 +27,6 @@ Neural Network
     mindspore.ops.kl_div
     mindspore.ops.pad
     mindspore.ops.padding
-    mindspore.ops.pdist
-    mindspore.ops.prelu
-    mindspore.ops.relu
-    mindspore.ops.relu6
-
 
 Loss Functions
 ^^^^^^^^^^^^^^
@@ -56,7 +49,6 @@ Activation Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.celu
     mindspore.ops.dropout
     mindspore.ops.fast_gelu
     mindspore.ops.gumbel_softmax
@@ -67,7 +59,6 @@ Activation Functions
     mindspore.ops.selu
     mindspore.ops.softsign
     mindspore.ops.soft_shrink
-    mindspore.ops.softmax
     mindspore.ops.tanh
 
 Sampling Functions
@@ -80,16 +71,6 @@ Sampling Functions
 
     mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
-
-Distance Functions
-^^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.cdist
 
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -146,19 +127,14 @@ Element-by-Element Operations
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
-    mindspore.ops.logit
-    mindspore.ops.log_matrix_determinant
-    mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
     mindspore.ops.round
     mindspore.ops.sin
     mindspore.ops.sinh
-    mindspore.ops.sqrt
     mindspore.ops.square
     mindspore.ops.sub
-    mindspore.ops.svd
     mindspore.ops.tan
     mindspore.ops.trunc
     mindspore.ops.truncate_div
@@ -260,7 +236,6 @@ Tensor Building
 
     mindspore.ops.eye
     mindspore.ops.fill
-    mindspore.ops.fills
     mindspore.ops.linspace
     mindspore.ops.narrow
     mindspore.ops.one_hot
@@ -296,14 +271,12 @@ Array Operation
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_max_pool2d
-    mindspore.ops.affine_grid
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
     mindspore.ops.count_nonzero
     mindspore.ops.diag
-    mindspore.ops.dyn_shape
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
@@ -341,8 +314,6 @@ Array Operation
     mindspore.ops.squeeze
     mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
-    mindspore.ops.tensor_scatter_min
-    mindspore.ops.tensor_scatter_max
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
@@ -403,10 +374,7 @@ Sparse Functions
 
     mindspore.ops.dense_to_sparse_coo
     mindspore.ops.dense_to_sparse_csr
-    mindspore.ops.csr_add
-    mindspore.ops.csr_softmax
     mindspore.ops.csr_to_coo
-    mindspore.ops.sparse_add
 
 Gradient Clipping
 ^^^^^^^^^^^^^^^^^^
@@ -458,26 +426,6 @@ Differential Functions
     mindspore.ops.jvp
     mindspore.ops.vjp
     mindspore.ops.vmap
-
-Debugging Functions
--------------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.print_
-
-Image Functions
----------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.iou
 
 Other Functions
 ---------------
