@@ -57,7 +57,9 @@ bool FractionalMaxPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
     return false;
   }
-
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  overlapping_ = kernel_ptr->get_overlapping();
   kernel_func_ = func_list_[index].second;
   return true;
 }
@@ -70,9 +72,8 @@ int FractionalMaxPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  overlapping_ = kernel_ptr->get_overlapping();
+  tensor_in_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
+  tensor_out_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
   return ret;
 }
 
