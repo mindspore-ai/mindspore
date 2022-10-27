@@ -2566,6 +2566,13 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
     return F.unsorted_segment_prod(x, segment_ids, num_segments)
 
 
+def negative(x):
+    r"""
+    Return a new tensor with the negative of the elements of input.
+    """
+    return F.neg(x)
+
+
 def nonzero(x):
     """
     Return a Tensor of the positions of all non-zero values.
