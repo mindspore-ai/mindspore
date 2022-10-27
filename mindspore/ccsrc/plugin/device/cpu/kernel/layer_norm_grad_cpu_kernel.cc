@@ -26,6 +26,8 @@ namespace kernel {
 namespace {
 constexpr size_t kLayerNormGradInputsNum = 5;
 constexpr size_t kLayerNormGradOutputsNum = 3;
+constexpr size_t kLayerNormGradOnednnMinDim = 2;
+constexpr size_t kLayerNormGradOnednnMaxDim = 5;
 constexpr size_t kLayerNormGradInputXIndex = 0;
 constexpr size_t kLayerNormGradInputDyIndex = 1;
 constexpr size_t kLayerNormGradInputVarIndex = 2;
@@ -34,7 +36,18 @@ constexpr size_t kLayerNormGradInputGammaIndex = 4;
 constexpr size_t kLayerNormGradOutputDxIndex = 0;
 constexpr size_t kLayerNormGradOutputDgIndex = 1;
 constexpr size_t kLayerNormGradOutputDbIndex = 2;
+constexpr size_t kScaleShiftNum = 2;
 }  // namespace
+
+void LayerNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
+  size_t type_size = sizeof(float);
+  size_t tensor_size = static_cast<size_t>(param_num_) * kScaleShiftNum * type_size;
+  input_size_list_.pop_back();
+  // [2, c] to store scale and bias
+  (void)workspace_size_list_.emplace_back(tensor_size);
+  // [2, c] to store diff_scale and diff_bias
+  (void)workspace_size_list_.emplace_back(tensor_size);
+}
 
 bool LayerNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
@@ -67,6 +80,7 @@ int LayerNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
 
   auto x_shape = inputs[kLayerNormGradInputXIndex]->GetShapeVector();
+  auto x_type = inputs[kLayerNormGradInputXIndex]->GetDtype();
   auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
   auto begin_params_axis = kernel_ptr->get_begin_params_axis();
   if (begin_norm_axis < 0) {
@@ -94,14 +108,81 @@ int LayerNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
                       << Vector2Str(x_shape);
   }
+
+  if (begin_norm_axis == static_cast<int64_t>(x_shape.size() - 1) &&
+      begin_params_axis == static_cast<int64_t>(x_shape.size() - 1) && x_type == kNumberTypeFloat32 &&
+      x_shape.size() >= kLayerNormGradOnednnMinDim && x_shape.size() <= kLayerNormGradOnednnMaxDim) {
+    use_onednn_ = true;
+    dnnl::memory::desc x_desc = GetDefaultMemDesc(x_shape);
+    dnnl::memory::desc scale_bias_desc =
+      GetDefaultMemDesc(std::vector<int64_t>{kScaleShiftNum, static_cast<int64_t>(param_num_)});
+    auto prop_kind = dnnl::prop_kind::forward_inference;
+    auto normalization_flags = dnnl::normalization_flags::use_scale_shift;
+    auto desc = CreateDesc<dnnl::layer_normalization_forward::desc>(prop_kind, x_desc, eps_, normalization_flags);
+    auto forward_prim_desc = CreateDesc<dnnl::layer_normalization_forward::primitive_desc>(desc, engine_);
+
+    auto backward_desc = CreateDesc<dnnl::layer_normalization_backward::desc>(dnnl::prop_kind::backward, x_desc, x_desc,
+                                                                              eps_, normalization_flags);
+    auto backward_prim_desc =
+      CreateDesc<dnnl::layer_normalization_backward::primitive_desc>(backward_desc, engine_, forward_prim_desc);
+    auto wksp_desc = GetWorkspaceDesc(forward_prim_desc);
+    auto mean = GetMeanDesc(forward_prim_desc);
+    auto variance = GetVarianceDesc(forward_prim_desc);
+    primitive_ = CreatePrimitive<dnnl::layer_normalization_backward>(backward_prim_desc);
+    AddArgument(DNNL_ARG_SRC, x_desc);
+    AddArgument(DNNL_ARG_MEAN, mean);
+    AddArgument(DNNL_ARG_VARIANCE, variance);
+    AddArgument(DNNL_ARG_SCALE_SHIFT, scale_bias_desc);
+    AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
+    AddArgument(DNNL_ARG_DST, x_desc);
+    AddArgument(DNNL_ARG_DIFF_DST, x_desc);
+    AddArgument(DNNL_ARG_DIFF_SRC, x_desc);
+    AddArgument(DNNL_ARG_DIFF_SCALE_SHIFT, scale_bias_desc);
+
+    InitWorkspaceSize(inputs);
+  }
+
   return ret;
 }
 
 bool LayerNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &workspace,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormGradOutputsNum, kernel_name_);
+  if (use_onednn_) {
+    auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->addr);
+    auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size, inputs[SCALE]->addr, inputs[SCALE]->size);
+    if (scale_ret != 0) {
+      MS_LOG(EXCEPTION) << "Scale memcpy error!";
+    }
+    auto max_size = workspace[SCALE_BIAS]->size - inputs[SCALE]->size;
+    auto bias_ret = memset_s(wksp_in + (inputs[SCALE]->size / sizeof(float)), max_size, 0, max_size);
+    if (bias_ret != 0) {
+      MS_LOG(EXCEPTION) << "Bias memset 0 error.";
+    }
+
+    SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[Y_BACKPROP]->addr);
+    SetArgumentHandle(DNNL_ARG_SRC, inputs[X]->addr);
+    SetArgumentHandle(DNNL_ARG_MEAN, inputs[SAVE_MEAN]->addr);
+    SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[SAVE_VARIANCE]->addr);
+    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[SCALE_BIAS]->addr);
+    SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[DX]->addr);
+    SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[DIFF_SCALE_BIAS]->addr);
+    ExecutePrimitive();
+
+    auto wksp_out = reinterpret_cast<float *>(workspace[DIFF_SCALE_BIAS]->addr);
+    auto diff_scale_ret = memcpy_s(outputs[DSCALE]->addr, outputs[DSCALE]->size, wksp_out, inputs[SCALE]->size);
+    if (diff_scale_ret != 0) {
+      MS_LOG(EXCEPTION) << "Diff_scale memcpy to output[1] error.";
+    }
+    auto diff_bias_ret = memcpy_s(outputs[DBIAS]->addr, outputs[DBIAS]->size,
+                                  wksp_out + (outputs[DSCALE]->size / sizeof(float)), outputs[DBIAS]->size);
+    if (diff_bias_ret != 0) {
+      MS_LOG(EXCEPTION) << "Diff_bias memcpy to  to output[2] error.";
+    }
+    return true;
+  }
   kernel_func_(this, inputs, outputs);
   return true;
 }
