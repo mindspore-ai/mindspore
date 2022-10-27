@@ -61,8 +61,8 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
 void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;
   matrix_b_.need_pack = true;
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major : RowMajor2Row8Major;
+  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major_parallel : RowMajor2Col12Major_parallel;
+  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major_parallel : RowMajor2Row8Major_parallel;
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
   col_min_unit_ = C8NUM;
@@ -193,9 +193,9 @@ int MatmulFp32BaseCPUKernel::PackMatrixAImpl() {
     const float *src = src_ptr + i * params_->deep_ * params_->row_;
     float *dst = matrix_a_.pack_ptr + i * params_->deep_ * params_->row_align_;
     if (params_->a_transpose_) {
-      matrix_a_pack_fun_(src, dst, params_->deep_, params_->row_);
+      matrix_a_pack_fun_(src, dst, params_->deep_, params_->row_, 0, params_->deep_);
     } else {
-      matrix_a_pack_fun_(src, dst, params_->row_, params_->deep_);
+      matrix_a_pack_fun_(src, dst, params_->row_, params_->deep_, 0, params_->row_);
     }
   }
   return RET_OK;
@@ -236,6 +236,29 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
   return PackMatrixBImpl();
 }
 
+int PackMatrixBRun(void *cdata, int task_id, float, float) {
+  CHECK_NULL_RETURN(cdata);
+  auto op = reinterpret_cast<const MatmulFp32BaseCPUKernel *>(cdata);
+  auto error_code = op->PackMatrixBParallelRunByBatch(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "PackMatrixBRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int MatmulFp32BaseCPUKernel::PackMatrixBParallelRunByBatch(int task_id) const {
+  int start = task_id * pack_b_stride_;
+  if (params_->b_transpose_) {
+    int end = MSMIN(params_->col_, start + pack_b_stride_);
+    matrix_b_pack_fun_(pack_b_src_, pack_b_dst_, params_->col_, params_->deep_, start, end);
+  } else {
+    int end = MSMIN(params_->deep_, start + pack_b_stride_);
+    matrix_b_pack_fun_(pack_b_src_, pack_b_dst_, params_->deep_, params_->col_, start, end);
+  }
+  return RET_OK;
+}
+
 int MatmulFp32BaseCPUKernel::PackMatrixBImpl() {
   auto src_ptr = matrix_b_.has_origin
                    ? matrix_b_.origin_ptr
@@ -245,12 +268,17 @@ int MatmulFp32BaseCPUKernel::PackMatrixBImpl() {
   MS_CHECK_TRUE_MSG(matrix_b_.pack_ptr != nullptr, RET_ERROR, "matrix-b pack ptr is a nullptr.");
   MS_CHECK_TRUE_MSG(matrix_b_pack_fun_ != nullptr, RET_ERROR, "matrix-b func is a nullptr.");
   for (int i = 0; i < b_batch_; i++) {
-    const float *src = src_ptr + i * params_->deep_ * params_->col_;
-    float *dst = matrix_b_.pack_ptr + i * params_->deep_ * params_->col_align_;
     if (params_->b_transpose_) {
-      matrix_b_pack_fun_(src, dst, params_->col_, params_->deep_);
+      pack_b_stride_ = UP_DIV(params_->col_, op_parameter_->thread_num_);
     } else {
-      matrix_b_pack_fun_(src, dst, params_->deep_, params_->col_);
+      pack_b_stride_ = UP_DIV(params_->deep_, op_parameter_->thread_num_);
+    }
+    pack_b_src_ = src_ptr + i * params_->deep_ * params_->col_;
+    pack_b_dst_ = matrix_b_.pack_ptr + i * params_->deep_ * params_->col_align_;
+    auto ret = ParallelLaunch(this->ms_context_, PackMatrixBRun, this, op_parameter_->thread_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "MatmulRun failed in split by batch";
+      return ret;
     }
   }
   return RET_OK;
@@ -615,13 +643,13 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
   InitGlobalVariable();
   if (CheckRow1OptimalConditions()) {
     row_tile_ = 1;
-    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
     matrix_a_.need_pack = false;
     pack_opt_ = false;
     if (!params_->b_const_ && params_->col_ <= C128NUM) {
       col_tile_ = 1;
       out_need_aligned_ = false;
-      matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+      matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
       matrix_b_.need_pack = params_->b_transpose_;
     }
   }
@@ -629,8 +657,8 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
     out_need_aligned_ = false;
     row_tile_ = 1;
     col_tile_ = 1;
-    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
-    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
+    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
     matrix_a_.need_pack = params_->a_transpose_ && params_->row_ != 1;
     matrix_b_.need_pack = false;
     pack_opt_ = false;

@@ -91,20 +91,24 @@ void PackNHWCToNC8HW8NotAlignedFp32(const float *src, float *dst, const int batc
   }
 }
 
-void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
-  for (int r = 0; r < row; ++r) {
+void RowMajor2ColMajor_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  for (int r = row_start; r < row_end; ++r) {
     for (int c = 0; c < col; ++c) {
       dst_ptr[c * row + r] = src_ptr[r * col + c];
     }
   }
 }
 
-void RowMajor2RowMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
-  memcpy(dst_ptr, src_ptr, row * col * (int)(sizeof(float)));
+void RowMajor2RowMajor_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  if (row_end > row_start) {
+    src_ptr += row_start * col;
+    dst_ptr += row_start * col;
+    memcpy(dst_ptr, src_ptr, (row_end - row_start) * col * (int)(sizeof(float)));
+  }
 }
 
-void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  for (int r = 0; r < row; r++) {
+void RowMajor2Row4Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  for (int r = row_start; r < row_end; r++) {
     const float *src = src_ptr + r * col;
     int c = 0;
     for (; c < col; c++) {
@@ -121,8 +125,8 @@ void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   return;
 }
 
-void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  for (int r = 0; r < row; r++) {
+void RowMajor2Row6Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  for (int r = row_start; r < row_end; r++) {
     const float *src = src_ptr + r * col;
     int c = 0;
     for (; c < col; c++) {
@@ -139,8 +143,8 @@ void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   return;
 }
 
-void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  for (int r = 0; r < row; r++) {
+void RowMajor2Row8Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  for (int r = row_start; r < row_end; r++) {
     const float *src = src_ptr + r * col;
     int c = 0;
     for (; c < col; c++) {
@@ -157,8 +161,8 @@ void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   return;
 }
 
-void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  for (int r = 0; r < row; r++) {
+void RowMajor2Row12Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  for (int r = row_start; r < row_end; r++) {
     const float *src = src_ptr + r * col;
     int c = 0;
     for (; c < col; c++) {
@@ -175,8 +179,8 @@ void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col)
   return;
 }
 
-void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  for (int r = 0; r < row; r++) {
+void RowMajor2Row16Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  for (int r = row_start; r < row_end; r++) {
     const float *src = src_ptr + r * col;
     int c = 0;
     for (; c < col; c++) {
@@ -193,31 +197,35 @@ void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col)
   return;
 }
 
-void RowMajor2Row32Major(const float *src_ptr, float *dst_ptr, int col, int row) {
+void RowMajor2Row32Major_parallel(const float *src_ptr, float *dst_ptr, int col, int row, int col_start, int col_end) {
   // Not exactly aligned to 32, but aligned to 24 or 16 or 8 If 32 is not met.
   int row_block_num = UP_DIV(row, C8NUM);
   int row_block = C4NUM;
   for (int i = 0; i < row_block_num; i += row_block) {
     row_block = MSMIN(C4NUM, row_block_num - i);  // max_tile = 4
     int row_remainder = MSMIN(row_block * C8NUM, row - i * C8NUM);
-    for (int oc = 0; oc < col; ++oc) {
+    dst_ptr += col_start * row_block * C8NUM;
+    for (int oc = col_start; oc < col_end; ++oc) {
       memcpy(dst_ptr, src_ptr + oc * row + i * C8NUM, row_remainder * sizeof(float));
       dst_ptr += row_block * C8NUM;
     }
+    dst_ptr += (col - col_end) * row_block * C8NUM;
   }
 }
 
-void RowMajor2Row64Major(const float *src_ptr, float *dst_ptr, int col, int row) {
+void RowMajor2Row64Major_parallel(const float *src_ptr, float *dst_ptr, int col, int row, int col_start, int col_end) {
   // Not exactly aligned to 32, but aligned to 24 or 16 or 8 If 32 is not met.
   int row_block_num = UP_DIV(row, C16NUM);
   int row_block = C4NUM;
   for (int i = 0; i < row_block_num; i += row_block) {
     row_block = MSMIN(C4NUM, row_block_num - i);  // max_tile = 4
     int row_remainder = MSMIN(row_block * C16NUM, row - i * C16NUM);
-    for (int oc = 0; oc < col; ++oc) {
+    dst_ptr += col_start * row_block * C16NUM;
+    for (int oc = col_start; oc < col_end; ++oc) {
       memcpy(dst_ptr, src_ptr + oc * row + i * C16NUM, row_remainder * sizeof(float));
       dst_ptr += row_block * C16NUM;
     }
+    dst_ptr += (col - col_end) * row_block * C16NUM;
   }
 }
 
@@ -344,11 +352,11 @@ void RowMajor2Col12Major_arm32(const float *src_c, float *dst_c, size_t col) {
   return;
 }
 #endif
-void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  const float *src_r = src_ptr;
-  float *dst_r = dst_ptr;
-  int ri = 0;
-  for (; ri < (row / C12NUM * C12NUM); ri += C12NUM) {
+void RowMajor2Col12Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  int ri = (row_start / C12NUM * C12NUM);
+  float *dst_r = dst_ptr + ri * col;
+  const float *src_r = src_ptr + ri * col;
+  for (; ri < (row_end / C12NUM * C12NUM); ri += C12NUM) {
     int ci = 0;
     for (; ci < (col / C4NUM * C4NUM); ci += C4NUM) {
       const float *src_c = src_r + ci;
@@ -431,14 +439,16 @@ void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col)
     src_r += C12NUM * col;
     dst_r += C12NUM * col;
   }
-  for (; ri < row; ri++, dst_r++, src_r += col) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C12NUM] = src_r[i];
+  if (row_end == row) {
+    for (; ri < row_end; ri++, dst_r++, src_r += col) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C12NUM] = src_r[i];
+      }
     }
-  }
-  for (; ri < UP_ROUND(row, C12NUM); ri++, dst_r++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C12NUM] = 0;
+    for (; ri < UP_ROUND(row, C12NUM); ri++, dst_r++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C12NUM] = 0;
+      }
     }
   }
 }
@@ -614,8 +624,8 @@ void RowMajor2Col8Major_arm32(const float *src_c, float *dst_c, size_t col) {
 }
 #endif
 #endif
-void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int row8 = row / C8NUM * C8NUM;
+void RowMajor2Col8Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  int row8 = row_end / C8NUM * C8NUM;
 #ifdef ENABLE_ARM64
   int col_skip = col / C8NUM * C8NUM;
   int skip_size = C8NUM;
@@ -623,10 +633,10 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   int col_skip = col / C4NUM * C4NUM;
   int skip_size = C4NUM;
 #endif
-  const float *src_r = src_ptr;
-  float *dst_r = dst_ptr;
+  int ri = (row_start / C8NUM * C8NUM);
+  const float *src_r = src_ptr + ri * col;
+  float *dst_r = dst_ptr + ri * col;
 
-  int ri = 0;
   for (; ri < row8; ri += C8NUM) {
     int ci = 0;
     for (; ci < col_skip; ci += skip_size) {
@@ -683,26 +693,28 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     src_r += C8NUM * col;
     dst_r += C8NUM * col;
   }
-  for (; ri < row; ri++, src_r += col, dst_r++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C8NUM] = src_r[i];
+  if (row_end == row) {
+    for (; ri < row; ri++, src_r += col, dst_r++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C8NUM] = src_r[i];
+      }
     }
-  }
 
-  for (; ri < UP_ROUND(row, C8NUM); ri++, dst_r++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C8NUM] = 0;
+    for (; ri < UP_ROUND(row, C8NUM); ri++, dst_r++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C8NUM] = 0;
+      }
     }
   }
 }
 
-void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int row16 = row / C16NUM * C16NUM;
+void RowMajor2Col16Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  int row16 = row_end / C16NUM * C16NUM;
+  int ri = row_start / C16NUM * C16NUM;
   int col8 = col / C8NUM * C8NUM;
-  const float *src_r = src_ptr;
-  float *dst_r = dst_ptr;
+  const float *src_r = src_ptr + ri * col;
+  float *dst_r = dst_ptr + ri * col;
 
-  int ri = 0;
   for (; ri < row16; ri += C16NUM) {
     int ci = 0;
     for (; ci < col8; ci += C8NUM) {
@@ -729,31 +741,34 @@ void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col)
     src_r += C16NUM * col;
     dst_r += C16NUM * col;
   }
-  for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C16NUM] = src_r[i];
+  if (row_end == row) {
+    for (; ri < row; ri++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C16NUM] = src_r[i];
+      }
+      src_r += col;
+      dst_r += 1;
     }
-    src_r += col;
-    dst_r += 1;
-  }
-
-  int total_row = UP_ROUND(row, C16NUM);
-  for (; ri < total_row; ri++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C16NUM] = 0;
+    int total_row = UP_ROUND(row, C16NUM);
+    for (; ri < total_row; ri++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C16NUM] = 0;
+      }
+      dst_r += 1;
     }
-    dst_r += 1;
   }
 }
 
-void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+void RowMajor2Col32Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
   // Not exactly aligned to 32, but aligned to 24 or 16 or 8 If 32 is not met.
 #ifdef ENABLE_AVX
   int col8 = col / C8NUM * C8NUM;
 #endif
   int all_block_num = UP_DIV(row, C8NUM);
   int cur_block = C4NUM;
-  for (int i = 0; i < all_block_num; i += cur_block) {
+  row_start = UP_DIV(row_start, C8NUM);
+  row_end = UP_DIV(row_end, C8NUM);
+  for (int i = UP_ROUND(row_start, C4NUM); i < row_end; i += cur_block) {
     cur_block = MSMIN(C4NUM, all_block_num - i);  // max_tile = 4
     int dst_stride = cur_block * C8NUM;
     int row_num = MSMIN(dst_stride, row - i * C8NUM);
@@ -784,11 +799,13 @@ void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col)
   }
 }
 
-void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+void RowMajor2Col64Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
   // Not exactly aligned to 64, but aligned to 48 or 32 or 16 If 64 is not met.
   int all_block_num = UP_DIV(row, C16NUM);
   int cur_block = C4NUM;
-  for (int i = 0; i < all_block_num; i += cur_block) {
+  row_start = UP_DIV(row_start, C16NUM);
+  row_end = UP_DIV(row_end, C16NUM);
+  for (int i = UP_ROUND(row_start, C4NUM); i < row_end; i += cur_block) {
     cur_block = MSMIN(C4NUM, all_block_num - i);  // max_tile = 4
     int dst_stride = cur_block * C16NUM;
     int row_num = MSMIN(dst_stride, row - i * C16NUM);
@@ -803,14 +820,13 @@ void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col)
   }
 }
 
-void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int totalRow = UP_ROUND(row, C6NUM);
-  int row6 = row / C6NUM * C6NUM;
+void RowMajor2Col6Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  int row6 = row_end / C6NUM * C6NUM;
+  int ri = row_start / C6NUM * C6NUM;
   int col8 = col / C8NUM * C8NUM;
-  const float *src_r = src_ptr;
-  float *dst_r = dst_ptr;
+  const float *src_r = src_ptr + ri * col;
+  float *dst_r = dst_ptr + ri * col;
 
-  int ri = 0;
   for (; ri < row6; ri += C6NUM) {
     int ci = 0;
     for (; ci < col8; ci += C8NUM) {
@@ -885,30 +901,32 @@ void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     dst_r += C6NUM * col;
   }
 
-  for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C6NUM] = src_r[i];
+  if (row_end == row) {
+    for (; ri < row_end; ri++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C6NUM] = src_r[i];
+      }
+      src_r += col;
+      dst_r += 1;
     }
-    src_r += col;
-    dst_r += 1;
-  }
 
-  for (; ri < totalRow; ri++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C6NUM] = 0;
+    int totalRow = UP_ROUND(row, C6NUM);
+    for (; ri < totalRow; ri++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C6NUM] = 0;
+      }
+      dst_r += 1;
     }
-    dst_r += 1;
   }
 }
 
-void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int total_row = UP_ROUND(row, C4NUM);
-  int row4 = row / C4NUM * C4NUM;
+void RowMajor2Col4Major_parallel(const float *src_ptr, float *dst_ptr, int row, int col, int row_start, int row_end) {
+  int row4 = row_end / C4NUM * C4NUM;
+  int ri = row_start / C4NUM * C4NUM;
   int col4 = col / C4NUM * C4NUM;
-  const float *src_r = src_ptr;
-  float *dst_r = dst_ptr;
+  const float *src_r = src_ptr + ri * col;
+  float *dst_r = dst_ptr + ri * col;
 
-  int ri = 0;
   for (; ri < row4; ri += C4NUM) {
     int ci = 0;
     for (; ci < col4; ci += C4NUM) {
@@ -980,20 +998,72 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     src_r += C4NUM * col;
     dst_r += C4NUM * col;
   }
-  for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C4NUM] = src_r[i];
+  if (row_end == row) {
+    for (; ri < row; ri++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C4NUM] = src_r[i];
+      }
+      src_r += col;
+      dst_r += 1;
     }
-    src_r += col;
-    dst_r += 1;
-  }
 
-  for (; ri < total_row; ri++) {
-    for (int i = 0; i < col; i++) {
-      dst_r[i * C4NUM] = 0;
+    int total_row = UP_ROUND(row, C4NUM);
+    for (; ri < total_row; ri++) {
+      for (int i = 0; i < col; i++) {
+        dst_r[i * C4NUM] = 0;
+      }
+      dst_r += 1;
     }
-    dst_r += 1;
   }
+}
+
+inline void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2ColMajor_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2RowMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2RowMajor_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Row4Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Row6Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Row8Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Row12Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Row16Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Row32Major(const float *src_ptr, float *dst_ptr, int col, int row) {
+  RowMajor2Row32Major_parallel(src_ptr, dst_ptr, col, row, 0, col);
+}
+inline void RowMajor2Row64Major(const float *src_ptr, float *dst_ptr, int col, int row) {
+  RowMajor2Row64Major_parallel(src_ptr, dst_ptr, col, row, 0, col);
+}
+inline void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Col12Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Col8Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Col16Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Col32Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Col64Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Col6Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
+}
+inline void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  RowMajor2Col4Major_parallel(src_ptr, dst_ptr, row, col, 0, row);
 }
 
 void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel) {
