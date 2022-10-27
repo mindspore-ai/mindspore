@@ -1579,6 +1579,8 @@ void OnnxExporter::ExportPrimReduce(const FuncGraphPtr &, const CNodePtr &node,
     name = "ReduceSum";
   } else if (node->IsApply(prim::kPrimReduceMean)) {
     name = "ReduceMean";
+  } else if (node->IsApply(prim::kPrimReduceMax)) {
+    name = "ReduceMax";
   } else {
     MS_LOG(EXCEPTION) << "Unsupported reduce op: " << node->ToString();
   }
@@ -3125,6 +3127,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimReshape, &OnnxExporter::ExportPrimReshape},
     {prim::kPrimReduceMean, &OnnxExporter::ExportPrimReduce},
     {prim::kPrimReduceSum, &OnnxExporter::ExportPrimReduce},
+    {prim::kPrimReduceMax, &OnnxExporter::ExportPrimReduce},
     {prim::kPrimTranspose, &OnnxExporter::ExportPrimTranspose},
     {prim::kPrimStridedSlice, &OnnxExporter::ExportPrimStridedSlice},
     {prim::kPrimResizeNearestNeighbor, &OnnxExporter::ExportPrimResizeNearestNeighbor},
