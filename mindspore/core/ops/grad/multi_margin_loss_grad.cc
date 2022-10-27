@@ -48,6 +48,10 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape) || IsDynamicRank(target_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+
   if (x_shape.size() != kDim2 || target_shape.size() != kDim1) {
     MS_EXCEPTION(ValueError) << "For MultiMarginLossGrad, the rank of input x should be 2, and "
                                 "the rank of target should be 1,"

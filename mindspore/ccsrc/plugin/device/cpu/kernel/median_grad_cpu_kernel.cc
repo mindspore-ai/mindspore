@@ -75,18 +75,18 @@ int MedianGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (input0_type_ != input1_type_) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the dtype of y_grad should be same with x, but got " << input0_type_
                   << ".";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   if (input0_dim_ != input2_dim_) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the shape of y_grad should be same with y, but got " << input0_shape_
                   << ".";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   for (size_t i = 0; i < input2_dim_; i++) {
     if (input0_shape_[i] != input2_shape_[i]) {
       MS_LOG(ERROR) << "For " << kernel_name_ << ", the shape of y_grad should be same with y, but got "
                     << input0_shape_ << ".";
-      return false;
+      return KRET_RESIZE_FAILED;
     }
   }
   return KRET_OK;

@@ -61,7 +61,7 @@ int MedianCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     if (axis_ > static_cast<int>(input_dim_ - 1) || axis_ < static_cast<int>(-input_dim_)) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the axis must be in [" << -input_dim_ << "," << input_dim_
                     << "), but got " << axis_ << ".";
-      return false;
+      return KRET_RESIZE_FAILED;
     }
     for (size_t i = 0; i < input_dim_; i++) {
       input_num_elements_ *= static_cast<size_t>(input_shape_[i]);
@@ -70,7 +70,7 @@ int MedianCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     if (axis_ > 0 || axis_ < -1) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the axis must be in [" << -1 << "," << 1 << "), but got " << axis_
                     << ".";
-      return false;
+      return KRET_RESIZE_FAILED;
     }
   }
   return KRET_OK;

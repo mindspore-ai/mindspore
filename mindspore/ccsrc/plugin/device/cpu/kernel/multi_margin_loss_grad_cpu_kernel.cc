@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/multi_margin_loss_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/grad/multi_margin_loss_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,40 +31,101 @@ const size_t kThree = 3;
 constexpr char kKernelName[] = "MultiMarginLossGrad";
 }  // namespace
 
-void MultiMarginLossGradCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
-  ShapeVector x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kOne);
-  if (IsDynamic({x_shape})) {
-    return;
-  }
-  batch_size = LongToSize(x_shape[kZero]);
-  dims = LongToSize(x_shape[kOne]);
-  reduction = common::AnfAlgo::GetNodeAttr<string>(kernel_node, REDUCTION);
-  p = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "p");
-  margin = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "margin");
-  y_grad_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kZero).size();
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kZero);
-  input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+bool MultiMarginLossGradCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultiMarginLossGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  reduction = kernel_ptr->get_reduction();
+  p = kernel_ptr->get_p();
+  margin = kernel_ptr->get_margin();
+
+  dtype_ = inputs[kZero]->GetDtype();
+  input_num = inputs.size();
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
-bool MultiMarginLossGradCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+int MultiMarginLossGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs,
+                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto x_shape = inputs[kOne]->GetShapeVector();
+  batch_size = LongToSize(x_shape[kZero]);
+  dims = LongToSize(x_shape[kOne]);
+  return KRET_OK;
+}
+
+bool MultiMarginLossGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                   const std::vector<AddressPtr> &workspace,
+                                                   const std::vector<AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernelFP16<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    LaunchKernelFP32AndFP64<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
+    LaunchKernelFP32AndFP64<double>(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
   }
   return true;
 }
 
+const std::vector<std::pair<KernelAttr, MultiMarginLossGradCPUKernelMod::KernelRunFunc>>
+  &MultiMarginLossGradCPUKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, MultiMarginLossGradCPUKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
+  };
+  return func_list;
+}
+
 template <typename T>
-void MultiMarginLossGradCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
+void MultiMarginLossGradCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kernel::AddressPtr> &inputs,
+                                                              const std::vector<kernel::AddressPtr> &outputs) {
   auto y_grad_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   auto x_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
   auto target_addr = reinterpret_cast<int64_t *>(inputs[kTwo]->addr);

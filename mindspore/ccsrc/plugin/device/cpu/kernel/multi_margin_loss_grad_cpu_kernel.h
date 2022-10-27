@@ -14,69 +14,49 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MULTI_MARGIN_LOSS_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MULTI_MARGIN_LOSS_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MULTI_MARGIN_LOSS_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MULTI_MARGIN_LOSS_GRAD_CPU_KERNEL_H_
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MultiMarginLossGradCPUKernelMod : public DeprecatedNativeCpuKernelMod {
+class MultiMarginLossGradCPUKernelMod : public NativeCpuKernelMod,
+                                        public MatchKernelHelper<MultiMarginLossGradCPUKernelMod> {
  public:
   MultiMarginLossGradCPUKernelMod() = default;
 
   ~MultiMarginLossGradCPUKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddOutputAttr(kNumberTypeFloat16),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddOutputAttr(kNumberTypeFloat64),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeFloat16),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeFloat32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeFloat64)};
-    return support_list;
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelFP32AndFP64(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void LaunchKernelFP16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
@@ -92,4 +72,4 @@ class MultiMarginLossGradCPUKernelMod : public DeprecatedNativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MULTI_MARGIN_LOSS_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MULTI_MARGIN_LOSS_GRAD_CPU_KERNEL_H_
