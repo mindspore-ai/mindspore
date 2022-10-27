@@ -427,14 +427,6 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_
 }
 
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-#ifndef ENABLE_CLOUD_FUSION_INFERENCE
-  auto acl_pass = std::make_shared<opt::AclPass>(param);
-  CHECK_NULL_RETURN(acl_pass);
-  if (!acl_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Acl pass failed.";
-    return RET_ERROR;
-  }
-#endif
   if (param->device.find("Ascend") != std::string::npos) {
     if (opt::AclPassPlugin::GetInstance().HasPluginSo()) {
       auto acl_pass_ptr = opt::AclPassPlugin::GetInstance().CreateAclPass(param);

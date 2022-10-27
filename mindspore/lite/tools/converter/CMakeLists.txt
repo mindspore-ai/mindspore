@@ -245,10 +245,6 @@ if(MSLITE_ENABLE_CONTROLFLOW)
     set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_KERNEL_SRC})
 endif()
 
-if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-    set(LITE_SRC ${LITE_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/acl_pass.cc)
-endif()
-
 if(MSLITE_ENABLE_MINDRT)
     add_compile_definitions(ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt)
@@ -394,11 +390,6 @@ target_link_libraries(mindspore_converter
         ccsrc_debug_common_mid_
         mindir_proto_mid
         _mindspore_transform_express_ir_obj)
-
-if(MSLITE_ENABLE_ACL AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-    target_link_libraries(mindspore_converter
-            lite_acl_mid)
-endif()
 
 if(NOT MSVC)
     target_link_libraries(mindspore_converter pthread)

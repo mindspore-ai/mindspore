@@ -240,10 +240,6 @@ if(MSLITE_ENABLE_MODEL_OBF)
     target_link_libraries(lite-test ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()
 
-if(MSLITE_ENABLE_CONVERTER AND MSLITE_ENABLE_ACL)
-    target_link_libraries(lite-test lite_acl_mid mindspore_shared_lib)
-endif()
-
 if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     target_link_libraries(lite-test kernel_executor)
 endif()
