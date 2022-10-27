@@ -34,6 +34,12 @@ abstract::TupleShapePtr GridSampler2DGradInferShape(const PrimitivePtr &,
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[KZero]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[KOne]->BuildShape())[kShape];
   auto grid_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[KTwo]->BuildShape())[kShape];
+  // dynamic rank
+  if (IsDynamicRank(input_x_shape) || IsDynamicRank(grid_shape) || IsDynamicRank(grad_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny}),
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny})});
+  }
   if (grad_shape.size() != KFour) {
     MS_EXCEPTION(ValueError) << "Grad must be a 4-dimensional tensor, but got " << std::to_string(grad_shape.size())
                              << "-dimensional tensor.";
@@ -45,6 +51,17 @@ abstract::TupleShapePtr GridSampler2DGradInferShape(const PrimitivePtr &,
   if (grid_shape.size() != KFour) {
     MS_EXCEPTION(ValueError) << "Grid must be a 4-dimensional tensor, but got " << std::to_string(grid_shape.size())
                              << "-dimensional tensor.";
+  }
+  // dynamic shape
+  if (IsDynamic(input_x_shape) || IsDynamic(grid_shape) || IsDynamic(grad_shape)) {
+    ShapeVector dx_dyn_shape;
+    ShapeVector dgrid_dyn_shape;
+    for (size_t i = 0; i < input_x_shape.size(); ++i) {
+      dx_dyn_shape.push_back(abstract::Shape::kShapeDimAny);
+      dgrid_dyn_shape.push_back(abstract::Shape::kShapeDimAny);
+    }
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      std::make_shared<abstract::Shape>(dx_dyn_shape), std::make_shared<abstract::Shape>(dgrid_dyn_shape)});
   }
   if (input_x_shape[KZero] != grid_shape[KZero]) {
     MS_EXCEPTION(ValueError) << "The shape of grid is " << input_args[KTwo]->BuildShape()->ToString()
