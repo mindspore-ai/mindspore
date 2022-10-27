@@ -935,8 +935,8 @@ REG_BPROP_BUILDER("Softmax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto reverse_axis = GetTransposeAxis(shp, one_axis);
   out = ib->Emit("Transpose", {out, ib->Value<ShapeVector>(reverse_axis)});
   dout = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>(reverse_axis)});
-  auto dx = ib->Mul(out, ib->Sub(dout, ib->Emit("ReduceSum", {ib->Mul(out, dout)},
-                                                {{"axis", MakeValue(-1)}, {"keep_dims", MakeValue(true)}})));
+  ShapeVector reduce_axis = {-1};
+  auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), reduce_axis, true)));
   dx = ib->Emit("Transpose", {dx, ib->Value<ShapeVector>(reverse_axis)});
   return {dx};
 });
@@ -1035,5 +1035,205 @@ REG_BPROP_BUILDER("DynamicGRUV2").SetBody([](const BpropIRBuilder *ib) -> NodePt
   auto dh_prev = ib->TupleGetItem(tmp, kIndex5);
   constexpr int64_t zero = 0;
   return {dx, dw_input, dw_hidden, db_input, db_hidden, ib->ZerosLike(ib->Tensor(zero)), dh_prev};
+});
+
+REG_BPROP_BUILDER("AdaptiveMaxPool2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto index = ib->TupleGetItem(out, 1);
+  auto dy = ib->TupleGetItem(dout, 0);
+  auto dx = ib->Emit("AdaptiveMaxPool2DGrad", {dy, x, index});
+  return {dx};
+});
+
+NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto f_sizes = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto w_shape = ib->GetShape(w);
+  auto dx = ib->Emit(kConv2DOpName, {dout, w},
+                     {{"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"group", ib->GetAttr("group")},
+                      {"format", ib->GetAttr("format")},
+                      {"out_channel", ib->GetAttr("out_channel")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"mode", MakeValue(1)}});
+  auto dw = ib->Emit(kConv2DBackpropFilterOpName, {x, dout, ib->Value(w_shape)},
+                     {{"mode", ib->GetAttr("mode")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"group", ib->GetAttr("group")},
+                      {"format", ib->GetAttr("format")},
+                      {"out_channel", ib->GetAttr("out_channel")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"pad_list", ib->GetAttr("pad_list")}});
+  return {dx, dw, ib->ZerosLike(f_sizes)};
+}
+REG_BPROP_BUILDER(kConv2DTransposeOpName).SetBody(Conv2DTransposeBpropExpander);
+REG_BPROP_BUILDER(kConv2DBackpropInputOpName).SetBody(Conv2DTransposeBpropExpander);
+
+REG_BPROP_BUILDER(kConv2DBackpropFilterOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto dy = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto filter_size = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto x_shape = ib->GetShape(x);
+  auto dw_dx = ib->Emit(kConv2DBackpropInputOpName, {dy, dout, ib->Value(x_shape)},
+                        {{"mode", ib->GetAttr("mode")},
+                         {"dilation", ib->GetAttr("dilation")},
+                         {"stride", ib->GetAttr("stride")},
+                         {"group", ib->GetAttr("group")},
+                         {"format", ib->GetAttr("format")},
+                         {"out_channel", ib->GetAttr("out_channel")},
+                         {"kernel_size", ib->GetAttr("kernel_size")},
+                         {"pad_mode", ib->GetAttr("pad_mode")},
+                         {"pad", ib->GetAttr("pad")},
+                         {"pad_list", ib->GetAttr("pad_list")}});
+  auto dw_dy = ib->Emit(kConv2DOpName, {x, dout},
+                        {{"pad_mode", ib->GetAttr("pad_mode")},
+                         {"pad", ib->GetAttr("pad")},
+                         {"dilation", ib->GetAttr("dilation")},
+                         {"stride", ib->GetAttr("stride")},
+                         {"group", ib->GetAttr("group")},
+                         {"format", ib->GetAttr("format")},
+                         {"out_channel", ib->GetAttr("out_channel")},
+                         {"kernel_size", ib->GetAttr("kernel_size")},
+                         {"mode", MakeValue(1)}});
+  return {dw_dy, dw_dx, ib->ZerosLike(filter_size)};
+});
+
+REG_BPROP_BUILDER("BCEWithLogitsLoss").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto reduction = GetValue<std::string>(ib->GetAttr("reduction"));
+  auto predict = ib->GetInput(kIndex0);
+  auto target = ib->GetInput(kIndex1);
+  auto weight = ib->GetInput(kIndex2);
+  auto pos_weight = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto sigmoid_input = ib->Emit("Sigmoid", {predict});
+
+  auto t = ib->Mul(target, pos_weight);
+  auto dx =
+    ib->Mul(ib->Sub(ib->Mul(ib->Sub(ib->Add(t, ib->Tensor(1, ib->GetDtype(t))), target), sigmoid_input), t), dout);
+  auto grad_target =
+    ib->Mul(ib->Sub(ib->Emit("Log", {ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)}),
+                    ib->Mul(pos_weight, ib->Emit("Log", {sigmoid_input}))),
+            dout);
+
+  dx = ib->Mul(dx, weight);
+  grad_target = ib->Mul(grad_target, weight);
+
+  if (reduction == "mean") {
+    dx = ib->RealDiv(dx, ib->Tensor(ib->GetSize(dx), ib->GetDtype(dx)));
+    grad_target = ib->RealDiv(grad_target, ib->Tensor(ib->GetSize(target), ib->GetDtype(grad_target)));
+  }
+  return {dx, grad_target, ib->ZerosLike(weight), ib->ZerosLike(pos_weight)};
+});
+
+REG_BPROP_BUILDER("KLDivLoss").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto reduction = GetValue<std::string>(ib->GetAttr("reduction"));
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx;
+  if (reduction == "mean") {
+    dx = ib->Emit("KLDivLossGrad", {dout, x, y}, {{"reduction", MakeValue("sum")}});
+    dx = ib->RealDiv(dx, ib->Tensor(ib->GetSize(x), ib->GetDtype(dx)));
+  } else {
+    dx = ib->Emit("KLDivLossGrad", {dout, x, y}, {{"reduction", MakeValue(reduction)}});
+  }
+  return {dx, ib->ZerosLike(y)};
+});
+
+REG_BPROP_BUILDER("HShrink").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto features = ib->GetInput(kIndex0);
+  auto gradients = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("HShrinkGrad", {gradients, features}, {{"lambd", ib->GetAttr("lambd")}});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("SoftShrink").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("SoftShrinkGrad", {dout, input_x}, {{"lambd", ib->GetAttr("lambd")}});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("SoftMarginLoss").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto predict = ib->GetInput(kIndex0);
+  auto label = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("SoftMarginLossGrad", {predict, label, dout}, {{"reduction", ib->GetAttr("reduction")}});
+  auto dy = ib->Emit("SoftMarginLossGrad", {label, predict, dout}, {{"reduction", ib->GetAttr("reduction")}});
+  return {dx, dy};
+});
+
+REG_BPROP_BUILDER("MultilabelMarginLoss").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto target = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("MultilabelMarginLossGrad", {ib->TupleGetItem(dout, 0), x, target, ib->TupleGetItem(out, 1)},
+                     {{"reduction", ib->GetAttr("reduction")}});
+  return {dx, ib->ZerosLike(target)};
+});
+
+REG_BPROP_BUILDER("Dilation2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto _filter = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("Dilation2DBackpropInput", {x, _filter, dout},
+                     {{"stride", ib->GetAttr("stride")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"format", ib->GetAttr("format")}});
+  auto dfilter = ib->Emit("Dilation2DBackpropFilter", {x, _filter, dout},
+                          {{"stride", ib->GetAttr("stride")},
+                           {"dilation", ib->GetAttr("dilation")},
+                           {"pad_mode", ib->GetAttr("pad_mode")},
+                           {"format", ib->GetAttr("format")}});
+  return {dx, dfilter};
+});
+
+REG_BPROP_BUILDER("CeLU").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto alpha = GetValue<float>(ib->GetAttr("alpha"));
+  auto x = ib->GetInput(kIndex0);
+  auto x_dtype = ib->GetDtype(x);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto greater = ib->Emit("GreaterEqual", {x, ib->Tensor(0.0, x_dtype)});
+  greater = ib->Cast(greater, x_dtype);
+  auto lesser = ib->Emit("Less", {x, ib->Tensor(0.0, x_dtype)});
+  lesser = ib->Cast(lesser, x_dtype);
+  auto dx = ib->Mul(
+    dout,
+    (ib->Add((ib->Mul(greater, ib->Tensor(1.0, x_dtype))),
+             (ib->Mul(lesser, (ib->Add((ib->RealDiv(out, ib->Tensor(alpha, x_dtype))), ib->Tensor(1.0, x_dtype))))))));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Pdist").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("PdistGrad", {dout, x, out}, {{"p", ib->GetAttr("p")}});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("MultiMarginLoss").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto target = ib->GetInput(kIndex1);
+  auto weight = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx =
+    ib->Emit("MultiMarginLossGrad", {dout, x, target, weight},
+             {{"p", ib->GetAttr("p")}, {"margin", ib->GetAttr("margin")}, {"reduction", ib->GetAttr("reduction")}});
+  return {dx, ib->ZerosLike(target), ib->ZerosLike(weight)};
 });
 }  // namespace mindspore::expander::bprop

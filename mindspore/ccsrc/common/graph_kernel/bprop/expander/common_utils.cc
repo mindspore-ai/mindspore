@@ -20,19 +20,23 @@
 #include <vector>
 #include <utility>
 #include <limits>
+#include <unordered_set>
 
 #include "ops/core_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore::expander::bprop {
 namespace {
 NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis) {
-  auto dx_origin_dtype = ib->GetDtype(dx)->type_id();
+  auto dx_origin_dtypeptr = ib->GetDtype(dx);
+  auto dx_origin_dtype = dx_origin_dtypeptr->type_id();
   if (dx_origin_dtype == TypeId::kNumberTypeInt16 || dx_origin_dtype == TypeId::kNumberTypeInt32 ||
       dx_origin_dtype == TypeId::kNumberTypeInt64) {
     auto dx_fp32 = ib->Cast(dx, kFloat32);
-    return ib->Emit("ReduceSum", {dx_fp32}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
+    auto red = ib->Emit("ReduceSum", {dx_fp32, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
+    return ib->Cast(red, dx_origin_dtypeptr);
   }
-  return ib->Emit("ReduceSum", {dx}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
+  return ib->Emit("ReduceSum", {dx, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
 }
 
 void ComputeReduceIndex(const std::vector<int64_t> &x_rev, const std::vector<int64_t> &y_rev,
@@ -95,6 +99,60 @@ std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_
   (void)bc_axis.emplace_back(std::move(grad_x_reduce_idx));
   (void)bc_axis.emplace_back(std::move(grad_y_reduce_idy));
   return bc_axis;
+}
+
+std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<int64_t> &y) {
+  std::vector<int64_t> out;
+  if (x.size() != y.size()) {
+    MS_LOG(EXCEPTION) << "The size of inputs of TupleDiv must be the same, but the size of divisor tuple is"
+                      << " " << y.size() << ", the size of dividend tuple is " << x.size() << ".";
+  }
+  for (size_t i = 0; i < y.size(); i++) {
+    if (y[i] == 0) {
+      MS_LOG(EXCEPTION) << "The divisor value should not be 0!";
+    }
+    if ((x[i] % y[i]) != 0) {
+      MS_LOG(EXCEPTION) << "The inputs of TupleDiv should be divisible, but they are not divisible now, "
+                        << "the dividend is " << x[i] << ", the divisor is " << y[i] << ".";
+    }
+    out.push_back(x[i] / y[i]);
+  }
+  return out;
+}
+
+std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis) {
+  std::vector<int64_t> out;
+  if (axis.empty()) {
+    return std::vector<int64_t>(x.size(), 1LL);
+  }
+  std::unordered_set<int64_t> axis_set;
+  int64_t x_rank = SizeToLong(x.size());
+  for (const auto &i : axis) {
+    if (i >= x_rank || i < (-x_rank)) {
+      MS_LOG(EXCEPTION) << "axis should be in range [" << (-x_rank) << ", " << x_rank << ").";
+    }
+    (void)axis_set.insert(i);
+  }
+  for (auto i = 0; i < x_rank; i++) {
+    if (axis_set.count(i) > 0 || axis_set.count(i - x_rank) > 0) {
+      out.push_back(1LL);
+    } else {
+      out.push_back(x[LongToSize(i)]);
+    }
+  }
+  return out;
+}
+
+std::vector<int64_t> GetAxisList(const ValuePtr &value) {
+  std::vector<int64_t> result;
+  if (value->isa<ValueSequence>()) {
+    const auto &vals = value->cast<ValueSequencePtr>()->value();
+    (void)std::transform(vals.begin(), vals.end(), std::back_inserter(result),
+                         [](const ValuePtr &v) { return AnfUtils::GetIntValue(v); });
+  } else {
+    result.push_back(AnfUtils::GetIntValue(value));
+  }
+  return result;
 }
 
 NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
@@ -201,5 +259,172 @@ NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type) {
     default:
       return ib->Tensor(0, type);
   }
+}
+
+NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto orig_indices = indices;
+  auto x_shp = ib->GetShape(x);
+  auto out_shp = ib->GetShape(dout);
+  auto ind_shp = ib->GetShape(indices);
+  auto axis_v = GetIntFromValueNode(axis);
+  if (out_shp.empty()) {
+    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+  }
+  if (ind_shp.empty()) {
+    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    ind_shp = ib->GetShape(indices);
+    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
+    dout = ib->Reshape(dout, out_shp1);
+  }
+  out_shp = ib->GetShape(dout);
+  auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v);
+  auto values_transpose = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>(perm_1)});
+  auto tmp = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
+  auto perm_2 = GenerateInverseIndex(x_shp, axis_v);
+  auto params_grad = ib->Emit("Transpose", {tmp, ib->Value<ShapeVector>(perm_2)});
+  return {params_grad, ib->ZerosLike(orig_indices), ib->ZerosLike(axis)};
+}
+
+std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v) {
+  int64_t x_rank = static_cast<int64_t>(x_shp.size());
+  auto index = Range(x_rank);
+  if (axis_v < 0) {
+    axis_v += x_rank;
+  }
+  std::vector<int64_t> perm;
+  auto start1 = x_rank <= 1 ? index.end() : index.begin() + 1;
+  auto end1 = axis_v + 1 >= x_rank ? index.end() : index.begin() + axis_v + 1;
+  auto start2 = axis_v + 1 >= x_rank ? index.end() : index.begin() + axis_v + 1;
+  (void)std::copy(start1, end1, std::back_inserter(perm));
+  perm.push_back(0);
+  (void)std::copy(start2, index.end(), std::back_inserter(perm));
+  return perm;
+}
+
+std::vector<int64_t> GenerateShapeIndex(const std::vector<int64_t> &out_shp, const std::vector<int64_t> &ind_shp,
+                                        int64_t axis_v) {
+  int64_t out_rank = static_cast<int64_t>(out_shp.size());
+  int64_t ind_rank = static_cast<int64_t>(ind_shp.size());
+  if (axis_v < 0) {
+    axis_v += out_rank - ind_rank + 1;
+  }
+  auto perm_part1 = Range(axis_v, axis_v + ind_rank);
+  auto index = Range(out_rank);
+  std::vector<int64_t> perm;
+  auto end = axis_v >= out_rank ? out_rank - 1 : axis_v;
+  auto start = axis_v + ind_rank >= out_rank ? index.end() : index.begin() + axis_v + ind_rank;
+  (void)std::copy(perm_part1.begin(), perm_part1.end(), std::back_inserter(perm));
+  (void)std::copy(index.begin(), index.begin() + end, std::back_inserter(perm));
+  (void)std::copy(start, index.end(), std::back_inserter(perm));
+  return perm;
+}
+
+std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, const std::vector<int64_t> &ind_shp,
+                                           int64_t axis_v) {
+  int64_t rank = static_cast<int64_t>(x_shp.size());
+  if (axis_v < 0) {
+    axis_v += rank;
+  }
+  std::vector<int64_t> out_shp;
+  auto end = axis_v >= rank ? rank - 1 : axis_v;
+  auto start = axis_v + 1 >= rank ? x_shp.end() : x_shp.begin() + axis_v + 1;
+  (void)std::copy(x_shp.begin(), x_shp.begin() + end, std::back_inserter(out_shp));
+  (void)std::copy(ind_shp.begin(), ind_shp.end(), std::back_inserter(out_shp));
+  (void)std::copy(start, x_shp.end(), std::back_inserter(out_shp));
+  return out_shp;
+}
+
+std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex) {
+  int64_t len_multi = static_cast<int64_t>(multiples.size());
+  int64_t len_shape = static_cast<int64_t>(shapex.size());
+  int64_t len_cmp = len_multi - len_shape;
+  auto max_len = std::max(len_multi, len_shape);
+  int64_t i = 0;
+  int64_t j = 0;
+  std::vector<int64_t> res;
+  while (i < max_len && j < max_len) {
+    if (len_cmp == 0) {
+      res.push_back(multiples[i]);
+      res.push_back(shapex[j]);
+      i++;
+      j++;
+    } else if (len_cmp > 0) {
+      res.push_back(multiples[i]);
+      res.push_back(1);
+      i++;
+      len_cmp--;
+    } else {
+      res.push_back(1);
+      res.push_back(shapex[j]);
+      j++;
+      len_cmp++;
+    }
+  }
+  return res;
+}
+
+std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm) {
+  std::vector<int64_t> check_perm(perm);
+  std::vector<int64_t> res(perm);
+  if (res.empty()) {
+    return res;
+  }
+  std::sort(check_perm.begin(), check_perm.end());
+  int64_t perm_size = static_cast<int64_t>(check_perm.size());
+  for (int64_t i = 0; i < perm_size; i++) {
+    if (check_perm[i] != i) {
+      MS_LOG(EXCEPTION) << "For InvertPermutation, the input_x should be '[0-" << (perm_size - 1) << "]', but got "
+                        << check_perm;
+    }
+    res[perm[i]] = i;
+  }
+  return res;
+}
+
+int64_t GetIntFromValueNode(const NodePtr &node) {
+  if (!node->isa<ValueNode>()) {
+    MS_LOG(EXCEPTION) << "The output of node should be value node, but got " << node->get()->ToString();
+  }
+  auto value_node = node->get()->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto v = value_node->value();
+  MS_EXCEPTION_IF_NULL(v);
+  int64_t res = 0;
+  if (v->isa<Int32Imm>()) {
+    res = static_cast<int64_t>(GetValue<int32_t>(v));
+  } else if (v->isa<Int64Imm>()) {
+    res = GetValue<int64_t>(v);
+  } else {
+    MS_LOG(EXCEPTION) << "The output of node should be int, but got " << node->get()->ToString();
+  }
+  return res;
+}
+
+std::vector<int64_t> GetTupleIntFromValueNode(const NodePtr &node) {
+  if (!node->isa<ValueNode>()) {
+    MS_LOG(EXCEPTION) << "The output of node should be value node, but got " << node->get()->ToString();
+  }
+  auto value_node = node->get()->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto v = value_node->value();
+  MS_EXCEPTION_IF_NULL(v);
+  if (!v->isa<ValueTuple>() && !v->isa<ValueList>()) {
+    MS_LOG(EXCEPTION) << "The output of node should be tuple, but got " << node->get()->ToString();
+  }
+  auto sh = GetValue<std::vector<int64_t>>(v);
+  return sh;
+}
+
+NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &dout) {
+  // Grad definition for `Sum` operation.
+  auto input_shape = ib->GetShape(x);
+  auto output_shape_kept_dims = ReduceShape(input_shape, axis);
+  auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
+  auto grad = ib->Reshape(dout, output_shape_kept_dims);
+  return ib->Emit("Tile", {grad, ib->Value(tile_scaling)});
 }
 }  // namespace mindspore::expander::bprop

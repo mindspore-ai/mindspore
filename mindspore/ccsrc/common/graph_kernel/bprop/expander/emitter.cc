@@ -60,6 +60,11 @@ NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bo
               {{"transpose_a", MakeValue(transpose_a)}, {"transpose_b", MakeValue(transpose_b)}});
 }
 
+NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
+  return Emit(prim::kPrimBatchMatMul->name(), {a, b},
+              {{"transpose_a", MakeValue(transpose_a)}, {"transpose_b", MakeValue(transpose_b)}});
+}
+
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   if (node->isa<ValueNode>()) {
     auto value_node = node->get<ValueNodePtr>();
@@ -74,6 +79,10 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     }
   }
   return Emit(prim::kZerosLike, {node});
+}
+
+NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) const {
+  return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(keep_dims)}});
 }
 
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Add(lhs, rhs); }
