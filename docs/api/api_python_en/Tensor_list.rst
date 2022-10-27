@@ -161,6 +161,7 @@ Linear Algebraic Methods
     mindspore.Tensor.ger
     mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.matrix_determinant
+    mindspore.Tensor.det
 
 Tensor Operation Methods
 ------------------------
@@ -220,6 +221,7 @@ Array Methods
     mindspore.Tensor.minimum
     mindspore.Tensor.nbytes
     mindspore.Tensor.ndim
+    mindspore.Tensor.ndimension
     mindspore.Tensor.nonzero
     mindspore.Tensor.narrow
     mindspore.Tensor.ptp

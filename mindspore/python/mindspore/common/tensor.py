@@ -627,6 +627,13 @@ class Tensor(Tensor_):
         """
         return Tensor(data, dtype=dtype)
 
+    def ndimension(self):
+        r"""
+        Refer to `Tensor.ndim()
+        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.ndim.html>` _.
+        """
+        return len(self._shape)
+
     def set_const_arg(self, const_arg=True):
         """
         Specify whether the tensor is a constant when it is used for the argument of a network.
@@ -2011,7 +2018,7 @@ class Tensor(Tensor_):
             ValueError: If the dimension of self tensor is less than 2.
 
         Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -4243,6 +4250,15 @@ class Tensor(Tensor_):
         else:
             res = flattened[:new_size]
         return res.reshape(new_shape)
+
+    def det(self):
+        r"""
+        Refer to `Tensor.matrix_determinant()
+        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.matrix_determinant.html
+        >` _.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('matrix_determinant')(self)
 
     def diagonal(self, offset=0, axis1=0, axis2=1):
         """

@@ -92,6 +92,11 @@ def mean(x, axis=(), keep_dims=False):
     return reduce_mean(x, axis)
 
 
+def ndimension(x):
+    """Return the number of tensor dimensions."""
+    return len(x.shape)
+
+
 def prod(x, axis=(), keep_dims=False):
     """
     Reduces a dimension of a tensor by product all elements in the dimension.
@@ -1066,6 +1071,11 @@ def resize(x, *new_shape):
     else:
         res = flattened[:new_size]
     return res.reshape(new_shape)
+
+
+def det(x):
+    """Computes the determinant of one or more square matrices."""
+    return F.matrix_determinant(x)
 
 
 def diagonal(x, offset=0, axis1=0, axis2=1):
