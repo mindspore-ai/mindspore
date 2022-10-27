@@ -84,7 +84,6 @@ def test_two_matmul():
     strategy4 = ((2, 4), (4, 1))
     net = GradWrap(NetWithLoss(Net2(strategy1, strategy2, strategy3, strategy4).add_flags_recursive(fp16=True)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)

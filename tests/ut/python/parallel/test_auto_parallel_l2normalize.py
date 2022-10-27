@@ -71,7 +71,6 @@ def test_auto_parallel_l2normalize():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = NetWithLoss(Net())
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     reset_op_id()
 
     x = Tensor(np.ones([128, 64, 64]), dtype=ms.float32)

@@ -75,7 +75,6 @@ _b1 = Tensor(np.ones([32 * 3]), dtype=ms.float32)
 def compile_net(net, change_input=False):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
-    train_net.set_auto_parallel()
     train_net.set_train()
     if change_input:
         _cell_graph_executor.compile(train_net, _x1, _b1)

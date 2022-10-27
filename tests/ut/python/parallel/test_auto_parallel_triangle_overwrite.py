@@ -71,7 +71,6 @@ def test_triangle_strategy_consistency():
     x = Tensor(np.ones([128, 1000]), dtype=ms.float32)
     net = NetWithLoss(Net())
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     reset_op_id()
 
     net.set_train()

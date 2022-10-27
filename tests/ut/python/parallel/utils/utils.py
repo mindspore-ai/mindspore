@@ -32,9 +32,8 @@ class ParallelValidator:
         >>> from mindspore.common.api import _cell_graph_executor
         >>> from parallel.util.utils import ParallelValidator
         >>> net = Net()
-        >>> net.set_auto_parallel()
         >>> net.set_train()
-        >>> phase, _ = _cell_graph_executor.compile(net, *inputs, auto_parallel_mode=True)
+        >>> phase, _ = _cell_graph_executor.compile(net, *inputs)
         >>> validator = ParallelValidator(net, phase) # Init validator by net and phase
         >>> assert validator.check_parameter_shape("x", [8, 3, 256, 256]) # Check parameter slice shape
         >>> # expect_layout: (device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group)
@@ -144,10 +143,9 @@ class ParallelValidator:
         return self._graph_info_dict[graph_name]
 
 
-def compile_net(net: Cell, *inputs, auto_parallel_mode=False):
-    net.set_auto_parallel()
+def compile_net(net: Cell, *inputs):
     net.set_train()
-    phase, _ = _cell_graph_executor.compile(net, *inputs, auto_parallel_mode=auto_parallel_mode)
+    phase, _ = _cell_graph_executor.compile(net, *inputs)
     context.reset_auto_parallel_context()
     return phase
 

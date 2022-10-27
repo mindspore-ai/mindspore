@@ -70,6 +70,5 @@ def test_auto_parallel_unsortedsegmentsum():
     indices = Tensor(np.random.randint(16, size=(16, 16)))
 
     net = GradWrap(NetWithLoss(Net(16)))
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, indices)

@@ -42,7 +42,6 @@ _b = Tensor(np.ones([64, 32]), dtype=ms.float32)
 
 
 def compile_net(net):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, _x, _b)
     context.reset_auto_parallel_context()

@@ -79,7 +79,6 @@ def compile_net(net, shape):
     z = Tensor(np.ones(shape), dtype=ms.int32)
     optimizer = Adam(net.trainable_params(), learning_rate=0.1)
     train_net = TrainOneStepCell(net, optimizer)
-    train_net.set_auto_parallel()
     train_net.set_train()
     _cell_graph_executor.compile(train_net, x, y, z)
     context.reset_auto_parallel_context()

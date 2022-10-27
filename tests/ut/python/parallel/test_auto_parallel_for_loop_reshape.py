@@ -134,7 +134,6 @@ def test_auto_parallel():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
     _set_algo_single_loop(True)
     net = Full(_w1, 3)
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, _x, phase='train')
     num_ops = _cell_graph_executor._get_num_parallel_ops(net)

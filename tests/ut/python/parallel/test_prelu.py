@@ -58,7 +58,6 @@ class Net(nn.Cell):
         return out
 
 def compile_net(net, x, y):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 
@@ -154,6 +153,5 @@ def test_matmul_prelu_parallel_success():
     y = Tensor(np.random.rand(64, 16), dtype=ms.float32)
     w = Tensor(np.random.rand(16), dtype=ms.float32)
     net = GradWrap3(NetWithLoss3(Net3(strategy1, strategy2)))
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, w)

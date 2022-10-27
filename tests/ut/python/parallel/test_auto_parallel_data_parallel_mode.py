@@ -53,7 +53,6 @@ class NetRecursive(nn.Cell):
         return self.mul_net(out1, out2)
 
 def compile_net(net, x, y):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

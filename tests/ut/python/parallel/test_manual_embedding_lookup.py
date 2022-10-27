@@ -70,9 +70,8 @@ def compile_net(net):
     optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1)
     optimizer.sparse_opt.set_device("CPU")
     train_net = TrainOneStepCell(net, optimizer)
-    train_net.set_auto_parallel()
     train_net.set_train()
-    _cell_graph_executor.compile(train_net, _x, _b, auto_parallel_mode=True)
+    _cell_graph_executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()
 
 

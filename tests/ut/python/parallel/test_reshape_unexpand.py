@@ -54,7 +54,6 @@ class GradWrap(nn.Cell):
 def compile_net(net, input_data, dev_num=8, parallel_mode="semi_auto_parallel"):
     context.set_auto_parallel_context(device_num=dev_num, global_rank=0)
     context.set_auto_parallel_context(parallel_mode=parallel_mode)
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, input_data)
 

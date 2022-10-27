@@ -297,7 +297,6 @@ def test_bn_reshape_dense_bn_train_loss():
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
-    net.set_auto_parallel()
 
     net.set_train()
     _cell_graph_executor.compile(net, input_, label)
@@ -312,7 +311,6 @@ def test_semi_one_hot_net_batch():
 
     net = SemiAutoOneHotNet(args=Args(), strategy=StrategyBatch())
     net = GradWrap(NetWithLoss(net))
-    net.set_auto_parallel()
 
     net.set_train()
     _cell_graph_executor.compile(net, input_, label)
@@ -352,7 +350,6 @@ class TestOneHotNet(BasicValidator):
         label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
         net = GradWrap(NetWithLoss(OneHotWithMulNet(onehot_strategy=((1, 4), (), ()), mul_strategy=((1, 4), ()))))
-        net.set_auto_parallel()
 
         net.set_train()
         _cell_graph_executor.compile(net, input_, label)

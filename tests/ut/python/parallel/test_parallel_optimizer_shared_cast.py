@@ -82,9 +82,8 @@ def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None
     parameters = net.trainable_params() if stages == 1 else net.infer_param_pipeline_stage()
     optimizer = Momentum(parameters, learning_rate=0.1, momentum=0.9)
     train_network = TrainOneStepCell(net, optimizer).set_comm_fusion(4)
-    train_network.set_auto_parallel()
     train_network.set_train()
-    _cell_graph_executor.compile(train_network, inputs, label, phase="train", auto_parallel_mode=True)
+    _cell_graph_executor.compile(train_network, inputs, label, phase="train")
     context.reset_auto_parallel_context()
     return train_network
 

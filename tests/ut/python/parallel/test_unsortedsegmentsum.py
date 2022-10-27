@@ -72,7 +72,6 @@ def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
     else:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

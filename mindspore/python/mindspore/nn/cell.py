@@ -40,7 +40,6 @@ from mindspore.ops.operations import Cast
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
-from mindspore.parallel._tensor import _load_tensor_by_layout
 
 
 class Cell(Cell_):
@@ -84,12 +83,11 @@ class Cell(Cell_):
         [Parameter (name=weight, shape=(240, 120, 4, 4), dtype=Float32, requires_grad=True)]
     """
 
-    IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
-                   '_construct_inputs_num', '_create_time', '_func_graph_flags', '_parallel_inputs_run',
-                   '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase', '_auto_parallel_mode',
+    IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_create_time',
+                   '_func_graph_flags', '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase',
                    '_forward_pre_hook', '_forward_hook', '_enable_forward_pre_hook', '_enable_forward_hook',
                    '_bprop_debug', '_enable_backward_hook', '_cell_backward_hook', '_is_run', '_param_prefix',
-                   '_attr_synced', 'pynative', 'requires_grad', '_auto_parallel_compile_and_run', 'cell_type']
+                   '_attr_synced', 'pynative', 'requires_grad', 'cell_type']
 
     def __init__(self, auto_prefix=True, flags=None):
         Cell_.__init__(self, self._cell_tag)
@@ -123,10 +121,6 @@ class Cell(Cell_):
         if os.getenv('GC_COLLECT_IN_CELL') == '1':
             gc.collect()
 
-        self._construct_inputs_num = 0
-        self._construct_inputs_names = []
-        self._auto_parallel_mode = False
-        self._parallel_inputs_run = None
         if flags:
             self.add_flags(**flags)
         self._bprop_debug = False
@@ -138,7 +132,6 @@ class Cell(Cell_):
         self._cell_backward_hook = None
         self._is_recursion_hook = False
         self.cell_type = None
-        self._auto_parallel_compile_and_run = False
         self.cast = Cast()
         self._has_config_recompute = False
         self._user_parameters = []
@@ -385,7 +378,7 @@ class Cell(Cell_):
     def _do_parameter_broadcast(self):
         if context.get_auto_parallel_context("parallel_mode") == ParallelMode.DATA_PARALLEL:
             if not self.parameter_broadcast_done:
-                _pynative_executor.parameter_broadcast(self, self.phase, self._auto_parallel_mode)
+                _pynative_executor.parameter_broadcast(self, self.phase)
                 self.parameter_broadcast_done = True
 
     def run_construct(self, cast_inputs, kwargs):
@@ -832,84 +825,20 @@ class Cell(Cell_):
         """
         Replace parameters with sliced tensors by parallel strategies.
 
-        Please refer to the usage in source code of `mindspore.common._CellGraphExecutor.compile`.
-
-        Args:
-            params (dict): The parameters dictionary used for initializing the data graph.
+        Note:
+            This interface is deprecated.
         """
-        if params is None:
-            params = self.parameters_dict()
-        if isinstance(params, OrderedDict):
-            for key in params:
-                tensor = params[key].data
-                if key not in self.parameter_layout_dict:
-                    logger.info("The layout dict does not contain the key %s.", key)
-                    continue
-                if params[key].sliced:
-                    logger.debug("The param %s is already sliced.", key)
-                    continue
-                layout = self.parameter_layout_dict[key]
-                new_tensor = _load_tensor_by_layout(tensor, layout)
-                params[key].set_data(new_tensor, True)
-        else:
-            raise TypeError("For 'load_parameter_slice', the argument 'params' must be OrderedDict type, "
-                            "but got {}.".format(type(params)))
+        logger.warning("'load_parameter_slice' function is deprecated.")
 
-    def _load_inputs(self, *inputs):
-        """
-        Slice inputs tensors by parallel strategies.
-
-        Args:
-            inputs (Function or Cell): inputs of construct method.
-        """
-        parallel_inputs_run = []
-        # judge if *args exists in input
-        if self.argspec[1] is not None:
-            prefix = self.argspec[1]
-            for i in range(len(inputs)):
-                key = prefix + str(i)
-                self._construct_inputs_names = self._construct_inputs_names + (key,)
-                self._construct_inputs_num = self._construct_inputs_num + 1
-        for i, tensor in enumerate(inputs):
-            key = self._construct_inputs_names[i]
-            # if input is not used, self.parameter_layout_dict may not contain the key
-            if key not in self.parameter_layout_dict:
-                logger.warning("Layout dict does not contain the key %s.", key)
-                parallel_inputs_run.append(tensor)
-            else:
-                layout = self.parameter_layout_dict[key]
-                new_tensor = _load_tensor_by_layout(tensor, layout)
-                parallel_inputs_run.append(new_tensor)
-        return tuple(parallel_inputs_run)
 
     def set_parallel_input_with_inputs(self, *inputs):
         """
         Slice inputs tensors by parallel strategies.
 
-        Args:
-            inputs (tuple): inputs of construct method.
+        Note:
+            This interface is deprecated.
         """
-        self._parallel_inputs_run = self._load_inputs(*inputs)
-
-    def _get_construct_inputs_number_and_name(self):
-        """Compute self._construct_inputs_names and self._construct_inputs_num"""
-        from mindspore._extends.parse.parser import get_parse_method_of_class
-
-        fn = get_parse_method_of_class(self)
-        self.argspec = inspect.getfullargspec(fn)
-        self._construct_inputs_num = fn.__code__.co_argcount
-        self._construct_inputs_names = fn.__code__.co_varnames
-
-        if self._construct_inputs_num <= 0:
-            raise ValueError(f"For 'set_auto_parallel', the number of inputs must be greater than 0,"
-                             f"but got {self._construct_inputs_num}.")
-        if self._construct_inputs_names[0] != 'self':
-            raise ValueError(f"First member of fn function must be self, but got {self._construct_inputs_names[0]}")
-        if self._construct_inputs_num - 1 > len(self._construct_inputs_names):
-            raise ValueError(f"Num of inputs must be greater than num of fn function members, num of inputs is \
-                {self._construct_inputs_names - 1}, num of fn function members is {len(self._construct_inputs_names)}")
-        self._construct_inputs_names = self._construct_inputs_names[1:self._construct_inputs_num]
-        self._construct_inputs_num = self._construct_inputs_num - 1
+        logger.warning("'set_parallel_input_with_inputs' function is deprecated.")
 
     def set_inputs(self, *inputs):
         """
@@ -975,7 +904,7 @@ class Cell(Cell_):
             inputs (tuple): Inputs of the Cell object.
         """
         if self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None:
-            _cell_graph_executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode,
+            _cell_graph_executor.compile(self, *inputs, phase=self.phase,
                                          jit_config_dict=self._jit_config_dict)
         else:
             self._check_compile_dynamic_shape(*inputs)
@@ -986,7 +915,6 @@ class Cell(Cell_):
 
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
-                                         auto_parallel_mode=self._auto_parallel_mode,
                                          jit_config_dict=self._jit_config_dict)
             logger.debug("Compiled Graph with dynamic shape")
 
@@ -1003,7 +931,6 @@ class Cell(Cell_):
         Returns:
             Object, the result of executing.
         """
-        self._auto_parallel_compile_and_run = True
         self.compile(*inputs)
 
         new_inputs = _get_args_for_run(self, inputs)
@@ -1013,10 +940,10 @@ class Cell(Cell_):
         """
         Whether or not to execute compile and run in 'AUTO_PARALLEL' or 'SEMI_AUTO_PARALLEL' mode.
 
-        Returns:
-            bool, `_auto_parallel_compile_and_run` value.
+        Note:
+            This interface is deprecated.
         """
-        return self._auto_parallel_compile_and_run
+        logger.warning("'auto_parallel_compile_and_run' function is deprecated.")
 
     def exec_checkpoint_graph(self):
         """Executes saving checkpoint graph operation."""
@@ -1652,11 +1579,9 @@ class Cell(Cell_):
         Set the cell to auto parallel mode.
 
         Note:
-            If a cell needs to use the auto parallel or semi auto parallel mode for training, evaluation or prediction,
-            this interface needs to be called by the cell.
+            This interface is deprecated.
         """
-        self._auto_parallel_mode = True
-        self._get_construct_inputs_number_and_name()
+        logger.warning("'set_auto_parallel' function is deprecated.")
 
     def set_jit_config(self, jit_config):
         """

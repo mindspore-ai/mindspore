@@ -126,7 +126,6 @@ def compile_graph(batch_size, num_heads, dp, mp, auto=False, shard=True):
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     x = Tensor(np.ones((batch_size * 1024, num_heads * 128)), ms.float32)
     net = GradWrap(NetWithLoss(Net(batch_size, num_heads, dp, mp, shard=shard)))
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x)
 

@@ -42,7 +42,6 @@ class Net(Cell):
 
 def compile_net(net: Cell):
     net.set_train()
-    net.set_auto_parallel()
     _cell_graph_executor.compile(net, _anchor_boxes, _gt_boxes)
     context.reset_auto_parallel_context()
 

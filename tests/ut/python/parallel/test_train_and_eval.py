@@ -50,10 +50,9 @@ class EvalNet(Cell):
         return out
 
 def compile_net(net, input_data, label, is_train=True):
-    net.set_auto_parallel()
     net.set_train(mode=is_train)
     phase = "train" if is_train else "eval"
-    _cell_graph_executor.compile(net, input_data, label, phase=phase, auto_parallel_mode=True)
+    _cell_graph_executor.compile(net, input_data, label, phase=phase)
 
 def test_train_and_eval():
     """

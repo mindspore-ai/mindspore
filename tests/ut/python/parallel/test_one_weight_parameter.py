@@ -78,7 +78,6 @@ def test_one_weight_parameter():
 
     train_net = OneStepCell(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    train_net.set_auto_parallel()
 
     train_net.set_train()
     _cell_graph_executor.compile(train_net, x, b)

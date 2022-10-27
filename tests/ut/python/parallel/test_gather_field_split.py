@@ -38,10 +38,9 @@ class Net(Cell):
 
 
 def compile_net(net, x):
-    net.set_auto_parallel()
     net.set_train()
     b = Tensor(np.ones([64, 8]), dtype=ms.float32)
-    phase, _ = _cell_graph_executor.compile(net, x, b, auto_parallel_mode=True)
+    phase, _ = _cell_graph_executor.compile(net, x, b)
     context.reset_auto_parallel_context()
     return phase
 

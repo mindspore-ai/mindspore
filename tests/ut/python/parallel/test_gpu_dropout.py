@@ -63,7 +63,6 @@ class Net(nn.Cell):
 
 def compile_graph(net, device_num, parallel_mode, x, y):
     context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

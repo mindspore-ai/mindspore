@@ -116,16 +116,14 @@ class ParallelMulNet(nn.Cell):
         return x
 
 def compile_graph(x, net):
-    net.set_auto_parallel()
     net.set_train(False)
-    _cell_graph_executor.compile(net, x, auto_parallel_mode=True)
+    _cell_graph_executor.compile(net, x)
     strategies = _cell_graph_executor._get_shard_strategy(net)
     return strategies
 
 def compile_graph_two_input(x, y, net):
-    net.set_auto_parallel()
     net.set_train(False)
-    _cell_graph_executor.compile(net, x, y, auto_parallel_mode=True)
+    _cell_graph_executor.compile(net, x, y)
     strategies = _cell_graph_executor._get_shard_strategy(net)
     return strategies
 

@@ -68,7 +68,6 @@ class Net(nn.Cell):
 
 def compile_net(net, index_shape, emb_shape, device_num=8, parallel_mode="semi_auto_parallel"):
     context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
-    net.set_auto_parallel()
     x = Tensor(np.ones(index_shape), dtype=ms.float32)
     y = Tensor(np.ones(emb_shape), dtype=ms.float32)
     net.set_train()

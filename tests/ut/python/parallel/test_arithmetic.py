@@ -51,7 +51,6 @@ class GradWrap(nn.Cell):
 
 
 def compile_net(net, x, y, b):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b)
 
@@ -799,7 +798,6 @@ def test_assign_sub():
             return grad_all(self.network)(x)
 
     def compile_sub_net(net, x):
-        net.set_auto_parallel()
         net.set_train()
         _cell_graph_executor.compile(net, x)
 
@@ -853,7 +851,6 @@ def test_assign_add():
             return grad_all(self.network)(x)
 
     def compile_sub_net(net, x):
-        net.set_auto_parallel()
         net.set_train()
         _cell_graph_executor.compile(net, x)
 
@@ -907,7 +904,6 @@ def test_assign():
             return grad_all(self.network)(x)
 
     def compile_sub_net(net, x):
-        net.set_auto_parallel()
         net.set_train()
         _cell_graph_executor.compile(net, x)
 

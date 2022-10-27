@@ -71,7 +71,6 @@ def test_linear():
     strategy2 = ((2, 8),)
     strategy3 = ((16, 1), (16, 1))
     net = GradWrap(NetWithLoss(Net(strategy0, strategy1, strategy2), strategy3))
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)

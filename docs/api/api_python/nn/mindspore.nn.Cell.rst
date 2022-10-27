@@ -37,13 +37,6 @@
         返回：
             Tuple类型，经过类型转换后的输入。
 
-    .. py:method:: auto_parallel_compile_and_run()
-
-        是否在‘AUTO_PARALLEL’或‘SEMI_AUTO_PARALLEL’模式下执行编译流程。
-
-        返回：
-            bool，`_auto_parallel_compile_and_run` 的值。
-
     .. py:method:: bprop_debug
         :property:
 
@@ -245,15 +238,6 @@
             - **KeyError** - 如果参数名称为空或包含"."。
             - **TypeError** - 如果参数的类型不是Parameter。
 
-    .. py:method:: load_parameter_slice(params)
-
-        根据并行策略获取Tensor分片并替换原始参数。
-
-        请参考 `mindspore.common._Executor.compile` 源代码中的用法。
-
-        参数：
-            - **params** (dict) - 用于初始化数据图的参数字典。
-
     .. py:method:: name_cells()
 
         递归地获取一个Cell中所有子Cell的迭代器。
@@ -414,12 +398,6 @@
         返回：
             Cell的输出。
 
-    .. py:method:: set_auto_parallel()
-
-        将Cell设置为自动并行模式。
-
-        .. note:: 如果一个Cell需要使用自动并行或半自动并行模式来进行训练、评估或预测，则该Cell需要调用此接口。
-
     .. py:method:: set_boost(boost_type)
 
         为了提升网络性能，可以配置boost内的算法让框架自动使能该算法来加速网络训练。
@@ -496,13 +474,6 @@
                 - O2：手动优化和图算融合。
 
               - **task_sink** (bool) - 是否通过数据集方式传递数据。默认值：True。
-
-    .. py:method:: set_parallel_input_with_inputs(*inputs)
-
-        通过并行策略对输入张量进行切分。
-
-        参数：
-            - **inputs** (tuple) - construct方法的输入。
 
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 

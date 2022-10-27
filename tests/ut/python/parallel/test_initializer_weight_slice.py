@@ -64,9 +64,8 @@ def check_initializer_weight_slice(init_name="Uniform", using_seed=False):
         weight1 = initializer(init_name, [32, 32], ms.float32)
         weight2 = initializer(init_name, [32, 32], ms.float32)
         net = Net(strategy1, strategy2, weight1, weight2)
-        net.set_auto_parallel()
         net.set_train()
-        exe.compile(net, x, auto_parallel_mode=True, phase='train')
+        exe.compile(net, x, phase='train')
         hccl.rank_id = rank_save
         return net.parameters_dict()['w1'].data.asnumpy(), net.parameters_dict()['w2'].data.asnumpy()
 
@@ -123,9 +122,8 @@ def test_wrong_order_set_parallel_mode_with_initializer():
     exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    net.set_auto_parallel()
     with pytest.raises(RuntimeError):
-        exe.compile(net, x, auto_parallel_mode=True, phase='train')
+        exe.compile(net, x, phase='train')
 
 
 def test_wrong_order_set_same_parallel_mode_with_initializer():
@@ -143,8 +141,7 @@ def test_wrong_order_set_same_parallel_mode_with_initializer():
     exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
-    net.set_auto_parallel()
-    exe.compile(net, x, auto_parallel_mode=True, phase='train')
+    exe.compile(net, x, phase='train')
 
 
 def test_wrong_order_set_parallel_mode_without_initializer():
@@ -161,5 +158,4 @@ def test_wrong_order_set_parallel_mode_without_initializer():
     exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    net.set_auto_parallel()
-    exe.compile(net, x, auto_parallel_mode=True, phase='train')
+    exe.compile(net, x, phase='train')

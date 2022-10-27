@@ -26,7 +26,6 @@ import math
 from mindspore.train.callback import RunContext
 from mindspore import context
 from mindspore import nn
-from mindspore.context import ParallelMode
 from mindspore.train.model import Model
 from mindspore.train.dataset_helper import connect_network_with_dataset
 from mindspore.parallel._utils import _need_to_full, _to_full_tensor
@@ -139,9 +138,6 @@ class ModelThor(Model):
             network = connect_network_with_dataset(network, dataset_helper)
         network.set_train(is_train)
         network.phase = phase
-
-        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            network.set_auto_parallel()
 
         return dataset_helper, network
 

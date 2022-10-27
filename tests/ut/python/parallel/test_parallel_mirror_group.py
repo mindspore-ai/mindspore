@@ -59,9 +59,8 @@ def auto_parallel_compile_net(strategy1=None, strategy2=None, strategy3=None):
         net = _VirtualDatasetCell(net)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_network = TrainOneStepCell(net, optimizer).set_comm_fusion(4)
-    train_network.set_auto_parallel()
     train_network.set_train()
-    _cell_graph_executor.compile(train_network, inputs, label, phase="train", auto_parallel_mode=auto_parallel)
+    _cell_graph_executor.compile(train_network, inputs, label, phase="train")
 
 
 

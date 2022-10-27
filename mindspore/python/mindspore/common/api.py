@@ -24,7 +24,6 @@ import time
 import ast
 import inspect
 import importlib
-from collections import OrderedDict
 from functools import wraps
 import numpy as np
 import mindspore as ms
@@ -40,7 +39,7 @@ from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTenso
     _ms_memory_recycle
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
-    _get_pipeline_stages
+    _get_pipeline_stages, _is_in_auto_parallel_mode
 from mindspore._checkparam import Validator
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
@@ -893,16 +892,6 @@ def _function_forbid_reuse(func):
     return func
 
 
-def _get_auto_split_param_names(parameter_layout_dict):
-    auto_split_param_names = []
-    for key, value in parameter_layout_dict.items():
-        for dim in value[1]:
-            if dim != -1:
-                auto_split_param_names.append(key)
-                break
-    return auto_split_param_names
-
-
 def _build_broadcast_graph(broadcast_params_dict, broadcast_phase):
     """Build broadcast graph."""
     from mindspore.nn.wrap.cell_wrapper import _BroadCastCell
@@ -918,18 +907,9 @@ def _build_broadcast_graph(broadcast_params_dict, broadcast_phase):
         broadcast_params_dict[param_name].set_data(param)
 
 
-def _parameter_broadcast(obj, auto_parallel_mode):
+def _parameter_broadcast(obj):
     """Parameter broadcast."""
-    auto_split_param_names = []
-    if auto_parallel_mode:
-        auto_split_param_names = _get_auto_split_param_names(obj.parameter_layout_dict)
-
     broadcast_params_dict = obj.parameters_broadcast_dict()
-    if auto_split_param_names and broadcast_params_dict:
-        broadcast_params_dict = OrderedDict()
-        for param_name, param in obj.parameters_broadcast_dict().items():
-            if param_name not in auto_split_param_names:
-                broadcast_params_dict[param_name] = param
     broadcast_phase = "_broadcast_subgraph"
     _build_broadcast_graph(broadcast_params_dict, broadcast_phase)
 
@@ -974,20 +954,19 @@ class _PyNativeExecutor:
         return self._executor(sens_param, obj, args)
 
     @staticmethod
-    def parameter_broadcast(obj, phase, auto_parallel_mode):
+    def parameter_broadcast(obj, phase):
         """
         Run broadcast for parameter.
 
         Args:
             obj (Cell): The cell instance.
             phase (str): The phase of cell instance.
-            auto_parallel_mode (bool): The flag of running auto parallel.
 
         Return:
             None.
         """
         if BROADCAST_PHASE not in phase and _get_parameter_broadcast():
-            _parameter_broadcast(obj, auto_parallel_mode)
+            _parameter_broadcast(obj)
 
     def real_run_op(self, *args):
         """
@@ -1342,7 +1321,7 @@ class _CellGraphExecutor:
         if "train" in phase and (enable_compile_cache is True or enable_compile_cache == "1"):
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
-    def compile(self, obj, *args, phase='predict', do_convert=True, auto_parallel_mode=False, jit_config_dict=None):
+    def compile(self, obj, *args, phase='predict', do_convert=True, jit_config_dict=None):
         """
         Compiles graph.
 
@@ -1351,7 +1330,6 @@ class _CellGraphExecutor:
             args (tuple): Function or cell input arguments.
             phase (str): The name of compile phase. Default: 'predict'.
             do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
-            auto_parallel_mode: When set to True, use auto parallel mode to compile graph.
             jit_config_dict (dict): Jit config for compile. Default: None.
 
         Return:
@@ -1395,10 +1373,11 @@ class _CellGraphExecutor:
         if graph is None:
             raise RuntimeError("Compile graph failed for phase {}.".format(phase))
 
+        auto_parallel_mode = _is_in_auto_parallel_mode()
         if not auto_parallel_mode:
             replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
             self._update_param_node_default_input(phase, replace)
-        else:
+        elif 'skip_auto_parallel_compile' not in obj.get_flags().keys():
             obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
             obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
             if _get_pipeline_stages() > 1 and (not hasattr(obj, "is_first_iteration") or not obj.is_first_iteration):
@@ -1413,7 +1392,7 @@ class _CellGraphExecutor:
         elif "export" in phase:
             self._build_data_graph(obj, phase)
         elif BROADCAST_PHASE not in phase and _get_parameter_broadcast():
-            _parameter_broadcast(obj, auto_parallel_mode)
+            _parameter_broadcast(obj)
 
         return phase, True
 

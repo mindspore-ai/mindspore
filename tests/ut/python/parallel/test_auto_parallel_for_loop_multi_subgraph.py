@@ -131,7 +131,6 @@ def test_double_subgraphs():
     _set_algo_single_loop(True)
     net = TrainStepWarp(NetWithLoss(Net()))
     _set_multi_subgraphs()
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
     reset_op_id()

@@ -76,6 +76,5 @@ def test_auto_parallel_bn_with_prelu():
     x = Tensor(np.random.rand(16, 16, 32, 64), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x)

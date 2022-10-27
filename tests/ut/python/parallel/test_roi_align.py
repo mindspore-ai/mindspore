@@ -51,9 +51,8 @@ class Net(Cell):
 
 
 def compile_net(net: Cell, *inputs):
-    net.set_auto_parallel()
     net.set_train()
-    phase, _ = _cell_graph_executor.compile(net, *inputs, auto_parallel_mode=True)
+    phase, _ = _cell_graph_executor.compile(net, *inputs)
     context.reset_auto_parallel_context()
     return phase
 

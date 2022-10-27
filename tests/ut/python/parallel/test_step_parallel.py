@@ -79,6 +79,5 @@ def test_two_matmul():
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     b = Tensor(np.ones([128, 128]), dtype=ms.float32)
     a = Tensor(np.ones([128, 128]), dtype=ms.float32)
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b, a)

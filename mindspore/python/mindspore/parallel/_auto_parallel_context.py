@@ -429,13 +429,14 @@ class _AutoParallelContext:
         Set the value of sharding strategy propagation in AUTO_PARALLEL mode. If True, the strategy-configured operators
         will propagate the strategies to other operators with minimum redistribution cost; otherwise, the algorithm
         will search the desired strategies. Default: False.
-        This attribute is replaced by context.set_auto_parallel(search_mode="sharding_propagation").
+        This attribute is replaced by context.set_auto_parallel_context(search_mode="sharding_propagation").
 
         Args:
             sharding_propagation (bool): Enable/disable strategy propagation.
         """
-        logger.warning("This attribute is replaced by context.set_auto_parallel(search_mode='sharding_propagation'), "
-                       "and this attribute will be deleted in a future MindSpore version.")
+        logger.warning("This attribute is replaced by "
+                       "context.set_auto_parallel_context(search_mode='sharding_propagation'), and this attribute will"
+                       " be deleted in a future MindSpore version.")
         self.check_context_handle()
         if not isinstance(sharding_propagation, bool):
             raise TypeError("For 'set_auto_parallel_context().set_sharding_propagation', "

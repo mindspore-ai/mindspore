@@ -64,7 +64,6 @@ class GradWrap(nn.Cell):
 
 
 def compile_net(net):
-    net.set_auto_parallel()
     _cell_graph_executor.compile(net)
 
 def test_get_next_single():

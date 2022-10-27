@@ -63,7 +63,6 @@ def test_auto_parallel_assign_sub_with_ref_key():
 
     net = NetWithLoss(nn.PReLU(4))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     reset_op_id()
 
     net.set_train()
