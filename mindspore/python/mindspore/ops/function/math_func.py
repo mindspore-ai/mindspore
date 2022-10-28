@@ -4327,7 +4327,6 @@ def cumsum(x, axis, dtype=None):
     """
     if dtype is not None and x.dtype != dtype:
         x = x.astype(dtype, copy=False)
-    validator.check_axis_in_range(axis, x.ndim)
     return cumsum_(x, axis)
 
 
