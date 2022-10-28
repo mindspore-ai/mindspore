@@ -40,8 +40,8 @@ bool ResizeBilinearGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                                       const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  if (inputs.size() != kDynamicInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be  2"
+  if (inputs.size() != kInputsNum && inputs.size() != kDynamicInputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or 2"
                       << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
