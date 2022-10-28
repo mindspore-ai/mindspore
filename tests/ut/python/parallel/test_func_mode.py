@@ -84,7 +84,7 @@ def test_sink():
     data = {"input": np.ones([16, 32, 128]).astype(np.float32), "label": np.zeros([16, 32, 768]).astype(np.float32)}
     dataset = ds.NumpySlicesDataset(data=data)
     jitconfig = JitConfig(jit_level="O1", task_sink=True)
-    sink_process = ms.train.data_sink(dense_func, dataset, steps=2, sink_size=4, jit_config=jitconfig)
+    sink_process = ms.train.data_sink(dense_func, dataset, sink_size=4, jit_config=jitconfig)
     _ = sink_process()
 
 
@@ -111,7 +111,7 @@ def test_sink_with_grad():
     data = {"input": np.ones([16, 32, 128]).astype(np.float32), "label": np.zeros([16, 32, 768]).astype(np.float32)}
     dataset = ds.NumpySlicesDataset(data=data)
     jitconfig = JitConfig(jit_level="O1", task_sink=True)
-    sink_process = ms.train.data_sink(train_step, dataset, steps=2, sink_size=4, jit_config=jitconfig)
+    sink_process = ms.train.data_sink(train_step, dataset, sink_size=4, jit_config=jitconfig)
     _ = sink_process()
 
 
