@@ -54,36 +54,20 @@ def dynamic_rank():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
-def test_dynamic_affine_grid_cpu():
-    """
-    Feature: AffineGrid Grad DynamicShape.
-    Description: Test case of dynamic shape for AffineGrid grad operator on CPU.
-    Expectation: success.
-    """
-    # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-    # PyNative mode
-
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    dynamic_shape()
-    dynamic_rank()
-
-
-@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-def test_dynamic_affine_grid_gpu():
+@pytest.mark.env_onecard
+def test_dynamic_affine_grid():
     """
     Feature: AffineGrid Grad DynamicShape.
-    Description: Test case of dynamic shape for AffineGrid grad operator on GPU.
+    Description: Test case of dynamic shape for AffineGrid grad operator.
     Expectation: success.
     """
     # Graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     dynamic_shape()
     dynamic_rank()
     # PyNative mode
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    context.set_context(mode=context.PYNATIVE_MODE)
     dynamic_shape()
     dynamic_rank()
