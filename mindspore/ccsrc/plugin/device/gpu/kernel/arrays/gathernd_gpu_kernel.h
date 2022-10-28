@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_
-
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_
+#include <map>
 #include <vector>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/gather_nd.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   GatherNdFwdGpuKernelMod() : dev_batch_strides_(nullptr), dev_batch_indices_(nullptr), memcpy_flag_(false) {}
   ~GatherNdFwdGpuKernelMod() {
@@ -39,12 +41,8 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    VARIABLE_NOT_USED(workspace);
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -52,14 +50,14 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (!memcpy_flag_) {
       const size_t strides_len = sizeof(S) * batch_strides_.size();
       const size_t indices_len = sizeof(S) * batch_indices_.size();
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(dev_batch_strides_, &batch_strides_[0], strides_len,
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(dev_batch_indices_, &batch_indices_[0], indices_len,
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(dev_batch_strides_, &batch_strides_[0], strides_len, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(dev_batch_indices_, &batch_indices_[0], indices_len, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
       memcpy_flag_ = true;
     }
 
@@ -68,30 +66,27 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    InitResource();
-    memcpy_flag_ = false;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
-    }
-    input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    const size_t input_num = 2;
+    const size_t output_num = 1;
+    kernel_name_ = base_operator->GetPrim()->name();
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+    return true;
+  }
 
-    if (AnfAlgo::IsShapesDynamic({input_shapes_, indices_shapes_, output_shapes_})) {
-      return true;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
     }
-
-    is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input_x") ||
-                     CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "indices") ||
-                     CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
+    input_shapes_ = inputs[0]->GetShapeVector();
+    indices_shapes_ = inputs[1]->GetShapeVector();
+    output_shapes_ = outputs[0]->GetShapeVector();
+    ResetResource();
     Reshape();
 
     size_t dim_indices_last = dims_[dims_.size() - 1];
@@ -110,7 +105,7 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     const size_t strides_len = sizeof(S) * batch_strides_.size();
     void *dev_batch_strides_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(strides_len);
     if (dev_batch_strides_work == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the memory alloc of dev_batch_strides_work must be successful, but failed, got size: "
                         << strides_len;
     }
@@ -119,40 +114,22 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     const size_t indices_len = sizeof(S) * batch_indices_.size();
     void *dev_batch_indices_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
     if (dev_batch_indices_work == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the memory alloc of dev_batch_indices_work must be successful, but failed, got size: "
                         << indices_len;
     }
     dev_batch_indices_ = static_cast<S *>(dev_batch_indices_work);
 
-    InitSizeLists();
-    return true;
+    return ret;
   }
 
-  void ResetResource() noexcept override {
-    ResetSizeLists();
-    is_null_input_ = false;
+  void ResetResource() noexcept {
     memcpy_flag_ = false;
-    input_shapes_.clear();
-    indices_shapes_.clear();
-    output_shapes_.clear();
     dims_.clear();
     batch_indices_.clear();
     batch_strides_.clear();
     dev_batch_indices_ = nullptr;
     dev_batch_strides_ = nullptr;
-  }
-
- protected:
-  void InitSizeLists() override {
-    size_t size = common::AnfAlgo::TensorSizeInByte<T>(input_shapes_);
-    input_size_list_.push_back(size);
-
-    size = common::AnfAlgo::TensorSizeInByte<S>(indices_shapes_);
-    input_size_list_.push_back(size);
-
-    size = common::AnfAlgo::TensorSizeInByte<T>(output_shapes_);
-    output_size_list_.push_back(size);
   }
 
  private:
@@ -185,9 +162,10 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   S *dev_batch_strides_;
   S *dev_batch_indices_;
   bool memcpy_flag_;
-  bool is_null_input_;
+  std::string kernel_name_;
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_

@@ -32,18 +32,42 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-void GatherNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shapes_, indices_shapes_, output_shapes_})) {
-    return;
-  }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool GatherNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  dtype_ = inputs[0]->GetDtype();
 
-  // ReShape()
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, GatherNdFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "GatherNd does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+int GatherNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  indices_shapes_.clear();
+  output_shapes_.clear();
+  dims_.clear();
+  batch_indices_.clear();
+  batch_strides_.clear();
+
+  input_shapes_ = inputs[0]->GetShapeVector();
+  indices_shapes_ = inputs[1]->GetShapeVector();
+  output_shapes_ = inputs[0]->GetShapeVector();
+
+  // Reshape()
   size_t dim_of_indices = 1;
   for (size_t i = 0; i < indices_shapes_.size() - IntToSize(1); ++i) {
     dim_of_indices *= LongToSize(indices_shapes_[i]);
@@ -62,7 +86,6 @@ void GatherNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   (void)dims_.emplace_back(dim_of_indices);
   (void)dims_.emplace_back(dim_after_indices);
   (void)dims_.emplace_back(dim_indices_last);
-
   batch_strides_.resize(dim_indices_last, 0);
   batch_indices_.resize(dim_indices_last, 0);
 
@@ -75,16 +98,7 @@ void GatherNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     batch_strides_[i - 1] = input_shapes_[i - 1];
     batch_indices_[i - 1] = batch_indices_[i] * LongToInt(input_shapes_[i]);
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, GatherNdFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "GatherNd does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return ret;
 }
 
 template <typename S, typename T>

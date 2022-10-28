@@ -14,27 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERND_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERND_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_GATHERND_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_GATHERND_CPU_KERNEL_H_
 
+#include <map>
 #include <complex>
 #include <vector>
 #include <utility>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/gather_nd.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnknown = "Unknown";
 
-class GatherNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class GatherNdCpuKernelMod : public NativeCpuKernelMod {
  public:
   GatherNdCpuKernelMod() = default;
   ~GatherNdCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -65,4 +69,4 @@ class GatherNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERND_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_GATHERND_CPU_KERNEL_H_
