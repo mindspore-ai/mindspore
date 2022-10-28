@@ -39,6 +39,9 @@ class ArgMinWithValueCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
