@@ -110,6 +110,7 @@ convert_object_map = {
     T.floordiv:     multitype_ops.floordiv,
     T.mod:          multitype_ops.mod,
     T.pow:          multitype_ops.pow_,
+    T.matmul:       F.matmul,
     T.lshift:       multitype_ops.left_shift,
     T.rshift:       multitype_ops.right_shift,
     T.and_:         multitype_ops.bitwise_and,

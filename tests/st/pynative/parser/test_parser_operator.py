@@ -20,8 +20,10 @@ from mindspore.nn import ReLU
 from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
 
+
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -60,4 +62,22 @@ def test_tensor_pow():
     y = Tensor(y_np)
     out_me = x ** y
     out_np = np.array(x) ** y_np
+    assert np.allclose(out_me.asnumpy(), out_np, rtol=0.01, atol=0.01)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_matmul():
+    """
+    Feature: tensor matmul
+    Description: Test tensor matmul in pynative
+    Expectation: No exception.
+    """
+    x_np = np.arange(2*3*4).reshape(2, 3, 4).astype('float32')
+    y_np = np.arange(4*5).reshape(4, 5).astype('float32')
+    x = Tensor(x_np)
+    y = Tensor(y_np)
+    out_me = x @ y
+    out_np = x_np @ y_np
     assert np.allclose(out_me.asnumpy(), out_np, rtol=0.01, atol=0.01)
