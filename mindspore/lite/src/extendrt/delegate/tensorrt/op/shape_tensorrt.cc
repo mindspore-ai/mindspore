@@ -39,16 +39,18 @@ int ShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   nvinfer1::ITensor *shape_input = input(ctx, 0).trt_tensor_;
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NCHW) {
-    // transpose: NCHW->NHWC
-    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
-    if (transpose_layer_in == nullptr) {
-      MS_LOG(ERROR) << "transpose: NCHW->NHWC failed for " << op_name_;
-      return RET_ERROR;
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && !input(ctx, 0).same_format_) {
+    if (input(ctx, 0).format_ == Format::NCHW) {
+      // transpose: NCHW->NHWC
+      nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
+      if (transpose_layer_in == nullptr) {
+        MS_LOG(ERROR) << "transpose: NCHW->NHWC failed for " << op_name_;
+        return RET_ERROR;
+      }
+      transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
+      shape_input = transpose_layer_in->getOutput(0);
+      this->transpose_layer_ = transpose_layer_in;
     }
-    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
-    shape_input = transpose_layer_in->getOutput(0);
-    this->transpose_layer_ = transpose_layer_in;
   }
   nvinfer1::IShapeLayer *shape_layer = ctx->network()->addShape(*shape_input);
 

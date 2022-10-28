@@ -78,6 +78,22 @@ ITensorHelper TensorRTContext::MsName2Tensor(const std::string &ms_name) {
 }
 
 template <typename T>
+nvinfer1::ITensor *TensorRTContext::ConvertTo0DTensor(T value) {
+  void *ptr = malloc(sizeof(T));
+  memcpy(ptr, reinterpret_cast<const void *>(&value), sizeof(T));
+  owner_memorys_.push_back(ptr);
+
+  nvinfer1::Weights weights{GetNvinferDataType<T>(), ptr, 1};
+  nvinfer1::Dims dims{};
+  nvinfer1::IConstantLayer *constant_tensor = network()->addConstant(dims, weights);
+  if (constant_tensor == nullptr) {
+    MS_LOG(ERROR) << "create constant_tensor failed.";
+    return nullptr;
+  }
+  return constant_tensor->getOutput(0);
+}
+
+template <typename T>
 nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(T value) {
   return ConvertTo1DTensor(std::vector<T>{value});
 }
@@ -99,6 +115,8 @@ nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(const std::vector<T> &valu
   return constant_tensor->getOutput(0);
 }
 
+template nvinfer1::ITensor *TensorRTContext::ConvertTo0DTensor(int value);
+template nvinfer1::ITensor *TensorRTContext::ConvertTo0DTensor(float value);
 template nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(int value);
 template nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(float value);
 template nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(const std::vector<int> &values);
