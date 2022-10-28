@@ -38,6 +38,7 @@ CollectiveManager::CollectiveManager()
       device_ctx_(nullptr),
       host_comm_lib_instance_(nullptr),
       device_comm_lib_instance_(nullptr),
+      comm_lib_instance_(nullptr),
       global_rank_id_(0),
       local_rank_id_(0),
       global_rank_size_(0),
@@ -58,6 +59,7 @@ CollectiveManager::~CollectiveManager() {
   device_ctx_ = nullptr;
   host_comm_lib_instance_ = nullptr;
   device_comm_lib_instance_ = nullptr;
+  comm_lib_instance_ = nullptr;
 }
 
 std::shared_ptr<CollectiveManager> CollectiveManager::instance() {
@@ -289,31 +291,37 @@ bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name)
 }
 
 uint32_t CollectiveManager::GetRankId(const std::string &group_name) {
+  BY_PASS_SCHED_RANK_ID;
   MS_EXCEPTION_IF_NULL(comm_lib_instance_);
   return comm_lib_instance_->GetRankId(group_name);
 }
 
 uint32_t CollectiveManager::GetGroupSize(const std::string &group_name) {
+  BY_PASS_SCHED_RANK_SIZE;
   MS_EXCEPTION_IF_NULL(comm_lib_instance_);
   return comm_lib_instance_->GetGroupSize(group_name);
 }
 
 uint32_t CollectiveManager::GetLocalRankId(const std::string &group_name) {
+  BY_PASS_SCHED_RANK_ID;
   MS_EXCEPTION_IF_NULL(comm_lib_instance_);
   return comm_lib_instance_->GetLocalRankId(group_name);
 }
 
 uint32_t CollectiveManager::GetLocalGroupSize(const std::string &group_name) {
+  BY_PASS_SCHED_RANK_SIZE;
   MS_EXCEPTION_IF_NULL(comm_lib_instance_);
   return comm_lib_instance_->GetLocalGroupSize(group_name);
 }
 
 uint32_t CollectiveManager::GetWorldRankFromGroupRank(const std::string &group_name, uint32_t local_rank) {
+  BY_PASS_SCHED_RANK_ID;
   MS_EXCEPTION_IF_NULL(comm_lib_instance_);
   return comm_lib_instance_->GetWorldRankFromGroupRank(group_name, local_rank);
 }
 
 uint32_t CollectiveManager::GetGroupRankFromWorldRank(uint32_t global_rank, const std::string &group_name) {
+  BY_PASS_SCHED_RANK_ID;
   MS_EXCEPTION_IF_NULL(comm_lib_instance_);
   return comm_lib_instance_->GetGroupRankFromWorldRank(global_rank, group_name);
 }

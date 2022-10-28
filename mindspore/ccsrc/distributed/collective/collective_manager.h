@@ -23,6 +23,11 @@
 #include <atomic>
 #include "utils/ms_utils.h"
 #include "distributed/constants.h"
+#if defined(__linux__) && defined(WITH_BACKEND)
+#include "distributed/cluster/cluster_context.h"
+#else
+#include "distributed/cluster/dummy_cluster_context.h"
+#endif
 #include "runtime/hardware/device_context_manager.h"
 #include "include/backend/visible.h"
 
@@ -157,6 +162,22 @@ class BACKEND_EXPORT CollectiveManager {
   // This member uses to assign local rank and size for each group.
   std::vector<size_t> all_host_hashs_;
 };
+
+// For scheduler node, CollectiveManager is not initialized. Return 0 as rank id.
+#define BY_PASS_SCHED_RANK_ID                                                      \
+  do {                                                                             \
+    if (cluster::ClusterContext::instance()->node_role() == kEnvRoleOfScheduler) { \
+      return static_cast<uint32_t>(0);                                             \
+    }                                                                              \
+  } while (0)
+
+// For scheduler node, CollectiveManager is not initialized. Return 1 as rank size.
+#define BY_PASS_SCHED_RANK_SIZE                                                    \
+  do {                                                                             \
+    if (cluster::ClusterContext::instance()->node_role() == kEnvRoleOfScheduler) { \
+      return static_cast<uint32_t>(1);                                             \
+    }                                                                              \
+  } while (0)
 }  // namespace collective
 }  // namespace distributed
 }  // namespace mindspore
