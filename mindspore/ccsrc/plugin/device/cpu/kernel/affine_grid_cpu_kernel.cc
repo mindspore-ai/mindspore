@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/affine_grid_cpu_kernel.h"
 #include <string>
 #include <algorithm>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "kernel/common_utils.h"
@@ -24,8 +25,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kAffineGridInputsNum = 2;
-constexpr size_t kAffineGridOutputsNum = 1;
 constexpr size_t kRowNum2 = 2;
 constexpr size_t kRowNum3 = 3;
 constexpr size_t kRowNum4 = 4;
@@ -47,22 +46,32 @@ enum kColNum : size_t {
   kColNum12
 };
 }  // namespace
-void AffineGridCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kAffineGridInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kAffineGridOutputsNum, kernel_name_);
-  output_size_dims_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  cnode_ptr_ = kernel_node;
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+
+bool AffineGridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For AffineGrid, this kernel data type: " << kernel_attr << " is not support.";
+    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  auto prim = base_operator->GetPrim();
+  align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
+  return true;
+}
+
+int AffineGridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  output_size_dims_ = inputs[1]->GetDeviceShapeAdaptively();
+  output_type_ = outputs[0]->GetDtype();
+  outputs_ = outputs;
+  return KRET_OK;
 }
 
 template <typename T>
@@ -132,7 +141,7 @@ void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPt
       k_num += kColNum2;
     }
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape({output_type_}, {out_shape}, cnode_ptr_.lock().get());
+  output_shape_ = out_shape;
 }
 
 template <typename T>
@@ -224,7 +233,7 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPt
       k_num += kColNum3;
     }
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape({output_type_}, {out_shape}, cnode_ptr_.lock().get());
+  output_shape_ = out_shape;
 }
 
 template <typename T>

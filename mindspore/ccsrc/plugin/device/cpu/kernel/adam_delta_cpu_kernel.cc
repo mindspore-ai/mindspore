@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
@@ -67,35 +68,21 @@ void AdamDeltaCpuKernelMod::LaunchAdamDelta(T *delta, T *m, T *v, float lr, floa
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
-void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto delta_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  auto m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kMIndex);
-  auto v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVIndex);
-  auto grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kGradIndex);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool AdamDeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs[0]->GetDtype();
+  return true;
+}
 
-  if (AnfAlgo::IsShapesDynamic({delta_shape, m_shape, v_shape})) {
-    return;
+int AdamDeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-
-  if (!IsSameShape(delta_shape, m_shape)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'delta' must be the same as the shape of 'm', but got the shape of 'delta': "
-                      << Vector2Str(delta_shape) << " and 'm': " << Vector2Str(m_shape);
-  }
-  if (!IsSameShape(delta_shape, v_shape)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'delta' must be the same as the shape of 'v', but got the shape of 'delta': "
-                      << Vector2Str(delta_shape) << " and 'v': " << Vector2Str(v_shape);
-  }
-  if (!IsSameShape(delta_shape, grad_shape)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'delta' must be the same as the shape of 'grad', "
-                         "but got the shape of 'delta': "
-                      << Vector2Str(delta_shape) << " and 'grad': " << Vector2Str(grad_shape);
-  }
+  auto delta_shape = outputs[0]->GetDeviceShapeAdaptively();
   if (delta_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";
   }
@@ -106,9 +93,13 @@ void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";
   }
-  if (common::AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
-    use_nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  auto use_nesterov_ptr = prim->GetAttr("use_nesterov");
+  if (use_nesterov_ptr != nullptr) {
+    use_nesterov_ = GetValue<bool>(use_nesterov_ptr);
   }
+  return KRET_OK;
 }
 
 void AdamDeltaCpuKernelMod::CheckParams(const std::vector<kernel::AddressPtr> &inputs,

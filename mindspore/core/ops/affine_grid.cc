@@ -43,10 +43,7 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
     // theta is dynamic shape, verification could not be performed.
     // launch kernel will fail, and infer shape will run again.
     ShapeVector grid_shape = {-2};
-    ShapeVector infer_shape_min;
-    ShapeVector infer_shape_max;
-    infer_shape_min = infer_shape_max = {1};
-    return std::make_shared<abstract::Shape>(grid_shape, infer_shape_min, infer_shape_max);
+    return std::make_shared<abstract::Shape>(grid_shape);
   }
   auto theta_rank = SizeToLong(theta_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank of 'theta'", theta_rank, kEqual, RANK_THETA, prim_name);
@@ -98,16 +95,12 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
                                << "and the size of 'output_size' is " << output_size_val_size << ".";
     }
     return std::make_shared<abstract::Shape>(grid_shape);
-  } else {
-    // Since the real grid shape relies on the value of 'output_size',
-    // the grid_shape is set to {-2} meaning that even the dimension can not be determined.
-    // The real output shape will be updated before launching kernel,
-    // so min/max shape are not necessary to set correctly.
+  } else if (output_size_arg->isa<abstract::AbstractTensor>()) {
     ShapeVector grid_shape = {-2};
-    ShapeVector infer_shape_min;
-    ShapeVector infer_shape_max;
-    infer_shape_min = infer_shape_max = {1};
-    return std::make_shared<abstract::Shape>(grid_shape, infer_shape_min, infer_shape_max);
+    return std::make_shared<abstract::Shape>(grid_shape);
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', "
+                            << "the input[output_size] is not supported: " << output_size_arg->ToString();
   }
 }
 

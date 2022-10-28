@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include <map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -29,12 +30,17 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class AffineGridCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AffineGridCpuKernelMod : public NativeCpuKernelMod {
  public:
   AffineGridCpuKernelMod() = default;
   ~AffineGridCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -58,9 +64,10 @@ class AffineGridCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   AffineGridFunc kernel_func_;
 
   TypeId output_type_;
-  CNodeWeakPtr cnode_ptr_;
   std::vector<int64_t> output_size_dims_;
   bool align_corners_{false};
+  std::vector<KernelTensorPtr> outputs_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

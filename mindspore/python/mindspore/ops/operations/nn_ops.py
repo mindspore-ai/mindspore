@@ -4973,7 +4973,7 @@ class AdamWeightDecay(PrimitiveWithInfer):
         return var_dtype, m_dtype, v_dtype
 
 
-class AdamNoUpdateParam(PrimitiveWithInfer):
+class AdamNoUpdateParam(Primitive):
     r"""
     Updates gradients by the Adaptive Moment Estimation (Adam) algorithm. This operator do not update the parameter, but
     calculate the value that should be added to the parameter instead.
@@ -5067,20 +5067,6 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         """Initialize AdamNoUpdateParam."""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
-
-    def infer_shape(self, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
-                    beta1_shape, beta2_shape, epsilon_shape, grad_shape):
-        validator.check("grad_shape", grad_shape, "m_shape", m_shape, Rel.EQ, self.name)
-        validator.check("grad_shape", grad_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        return grad_shape
-
-    def infer_dtype(self, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
-                    beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype):
-        args = {"m": m_dtype, "v": v_dtype, "grad": grad_dtype,
-                "beta1_power": beta1_power_dtype, "beta2_power": beta2_power_dtype, 'lr': lr_dtype,
-                "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
-        return grad_dtype
 
 
 class FusedSparseAdam(Primitive):
