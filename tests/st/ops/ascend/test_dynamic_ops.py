@@ -21,6 +21,7 @@ from mindspore.ops.operations import _inner_ops as inner
 
 from mindspore.train import DatasetHelper, connect_network_with_dataset
 import mindspore.dataset as ds
+from mindspore.common.initializer import One
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 set_seed(2)
@@ -94,13 +95,29 @@ def common_func(dynamic_range, input_shape, data_type, op_net):
             cur_data.append(np.random.random(cur_shape).astype(data_type))
         data_list.append(tuple(cur_data))
 
+    def np_type_to_ms(data_type):
+        if data_type == np.float32:
+            return ms.float32
+        if data_type == np.float64:
+            return ms.float64
+        if data_type == np.int32:
+            return ms.int32
+        if data_type == np.int64:
+            return ms.int64
+        raise ValueError("Unsupportted datatype: {}".format(data_type))
+
     dynamic_data_map = {}
+    dyn_tensors = []
     for i, val in enumerate(input_shape):
         dynamic_data_map["data" + str(i + 1)] = val
+        if None in val:
+            dyn_tensors.append(Tensor(dtype=np_type_to_ms(data_type), shape=val))
+        else:
+            dyn_tensors.append(Tensor(dtype=np_type_to_ms(data_type), shape=val, init=One()))
 
     dataset = ds.GeneratorDataset(data_list, list(dynamic_data_map.keys()))
-    dataset.set_dynamic_columns(columns=dynamic_data_map)
     net = GradNetWrtX(op_net)
+    net.set_inputs(*dyn_tensors)
 
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
@@ -161,6 +178,7 @@ class ShapeTensorNet(nn.Cell):
         self.mul = ops.Mul()
         self.broadcast_to = inner.DynamicBroadcastTo()
         self.tensor_scatter_update = ops.TensorScatterUpdate()
+
     def construct(self, x, y):
         res = self.tensor_shape(x)
         res = self.strided_slice(res, (1,), (4,), (1,))
@@ -261,8 +279,10 @@ def test_dynamic_dropout():
                           np.random.rand(batch_size, i, 256).astype(np.float32)))
 
     dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns={"data1": [batch_size, None, 256], "data2": [batch_size, None, 256]})
+    t0 = Tensor(dtype=ms.float32, shape=[batch_size, None, 256])
+    t1 = Tensor(dtype=ms.float32, shape=[batch_size, None, 256])
     net = GradNetWrtX(DropoutNet())
+    net.set_inputs(t0, t1)
     net.set_train()
     gradients = dynamic_shape_sink_process(net, dataset)
     assert gradients[0][0].shape == (batch_size, 49, 256)
@@ -285,9 +305,10 @@ def test_dynamic_reducesum1():
                           np.array(1).astype(np.float32)))
 
     dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns={"data1": [batch_size, None, None], "data2": []})
+    t0 = Tensor(dtype=ms.float32, shape=[batch_size, None, None])
+    t1 = Tensor(dtype=ms.float32, shape=[], init=One())
     net = GradNetWrtX(ReduceSumNet())
-
+    net.set_inputs(t0, t1)
     gradients = dynamic_shape_sink_process(net, dataset)
     assert gradients[0][0].shape == (batch_size, 49, 51)
 
@@ -309,9 +330,11 @@ def test_dynamic_reducesum2():
                           np.random.rand(batch_size, i + 2).astype(np.float32)))
 
     dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns={"data1": [batch_size, None, None], "data2": [batch_size, None]})
     net = GradNetWrtX(ReduceSumNet(1))
 
+    t0 = Tensor(dtype=ms.float32, shape=[batch_size, None, None])
+    t1 = Tensor(dtype=ms.float32, shape=[batch_size, None])
+    net.set_inputs(t0, t1)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -335,9 +358,12 @@ def test_dynamic_add1():
                           np.random.rand(batch_size, i).astype(np.float32)))
 
     dataset = ds.GeneratorDataset(data_list, ["data1", "data2", "data3"])
-    dataset.set_dynamic_columns(columns={"data1": [batch_size, None], "data2": [], "data3": [batch_size, None]})
     net = GradNetWrtX(AddNet())
 
+    t0 = Tensor(dtype=ms.float32, shape=[batch_size, None])
+    t1 = Tensor(dtype=ms.float32, shape=[], init=One())
+    t2 = Tensor(dtype=ms.float32, shape=[batch_size, None])
+    net.set_inputs(t0, t1, t2)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -362,10 +388,12 @@ def test_dynamic_add2():
                           np.random.rand(batch_size, 2, i).astype(np.float32)))
 
     dataset = ds.GeneratorDataset(data_list, ["data1", "data2", "data3"])
-    dataset.set_dynamic_columns(columns=
-                                {"data1": [batch_size, 2, None], "data2": [2, None], "data3": [batch_size, 2, None]})
     net = GradNetWrtX(AddNet())
 
+    t0 = Tensor(dtype=ms.float32, shape=[batch_size, 2, None])
+    t1 = Tensor(dtype=ms.float32, shape=[2, None])
+    t2 = Tensor(dtype=ms.float32, shape=[batch_size, 2, None])
+    net.set_inputs(t0, t1, t2)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -448,9 +476,11 @@ def test_dynamic_square_sum_all():
                           np.random.rand(batch_size, i).astype(np.float32)))
 
     dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns={"data1": [batch_size, None], "data2": [batch_size, None]})
     net = SquareSumAllNet()
 
+    t0 = Tensor(dtype=ms.float32, shape=[batch_size, None])
+    t1 = Tensor(dtype=ms.float32, shape=[batch_size, None])
+    net.set_inputs(t0, t1)
     out = dynamic_shape_sink_process(net, dataset)
     out_expect = fixed_shape_process(net, dataset)
     assert compare(out, out_expect)
@@ -513,10 +543,11 @@ def test_dynamic_reshape():
                           np.random.rand(32, 16, 4, i).astype(np.float32)))
 
     dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns=
-                                {"data1": [32, 16, 4, None], "data2": [32, 16, 4, None]})
     net = ReshapeNet()
     net.add_flags_recursive(defer_inline=True)
     grad_net = GradNetWrtX(net)
+    t0 = Tensor(dtype=ms.float32, shape=[32, 16, 4, None])
+    t1 = Tensor(dtype=ms.float32, shape=[32, 16, 4, None])
+    grad_net.set_inputs(t0, t1)
     gradients = dynamic_shape_sink_process(grad_net, dataset)
     print(gradients)

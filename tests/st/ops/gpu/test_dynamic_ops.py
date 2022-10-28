@@ -16,12 +16,26 @@
 import numpy as np
 import pytest
 
-from mindspore import ops, nn, ParameterTuple, context, set_seed
+from mindspore import ops, nn, ParameterTuple, context, set_seed, Tensor
 from mindspore.train import DatasetHelper, connect_network_with_dataset
 import mindspore.dataset as ds
+import mindspore as ms
+from mindspore.common.initializer import One
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 set_seed(2)
+
+
+def np_type_to_ms(data_type):
+    if data_type == np.float32:
+        return ms.float32
+    if data_type == np.float64:
+        return ms.float64
+    if data_type == np.int32:
+        return ms.int32
+    if data_type == np.int64:
+        return ms.int64
+    raise ValueError("Unsupportted datatype: {}".format(data_type))
 
 
 def _exec_preprocess(network, is_train, dataset, dataset_sink_mode, epoch_num, sink_size):
@@ -115,11 +129,16 @@ def comm_func(dyn_range, input_shp, data_type, op_net, num=None, output_compare_
         list_data.append(tuple(tmp_data))
 
     data_map = {}
+    dyn_tensors = []
     for i, val in enumerate(input_shp):
         data_map["data" + str(i + 1)] = val
+        if None in val:
+            dyn_tensors.append(Tensor(dtype=np_type_to_ms(data_type), shape=val))
+        else:
+            dyn_tensors.append(Tensor(dtype=np_type_to_ms(data_type), shape=val, init=One()))
 
     dataset = ds.GeneratorDataset(list_data, list(data_map.keys()))
-    dataset.set_dynamic_columns(columns=data_map)
+    op_net.set_inputs(*dyn_tensors)
 
     gradient = dynamic_shape_sink_process(op_net, dataset)
     gradient_cmp = fixed_shape_process(op_net, dataset)
@@ -155,10 +174,16 @@ def dynamic_concat_run(is_grad):
         16, None], column_names[1]: [16, None]}
     if is_grad:
         dynamic_columns[column_names[-1]] = [16, None]
-    dataset.set_dynamic_columns(columns=dynamic_columns)
+
+    dyn_tensors = []
+    for val in dynamic_columns.values():
+        dyn_tensors.append(Tensor(dtype=ms.float32, shape=val))
+
     net = ConcatNet(axis)
     if is_grad:
         net = GradNetWrtX(net)
+
+    net.set_inputs(*dyn_tensors)
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
@@ -217,9 +242,10 @@ def test_dynamic_bachnorm():
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
-    dynamic_columns = {column_names[0]: [None, c], column_names[1]: [None, c]}
-    dataset.set_dynamic_columns(columns=dynamic_columns)
+    t0 = Tensor(dtype=ms.float32, shape=[None, c])
+    t1 = Tensor(dtype=ms.float32, shape=[None, c])
     net = GradNetWrtX(BatchNormNet(c))
+    net.set_inputs(t0, t1)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -249,10 +275,11 @@ def test_dynamic_reshape():
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
-    dynamic_columns = {column_names[0]: [
-        None, 64, 1], column_names[1]: [None, 64]}
-    dataset.set_dynamic_columns(columns=dynamic_columns)
     net = ReshapeNet()
+
+    t0 = Tensor(dtype=ms.float32, shape=[None, 64, 1])
+    t1 = Tensor(dtype=ms.float32, shape=[None, 64])
+    net.set_inputs(t0, t1)
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
@@ -285,9 +312,10 @@ def test_dynamic_reduce_sum_input_axis():
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
-    dynamic_columns = {column_names[0]: [None, 256]}
-    dataset.set_dynamic_columns(columns=dynamic_columns)
     net = ReduceSumInputAxisNet()
+    t0 = Tensor(dtype=ms.float32, shape=[None, 256])
+    t1 = Tensor(dtype=ms.int64, shape=[1], init=One())
+    net.set_inputs(t0, t1)
     output = dynamic_shape_sink_process(net, dataset)
     # Currently, the parameter axis of ReduceSum operator is dynamic(tensor) is
     # not supported under the fixed shape, so numpy is used for comparison
@@ -320,9 +348,9 @@ def test_dynamic_nop():
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
-    dynamic_columns = {column_names[0]: [None, 1]}
-    dataset.set_dynamic_columns(columns=dynamic_columns)
     net = NopNet()
+    t0 = Tensor(dtype=ms.float32, shape=[None, 1])
+    net.set_inputs(t0)
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
@@ -356,9 +384,10 @@ def test_dynamic_reduce_sum():
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
-    dynamic_columns = {column_names[0]: [None, 256]}
-    dataset.set_dynamic_columns(columns=dynamic_columns)
     net = GradNetWrtX(ReduceSumNet())
+    t0 = Tensor(dtype=ms.float32, shape=[None, 256])
+    t1 = Tensor(dtype=ms.float32, shape=[], init=One())
+    net.set_inputs(t0, t1)
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
@@ -388,10 +417,11 @@ def test_dynamic_add():
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
-    dynamic_columns = {column_names[0]: [None, 256], column_names[1]: [
-        None, 256], column_names[2]: [None, 256]}
-    dataset.set_dynamic_columns(columns=dynamic_columns)
     net = GradNetWrtX(AddNet())
+    t0 = Tensor(dtype=ms.float32, shape=[None, 256])
+    t1 = Tensor(dtype=ms.float32, shape=[None, 256])
+    t2 = Tensor(dtype=ms.float32, shape=[None, 256])
+    net.set_inputs(t0, t1, t2)
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
