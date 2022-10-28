@@ -21,6 +21,7 @@ from .test_grad_of_dynamic import TestDynamicGrad
 
 
 class StridedSliceGradNet(nn.Cell):
+
     def __init__(self):
         super(StridedSliceGradNet, self).__init__()
         self.op = G.StridedSliceGrad()
@@ -35,14 +36,11 @@ def dyn_grad_func(dtype=np.float16, is_dynamic_rank=False):
     test_dynamic = TestDynamicGrad(StridedSliceGradNet())
     dy = Tensor(np.ones((2, 1, 1)).astype(dtype))
     x = Tensor(
-        np.array(
-            [
-                [[1, 1, 1], [2, 2, 2]],
-                [[3, 3, 3], [4, 4, 4]],
-                [[5, 5, 5], [6, 6, 6]],
-            ]
-        ).astype(dtype)
-    )
+        np.array([
+            [[1, 1, 1], [2, 2, 2]],
+            [[3, 3, 3], [4, 4, 4]],
+            [[5, 5, 5], [6, 6, 6]],
+        ]).astype(dtype))
     begin = (1, 0, 2)
     end = (3, 1, 3)
     strides = (1, 1, 1)
