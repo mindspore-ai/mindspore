@@ -3,9 +3,7 @@ mindspore.ops.avg_pool3d
 
 .. py:function:: mindspore.ops.avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=0)
 
-    对输入的多维数据进行三维平均池化运算。
-
-    在输入Tensor上应用3D average pooling，可被视为3D输入平面。
+    在输入Tensor上应用3D平均池化，输入Tensor可以看作是由一系列3D平面组成的。
 
     一般地，输入的shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` ，输出 :math:`(D_{in}, H_{in}, W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `stride` 为 :math:`s = (s_0, s_1, s_2)`，运算如下：
 

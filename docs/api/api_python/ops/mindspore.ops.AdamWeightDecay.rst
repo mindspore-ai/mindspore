@@ -34,7 +34,7 @@ mindspore.ops.AdamWeightDecay
         - **var** (Parameter) - 需要更新的权重。shape为 :math:`(N,*)` 其中 :math:`*` 表示任何数量的附加维度，数据类型可以是float16或float32。
         - **m** (Parameter) - 更新公式中的第一个动量矩阵，它的shape应该和 `var` 一致，数据类型可以是float16或float32。
         - **v** (Parameter) - 更新公式中的第二个动量矩阵，shape和数据类型与 `m` 相同。
-        - **lr** (float) - 更新公式中的 :math:`l` 。其论文建议值为 :math:`10^{-8}` ，数据类型应为float32。
+        - **lr** (float) - 更新公式中的 :math:`lr` 。其论文建议值为 :math:`10^{-8}` ，数据类型应为float32。
         - **beta1** (float) - 第一个动量矩阵的指数衰减率，数据类型应为float32。论文建议的值是 :math:`0.9` 。
         - **beta2** (float) - 第二个动量矩阵的指数衰减率，数据类型应为float32。论文建议的值是 :math:`0.999` 。
         - **epsilon** (float) - 添加到分母中的值，以提高数值稳定性，数据类型应为float32。
@@ -47,3 +47,12 @@ mindspore.ops.AdamWeightDecay
         - **var** (Tensor) - 具有与 `var` 相同的shape和数据类型。
         - **m** (Tensor) - 具有与 `m` 相同的shape和数据类型。
         - **v** (Tensor) - 具有与 `v` 相同的shape和数据类型。
+
+    异常：
+        - **TypeError**: -如果 `use_locking` 不是bool类型。
+        - **TypeError**: -如果 `lr`, `beta1`, `beta2`, `epsilon` 或者 `decay` 不是float32。
+        - **TypeError**: -如果 `var`, `m` 或者 `v` 不是数据类型为float16或者float32的Parameter。
+        - **TypeError**: -如果 `gradient` 不是Tensor。
+        - **ValueError** - 如果 `eps` 小于等于0。
+        - **ValueError** - 如果 `beta1` 、 `beta2` 不在（0.0,1.0）范围内。
+        - **ValueError** - 如果 `decay` 小于0。

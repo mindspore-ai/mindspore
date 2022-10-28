@@ -3431,13 +3431,14 @@ def affine_grid(theta, output_size, align_corners=False):
     Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.
 
     Args:
-        theta (Tensor): The input tensor whose dtype is float16, float32.
+        theta (Tensor): The input tensor of flow field whose dtype is float16, float32.
             Input batch of affine matrices with shape [N, 2, 3] for 2D grid or [N, 3, 4] for 3D grid.
         output_size (tuple[int]): The target output image size.
             The value of target output with format [N, C, H, W] for 2D grid or [N, C, D, H, W] for 3D grid.
-        align_corners (bool): If True, consider -1 and 1 to refer to the centers of the corner pixels rather
-                              than the image corners. The default value is False.
-
+        align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
+            If True, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
+            The default value is False, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
+            irrelevant to resolution of the image.
     Returns:
         Tensor, a tensor whose data type is same as 'theta', and the shape is [N, H, W, 2] for 2D grid
         or [N, D, H, W, 3] for 3D grid.
@@ -4317,9 +4318,8 @@ def argmax(x, axis=-1, output_type=mstype.int32):
 
     Args:
         x (Tensor): Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        axis (int): Axis where the Argmax operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
-          Default: `mindspore.dtype.int32`.
+        axis (int, optional): Axis where the `argmax` operation applies to. Default: -1.
+        output_type (:class:`mindspore.dtype`, optional): Specified output data type. Default: `mindspore.dtype.int32`.
 
     Returns:
         Tensor, indices of the max value of input tensor across the `axis`.
