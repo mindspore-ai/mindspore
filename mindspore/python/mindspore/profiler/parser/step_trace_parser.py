@@ -188,7 +188,7 @@ class BaseStepTraceParser:
         }
         # update reduce info
         self._update_reduce_info(step_trace, row_data)
-        # save the row data
+        # save the row data, The unit of duration is 10ns
         if not self._header:
             self._header = list(row_data.keys())
             log.info("Profiler step trace header: %s", str(self._header))

@@ -83,6 +83,9 @@ void Profiler::RecordOneStepStartEndInfo() {
   // Multi-graph dotting data is not supported.
   std::lock_guard<std::mutex> locker(record_mutex_);
   uint32_t vector_size = static_cast<uint32_t>(step_start_end_info_vector_.size());
+  if (vector_size == 0) {
+    return;
+  }
   step_start_end_info_.iter_start_op_name = step_start_end_info_vector_[0];
   step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[0];
   // If is the first step, the step_start_end_info_vector_ length is 1.
