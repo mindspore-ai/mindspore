@@ -31,6 +31,8 @@ class MIND_API CumulativeLogsumexp : public BaseOperator {
   MIND_API_BASE_MEMBER(CumulativeLogsumexp);
   CumulativeLogsumexp() : BaseOperator(kNameCumulativeLogsumexp) { InitIOName({"x", "axis"}, {"y"}); }
   void Init() const {}
+  bool get_exclusive() const;
+  bool get_reverse() const;
 };
 
 abstract::AbstractBasePtr CumulativeLogsumexpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -18,10 +18,11 @@
 #include <cmath>
 #include <string>
 #include <thread>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 #include "utils/ms_utils.h"
-
+#include "mindspore/core/ops/cumulative_logsumexp.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -29,18 +30,40 @@ constexpr size_t kCumulativeLogsumexpInputsNum = 2;
 constexpr size_t kCumulativeLogsumexpOutputsNum = 1;
 constexpr size_t kAxisDimension = 1;
 constexpr size_t kAxisShapeSize = 1;
+constexpr size_t kInputIndex0 = 0;
 const float float16_exclusive_data = -65504e+0;
 const float float_exclusive_data = -3.4028235e+38;
 const double double_exclusive_data = -1.7976931348623157e+308;
 }  // namespace
 
-void CumulativeLogsumexpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  exclusive_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, EXCLUSIVE);
-  reverse_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, REVERSE);
+bool CumulativeLogsumexpCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  shape_ = inputs[kInputIndex0]->GetShapeVector();
+  dtype_ = inputs[kInputIndex0]->GetDtype();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumulativeLogsumexp>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', kernel_ptr is null.";
+    return false;
+  }
+  exclusive_ = kernel_ptr->get_exclusive();
+  reverse_ = kernel_ptr->get_reverse();
+  return true;
+}
+
+int CumulativeLogsumexpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs,
+                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  shape_ = inputs[kInputIndex0]->GetShapeVector();
+  dtype_ = inputs[kInputIndex0]->GetDtype();
+  return KRET_OK;
 }
 
 bool CumulativeLogsumexpCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

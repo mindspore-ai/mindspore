@@ -33,15 +33,27 @@ constexpr size_t kCSRSparseMatrixToDenseInputsNum = 5;
 constexpr size_t kCSRSparseMatrixToDenseOutputsNum = 1;
 }  // namespace
 
-void CSRSparseMatrixToDenseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  indices_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  values_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex4);
-  rank_ = static_cast<size_t>(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0)[kZero]);
-  batch_size_ =
-    static_cast<size_t>(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1)[kZero]) - kOne;
+bool CSRSparseMatrixToDenseCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  indices_type = inputs[kInputIndex0]->GetDtype();
+  values_type = inputs[kInputIndex4]->GetDtype();
+  return true;
+}
+
+int CSRSparseMatrixToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                               const std::vector<KernelTensorPtr> &inputs,
+                                               const std::vector<KernelTensorPtr> &outputs,
+                                               const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  rank_ = inputs[kInputIndex0]->GetShapeVector()[kZero];
+  batch_size_ = static_cast<size_t>(inputs[kInputIndex1]->GetShapeVector()[kZero]) - kOne;
+  return KRET_OK;
 }
 
 bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -94,20 +106,16 @@ bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::Addres
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of indices should be int32 or int64, "
                         << "but got " << TypeIdToType(indices_type)->ToString();
   }
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
-  std::vector<TypeId> y_dtype = {values_type};
-  std::vector<int64_t> y_dims;
   if (rank_ == kDefaultRank) {
-    y_dims = {SizeToLong(num_rows_), SizeToLong(num_cols_)};
+    y_dims_ = {SizeToLong(num_rows_), SizeToLong(num_cols_)};
   } else {
-    y_dims = {SizeToLong(batch_size_), SizeToLong(num_rows_), SizeToLong(num_cols_)};
+    y_dims_ = {SizeToLong(batch_size_), SizeToLong(num_rows_), SizeToLong(num_cols_)};
   }
-  (void)common::AnfAlgo::SetOutputInferTypeAndShape(y_dtype, {y_dims}, node_.get());
+
   return true;
 }
+
+void CSRSparseMatrixToDenseCpuKernelMod::SyncData() { outputs_[kIndex0]->SetShapeVector(y_dims_); }
 
 template <typename indiceT, typename valueT>
 void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,

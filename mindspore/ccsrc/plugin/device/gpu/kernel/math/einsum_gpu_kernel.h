@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <functional>
 #include <set>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/math/einsum_helper.h"
@@ -33,13 +34,10 @@ constexpr int IDX_INP_SHAPE = 1;
 constexpr int IDX_PARAM = 2;
 constexpr int IDX_OUT_SHAPE = 3;
 template <typename T>
-class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class EinsumGpuKernelMod : public NativeGpuKernelMod {
  public:
-  EinsumGpuKernelMod() { ResetResource(); }
+  EinsumGpuKernelMod() {}
   ~EinsumGpuKernelMod() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   // workspace[2] : res; workspace[1]:src workspace[2]: dst
   void RunSingleOpProcess(const OpStruct &op_info, T *src_ptr, T *dst_ptr, void *stream_ptr) {
     auto name = std::get<IDX_NAME>(op_info);
@@ -75,8 +73,7 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     RunSingleOpVecProcess(input_ptr, single_op_[0], stream_ptr, &src_ptr, &dst_ptr);
     auto back_shape = std::get<IDX_OUT_SHAPE>(single_op_[0].back());
     size_t size = func_helper_.GetShapeSize(back_shape);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(res_ptr, src_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "For " + node_name_ + ", cudaMemcpyAsync failed.");
 
@@ -114,54 +111,54 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     T *out_ptr = GetDeviceAddress<T>(outputs, 0);
     size = output_size_list_[0];
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(out_ptr, res_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "For " + node_name_ + ", cudaMemcpyAsync failed.");
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    node_name_ = node_name;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    node_name_ = base_operator->GetPrim()->name();
+    size_t input_num = inputs.size();
     if (input_num < 1) {
-      MS_LOG(ERROR) << "For " << node_name << ", input number can not be less than 1, but got " << input_num;
+      MS_LOG(ERROR) << "For " << node_name_ << ", input number can not be less than 1, but got " << input_num;
       return false;
     }
-    type_id_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    for (size_t idx = 0; idx < input_num; ++idx) {
-      TypeId cur_type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, idx);
-      if (cur_type_id != type_id_) {
-        MS_LOG(ERROR) << "For " << node_name << ", input types should be the same, but it does not.";
-        return false;
-      }
-      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
-      input_shapes_.push_back(in_shape);
-    }
-    std::string equation = GetAttr<std::string>(kernel_node, "equation");
-    single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());
-    bool flag = func_helper_.Preprocess(equation, node_name, input_shapes_, &out_shape_, &single_op_, &res_op_);
-    if (!flag) {
-      return false;
-    }
-    InitSizeLists();
+    type_id_ = inputs[0]->GetDtype();
     return true;
   }
 
-  void ResetResource() noexcept override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    input_shapes_.clear();
-    out_shape_.clear();
-    single_op_.clear();
-    res_op_.clear();
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
+    }
+
+    size_t input_num = inputs.size();
+    for (size_t idx = 0; idx < input_num; ++idx) {
+      TypeId cur_type_id = inputs[idx]->GetDtype();
+      if (cur_type_id != type_id_) {
+        MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
+        return KRET_RESIZE_FAILED;
+      }
+      auto in_shape = inputs[idx]->GetDeviceShapeAdaptively();
+      input_shapes_.push_back(in_shape);
+    }
+
+    std::string equation = GetValue<std::string>(base_operator->GetAttr("equation"));
+    single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());
+    bool flag = func_helper_.Preprocess(equation, node_name_, input_shapes_, &out_shape_, &single_op_, &res_op_);
+    if (!flag) {
+      return KRET_RESIZE_FAILED;
+    }
+    InitSizeLists();
+    return KRET_OK;
   }
 
- protected:
-  void InitSizeLists() override {
+ private:
+  void InitSizeLists() {
     size_t work_size = 0;
     size_t shape_size = 0;
     // if (T == float16) { reduce_sum_work_size = size * 2; } else { reduce_sum_work_size = size; }
@@ -202,11 +199,8 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.emplace_back(shape_size * sizeof(size_t));
     workspace_size_list_.emplace_back(shape_size * sizeof(size_t));
     workspace_size_list_.emplace_back(shape_size * sizeof(size_t));
-    size_t output_size = func_helper_.GetShapeSize(out_shape_);
-    output_size_list_.push_back(output_size);
   }
 
- private:
   EinsumHelper<T> func_helper_;
   std::string node_name_;
   TypeId type_id_;

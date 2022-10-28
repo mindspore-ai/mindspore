@@ -23,23 +23,33 @@
 #include <random>
 #include <algorithm>
 #include <utility>
+#include <map>
 #include "Eigen/Core"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class FractionalAvgPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class FractionalAvgPoolGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  FractionalAvgPoolGradCpuKernelMod() : kernel_func_(nullptr), output_type_(kTypeUnknown) {}
+  FractionalAvgPoolGradCpuKernelMod() : kernel_func_(nullptr) {}
   ~FractionalAvgPoolGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
+
+ protected:
+  void SyncData() override;
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   template <typename T>
@@ -55,11 +65,11 @@ class FractionalAvgPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, FractionalAvgPoolGradFunc>> func_list_;
   FractionalAvgPoolGradFunc kernel_func_;
-  TypeId output_type_;
-  CNodeWeakPtr node_wpt_;
   std::vector<int64_t> orig_input_shape_;
   std::vector<int64_t> out_backprop_shape_;
   bool overlapping_{false};
+  std::vector<KernelTensorPtr> outputs_{};
+  ShapeVector out_shape_{};
 };
 }  // namespace kernel
 }  // namespace mindspore
