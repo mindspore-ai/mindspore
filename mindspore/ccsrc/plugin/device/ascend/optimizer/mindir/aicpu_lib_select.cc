@@ -43,11 +43,9 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                       kReservoirReplayBufferSample,
                                                       kReservoirReplayBufferDestroy,
                                                       kGatherDGradV2OpName,
-                                                      kCumProdOpName,
                                                       kConcatOffsetOpName,
                                                       kSliceGradOpName,
                                                       kRandomShuffleOpName,
-                                                      kListDiffOpName,
                                                       kRangeOpName};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
 

@@ -127,7 +127,6 @@ from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
 from .check_numerics import _check_numerics_aicpu
 from .cumsum import _cumsum_aicpu
-from .cumprod import _cumprod_aicpu
 from .round import _round_aicpu
 from .stft import _stft_aicpu
 from .floor_div import _floor_div_aicpu
@@ -165,5 +164,4 @@ from .reservoir_replay_buffer import _rrb_destroy_op_cpu
 from .parallel_concat import _parallel_concat_aicpu
 from .concat_offset import _concat_offset_aicpu
 from .range import _range_aicpu
-from .list_diff import _list_diff_aicpu
 from .slice_grad import _slice_grad_aicpu
