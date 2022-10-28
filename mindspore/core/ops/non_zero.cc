@@ -33,6 +33,11 @@ constexpr int64_t kNonZeroInputNum = 1;
 abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  // support dynamic rank
+  if (IsDynamicRank(x_shape_map[kShape])) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   auto x_shape = x_shape_map[kMaxShape].empty() ? x_shape_map[kShape] : x_shape_map[kMaxShape];
   auto x_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_rank, kGreaterEqual, kNonZeroInputMinDim, prim_name);
