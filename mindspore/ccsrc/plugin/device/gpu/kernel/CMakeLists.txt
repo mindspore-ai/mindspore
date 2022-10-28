@@ -19,6 +19,13 @@ if(ENABLE_GPU)
         list(REMOVE_ITEM GPU_SRC_LIST "rl/mux_recv_gpu_kernel.cc")
     endif()
 
+    if(NOT (CMAKE_SYSTEM_NAME MATCHES "Linux" AND ${CUDA_VERSION} VERSION_GREATER "11.0"))
+        list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_erase_gpu_kernel.cc")
+        list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_get_data_gpu_kernel.cc")
+        list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_get_gpu_kernel.cc")
+        list(REMOVE_ITEM GPU_SRC_LIST "map_tensor/map_tensor_put_gpu_kernel.cc")
+    endif()
+
     if(ENABLE_MPI)
         include(ExternalProject)
         file(GLOB_RECURSE GPU_NCCL_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nccl/*.cc")
