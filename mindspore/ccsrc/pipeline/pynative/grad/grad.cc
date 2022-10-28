@@ -1043,8 +1043,20 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const p
   }
 
   // Replace weights param
+  mindspore::HashSet<std::string> graph_weights_set;
+  const auto &fir_graph_parameters = first_grad_fg->parameters();
+  for (const auto &weight_param : fir_graph_parameters) {
+    auto param_node = weight_param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_node);
+    if (param_node->has_default()) {
+      (void)graph_weights_set.emplace(param_node->name());
+    }
+  }
   for (const auto &fir : first_graph_info->params) {
     if (!fir.second->has_default()) {
+      continue;
+    }
+    if (graph_weights_set.find(fir.second->name()) == graph_weights_set.end()) {
       continue;
     }
     // Second graph no this weight param, need add to second graph
