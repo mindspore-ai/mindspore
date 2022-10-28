@@ -26,7 +26,8 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.container import CellList
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
-from mindspore.common.tensor import Tensor, RowTensorInner
+from mindspore.common import Tensor
+from mindspore.common.sparse_tensor import RowTensorInner
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore import log as logger

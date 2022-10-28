@@ -20,7 +20,8 @@ from __future__ import absolute_import
 import ast
 import math
 
-from mindspore import RowTensorInner, RowTensor, SparseTensor, COOTensor, CSRTensor, MapTensor
+from mindspore import RowTensor, SparseTensor, COOTensor, CSRTensor, MapTensor
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops import Primitive
 from mindspore.ops.composite import multitype_ops

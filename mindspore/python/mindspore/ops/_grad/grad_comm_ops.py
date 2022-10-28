@@ -23,7 +23,7 @@ from mindspore.communication import get_rank, get_group_size
 from mindspore.parallel._utils import _get_enable_parallel_optimizer, _get_grad_accumulation_shard
 from mindspore.ops import operations as P
 from mindspore.ops.operations._inner_ops import Send, Receive
-from mindspore.common.tensor import RowTensorInner
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce,
                                                NeighborExchange, AlltoAll, NeighborExchangeV2, Broadcast,

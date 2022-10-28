@@ -28,7 +28,8 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
 import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor, RowTensorInner
+from mindspore.common.tensor import Tensor
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, _calculate_correct_fan, One
 

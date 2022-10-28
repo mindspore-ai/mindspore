@@ -17,7 +17,8 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, RowTensorInner, nn, context
+from mindspore import Tensor, nn, context
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common import dtype as mstype
 
 

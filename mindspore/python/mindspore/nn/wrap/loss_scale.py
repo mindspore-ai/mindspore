@@ -20,7 +20,8 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell
 from mindspore.nn.cell import Cell
-from mindspore.common import Tensor, RowTensorInner
+from mindspore.common import Tensor
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common.parameter import Parameter
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C

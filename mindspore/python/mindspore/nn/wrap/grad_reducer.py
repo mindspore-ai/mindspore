@@ -19,12 +19,12 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.cell import Cell
 from mindspore.communication.management import GlobalComm, get_group_size
-from mindspore.common.tensor import RowTensorInner
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor
+from mindspore.common.sparse_tensor import Tensor
 from mindspore.common.api import jit
 
 

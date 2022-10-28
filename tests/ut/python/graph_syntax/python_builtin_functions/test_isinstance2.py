@@ -18,11 +18,12 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, CSRTensor, COOTensor, RowTensorInner, jit, jit_class, context
+from mindspore import Tensor, CSRTensor, COOTensor, jit, jit_class, context
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.mutable import mutable
+from mindspore.common.sparse_tensor import RowTensorInner
 
 context.set_context(mode=context.GRAPH_MODE)
 
