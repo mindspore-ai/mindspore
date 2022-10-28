@@ -293,6 +293,18 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/util/arena.cc
         )
 
+        if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+            set(MINDDATA_FULL_SRC
+                ${MINDDATA_FULL_SRC}
+                ${MINDDATA_DIR}/kernels/image/pad_op.cc
+                ${MINDDATA_DIR}/kernels/ir/vision/pad_ir.cc
+                ${MINDDATA_DIR}/kernels/image/swap_red_blue_op.cc
+                ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
+                ${MINDDATA_DIR}/kernels/image/rescale_op.cc
+                ${MINDDATA_DIR}/kernels/ir/vision/rescale_ir.cc
+                )
+        endif()
+
     add_library(minddata-lite-obj OBJECT
             ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log.cc

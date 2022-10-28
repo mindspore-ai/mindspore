@@ -45,7 +45,6 @@
 #include "minddata/dataset/kernels/ir/vision/mixup_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/normalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
-#include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
 #include "minddata/dataset/kernels/ir/vision/perspective_ir.h"
 #include "minddata/dataset/kernels/ir/vision/posterize_ir.h"
@@ -74,7 +73,6 @@
 #include "minddata/dataset/kernels/ir/vision/random_solarize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_vertical_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_vertical_flip_with_bbox_ir.h"
-#include "minddata/dataset/kernels/ir/vision/rescale_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_preserve_ar_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
@@ -86,12 +84,17 @@
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/ir/vision/solarize_ir.h"
-#include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
 #include "minddata/dataset/kernels/ir/vision/trivial_augment_wide_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 #include "minddata/dataset/util/log_adapter.h"
+
+#if !defined(ENABLE_ANDROID) || defined(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+#include "minddata/dataset/kernels/ir/vision/pad_ir.h"
+#include "minddata/dataset/kernels/ir/vision/rescale_ir.h"
+#include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
+#endif
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -622,6 +625,7 @@ NormalizePad::NormalizePad(const std::vector<float> &mean, const std::vector<flo
 std::shared_ptr<TensorOperation> NormalizePad::Parse() {
   return std::make_shared<NormalizePadOperation>(data_->mean_, data_->std_, data_->dtype_, data_->is_hwc_);
 }
+#endif  // not ENABLE_ANDROID
 
 // Pad Transform Operation.
 struct Pad::Data {
@@ -636,9 +640,15 @@ Pad::Pad(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_v
     : data_(std::make_shared<Data>(padding, fill_value, padding_mode)) {}
 
 std::shared_ptr<TensorOperation> Pad::Parse() {
+#if !defined(ENABLE_ANDROID) || defined(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
   return std::make_shared<PadOperation>(data_->padding_, data_->fill_value_, data_->padding_mode_);
+#else
+  MS_LOG(ERROR) << "Unsupported Pad.";
+  return nullptr;
+#endif
 }
 
+#ifndef ENABLE_ANDROID
 // PadToSize Transform Operation.
 struct PadToSize::Data {
   Data(const std::vector<int32_t> &size, const std::vector<int32_t> &offset, const std::vector<uint8_t> &fill_value,
@@ -1140,6 +1150,7 @@ RandomVerticalFlipWithBBox::RandomVerticalFlipWithBBox(float prob) : data_(std::
 std::shared_ptr<TensorOperation> RandomVerticalFlipWithBBox::Parse() {
   return std::make_shared<RandomVerticalFlipWithBBoxOperation>(data_->probability_);
 }
+#endif  // not ENABLE_ANDROID
 
 // Rescale Transform Operation.
 struct Rescale::Data {
@@ -1151,9 +1162,13 @@ struct Rescale::Data {
 Rescale::Rescale(float rescale, float shift) : data_(std::make_shared<Data>(rescale, shift)) {}
 
 std::shared_ptr<TensorOperation> Rescale::Parse() {
+#if !defined(ENABLE_ANDROID) || defined(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
   return std::make_shared<RescaleOperation>(data_->rescale_, data_->shift_);
+#else
+  MS_LOG(ERROR) << "Unsupported Rescale.";
+  return nullptr;
+#endif
 }
-#endif  // not ENABLE_ANDROID
 
 // Resize Transform Operation.
 struct Resize::Data {
@@ -1324,11 +1339,20 @@ struct Solarize::Data {
 Solarize::Solarize(const std::vector<float> &threshold) : data_(std::make_shared<Data>(threshold)) {}
 
 std::shared_ptr<TensorOperation> Solarize::Parse() { return std::make_shared<SolarizeOperation>(data_->threshold_); }
+#endif  // not ENABLE_ANDROID
 
 // SwapRedBlue Transform Operation.
 SwapRedBlue::SwapRedBlue() = default;
-std::shared_ptr<TensorOperation> SwapRedBlue::Parse() { return std::make_shared<SwapRedBlueOperation>(); }
+std::shared_ptr<TensorOperation> SwapRedBlue::Parse() {
+#if !defined(ENABLE_ANDROID) || defined(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+  return std::make_shared<SwapRedBlueOperation>();
+#else
+  MS_LOG(ERROR) << "Unsupported SwapRedBlue.";
+  return nullptr;
+#endif
+}
 
+#ifndef ENABLE_ANDROID
 // ToTensor Transform Operation.
 struct ToTensor::Data {
   explicit Data(const std::string &output_type) : output_type_(DataType(output_type)) {}
