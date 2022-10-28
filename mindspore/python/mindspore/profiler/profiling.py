@@ -178,6 +178,7 @@ class Profiler:
         self._filt_optype_names = ''
         self._output_path = ''
         self._rank_size = 0
+        self._rank_id = 0
         self._ascend_profiler = None
         _environment_check()
         # default aicore_metrics type is ArithmeticUtilization
@@ -525,6 +526,7 @@ class Profiler:
         if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
             self._dev_id = str(get_rank())
         os.environ['DEVICE_ID'] = self._dev_id
+        self._rank_id = self._dev_id
 
     def _ascend_profiler_init(self, kwargs):
         """Ascend profiler init."""

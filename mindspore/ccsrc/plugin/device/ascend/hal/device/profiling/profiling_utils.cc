@@ -57,7 +57,7 @@ ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelG
   auto profiling_option = GetContextProfilingOption();
 
   ProfilingTraceInfo profiling_trace;
-  if (cnode_exec_order.empty()) {
+  if (cnode_exec_order.size() <= 1) {
     return profiling_trace;
   }
   GetTraceBegin(kernel_graph, profiling_option, &profiling_trace);
