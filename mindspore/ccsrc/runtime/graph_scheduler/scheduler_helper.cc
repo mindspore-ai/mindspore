@@ -139,10 +139,21 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
+  // Check the data arrow legitimacy.
   if (IsControlFlowActor(to_actor->type()) && (from_actor->type() == KernelTransformType::kKernelActor) &&
       (to_actor->type() != KernelTransformType::kExitActor)) {
-    MS_LOG(WARNING) << "Kernel actor:" << from_actor->GetAID() << " link data arrow to actor:" << to_actor->GetAID()
-                    << " is not an exit actor.";
+    MS_LOG(WARNING) << "Kernel actor:" << from_actor->GetAID().Name()
+                    << " link data arrow to actor:" << to_actor->GetAID().Name() << " is not an exit actor.";
+  }
+  // The continuous memory inpus need allocate memory in advance, so must be from the inside subgraph.
+  if (to_actor->type() == KernelTransformType::kKernelActor) {
+    auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
+    if (to_kernel_actor->inputs_continuous_memory() && (from_actor->type() != KernelTransformType::kKernelActor)) {
+      MS_LOG(EXCEPTION) << "The continuous memory input is not from the inside subgraph, to actor: "
+                        << to_actor->GetAID().Name() << ", to input index: " << to_input_index
+                        << ", from actor: " << from_actor->GetAID().Name()
+                        << ", from output index: " << from_output_index;
+    }
   }
 
   auto data_arrow = std::make_shared<DataArrow>(from_output_index, to_actor->GetAID(), to_input_index);

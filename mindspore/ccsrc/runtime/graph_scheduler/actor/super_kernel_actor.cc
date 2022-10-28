@@ -269,8 +269,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
     // be created.
     if (!dst_device_tensor->is_ptr_persisted()) {
-      if (src_device_tensor->GetDeviceType() == dst_device_tensor->GetDeviceType() &&
-          src_device_tensor->format() == dst_device_tensor->format()) {
+      if ((src_device_tensor->GetDeviceType() == dst_device_tensor->GetDeviceType()) &&
+          AnfAlgo::IsEquivalentFormat(src_device_tensor->format(), dst_device_tensor->format())) {
         MS_LOG(DEBUG) << "Disable copy for device tensor:" << dst_device_tensor;
         continue;
       }

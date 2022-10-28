@@ -66,6 +66,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::string GetOutputFormat(const AnfNodePtr &node, size_t output_idx);
   // get input format select of anf node
   static std::string GetInputFormat(const AnfNodePtr &node, size_t input_idx);
+  // Judge whether the format is equivalent by converting between default format and real format.
+  static bool IsEquivalentFormat(const std::string &src_format, const std::string &dst_format);
   // get output format from prev node,input_index is the input index of current node related to prev node
   static std::string GetPrevNodeOutputFormat(const AnfNodePtr &anf_node, size_t input_idx);
   // get reshape_type of from the output of input node.
