@@ -48,17 +48,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
+void CheckInputsShape(const ShapeVector &x_shape, const ShapeVector &lu_data_shape, const ShapeVector &lu_pivots_shape,
+                      const std::string &op_name) {
   const int64_t kDimNum = 2;
-  std::ostringstream buffer;
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto x_shape = x_shape_map[kShape];
-  auto lu_data_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-  auto lu_data_shape = lu_data_shape_map[kShape];
-  auto lu_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape());
-  auto lu_pivots_shape = lu_pivots_shape_map[kShape];
   if (lu_data_shape.size() < kDimNum) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', lu_data's dimension must be greater than or equal to 2, but got: "
@@ -84,48 +76,71 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
                              << "but got x's: " << x_shape[x_shape.size() - kDimNum]
                              << ", lu_data's: " << lu_data_shape[lu_data_shape.size() - kDimNum] << ".";
   }
-  if (x_shape.size() == lu_data_shape.size()) {
-    for (size_t i = 0; i <= x_shape.size() - kDimNum; i++) {
-      if (x_shape[i] != lu_data_shape[i]) {
-        LuSolve_buffer(x_shape, lu_data_shape);
-        MS_EXCEPTION(ValueError) << buffer.str();
+}
+
+abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  const int64_t kDimNum = 2;
+  std::ostringstream buffer;
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto x_shape = x_shape_map[kShape];
+  auto lu_data_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto lu_data_shape = lu_data_shape_map[kShape];
+  auto lu_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape());
+  auto lu_pivots_shape = lu_pivots_shape_map[kShape];
+
+  if (IsDynamicRank(x_shape) || IsDynamicRank(lu_data_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
+
+  if (!IsDynamicShape(x_shape) && !IsDynamicShape(lu_data_shape) && !IsDynamic(lu_pivots_shape)) {
+    CheckInputsShape(x_shape, lu_data_shape, lu_pivots_shape, op_name);
+    if (x_shape.size() == lu_data_shape.size()) {
+      for (size_t i = 0; i <= x_shape.size() - kDimNum; i++) {
+        if (x_shape[i] != lu_data_shape[i]) {
+          LuSolve_buffer(x_shape, lu_data_shape);
+          MS_EXCEPTION(ValueError) << buffer.str();
+        }
+      }
+    } else if (lu_data_shape.size() > x_shape.size()) {
+      for (size_t i = 0; i < x_shape.size() - kDimNum; i++) {
+        if (x_shape[i] != lu_data_shape[lu_data_shape.size() - x_shape.size() + i]) {
+          LuSolve_buffer(x_shape, lu_data_shape);
+          MS_EXCEPTION(ValueError) << buffer.str();
+        }
+      }
+    } else {
+      for (size_t i = 0; i < lu_data_shape.size() - kDimNum; i++) {
+        if (lu_data_shape[i] != x_shape[x_shape.size() - lu_data_shape.size() + i]) {
+          LuSolve_buffer(x_shape, lu_data_shape);
+          MS_EXCEPTION(ValueError) << buffer.str();
+        }
       }
     }
-  } else if (lu_data_shape.size() > x_shape.size()) {
-    for (size_t i = 0; i < x_shape.size() - kDimNum; i++) {
-      if (x_shape[i] != lu_data_shape[lu_data_shape.size() - x_shape.size() + i]) {
-        LuSolve_buffer(x_shape, lu_data_shape);
-        MS_EXCEPTION(ValueError) << buffer.str();
-      }
+    if (lu_pivots_shape[lu_pivots_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - 1]) {
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', the last dim of lu_pivots must be the same as lu_data's last dim, "
+                               << "but got lu_pivots' last dim: " << lu_pivots_shape[lu_pivots_shape.size() - 1]
+                               << ", lu_data's last dim: " << lu_data_shape[lu_data_shape.size() - 1] << ".";
     }
-  } else {
-    for (size_t i = 0; i < lu_data_shape.size() - kDimNum; i++) {
-      if (lu_data_shape[i] != x_shape[x_shape.size() - lu_data_shape.size() + i]) {
-        LuSolve_buffer(x_shape, lu_data_shape);
+    for (size_t i = 0; i < lu_pivots_shape.size(); i++) {
+      if (lu_data_shape[i] != lu_pivots_shape[i]) {
+        x_shape.pop_back();
+        x_shape.pop_back();
+        lu_pivots_shape.pop_back();
+        buffer
+          << "For " << op_name
+          << " lu_data's batch dimension does not match lu_pivots's batch dimension, lu_data's batch dimension is [";
+        LuSolve_for(x_shape);
+        buffer << "], lu_pivots's batch dimension is [";
+        LuSolve_for(lu_pivots_shape);
+        buffer << "], the size of the dimension and the number of each dimension must be the same.";
         MS_EXCEPTION(ValueError) << buffer.str();
       }
     }
   }
-  if (lu_pivots_shape[lu_pivots_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - 1]) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', the last dim of lu_pivots must be the same as lu_data's last dim, "
-                             << "but got lu_pivots' last dim: " << lu_pivots_shape[lu_pivots_shape.size() - 1]
-                             << ", lu_data's last dim: " << lu_data_shape[lu_data_shape.size() - 1] << ".";
-  }
-  for (size_t i = 0; i < lu_pivots_shape.size(); i++) {
-    if (lu_data_shape[i] != lu_pivots_shape[i]) {
-      x_shape.pop_back();
-      x_shape.pop_back();
-      lu_pivots_shape.pop_back();
-      buffer << "For " << op_name
-             << " lu_data's batch dimension does not match lu_pivots's batch dimension, lu_data's batch dimension is [";
-      LuSolve_for(x_shape);
-      buffer << "], lu_pivots's batch dimension is [";
-      LuSolve_for(lu_pivots_shape);
-      buffer << "], the size of the dimension and the number of each dimension must be the same.";
-      MS_EXCEPTION(ValueError) << buffer.str();
-    }
-  }
+
   auto dim_vector = lu_data_shape;
   if (x_shape.size() >= lu_data_shape.size()) {
     return std::make_shared<abstract::Shape>(x_shape);

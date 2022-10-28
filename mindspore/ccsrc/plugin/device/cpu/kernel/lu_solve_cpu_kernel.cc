@@ -26,99 +26,54 @@ constexpr size_t kDimNum = 2;
 
 int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 
-void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  node_wpt_ = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool LuSolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  size_t input_num = inputs.size();
+  size_t output_num = outputs.size();
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputNum, kernel_name_);
-  auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto lu_data_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  auto lu_pivots_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-  if (AnfAlgo::IsShapesDynamic({x_shape, lu_data_shape, lu_pivots_shape})) {
-    return;
-  }
-  if (lu_data_shape.size() < kDimNum) {
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel lu_data's dimensions must be greater than or equal to 2.";
-  }
-  if (x_shape.size() < kDimNum) {
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel x's dimensions must be greater than or equal to 2.";
-  }
-  if (lu_pivots_shape.size() < 1) {
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel lu_pivots's dimensions must be greater than or equal to 1.";
-  }
-  if (lu_data_shape[lu_data_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - kDimNum])
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel "
-                             << " input lu_data must be square matrix "
-                             << "while row is " << lu_data_shape[lu_data_shape.size() - kDimNum] << ", col is "
-                             << lu_data_shape[lu_data_shape.size() - 1] << ".";
 
-  if (x_shape.size() == lu_data_shape.size()) {
-    for (size_t i = 0; i <= x_shape.size() - kDimNum; i++) {
-      if (x_shape[i] != lu_data_shape[i]) {
-        MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel "
-                                 << " shapes in dim[" << i << "] are not the same "
-                                 << "while x is " << x_shape[i] << ", lu_data is " << lu_data_shape[i] << ".";
-      }
-    }
-  } else if (lu_data_shape.size() > x_shape.size()) {
-    for (size_t i = 0; i < x_shape.size() - kDimNum; i++) {
-      if (x_shape[i] != lu_data_shape[lu_data_shape.size() - x_shape.size() + i]) {
-        MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel"
-                                 << " shapes in dim[" << i << "] are not same as lu_data's dim["
-                                 << lu_data_shape.size() - x_shape.size() + i << "]"
-                                 << "while x is " << x_shape[i] << ", lu_data is " << lu_data_shape[i] << ".";
-      }
-    }
-  } else {
-    for (size_t i = 0; i < lu_data_shape.size() - kDimNum; i++) {
-      if (lu_data_shape[i] != x_shape[x_shape.size() - lu_data_shape.size() + i]) {
-        MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel "
-                                 << " shapes in lu_data's dim[" << i << "] are not same as x's dim["
-                                 << x_shape.size() - lu_data_shape.size() + i << "]"
-                                 << "while x is " << x_shape[x_shape.size() - lu_data_shape.size() + i]
-                                 << ", lu_data is " << lu_data_shape[i] << ".";
-      }
-    }
-  }
-  if (lu_pivots_shape[lu_pivots_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - 1]) {
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel "
-                             << " Number of pivots per batch must be the same as the dimension of the matrix.";
-  }
-  for (size_t i = 0; i < lu_pivots_shape.size(); i++) {
-    if (lu_data_shape[i] != lu_pivots_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel "
-                               << "batch dimension of LU_pivots should match batch dimension of LU_data.";
-    }
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, LuSolveFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "LuSolve does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "LuSolve does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int LuSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename T1, typename T2>
 void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &outputs, T1 *b_working_ptr, T1 *lu_working_ptr,
                                   int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
-  auto input_0_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
-  auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
   auto output_y = reinterpret_cast<T2 *>(outputs[0]->addr);
-  size_t lu_dims = input_1_Shape.size();
-  size_t lu_maxtrix_sizes = LongToSize(input_1_Shape[lu_dims - 2]);
-  size_t b_dim = input_0_Shape.size();
-  size_t b_m = LongToSize(input_0_Shape[b_dim - 1]);
+  size_t lu_dims = input_1_shape_.size();
+  size_t lu_maxtrix_sizes = LongToSize(input_1_shape_[lu_dims - 2]);
+  size_t b_dim = input_0_shape_.size();
+  size_t b_m = LongToSize(input_0_shape_[b_dim - 1]);
   typedef Eigen::Matrix<T1, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd matrix_b = Eigen::Map<MatrixXd>(b_working_ptr, lu_maxtrix_sizes, b_m);
   MatrixXd matrix_A = Eigen::Map<MatrixXd>(lu_working_ptr, lu_maxtrix_sizes, lu_maxtrix_sizes);
-  for (size_t i = 0; i < LongToSize(input_0_Shape[b_dim - kDimNum]); i++) {
+  for (size_t i = 0; i < LongToSize(input_0_shape_[b_dim - kDimNum]); i++) {
     matrix_b.row(i).swap(matrix_b.row(*(pivots_working_ptr + i) - 1));
   }
   MatrixXd result = matrix_A.template triangularView<Eigen::UnitLower>().solve(matrix_b);
@@ -134,21 +89,18 @@ bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   auto input_x0 = reinterpret_cast<T2 *>(inputs[0]->addr);
   auto input_x1 = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto input_x2 = reinterpret_cast<int32_t *>(inputs[2]->addr);
-  auto input_0_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
-  auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
-  auto output_Shape = AnfAlgo::GetOutputDeviceShape(node_wpt_, 0);
-  auto input0_element_num = SizeOf(input_0_Shape);
-  auto input1_element_num = SizeOf(input_1_Shape);
-  auto output_element_num = SizeOf(output_Shape);
+  auto input0_element_num = SizeOf(input_0_shape_);
+  auto input1_element_num = SizeOf(input_1_shape_);
+  auto output_element_num = SizeOf(output_shape_);
   std::vector<T1> input_0(input_x0, input_x0 + input0_element_num);
   std::vector<T1> input_1(input_x1, input_x1 + input1_element_num);
-  size_t b_dims = input_0_Shape.size();
-  std::vector<int64_t> b_dims_vector = input_0_Shape;
-  size_t lu_dims = input_1_Shape.size();
-  std::vector<int64_t> lu_dims_vector = input_1_Shape;
-  size_t b_stride = static_cast<size_t>(input_0_Shape[b_dims - 1] * input_0_Shape[b_dims - 2]);
-  size_t lu_stride = static_cast<size_t>(input_1_Shape[lu_dims - 1] * input_1_Shape[lu_dims - 2]);
-  size_t pivots_stride = static_cast<size_t>(input_1_Shape[lu_dims - 1]);
+  size_t b_dims = input_0_shape_.size();
+  std::vector<int64_t> b_dims_vector = input_0_shape_;
+  size_t lu_dims = input_1_shape_.size();
+  std::vector<int64_t> lu_dims_vector = input_1_shape_;
+  size_t b_stride = static_cast<size_t>(input_0_shape_[b_dims - 1] * input_0_shape_[b_dims - 2]);
+  size_t lu_stride = static_cast<size_t>(input_1_shape_[lu_dims - 1] * input_1_shape_[lu_dims - 2]);
+  size_t pivots_stride = static_cast<size_t>(input_1_shape_[lu_dims - 1]);
   MS_EXCEPTION_IF_ZERO("b_stride", b_stride);
   size_t batch_num = output_element_num / b_stride;
   if (b_dims == lu_dims) {
