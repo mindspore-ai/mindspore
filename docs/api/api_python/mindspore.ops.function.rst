@@ -286,7 +286,6 @@ Tensor创建
     mindspore.ops.one_hot
     mindspore.ops.ones
     mindspore.ops.ones_like
-    mindspore.ops.zeros_like
 
 随机生成函数
 ^^^^^^^^^^^^^^^^

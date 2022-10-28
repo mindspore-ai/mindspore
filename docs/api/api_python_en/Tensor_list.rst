@@ -312,6 +312,13 @@ Other Methods
     mindspore.Tensor.flush_from_cache
     mindspore.Tensor.set_const_arg
 
+{% elif fullname=="mindspore.nn.Cell" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: infer_value, infer_shape, infer_dtype, auto_parallel_compile_and_run, load_parameter_slice, set_auto_parallel, set_parallel_input_with_inputs
+    :members:
+
 {% elif objname[0].istitle() %}
 {{ fullname | underline }}
 

@@ -3097,11 +3097,11 @@ def nonzero(x):
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
 
     Raises:
-       TypeError: If `x` is not Tensor.
-       ValueError: If 'x' dim equal to 0.
+        TypeError: If `x` is not Tensor.
+        ValueError: If 'x' dim equal to 0.
 
     Supported Platforms:
-       ``GPU``
+        ``GPU``
 
     Examples:
         >>> import mindspore

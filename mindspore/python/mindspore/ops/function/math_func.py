@@ -6703,10 +6703,10 @@ def igammac(input, other):
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
-    Inputs:
+    Args:
         input (Tensor): The first input tensor. With type of float32 or float64.
         other (Tensor): The second input tensor. With float32 or float64 type. `other` should have
-          the same dtype with `input`.
+            the same dtype with `input`.
 
     Outputs:
         Tensor, has the same dtype as `input` and `other`.

@@ -2436,21 +2436,21 @@ class HingeEmbeddingLoss(LossBase):
 
     The loss function for :math:`n`-th sample in the mini-batch is
 
-        .. math::
-            l_n = \begin{cases}
-            x_n, & \text{if}\; y_n = 1,\\
-            \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
-            \end{cases}
+    .. math::
+        l_n = \begin{cases}
+        x_n, & \text{if}\; y_n = 1,\\
+        \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
+        \end{cases}
 
-        and the total loss functions is
+    and the total loss functions is
 
-        .. math::
-            \ell(x, y) = \begin{cases}
-            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
-            \end{cases}
+    .. math::
+        \ell(x, y) = \begin{cases}
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
 
-        where :math:`L = \{l_1,\dots,l_N\}^\top`.
+    where :math:`L = \{l_1,\dots,l_N\}^\top`.
 
     Args:
         margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.

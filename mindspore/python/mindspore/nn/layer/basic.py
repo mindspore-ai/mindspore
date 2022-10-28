@@ -224,15 +224,6 @@ class Dropout1d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.random.randn(4, 3), mindspore.float32)
-        >>> output = dropout1d(input_x, 0.5)
-        >>> print(output.shape)
-        (4, 3)
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
         >>> dropout = nn.Dropout1d(p=0.5)
         >>> x = Tensor(np.ones([4, 3]), mindspore.float32)
         >>> output = dropout(x)
