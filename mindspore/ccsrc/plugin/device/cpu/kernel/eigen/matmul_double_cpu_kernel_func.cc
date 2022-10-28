@@ -143,8 +143,6 @@ bool MatmulDoubleCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &i
     MatMul<uint32_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt64) {
     MatMul<uint64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat16) {
-    MatMul<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
     MatMul<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeComplex64) {
