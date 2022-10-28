@@ -97,6 +97,19 @@ class GPUEnvChecker(EnvChecker):
                            "information: https://www.mindspore.cn/install. The recommended version is "
                            "CUDA11.1 with cuDNN8.0.x or CUDA11.6 with cuDNN8.5.x.")
 
+    def get_cudart_version(self):
+        """Get cuda runtime version by libcudart.so."""
+        for path in self.cuda_lib_path:
+            real_path = glob.glob(path + "/lib*/libcudart.so.*.*.*")
+            if real_path == []:
+                continue
+            ls_cudart = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
+                                       capture_output=True, check=False)
+            if ls_cudart.returncode == 0:
+                self.v = ls_cudart.stdout.split('/')[-1].strip('libcudart.so.').strip()
+                break
+        return self.v
+
     def set_env(self):
         return
 
@@ -150,22 +163,9 @@ class GPUEnvChecker(EnvChecker):
         version_str = ''.join(cudnn_version)
         return version_str[0:3]
 
-    def _get_cudart_version(self):
-        """Get cuda runtime version by libcudart.so."""
-        for path in self.cuda_lib_path:
-            real_path = glob.glob(path + "/lib*/libcudart.so.*.*.*")
-            if real_path == []:
-                continue
-            ls_cudart = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
-                                       capture_output=True, check=False)
-            if ls_cudart.returncode == 0:
-                self.v = ls_cudart.stdout.split('/')[-1].strip('libcudart.so.').strip()
-                break
-        return self.v
-
     def _check_version(self):
         """Check cuda version"""
-        v = self._get_cudart_version()
+        v = self.get_cudart_version()
         v = version.parse(v)
         v_str = str(v.major) + "." + str(v.minor)
         if v_str not in self.version:
