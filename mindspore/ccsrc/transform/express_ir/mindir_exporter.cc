@@ -1300,11 +1300,19 @@ bool IrExportBuilder::SetDictToAttributeProto(const ValueDictionaryPtr &value_di
         MS_LOG(ERROR) << "Set dictionary to AttributeProto failed.";
         return false;
       }
-    } else {
-      if (!SetSeqElemToAttributeProto(value, dict_item_value)) {
-        MS_LOG(ERROR) << "Set seq elem to AttributeProto failed.";
+    } else if (value->isa<StringImm>() || value->isa<Scalar>()) {
+      if (!SetScalarToAttributeProto_irs(value, dict_item_value)) {
+        MS_LOG(ERROR) << "Set StringImm or Scalar to AttributeProto failed.";
         return false;
       }
+    } else if (value->isa<Number>() || value->isa<tensor::Tensor>()) {
+      if (!SetTypeToAttributeProto_irs(value, dict_item_value)) {
+        MS_LOG(ERROR) << "Set Number or Tensor to AttributeProto failed.";
+        return false;
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported type while converting ValueDictionary to AttributeProto: "
+                        << value->type_name();
     }
   }
   return true;
