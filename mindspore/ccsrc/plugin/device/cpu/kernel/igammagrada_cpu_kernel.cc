@@ -60,6 +60,8 @@ constexpr size_t kInputNum = 2;
 constexpr size_t kOutputNum = 1;
 constexpr int64_t VALUE = 1;
 constexpr int64_t DERIVATIVE = 2;
+constexpr int64_t kInputsNum = 2;
+constexpr int64_t kOutputsNum = 1;
 size_t get_element_num(const std::vector<int64_t> &shape) {
   size_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
@@ -371,12 +373,36 @@ void IgammaGradACpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPt
   }
 }
 
-void IgammaGradACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  a_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  z_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool IgammaGradACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  constexpr size_t input_num = kInputsNum;
+  constexpr size_t output_num = kOutputsNum;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  dtype_ = inputs[0]->GetDtype();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int IgammaGradACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  a_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[1]->GetDeviceShapeAdaptively();
+  z_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  return ret;
 }
 
 bool IgammaGradACpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
