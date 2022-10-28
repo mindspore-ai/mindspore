@@ -29,7 +29,7 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-using MatrixPackFun = void (*)(const float *src_ptr, float *dst_ptr, int row, int col);
+using MatrixPackFun = void (*)(const float *src_ptr, float *dst_ptr, int row, int col, int start_row, int end_row);
 using GemmIsNotPackFun = void (*)(const float *a, const float *b, float *c, const float *bias, int m, int k,
                                   int act_type);
 
@@ -54,6 +54,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int Run() override;
   static int InitBroadcastParams(const std::vector<int> &a_shape_const, const std::vector<int> &b_shape_const,
                                  MatMulParameter *params, std::vector<int> *a_offsets, std::vector<int> *b_offsets);
+  int PackMatrixBParallelRunByBatch(int task_id) const;
 
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
   ParallelRun parallel_fun_ = nullptr;
@@ -91,6 +92,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   void GetThreadCuttingInfoByRow();
   void InitShapeA();
   void InitShapeB();
+  int InitBroadcastParams();
 
  protected:
   MatMulParameter *params_ = nullptr;
@@ -100,6 +102,9 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   std::vector<int> a_offset_;
   std::vector<int> b_offset_;
 
+  int pack_b_stride_ = 0;
+  const float *pack_b_src_;
+  float *pack_b_dst_;
   int col_tile_ = 0;
   int row_tile_ = 0;
   int batch_stride_ = 0;
