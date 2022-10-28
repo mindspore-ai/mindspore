@@ -26,6 +26,12 @@ std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_
 
 std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64_t axis);
 
+std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<int64_t> &y);
+
+std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis);
+
+std::vector<int64_t> GetAxisList(const ValuePtr &value);
+
 NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                             const NodePtr &dy);
 
@@ -45,5 +51,17 @@ std::vector<T> operator+(std::vector<T> const &m, std::vector<T> const &n) {
 }
 
 NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type);
+NodePtrList BinopGatherCommon(const BpropIRBuilder *ib);
+std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v);
+std::vector<int64_t> GenerateShapeIndex(const std::vector<int64_t> &out_shp, const std::vector<int64_t> &ind_shp,
+                                        int64_t axis_v);
+std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, const std::vector<int64_t> &ind_shp,
+                                           int64_t axis_v);
+std::vector<int64_t> GetTupleIntFromValueNode(const NodePtr &node);
+int64_t GetIntFromValueNode(const NodePtr &node);
+std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex);
+std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
+
+NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &dout);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_EXPANDER_COMMON_UTILS_H_

@@ -63,6 +63,7 @@ class Emitter {
   NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kRealDiv, {lhs, rhs}); }
   NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kPowOpName, {lhs, rhs}); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
+  NodePtr BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
     return Emit(kSelectOpName, {cond, lhs, rhs});
   }
@@ -72,6 +73,7 @@ class Emitter {
   NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kGreaterEqualOpName, {lhs, rhs}); }
   NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kEqualOpName, {lhs, rhs}); }
   NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("NotEqual", {lhs, rhs}); }
+  NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
   NodePtr ZerosLike(const NodePtr &node) const;
 
