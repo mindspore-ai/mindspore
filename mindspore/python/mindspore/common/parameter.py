@@ -279,7 +279,7 @@ class Parameter(Tensor_):
 
     @staticmethod
     def _not_init_data():
-        is_worker_or_server = (_is_role_worker() or _is_role_pserver())
+        is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
         if is_worker_or_server or _is_role_sched() or _is_in_parallel_mode():
             return True
         return False
@@ -298,7 +298,7 @@ class Parameter(Tensor_):
                 # make a copy of Tensor to init the parameter.
                 return (Tensor, data.asnumpy())
 
-            is_worker_or_server = (_is_role_worker() or _is_role_pserver())
+            is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
             not_init_data = is_worker_or_server or _is_role_sched() or _is_in_parallel_mode()
             if not_init_data:
                 # do not init data while in auto parallel.
