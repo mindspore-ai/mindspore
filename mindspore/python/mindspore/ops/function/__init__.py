@@ -353,6 +353,7 @@ from .nn_func import (
 )
 from .linalg_func import (
     svd,
+    pinv
 )
 from .sparse_func import (
     coalesce,

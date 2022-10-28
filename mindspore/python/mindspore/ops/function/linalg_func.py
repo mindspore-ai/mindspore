@@ -15,8 +15,19 @@
 
 """Operators for linalg function."""
 
+import mindspore.ops as ops
+from mindspore.common import dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.function.math_func import _check_input_dtype, _check_attr_dtype
+from mindspore._c_expression import Tensor as Tensor_
+
 from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
+
+
+__all__ = ['svd', 'pinv']
 
 
 def svd(a, full_matrices=False, compute_uv=True):
@@ -78,6 +89,105 @@ def svd(a, full_matrices=False, compute_uv=True):
     return s
 
 
-__all__ = ['svd']
+def pinv(x, *, atol=None, rtol=None, hermitian=False):
+    """
+    Computes the (Moore-Penrose) pseudo-inverse of a matrix.
+
+    Note:
+        Only `float32`, `float64` are supported Tensor dtypes.
+
+    Args:
+        x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions.
+
+    Keyword args:
+        atol (float, tensor) : absolute tolerance value. Default: None.
+        rtol (float, tensor) : relative tolerance value. Default: None.
+        hermitian (bool) : An optional bool. x is assumed to be symmetric if real. Default: False.
+
+    Outputs:
+        Tensor.
+
+    Raises:
+        TypeError: If `hermitian` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> x = Tensor([[2., 1.], [1., 2.]], mindspore.float32)
+        >>> output = ops.pinv(x)
+        >>> print(output)
+        [[ 0.6666667  -0.33333334]
+        [-0.33333334  0.6666667 ]]
+    """
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("The input x must be tensor")
+    if x.shape == ():
+        raise TypeError("For pinv, the 0-D input is not supported")
+    x_shape = F.shape(x)
+    if len(x_shape) < 2:
+        raise ValueError("input x should have 2 or more dimensions, " f"but got {len(x_shape)}.")
+    x_dtype = _get_cache_prim(P.DType)()(x)
+    _check_input_dtype("x", x_dtype, [mstype.float32, mstype.float64], "pinv")
+    _check_attr_dtype("hermitian", hermitian, [bool], "pinv")
+
+    if atol is not None:
+        if rtol is None:
+            rtol = Tensor(0.0)
+    else:
+        atol = Tensor(0.0)
+        if rtol is None:
+            rtol = max(ops.shape(x)) * ops.Eps()(Tensor(1.0, x.dtype))
+
+    if not ops.IsInstance()(rtol, mstype.tensor):
+        rtol = Tensor(rtol, mstype.float32)
+    if not ops.IsInstance()(atol, mstype.tensor):
+        atol = Tensor(atol, mstype.float32)
+
+    if not hermitian:
+        s, u, v = x.svd()
+        max_singular_val = ops.narrow(s, -1, 0, 1)
+        threshold = ops.maximum(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
+        condition = s > threshold
+        reciprocal_s_before = Tensor(ops.Reciprocal()(s)).broadcast_to(condition.shape)
+        zero = ops.Zeros()(condition.shape, s.dtype)
+        s_pseudoinv = ops.select(condition, reciprocal_s_before, zero)
+        output = ops.matmul(v * s_pseudoinv.expand_dims(-2), _nd_transpose(ops.Conj()(u)))
+    else:
+        s, u = _compare_eigh(x)
+        s_abs = s.abs()
+        max_singular_val = ops.amax(s_abs, -1, True)
+        threshold = ops.maximum(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
+        condition = s_abs > threshold
+        reciprocal_s_before = Tensor(ops.Reciprocal()(s))
+        zero = ops.Zeros()(condition.shape, s.dtype)
+        s_pseudoinv = ops.select(condition, reciprocal_s_before, zero)
+        output = ops.matmul(u * s_pseudoinv.expand_dims(-2), _nd_transpose(ops.Conj()(u)))
+    return output
+
+
+def _compare_eigh(x):
+    """
+    compare eigh
+    """
+    from mindspore.scipy.ops import Eigh
+    s, u = Eigh()(x)
+    return s, u
+
+
+def _nd_transpose(a):
+    """
+    _nd_transpose
+    """
+    dims = a.ndim
+    if dims < 2:
+        raise TypeError("to do _nd_transpose for input a's ndim is not greater or equal to 2d, which is invalid.")
+    axes = ops.make_range(0, dims)
+    axes = axes[:-2] + (axes[-1],) + (axes[-2],)
+    return ops.transpose(a, axes)
+
 
 __all__.sort()
