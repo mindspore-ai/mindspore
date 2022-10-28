@@ -123,30 +123,30 @@ def test_adaptive_max_pool_1d():
 
 
 class MaxUnpool2dNet(nn.Cell):
-    def __init__(self, kernel_size, stride=0, padding=0, output_size=()):
+    def __init__(self, kernel_size, stride=0, padding=0):
         super(MaxUnpool2dNet, self).__init__()
-        self.max_unpool2d = nn.MaxUnpool2d(kernel_size, stride, padding, output_size)
+        self.max_unpool2d = nn.MaxUnpool2d(kernel_size, stride, padding)
 
-    def construct(self, x, indices):
-        return self.max_unpool2d(x, indices)
+    def construct(self, x, indices, output_size=None):
+        return self.max_unpool2d(x, indices, output_size)
 
 
 class MaxUnpool1dNet(nn.Cell):
-    def __init__(self, kernel_size, stride=0, padding=0, output_size=()):
+    def __init__(self, kernel_size, stride=0, padding=0):
         super(MaxUnpool1dNet, self).__init__()
-        self.max_unpool1d = nn.MaxUnpool1d(kernel_size, stride, padding, output_size)
+        self.max_unpool1d = nn.MaxUnpool1d(kernel_size, stride, padding)
 
-    def construct(self, x, indices):
-        return self.max_unpool1d(x, indices)
+    def construct(self, x, indices, output_size=None):
+        return self.max_unpool1d(x, indices, output_size)
 
 
 class MaxUnpool3dNet(nn.Cell):
-    def __init__(self, kernel_size, stride=0, padding=0, output_size=()):
+    def __init__(self, kernel_size, stride=0, padding=0):
         super(MaxUnpool3dNet, self).__init__()
-        self.max_unpool3d = nn.MaxUnpool3d(kernel_size, stride, padding, output_size)
+        self.max_unpool3d = nn.MaxUnpool3d(kernel_size, stride, padding)
 
-    def construct(self, x, indices):
-        return self.max_unpool3d(x, indices)
+    def construct(self, x, indices, output_size=None):
+        return self.max_unpool3d(x, indices, output_size)
 
 
 def test_max_unpool2d_normal():

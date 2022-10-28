@@ -27,7 +27,6 @@ from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D, AdaptiveAvgPool3D
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations.nn_ops import MaxPool3DWithArgmax
-from mindspore.ops.operations.nn_ops import MaxUnpool2D, MaxUnpool3D
 from mindspore.nn.cell import Cell
 
 __all__ = ['AvgPool3d', 'MaxPool3d', 'AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'FractionalMaxPool2d',
@@ -1523,13 +1522,8 @@ class MaxUnpool1d(Cell):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
-            If stride is 0 or (0), then stride equal to kernel_size. Default: None.
+            If stride is 0, (0) or None, then stride equal to kernel_size. Default: None.
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0.
-        output_size (tuple[int]) : The target output size is an optional input. Default: ().
-            If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-            If output_size != (), then output_size must be :math:`(N, C, H)` or
-            :math:`(C, H)` and output_size must belong to
-            :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]`.
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
@@ -1538,6 +1532,11 @@ class MaxUnpool1d(Cell):
           Tensor of shape must be same with input 'x'.
           Values of indices must belong to :math:`[0, H_{in} - 1]`.
           Data type must be in int32 or int64.
+        - **output_size** (tuple[int], optional) - The output size. Default: None.
+          If output_size == (), then the shape of output computed by kernel_size, stride and padding.
+          If output_size != (), then output_size must be :math:`(N, C, H)` or
+          :math:`(C, H)` and output_size must belong to
+          :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]`.
 
     Outputs:
         Tensor, with shape :math:`(N, C, H_{out})` or :math:`(C, H_{out})`,
@@ -1545,16 +1544,16 @@ class MaxUnpool1d(Cell):
 
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
-        TypeError: If `kernel_size`, `stride` or `padding` is neither int nor tuple.
-        ValueError: If numbers in `stride` (also support 0 and (0)) or `kernel_size` is not positive.
-        ValueError: If the shape of `x` and `indices` are not equal.
-        ValueError: If numbers in `padding` is negative.
-        ValueError: If `output_size` whose length is neither 0, 2 or 3.
-        ValueError: If `output_size` is not close to output size
-                    computed by attr `kernel_size, stride, padding`.
+        TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
+        ValueError: If numbers in `stride`, `padding` (also support 0 and (0)) or `kernel_size` is not positive.
+        ValueError: If the shapes of `x` and `indices` are not equal.
+        ValueError: If `x` whose length is not 2 or 3.
+        ValueError: If type of `output_size` is not tuple.
+        ValueError: If `output_size` whose length is not 0, 2 or 3.
+        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
@@ -1564,46 +1563,23 @@ class MaxUnpool1d(Cell):
         >>> print(output.asnumpy())
         [[0, 2, 0, 4, 0, 6, 0, 8]]
     """
-
-    def __init__(self, kernel_size, stride=None, padding=0, output_size=()):
+    def __init__(self, kernel_size, stride=None, padding=0):
         """Initialize MaxUnpool1d."""
         super(MaxUnpool1d, self).__init__()
-        if len(output_size) == 2:
-            output_size = (1,) + output_size
         if not stride:
             stride = 0
-        self.max_unpool2d = MaxUnpool2D(ksize=(kernel_size, 1), strides=(stride, 1), pads=(padding, 0),
-                                        output_shape=output_size, data_format="NCHW")
-        self.shape = P.Shape()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
 
-    @staticmethod
-    @constexpr
-    def _check_input_dim(x_shape, indices_shape, cls_name):
-        x_dim = len(x_shape)
-        if x_shape != indices_shape:
-            raise ValueError(f"For '{cls_name}', the x shape and indices shape must be equal, but got input "
-                             f"shape {x_shape} and indices shape {indices_shape}.")
-        if x_dim not in (2, 3):
-            raise ValueError(f"For '{cls_name}', the x shape must have 2 or 3 dims, but got {x_dim}.")
-        return x_dim
-
-    def construct(self, x, indices):
-        x_shape = self.shape(x)
-        indices_shape = self.shape(indices)
-        x_dim = self._check_input_dim(x_shape, indices_shape, self.cls_name)
-        if x_dim == 2:
-            x = x.expand_dims(axis=0)
-            indices = indices.expand_dims(axis=0)
-            x = x.expand_dims(axis=3)
-            indices = indices.expand_dims(axis=3)
-            out = self.max_unpool2d(x, indices)
-            out = out.squeeze(-1)
-            out = out.squeeze(0)
+    def construct(self, x, indices, output_size=None):
+        if output_size is None:
+            output_size = ()
         else:
-            x = x.expand_dims(axis=3)
-            indices = indices.expand_dims(axis=3)
-            out = self.max_unpool2d(x, indices)
-            out = out.squeeze(-1)
+            if not isinstance(output_size, tuple):
+                raise ValueError(f"For MaxUnpool1d, output_size must be tuple, but type {type(output_size)}.")
+        out = ops.max_unpool1d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
+                               output_size=output_size)
         return out
 
 
@@ -1631,15 +1607,10 @@ class MaxUnpool2d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            If stride is 0 or (0, 0), then stride equal to kernel_size. Default: None.
+            If stride is 0, (0, 0) or None, then stride equal to kernel_size. Default: None.
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
-        output_size (tuple[int]) : The target output size is an optional parameter. Default: ().
-            If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-            If output_size != (), then output_size must be :math:`(N, C, H, W)` and output_size must belong to
-            :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]),
-            (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
@@ -1648,6 +1619,11 @@ class MaxUnpool2d(Cell):
           Tensor of shape must be same with input 'x'.
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
+        - **output_size** (tuple[int], optional) - The output size. Default: None.
+          If output_size == (), then the shape of output computed by kernel_size, stride and padding.
+          If output_size != (), then output_size must be :math:`(N, C, H, W)` and output_size must belong to
+          :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]),
+          (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
     Outputs:
         Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`,
@@ -1655,17 +1631,17 @@ class MaxUnpool2d(Cell):
 
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
-        TypeError: If `kernel_size`, `stride` or `padding` is neither int nor tuple.
-        ValueError: If numbers in `stride` (also support 0 and (0, 0)) or `kernel_size` is not positive.
+        TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
+        ValueError: If numbers in `stride`, `padding` (also support 0 and (0, 0)) or `kernel_size` is not positive.
         ValueError: If the shape of `x` and `indices` are not equal.
-        ValueError: If numbers in `padding` is negative.
         ValueError: If `kernel_size`, `stride` or `padding` is a tuple whose length is not equal to 2.
-        ValueError: If `output_size` whose length is neither 0, 3 or 4.
-        ValueError: If `output_size` is not close to output size
-                    computed by attr `kernel_size, stride, padding`.
+        ValueError: If `x` whose length is not 3 or 4.
+        ValueError: If `output_size` whose type is not tuple.
+        ValueError: If `output_size` whose length is not 0, 3 or 4.
+        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
@@ -1676,40 +1652,23 @@ class MaxUnpool2d(Cell):
         [[[[0. 1.]
            [8. 9.]]]]
     """
-
-    def __init__(self, kernel_size, stride=None, padding=0, output_size=()):
+    def __init__(self, kernel_size, stride=None, padding=0):
         """Initialize MaxUnpool2d."""
         super(MaxUnpool2d, self).__init__()
-        if len(output_size) == 3:
-            output_size = (1,) + output_size
         if not stride:
             stride = 0
-        self.max_unpool2d = MaxUnpool2D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
-                                        data_format="NCHW")
-        self.shape = P.Shape()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
 
-    @staticmethod
-    @constexpr
-    def _check_input_dim(x_shape, indices_shape, cls_name):
-        x_dim = len(x_shape)
-        if x_shape != indices_shape:
-            raise ValueError(f"For '{cls_name}', the x shape and indices shape must be equal, but got input "
-                             f"shape {x_shape} and indices shape {indices_shape}.")
-        if x_dim not in (3, 4):
-            raise ValueError(f"For '{cls_name}', the x shape must have 3 or 4 dims, but got {x_dim}.")
-        return x_dim
-
-    def construct(self, x, indices):
-        x_shape = self.shape(x)
-        indices_shape = self.shape(indices)
-        x_dim = self._check_input_dim(x_shape, indices_shape, self.cls_name)
-        if x_dim == 3:
-            x = x.expand_dims(axis=0)
-            indices = indices.expand_dims(axis=0)
-            out = self.max_unpool2d(x, indices)
-            out = out.squeeze(0)
+    def construct(self, x, indices, output_size=None):
+        if output_size is None:
+            output_size = ()
         else:
-            out = self.max_unpool2d(x, indices)
+            if not isinstance(output_size, tuple):
+                raise ValueError(f"For MaxUnpool2d, output_size must be tuple, but type {type(output_size)}.")
+        out = ops.max_unpool2d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
+                               output_size=output_size)
         return out
 
 
@@ -1739,17 +1698,11 @@ class MaxUnpool3d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
-            If stride is 0 or (0, 0, 0), then stride equal to kernel_size. Default: None.
+            If stride is 0, (0, 0, 0) or None, then stride equal to kernel_size. Default: None.
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
             the paddings of depth, height and width are the same, equal to padding. If `padding` is a tuple of three
             integers, the padding of depth, height and width equal to padding[0], padding[1] and padding[2]
             correspondingly.
-        output_size (tuple[int]) : The target output size is an optional input. Default: ().
-            If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-            If output_size != (), then output_size must be :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)` and
-            output_size must belong to
-            :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
-            (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]`.
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
@@ -1758,6 +1711,12 @@ class MaxUnpool3d(Cell):
           Tensor of shape must be same with input 'x'.
           Values of indices must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
+        - **output_size** (tuple[int], optional) - The output size. Default: None.
+          If output_size == (), then the shape of output computed by kernel_size, stride and padding.
+          If output_size != (), then output_size must be :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)` and
+          output_size must belong to
+          :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
+          (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]`.
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`,
@@ -1765,16 +1724,18 @@ class MaxUnpool3d(Cell):
 
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
-        TypeError: If `kernel_size`, `stride` or `padding` is neither int nor tuple.
-        ValueError: If numbers in `stride` (also support 0 and (0, 0, 0)) or `kernel_size` is not positive.
-        ValueError: If numbers in `padding` is negative.
+        TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
+        ValueError: If numbers in `stride` or `padding` (also support 0 and (0, 0, 0)) or `kernel_size` is not positive.
+        ValueError: If the shape of `x` and `indices` are not equal.
         ValueError: If `kernel_size`, `stride` or `padding` is a tuple whose length is not equal to 3.
-        ValueError: If `output_size` whose length is neither 0, 4 or 5.
-        ValueError: If `output_size` is not close to output size
-                    computed by attr `kernel_size, stride, padding`.
+        ValueError: If `x` whose length is not 4 or 5.
+        ValueError: If `output_size` whose length is not 0, 4 or 5.
+        ValueError: If `output_size` whose type is not tuple.
+        ValueError: If `output_size` whose length is not 0, 3 or 4.
+        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
@@ -1785,37 +1746,20 @@ class MaxUnpool3d(Cell):
         [[[[[0. 1.]
             [8. 9.]]]]]
     """
-
-    def __init__(self, kernel_size, stride=None, padding=0, output_size=()):
+    def __init__(self, kernel_size, stride=None, padding=0):
         super(MaxUnpool3d, self).__init__()
-        if len(output_size) == 4:
-            output_size = (1,) + output_size
         if not stride:
             stride = 0
-        self.max_unpool3d = MaxUnpool3D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
-                                        data_format="NCDHW")
-        self.shape = P.Shape()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
 
-    @staticmethod
-    @constexpr
-    def _check_input_dim(x_shape, indices_shape, cls_name):
-        x_dim = len(x_shape)
-        if x_shape != indices_shape:
-            raise ValueError(f"For '{cls_name}', the x shape and indices shape must be equal, but got input "
-                             f"shape {x_shape} and indices shape {indices_shape}.")
-        if x_dim not in (4, 5):
-            raise ValueError(f"For '{cls_name}', the x shape must have 4 or 5 dims, but got {x_dim}.")
-        return x_dim
-
-    def construct(self, x, indices):
-        x_shape = self.shape(x)
-        indices_shape = self.shape(indices)
-        x_dim = self._check_input_dim(x_shape, indices_shape, self.cls_name)
-        if x_dim == 4:
-            x = x.expand_dims(axis=0)
-            indices = indices.expand_dims(axis=0)
-            out = self.max_unpool3d(x, indices)
-            out = out.squeeze(0)
+    def construct(self, x, indices, output_size=None):
+        if output_size is None:
+            output_size = ()
         else:
-            out = self.max_unpool3d(x, indices)
+            if not isinstance(output_size, tuple):
+                raise ValueError(f"For MaxUnpool3d, output_size must be tuple, but type {type(output_size)}.")
+        out = ops.max_unpool3d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
+                               output_size=output_size)
         return out
