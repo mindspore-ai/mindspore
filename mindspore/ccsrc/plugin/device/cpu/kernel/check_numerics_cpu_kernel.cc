@@ -26,14 +26,25 @@ constexpr size_t kCheckNumericsInputsNum = 1;
 constexpr size_t kCheckNumericsOutputsNum = 1;
 }  // namespace
 
-void CheckNumericsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool CheckNumericsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  input_dtype_ = inputs.at(kIndex0)->GetDtype();
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of 'x' should be float16, float32 or float64, but got: " << input_dtype_;
   }
+  return true;
+}
+
+int CheckNumericsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  return KRET_OK;
 }
 
 bool CheckNumericsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

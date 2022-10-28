@@ -14,6 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
@@ -22,6 +23,7 @@ from mindspore.common.api import ms_function
 
 
 class CheckNumericsNet(nn.Cell):
+
     def __init__(self):
         super(CheckNumericsNet, self).__init__()
         self.checknumerics = P.CheckNumerics()
@@ -38,7 +40,8 @@ def check_numerics(loss):
     check_numerics_net = CheckNumericsNet()
     check_numerics_output = check_numerics_net(input_x_ms)
     check_numerics_expect = np.array([[6, 3], [2, 5]], dtype=np.float32)
-    assert np.allclose(check_numerics_output.asnumpy(), check_numerics_expect, loss, loss)
+    assert np.allclose(check_numerics_output.asnumpy(), check_numerics_expect,
+                       loss, loss)
 
 
 def check_numerics_pynative(loss):
@@ -50,7 +53,41 @@ def check_numerics_pynative(loss):
     check_numerics_expect = np.array([[1, 5], [2, 4]], dtype=np.float64)
     print(check_numerics_output)
     print(check_numerics_expect)
-    assert np.allclose(check_numerics_output.asnumpy(), check_numerics_expect, loss, loss)
+    assert np.allclose(check_numerics_output.asnumpy(), check_numerics_expect,
+                       loss, loss)
+
+
+def dyn_case():
+    net = CheckNumericsNet()
+
+    x_dyn = Tensor(shape=[None, None], dtype=ms.float64)
+    net.set_inputs(x_dyn)
+
+    x = Tensor(
+        np.array([[0.42987306, 0.02847828, 0.59385591, 0.7040952, 0.27390435],
+                  [0.32904094, 0.63063352, 0.70752448, 0.24763578, 0.99662956],
+                  [0.66478424, 0.70580542, 0.92749155, 0.72736302, 0.24973136],
+                  [0.79918445, 0.68613469, 0.9526593, 0.12412648,
+                   0.15175918]]).astype(np.float64))
+    out = net(x)
+
+    expect_shape = (4, 5)
+    assert out.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_check_numerics_dyn():
+    """
+    Feature: test CheckNumerics ops in gpu.
+    Description: Test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    dyn_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    dyn_case()
 
 
 @pytest.mark.level0
