@@ -10,6 +10,53 @@
 
 - [STABLE] 新增面向对象+函数式融合编程范式，提供 `mindspore.amp.LossScaler` 、 `mindspore.amp.DynamicLossScaler` 、 `mindspore.amp.StaticLossScaler` 、 `mindspore.amp.auto_mixed_precision` 、 `mindspore.amp.all_finite` 等融合编程范式下的混合精度接口。
 
+### API变更
+
+#### 算子
+
+- [STABLE] `nn.AdaptiveAvgPool3d` 新增nn接口。
+- [STABLE] `ops.adaptive_avg_pool3d` 新增functional接口。
+- [STABLE] `ops.addcdiv` 新增functional接口。
+- [STABLE] `ops.addcmul` 新增functional接口。
+- [STABLE] `ops.approximate_equal` 新增GPU、CPU支持。
+- [STABLE] `ops.atanh` 新增GPU支持。
+- [STABLE] `ops.bessel_i0` 新增GPU支持。
+- [STABLE] `ops.bessel_i0e` 新增Ascend支持。
+- [STABLE] `ops.bessel_i1` 新增GPU支持。
+- [STABLE] `ops.bessel_i1e` 新增Ascend、GPU支持。
+- [STABLE] `ops.bessel_j0` 新增GPU支持。
+- [STABLE] `ops.bessel_j1` 新增GPU支持。
+- [STABLE] `ops.bessel_k0` 新增GPU支持。
+- [STABLE] `ops.bessel_k0e` 新增GPU支持。
+- [STABLE] `ops.bessel_k1` 新增GPU支持。
+- [STABLE] `ops.bessel_k1e` 新增GPU支持。
+- [STABLE] `ops.bessel_y0` 新增GPU支持。
+- [STABLE] `ops.bessel_y1` 新增GPU支持。
+- [STABLE] `ops.bias_add` 新增functional接口。
+- [STABLE] `ops.bitwise_and` 新增GPU支持。
+- [STABLE] `ops.bitwise_or` 新增GPU支持。
+- [STABLE] `ops.bitwise_xor` 新增GPU支持。
+- [STABLE] `ops.grid_sample` 新增Ascend支持。
+- [STABLE] `ops.inplace_update` 新增CPU支持。
+- [STABLE] `ops.isclose` 新增Ascend、GPU支持。
+- [STABLE] `ops.isnan` 新增Ascend支持。
+- [STABLE] `ops.lerp` 新增GPU支持。
+- [STABLE] `ops.random_poisson` 新增functional接口。
+- [STABLE] `ops.reverse_sequence` 新增functional接口。
+- [STABLE] `ops.scatter_mul` 新增GPU支持。
+- [STABLE] `ops.scatter_nd_max` 新增functional接口。
+- [STABLE] `ops.scatter_nd_min` 新增functional接口。
+- [STABLE] `ops.SparseToDense` 新增GPU支持。
+- [STABLE] `ops.square` 新增functional接口。
+- [STABLE] `ops.standard_laplace` 新增GPU支持。
+- [STABLE] `ops.std` 新增functional接口。
+- [STABLE] `ops.trunc` 新增Ascend、GPU支持。
+- [STABLE] `ops.unsorted_segment_sum` 新增functional接口。
+- [STABLE] `ops.xdivy` 新增functional接口。
+- [STABLE] `ops.xlogy` 新增GPU支持。
+- `ops.poisson` 接口废弃使用，对应新接口为 `ops.random_poisson` 。
+- `ops.SparseApplyAdagrad` 接口废弃使用，可使用 `ops.SparseApplyAdagradV2` 接口替代。
+
 ### Bug fixes
 
 - [BUGFIX] 修改混合精度O2 level的判断逻辑，在原来屏蔽 `BatchNorm1d` 、 `BatchNorm2d` 算子的基础上，添加另外两个屏蔽算子`BatchNorm3d`和`LayerNorm`，这4个算子依然用float32数据类型计算。
