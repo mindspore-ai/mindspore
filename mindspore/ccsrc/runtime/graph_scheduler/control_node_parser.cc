@@ -1057,7 +1057,11 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
   }
   MS_EXCEPTION_IF_NULL(front_node);
   const auto &real_front_node = common::AnfAlgo::VisitKernelWithReturnType(front_node, 0).first;
-  if (real_front_node != nullptr && real_front_node->isa<ValueNode>()) {
+  if (real_front_node != nullptr && real_front_node->isa<ValueNode>() && (!HasAbstractMonad(real_front_node))) {
+    // If the real front node is a value node, we have two situations:
+    // 1. if the value in value node is a tensor, it should be set into device tensor store by graph scheduler;
+    // 2. if the value is a monad state, it shoould be converted to control arrow, which should link by control
+    //    node scheduler.
     MS_LOG(DEBUG) << "Front node:" << real_front_node->DebugString()
                   << " of backend node:" << backend_node->DebugString() << " is a valuenode.";
     return false;
