@@ -29,8 +29,8 @@ constexpr int64_t kPackAMinUnitNum = 1 << 14;
 void MatmulFp32ARM64CPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;
   matrix_b_.need_pack = true;
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major_parallel : RowMajor2Col12Major_parallel;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major_parallel : RowMajor2Row8Major_parallel;
+  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12MajorParallel : RowMajor2Col12MajorParallel;
+  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8MajorParallel : RowMajor2Row8MajorParallel;
   pack_opt_ = true;
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;

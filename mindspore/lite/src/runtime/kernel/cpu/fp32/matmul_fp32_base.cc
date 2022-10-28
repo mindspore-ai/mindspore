@@ -61,8 +61,8 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
 void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;
   matrix_b_.need_pack = true;
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major_parallel : RowMajor2Col12Major_parallel;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major_parallel : RowMajor2Row8Major_parallel;
+  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12MajorParallel : RowMajor2Col12MajorParallel;
+  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8MajorParallel : RowMajor2Row8MajorParallel;
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
   col_min_unit_ = C8NUM;
@@ -643,13 +643,13 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
   InitGlobalVariable();
   if (CheckRow1OptimalConditions()) {
     row_tile_ = 1;
-    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajorParallel : RowMajor2RowMajorParallel;
     matrix_a_.need_pack = false;
     pack_opt_ = false;
     if (!params_->b_const_ && params_->col_ <= C128NUM) {
       col_tile_ = 1;
       out_need_aligned_ = false;
-      matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
+      matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajorParallel : RowMajor2RowMajorParallel;
       matrix_b_.need_pack = params_->b_transpose_;
     }
   }
@@ -657,8 +657,8 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
     out_need_aligned_ = false;
     row_tile_ = 1;
     col_tile_ = 1;
-    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
-    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor_parallel : RowMajor2RowMajor_parallel;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajorParallel : RowMajor2RowMajorParallel;
+    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajorParallel : RowMajor2RowMajorParallel;
     matrix_a_.need_pack = params_->a_transpose_ && params_->row_ != 1;
     matrix_b_.need_pack = false;
     pack_opt_ = false;
