@@ -31,7 +31,6 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.train.serialization import export, _get_mindir_inputs, convert_model
-from mindspore.nn import GraphCell
 
 
 def weight_variable():
@@ -327,7 +326,7 @@ def test_export_lenet_mindir_with_aes():
     load_graph = mindspore.load("aes_encrypt.mindir",
                                 dec_key=b'0123456789012345', dec_mode="AES-CBC")
     load_net = nn.GraphCell(load_graph)
-    assert isinstance(load_net, GraphCell)
+    assert isinstance(load_net, nn.GraphCell)
     os.remove(verify_name)
 
 
@@ -349,5 +348,5 @@ def test_export_lenet_mindir_with_sm4():
     load_graph = mindspore.load("sm4_encrypt.mindir",
                                 dec_key=b'0123456789012345', dec_mode="SM4-CBC")
     load_net = nn.GraphCell(load_graph)
-    assert isinstance(load_net, GraphCell)
+    assert isinstance(load_net, nn.GraphCell)
     os.remove(verify_name)
