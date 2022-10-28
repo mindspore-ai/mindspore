@@ -431,8 +431,7 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       if (parameter_from_cnode->isa<Parameter>() && IsPrimitiveCNode(anf, prim::kPrimLoad)) {
         auto para = parameter_from_cnode->cast<ParameterPtr>();
         auto load_cnode = anf->cast<CNodePtr>();
-        para->set_name(load_cnode->input(kFirstDataInputIndex)->fullname_with_scope());
-        para->set_user_data<string>("orig_name", std::make_shared<string>(load_cnode->fullname_with_scope()));
+        para->set_name(load_cnode->fullname_with_scope());
       }
       cnode_inputs->push_back(parameter_from_cnode);
       (*other_graph_cnode)[anf] = parameter_from_cnode;
@@ -845,16 +844,7 @@ bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGrap
     return false;
   }
   new_cnode->set_abstract(cnode->abstract());
-  std::string fullname;
-  if (cnode->input(kAnfPrimitiveIndex)->isa<CNode>()) {
-    fullname = cnode->input(kAnfPrimitiveIndex)->fullname_with_scope();
-    new_cnode->set_user_data<string>("orig_name", std::make_shared<string>(cnode->fullname_with_scope()));
-  } else if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
-    fullname = cnode->input(kFirstDataInputIndex)->fullname_with_scope();
-    new_cnode->set_user_data<string>("orig_name", std::make_shared<string>(cnode->fullname_with_scope()));
-  } else {
-    fullname = cnode->fullname_with_scope();
-  }
+  std::string fullname = cnode->fullname_with_scope();
   new_cnode->set_fullname_with_scope(fullname);
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendMapAdd(node, new_cnode);

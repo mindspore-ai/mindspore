@@ -82,7 +82,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
         current_epoch_(0),
         is_dynamic_shape_(false) {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
-    is_derived_ = true;
   }
 
   KernelGraph(const KernelGraph &graph) : FuncGraph(graph) {
@@ -137,7 +136,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     has_optimizer_ = graph.has_optimizer_;
     is_dynamic_shape_ = graph.is_dynamic_shape_;
     front_outputs_ = graph.front_outputs_;
-    is_derived_ = true;
   }
 
   ~KernelGraph() override;
