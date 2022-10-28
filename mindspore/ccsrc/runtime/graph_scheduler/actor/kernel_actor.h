@@ -68,6 +68,7 @@ class KernelActor : public DebugAwareActor {
         modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
         modifiable_ref_output_indexes_(modifiable_ref_output_indexes),
         is_launch_skipped_(false),
+        inputs_continuous_memory_(false),
         somas_info_(nullptr) {
     (void)device_contexts_.emplace_back(device_context);
   }
@@ -89,6 +90,7 @@ class KernelActor : public DebugAwareActor {
   const std::set<size_t> &modifiable_ref_output_indexes() const { return modifiable_ref_output_indexes_; }
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
   bool is_launch_skipped() const { return is_launch_skipped_; }
+  bool inputs_continuous_memory() const { return inputs_continuous_memory_; }
   SomasInfo *somas_info() const { return somas_info_; }
 
  protected:
@@ -171,6 +173,9 @@ class KernelActor : public DebugAwareActor {
 
   // Whether skip the kernel launch.
   bool is_launch_skipped_;
+
+  // Whether the inputs need continuous memory, used to check the inputs legitimacy.
+  bool inputs_continuous_memory_;
 
   // The information used for integration of dynamic and static memory.
   SomasInfo *somas_info_;

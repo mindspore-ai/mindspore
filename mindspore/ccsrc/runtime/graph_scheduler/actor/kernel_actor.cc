@@ -459,10 +459,15 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   auto &real_input_info = real_input_data_infos_[input_data_index];
   MS_EXCEPTION_IF_NULL(real_input_info);
   if ((input_data->data_->GetDeviceType() == device_contexts_[0]->GetDeviceType()) &&
-      (input_data->data_->format() == real_input_info->format_)) {
+      AnfAlgo::IsEquivalentFormat(input_data->data_->format(), real_input_info->format_)) {
     return;
   }
 
+  if (inputs_continuous_memory_) {
+    std::string error_info = GetAID().Name() + " inputs must be continuous memory and can't be copied for index " +
+                             std::to_string(input_data_index);
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, error_info);
+  }
   if (input_data_index >= copy_input_device_tensors_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }

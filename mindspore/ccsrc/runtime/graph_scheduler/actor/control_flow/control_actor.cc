@@ -408,7 +408,8 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     }
 
     // Copy from the real parameter to formal parameter and insert the device tensor copy store.
-    if ((device_tensor->format() != data->format()) || (device_tensor->GetDeviceType() != data->GetDeviceType())) {
+    if ((!AnfAlgo::IsEquivalentFormat(device_tensor->format(), data->format())) ||
+        (device_tensor->GetDeviceType() != data->GetDeviceType())) {
       MS_LOG(INFO) << GetAID().Name() << " the input position:" << formal_parameter_position
                    << " copy from real parameter address:" << data << ", type:" << data->GetDeviceType()
                    << ", format:" << data->format() << " to formal parameter address:" << device_tensor.get()

@@ -1089,9 +1089,11 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
                                           debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
         }
         MS_EXCEPTION_IF_NULL(kernel_actor);
-        // Set the skipped launch.
+        // Set the member of kernel actor.
         kernel_actor->is_launch_skipped_ =
           common::AnfAlgo::IsNopNode(kernel) && graph->IsInRefOutputMap(std::make_pair(kernel, 0));
+        kernel_actor->inputs_continuous_memory_ =
+          common::AnfAlgo::IsCommunicationOp(kernel) && (common::AnfAlgo::GetInputTensorNum(kernel) > 1);
 
         InsertActor(kernel_actor.get());
         (void)kernel_actors.emplace_back(kernel_actor);
