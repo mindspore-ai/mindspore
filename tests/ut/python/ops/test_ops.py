@@ -166,6 +166,8 @@ from mindspore.ops.operations.sparse_ops import SparseConcat
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseSparseMaximum
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
+from mindspore.ops.operations.sparse_ops import SparseSegmentSum
+from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
@@ -4664,6 +4666,19 @@ test_case_sparse_ops = [
                         Tensor([1], mstype.int32),
                         Tensor([1], mstype.float32)],
         'desc_bprop': [Tensor([1], mstype.float32)]}),
+    ('SparseSegmentSum', {
+        'block': SparseSegmentSum(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([0, 1]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32))]}),
+    ('SparseSegmentSumWithNumSegments', {
+        'block': SparseSegmentSumWithNumSegments(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([2]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32))]}),
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,

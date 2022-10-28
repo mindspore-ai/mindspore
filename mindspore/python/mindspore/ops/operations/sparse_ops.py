@@ -1110,11 +1110,11 @@ class SparseSegmentSum(Primitive):
     Computes the sum along sparse segments of a tensor.
 
     Inputs:
-        - **x** (Tensor) - A tensor.
-        - **indices** (Tensor) - Indices is a 1-D tensor. Must be one of the following types: int32, int64.
-          Has same rank as segment_ids. The shape should be :math:`(N,)`.
-        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor. Must be one of the following types: int32, int64.
-          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **x** (Tensor) - A tensor of the first input of SparseSegmentSum.
+        - **indices** (Tensor) - 1-D Tensor of type int32 or int 64 with indices into `x`.
+          Has same rank as `segment_ids`. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - 1-D Tensor of type int32 or int64 with indices into the output `y`. Values
+          should be sorted and can be repeated. The shape should be :math:`(N,)`.
 
     Outputs:
         A Tensor. Has the same type as `x` .
@@ -1128,10 +1128,10 @@ class SparseSegmentSum(Primitive):
         ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
         ValueError: If indices in `segment_ids` are not contiguous or do not start from 0.
         ValueError: If `segment_ids` is not sorted.
-        ValueError: If `indices` is out of range of x's first shape.
+        ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 1, 2], [1, 2, 3], [3, 6, 7]], dtype=ms.float32)
@@ -1153,7 +1153,6 @@ class SparseSegmentSum(Primitive):
     def __init__(self):
         """Initialize SparseSegmentSum"""
         self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids'], outputs=['y'])
-        self.add_prim_attr("cust_aicpu", self.name)
 
 
 class SparseSegmentSumWithNumSegments(Primitive):
@@ -1161,12 +1160,13 @@ class SparseSegmentSumWithNumSegments(Primitive):
     Computes the sum along sparse segments of a tensor, but it is allowed to miss id in segment_ids.
 
     Inputs:
-        - **x** (Tensor) - A Tensor.
-        - **indices** (Tensor) - Indices is a 1-D tensor. Must be one of the following types: int32, int64.
-          Has same rank as segment_ids. The shape should be :math:`(N,)`.
-        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor. Must be one of the following types: int32, int64.
-          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
-        - **num_segments** (Tensor) - Num_segments should equal the number of distinct segment_ids.
+        - **x** (Tensor) - A Tensor of the first input of SparseSegmentSumWithNumSegments.
+        - **indices** (Tensor) - 1-D Tensor with indices into `x`. Must be one of the following types: int32, int64.
+          Has same rank as `segment_ids`. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - 1-D Tensor with indices into the output `y`. Must be one of the following types:
+          int32, int64. Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **num_segments** (Tensor) - Num_segments indicates the size of the output.
+          It should be bigger than the largest id of `segment_ids`.
 
     Outputs:
         A Tensor. Has the same type as `x` .
@@ -1182,10 +1182,10 @@ class SparseSegmentSumWithNumSegments(Primitive):
         ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
         ValueError: If `segment_ids` is not sorted.
         ValueError: If the last number of `segment_ids` is bigger than or equal to `num_segments`.
-        ValueError: If `indices` is out of range of x's first shape.
+        ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]], dtype=ms.float16)
@@ -1204,14 +1204,13 @@ class SparseSegmentSumWithNumSegments(Primitive):
         sig.make_sig('x', dtype=sig.sig_dtype.T1),
         sig.make_sig('indices', dtype=sig.sig_dtype.T),
         sig.make_sig('segment_ids', dtype=sig.sig_dtype.T),
-        sig.make_sig('num_segemnts', dtype=sig.sig_dtype.T)
+        sig.make_sig('num_segments', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSegmentSumWithNumSegments"""
         self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids', 'num_segments'], outputs=['y'])
-        self.add_prim_attr("cust_aicpu", self.name)
 
 
 class SparseSegmentSqrtN(Primitive):
