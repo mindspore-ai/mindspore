@@ -170,7 +170,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
 
   static void UpdateGraphValidRefPair(const KernelGraphPtr &graph);
-  static bool IsDynamicShapeSkipExecute(const std::string &op_name, const ShapeVector &axes_shape);
+  static bool IsDynamicShapeSkipExecute(const bool skip_mode, const ShapeVector &axes_shape);
   static bool IsDynamicShapeSkipExecute(const CNodePtr &cnode);
   // return true if need to update output's shape and type after launch
   static bool IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &cnode);

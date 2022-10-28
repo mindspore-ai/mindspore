@@ -23,7 +23,7 @@ namespace kernel {
 namespace {
 constexpr size_t kEmbeddingLookupInputsNum = 3;
 constexpr size_t kEmbeddingLookUpInputParamsMaxDim = 2;
-constexpr size_t kIndex2 = 2;
+constexpr size_t kOffsetIndex = 2;
 using KernelRunFunc = EmbeddingLookUpCpuKernelMod::KernelRunFunc;
 
 #define ADD_KERNEL(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, input_indices_type) \
@@ -152,7 +152,7 @@ bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   T *input_params_addr = reinterpret_cast<T *>(inputs[0]->addr);
   S *input_indices_addr = reinterpret_cast<S *>(inputs[1]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  G offset = static_cast<G *>(inputs[kIndex2]->addr)[0];
+  G offset = static_cast<G *>(inputs[kOffsetIndex]->addr)[0];
   offset_ = static_cast<int64_t>(offset);
 
   auto task = [&](size_t start, size_t end) {

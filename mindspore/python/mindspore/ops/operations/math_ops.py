@@ -513,7 +513,6 @@ class _Reduce(PrimitiveWithCheck):
         value = None
         if input_x is not None and axis is not None:
             prim_map = {
-                'ReduceSum': np.sum,
                 'ReduceMax': np.max,
                 'ReduceMin': np.min,
                 'ReduceProd': np.prod,
@@ -695,7 +694,7 @@ class CumulativeLogsumexp(Primitive):
         validator.check_bool(reverse, "reverse", self.name)
 
 
-class ReduceSum(_Reduce):
+class ReduceSum(PrimitiveWithCheck):
     """
     Reduces a dimension of a tensor by summing all elements in the dimension, by default. And also can reduce a
     dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
@@ -704,18 +703,24 @@ class ReduceSum(_Reduce):
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
+        skip_mode (bool): If true and axis is empty tuple or empty list, the ReduceSum operation isn't performed,
+                          skip it.
+                          If true and axis is other values, the ReduceSum calculation is performed normally.
+                          If false, do reduce. Default: False.
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-           Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions
+           when skip_mode is false. Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If axis is (), and keep_dims is False,
+        - If axis is (), keep_dims is False, and skip_mode is False,
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
+        - If axis is (), and skip_mode is True,
+          the ReduceSum operation is not performed, output tensor is equal to the input tensor.
         - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
         - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
@@ -723,6 +728,7 @@ class ReduceSum(_Reduce):
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
+        TypeError: If `skip_mode` is not a bool.
         TypeError: If `x` is not a Tensor.
         ValueError: If `axis` is None.
 
@@ -770,11 +776,43 @@ class ReduceSum(_Reduce):
           [54.]]]
     """
 
+    __mindspore_signature__ = (
+        sig.make_sig('input_x'),
+        sig.make_sig('axis', default=())
+    )
+
     @prim_attr_register
-    def __init__(self, keep_dims=False):
-        """Initialize ReduceSum"""
-        super(ReduceSum, self).__init__(keep_dims)
+    def __init__(self, keep_dims=False, skip_mode=False):
+        """Initialize Reduce"""
+        validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
+        validator.check_value_type('skip_mode', skip_mode, [bool], self.name)
+        self.init_prim_io_names(inputs=['input_x', 'axis'], outputs=['y'])
+        self.keep_dims = keep_dims
+        self.skip_mode = skip_mode
         self.__setattr_flag__ = True
+
+    def __call__(self, x, axis=()):
+        args = [x, axis]
+        output = _run_op(self, self.name, args)
+        return output
+
+    def infer_value(self, input_x, axis):
+        """ return reduce op value"""
+        value = None
+        if input_x is not None and axis is not None:
+            value = input_x.asnumpy()
+            if isinstance(axis, int):
+                pass
+            elif axis:
+                axis = tuple(set(axis))
+            elif axis in ((), []) and self.skip_mode:
+                return input_x
+            else:
+                axis = tuple(range(len(value.shape)))
+            value = np.sum(value, axis, keepdims=self.keep_dims)
+            value = np.array(value)
+            value = Tensor(value)
+        return value
 
 
 class ReduceAll(_Reduce):

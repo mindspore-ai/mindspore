@@ -171,11 +171,17 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
       input_args[kInputIndex1]->isa<abstract::AbstractTuple>() ||
       input_args[kInputIndex1]->isa<abstract::AbstractList>()) {
     *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", input_value, op_name);
+    if (axis_value->empty()) {
+      *axis_shape_v = 0;
+    }
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
                                                      op_name);
     if (input_value->isa<tensor::Tensor>()) {
       *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, op_name);
+      if (axis_value->empty()) {
+        *axis_shape_v = 0;
+      }
     } else {
       is_dynamic = true;
       auto axis_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
@@ -196,6 +202,14 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
   return is_dynamic;
 }
 
+bool IsDynamicShapeSkipExecute(const bool skip_mode, const ShapeVector &axes_shape) {
+  // Skip run ReduceSum when axis is a Empty Tensor
+  if (std::any_of(axes_shape.begin(), axes_shape.end(), [](int64_t shape) { return shape == 0; }) && skip_mode) {
+    return true;
+  }
+  return false;
+}
+
 abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args,
                                         const std::string &prim_name) {
@@ -203,6 +217,12 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto x_shape = shape_ptr->shape();
+  bool skip_mode = false;
+  if (primitive->HasAttr(kSkipMode)) {
+    auto skip_mode_value_ptr = primitive->GetAttr(kSkipMode);
+    MS_EXCEPTION_IF_NULL(skip_mode_value_ptr);
+    skip_mode = GetValue<bool>(skip_mode_value_ptr);
+  }
   auto keep_dimis_value_ptr = primitive->GetAttr(kKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dimis_value_ptr);
   if (!keep_dimis_value_ptr->isa<BoolImm>()) {
@@ -210,8 +230,11 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   }
   bool keep_dims = GetValue<bool>(keep_dimis_value_ptr);
   std::vector<int64_t> axis_value;
-  int64_t axis_shape = 0;
+  int64_t axis_shape = 1;
   bool axis_is_dynamic = CheckAndGetAxisValue(input_args, &axis_value, &axis_shape, primitive);
+  if (IsDynamicShapeSkipExecute(skip_mode, {axis_shape})) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
   ShapeVector out_shape = {};
   constexpr int dynamic_rank_value = -2;
   if (IsDynamicRank(x_shape)) {
