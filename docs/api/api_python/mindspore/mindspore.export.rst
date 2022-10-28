@@ -40,4 +40,4 @@ mindspore.export
             - **type** (str) - 混淆类型，目前支持动态混淆，即 'dynamic' 。
             - **obf_ratio** (Union[str, float]) - 全模型算子的混淆比例，可取浮点数(0, 1]或者字符串 "small" 、 "medium" 、 "large" 。
             - **customized_func** (function) - 在自定义函数模式下需要设置的Python函数，用来控制混淆结构中的选择分支走向。它的返回值需要是bool类型，且是恒定的，用户可以参考不透明谓词进行设置。如果设置了 `customized_func` ，那么在使用 `load` 接口导入模型的时候，需要把这个函数也传入。
-            - **obf_password** (int) - 秘密口令，用于password模式，是一个大于0的整数。如果用户设置了 `obf_password` ，那么在部署混淆模型的时候，需要在调用 :class:`mindspore.nn.GraphCell` 接口中传入 `obf_password` 。需要注意的是，如果用户同时设置了 `customized_func` 和 `obf_password` ，那么password模式将会被采用。
+            - **obf_password** (int) - 秘密口令，用于password模式，是一个大于0、小于等于int_64_max(9223372036854775807)的整数。如果用户设置了 `obf_password` ，那么在部署混淆模型的时候，需要在调用 :class:`mindspore.nn.GraphCell` 接口中传入 `obf_password` 。需要注意的是，如果用户同时设置了 `customized_func` 和 `obf_password` ，那么password模式将会被采用。
