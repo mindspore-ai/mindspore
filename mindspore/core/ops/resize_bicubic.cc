@@ -73,7 +73,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(output_shape);
 }
 TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   auto prim_name = primitive->name();

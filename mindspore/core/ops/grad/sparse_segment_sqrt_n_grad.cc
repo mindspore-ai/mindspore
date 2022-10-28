@@ -64,8 +64,8 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
     auto output_dim0_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
-    size_t dim_zero = static_cast<size_t>(output_dim0_value_ptr_tensor[kInputIndex0]);
-    if (dim_zero <= kInputIndex0) {
+    auto dim_zero = output_dim0_value_ptr_tensor[kInputIndex0];
+    if (dim_zero <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "' , tensor output_dim0 must > 0, "
                                << "but got [" << dim_zero << "].";
     } else {

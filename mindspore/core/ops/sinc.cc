@@ -49,7 +49,7 @@ TypePtr SincInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   const std::set<TypeId> valid_types = {kNumberTypeUInt8,  kNumberTypeInt8,   kNumberTypeUInt16,
                                         kNumberTypeInt16,  kNumberTypeUInt32, kNumberTypeInt32,
                                         kNumberTypeUInt64, kNumberTypeInt64,  kNumberTypeBool};
-  if (valid_types.count(type_id)) {
+  if (valid_types.count(type_id) > 0) {
     return std::make_shared<TensorType>(kFloat32);
   } else {
     return x_dtype;

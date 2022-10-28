@@ -61,7 +61,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
       auto set_shape_value_tensor = set_shape_value->cast<tensor::TensorPtr>();
       auto value = static_cast<int64_t *>(set_shape_value_tensor->data_c());
       MS_EXCEPTION_IF_NULL(value);
-      for (size_t i = 0; i < (unsigned int)shape_size_dim; ++i) {
+      for (size_t i = 0; i < LongToSize(shape_size_dim); ++i) {
         set_shape_value_vec[i] = value[i];
       }
       gen_value_succ = true;

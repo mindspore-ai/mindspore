@@ -57,7 +57,6 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
     }
   }
   for (size_t i = 1; i < elements.size(); ++i) {
-    std::string elementi = "element" + std::to_string(i);
     auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("x" + std::to_string(i) + ".shape[0]", elementi_shape[0], kEqual, kOneNum,
                                              prim_name);

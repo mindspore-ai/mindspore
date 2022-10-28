@@ -130,8 +130,8 @@ AbstractBasePtr MultiMarginLossInfer(const abstract::AnalysisEnginePtr &, const 
   if (input_args.size() == kDim3) {
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
   }
-  (void)CheckAndConvertUtils::CheckInRange("multi_margin_loss_input_nums", input_args.size(), kIncludeBoth,
-                                           {kDim2, kDim3}, primitive->name());
+  CheckAndConvertUtils::CheckInRange("multi_margin_loss_input_nums", input_args.size(), kIncludeBoth, {kDim2, kDim3},
+                                     primitive->name());
   auto types = MultiMarginLossInferType(primitive, input_args);
   auto shapes = MultiMarginLossInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
