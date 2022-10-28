@@ -26,10 +26,11 @@
 #include "runtime/hardware/device_context.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 #include "extendrt/session/lite_graph_executor.h"
-#ifdef ENABLE_HELPER
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
-#endif
 namespace mindspore {
-Status AdaptGraph(const FuncGraphPtr &func_graph);
+class GeUtils {
+ public:
+  static Status AdaptGraph(const FuncGraphPtr &func_graph);
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_UTILS_H_
