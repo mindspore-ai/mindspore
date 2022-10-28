@@ -112,9 +112,10 @@ class BACKEND_EXPORT UnpackNode {
 
 class BACKEND_EXPORT PatternNode {
  public:
-  PatternNode(const PrimitivePtr &p) : type_("prim"), p_(NewValueNode(p)) {}  // NOLINT
-  PatternNode(const char *name) : type_("name"), name_(name) {}               // NOLINT
-  PatternNode(std::vector<UnpackNode> &v) : type_("unpack"), v_(v) {}         // NOLINT
+  PatternNode(const PrimitivePtr &p)  // NOLINT
+      : type_("prim"), p_(NewValueNode(std::make_shared<Primitive>(p->name()))) {}
+  PatternNode(const char *name) : type_("name"), name_(name) {}        // NOLINT
+  PatternNode(std::vector<UnpackNode> &v) : type_("unpack"), v_(v) {}  // NOLINT
   PatternNode(const PatternNode &) = default;
 
  private:
