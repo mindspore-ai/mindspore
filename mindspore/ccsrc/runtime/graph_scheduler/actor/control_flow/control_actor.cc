@@ -16,6 +16,7 @@
 
 #include "runtime/graph_scheduler/actor/control_flow/control_actor.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "utils/profile.h"
 
 namespace mindspore {
 namespace runtime {
@@ -112,14 +113,10 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
   try {
     // The exit actor is the output of kernel graph when the node_ is null.
     if (type_ == KernelTransformType::kExitActor && node_ == nullptr) {
-      timeval current_time;
-      constexpr uint64_t kUSecondInSecond = 1000000;
-      (void)gettimeofday(&current_time, nullptr);
-      MS_LOG(DEBUG) << "Kernel graph group exit actor:" << GetAID() << " cost time:"
-                    << (kUSecondInSecond * static_cast<uint64_t>(current_time.tv_sec) +
-                        static_cast<uint64_t>(current_time.tv_usec)) -
-                         (kUSecondInSecond * static_cast<uint64_t>(start_time_.tv_sec) +
-                          static_cast<uint64_t>(start_time_.tv_usec));
+      double end_time = GetTime();
+      const size_t kSecondsToMilliseconds = 1000;
+      MS_LOG(DEBUG) << "Kernel graph group exit actor:" << GetAID()
+                    << " cost time:" << (end_time - start_time_) * kSecondsToMilliseconds;
     }
 
     FetchInput(context);
@@ -467,9 +464,7 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Update the start time in end actor.
   for (const auto &actor : end_actors_) {
     MS_EXCEPTION_IF_NULL(actor);
-    timeval start_time;
-    (void)gettimeofday(&start_time, nullptr);
-    actor->set_start_time(start_time);
+    actor->set_start_time(GetTime());
   }
 }
 
