@@ -31,29 +31,34 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  if (input_args[0]->isa<abstract::AbstractTensor>() && input_args[1]->isa<abstract::AbstractTensor>()) {
-    auto op_name = primitive->name();
-    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-    auto dims_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-    const int64_t indices_shape_dim = SizeToLong(indices_shape.size());
-    const int64_t dims_shape_dim = SizeToLong(dims_shape.size());
-    (void)CheckAndConvertUtils::CheckInteger("dims shape", dims_shape_dim, kEqual, 1, op_name);
-    if (indices_shape_dim == 0) {
-      int64_t dims_shape_v = dims_shape[0];
-      std::vector<int64_t> output_shape;
-      output_shape.push_back(dims_shape_v);
-      return std::make_shared<abstract::Shape>(output_shape);
-    } else {
-      (void)CheckAndConvertUtils::CheckInteger("indices shape", indices_shape_dim, kEqual, 1, op_name);
-      int64_t indices_shape_v = indices_shape[0];
-      int64_t dims_shape_v = dims_shape[0];
-      std::vector<int64_t> output_shape;
-      output_shape.push_back(dims_shape_v);
-      output_shape.push_back(indices_shape_v);
-      return std::make_shared<abstract::Shape>(output_shape);
-    }
-  } else {
+  if (!input_args[0]->isa<abstract::AbstractTensor>() || !input_args[1]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "Input must be a Tensor.";
+  }
+
+  auto op_name = primitive->name();
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto dims_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  // support dynamic shape
+  if (IsDynamicRank(indices_shape) || IsDynamicRank(dims_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
+  const int64_t indices_shape_dim = SizeToLong(indices_shape.size());
+  const int64_t dims_shape_dim = SizeToLong(dims_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("dims shape", dims_shape_dim, kEqual, 1, op_name);
+  if (indices_shape_dim == 0) {
+    int64_t dims_shape_v = dims_shape[0];
+    std::vector<int64_t> output_shape;
+    output_shape.push_back(dims_shape_v);
+    return std::make_shared<abstract::Shape>(output_shape);
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("indices shape", indices_shape_dim, kEqual, 1, op_name);
+    int64_t indices_shape_v = indices_shape[0];
+    int64_t dims_shape_v = dims_shape[0];
+    std::vector<int64_t> output_shape;
+    output_shape.push_back(dims_shape_v);
+    output_shape.push_back(indices_shape_v);
+    return std::make_shared<abstract::Shape>(output_shape);
   }
 }
 
