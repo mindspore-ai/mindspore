@@ -31,8 +31,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   std::vector<int64_t> batch_pointer =
