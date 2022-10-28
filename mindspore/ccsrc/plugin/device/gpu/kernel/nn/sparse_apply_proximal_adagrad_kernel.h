@@ -23,6 +23,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SPARSE_APPLY_PROXIMAL_ADAGRAD_KERNEL_H_
 
 #include <vector>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sparse_apply_proximal_adagrad_impl.cuh"
@@ -31,16 +32,13 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 7;
 template <typename T>
-class SparseApplyProximalAdagradKernelMod : public DeprecatedNativeGpuKernelMod {
+class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
  public:
-  SparseApplyProximalAdagradKernelMod() { ResetResource(); }
+  SparseApplyProximalAdagradKernelMod() = default;
   ~SparseApplyProximalAdagradKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     T *learning_rate = GetDeviceAddress<T>(inputs, 2);
@@ -51,87 +49,39 @@ class SparseApplyProximalAdagradKernelMod : public DeprecatedNativeGpuKernelMod 
     T *variable_out = GetDeviceAddress<T>(outputs, 0);
     T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
 
-    CalSparseApplyProximalAdagrad(inputs[0]->size / sizeof(T), indices_size_ / sizeof(int), learning_rate,
-                                  l1_regularization, l2_regularization, gradient, indices, variable, accumulation,
-                                  variable_out, accumulation_out, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalSparseApplyProximalAdagrad(inputs[0]->size / sizeof(T), indices_size_, learning_rate, l1_regularization,
+                                  l2_regularization, gradient, indices, variable, accumulation, variable_out,
+                                  accumulation_out, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be " << INPUT_NUM << ", but got "
-                        << input_num;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    if (inputs.empty() || outputs.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+      return false;
     }
-
-    variable_size_ = sizeof(T);
-    accumulation_size_ = sizeof(T);
-    learning_rate_size_ = sizeof(T);
-    l1_regularization_size_ = sizeof(T);
-    l2_regularization_size_ = sizeof(T);
-    gradient_size_ = sizeof(T);
-    indices_size_ = sizeof(int);
-
-    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto learning_rate_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-    auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
-    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name, "var") ||
-                     CHECK_SHAPE_NULL(accumulation_shape, kernel_name, "accum") ||
-                     CHECK_SHAPE_NULL(learning_rate_shape, kernel_name, "lr") ||
-                     CHECK_SHAPE_NULL(gradient_shape, kernel_name, "grad") ||
-                     CHECK_SHAPE_NULL(indices_shape, kernel_name, "indices");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
+    if (inputs.size() != INPUT_NUM) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << INPUT_NUM << ", but got "
+                        << inputs.size();
     }
-    variable_size_ *= SizeOf(variable_shape);
-    accumulation_size_ *= SizeOf(accumulation_shape);
-    learning_rate_size_ *= SizeOf(learning_rate_shape);
-    gradient_size_ *= SizeOf(gradient_shape);
-    indices_size_ *= SizeOf(indices_shape);
-    InitSizeLists();
     return true;
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(variable_size_);
-    input_size_list_.push_back(accumulation_size_);
-    input_size_list_.push_back(learning_rate_size_);
-    input_size_list_.push_back(l1_regularization_size_);
-    input_size_list_.push_back(l2_regularization_size_);
-    input_size_list_.push_back(gradient_size_);
-    input_size_list_.push_back(indices_size_);
-    output_size_list_.push_back(variable_size_);
-    output_size_list_.push_back(accumulation_size_);
-  }
-
-  void ResetResource() noexcept override {
-    is_null_input_ = false;
-    variable_size_ = 0;
-    accumulation_size_ = 0;
-    learning_rate_size_ = 0;
-    l1_regularization_size_ = 0;
-    l2_regularization_size_ = 0;
-    gradient_size_ = 0;
-    indices_size_ = 0;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
+    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    auto indices_shape = inputs.at(kIndex6)->GetShapeVector();
+    indices_size_ = SizeOf(indices_shape);
+    return KRET_OK;
   }
 
  private:
-  bool is_null_input_;
-  size_t variable_size_;
-  size_t accumulation_size_;
-  size_t learning_rate_size_;
-  size_t l1_regularization_size_;
-  size_t l2_regularization_size_;
-  size_t gradient_size_;
   size_t indices_size_;
 };
 }  // namespace kernel
