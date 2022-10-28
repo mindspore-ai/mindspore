@@ -72,6 +72,7 @@ void Worker::SetAffinity() {
 }
 
 void Worker::InitWorkerMask(const std::vector<int> &core_list, const size_t workers_size) {
+  core_list_ = core_list;
 #ifdef _WIN32
   static uint32_t windows_core_index = 0;
   core_id_ = windows_core_index++;
@@ -92,7 +93,9 @@ void Worker::InitWorkerMask(const std::vector<int> &core_list, const size_t work
 }
 
 void Worker::Run() {
-  SetAffinity();
+  if (!core_list_.empty()) {
+    SetAffinity();
+  }
 #if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
   static std::atomic_int index = {0};
   (void)pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
