@@ -67,7 +67,6 @@ def test_matmul_add():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)

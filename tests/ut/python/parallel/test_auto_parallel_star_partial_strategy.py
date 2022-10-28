@@ -90,7 +90,6 @@ def test_star_strategy_consistency1():
                      "relu2": ((2, 2),), "add": ((1, 8), (1, 8))}
     net = NetWithLoss(Net(strategy_dict))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     reset_op_id()
     net.set_train()
     _cell_graph_executor.compile(net, x, phase='train')
@@ -105,7 +104,6 @@ def test_star_strategy_consistency2():
                      "relu2": ((2, 2),), "add": ((8, 1), (8, 1))}
     net = NetWithLoss(Net(strategy_dict))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     reset_op_id()
     net.set_train()
     _cell_graph_executor.compile(net, x, phase='train')
@@ -120,7 +118,6 @@ def test_star_strategy_consistency3():
                      "relu2": ((4, 1),), "add": ((2, 2), (2, 2))}
     net = NetWithLoss(Net(strategy_dict))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     reset_op_id()
     net.set_train()
     _cell_graph_executor.compile(net, x, phase='train')
@@ -135,7 +132,6 @@ def test_star_strategy_consistency4():
                      "relu2": None, "add": None}
     net = NetWithLoss(Net(strategy_dict))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     reset_op_id()
     with pytest.raises(RuntimeError):
         net.set_train()

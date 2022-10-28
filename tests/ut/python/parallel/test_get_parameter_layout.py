@@ -50,10 +50,9 @@ def test_get_parameter_layout():
     weight = Tensor(np.ones([64, 32]), dtype=ms.float32)
 
     net = Net(strategy1, strategy2, weight)
-    net.set_auto_parallel()
     net.set_train()
     exe = me._cell_graph_executor
-    exe.compile(net, x, phase='train', auto_parallel_mode=True)
+    exe.compile(net, x, phase='train')
     x_layout = ([8], [0, -1], [32, 32], 0, True, '')  # device_arrangement = [2, 4], tensor_map = [1, -1]
     weight_layout = ([2, 4], [0, -1], [16, 32], 0, True, '')  # device_arrangement = [2, 4], tensor_map = [0, -1]
     expect_dict = {'x': x_layout, 'w1': weight_layout}

@@ -49,7 +49,6 @@ class NetWithLoss(nn.Cell):
 
 
 def compile_net(net, x, y, b):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b)
 

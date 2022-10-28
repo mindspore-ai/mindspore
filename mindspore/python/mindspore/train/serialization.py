@@ -54,7 +54,7 @@ from mindspore.compression.export import quant_export
 from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
-from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
+from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices, _is_in_auto_parallel_mode
 from mindspore.parallel._parallel_serialization import _convert_to_list, _convert_to_layout, _build_searched_strategy, \
     _restore_group_info_list
 from mindspore.train._utils import read_proto
@@ -1344,9 +1344,8 @@ def _msfunc_info(net, *inputs):
 
 def _cell_info(net, *inputs):
     """Get mindir stream and net dict of cell"""
-    phase_name = "predict" if net._auto_parallel_mode else "export.mindir"
-    graph_id, _ = _executor.compile(net, *inputs, phase=phase_name,
-                                    do_convert=False, auto_parallel_mode=net._auto_parallel_mode)
+    phase_name = "predict" if _is_in_auto_parallel_mode() else "export.mindir"
+    graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
     # pylint: disable=protected-access
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
     # clean obfuscation config to prevent the next call

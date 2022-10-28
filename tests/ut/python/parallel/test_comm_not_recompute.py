@@ -81,7 +81,6 @@ def compile_net(mp_comm_recompute, recompute_slice_activation):
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = train_step_with_loss_warp(DenseMutMulNet(mp_comm_recompute=mp_comm_recompute,
                                                    recompute_slice_activation=recompute_slice_activation))
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, input_, label)
     _Context().set_backend_policy("ge")

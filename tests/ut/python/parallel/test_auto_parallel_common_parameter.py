@@ -75,6 +75,5 @@ def test_common_parameter():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, z)

@@ -112,7 +112,6 @@ def test_batch():
     strategy3 = ((4, 1, 1, 2), (4, 1, 1, 2))
 
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([128, 16, 34, 34]), dtype=ms.float32)
     w1 = Tensor(np.ones([128, 8, 32, 32]), dtype=ms.float32)
@@ -134,7 +133,6 @@ def test_batch_shape_less_than_devices():
     strategy3 = None
 
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([128, 16, 34, 34]), dtype=ms.float32)
     w1 = Tensor(np.ones([128, 8, 32, 32]), dtype=ms.float32)

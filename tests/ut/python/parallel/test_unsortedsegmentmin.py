@@ -69,7 +69,6 @@ class NetWithLoss(nn.Cell):
 
 def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))
-    net.set_auto_parallel()
     net.set_train()
     if auto:
         context.set_auto_parallel_context(parallel_mode="auto_parallel")

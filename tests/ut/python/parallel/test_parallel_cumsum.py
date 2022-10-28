@@ -49,7 +49,6 @@ class GradWrap(nn.Cell):
         return grad_all(self.network)(x, y)
 
 def compile_net(net, x, y):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

@@ -98,7 +98,6 @@ def test_auto_parallel_arithmetic():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -125,7 +124,8 @@ def test_auto_parallel_arithmetic_model():
             return out2
 
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, dataset_strategy="data_parallel")
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL,
+                                      dataset_strategy="data_parallel")
     net = NetOneHot()
 
     x = Tensor(np.ones([8, 32]), dtype=ms.float32)

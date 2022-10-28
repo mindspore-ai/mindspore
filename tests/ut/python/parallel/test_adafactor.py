@@ -61,7 +61,6 @@ def compile_net(net):
                           scale_parameter=scale_parameter, relative_step=relative_step,
                           warmup_init=warmup_init, compression=compression)
     train_net = TrainOneStepCell(net, optimizer)
-    train_net.set_auto_parallel()
     train_net.set_train()
     _cell_graph_executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()

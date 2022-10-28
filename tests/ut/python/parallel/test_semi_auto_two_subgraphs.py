@@ -111,6 +111,5 @@ def test_two_subgraphs():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     net = TrainStepWrap(NetWithLoss(Net()))
     input_x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, input_x)

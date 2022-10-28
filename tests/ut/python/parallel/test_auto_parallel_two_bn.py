@@ -76,7 +76,6 @@ def test_two_bn():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetWithLoss(Net())
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    net.set_auto_parallel()
     net.set_train()
     set_algo_parameters(elementwise_op_strategy_follow=True)
     reset_op_id()

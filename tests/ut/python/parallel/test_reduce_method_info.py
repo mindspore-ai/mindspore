@@ -71,13 +71,11 @@ class GradWrap(nn.Cell):
 
 
 def compile_net_no_bias(net, x, y):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 
 
 def compile_net(net, x, y, b):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b)
 

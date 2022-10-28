@@ -82,13 +82,11 @@ class GradWrapTwoInput(nn.Cell):
 
 def compile_graph(net, parallel_mode, device_num, x):
     context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x)
 
 def compile_graph_two_input(net, parallel_mode, device_num, x, y):
     context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

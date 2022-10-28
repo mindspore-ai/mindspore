@@ -32,8 +32,8 @@ from mindspore._checkparam import check_input_data, check_output_data, Validator
 from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
 from mindspore.train.callback import __all__ as internal_cb_names
 from mindspore import context
-from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
-    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
+from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_parameter_broadcast, \
+    _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
     _reset_op_id_with_offset
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
     _cache_enable, _enable_distributed_mindrt
@@ -212,7 +212,6 @@ class Model:
         self._process_amp_args(kwargs)
         self._parallel_mode = _get_parallel_mode()
         self._device_number = _get_device_num()
-        self._global_rank = _get_global_rank()
         self._parameter_broadcast = _get_parameter_broadcast()
         self._metrics = metrics
 
@@ -323,7 +322,6 @@ class Model:
         # If need to check if loss_fn is not None, but optimizer is None
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            network.set_auto_parallel()
             if self._optimizer is None:
                 # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
                 _set_multi_subgraphs()
@@ -371,14 +369,11 @@ class Model:
             if self._optimizer is None:
                 # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
                 _set_multi_subgraphs()
-            self._eval_network.set_auto_parallel()
 
     def _build_predict_network(self):
         """Build the network for prediction."""
         self._predict_network = self._network
-        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
-            self._predict_network.set_auto_parallel()
+        # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
 
     def _clear_metrics(self):
         """Clear metrics local values."""
@@ -450,9 +445,6 @@ class Model:
         network.set_train(is_train)
         network.phase = phase
         self._backbone_is_train = is_train
-
-        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            network.set_auto_parallel()
 
         return dataset_helper, network
 
@@ -1638,7 +1630,6 @@ class Model:
 
         predict_net = self._predict_network
         # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
-        predict_net.set_auto_parallel()
         predict_net = self._check_network_mode(predict_net, False)
         predict_net.compile(*predict_data)
         return predict_net.parameter_layout_dict

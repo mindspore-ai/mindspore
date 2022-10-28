@@ -74,7 +74,6 @@ class GradWrapTwoInput(nn.Cell):
 def compile_graph(net, device_num, x):
     context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode="auto_parallel",
                                       search_mode="sharding_propagation")
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x)
 
@@ -82,7 +81,6 @@ def compile_graph(net, device_num, x):
 def compile_graph_two_input(net, device_num, x, y):
     context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode="auto_parallel",
                                       search_mode="sharding_propagation")
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

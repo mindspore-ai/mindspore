@@ -80,6 +80,5 @@ def test_four_matmul_linear():
 
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, z, w, b)

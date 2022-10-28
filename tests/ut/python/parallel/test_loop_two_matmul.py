@@ -98,7 +98,6 @@ def test_two_matmul():
             print(strategy1, strategy2)
             net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
             context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-            net.set_auto_parallel()
             net.set_train()
             _cell_graph_executor.compile(net, x, y, b)
             count = count + 1

@@ -236,8 +236,6 @@ def train_net():
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
     train_network = build_train_network(net, opt, loss, level="O2", boost_level=config.boost_mode,
                                         loss_scale_manager=loss_scale, keep_batchnorm_fp32=False)
-    if config.run_distribute:
-        train_network.set_auto_parallel()
     for _ in range(500):
         image = Tensor(np.random.rand(32, 3, 224, 224), dtype=mindspore.float32)
         label = Tensor(np.random.randint(0, 10, [32]), dtype=mindspore.int32)

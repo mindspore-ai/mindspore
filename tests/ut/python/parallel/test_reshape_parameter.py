@@ -66,7 +66,6 @@ class Net(nn.Cell):
 
 
 def compile_net(net, x, y):
-    net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

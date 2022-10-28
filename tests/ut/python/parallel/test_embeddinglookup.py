@@ -61,7 +61,6 @@ def test_embeddinglookup_reducescatter_false():
     shape = [8, 8]
     offset = 8
     net = NetWithLoss(Net(shape, offset))
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
@@ -73,7 +72,6 @@ def test_embeddinglookup_reducescatter_true():
     shape = [8, 8]
     offset = 8
     net = NetWithLoss(Net(shape, offset))
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
@@ -85,7 +83,6 @@ def test_embeddinglookup_reducescatter_false_grad():
     shape = [8, 8]
     offset = 8
     net = GradWrap(NetWithLoss(Net(shape, offset)))
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
@@ -97,7 +94,6 @@ def test_embeddinglookup_reducescatter_true_grad():
     shape = [8, 8]
     offset = 8
     net = GradWrap(NetWithLoss(Net(shape, offset)))
-    net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
@@ -114,7 +110,6 @@ def test_embeddinglookup_semi_auto1():
     strategy2 = ((4, 1, 2), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(shape, offset, strategy1, strategy2, "CPU")))
 
-    net.set_auto_parallel()
     x = Tensor(np.ones([64 // 8, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64 // 8, 64, 64]), dtype=ms.float32)
     net.set_train()
