@@ -36,6 +36,7 @@ from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
+from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.composite import _Vmap
 
@@ -338,6 +339,7 @@ tensor_operator_registry.register('abs', P.Abs)
 tensor_operator_registry.register('sqrt', sqrt)
 tensor_operator_registry.register('square', square)
 tensor_operator_registry.register('sub', sub)
+tensor_operator_registry.register('triu', Triu)
 tensor_operator_registry.register('tan', P.Tan)
 tensor_operator_registry.register('acos', acos)
 tensor_operator_registry.register('cos', cos)

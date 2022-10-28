@@ -62,6 +62,7 @@ Mathematical Methods
     mindspore.Tensor.less_equal
     mindspore.Tensor.igamma
     mindspore.Tensor.igammac
+    mindspore.Tensor.true_divide
 
 Element-wise Methods
 ^^^^^^^^^^^^^^^^^^^^
@@ -108,6 +109,7 @@ Element-wise Methods
     mindspore.Tensor.sqrt
     mindspore.Tensor.std
     mindspore.Tensor.sub
+    mindspore.Tensor.subtract
     mindspore.Tensor.svd
     mindspore.Tensor.square
     mindspore.Tensor.tan
@@ -163,10 +165,10 @@ Linear Algebraic Methods
     :toctree: Tensor
     :nosignatures:
 
+    mindspore.Tensor.det
     mindspore.Tensor.ger
     mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.matrix_determinant
-    mindspore.Tensor.det
 
 Tensor Operation Methods
 ------------------------
@@ -258,6 +260,7 @@ Array Methods
     mindspore.Tensor.to_tensor
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
+    mindspore.Tensor.triu
     mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad
