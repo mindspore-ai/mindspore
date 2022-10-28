@@ -91,6 +91,26 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
 TypePtr ExpandDimsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  constexpr auto kExpandDimsInputsNum = 2;
+  if (input_args.size() == kExpandDimsInputsNum) {
+    auto dim_type = input_args[kInputIndex1]->BuildType();
+    if (dim_type->isa<TensorType>()) {
+      std::set<TypePtr> check_list = {kInt32, kInt64};
+      (void)CheckAndConvertUtils::CheckTensorTypeValid("dim dtype", dim_type, check_list, prim_name);
+    } else if (dim_type->type_id() != kNumberTypeInt64 && dim_type->type_id() != kNumberTypeInt32) {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the 'axis' must be a Int, but got "
+                              << dim_type->ToString();
+    }
+  } else if (input_args.size() == 1) {
+    auto num_value = prim->GetAttr("axis");
+    MS_EXCEPTION_IF_NULL(num_value);
+    if (!num_value->isa<Int64Imm>() && !num_value->isa<Int32Imm>()) {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the 'axis' must be a Int, but got "
+                              << num_value->ToString();
+    }
+  } else {
+    MS_LOG(EXCEPTION) << " The num of ExpandDims must be 1 or 2, but got " << input_args.size();
+  }
 
   return input_args[kInputIndex0]->BuildType();
 }
