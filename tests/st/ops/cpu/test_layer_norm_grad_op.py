@@ -239,9 +239,24 @@ def test_layernormgrad_vmap():
     np.random.seed(20)
     x_np = np.random.rand(2, 3, 4).astype(np.float32)
     gamma_np = np.random.rand(2, 4).astype(np.float32)
-    mean_np = np.random.rand(2, 3, 1).astype(np.float32)
-    var_np = np.random.rand(2, 3, 1).astype(np.float32)
     dy_np = np.random.rand(2, 3, 4).astype(np.float32)
+    epsilon = 10e-12
+
+    dx_np, dg_np, db_np, mean_np, var_np = [], [], [], [], []
+    for i in range(2):
+        dx_npt, dg_npt, db_npt, mean_npt, var_npt = layer_norm_grad_np(x_np[i], dy_np[i], gamma_np[i], epsilon,
+                                                                       begin_norm_axis, begin_params_axis)
+        dx_np.append(dx_npt)
+        dg_np.append(dg_npt)
+        db_np.append(db_npt)
+        mean_np.append(mean_npt)
+        var_np.append(var_npt)
+
+    dx_np = np.stack(dx_np)
+    dg_np = np.concatenate(dg_np)
+    db_np = np.concatenate(db_np)
+    mean_np = np.stack(mean_np)
+    var_np = np.stack(var_np)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -251,19 +266,6 @@ def test_layernormgrad_vmap():
 
     net = vmap(LayerNormGradNet(begin_norm_axis, begin_params_axis), in_axes=(0, 0, 0, 0, 0))
     dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
-
-    dx_np = np.array([[[0.08240443, -0.07900912, -0.43200213, 0.42860693],
-                       [0.6347864, -0.67859626, 0.16305685, -0.11924678],
-                       [0.18618828, -0.20478705, -0.05548531, 0.07408381]],
-                      [[-0.02406916, -0.00916663, -0.04638082, 0.07961658],
-                       [-0.12870556, -0.40427572, 0.33375514, 0.19922608],
-                       [0.11984706, -0.10303903, 0.01200861, -0.02881673]]])
-
-    dg_np = np.array([[0.00223615, 0.30191678, 0.11076832, 0.92861396],
-                      [0.50957316, 0.66863894, 0.08570942, -0.5415667]])
-
-    db_np = np.array([[1.8624861, 1.5426035, 1.6820006, 1.5990644],
-                      [1.9435556, 1.1430606, 1.5135581, 1.425891]])
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-4, atol=1e-4)
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
@@ -285,9 +287,24 @@ def test_layernormgrad_vmap_gamma_inaxes_none():
     np.random.seed(20)
     x_np = np.random.rand(2, 3, 4).astype(np.float32)
     gamma_np = np.random.rand(4).astype(np.float32)
-    mean_np = np.random.rand(2, 3, 1).astype(np.float32)
-    var_np = np.random.rand(2, 3, 1).astype(np.float32)
     dy_np = np.random.rand(2, 3, 4).astype(np.float32)
+    epsilon = 10e-12
+
+    dx_np, dg_np, db_np, mean_np, var_np = [], [], [], [], []
+    for i in range(2):
+        dx_npt, dg_npt, db_npt, mean_npt, var_npt = layer_norm_grad_np(x_np[i], dy_np[i], gamma_np, epsilon,
+                                                                       begin_norm_axis, begin_params_axis)
+        dx_np.append(dx_npt)
+        dg_np.append(dg_npt)
+        db_np.append(db_npt)
+        mean_np.append(mean_npt)
+        var_np.append(var_npt)
+
+    dx_np = np.stack(dx_np)
+    dg_np = np.concatenate(dg_np)
+    db_np = np.concatenate(db_np)
+    mean_np = np.stack(mean_np)
+    var_np = np.stack(var_np)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -297,19 +314,6 @@ def test_layernormgrad_vmap_gamma_inaxes_none():
 
     net = vmap(LayerNormGradNet(begin_norm_axis, begin_params_axis), in_axes=(0, 0, 0, 0, None))
     dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
-
-    dx_np = np.array([[[0.21246582, -0.06877905, -0.15143825, 0.00775158],
-                       [-0.11681256, 0.02876517, -0.2464262, 0.33447358],
-                       [0.5055599, -0.6078629, 0.0893029, 0.01300031]],
-                      [[0.15349549, -0.12794405, 0.00809783, -0.03364938],
-                       [0.27740622, -0.17179585, -0.21011633, 0.10450572],
-                       [-0.11413357, -0.85416675, 0.2518367, 0.7164639]]])
-
-    dg_np = np.array([[-0.11205267, 0.30751377, -0.39264485, 0.20515375],
-                      [0.6581421, 0.890804, 0.7406085, -0.3989095]])
-
-    db_np = np.array([[1.7106516, 1.2960826, 1.2145088, 1.4016204],
-                      [1.9444349, 1.4876218, 1.9198239, 1.7262859]])
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-4, atol=1e-4)
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
