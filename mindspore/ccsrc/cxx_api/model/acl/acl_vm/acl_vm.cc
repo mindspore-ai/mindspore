@@ -34,6 +34,22 @@ inline bool IsMonadNode(const AnfNodePtr &node) {
 
   return false;
 }
+
+std::vector<MSTensor> ParseVectorMsTensorRef(const VectorRef &args) {
+  std::vector<MSTensor> ms_tensors;
+  for (const auto &arg : args) {
+    if (utils::isa<VectorRef>(arg)) {
+      auto ret = ParseVectorMsTensorRef(utils::cast<VectorRef>(arg));
+      ms_tensors.insert(ms_tensors.end(), ret.begin(), ret.end());
+    } else if (utils::isa<MSTensorRef>(arg)) {
+      auto wrapper = utils::cast<MSTensorRef>(arg);
+      ms_tensors.emplace_back(wrapper.GetTensor());
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid item " << arg.ToString();
+    }
+  }
+  return ms_tensors;
+}
 }  // namespace
 AclBackend::AclBackend(const std::string &name, const std::string &target,
                        const std::shared_ptr<AclModelOptions> &options)
@@ -44,15 +60,7 @@ AclBackend::AclBackend(const std::string &name, const std::string &target,
 }
 
 VectorRef AclBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string & /* target */) {
-  std::vector<MSTensor> inputs;
-  for (const auto &arg : args) {
-    if (!utils::isa<MSTensorRef>(arg)) {
-      MS_LOG(EXCEPTION) << "Invalid item " << arg.ToString();
-    }
-    auto wrapper = utils::cast<MSTensorRef>(arg);
-    inputs.emplace_back(wrapper.GetTensor());
-  }
-
+  std::vector<MSTensor> inputs = ParseVectorMsTensorRef(args);
   VectorRef outputs;
   MS_EXCEPTION_IF_NULL(target_sess_);
   auto exec_sess = std::dynamic_pointer_cast<session::MultiGraphAclSession>(target_sess_);

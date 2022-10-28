@@ -132,6 +132,7 @@ DeprecatedInterface *AscendDeviceContext::GetDeprecatedInterface() {
 }
 
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);
+MS_REGISTER_DEVICE(kDavinciMultiGraphInferenceDevice, AscendDeviceContext);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
