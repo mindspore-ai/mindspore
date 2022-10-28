@@ -113,7 +113,7 @@ bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
 
   const int64_t kSize = x2_values_num_;
   const int64_t kSizeX2 = kNumTwo * kSize;
-  S x2[kSizeX2];
+  std::vector<S> x2(kSizeX2);
   S x1_devicetohost_shape[kNumTwo];
   int64_t x1_host_shape[kNumTwo];
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
@@ -126,14 +126,14 @@ bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     cudaMemcpyAsync(&x1_devicetohost_shape, x1_shape, sizeof(S) * kNumTwo, cudaMemcpyDeviceToHost, stream),
     "For SspaddmmGpuKernelMod cudaMemcpyAsync x1_shape Fail");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(&x2, x2_indices, sizeof(S) * x2_values_num_ * kNumTwo, cudaMemcpyDeviceToHost, stream),
+    cudaMemcpyAsync(x2.data(), x2_indices, sizeof(S) * x2_values_num_ * kNumTwo, cudaMemcpyDeviceToHost, stream),
     "For SspaddmmGpuKernelMod cudaMemcpyAsync x2_values Fail");
 
   // cal y_shape
   x1_host_shape[0] = static_cast<int64_t>(x1_devicetohost_shape[0]);
   x1_host_shape[1] = static_cast<int64_t>(x1_devicetohost_shape[1]);
   // cal index for y_values and y_indices
-  int64_t idx[kSize];
+  std::vector<int64_t> idx(kSize);
   int64_t count = 0;
   idx[0] = count;
   for (int64_t i = 1; i < x2_values_num_; ++i) {
@@ -149,7 +149,7 @@ bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(index, idx, sizeof(int64_t) * x2_values_num_, cudaMemcpyHostToDevice, stream),
+    cudaMemcpyAsync(index, idx.data(), sizeof(int64_t) * x2_values_num_, cudaMemcpyHostToDevice, stream),
     "For SspaddmmGpuKernelMod cudaMemcpyAsync index failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(y_shape, x1_host_shape, kNumTwo * sizeof(int64_t), cudaMemcpyHostToDevice, stream),
