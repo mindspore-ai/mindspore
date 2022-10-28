@@ -267,6 +267,12 @@ int Scheduler::InitKernels(std::vector<kernel::KernelExec *> &&dst_kernels) {
 int Scheduler::SchedulePreProcess() {
   schema_version_ = reinterpret_cast<LiteModel *>(src_model_)->GetSchemaVersion();
 
+#ifndef AUTO_PARALLEL_CLIP
+  auto search_sub_graph =
+    SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
+  search_sub_graph.DoOnlineFusion();
+#endif
+
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
 
   if (src_model_->model_type_ != ModelType_MSLite) {
@@ -282,9 +288,6 @@ int Scheduler::SchedulePreProcess() {
 
   if (context_->enable_parallel_ || context_->inter_op_parallel_num_ > 1) {
 #ifndef AUTO_PARALLEL_CLIP
-    auto search_sub_graph =
-      SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
-
     if (context_->enable_parallel_) {
       if (*is_infershape_ != RET_INFER_INVALID) {
         search_sub_graph.SubGraphSplit();
