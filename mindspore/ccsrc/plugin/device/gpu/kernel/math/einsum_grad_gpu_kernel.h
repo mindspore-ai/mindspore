@@ -34,10 +34,12 @@ constexpr int IDX_NAME = 0;
 constexpr int IDX_INP_SHAPE = 1;
 constexpr int IDX_PARAM = 2;
 constexpr int IDX_OUT_SHAPE = 3;
+constexpr auto kReduceSum = "ReduceSum";
+constexpr size_t kHalfTypeWorkSizeMul = 2;
 template <typename T>
 class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  EinsumGradGpuKernelMod() {}
+  EinsumGradGpuKernelMod() { ResetResource(); }
   ~EinsumGradGpuKernelMod() = default;
 
   // inputs: 0, data0; 1, data1;...k,datak; k+1, dout
@@ -92,7 +94,7 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
       TypeId cur_type_id = inputs[idx]->GetDtype();
       if (cur_type_id != type_id_) {
         MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
-        return false;
+        return KRET_RESIZE_FAILED;
       }
       auto in_shape = inputs[idx]->GetDeviceShapeAdaptively();
       input_shapes_.push_back(in_shape);
@@ -102,9 +104,11 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());
     bool flag = func_helper_.Preprocess(equation, node_name_, input_shapes_, &out_shape_, &single_op_, &res_op_);
     if (!flag) {
-      return false;
+      MS_LOG(ERROR) << "For " << node_name_ << ", preprocess failed in resize.";
+      return KRET_RESIZE_FAILED;
     }
-    InitWorkSizeLists();
+    InitSizeLists();
+    InitWorkspaceSizeLists();
     return KRET_OK;
   }
 
@@ -112,9 +116,41 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
   // workspace: 0, mid_res0; 1,mid_res1; ... k-1,mid_resk-1; k,work0; k + 1,work1; k+2, shape0;k+3; shape1,k+4; shape2,
   // outputs: 0 dinput0; 1dinput1; ... k, dinputk
  private:
-  void InitWorkSizeLists() {
+  void ResetResource() noexcept {
+    input_shapes_.clear();
+    out_shape_.clear();
+    single_op_.clear();
+    res_op_.clear();
+    reduce_sum_work_size_ = 0;
+    work_size_ = 0;
+    shape_size_ = 0;
+  }
+
+  void InitSizeLists() {
     size_t size = 0;
-    size_t mul_val = (type_id_ == kNumberTypeFloat16) ? HALF_TYPE_WORK_SIZE_MUL : 1;
+    size_t mul_val = (type_id_ == kNumberTypeFloat16) ? kHalfTypeWorkSizeMul : 1;
+    for (auto &op_vec : single_op_) {
+      auto &inp_shape = std::get<IDX_INP_SHAPE>(op_vec[0]);
+      size = func_helper_.GetShapeSize(inp_shape);
+      work_size_ = work_size_ > size ? work_size_ : size;
+      shape_size_ = inp_shape.size() > shape_size_ ? inp_shape.size() : shape_size_;
+
+      for (auto &cur_op : op_vec) {
+        auto name = std::get<IDX_NAME>(cur_op);
+        if (name != kReduceSum) {
+          continue;
+        }
+        auto shape = std::get<IDX_INP_SHAPE>(cur_op);
+        size = func_helper_.GetShapeSize(shape);
+        size_t tmp_val = size * mul_val;
+        reduce_sum_work_size_ = reduce_sum_work_size_ > tmp_val ? reduce_sum_work_size_ : tmp_val;
+      }
+    }
+  }
+
+  void InitWorkspaceSizeLists() {
+    size_t size = 0;
+    size_t mul_val = (type_id_ == kNumberTypeFloat16) ? kHalfTypeWorkSizeMul : 1;
     size_t mul_wrok_size = 0;
     for (auto &op : res_op_) {
       auto name = std::get<IDX_NAME>(op);
@@ -122,11 +158,11 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
       size = func_helper_.GetShapeSize(out_shape);
       if (name == "Mul") {
         mul_wrok_size = mul_wrok_size > size ? mul_wrok_size : size;
-        reduce_sum_wrok_size_ = reduce_sum_wrok_size_ > size * mul_val ? reduce_sum_wrok_size_ : size * mul_val;
-      } else if (name == "ReduceSum") {
+        reduce_sum_work_size_ = reduce_sum_work_size_ > size * mul_val ? reduce_sum_work_size_ : size * mul_val;
+      } else if (name == kReduceSum) {
         auto inp_shape = std::get<IDX_INP_SHAPE>(op);
         size = func_helper_.GetShapeSize(inp_shape);
-        reduce_sum_wrok_size_ = reduce_sum_wrok_size_ > size * mul_val ? reduce_sum_wrok_size_ : size * mul_val;
+        reduce_sum_work_size_ = reduce_sum_work_size_ > size * mul_val ? reduce_sum_work_size_ : size * mul_val;
       }
       if (single_op_func_.count(name) == 0) {
         shape_size_ = out_shape.size() > shape_size_ ? out_shape.size() : shape_size_;
@@ -139,8 +175,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     if (mul_wrok_size > 0) {
       workspace_size_list_.emplace_back(mul_wrok_size);
     }
-    if (reduce_sum_wrok_size_ > 0) {
-      workspace_size_list_.emplace_back(reduce_sum_wrok_size_);
+    if (reduce_sum_work_size_ > 0) {
+      workspace_size_list_.emplace_back(reduce_sum_work_size_);
     }
     workspace_size_list_.emplace_back(shape_size_ * sizeof(size_t));
     workspace_size_list_.emplace_back(shape_size_ * sizeof(size_t));
@@ -353,7 +389,7 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
   TypeId type_id_;
   size_t work_size_;
   size_t shape_size_;
-  size_t reduce_sum_wrok_size_;
+  size_t reduce_sum_work_size_;
   std::vector<std::vector<int64_t>> input_shapes_;
   std::vector<int64_t> out_shape_;
   std::vector<std::vector<OpStruct>> single_op_;
