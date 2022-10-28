@@ -557,7 +557,7 @@ def obfuscate_model(obf_config, **kwargs):
               function needs to ensure that its result is constant for any input. Users can refer to opaque
               predicates. If customized_func is set, then it should be passed to `load()` interface when loading
               obfuscated model.
-            - obf_password (int): A password used for password mode, which should be larger than zero. If
+            - obf_password (int): A password used for password mode, which should be in (0, 9223372036854775807]. If
               obf_password is set, then it should be passed to `nn.GraphCell()` interface when loading obfuscated
               model. It should be noted that at least one of 'customized_func' or 'obf_password' should be set, and
               'obf_password' mode would be applied if both of them are set.
@@ -1083,7 +1083,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                 function needs to ensure that its result is constant for any input. Users can refer to opaque
                 predicates. If customized_func is set, then it should be passed to `load()` interface when loading
                 obfuscated model.
-              - obf_password (int): A password used for password mode, which should be larger than zero. If
+              - obf_password (int): A password used for password mode, which should be in (0, 9223372036854775807]. If
                 obf_password is set, then it should be passed to `nn.GraphCell()` interface when loading obfuscated
                 model. It should be noted that at least one of 'customized_func' or 'obf_password' should be set, and
                 'obf_password' mode would be applied if both of them are set.
