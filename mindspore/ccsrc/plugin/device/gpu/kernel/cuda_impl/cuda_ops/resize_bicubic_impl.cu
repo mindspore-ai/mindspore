@@ -268,9 +268,9 @@ template CUDA_LIB_EXPORT void CalResizeBicubic<float, float>(const float *input,
                                                              const float w_scale, float *output,
                                                              bool half_pixel_centers, const uint32_t &device_id,
                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalResizeBicubic<double, double>(const double *input, const int n, const int c,
+template CUDA_LIB_EXPORT void CalResizeBicubic<double, float>(const double *input, const int n, const int c,
                                                                const int input_h, const int input_w, const int output_h,
-                                                               const int output_w, const double h_scale,
-                                                               const double w_scale, double *output,
+                                                               const int output_w, const float h_scale,
+                                                               const float w_scale, float *output,
                                                                bool half_pixel_centers, const uint32_t &device_id,
                                                                cudaStream_t cuda_stream);

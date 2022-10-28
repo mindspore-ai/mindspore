@@ -36,62 +36,24 @@ void AttrTest(bool a, bool b) {
 
 abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
+  std::vector<int64_t> output_shape(4, -1);
   const int64_t shape0_dim = 4;
-  const int64_t shape1_dim = 1;
-  constexpr int64_t indexid3 = 3;
-  constexpr int64_t calnum2 = 2;
-  constexpr int64_t calnum3 = 3;
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', images only support tensor!";
-  }
-  if (!input_args[1]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', size only support tensor!";
-  }
-  auto max_length_ptr = primitive->GetAttr("max_length");
-  MS_EXCEPTION_IF_NULL(max_length_ptr);
-  int64_t kMaxLen = GetValue<int64_t>(max_length_ptr);
-  auto input0_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input0_shape);
-  auto input0_shape_value_ptr = input0_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input0_shape_value_ptr);
-  auto input0_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(input0_type);
-  auto input0_type_id = input0_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input0_type_id);
-  auto input0_type_element = input0_type_id->element();
-  MS_EXCEPTION_IF_NULL(input0_type_element);
-  auto input1_shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input1_shape);
-  auto input1_shape_value_ptr = input1_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input1_shape_value_ptr);
-  auto input1_shape_tensor = input1_shape_value_ptr->cast<tensor::TensorPtr>();
-  auto input1_type = input_args[1]->BuildType();
-  MS_EXCEPTION_IF_NULL(input1_type);
-  auto input1_type_id = input1_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input1_type_id);
-  auto input1_type_element = input1_type_id->element();
-  MS_EXCEPTION_IF_NULL(input1_type_element);
-  auto shape0_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape]);
-  auto shape1_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape]);
-  auto shape0_v = shape0_ptr->shape();
-  auto shape1_v = shape1_ptr->shape();
-  // support dynamic rank
-  if (IsDynamicRank(shape0_v) || IsDynamicRank(shape1_v)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
-  }
-
-  if (shape0_v.size() != shape0_dim) {
+  auto shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (!IsDynamicRank(shape0) && shape0.size() != shape0_dim) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the images tensor must be a 4-D tensor. But got "
-                             << shape0_v.size() << "-D";
+                             << shape0.size() << "-D";
+    constexpr int64_t indexid3 = 3;
+    output_shape[0] = shape0[0];
+    output_shape[indexid3] = shape0[indexid3];
   }
-  if (shape1_v.size() != shape1_dim) {
+  auto shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  if (shape1.size() != 1) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size tensor must be a 1-D tensor. But got "
-                             << shape1_v.size() << "-D";
+                             << shape1.size() << "-D";
   }
-  if (shape1_v[0] != calnum2) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size shape must be 2. But got " << shape1_v[0];
+  constexpr int64_t calnum2 = 2;
+  if (!IsDynamic(shape1) && shape1[0] != calnum2) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size shape must be 2. But got " << shape1[0];
   }
   auto align_corners_ptr = primitive->GetAttr("align_corners");
   bool align_corners = GetValue<bool>(align_corners_ptr);
@@ -99,36 +61,16 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   bool half_pixel_centers = GetValue<bool>(half_pixel_centers_ptr);
   AttrTest(align_corners, half_pixel_centers);
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto input1_shape_ptr = static_cast<int32_t *>(input1_shape_tensor->data_c());
-    if (input1_shape_ptr[0] <= 0 || input1_shape_ptr[1] <= 0) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size must be positive "
-                               << ", but got " << input1_shape_ptr[0] << " , " << input1_shape_ptr[1];
+    auto input1_value = input_args[1]->BuildValue();
+    if (!input1_value->isa<tensor::Tensor>()) {
+      MS_LOG(EXCEPTION) << "For ResizeArea, the inputs[1] must be a tensor, but got: " << input1_value->ToString()
+                        << ".";
     }
-    std::vector<int64_t> output_shape;
-    auto shape_m = 1;
-    output_shape.push_back(shape0_v[0]);
-    output_shape.push_back(input1_shape_ptr[0]);
-    output_shape.push_back(input1_shape_ptr[1]);
-    output_shape.push_back(shape0_v[calnum3]);
-    shape_m = shape0_v[0] * input1_shape_ptr[0] * input1_shape_ptr[1] * shape0_v[calnum3];
-    if (shape_m > kMaxLen) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', the number of elements of output must be less than max length: " << kMaxLen
-                               << ", but got " << shape_m
-                               << "! The shape of  output should be reduced or max_length should be increased";
-    }
-    return std::make_shared<abstract::Shape>(output_shape);
-  } else {
-    auto prim_name = primitive->name();
-    auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
-    auto x_shape = x_shape_ptr->shape();
-    if (x_shape_ptr->IsDynamic()) {
-      return std::make_shared<abstract::Shape>(x_shape);
-    }
-    ShapeVector shape_out = {shape0_v[0], abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
-                             shape0_v[indexid3]};
-    return std::make_shared<abstract::Shape>(shape_out);
+    auto input1_shape_ptr = static_cast<int32_t *>(input1_value->cast<tensor::TensorPtr>()->data_c());
+    output_shape[kInputIndex1] = input1_shape_ptr[kInputIndex0];
+    output_shape[kInputIndex2] = input1_shape_ptr[kInputIndex1];
   }
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
@@ -139,10 +81,6 @@ TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<
   const std::set<TypePtr> valid1_types = {kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[0]->BuildType(), valid0_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), valid1_types, prim_name);
-  string inputFp64 = "Float64";
-  if (input_args[0]->BuildType()->ToString().find(inputFp64) != string::npos) {
-    return kFloat64;
-  }
   return kFloat32;
 }
 }  // namespace

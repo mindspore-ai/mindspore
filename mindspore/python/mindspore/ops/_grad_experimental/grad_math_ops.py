@@ -17,9 +17,7 @@
 
 import numpy as np
 import mindspore.numpy as mnp
-from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.scipy.ops import SolveTriangular
 from mindspore.nn import LGamma
 from mindspore.ops import functional as F
 from mindspore.ops.functional import broadcast_gradient_args
@@ -1321,33 +1319,13 @@ def get_bprop_nextafter(self):
 @bprop_getters.register(Cholesky)
 def get_bprop_cholesky(self):
     """Grad definition for `Cholesky` operation."""
-    batchmatmul = P.BatchMatMul()
     upper = self.upper
-    is_ascend = context.get_context("device_target") == "Ascend"
     choleskygrad = G.CholeskyGrad()
 
-    solve_triangular_upper = SolveTriangular(lower=False, unit_diagonal=False, trans='N')
-    matmul = P.MatMul()
-
     def bprop(x, out, dout):
-        if is_ascend:
-            out = cholesky_transpose(out) if upper else out
-            dout = cholesky_transpose(dout) if upper else dout
-            dx = choleskygrad(out, dout)
-            return (dx,)
-        if len(out.shape) > 2:
-            op = batchmatmul
-        else:
-            op = matmul
-        out = _adjoint(out) if upper else out
-        dout = _adjoint(dout) if upper else dout
-        gl = op(_adjoint(out), dout)
-        gl = F.matrix_band_part(gl, -1, 0)
-        diag = F.matrix_band_part(gl, 0, 0)
-        gl = 0.5 * (gl + _adjoint(gl) - diag)
-        gl = solve_triangular_upper(_adjoint(out), gl)
-        grad_a = solve_triangular_upper(cholesky_transpose(out), cholesky_transpose(gl))
-        grad_a = cholesky_transpose(grad_a)
-        return (grad_a,)
+        out = cholesky_transpose(out) if upper else out
+        dout = cholesky_transpose(dout) if upper else dout
+        dx = choleskygrad(out, dout)
+        return (dx,)
 
     return bprop

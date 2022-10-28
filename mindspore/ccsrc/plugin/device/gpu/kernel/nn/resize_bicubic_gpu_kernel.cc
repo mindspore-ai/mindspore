@@ -44,8 +44,8 @@ const std::vector<std::pair<KernelAttr, ResizeBicubicPtrCreatorFunc>> kernel_att
    CreateResizeBicubicKernelPtr<half, float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
    CreateResizeBicubicKernelPtr<float, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-   CreateResizeBicubicKernelPtr<double, double>}};
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+   CreateResizeBicubicKernelPtr<double, float>}};
 }  // namespace
 
 bool ResizeBicubicGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

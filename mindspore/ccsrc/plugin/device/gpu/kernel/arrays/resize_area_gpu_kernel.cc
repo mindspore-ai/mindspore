@@ -84,6 +84,12 @@ int ResizeAreaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
       return KRET_UNKNOWN_SHAPE;
     }
   }
+  for (const auto &output : outputs) {
+    auto output_shape = output->GetShapeVector();
+    if (!IsValidShape(output_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
   constexpr int64_t kzero = 0;
   constexpr int64_t kone = 1;
   std::vector<std::vector<int64_t>> input_shapes;
