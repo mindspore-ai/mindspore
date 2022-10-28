@@ -992,14 +992,10 @@ def jacfwd(fn, grad_position=0, has_aux=False):
         >>> print(jac)
         [[[[ 2.,  0.]
            [ 0.,  0.]]
-
           [[ 0.,  4.]
            [ 0.,  0.]]]
-
-
          [[[ 0.,  0.]
            [ 6.,  0.]]
-
           [[ 0.,  0.]
            [ 0.,  8.]]]]
         >>> print(aux)
@@ -1187,14 +1183,10 @@ def jacrev(fn, grad_position=0, has_aux=False):
         >>> print(jac)
         [[[[ 2.,  0.]
            [ 0.,  0.]]
-
           [[ 0.,  4.]
            [ 0.,  0.]]]
-
-
          [[[ 0.,  0.]
            [ 6.,  0.]]
-
           [[ 0.,  0.]
            [ 0.,  8.]]]]
         >>> print(aux)

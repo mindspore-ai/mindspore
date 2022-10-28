@@ -2876,28 +2876,28 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
 
     The loss function for :math:`n`-th sample in the mini-batch is
 
-        .. math::
-            l_n = \begin{cases}
-            x_n, & \text{if}\; y_n = 1,\\
-            \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
-            \end{cases}
+    .. math::
+        l_n = \begin{cases}
+        x_n, & \text{if}\; y_n = 1,\\
+        \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
+        \end{cases}
 
-        and the total loss functions is
+    and the total loss functions is
 
-        .. math::
-            \ell(x, y) = \begin{cases}
-            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
-            \end{cases}
+    .. math::
+        \ell(x, y) = \begin{cases}
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
 
-        where :math:`L = \{l_1,\dots,l_N\}^\top`.
+    where :math:`L = \{l_1,\dots,l_N\}^\top`.
 
     Args:
         inputs (Tensor): Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
         targets (Tensor): Same shape as the logits, contains -1 or 1.
         margin (float): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: 1.0.
-        reduction (string): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
+        reduction (str): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
             Default: 'mean'.
 
     Returns:
@@ -3920,8 +3920,8 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     Args:
-        x (Tensor) - Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
-        norm_type (Union[int, float]) - Type of normalization, represents p in the formula,
+        x (Tensor): Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
+        norm_type (Union[int, float]): Type of normalization, represents p in the formula,
 
             - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
             - if p = :math:`\infty`, one gets Max Pooling.
@@ -3991,8 +3991,8 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     Args:
-        x (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
-        norm_type (Union[int, float]) - Type of normalization, represents p in the formula,
+        x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
+        norm_type (Union[int, float]): Type of normalization, represents p in the formula,
 
             - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
             - if p = :math:`\infty`, one gets Max Pooling.
