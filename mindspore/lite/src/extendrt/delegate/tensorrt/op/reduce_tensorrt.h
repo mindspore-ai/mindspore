@@ -37,6 +37,8 @@ class ReduceTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
+  std::vector<int64_t> KeepDimsShape(TensorRTContext *ctx, nvinfer1::ITensor *out_tensor,
+                                     mindspore::MSTensor axis_tensor);
   uint32_t GetAxis(TensorRTContext *ctx);
   Format out_format_;
 };
