@@ -221,19 +221,16 @@ ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python dict";
 
   auto dict_values = obj.cast<py::dict>();
-  std::vector<std::pair<std::string, ValuePtr>> key_values;
+  std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (auto item : dict_values) {
-    if (!py::isinstance<py::str>(item.first)) {
-      MS_LOG(ERROR) << "The key of dict only supports 'string' type now.";
-      return nullptr;
-    }
-    std::string key = py::str(item.first);
-    ValuePtr out = nullptr;
-    bool success = ConvertData(dict_values[item.first], &out, use_signature);
+    ValuePtr key = nullptr;
+    ValuePtr value = nullptr;
+    bool success = ConvertData(py::cast<py::object>(item.first), &key, use_signature) &&
+                   ConvertData(py::cast<py::object>(item.second), &value, use_signature);
     if (!success) {
       return nullptr;
     }
-    key_values.emplace_back(key, out);
+    key_values.emplace_back(key, value);
   }
   return std::make_shared<ValueDictionary>(key_values);
 }

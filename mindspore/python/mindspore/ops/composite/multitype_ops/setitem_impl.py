@@ -200,79 +200,34 @@ def _list_slice_setitem_with_number(data, slice_index, value):
     raise TypeError("must assign iterable to extended slice")
 
 
+@setitem.register("Dictionary", "Tensor", "Tuple")
+@setitem.register("Dictionary", "Tensor", "Dictionary")
+@setitem.register("Dictionary", "Tensor", "List")
+@setitem.register("Dictionary", "Tensor", "Number")
+@setitem.register("Dictionary", "Tensor", "Tensor")
+@setitem.register("Dictionary", "Tuple", "Tuple")
+@setitem.register("Dictionary", "Tuple", "Dictionary")
+@setitem.register("Dictionary", "Tuple", "List")
+@setitem.register("Dictionary", "Tuple", "Number")
+@setitem.register("Dictionary", "Tuple", "Tensor")
+@setitem.register("Dictionary", "Number", "Tuple")
+@setitem.register("Dictionary", "Number", "Dictionary")
+@setitem.register("Dictionary", "Number", "List")
+@setitem.register("Dictionary", "Number", "Number")
+@setitem.register("Dictionary", "Number", "Tensor")
+@setitem.register("Dictionary", "String", "Tuple")
+@setitem.register("Dictionary", "String", "Dictionary")
+@setitem.register("Dictionary", "String", "List")
+@setitem.register("Dictionary", "String", "Number")
 @setitem.register("Dictionary", "String", "Tensor")
 def _dict_setitem_with_tensor(data, key, value):
     """
     Assigns value to dictionary.
 
     Inputs:
-        data (dict): Data of type dict.
-        key (str): Key of the data.
-        value (Tensor): Value given.
-
-    Outputs:
-        dict, type is as same as the element type of data.
-    """
-    return F.dict_setitem(data, key, value)
-
-
-@setitem.register("Dictionary", "String", "Number")
-def _dict_setitem_with_number(data, key, value):
-    """
-    Assigns value to dictionary.
-
-    Inputs:
-        data (dict): Data of type dict.
-        key (str): Key of the data.
-        value (Number): Value given.
-
-    Outputs:
-        dict, type is as same as the element type of data.
-    """
-    return F.dict_setitem(data, key, value)
-
-
-@setitem.register("Dictionary", "String", "List")
-def _dict_setitem_with_list(data, key, value):
-    """
-    Assigns value to dictionary.
-
-    Inputs:
-        data (dict): Data of type dict.
-        key (str): Key of the data.
-        value (List): Value given.
-
-    Outputs:
-        dict, type is as same as the element type of data.
-    """
-    return F.dict_setitem(data, key, value)
-
-
-@setitem.register("Dictionary", "String", "Dictionary")
-def _dict_setitem_with_dict(data, key, value):
-    """
-    Assigns value to dictionary.
-
-    Inputs:
-        data (dict): Data of type dict.
-        key (str): Key of the data.
-        value (dict): Value given.
-
-    Outputs:
-        dict, type is as same as the element type of data.
-    """
-    return F.dict_setitem(data, key, value)
-
-
-@setitem.register("Dictionary", "String", "Tuple")
-def _dict_setitem_with_tuple(data, key, value):
-    """
-    Assigns value to dictionary.
-
-    Inputs:
-        data (dict): Data of type dict.
-        key (str): Key of the data.
-        value (Tuple): Value given.
+        data: Data of type dict.
+        key: Key of the data.
+        value: Value given.
 
     Outputs:
         dict, type is as same as the element type of data.

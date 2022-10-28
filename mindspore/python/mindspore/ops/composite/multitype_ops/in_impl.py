@@ -103,13 +103,16 @@ def _string_in_list(x, y):
     return const_utils.scalar_in_sequence(x, y)
 
 
+@in_.register("Tensor", "Dictionary")
+@in_.register("Tuple", "Dictionary")
+@in_.register("Number", "Dictionary")
 @in_.register("String", "Dictionary")
 def _str_in_dict(x, y):
     """
-    Determine if a str in dict.
+    Determine if an element is in dict.
 
     Args:
-       x: str
+       x: Tensor, Tuple, Number, String
        y: dict
 
     Returns:

@@ -921,6 +921,11 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   /// \return Whether all elements of the tuple are tensors.
   bool ContainsAllBroadenTensors() const;
 
+  /// \brief Check whether all elements of the tuple are constants.
+  ///
+  /// \return Whether all elements of the tuple are constants.
+  bool ContainsAllConstants() const;
+
   /// \brief Overwrite the operator '==' to compare other abstract tuple.
   ///
   /// \param[in] other The other instance of AbstractTuple.

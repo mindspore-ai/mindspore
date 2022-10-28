@@ -275,11 +275,11 @@ std::string KeywordArg::ToString() const {
   return buffer.str();
 }
 
-const ValuePtr ValueDictionary::operator[](const std::string &key) const {
-  auto it = std::find_if(key_values_.begin(), key_values_.end(),
-                         [key](const std::pair<std::string, ValuePtr> &item) { return item.first == key; });
+const ValuePtr ValueDictionary::operator[](const ValuePtr &key) const {
+  auto it = std::find_if(key_values_.cbegin(), key_values_.cend(),
+                         [key](const std::pair<ValuePtr, ValuePtr> &item) { return item.first == key; });
   if (it == key_values_.end()) {
-    MS_LOG(EXCEPTION) << "The key " << key << " is not in the map";
+    MS_LOG(EXCEPTION) << "The key " << key->ToString() << " is not in the map";
   }
   return it->second;
 }
@@ -298,12 +298,9 @@ bool ValueDictionary::operator==(const ValueDictionary &other) const {
     return false;
   }
   for (size_t index = 0; index < key_values_.size(); index++) {
-    if (key_values_[index].first != other.key_values_[index].first) {
+    if (!(*key_values_[index].first == *other.key_values_[index].first) ||
+        !(*key_values_[index].second == *other.key_values_[index].second))
       return false;
-    }
-    if (!(*key_values_[index].second == *other.key_values_[index].second)) {
-      return false;
-    }
   }
   return true;
 }

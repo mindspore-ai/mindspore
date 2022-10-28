@@ -76,13 +76,15 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
       AbstractDictionaryPtr arg_dict = args_spec_list[index]->cast<AbstractDictionaryPtr>();
       AnfNodePtr para_dict = ret_graph->add_parameter();
       auto dict_elems = arg_dict->elements();
-      (void)std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(elems),
-                           [ret_graph, para_dict](const AbstractAttribute &item) {
-                             auto dict_get_item = ret_graph->NewCNode(
-                               {NewValueNode(prim::kPrimDictGetItem), para_dict, NewValueNode(item.first)});
-                             return ret_graph->NewCNode(
-                               {NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(item.first), dict_get_item});
-                           });
+      (void)std::transform(
+        dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(elems),
+        [ret_graph, para_dict](const AbstractAttribute &item) {
+          // Dict_elems's first element represents parameter names, which should be string type.
+          auto key_value = GetValue<std::string>(item.first->BuildValue());
+          auto dict_get_item =
+            ret_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), para_dict, NewValueNode(key_value)});
+          return ret_graph->NewCNode({NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(key_value), dict_get_item});
+        });
     } else {
       MS_LOG(EXCEPTION) << "The arguments of UnpackCall operator should be tuple, list or dict, but got "
                         << args_spec_list[index]->ToString();

@@ -19,7 +19,8 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "ir/meta_func_graph.h"
 
@@ -66,7 +67,7 @@ class DictUpdate : public MetaFuncGraph {
   }
   friend bool operator==(const DictUpdate &lhs, const DictUpdate &rhs) { return lhs.name_ == rhs.name_; }
   void AddNodeToLists(const AbstractBasePtr &arg, const FuncGraphPtr &ret, AnfNodePtrList *keys, AnfNodePtrList *values,
-                      std::unordered_map<std::string, size_t> *hash_map);
+                      std::vector<std::pair<ValuePtr, size_t>> *key_place_map);
 };
 using DictUpdatePtr = std::shared_ptr<DictUpdate>;
 

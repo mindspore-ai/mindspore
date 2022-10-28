@@ -36,7 +36,7 @@ FuncGraphPtr DictClear::GenerateFuncGraph(const abstract::AbstractBasePtrList &a
   ret->debug_info()->set_name("clear");
   (void)ret->add_parameter();
 
-  auto empty_dict = std::vector<std::pair<std::string, ValuePtr>>();
+  auto empty_dict = std::vector<std::pair<ValuePtr, ValuePtr>>();
   ret->set_output(NewValueNode(std::make_shared<ValueDictionary>(empty_dict)));
   return ret;
 }
@@ -49,16 +49,12 @@ FuncGraphPtr DictHasKey::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ValuePtr key_value = args_list[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(dict);
   MS_EXCEPTION_IF_NULL(key_value);
-  if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "The key should be string, but got " << key_value->ToString();
-  }
-
-  auto key_str = GetValue<std::string>(key_value);
   auto dict_elems = dict->elements();
   bool has_key = false;
-  auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
-                         [key_str](const abstract::AbstractAttribute &item) { return item.first == key_str; });
-  if (it != dict_elems.end()) {
+  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const abstract::AbstractAttribute &item) {
+    return *key_value == *item.first->BuildValue();
+  });
+  if (it != dict_elems.cend()) {
     has_key = true;
   }
 
@@ -86,9 +82,9 @@ FuncGraphPtr DictUpdate::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   (void)key_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   (void)value_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
 
-  std::unordered_map<std::string, size_t> hash_map;
-  AddNodeToLists(args_list[0], ret, &key_inputs, &value_inputs, &hash_map);
-  AddNodeToLists(args_list[1], ret, &key_inputs, &value_inputs, &hash_map);
+  std::vector<std::pair<ValuePtr, size_t>> key_place_map;
+  AddNodeToLists(args_list[0], ret, &key_inputs, &value_inputs, &key_place_map);
+  AddNodeToLists(args_list[1], ret, &key_inputs, &value_inputs, &key_place_map);
 
   ret->set_output(ret->NewCNode(
     {NewValueNode(prim::kPrimMakeDict), ret->NewCNode(std::move(key_inputs)), ret->NewCNode(std::move(value_inputs))}));
@@ -96,19 +92,22 @@ FuncGraphPtr DictUpdate::GenerateFuncGraph(const abstract::AbstractBasePtrList &
 }
 
 void DictUpdate::AddNodeToLists(const AbstractBasePtr &arg, const FuncGraphPtr &ret, AnfNodePtrList *keys,
-                                AnfNodePtrList *values, std::unordered_map<std::string, size_t> *hash_map) {
+                                AnfNodePtrList *values, std::vector<std::pair<ValuePtr, size_t>> *key_place_map) {
   auto dict = dyn_cast<abstract::AbstractDictionary>(arg);
   MS_EXCEPTION_IF_NULL(dict);
   auto &dict_elems = dict->elements();
   auto arg_node = ret->add_parameter();
 
   for (const auto &elem : dict_elems) {
-    AnfNodePtr dict_value = ret->NewCNode({NewValueNode(prim::kPrimDictGetItem), arg_node, NewValueNode(elem.first)});
-
-    auto map_find = hash_map->find(elem.first);
-    if (map_find == hash_map->end()) {
-      hash_map->insert(std::make_pair(elem.first, values->size()));
-      (void)keys->emplace_back(NewValueNode(elem.first));
+    auto elem_key = elem.first->BuildValue();
+    MS_EXCEPTION_IF_NULL(elem_key);
+    AnfNodePtr dict_value = ret->NewCNode({NewValueNode(prim::kPrimDictGetItem), arg_node, NewValueNode(elem_key)});
+    auto map_find =
+      std::find_if(key_place_map->cbegin(), key_place_map->cend(),
+                   [&elem_key](const std::pair<ValuePtr, size_t> &item) { return *elem_key == *item.first; });
+    if (map_find == key_place_map->cend()) {
+      (void)key_place_map->emplace_back(std::make_pair(elem_key, values->size()));
+      (void)keys->emplace_back(NewValueNode(elem_key));
       (void)values->emplace_back(dict_value);
     } else {
       values->at(map_find->second) = dict_value;
@@ -130,14 +129,10 @@ FuncGraphPtr DictFromKeys::GenerateFuncGraph(const abstract::AbstractBasePtrList
   (void)ret->add_parameter();
   (void)ret->add_parameter();
 
-  std::vector<std::pair<std::string, ValuePtr>> key_values;
+  std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (auto &value : values) {
-    auto key = value->BuildValue();
-    if (!key->IsSameTypeId(StringImm::kTypeId)) {
-      MS_LOG(EXCEPTION) << "The key should be string, but got " << key->type_name();
-    }
-
-    std::string key_node = GetValue<std::string>(key);
+    auto key_node = value->BuildValue();
+    MS_EXCEPTION_IF_NULL(key_node);
     (void)key_values.emplace_back(std::make_pair(key_node, value_node));
   }
 
@@ -157,15 +152,14 @@ abstract::AbstractBasePtrList DictFromKeys::ParseIterableObject(const abstract::
     MS_EXCEPTION_IF_NULL(dict_keys);
     AbstractBasePtrList keys;
     auto &dict_elems = dict_keys->elements();
-    std::transform(
-      dict_elems.begin(), dict_elems.end(), std::back_inserter(keys),
-      [](const abstract::AbstractAttribute &item) { return std::make_shared<abstract::AbstractScalar>(item.first); });
+    std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
+                   [](const abstract::AbstractAttribute &item) { return item.first; });
     return keys;
   }
   if (key_type->IsSameTypeId(String::kTypeId)) {
     string dict_keys = arg_key->BuildValue()->ToString();
     AbstractBasePtrList keys;
-    std::transform(dict_keys.begin(), dict_keys.end(), std::back_inserter(keys),
+    std::transform(dict_keys.cbegin(), dict_keys.cend(), std::back_inserter(keys),
                    [](const char &item) { return std::make_shared<abstract::AbstractScalar>(std::string(1, item)); });
     return keys;
   }

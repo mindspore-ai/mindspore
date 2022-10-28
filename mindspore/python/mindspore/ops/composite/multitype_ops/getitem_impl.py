@@ -20,7 +20,6 @@ from mindspore.ops.composite.multitype_ops import _compile_utils as compile_util
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
-
 getitem = base.MultitypeFuncGraph('getitem', True)
 """
 getitem is a metafuncgraph object which will get item from an object according to input type
@@ -175,14 +174,17 @@ def _list_getitem_by_slice(data, slice_index):
     return _list_slice(data, slice_index)
 
 
+@getitem.register("Dictionary", "Tensor")
+@getitem.register("Dictionary", "Tuple")
+@getitem.register("Dictionary", "Number")
 @getitem.register("Dictionary", "String")
 def _dict_getitem_by_key(data, key):
     """
-    Getting item of dictionary by key which is a string.
+    Getting item of dictionary by key.
 
     Inputs:
         data (Dictionary): data
-        key (str): Key of the data.
+        key (Tensor, Tuple, Number, String): Key of the data.
 
     Outputs:
         Type, is as same as the element type of data.

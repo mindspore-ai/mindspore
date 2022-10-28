@@ -156,11 +156,11 @@ class MS_CORE_API Dictionary final : public Object {
   /// \brief Constructor for Dictionary.
   ///
   /// \param[in] key_values The elements of Dictionary.
-  explicit Dictionary(const std::vector<std::pair<std::string, TypePtr>> &key_values)
+  explicit Dictionary(const std::vector<std::pair<TypePtr, TypePtr>> &key_values)
       : Object(kObjectTypeDictionary, false), key_values_(key_values) {}
 
   /// \brief Destructor of Dictionary.
-  ~Dictionary() override {}
+  ~Dictionary() override = default;
   MS_DECLARE_PARENT(Dictionary, Object)
 
   TypeId generic_type_id() const override { return kObjectTypeDictionary; }
@@ -176,7 +176,7 @@ class MS_CORE_API Dictionary final : public Object {
   /// \param[in] is_dumptext whether to show each element DumpText
   /// \return The description of the Dictionary object.
   std::string DumpContent(bool) const;
-  std::vector<std::pair<std::string, TypePtr>> key_values_;
+  std::vector<std::pair<TypePtr, TypePtr>> key_values_;
 };
 using DictionaryPtr = std::shared_ptr<Dictionary>;
 }  // namespace mindspore

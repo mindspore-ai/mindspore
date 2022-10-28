@@ -152,10 +152,11 @@ TypePtr Dictionary::DeepCopy() const {
   if (IsGeneric()) {
     return std::make_shared<Dictionary>();
   } else {
-    std::vector<std::pair<std::string, TypePtr>> kv;
-    (void)std::transform(
-      key_values_.begin(), key_values_.end(), std::back_inserter(kv),
-      [](const std::pair<std::string, TypePtr> &item) { return std::make_pair(item.first, item.second->DeepCopy()); });
+    std::vector<std::pair<TypePtr, TypePtr>> kv;
+    (void)std::transform(key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
+                         [](const std::pair<TypePtr, TypePtr> &item) {
+                           return std::make_pair(item.first->DeepCopy(), item.second->DeepCopy());
+                         });
     return std::make_shared<Dictionary>(kv);
   }
 }
@@ -170,7 +171,7 @@ std::string DumpKeyVector(std::vector<std::string> keys) {
 
 std::string Dictionary::DumpContent(bool) const {
   std::ostringstream buffer;
-  std::vector<std::string> keys;
+  std::vector<TypePtr> keys;
   std::vector<TypePtr> values;
   for (const auto &kv : key_values_) {
     keys.push_back(kv.first);
@@ -180,7 +181,7 @@ std::string Dictionary::DumpContent(bool) const {
     buffer << "Dictionary";
   } else {
     buffer << "Dictionary[";
-    buffer << "[" << DumpKeyVector(keys) << "],";
+    buffer << "[" << DumpTypeVector(keys, false) << "],";
     buffer << "[" << DumpTypeVector(values, false) << "]";
     buffer << "]";
   }
@@ -200,7 +201,7 @@ bool Dictionary::operator==(const mindspore::Type &other) const {
   for (size_t i = 0; i < size; ++i) {
     const auto &a = key_values_[i];
     const auto &b = other_dict.key_values_[i];
-    if (a.first != b.first || !common::IsEqual(a.second, b.second)) {
+    if (!common::IsEqual(a.first, b.first) || !common::IsEqual(a.second, b.second)) {
       return false;
     }
   }
@@ -211,7 +212,7 @@ size_t Dictionary::hash() const {
   size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
   hash_value = hash_combine(hash_value, key_values_.size());
   for (auto &kv : key_values_) {
-    hash_value = hash_combine(hash_value, std::hash<std::string>{}(kv.first));
+    hash_value = hash_combine(hash_value, (kv.first == nullptr ? 0 : kv.first->hash()));
     hash_value = hash_combine(hash_value, (kv.second == nullptr ? 0 : kv.second->hash()));
   }
   return hash_value;

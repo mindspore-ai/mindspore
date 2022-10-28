@@ -103,13 +103,16 @@ def _string_not_in_list(x, y):
     return not const_utils.scalar_in_sequence(x, y)
 
 
+@not_in_.register("Tensor", "Dictionary")
+@not_in_.register("Tuple", "Dictionary")
+@not_in_.register("Number", "Dictionary")
 @not_in_.register("String", "Dictionary")
 def _str_not_in_dict(x, y):
     """
-    Determine if a str not in dict.
+    Determine if an element is not in dict.
 
     Args:
-       x: str
+       x: Tensor, Tuple, Number, String
        y: dict
 
     Returns:

@@ -258,7 +258,10 @@ void DebuggerProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val,
   value_proto->set_dtype(debugger::DT_DICT);
   for (const auto &item : val->value()) {
     debugger::NamedValueProto *named_val = value_proto->add_dict_val();
-    named_val->set_key(item.first);
+    if (!item.first->isa<StringImm>()) {
+      MS_LOG(EXCEPTION) << "The key of NamedValueProto should be string type, but got " << item.first->ToString();
+    }
+    named_val->set_key(GetValue<std::string>(item.first));
     SetValueToProto(item.second, named_val->mutable_value());
   }
 }

@@ -32,6 +32,22 @@ AbstractBasePtr InferImplMakeList(const AnalysisEnginePtr &, const PrimitivePtr 
   return std::make_shared<AbstractList>(args_spec_list);
 }
 
+namespace {
+void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
+  auto key_value = key->BuildValue();
+  MS_EXCEPTION_IF_NULL(key_value);
+  if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() ||
+        (key->isa<abstract::AbstractTensor>() && key_value != kAnyValue) || key->isa<abstract::AbstractTuple>())) {
+    MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
+                      << key->BuildValue()->ToString();
+  }
+  if (key->isa<abstract::AbstractTuple>() && !key->cast_ptr<abstract::AbstractTuple>()->ContainsAllConstants()) {
+    MS_LOG(EXCEPTION) << op_name << " evaluator key should not be tuple that contains variables, but got "
+                      << key->BuildValue()->ToString();
+  }
+}
+}  // namespace
+
 AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tuples.
@@ -46,19 +62,15 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
     MS_LOG(EXCEPTION) << op_name << " evaluator keys' size is not equal with values' size";
   }
 
-  std::vector<AbstractAttribute> key_value;
-  AbstractScalarPtr key;
   AbstractBasePtrList key_list = keys->elements();
+  for (size_t index = 0; index < keys_size; index++) {
+    const auto &key = key_list[index];
+    CheckDictKey(key, op_name);
+  }
+  std::vector<AbstractAttribute> key_value;
   AbstractBasePtrList value_list = values->elements();
   for (size_t index = 0; index < keys_size; index++) {
-    key = CheckArg<AbstractScalar>(op_name + "key", key_list, index);
-    ValuePtr keyPtr = key->BuildValue();
-    MS_EXCEPTION_IF_NULL(keyPtr);
-    if (!keyPtr->isa<StringImm>()) {
-      MS_LOG(EXCEPTION) << op_name << " evaluator keys should be string, but got " << keyPtr->ToString();
-    }
-    auto key_string = GetValue<std::string>(keyPtr);
-    (void)key_value.emplace_back(key_string, value_list[index]);
+    (void)key_value.emplace_back(key_list[index], value_list[index]);
   }
   return std::make_shared<AbstractDictionary>(key_value);
 }
@@ -201,22 +213,20 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
                       << dict_get_arg_size << ", but got " << args_spec_list.size();
   }
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
-  AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  const auto &key = args_spec_list[1];
+  CheckDictKey(key, op_name);
 
   ValuePtr key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
-  }
-  auto key_str = GetValue<std::string>(key_value);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
-  auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
-                         [key_str](const AbstractAttribute &item) { return item.first == key_str; });
+  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractAttribute &item) {
+    return *key_value == *item.first->BuildValue();
+  });
   if (it == dict_elems.end()) {
     // For dict[key], if key is not exist, will raise a KeyError exception.
     if (args_spec_list.size() == subscript_args_size) {
-      MS_EXCEPTION(KeyError) << "The key " << key_str
-                             << " does not exist in the dict:" << args_spec_list[0]->ToString();
+      MS_EXCEPTION(KeyError) << "The key " << key_value->ToString()
+                             << " does not exist in the dict:" << args_spec_list[0]->BuildValue()->ToString();
     }
     // For dict.get('key', default=None), if key is not exist, will return the default value.
     constexpr int default_value_index = 2;
@@ -232,20 +242,18 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
   constexpr int args_spec_size = 3;
   CheckArgsSize(op_name, args_spec_list, args_spec_size);
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
-  AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  const auto &key = args_spec_list[1];
+  CheckDictKey(key, op_name);
 
   ValuePtr key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
-  }
-  auto key_str = GetValue<std::string>(key_value);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
-  auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
-                         [key_str](const AbstractAttribute &item) { return item.first == key_str; });
+  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractAttribute &item) {
+    return *key_value == *item.first->BuildValue();
+  });
 
   MS_EXCEPTION_IF_NULL(args_spec_list[2]);
-  auto new_ele = std::make_pair(key_str, args_spec_list[2]);
+  auto new_ele = std::make_pair(args_spec_list[1], args_spec_list[2]);
   if (it != dict_elems.end()) {
     int64_t index = it - dict_elems.begin();
     dict_elems[LongToSize(index)] = new_ele;
@@ -264,8 +272,8 @@ AbstractBasePtr InferImplDictGetKeys(const AnalysisEnginePtr &, const PrimitiveP
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
   AbstractBasePtrList keys;
-  std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(keys),
-                 [](const AbstractAttribute &item) { return std::make_shared<AbstractScalar>(item.first); });
+  std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
+                 [](const AbstractAttribute &item) { return item.first; });
   return std::make_shared<AbstractTuple>(keys);
 }
 
@@ -278,7 +286,7 @@ AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const Primitiv
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
   AbstractBasePtrList values;
-  std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(values),
+  std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(values),
                  [](const AbstractAttribute &item) { return item.second; });
   return std::make_shared<AbstractTuple>(values);
 }
@@ -292,10 +300,9 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
   AbstractBasePtrList items;
-  (void)std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(items),
+  (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(items),
                        [](const AbstractAttribute &item) {
-                         return std::make_shared<AbstractTuple>(
-                           AbstractBasePtrList{std::make_shared<AbstractScalar>(item.first), item.second});
+                         return std::make_shared<AbstractTuple>(AbstractBasePtrList{item.first, item.second});
                        });
   return std::make_shared<AbstractList>(items);
 }
