@@ -38,8 +38,17 @@
 
 namespace mindspore {
 namespace dataset {
-constexpr dsize_t kDefaultImageRank = 3;  // images are hwc channels in general
-constexpr dsize_t kMinImageRank = 2;      // images have at least 2 dimensions
+constexpr dsize_t kChannelIndexHWC = 2;      // images are hwc, so index 2 represents number of channels
+constexpr dsize_t kChannelIndexCHW = 0;      // images are chw, so index 0 represents number of channels
+constexpr int32_t kMaxBitValue = 255;        // max bit value after decode is 256
+constexpr dsize_t kMinImageChannel = 1;      // image ops support minimum of 1 channel
+constexpr dsize_t kDefaultImageChannel = 3;  // images are 3 channels in general
+constexpr dsize_t kMaxImageChannel = 4;      // image ops support maximum of 4 channel
+constexpr float kHalf = 0.5;                 // to get the half of a value
+constexpr dsize_t kMinJpegQuality = 1;       // the minimum quality for JPEG
+constexpr dsize_t kMaxJpegQuality = 100;     // the maximum quality for JPEG
+constexpr dsize_t kDefaultImageRank = 3;     // images are hwc channels in general
+constexpr dsize_t kMinImageRank = 2;         // images have at least 2 dimensions
 constexpr int32_t kMaxPixelValue = 255;
 constexpr dsize_t kHeightIndex = 0;  // index of height of HWC images
 constexpr dsize_t kWidthIndex = 1;   // index of width of HWC images
@@ -55,6 +64,20 @@ struct JpegErrorManagerCustom {
   // for return to caller
   jmp_buf setjmp_buffer;
 };
+
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+/// \brief Returns Rescaled image
+/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param rescale: rescale parameter
+/// \param shift: shift parameter
+/// \param output: Rescaled image Tensor of same input shape and type DE_FLOAT32
+Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rescale, float shift);
+
+/// \brief Swap the red and blue pixels (RGB <-> BGR)
+/// \param input: Tensor of shape <H,W,3> and any OpenCv compatible type, see CVTensor.
+/// \param output: Swapped image of same shape and type
+Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
+#endif
 
 bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input);
 

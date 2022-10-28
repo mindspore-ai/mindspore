@@ -41,7 +41,7 @@ py::dtype DataType::AsNumpyType() const {
 }
 #endif
 
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
 uint8_t DataType::AsCVType() const {
   uint8_t res = kCVInvalidType;
   if (type_ < DataType::NUM_OF_TYPES) {
