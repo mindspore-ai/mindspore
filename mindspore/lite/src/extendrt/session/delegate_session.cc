@@ -24,7 +24,6 @@
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
 #include "extendrt/session/optimizer/tensorrt_optimizer.h"
-#include "extendrt/delegate/ascend_ge/ge_utils.h"
 
 namespace mindspore {
 namespace {
@@ -33,8 +32,10 @@ constexpr auto kAscendProviderGe = "ge";
 
 GraphSinkSession::~GraphSinkSession() {
 #ifdef ENABLE_HELPER
-  DelegateRegistry::GetInstance().UnRegDelegate(kAscend, kAscendProviderGe);
-  ge_context_->Destroy();
+  if (ge_context_ != nullptr) {
+    DelegateRegistry::GetInstance().UnRegDelegate(kAscend, kAscendProviderGe);
+    ge_context_->Destroy();
+  }
 #endif
 }
 
@@ -63,6 +64,7 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
       return kLiteUninitializedObj;
     }
     if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == kAscendProviderGe) {
+      MS_LOG(INFO) << "GraphSinkSession::Init ascend helper";
       GeDeviceContextInit();
       break;
     }
@@ -81,11 +83,14 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
       TensorRtOptimizer optimizer;
       optimizer.RunOptimizer(graph);
     }
+    if (device_info && device_info->GetDeviceType() == DeviceType::kAscend &&
+        device_info->GetProvider() == kAscendProviderGe) {
+#ifdef ENABLE_HELPER
+      GeUtils::AdaptGraph(graph);
+#endif
+    }
   }
   func_graph_ = graph;
-#ifdef ENABLE_HELPER
-  AdaptGraph(func_graph_);
-#endif
   std::vector<KernelGraphPtr> all_out_graph;
   kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
   MS_EXCEPTION_IF_NULL(kernel_graph_);

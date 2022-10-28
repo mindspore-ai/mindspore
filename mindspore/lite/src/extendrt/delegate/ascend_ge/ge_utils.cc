@@ -22,9 +22,10 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "mindspore/core/ops/op_name.h"
+#include "src/common/common.h"
 
 namespace mindspore {
-std::string AdjustCnodeName(const PrimitivePtr &prim) {
+static std::string AdjustCnodeName(const PrimitivePtr &prim) {
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return "";
@@ -42,7 +43,7 @@ std::string AdjustCnodeName(const PrimitivePtr &prim) {
   return name;
 }
 
-Status RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
+static Status RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Deparser graph start.";
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func_graph is nullptr.";
@@ -83,7 +84,11 @@ Status RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
   return kSuccess;
 }
 
-Status AdaptGraph(const FuncGraphPtr &func_graph) {
+Status GeUtils::AdaptGraph(const FuncGraphPtr &func_graph) {
+  if (!func_graph->has_attr(lite::kIsOptimized)) {
+    MS_LOG(INFO) << "Func graph is not parsed by converter, no need to map.";
+    return kSuccess;
+  }
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";

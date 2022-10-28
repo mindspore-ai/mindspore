@@ -27,6 +27,7 @@
 #include "extendrt/session/lite_graph_executor.h"
 #ifdef ENABLE_HELPER
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
+#include "extendrt/delegate/ascend_ge/ge_utils.h"
 #endif
 namespace mindspore {
 // TODO(zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
@@ -68,7 +69,7 @@ class GraphSinkSession : public InferSession {
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
 #ifdef ENABLE_HELPER
-  std::shared_ptr<GeDeviceContext> ge_context_;
+  std::shared_ptr<GeDeviceContext> ge_context_ = nullptr;
 #endif
   Status InitGraphInputsOutputs();
 };
