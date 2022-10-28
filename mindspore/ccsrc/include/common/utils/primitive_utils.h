@@ -26,7 +26,7 @@
 namespace py = pybind11;
 
 namespace mindspore {
-COMMON_EXPORT py::function GetBpropFunctionByObj(const py::object &obj);
+COMMON_EXPORT py::function GetBpropFunctionByObj(const py::object &obj, bool get_closure = false);
 
 COMMON_EXPORT py::function GetBpropFunction(const std::string &name);
 

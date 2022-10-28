@@ -14,6 +14,7 @@
 # ============================================================================
 """Generate the mindir for bprop"""
 
+import os
 import numpy as np
 
 import mindspore.nn as nn
@@ -24,9 +25,9 @@ import mindspore.ops.functional as F
 import mindspore.ops as ops
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore.ops.bprop_mindir import serializable_bprop_ops
-from mindspore._c_expression import load_mindir
 import mindspore.ops._grad as g
+from mindspore.ops._grad.grad_base import bprop_getters, bprops
+from mindspore._c_expression import _check_bprop_mindir
 
 
 class Net(nn.Cell):
@@ -58,7 +59,16 @@ class GradNet(nn.Cell):
         return gout
 
 
-def test_load_mindir_dir():
+def load_bprop_mindir(bprop_mindir_install_dir, bprop_map):
+    for op in bprop_map.keys():
+        if not isinstance(op, str):
+            continue
+        file_name = os.path.join(bprop_mindir_install_dir, op + "_bprop.mindir")
+        if os.path.isfile(file_name):
+            assert _check_bprop_mindir(op)
+
+
+def test_load_mindir():
     """
     Feature: Bprop pre-compilation.
     Description: Load all the mindir files of serializable bprop.
@@ -66,15 +76,9 @@ def test_load_mindir_dir():
     """
     bprop_path = g.__file__
     bprop_installed_dir = bprop_path[: bprop_path.rindex('/')]
-    bprop_mindir_export_dir = bprop_installed_dir + "/../bprop_mindir"
-    for op in serializable_bprop_ops:
-        if isinstance(op, str):
-            op_name = op
-        else:
-            op_name = op.__name__
-        file_name = bprop_mindir_export_dir + "/" + op_name + "_bprop.mindir"
-        graph = load_mindir(file_name)
-        assert not graph is None
+    bprop_mindir_export_dir = os.path.join(bprop_installed_dir, "..", "bprop_mindir")
+    load_bprop_mindir(bprop_mindir_export_dir, bprop_getters)
+    load_bprop_mindir(bprop_mindir_export_dir, bprops)
 
 
 def test_relu():

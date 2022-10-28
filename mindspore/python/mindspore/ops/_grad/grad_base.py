@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 
 """grad base functions"""
 
-import os
 from .._register_for_op import Registry
 from ..primitive import Primitive
 from ...common import Tensor
@@ -67,17 +66,16 @@ bprop_getters = BpropRegistry()
 bprops = BpropRegistry()
 taylor_fprop_getters = TaylorFpropRegistry()
 taylor_fprops = TaylorFpropRegistry()
-all_bprop_to_mindir = os.getenv("MS_DEV_ALL_BPROP_TO_MINDIR")
 
 
-def get_bprop_fn(prim):
+def get_bprop_fn(prim, get_closure=False):
     """get bprop function by primitive obj or prim name for c++"""
     out = bprop_getters.get(prim, None)
-    if out:
-        if all_bprop_to_mindir == "1":
-            return out
-        return out(prim)
-    return bprops.get(prim, None)
+    if out is None:
+        return bprops.get(prim, None)
+    if get_closure:
+        return out
+    return out(prim)
 
 
 def get_taylor_fprop_fn(prim):

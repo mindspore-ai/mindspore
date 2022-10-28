@@ -1,21 +1,21 @@
 
-0.1.1	MindSpore*2.0.0:ê
-z
-bprop.192:dout
-bprop.192:ybprop.192:dgrad:1bprop.192:dgrad:1"REF::S-Prim-ReluGrad:2:Default/S-Prim-ReluGrad-op109
-˜
-bprop.192:ybprop.192:[CNode]193:3bprop.192:[CNode]193:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:4:/Default/S-Prim-hyper_map[zeros_like_leaf]-op110
+0.1.1	MindSpore*2.0.0:¢
+u$get_bprop_relu_grad.385:[CNode]390:1$get_bprop_relu_grad.385:[CNode]390:1"REF::bprop.391:Default/bprop.391-op155
+Ì$get_bprop_relu_grad.385:input_grad:2$get_bprop_relu_grad.385:input_grad:2";REF::ClassType::mindspore.ops.operations._grad_ops.ReluGrad:ADefault/class 'mindspore.ops.operations._grad_ops.ReluGrad'-op156get_bprop_relu_grad.385*
+get_bprop_relu_grad.385:self*(
+&get_bprop_relu_grad.385:[Parameter]392*(
+&get_bprop_relu_grad.385:[Parameter]387*(
+&get_bprop_relu_grad.385:[Parameter]393*(
+&get_bprop_relu_grad.385:[Parameter]3862&
+$get_bprop_relu_grad.385:[CNode]390:1:@97c0a65823c3717058b9f6e0f337321f6fdd60644daf1a035a0bc43c0717319cJ/grad_nn_ops.pyB›
+¦
+&get_bprop_relu_grad.385:[Parameter]386
+&get_bprop_relu_grad.385:[Parameter]387bprop.391:dgrad:3bprop.391:dgrad:3")REF::get_bprop_relu_grad.385:input_grad:2:157
+³
+&get_bprop_relu_grad.385:[Parameter]387bprop.391:[CNode]388:4bprop.391:[CNode]388:4"(REF::S-Prim-hyper_map[zeros_like_leaf]:5:/Default/S-Prim-hyper_map[zeros_like_leaf]-op158
 ”
-bprop.192:dgrad:1
-bprop.192:[CNode]193:3bprop.192:[CNode]194:5bprop.192:[CNode]194:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op111	bprop.192*
-bprop.192:grad*
-bprop.192:y*
-bprop.192:out*
-bprop.192:dout2
-bprop.192:[CNode]194:5:@97c0a65823c3717058b9f6e0f337321f6fdd60644daf1a035a0bc43c0717319cJ/grad_nn_ops.pyPbr
-S-Prim-ReluGrad:2S-Prim-ReluGrad
-output_names€ŠZoutput€+
-input_names€ŠZ
-y_backprop€ŠZx€b&
-S-Prim-MakeTuple:6S-Prim-MakeTuplebH
-#S-Prim-hyper_map[zeros_like_leaf]:4!S-Prim-hyper_map[zeros_like_leaf]h
+bprop.391:dgrad:3
+bprop.391:[CNode]388:4bprop.391:[CNode]389:6bprop.391:[CNode]389:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op159	bprop.3912
+bprop.391:[CNode]389:6Pb&
+S-Prim-MakeTuple:7S-Prim-MakeTuplebH
+#S-Prim-hyper_map[zeros_like_leaf]:5!S-Prim-hyper_map[zeros_like_leaf]h

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,3 @@
 
 """bprop mindir."""
 from __future__ import absolute_import
-from .generate_mindir import serializable_bprop_ops
-
-__all__ = ['serializable_bprop_ops']

@@ -1,16 +1,16 @@
 
-0.1.1	MindSpore*2.0.0:˚
-l
-bprop.1:dout
-bprop.1:outbprop.1:dx:1bprop.1:dx:1"REF::S-Prim-ReluGrad:2:Default/S-Prim-ReluGrad-op0
+0.1.1	MindSpore*2.0.0:û
+]get_bprop_relu.1:[CNode]5:1get_bprop_relu.1:[CNode]5:1"REF::bprop.6:Default/bprop.6-op0
+ºget_bprop_relu.1:input_grad:2get_bprop_relu.1:input_grad:2";REF::ClassType::mindspore.ops.operations._grad_ops.ReluGrad:?Default/class 'mindspore.ops.operations._grad_ops.ReluGrad'-op1get_bprop_relu.1*
+get_bprop_relu.1:self*
+get_bprop_relu.1:[Parameter]7*
+get_bprop_relu.1:[Parameter]3*
+get_bprop_relu.1:[Parameter]22
+get_bprop_relu.1:[CNode]5:1:@92fe953ca276bba8b43b979895a017d6283e879df08b1a28bbae49b041d910b5J/grad_nn_ops.pyBí
+Å
+get_bprop_relu.1:[Parameter]2
+get_bprop_relu.1:[Parameter]3bprop.6:dx:3bprop.6:dx:3""REF::get_bprop_relu.1:input_grad:2:2
 m
-bprop.1:dx:1bprop.1:[CNode]2:3bprop.1:[CNode]2:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op1bprop.1*
-	bprop.1:x*
-bprop.1:out*
-bprop.1:dout2
-bprop.1:[CNode]2:3:@92fe953ca276bba8b43b979895a017d6283e879df08b1a28bbae49b041d910b5J/grad_nn_ops.pyPb&
-S-Prim-MakeTuple:4S-Prim-MakeTuplebr
-S-Prim-ReluGrad:2S-Prim-ReluGrad
-output_namesÄäZoutputÄ+
-input_namesÄäZ
-y_backpropÄäZxÄh
+bprop.6:dx:3bprop.6:[CNode]4:4bprop.6:[CNode]4:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.62
+bprop.6:[CNode]4:4Pb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

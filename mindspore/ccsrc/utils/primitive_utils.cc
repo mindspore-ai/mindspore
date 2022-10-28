@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@
 #include "pybind_api/ir/base_ref_py.h"
 
 namespace mindspore {
-py::function GetBpropFunctionByObj(const py::object &obj) {
+py::function GetBpropFunctionByObj(const py::object &obj, bool get_closure) {
   static const std::string get_bprop_fn = "get_bprop_fn";
   static const std::string ad_module = "mindspore.ops._grad";
   static const std::string ad_experimental_module = "mindspore.ops._grad_experimental";
-  py::function fn = python_adapter::GetPyFn(ad_module, get_bprop_fn)(obj);
+  py::function fn = python_adapter::GetPyFn(ad_module, get_bprop_fn)(obj, get_closure);
   if (!fn || py::isinstance<py::none>(fn)) {
     fn = python_adapter::GetPyFn(ad_experimental_module, get_bprop_fn)(obj);
   }

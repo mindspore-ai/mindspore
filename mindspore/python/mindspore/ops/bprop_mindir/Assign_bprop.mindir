@@ -1,17 +1,17 @@
 
-0.1.1	MindSpore*2.0.0:Ö
-’
-
-bprop.81:ybprop.81:[CNode]82:1bprop.81:[CNode]82:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op45
-‰
-bprop.81:dout
-bprop.81:[CNode]82:1bprop.81:[CNode]83:3bprop.81:[CNode]83:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op46bprop.81*
-
-bprop.81:x*
-
-bprop.81:y*
-bprop.81:out*
-bprop.81:dout2
-bprop.81:[CNode]83:3:@a71330e7616c3da1a8b708c7a0597e2e0b0da2efdbfef26d52786628c45139eeJ/grad_other_ops.pyPb&
-S-Prim-MakeTuple:4S-Prim-MakeTuplebH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]h
+0.1.1	MindSpore*2.0.0:º
+n!get_bprop_assign.164:[CNode]169:1!get_bprop_assign.164:[CNode]169:1"REF::bprop.170:Default/bprop.170-op64get_bprop_assign.164*
+get_bprop_assign.164:self*%
+#get_bprop_assign.164:[Parameter]171*%
+#get_bprop_assign.164:[Parameter]166*%
+#get_bprop_assign.164:[Parameter]172*%
+#get_bprop_assign.164:[Parameter]1682#
+!get_bprop_assign.164:[CNode]169:1:@a71330e7616c3da1a8b708c7a0597e2e0b0da2efdbfef26d52786628c45139eeJ/grad_other_ops.pyBÿ
+¯
+#get_bprop_assign.164:[Parameter]166bprop.170:[CNode]165:2bprop.170:[CNode]165:2"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:.Default/S-Prim-hyper_map[zeros_like_leaf]-op65
+¥
+#get_bprop_assign.164:[Parameter]168
+bprop.170:[CNode]165:2bprop.170:[CNode]167:4bprop.170:[CNode]167:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op66	bprop.1702
+bprop.170:[CNode]167:4PbH
+#S-Prim-hyper_map[zeros_like_leaf]:3!S-Prim-hyper_map[zeros_like_leaf]b&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

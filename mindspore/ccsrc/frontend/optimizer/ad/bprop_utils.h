@@ -24,8 +24,11 @@ namespace mindspore {
 namespace ad {
 #ifndef _WIN32
 // For the bprop mindir generator.
-// Given a python primitive or string, export a mindir file from the bprop defined in python.
+// Given an operator name, export a mindir file from its bprop defined in python.
 void ExportBpropToMindir(const py::object &obj);
+// For the bprop mindir check.
+// Given an operator name, check whether its mindir file can be loaded and up to date.
+bool CheckMindir(const py::object &obj);
 #endif
 // Get bprop function of a primitive.
 FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr);
