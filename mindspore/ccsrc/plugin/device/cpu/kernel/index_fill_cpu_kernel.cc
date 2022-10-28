@@ -34,32 +34,21 @@ namespace kernel {
 namespace {
 const uint32_t kInputNum = 4;
 const uint32_t kOutputNum = 1;
+const uint32_t kInputIndex0 = 0;
+const uint32_t kInputIndex1 = 1;
 const uint32_t kInputIndex2 = 2;
 const uint32_t kInputIndex3 = 3;
 }  // namespace
 
-void IndexFillCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  dim_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
-  value_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex3);
-  x_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  dim_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  indices_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex2);
-
-  if (dim_shape_.size() != 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'dim' has to be a scalar.";
-  }
-  if (indices_shape_.size() > 1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'index' has to be a vector/scalar.";
-  }
-  if (value_shape_.size() != 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', 'value' must be a 0-dimensional tensor, but got a tensor with "
-                             << value_shape_.size() << " dimension(s).";
-  }
+bool IndexFillCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  x_type_ = inputs[kInputIndex0]->GetDtype();
+  dim_type_ = inputs[kInputIndex1]->GetDtype();
+  indices_type_ = inputs[kInputIndex2]->GetDtype();
   if (dim_type_ != kNumberTypeInt32) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dtype of 'dim' must be int32 or int64, but got "
                             << dim_type_;
@@ -68,12 +57,31 @@ void IndexFillCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dtype of 'index' must be int32, but got "
                             << indices_type_;
   }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int IndexFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  x_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
+  dim_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+  indices_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
+  value_shape_ = inputs[kInputIndex3]->GetDeviceShapeAdaptively();
+  return ret;
 }
 
 bool IndexFillCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   switch (x_type_) {
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, inputs, outputs)
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt16, uint16_t, inputs, outputs)
