@@ -2566,7 +2566,7 @@ class Concat(PrimitiveWithCheck):
     def infer_value(self, input_x):
         """Implement Concat infer value"""
         value = None
-        if input_x is not None:
+        if input_x is not None and None not in input_x:
             value = Tensor(np.concatenate([x.asnumpy() for x in input_x], axis=self.axis))
         return value
 
@@ -2782,7 +2782,7 @@ class Stack(PrimitiveWithInfer):
         tuple_value = value['value']
         input_array = []
         infered_value = None
-        if tuple_value is not None:
+        if tuple_value is not None and None not in tuple_value:
             for item in tuple_value:
                 npy_item = item.asnumpy()
                 input_array.append(npy_item)

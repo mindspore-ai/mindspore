@@ -361,10 +361,6 @@ py::object BuildValue(const ValuePtr &value_ptr) {
 
 py::object AbstractTupleValueToPython(const AbstractTuple *tuple_abs) {
   MS_EXCEPTION_IF_NULL(tuple_abs);
-  auto value = tuple_abs->BuildValue();
-  if (value->isa<AnyValue>()) {
-    return py::none();
-  }
   const auto &elements = tuple_abs->elements();
   size_t len = elements.size();
   py::tuple value_tuple(len);
@@ -446,12 +442,7 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
   }
   dic[ATTR_SHAPE] = shape_tuple;
   dic[ATTR_DTYPE] = dtype_tuple;
-  MS_EXCEPTION_IF_NULL(arg_tuple->BuildValue());
-  if (arg_tuple->BuildValue()->isa<AnyValue>()) {
-    dic[ATTR_VALUE] = py::none();
-  } else {
-    dic[ATTR_VALUE] = value_tuple;
-  }
+  dic[ATTR_VALUE] = value_tuple;
 
   if (dyn_value) {
     dic[ATTR_MIN_VALUE] = min_value_tuple;
@@ -505,20 +496,12 @@ py::dict AbstractDictionaryToPython(const AbstractBasePtr &abs_base) {
   dic[ATTR_SHAPE] = shape_list;
   dic[ATTR_DTYPE] = dtype_list;
   MS_EXCEPTION_IF_NULL(arg_dict->BuildValue());
-  if (arg_dict->BuildValue()->isa<AnyValue>()) {
-    dic[ATTR_VALUE] = py::none();
-  } else {
-    dic[ATTR_VALUE] = value_dict;
-  }
+  dic[ATTR_VALUE] = value_dict;
   return dic;
 }
 
 py::object AbstractListValueToPython(const AbstractList *list_abs) {
   MS_EXCEPTION_IF_NULL(list_abs);
-  auto value = list_abs->BuildValue();
-  if (value->isa<AnyValue>()) {
-    return py::none();
-  }
   const auto &elements = list_abs->elements();
   size_t len = elements.size();
   py::list value_list(len);
@@ -585,12 +568,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
 
   dic[ATTR_SHAPE] = shape_list;
   dic[ATTR_DTYPE] = dtype_list;
-  MS_EXCEPTION_IF_NULL(arg_list->BuildValue());
-  if (arg_list->BuildValue()->isa<AnyValue>()) {
-    dic[ATTR_VALUE] = py::none();
-  } else {
-    dic[ATTR_VALUE] = value_list;
-  }
+  dic[ATTR_VALUE] = value_list;
 
   if (dyn_value) {
     dic[ATTR_MIN_VALUE] = min_value_list;
