@@ -26,6 +26,7 @@
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
+#include "distributed/collective/collective_manager.h"
 
 using mindspore::profiler::ascend::AscendProfiler;
 #endif
@@ -44,20 +45,30 @@ void AscendDeviceContext::Initialize() {
     AscendProfiler::GetInstance()->MsprofInitProfiler();
 #endif
   }
-  MS_EXCEPTION_IF_NULL(device_res_manager_);
-  device_res_manager_->Initialize();
-  auto ascend_res_manager = dynamic_cast<AscendDeviceResManager *>(device_res_manager_.get());
-  MS_EXCEPTION_IF_NULL(ascend_res_manager);
-  runtime_instance_ = ascend_res_manager->runtime_instance_;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  runtime_instance_ = dynamic_cast<AscendKernelRuntime *>(
+    device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id));
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
 #ifndef ENABLE_SECURITY
   runtime_instance_->PreInit();
 #endif
   MS_EXCEPTION_IF_NULL(GetDeprecatedInterface());
   GetDeprecatedInterface()->OpenTsd(MsContext::GetInstance());
-  MS_EXCEPTION_IF_NULL(runtime_instance_);
-  if (!runtime_instance_->Init()) {
-    MS_LOG(EXCEPTION) << "Runtime init failed.";
+  runtime_instance_->SetRtDevice(device_id);
+
+  // enable hccl and init hccl not done, skip the rest step.
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) &&
+      !distributed::collective::CollectiveManager::instance()->initialized()) {
+    return;
   }
+
+  MS_EXCEPTION_IF_NULL(device_res_manager_);
+  device_res_manager_->Initialize();
+  auto ascend_res_manager = dynamic_cast<AscendDeviceResManager *>(device_res_manager_.get());
+  MS_EXCEPTION_IF_NULL(ascend_res_manager);
+  runtime_instance_ = ascend_res_manager->runtime_instance_;
   auto ascend_kernel_executor = dynamic_cast<AscendKernelExecutor *>(kernel_executor_.get());
   MS_EXCEPTION_IF_NULL(ascend_kernel_executor);
   ascend_kernel_executor->Initialize();
