@@ -115,6 +115,7 @@ class LPPool1d(Cell):
         TypeError: If `x` is not an Tensor.
         TypeError: If `kernel_size` or `stride` is not an int.
         TypeError: If `ceil_mode` is not a bool.
+        TypeError: If `norm_type` is neither float nor int.
         ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If length of shape of `x` is not equal to 2 or 3.
 
@@ -146,7 +147,7 @@ class LPPool1d(Cell):
         self.ceil_mode = ceil_mode
 
     def construct(self, x):
-        return ops.lp_pool1d(x, float(self.norm_type), self.kernel_size,
+        return ops.lp_pool1d(x, self.norm_type, self.kernel_size,
                              self.stride, self.ceil_mode)
 
 
@@ -188,6 +189,7 @@ class LPPool2d(Cell):
         TypeError: If `x` is not an Tensor.
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         TypeError: If `ceil_mode` is not a bool.
+        TypeError: If `norm_type` is neither float nor int.
         ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2`.
         ValueError: If length of shape of `x` is not equal to 4.
@@ -226,7 +228,7 @@ class LPPool2d(Cell):
         self.ceil_mode = ceil_mode
 
     def construct(self, x):
-        return ops.lp_pool2d(x, float(self.norm_type), self.kernel_size,
+        return ops.lp_pool2d(x, self.norm_type, self.kernel_size,
                              self.stride, self.ceil_mode)
 
 
