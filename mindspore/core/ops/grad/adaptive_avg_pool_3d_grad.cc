@@ -49,7 +49,7 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &,
     MS_EXCEPTION_IF_NULL(orig_input_shape_value);
     if (!orig_input_shape_value->isa<None>() && !orig_input_shape_value->isa<AnyValue>()) {
       auto orig_input_shape_tensor = orig_input_shape_value->cast<tensor::TensorPtr>();
-      auto value = static_cast<int32_t *>(orig_input_shape_tensor->data_c());
+      auto value = reinterpret_cast<int *>(orig_input_shape_tensor->data_c());
       MS_EXCEPTION_IF_NULL(value);
       for (int64_t i = 0; i < input_grad_dims; ++i) {
         orig_input_shape_value_vec[i] = value[i] > 0 ? static_cast<int64_t>(value[i]) : static_cast<int64_t>(1);

@@ -78,22 +78,7 @@ class FractionalMaxPool3DWithFixedKsizeHelperGpuKernel : public GpuKernelHelperB
     is_null_input_ = false;
   }
 
-  virtual ~FractionalMaxPool3DWithFixedKsizeHelperGpuKernel() = default;
-  int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
-                 const std::vector<std::vector<int64_t>> &output_shapes) override {
-    ResetResource();
-
-    input_shape_ = input_shapes[kInputIndex0];
-    random_samples_shape_ = input_shapes[kInputIndex1];
-    output_shape_ = output_shapes[kOutputIndex0];
-    argmax_shape_ = output_shapes[kOutputIndex1];
-
-    data_format_ = attr_ptr_->data_format;
-    if (data_format_ != "NCDHW" && data_format_ != "NDHWC") {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', data_format must be NCDHW or NDHWC, but got " << data_format_
-                    << ".";
-      return -1;
-    }
+  void SetInputShape() {
     if (data_format_ == "NCDHW") {
       if (input_shape_.size() == kDimSize5) {
         inputN_ = input_shape_[kDimSize5FormatNCDHWIndexN];
@@ -121,6 +106,25 @@ class FractionalMaxPool3DWithFixedKsizeHelperGpuKernel : public GpuKernelHelperB
         inputW_ = input_shape_[kDimSize4FormatNDHWCIndexW];
       }
     }
+  }
+
+  virtual ~FractionalMaxPool3DWithFixedKsizeHelperGpuKernel() = default;
+  int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
+                 const std::vector<std::vector<int64_t>> &output_shapes) override {
+    ResetResource();
+
+    input_shape_ = input_shapes[kInputIndex0];
+    random_samples_shape_ = input_shapes[kInputIndex1];
+    output_shape_ = output_shapes[kOutputIndex0];
+    argmax_shape_ = output_shapes[kOutputIndex1];
+
+    data_format_ = attr_ptr_->data_format;
+    if (data_format_ != "NCDHW" && data_format_ != "NDHWC") {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', data_format must be NCDHW or NDHWC, but got " << data_format_
+                    << ".";
+      return -1;
+    }
+    SetInputShape();
 
     int inp_flag = 0;
     size_t cur_size_T = sizeof(T);

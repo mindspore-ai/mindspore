@@ -49,9 +49,9 @@ class MIND_API CropAndResizeGradImage : public BaseOperator {
   /// \brief Get method.
   ResizeMethod get_method() const;
 };
-AbstractBasePtr CropAndResizeGradImageInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args);
-using PrimCropAndResizeGradImagePtr = std::shared_ptr<CropAndResizeGradImage>;
+abstract::AbstractBasePtr CropAndResizeGradImageInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

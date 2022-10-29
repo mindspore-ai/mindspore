@@ -37,7 +37,6 @@ class MIND_API AdaptiveAvgPool3D : public BaseOperator {
 };
 AbstractBasePtr AdaptiveAvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args);
-using PrimAdaptiveAvgPool3DPtr = std::shared_ptr<AdaptiveAvgPool3D>;
 }  // namespace ops
 }  // namespace mindspore
 
