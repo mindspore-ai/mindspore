@@ -15,8 +15,7 @@
 """Top-level reference to dtype of common module."""
 from __future__ import absolute_import
 from mindspore.common import dtype
-from mindspore.common.api import no_recursive, ms_function, ms_memory_recycle, ms_class, _convert_python_data, \
-    jit, jit_class
+from mindspore.common.api import no_recursive, ms_function, ms_memory_recycle, ms_class, jit, jit_class
 from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \
     uint8, ubyte, uint16, ushort, uint32, uintc, uint64, uintp, float16, half, \
     float32, single, float64, double, bool_, float_, list_, tuple_, int_, \
@@ -61,7 +60,7 @@ __all__.extend([
     "Tensor", "RowTensor", "RowTensorInner", "SparseTensor", "COOTensor", "CSRTensor", "MapTensor", # tensor
     "no_recursive", "ms_function", "ms_class", 'jit', 'jit_class',  # api
     "Parameter", "ParameterTuple",  # parameter
-    "dtype", "_convert_python_data",
+    "dtype",
     "set_seed", "get_seed",  # random seed
     "set_dump",
     "ms_memory_recycle",

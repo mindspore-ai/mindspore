@@ -36,7 +36,7 @@ from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
 from mindspore import context
-from mindspore.common.api import _MindsporeFunctionExecutor, _convert_python_data
+from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.common import mutable
@@ -44,6 +44,7 @@ from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNa
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE, NO_IMPLEMENT
 from .jit_fallback_modules import jit_fallback_third_party_modules_whitelist
+from ...common.api import _convert_python_data
 
 # Define return value
 RET_SUCCESS = 0
