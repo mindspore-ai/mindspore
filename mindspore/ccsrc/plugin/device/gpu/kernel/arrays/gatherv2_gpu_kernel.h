@@ -21,6 +21,7 @@
 #include <map>
 #include <utility>
 #include <algorithm>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherv2.cuh"
@@ -29,9 +30,13 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kUnKnown = "UnKnown";
+constexpr auto kGather = "Gather";
+constexpr auto kSparseGatherV2 = "SparseGatherV2";
 class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   GatherV2FwdGpuKernelMod() { ResetResource(); }
+  explicit GatherV2FwdGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) { ResetResource(); }
   ~GatherV2FwdGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -59,6 +64,10 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
+  template <typename T, typename S, typename G>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
   void InitSizeLists() {
     auto input_size = std::accumulate(input_shapes_.begin(), input_shapes_.end(), 1, std::multiplies{});
     auto indices_size = std::accumulate(indices_shapes_.begin(), indices_shapes_.end(), 1, std::multiplies{});
@@ -70,10 +79,6 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     auto output_size = std::accumulate(output_shapes_.begin(), output_shapes_.end(), 1, std::multiplies{});
     output_size_list_.push_back(LongToSize(output_size) * input_type_size_);
   }
-
-  template <typename T, typename S, typename G>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
   void Reshape() {
     if (axis_ < 0) {
@@ -96,7 +101,13 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     dims_[kIndex2] = dim_after_indices;
     return;
   }
-  cudaStream_t cuda_stream_;
+
+ private:
+  using GatherV2Func = std::function<bool(GatherV2FwdGpuKernelMod *, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, GatherV2Func>>> func_map_;
+  GatherV2Func kernel_func_;
+
   std::vector<int64_t> input_shapes_;
   std::vector<int64_t> indices_shapes_;
   std::vector<int64_t> output_shapes_;
@@ -107,13 +118,7 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   size_t input_type_size_ = 0;
   size_t indices_type_size_ = 0;
   size_t axis_type_size_ = 0;
-
- private:
-  using GatherV2Func = std::function<bool(GatherV2FwdGpuKernelMod *, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
-  static std::vector<std::pair<KernelAttr, GatherV2Func>> func_list_;
-  // static std::vector<std::pair<KernelAttr, GatherV2Func>> sparse_gather_func_list_;
-  GatherV2Func kernel_func_;
+  std::string kernel_type_{kUnKnown};
 };
 }  // namespace kernel
 }  // namespace mindspore

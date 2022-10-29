@@ -591,65 +591,6 @@ AbstractBasePtr InferImplRealDiv(const AnalysisEnginePtr &, const PrimitivePtr &
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(out_shape));
 }
 
-AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list) {
-  const std::string &op_name = primitive->name();
-  constexpr size_t args_size = 3;
-  CheckArgsSize(op_name, args_spec_list, args_size);
-  AbstractTensorPtr params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  AbstractTensorPtr indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  bool ind_dyn = (!indices->shape()->min_shape().empty() && !indices->shape()->max_shape().empty());
-  bool param_dyn = (!params->shape()->min_shape().empty() && !params->shape()->max_shape().empty());
-  int64_t axis_val = 0;
-  // 3rd input is a Tensor when GatherV2 is a dynamic shape operator
-  constexpr size_t aixs_index = 2;
-  if (args_spec_list[aixs_index]->isa<AbstractTensor>()) {
-    auto axis = args_spec_list[aixs_index]->cast<AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(axis);
-    auto axis_value_ptr = axis->BuildValue();
-    MS_EXCEPTION_IF_NULL(axis_value_ptr);
-    auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(axis_tensor);
-    axis_val = *static_cast<int64_t *>(axis_tensor->data_c());
-  } else if (args_spec_list[aixs_index]->isa<AbstractScalar>()) {
-    auto axis = args_spec_list[aixs_index]->cast<AbstractScalarPtr>();
-    axis_val = GetValue<int64_t>(axis->BuildValue());
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid abstract type:" << args_spec_list[2]->type_name();
-  }
-  auto params_shp = params->shape()->shape();
-  auto indices_shp = indices->shape()->shape();
-  auto params_rank = static_cast<int64_t>(params_shp.size());
-  // either inputs or both can be dynamic and computation requires min/max shapes for both
-  ShapeVector param_shp_min = (param_dyn) ? params->shape()->min_shape() : params->shape()->shape();
-  ShapeVector param_shp_max = (param_dyn) ? params->shape()->max_shape() : params->shape()->shape();
-  ShapeVector indices_shp_min = (ind_dyn) ? indices->shape()->min_shape() : indices->shape()->shape();
-  ShapeVector indices_shp_max = (ind_dyn) ? indices->shape()->max_shape() : indices->shape()->shape();
-  // check axis_val within interval: [-params_rank, params_rank)
-  if (-params_rank > axis_val || axis_val >= params_rank) {
-    MS_LOG(EXCEPTION) << "For Gather - Axis value must be within [ " << -params_rank << ", " << params_rank << " ) "
-                      << "Got " << axis_val << ".";
-  }
-  if (axis_val < 0) {
-    axis_val += params_rank;
-  }
-  auto calc_shape = [axis_val](const ShapeVector &ind_vec, const ShapeVector &params_vec) -> ShapeVector {
-    ShapeVector out_vec;
-    std::copy(params_vec.begin(), params_vec.begin() + axis_val, std::back_inserter(out_vec));
-    copy(ind_vec.begin(), ind_vec.end(), std::back_inserter(out_vec));
-    copy(params_vec.begin() + axis_val + 1, params_vec.end(), std::back_inserter(out_vec));
-    return out_vec;
-  };
-  ShapeVector out_shape = calc_shape(indices_shp, params_shp);
-  if (ind_dyn || param_dyn) {
-    ShapeVector min_shape = calc_shape(indices_shp_min, param_shp_min);
-    ShapeVector max_shape = calc_shape(indices_shp_max, param_shp_max);
-    return std::make_shared<AbstractTensor>(params->element(),
-                                            std::make_shared<Shape>(out_shape, min_shape, max_shape));
-  }
-  return std::make_shared<AbstractTensor>(params->element(), std::make_shared<Shape>(out_shape));
-}
-
 AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor
