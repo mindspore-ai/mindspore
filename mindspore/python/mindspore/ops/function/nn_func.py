@@ -3624,6 +3624,127 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     return output
 
 
+@constexpr
+def _check_positive_int(arg_value, arg_name=None, prim_name=None):
+    validator.check_positive_int(arg_value, arg_name=arg_name, prim_name=prim_name)
+
+
+def pixel_shuffle(x, upscale_factor):
+    r"""
+    pixel_shuffle operatrion.
+
+    Applies a pixel_shuffle operation over an input signal composed of several input planes. This is useful for
+    implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
+    `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
+    <https://arxiv.org/abs/1609.05158> `_ .
+
+    Typically, the `x` is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
+    :math:`(*, C, H \times r, W \times r)`, where `r` is an upscale factor and `*` is zero or more batch dimensions.
+
+    Args:
+        x (Tensor)： Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and the
+            length of third to last dimension can be divisible by `upscale_factor` squared.
+        upscale_factor (int):  factor to increase spatial resolution by, and is a positive integer.
+
+    Returns:
+        - **output** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` .
+
+    Raises:
+        ValueError: If `upscale_factor` is not a positive integer.
+        ValueError: If the length of third to last dimension is not divisible by `upscale_factor` squared.
+        TypeError: If the dimension of `x` is less than 3.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(3 * 2 * 9 * 4 * 4).reshape((3, 2, 9, 4, 4))
+        >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
+        >>> output = ops.pixel_shuffle(input_x, 3)
+        >>> print(output.shape)
+        (3, 2, 1, 12, 12)
+    """
+    _check_positive_int(upscale_factor, "upscale_factor")
+    idx = x.shape
+    length = len(idx)
+    if length < 3:
+        raise TypeError(f"For pixel_shuffle, the dimension of `x` should be larger than 2, but got {length}.")
+    pre = idx[:-3]
+    c, h, w = idx[-3:]
+    if c % upscale_factor ** 2 != 0:
+        raise ValueError("For 'pixel_shuffle', the length of third to last dimension is not divisible"
+                         "by `upscale_factor` squared.")
+    c = c // upscale_factor ** 2
+    input_perm = (pre + (c, upscale_factor, upscale_factor, h, w))
+    reshape = ops.Reshape()
+    x = reshape(x, input_perm)
+    input_perm = [i for i in range(length - 2)]
+    input_perm = input_perm + [length, length - 2, length + 1, length - 1]
+    input_perm = tuple(input_perm)
+    transpose = ops.Transpose()
+    x = transpose(x, input_perm)
+    x = reshape(x, (pre + (c, upscale_factor * h, upscale_factor * w)))
+    return x
+
+
+def pixel_unshuffle(x, downscale_factor):
+    r"""
+    pixel_unshuffle operatrion.
+
+    Applies a pixel_unshuffle operation over an input signal composed of several input planes. For more details, refer
+    to `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
+    <https://arxiv.org/abs/1609.05158>`_ .
+
+    Typically, the input is of shape :math:`(*, C, H \times r, W \times r)` , and the output is of shape
+    :math:`(*, C \times r^2, H, W)` , where `r` is a downscale factor and `*` is zero or more batch dimensions.
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `x` is larger than 2,
+            and the length of second to last dimension or last dimension can be divisible by `downscale_factor` .
+        downscale_factor (int): factor to decrease spatial resolution by, and is a positive integer.
+
+    Returns:
+        - **output** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` .
+
+    Raises:
+        ValueError: If `downscale_factor` is not a positive integer.
+        ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
+        TypeError: If the dimension of `x` is less than 3.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(12 * 12).reshape((1, 1, 12, 12))
+        >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
+        >>> output = ops.pixel_unshuffle(input_x, 3)
+        >>> print(output.shape)
+        >>> (1, 9, 4, 4)
+    """
+    _check_positive_int(downscale_factor, "downscale_factor")
+    idx = x.shape
+    length = len(idx)
+    if length < 3:
+        raise TypeError(f"For pixel_unshuffle, the dimension of `x` should be larger than 2, but got {length}.")
+    pre = idx[:-3]
+    c, h, w = idx[-3:]
+    if h % downscale_factor != 0 or w % downscale_factor != 0:
+        raise ValueError("For 'pixel_unshuffle', the length of second to last 2 dimension should be divisible "
+                         "by downscale_factor.")
+    h = h // downscale_factor
+    w = w // downscale_factor
+    input_perm = (pre + (c, h, downscale_factor, w, downscale_factor))
+    reshape = ops.Reshape()
+    x = reshape(x, input_perm)
+    input_perm = [i for i in range(length - 2)]
+    input_perm = input_perm + [length - 1, length + 1, length - 2, length]
+    input_perm = tuple(input_perm)
+    transpose = ops.Transpose()
+    x = transpose(x, input_perm)
+    x = reshape(x, (pre + (c * downscale_factor * downscale_factor, h, w)))
+    return x
+
+
 def glu(x, axis=-1):
     r"""
     Computes GLU (Gated Linear Unit activation function) of input tensors .
@@ -4086,6 +4207,8 @@ __all__ = [
     'dropout2d',
     'dropout3d',
     'fast_gelu',
+    'pixel_shuffle',
+    'pixel_unshuffle',
     'hardshrink',
     'soft_shrink',
     'intopk',

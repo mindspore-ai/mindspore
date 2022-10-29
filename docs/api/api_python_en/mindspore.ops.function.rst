@@ -484,6 +484,8 @@ Image Functions
     mindspore.ops.bounding_box_encode
     mindspore.ops.check_valid
     mindspore.ops.iou
+    mindspore.ops.pixel_shuffle
+    mindspore.ops.pixel_unshuffle
 
 Spectral Functions
 ------------------
