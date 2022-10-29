@@ -140,6 +140,7 @@ AnfNodePtr ClipByNormFission::CreateConstantNode(const FuncGraphPtr &func_graph,
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
+  MS_EXCEPTION_IF_NULL(value_node);
   kernel_graph->AddValueNodeToGraph(value_node);
   auto constant_node = CreateCNodeBase(func_graph, {value_node}, op_name, inp);
   MS_EXCEPTION_IF_NULL(constant_node);

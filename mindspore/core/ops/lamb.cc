@@ -24,6 +24,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto m_type = input_args[kInputIndex1]->BuildType();
@@ -40,10 +41,10 @@ TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   (void)type_dict.emplace("var", var_type);
   (void)type_dict.emplace("m", m_type);
   (void)type_dict.emplace("v", v_type);
-  (void)type_dict.emplace("grad", gradient_type);
   std::set<TypePtr> num_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                 kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(type_dict, num_type, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grad", gradient_type, num_type, prim_name);
   std::map<std::string, TypePtr> type_dict1;
   (void)type_dict1.emplace("beta1", beta1_type);
   (void)type_dict1.emplace("beta2", beta2_type);
@@ -58,11 +59,16 @@ TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   return var_type;
 }
 abstract::ShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto m_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto v_shape_ptr = input_args[kInputIndex2]->BuildShape();
   auto grad_shape_ptr = input_args[kInputIndex9]->BuildShape();
+  MS_EXCEPTION_IF_NULL(var_shape_ptr);
+  MS_EXCEPTION_IF_NULL(m_shape_ptr);
+  MS_EXCEPTION_IF_NULL(v_shape_ptr);
+  MS_EXCEPTION_IF_NULL(grad_shape_ptr);
   if (var_shape_ptr->IsDynamic() || m_shape_ptr->IsDynamic() || v_shape_ptr->IsDynamic() ||
       grad_shape_ptr->IsDynamic()) {
     MS_LOG(WARNING) << "var is dynamic" << var_shape_ptr->IsDynamic() << "m is dynamic" << m_shape_ptr->IsDynamic()
