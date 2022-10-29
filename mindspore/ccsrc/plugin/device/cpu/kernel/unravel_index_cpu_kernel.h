@@ -14,41 +14,44 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNRAVEL_INDEX_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNRAVEL_INDEX_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_UNRAVEL_INDEX_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_UNRAVEL_INDEX_CPU_KERNEL_H_
 
 #include <vector>
 #include <utility>
 #include <functional>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class UnravelIndexCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class UnravelIndexCpuKernelMod : public NativeCpuKernelMod {
  public:
   UnravelIndexCpuKernelMod() = default;
   ~UnravelIndexCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  TypeId indices_type_{kTypeUnknown};
-  TypeId dims_type_{kTypeUnknown};
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
-  using UnravelIndexFunc = std::function<bool(UnravelIndexCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs) const;
+  using UnravelIndexFunc =
+    std::function<bool(UnravelIndexCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, UnravelIndexFunc>> func_list_;
   UnravelIndexFunc kernel_func_;
-  int axis_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNRAVEK_INDEX_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_UNRAVEL_INDEX_CPU_KERNEL_H_

@@ -22,37 +22,30 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kUnravelIndexInputsNum = 2;
-constexpr size_t kUnravelIndexOutputsNum = 1;
 constexpr int64_t kParallelDataNums = 1024;
 }  // namespace
 
-void UnravelIndexCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  indices_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  dims_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-}
-
-bool UnravelIndexCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnravelIndexInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUnravelIndexOutputsNum, kernel_name_);
-  if (indices_type_ != dims_type_) {
-    MS_EXCEPTION(TypeError) << "The data type of input0 need be same with input1.";
+bool UnravelIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = 2;
+  constexpr size_t output_num = 1;
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  if (indices_type_ == kNumberTypeInt32) {
-    return LaunchKernel<int32_t>(inputs, outputs);
-  } else if (indices_type_ == kNumberTypeInt64) {
-    return LaunchKernel<int64_t>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "Both input data types are supported only support int32, int64.";
-  }
+  kernel_func_ = func_list_[index].second;
+  return true;
 }
 
 template <typename T>
 bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &,
                                             const std::vector<AddressPtr> &outputs) const {
   auto *IndicesData = reinterpret_cast<T *>(inputs[0]->addr);
   auto *DimsData = reinterpret_cast<T *>(inputs[1]->addr);
@@ -96,9 +89,9 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 }
 
 std::vector<std::pair<KernelAttr, UnravelIndexCpuKernelMod::UnravelIndexFunc>> UnravelIndexCpuKernelMod::func_list_ = {
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
    &UnravelIndexCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
    &UnravelIndexCpuKernelMod::LaunchKernel<int64_t>}};
 
 std::vector<KernelAttr> UnravelIndexCpuKernelMod::GetOpSupport() {
