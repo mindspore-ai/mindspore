@@ -156,18 +156,17 @@ def _check_inputs(network_shapes, dataset_shapes, dataset_types):
             )
         if len(inputs_shape) != len(set_inputs_shape):
             raise ValueError(
-                f"For 'set_inputs', the Dimension of Tensor shape must be {len(inputs_shape)}, but got "
-                f"{len(set_inputs_shape)}"
-            )
+                f"The {tensor_index + 1}th input dims of 'set_inputs' must be the same as network's input, "
+                f"but got 'set_inputs': {len(set_inputs_shape)} and network's input: {len(inputs_shape)}.")
         if network_shapes[tensor_index] is None:
             break
         for index, ele_shape in enumerate(ele_dataset_shape):
             if network_shapes[tensor_index].shape[index] != -1:
                 if set_inputs_shape[index] != ele_shape:
                     raise ValueError(
-                        f"For 'Tensor shape', the value must be the same with that of inputs, but "
-                        f"got {set_inputs_shape[index]}"
-                    )
+                        f"The {index + 1}th input shape of 'set_inputs' must be the same as network's input, "
+                        f"but got 'set_inputs': {set_inputs_shape[index]} and network's input: "
+                        f"{dataset_shapes[tensor_index][index]}.")
             else:
                 dataset_shapes[tensor_index][index] = -1
 
