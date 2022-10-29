@@ -80,6 +80,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void ReleaseDeviceRes() override;
   uint64_t GetMsUsedHbmSize() const;
   void SetReuseCommunicationAddress(const session::KernelGraph &graph);
+  void SetRtDevice(uint32_t device_id);
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -92,7 +93,6 @@ class AscendKernelRuntime : public KernelRuntime {
 
  private:
   bool InitDevice();
-  void SetRtDevice(uint32_t device_id);
   bool ResetDevice(uint32_t device_id);
   static bool NeedDestroyHccl();
   static bool DestroyHccl();

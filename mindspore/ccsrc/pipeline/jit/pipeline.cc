@@ -1608,6 +1608,7 @@ void InitHccl() {
   }
 #endif
   mindspore::python_adapter::set_python_env_flag(true);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (ms_context->backend_policy() == "ms" && device_name == kAscendDevice) {
     if (!mindspore::distributed::Initialize()) {
@@ -1746,13 +1747,15 @@ void InitPipeline() {
     MS_EXCEPTION_IF_NULL(device_context);
     device_context->Initialize();
   }
-  if (device_name == kAscendDevice) {
-    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-    if (!device_context->GetDeprecatedInterface()->OpenTsd(ms_context)) {
-      MS_LOG(EXCEPTION) << "Open tsd failed";
+  if (!common::UseDynamicCluster()) {
+    if (device_name == kAscendDevice) {
+      const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+      MS_EXCEPTION_IF_NULL(device_context);
+      MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+      if (!device_context->GetDeprecatedInterface()->OpenTsd(ms_context)) {
+        MS_LOG(EXCEPTION) << "Open tsd failed";
+      }
     }
   }
 #endif
