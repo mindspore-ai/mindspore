@@ -131,7 +131,8 @@ std::vector<void *> AscendDeviceResManager::AllocateContinuousMemory(const std::
 
 DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
                                                              const string &format, TypeId type_id,
-                                                             const ShapeVector &shape) const {
+                                                             const ShapeVector &shape,
+                                                             const UserDataPtr &user_data) const {
   auto device_address = std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
                                                               device_context_->device_context_key().device_name_,
                                                               device_context_->device_context_key().device_id_);

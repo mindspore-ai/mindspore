@@ -32,6 +32,8 @@ class DeviceAddressUtils {
   static void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph,
                                               bool is_gradient_out);
   static void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
+  static void CreateDeviceAddressByMapTensorNode(const DeviceContext *device_context, const AnfNodePtr &node,
+                                                 size_t index);
   static void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph);
   static void UpdateDeviceAddress(const session::AnfWithOutIndex &cur_pair,
                                   const session::AnfWithOutIndex &origin_pair);

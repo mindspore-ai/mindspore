@@ -50,7 +50,8 @@ class GPUDeviceResManager : public DeviceResManager {
   size_t GetAvailableMemSize() const override { return mem_manager_->GetAvailableMemSize(); }
 
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape = ShapeVector()) const override;
+                                       const ShapeVector &shape = ShapeVector(),
+                                       const UserDataPtr &user_data = nullptr) const override;
 
   bool CreateStream(size_t *stream_id) const override;
   bool DestroyStream(size_t stream_id) const override;

@@ -58,7 +58,7 @@ class AscendDeviceResManager : public DeviceResManager {
 
   // Create concrete device address according different device type.
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape) const override;
+                                       const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
 
   bool CreateStream(size_t *stream_id) const override;
 

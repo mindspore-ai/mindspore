@@ -21,13 +21,17 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <utility>
 #include <mutex>
 #include "ir/tensor.h"
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
 #include "utils/shape_utils.h"
+#include "include/common/utils/utils.h"
 #include "runtime/hardware/device_type.h"
+#include "runtime/device/hash_table.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -62,6 +66,7 @@ namespace mindspore {
 namespace device {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
+using UserDataPtr = std::shared_ptr<UserData>;
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:
@@ -192,6 +197,31 @@ class DeviceAddress : public mindspore::DeviceSync {
   // Asynchronously copy device memory to host side.
   virtual bool AsyncDeviceToHost(const ShapeVector &, size_t, TypeId, void *, size_t) const { return true; }
 
+  UserDataPtr user_data() const { return user_data_; }
+  void set_user_data(const UserDataPtr &user_data) { user_data_ = user_data; }
+  // Free the ptr in user data when the ref count is 0.
+  virtual void ClearUserData() {
+    if (user_data_ == nullptr) {
+      return;
+    }
+
+    auto user_data_type = user_data_->get<UserDataType>(kUserDataType);
+    MS_EXCEPTION_IF_NULL(user_data_type);
+    if (*user_data_type == UserDataType::kUserTypeHashTable) {
+      const auto &key_type = user_data_->get<TypeId>(kHashTableKeyType);
+      const auto &value_type = user_data_->get<TypeId>(kHashTableValueType);
+      MS_EXCEPTION_IF_NULL(key_type);
+      MS_EXCEPTION_IF_NULL(value_type);
+      if (*key_type == TypeId::kNumberTypeInt32 && *value_type == TypeId::kNumberTypeFloat32) {
+        const auto &user_data_data = user_data_->get<HashTable<int, float>>(kUserDataData);
+        MS_EXCEPTION_IF_NULL(user_data_data);
+        if (!user_data_data->Clear()) {
+          MS_LOG(EXCEPTION) << "Clear user data failed.";
+        }
+      }
+    }
+  }
+
  protected:
   const void *ptr() const { return ptr_; }
   size_t size() const { return size_; }
@@ -222,6 +252,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name_{""};
   uint32_t device_id_{0};
   bool from_persistent_mem_{false};
+
+  // User data is the extra data required by the kernel launch in addition to device ptr.
+  UserDataPtr user_data_{nullptr};
 
   friend class KernelRuntime;
   friend class MemoryManager;

@@ -35,6 +35,12 @@ namespace mindspore {
 namespace runtime {
 using distributed::recovery::RecoveryContext;
 namespace {
+constexpr size_t kNormalTensorNum = 1;
+constexpr size_t kMapTensorNum = 3;
+constexpr size_t kMapTensorKeyIndex = 0;
+constexpr size_t kMapTensorValueIndex = 1;
+constexpr size_t kMapTensorStatusIndex = 2;
+
 bool IsDataTakenOverByMemOffload(const DeviceContext *device_context) {
   if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
     return false;
@@ -86,16 +92,39 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
                                                 device_tensor->GetSize());
   }
 
-  // Copy data from host tensor to device.
-  auto host_tensor_size = LongToSize(host_tensor->data().nbytes());
-  auto host_tensor_type = host_tensor->data_type();
-  if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), host_tensor_size, host_tensor_type,
-                                       host_tensor->data_c(), host_tensor->device_info().host_format_)) {
-    std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
-                             ", host tensor size: " + std::to_string(host_tensor_size) +
-                             ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
-                             ", device tensor size: " + std::to_string(device_tensor->GetSize());
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy, (*context), error_info);
+  auto get_tensor_by_index = [&host_tensor](size_t index) {
+    if (!host_tensor->isa<tensor::MapTensor>()) {
+      return host_tensor;
+    }
+    const auto &map_tensor = host_tensor->cast<tensor::MapTensorPtr>();
+    MS_EXCEPTION_IF_NULL(map_tensor);
+    switch (index) {
+      case kMapTensorKeyIndex:
+        return map_tensor->key_tensor();
+      case kMapTensorValueIndex:
+        return map_tensor->value_tensor();
+      case kMapTensorStatusIndex:
+        return map_tensor->status_tensor();
+      default:
+        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for map tensor:" << host_tensor->ToString();
+    }
+  };
+
+  auto get_tensor_num = (host_tensor->isa<tensor::MapTensor>() ? kMapTensorNum : kNormalTensorNum);
+  for (size_t i = 0; i < get_tensor_num; ++i) {
+    const auto &real_host_tensor = get_tensor_by_index(i);
+    MS_EXCEPTION_IF_NULL(real_host_tensor);
+    // Copy data from host tensor to device.
+    auto host_tensor_size = LongToSize(real_host_tensor->data().nbytes());
+    auto host_tensor_type = real_host_tensor->data_type();
+    if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), host_tensor_size, host_tensor_type,
+                                         real_host_tensor->data_c(), real_host_tensor->device_info().host_format_)) {
+      std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
+                               ", host tensor size: " + std::to_string(host_tensor_size) +
+                               ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
+                               ", device tensor size: " + std::to_string(device_tensor->GetSize());
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy, (*context), error_info);
+    }
   }
 }
 

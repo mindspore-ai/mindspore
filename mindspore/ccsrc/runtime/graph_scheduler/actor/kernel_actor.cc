@@ -258,6 +258,7 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
       if (device_tensor->GetPtr() != nullptr) {
         device_context->device_res_manager_->FreeMemory(device_tensor);
       }
+      device_tensor->ClearUserData();
       device_tensor->ResetRefCount();
     }
   }
@@ -599,11 +600,17 @@ void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context
 }
 
 void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
     MS_EXCEPTION_IF_NULL(launch_info_.inputs_[i]);
     launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
+    if (input_device_tensors_[i]->user_data() != nullptr) {
+      kernel_mod->set_input_user_data(input_device_tensors_[i]->user_data().get(), i);
+    }
   }
 
   for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
@@ -611,6 +618,9 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
     MS_EXCEPTION_IF_NULL(launch_info_.outputs_[i]);
     launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
+    if (output_device_tensors_[i]->user_data() != nullptr) {
+      kernel_mod->set_output_user_data(output_device_tensors_[i]->user_data().get(), i);
+    }
   }
 
   for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {

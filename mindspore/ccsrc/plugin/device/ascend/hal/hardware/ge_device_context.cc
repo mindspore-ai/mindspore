@@ -453,8 +453,8 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
 }
 
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
-                                                         const string &format, TypeId type_id,
-                                                         const ShapeVector &shape) const {
+                                                         const string &format, TypeId type_id, const ShapeVector &shape,
+                                                         const UserDataPtr &user_data) const {
   auto device_address = std::make_shared<cpu::CPUDeviceAddress>(device_ptr, device_size, format, type_id,
                                                                 device_context_->device_context_key_.device_name_,
                                                                 device_context_->device_context_key_.device_id_);

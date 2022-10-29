@@ -1717,5 +1717,25 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   }
   return buf.str();
 }
+
+abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abstract = node->abstract();
+  if (abstract == nullptr) {
+    return nullptr;
+  }
+
+  if (index == 0 || (!abstract->isa<abstract::AbstractTuple>())) {
+    return abstract;
+  }
+
+  const auto &abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  const auto &elements = abstract_tuple->elements();
+  if (elements.size() <= index) {
+    return nullptr;
+  }
+  return elements[index];
+}
 }  // namespace common
 }  // namespace mindspore

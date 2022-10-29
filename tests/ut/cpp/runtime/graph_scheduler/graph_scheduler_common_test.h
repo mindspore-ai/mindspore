@@ -40,6 +40,7 @@ using device::DeviceContextRegister;
 using device::DeviceType;
 using kernel::AddressPtr;
 using session::KernelGraph;
+using device::UserDataPtr;
 
 class TestDeviceAddress : public DeviceAddress {
  public:
@@ -77,7 +78,8 @@ class TestDeviceResManager : public device::DeviceResManager {
   virtual void *AllocateMemory(size_t size) const { return nullptr; }
   virtual void FreeMemory(void *const ptr) const {}
   virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const ShapeVector &shape) const {
+                                               TypeId type_id, const ShapeVector &shape,
+                                               const UserDataPtr &user_data = nullptr) const {
     return std::make_shared<TestDeviceAddress>(nullptr, 0);
   }
 };
