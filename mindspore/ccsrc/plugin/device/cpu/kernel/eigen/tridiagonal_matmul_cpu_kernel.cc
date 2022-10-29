@@ -33,65 +33,87 @@ constexpr size_t kInputShapeIndex1 = 1;
 constexpr size_t kInputShapeIndex2 = 2;
 constexpr size_t kInputShapeIndex3 = 3;
 }  // namespace
+bool TridiagonalMatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs[kIndex0]->GetDtype();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
+  if (!is_match) {
+    MS_LOG(ERROR) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
 
-using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
-void TridiagonalMatMulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputShapeIndex0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputShapeIndex0);
-  auto input1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputShapeIndex1);
-  auto input2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputShapeIndex2);
-  auto input3_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputShapeIndex3);
+int TridiagonalMatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto input0_shape = inputs[kIndex0]->GetShapeVector();
+  auto input1_shape = inputs[kIndex1]->GetShapeVector();
+  auto input2_shape = inputs[kIndex2]->GetShapeVector();
+  auto input3_shape = inputs[kIndex3]->GetShapeVector();
   if ((input0_shape.size() < is_matrix) || (input1_shape.size() < is_matrix) || (input2_shape.size() < is_matrix) ||
       (input3_shape.size() < is_matrix)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the rank of all inputs must be equal to or greater than 2, "
-                         "but got the rank of 'superdiag': "
-                      << input0_shape.size() << ", the rank of 'maindiag': " << input1_shape.size()
-                      << ", the rank of 'subdiag': " << input2_shape.size()
-                      << ", the rank of 'rhs': " << input3_shape.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the rank of all inputs must be equal to or greater than 2, "
+                     "but got the rank of 'superdiag': "
+                  << input0_shape.size() << ", the rank of 'maindiag': " << input1_shape.size()
+                  << ", the rank of 'subdiag': " << input2_shape.size()
+                  << ", the rank of 'rhs': " << input3_shape.size();
+    return KRET_RESIZE_FAILED;
   }
   if ((input0_shape[input0_shape.size() - row] != is_vector) ||
       (input1_shape[input1_shape.size() - row] != is_vector) ||
       (input2_shape[input2_shape.size() - row] != is_vector)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the row of superdiag, maindiag and subdiag must be 1, "
-                         "but got the row of 'superdiag': "
-                      << input0_shape[input0_shape.size() - row]
-                      << ", the row of 'maindiag': " << input1_shape[input1_shape.size() - row]
-                      << ", the row of 'subdiag': " << input2_shape[input2_shape.size() - row];
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the row of superdiag, maindiag and subdiag must be 1, "
+                     "but got the row of 'superdiag': "
+                  << input0_shape[input0_shape.size() - row]
+                  << ", the row of 'maindiag': " << input1_shape[input1_shape.size() - row]
+                  << ", the row of 'subdiag': " << input2_shape[input2_shape.size() - row];
+    return KRET_RESIZE_FAILED;
   }
   if ((input0_shape != input1_shape) || (input0_shape != input2_shape) || (input1_shape != input2_shape)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of superdiag, maindiag and subdiag must be same, "
-                         "but got the shape of 'superdiag': "
-                      << input0_shape << ", the shape of 'maindiag': " << input1_shape
-                      << ", the shape of 'subdiag': " << input2_shape;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of superdiag, maindiag and subdiag must be same, "
+                     "but got the shape of 'superdiag': "
+                  << input0_shape << ", the shape of 'maindiag': " << input1_shape
+                  << ", the shape of 'subdiag': " << input2_shape;
+    return KRET_RESIZE_FAILED;
   }
   if ((input0_shape[input0_shape.size() - col] != input3_shape[input3_shape.size() - row]) ||
       (input1_shape[input1_shape.size() - col] != input3_shape[input3_shape.size() - row]) ||
       (input2_shape[input2_shape.size() - col] != input3_shape[input3_shape.size() - row])) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the col of superdiag, maindiag and subdiag must be equal to the row of rhs, "
-                         "but got the col of 'superdiag': "
-                      << input0_shape[input0_shape.size() - col]
-                      << ", the col of 'maindiag': " << input1_shape[input1_shape.size() - col]
-                      << ", the col of 'subdiag': " << input2_shape[input2_shape.size() - col]
-                      << ", the row of 'rhs': " << input3_shape[input2_shape.size() - row];
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the col of superdiag, maindiag and subdiag must be equal to the row of rhs, "
+                     "but got the col of 'superdiag': "
+                  << input0_shape[input0_shape.size() - col]
+                  << ", the col of 'maindiag': " << input1_shape[input1_shape.size() - col]
+                  << ", the col of 'subdiag': " << input2_shape[input2_shape.size() - col]
+                  << ", the row of 'rhs': " << input3_shape[input2_shape.size() - row];
+    return KRET_RESIZE_FAILED;
   }
   size_t rhs_shape_num = input3_shape.size() - row;
   for (size_t i = 0; i < rhs_shape_num; i++) {
     if ((input0_shape[i] != input3_shape[i]) || (input1_shape[i] != input3_shape[i]) ||
         (input2_shape[i] != input3_shape[i])) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the shape of all inputs ignoring the last two elements must be same, "
-                           "but got the shape of 'superdiag': "
-                        << input0_shape << ", the shape of 'maindiag': " << input1_shape
-                        << ", the shape of 'subdiag': " << input2_shape << ", the shape of 'rhs': " << input3_shape;
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the shape of all inputs ignoring the last two elements must be same, "
+                       "but got the shape of 'superdiag': "
+                    << input0_shape << ", the shape of 'maindiag': " << input1_shape
+                    << ", the shape of 'subdiag': " << input2_shape << ", the shape of 'rhs': " << input3_shape;
+      return KRET_RESIZE_FAILED;
     }
   }
+  return KRET_OK;
 }
 
 bool TridiagonalMatMulCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

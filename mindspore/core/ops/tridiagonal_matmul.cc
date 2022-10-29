@@ -38,6 +38,10 @@ abstract::ShapePtr TridiagonalMatMulInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(subdiag_shape_ptr);
   auto rhs_shape_ptr = input_args[3]->BuildShape();
   MS_EXCEPTION_IF_NULL(rhs_shape_ptr);
+  if (superdiag_shape_ptr->IsDynamic() || maindiag_shape_ptr->IsDynamic() || subdiag_shape_ptr->IsDynamic() ||
+      rhs_shape_ptr->IsDynamic()) {
+    return rhs_shape_ptr->cast<abstract::ShapePtr>();
+  }
   auto superdiag_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(superdiag_shape_ptr)[kShape];
   auto maindiag_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(maindiag_shape_ptr)[kShape];
   auto subdiag_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(subdiag_shape_ptr)[kShape];
