@@ -44,8 +44,7 @@ class StridedSliceV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
 
   template <typename T>
-  bool StridedSliceV2LaunchDynamicType(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs);
+  bool StridedSliceV2LaunchDynamicType(const std::vector<kernel::AddressPtr> &inputs);
 
   template <typename T>
   void InitSliceParam(const CNodePtr &kernel_node, std::vector<T> *begin, std::vector<T> *end, std::vector<T> *stride);

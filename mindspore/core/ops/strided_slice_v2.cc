@@ -26,6 +26,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/primitive_c.h"
 #include "mindapi/src/helper.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -135,7 +136,8 @@ int64_t ComputeSlicingLengthV2(int64_t start_pos, int64_t end_pos, int64_t strid
   }
   if (strides > 0) {
     slicing_length = GetSlicingLengthForPositiveStridesV2(start_pos, end_pos, strides, x_dim);
-  } else {
+  }
+  if (strides < 0) {
     slicing_length = GetSlicingLengthForNegativeStridesV2(start_pos, end_pos, strides, x_dim);
   }
   return slicing_length;
@@ -165,7 +167,7 @@ void EllipsisInferShapeV2(const PrimitivePtr &primitive, const std::vector<int64
   }
   size_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
   MS_EXCEPTION_IF_NULL(infer_shape);
-  (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + LongToSize(i),
+  (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + SizeToLong(i),
                             x_shape.begin() + SizeToLong(i + ellipsis_occupied_dims));
   j += 1;
   i += ellipsis_occupied_dims;

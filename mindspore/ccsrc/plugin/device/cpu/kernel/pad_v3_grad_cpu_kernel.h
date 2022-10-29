@@ -18,12 +18,11 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PAD_V3_GRAD_CPU_KERNEL_H_
 
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <array>
 #include <complex>
 #include <iostream>
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <map>
@@ -55,12 +54,12 @@ class PadV3GradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename S>
+  bool GetPaddings(const std::vector<AddressPtr> &inputs);
+
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-
-  template <typename S>
-  bool GetPaddings(const std::vector<AddressPtr> &inputs);
 
   template <typename T>
   void PadV3GradCompute(T *input, T *output, int64_t p) const;
