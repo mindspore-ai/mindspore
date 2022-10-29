@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/argmin_with_value_cpu_kernel.h"
-
 #include <string>
 
+#include "ops/argmin_with_value.h"
+#include "plugin/device/cpu/kernel/argmin_with_value_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -92,35 +92,11 @@ bool ArgMinWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   return true;
 }
 
-void ArgMinWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShape(kernel_node, 0));
-  size_t shape_len = shape_.size();
-  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  axis += static_cast<int64_t>(shape_len);
-  if (shape_len == 0) {
-    if (axis != -1 && axis != 0) {
-      MS_LOG(EXCEPTION) << "For ArgMinWithValue with 0d input tensor, axis must be one of 0 or -1, but got " << axis
-                        << ".";
-    }
-    axis = 0;
-  }
-  num_before_axis_ = 1;
-  num_after_axis_ = 1;
-  if (shape_len > 0) {
-    axis = axis % SizeToLong(shape_len);
-    for (size_t i = 0; i < shape_len; i++) {
-      if (SizeToLong(i) < axis) {
-        num_before_axis_ *= shape_[i];
-      } else if (SizeToLong(i) > axis) {
-        num_after_axis_ *= shape_[i];
-      }
-    }
-    dim_axis_ = shape_[LongToSize(axis)];
-  }
-  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
-  auto input_type_id = build_info->GetInputDeviceType(0);
+bool ArgMinWithValueCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto input_type_id = inputs.at(kIndex0)->GetDtype();
   switch (input_type_id) {
     case kNumberTypeFloat64:
       kernel_func_ = &ArgMinWithValueCpuKernelMod::LaunchKernel<double>;
@@ -158,6 +134,46 @@ void ArgMinWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     default:
       MS_LOG(EXCEPTION) << "Argmin kernel does not support " << TypeIdToString(input_type_id);
   }
+
+  return true;
+}
+
+int ArgMinWithValueCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetDeviceShapeAdaptively());
+  size_t shape_len = shape_.size();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMinWithValue>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  int64_t axis = kernel_ptr->axis();
+  axis += static_cast<int64_t>(shape_len);
+  if (shape_len == 0) {
+    if (axis != -1 && axis != 0) {
+      MS_LOG(EXCEPTION) << "For ArgMinWithValue with 0d input tensor, axis must be one of 0 or -1, but got " << axis
+                        << ".";
+    }
+    axis = 0;
+  }
+  num_before_axis_ = 1;
+  num_after_axis_ = 1;
+  if (shape_len > 0) {
+    axis = axis % SizeToLong(shape_len);
+    for (size_t i = 0; i < shape_len; i++) {
+      if (SizeToLong(i) < axis) {
+        num_before_axis_ *= shape_[i];
+      } else if (SizeToLong(i) > axis) {
+        num_after_axis_ *= shape_[i];
+      }
+    }
+    dim_axis_ = shape_[LongToSize(axis)];
+  }
+  dim_axis_ = shape_[axis];
+
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> ArgMinWithValueCpuKernelMod::GetOpSupport() {
