@@ -78,6 +78,16 @@ class UserData {
   }
   std::unique_ptr<DataMap> data_;
 };
+
+// User data key name.
+constexpr auto kUserDataData = "user_data_data";
+constexpr auto kUserDataType = "user_data_type";
+constexpr auto kHashTableKeyType = "hash_table_key_type";
+constexpr auto kHashTableValueType = "hash_table_value_type";
+constexpr auto kHashTableShapeVector = "hash_table_shape_vector";
+constexpr auto kHashTableDefaultValue = "hash_table_default_value";
+
+enum class UserDataType { kUserDataTypeUnknown = 0, kUserTypeHashTable };
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_USER_DATA_H_

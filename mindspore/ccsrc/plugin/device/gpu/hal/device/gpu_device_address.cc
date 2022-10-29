@@ -23,6 +23,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/hardware/gpu_device_context.h"
+#include "plugin/device/gpu/hal/device/gpu_hash_table.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
@@ -119,8 +120,42 @@ bool GPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
   return SyncDeviceToHost(size, host_ptr);
 }
 
+namespace {
+bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, size_t size) {
+  MS_EXCEPTION_IF_NULL(user_data);
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data->get<TypeId>(kHashTableValueType);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    if (*key_type == TypeId::kNumberTypeInt32 && *value_type == TypeId::kNumberTypeFloat32) {
+#if CUDA_VERSION > 11000
+      const auto &gpu_hash_table = user_data->get<GPUHashTable<int, float>>(kUserDataData);
+      MS_EXCEPTION_IF_NULL(gpu_hash_table);
+      if (!gpu_hash_table->Import({const_cast<void *>(host_ptr), size})) {
+        MS_LOG(EXCEPTION) << "Import for hash table failed.";
+      }
+#else
+      MS_LOG(EXCEPTION) << "Unsupported cuda version.";
+#endif
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported hash table type:" << *key_type << " and:" << *value_type;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
                                         const std::string &format) const {
+  if (user_data_ != nullptr) {
+    return SyncUserDataToDevice(user_data_, host_ptr, size);
+  }
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   bool execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);

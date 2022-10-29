@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/hal/hardware/cpu_device_context.h"
+#include <map>
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
@@ -114,7 +115,8 @@ std::vector<void *> CPUDeviceResManager::AllocateContinuousMemory(const std::vec
 
 DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
                                                           const string &format, TypeId type_id,
-                                                          const ShapeVector &shape) const {
+                                                          const ShapeVector &shape,
+                                                          const UserDataPtr &user_data) const {
   auto device_address = std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id,
                                                            device_context_->device_context_key().device_name_,
                                                            device_context_->device_context_key().device_id_);

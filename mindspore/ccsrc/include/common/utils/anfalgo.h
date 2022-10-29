@@ -285,6 +285,7 @@ class COMMON_EXPORT AnfAlgo {
   static TypeId GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx);
 
   static std::string GetTensorValueString(const tensor::TensorPtr &tensor);
+  static abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
 };
 }  // namespace common
 }  // namespace mindspore

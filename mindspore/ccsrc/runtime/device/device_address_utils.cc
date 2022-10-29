@@ -19,10 +19,14 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 #include "ir/tensor.h"
+#include "runtime/device/device_address.h"
+#include "runtime/device/hash_table.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore {
+using device::UserDataPtr;
 using tensor::TensorPtr;
 namespace runtime {
 // Whether device address of anf node is valid and device address type
@@ -37,6 +41,38 @@ bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePt
     return address->GetDeviceType() == device_context->GetDeviceType();
   }
   return false;
+}
+
+void DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(const DeviceContext *device_context, const AnfNodePtr &node,
+                                                            size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abstract_base = common::AnfAlgo::GetNodeAbstractByIndex(node, index);
+  if (!abstract_base->isa<abstract::AbstractMapTensor>()) {
+    MS_LOG(EXCEPTION) << "Parameter:" << node->DebugString() << " is not a map tensor type.";
+  }
+
+  const auto &abstract = abstract_base->cast<abstract::AbstractMapTensorPtr>();
+  MS_EXCEPTION_IF_NULL(abstract);
+
+  // Parse attrs for user data by abstract.
+  const auto &value_shape = abstract->value_shape();
+  MS_EXCEPTION_IF_NULL(value_shape);
+  const auto &shape_vector = value_shape->shape();
+  const auto &map_tensor_type = abstract->map_tensor_type();
+  MS_EXCEPTION_IF_NULL(map_tensor_type);
+  MS_EXCEPTION_IF_NULL(map_tensor_type->key_dtype());
+  MS_EXCEPTION_IF_NULL(map_tensor_type->value_dtype());
+
+  auto user_data = std::make_shared<UserData>();
+  user_data->set(kUserDataType, std::make_shared<UserDataType>(UserDataType::kUserTypeHashTable));
+  user_data->set(kHashTableKeyType, std::make_shared<TypeId>(map_tensor_type->key_dtype()->type_id()));
+  user_data->set(kHashTableValueType, std::make_shared<TypeId>(map_tensor_type->value_dtype()->type_id()));
+  user_data->set(kHashTableShapeVector, std::make_shared<ShapeVector>(shape_vector));
+  user_data->set(kHashTableDefaultValue, abstract->default_value());
+  // Create device for map tensor node and the ptr size is 1 byte.
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, 1, kOpFormat_DEFAULT, TypeId::kNumberTypeInt8, ShapeVector(), user_data);
+  AnfAlgo::SetOutputAddr(device_address, index, node.get());
 }
 
 void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *device_context,
@@ -74,8 +110,15 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
 
   // Create device address for anf node in nodes_list
   for (const auto &item : nodes_list) {
+    MS_EXCEPTION_IF_NULL(item);
     auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
+      const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(item, index);
+      if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
+        CreateDeviceAddressByMapTensorNode(device_context, item, index);
+        continue;
+      }
+
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
       if (output_type_id == kTypeUnknown) {
         output_type_id = common::AnfAlgo::GetOutputInferDataType(item, index);
@@ -186,6 +229,13 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       if (AnfAlgo::OutputAddrExist(kernel, i)) {
         continue;
       }
+
+      const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(kernel, i);
+      if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
+        CreateDeviceAddressByMapTensorNode(device_context, kernel, i);
+        continue;
+      }
+
       auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);

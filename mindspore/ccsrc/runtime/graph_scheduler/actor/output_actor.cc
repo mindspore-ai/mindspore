@@ -50,6 +50,9 @@ void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
                              const std::vector<KernelWithIndex> &output_nodes) {
   for (size_t i = 0; i < output_tensors.size(); ++i) {
     MS_EXCEPTION_IF_NULL(output_tensors[i]);
+    if (output_tensors[i]->isa<tensor::MapTensor>()) {
+      continue;
+    }
     auto shape = common::AnfAlgo::GetOutputInferShape(output_nodes[i].first, output_nodes[i].second);
     (void)output_tensors[i]->set_shape(shape);
   }
@@ -186,12 +189,40 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   outputs_[output_position] = tensor;
   current_outputs_num_++;
 }
+namespace {
+TensorPtr CreateOutputMapTensor(const AnfNodePtr &output_node, size_t output_index) {
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &user_data = device_tensor->user_data();
+  MS_EXCEPTION_IF_NULL(user_data);
+  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
+    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data->get<TypeId>(kHashTableValueType);
+    auto default_value = user_data->get<Value>(kHashTableDefaultValue);
+    MS_EXCEPTION_IF_NULL(shape_vector);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    MS_EXCEPTION_IF_NULL(default_value);
+    auto map_tensor = std::make_shared<tensor::MapTensor>(*key_type, *value_type, *shape_vector, default_value);
+    map_tensor->set_device_address(device_tensor);
+    return map_tensor;
+  }
+  MS_LOG(WARNING) << "Invalid user data type:" << *user_data_type;
+  return nullptr;
+}
+}  // namespace
 
 TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_LOG(INFO) << "Create output tensor, output node: " << output_node->fullname_with_scope()
                << ", output index: " << output_index << ", output position: " << output_position;
-
+  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
+  if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
+    return CreateOutputMapTensor(output_node, output_index);
+  }
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
   auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);

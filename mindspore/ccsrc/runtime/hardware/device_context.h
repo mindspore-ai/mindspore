@@ -134,7 +134,8 @@ class BACKEND_EXPORT DeviceResManager {
 
   // Create concrete device address according different device type.
   virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const ShapeVector &shape) const = 0;
+                                               TypeId type_id, const ShapeVector &shape,
+                                               const UserDataPtr &user_data = nullptr) const = 0;
 
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
   virtual bool CreateStream(size_t *stream_id) const { return true; }
