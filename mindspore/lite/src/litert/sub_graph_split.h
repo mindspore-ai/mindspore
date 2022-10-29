@@ -28,6 +28,7 @@
 #include "src/litert/inner_context.h"
 #include "src/common/prim_util.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/split_parameter.h"
 
 namespace mindspore::lite {
 constexpr int kDefaultSubGraphSize = 2;
@@ -90,11 +91,20 @@ class SearchSubGraph {
   void SubGraphSplit();
   void SubGraphSplitByOperator();
   void InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::vector<size_t> *outputs);
+  void DoOnlineFusion();
+  void DoSplitReduceConcatFusionPass();
+  int CreateCustomNode(LiteGraph::Node *node, Subgraph *subgraph, SplitParameter *split_param);
+  int ParseNodePrimitive(Subgraph *subgraph);
+  OpParameter *GetNodeOpParameter(LiteGraph::Node *node);
+  std::vector<std::vector<uint32_t>> GetNextNodeIndex(LiteGraph::Node *cur_node);
 
  private: /* split by output */
   void SubGraphSplitByOutput();
   void InitSearchSubGraphByOutput();
   void InsertNode(uint32_t index, Subgraph *subgraph, uint32_t last_index);
+  bool DoSplitReduceConcatFusion(uint32_t node_id);
+  bool SatifyReduceReshapeConcatParse(Subgraph *subgraph, uint32_t node_id, int split_concat_axis);
+  void DeleteOriginNode(Subgraph *subgraph);
 
  private: /* split by middle */
   void SubGraphSplitByMiddle();

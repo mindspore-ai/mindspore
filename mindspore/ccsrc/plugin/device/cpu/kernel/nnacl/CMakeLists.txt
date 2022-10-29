@@ -95,6 +95,7 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/fp32_grad/*.c
     ${NNACL_DIR}/kernel/*.c
     ${NNACL_DIR}/experimental/*.c
+    ${NNACL_DIR}/fp32/online_fusion/*.c
 )
 
 set(KERNEL_AVX512_FILE  ${NNACL_DIR}/fp32/matmul_avx512_fp32.c
