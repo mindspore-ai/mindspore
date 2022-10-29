@@ -42,6 +42,7 @@ class TileCPUKernel : public LiteKernel {
   uint8_t *input_addr_ = nullptr;
   uint8_t *output_addr_ = nullptr;
   TileParameter *tile_parameter_ = nullptr;
+  bool resize_done_ = false;
 };
 }  // namespace mindspore::kernel
 
