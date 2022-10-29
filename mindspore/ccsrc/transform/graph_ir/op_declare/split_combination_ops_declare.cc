@@ -60,4 +60,11 @@ ATTR_MAP(ConcatV2) = {
 };
 OUTPUT_MAP(ConcatV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ConcatV2, kNameConcatV2, ADPT_DESC(ConcatV2))
+
+// SplitV
+INPUT_MAP(SplitV) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size_splits)}, {3, INPUT_DESC(split_dim)}};
+ATTR_MAP(SplitV) = {{"num_split", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
+ATTR_INPUT_MAP(SplitV) = {{"size_splits", 2}, {"split_dim", 3}};
+DYN_OUTPUT_MAP(SplitV) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SplitV, prim::kPrimSplitV->name(), ADPT_DESC(SplitV))
 }  // namespace mindspore::transform

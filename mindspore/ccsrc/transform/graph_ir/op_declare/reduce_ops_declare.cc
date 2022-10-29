@@ -112,4 +112,11 @@ INPUT_MAP(ReduceMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
 ATTR_MAP(ReduceMax) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMax, "ReduceMaxV1", ADPT_DESC(ReduceMax))
+
+// ReduceStd
+INPUT_MAP(ReduceStd) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ReduceStd) = {{"axis", ATTR_DESC(dim, AnyTraits<std::vector<int64_t>>())},
+                       {"unbiased", ATTR_DESC(unbiased, AnyTraits<bool>())},
+                       {"keep_dims", ATTR_DESC(keepdim, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceStd) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
 }  // namespace mindspore::transform

@@ -482,6 +482,13 @@ ATTR_MAP(SquareSumAll) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SquareSumAll) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
 REG_ADPT_DESC(SquareSumAll, kNameSquareSumAll, ADPT_DESC(SquareSumAll))
 
+// SquareSumV1
+INPUT_MAP(SquareSumV1) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(SquareSumV1) = {{"axis", ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>())},
+                         {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(SquareSumV1) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SquareSumV1, prim::kPrimSquareSumV1->name(), ADPT_DESC(SquareSumV1))
+
 // Maximum
 INPUT_MAP(Maximum) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Maximum) = EMPTY_ATTR_MAP;
@@ -671,4 +678,10 @@ INPUT_MAP(KLDiv) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}};
 ATTR_MAP(KLDiv) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(KLDiv) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(KLDiv, kNameKLDiv, ADPT_DESC(KLDiv))
+
+// Erfinv
+INPUT_MAP(Erfinv) = {{1, INPUT_DESC(input_x)}};
+ATTR_MAP(Erfinv) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Erfinv) = {{0, OUTPUT_DESC(output_y)}};
+REG_ADPT_DESC(Erfinv, prim::kPrimErfinv->name(), ADPT_DESC(Erfinv))
 }  // namespace mindspore::transform

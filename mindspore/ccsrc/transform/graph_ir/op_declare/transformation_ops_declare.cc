@@ -61,6 +61,7 @@ INPUT_MAP(Transpose) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(perm)}};
 ATTR_MAP(Transpose) = EMPTY_ATTR_MAP;
 // Do not set Transpose operator output descriptor
 REG_ADPT_DESC(Transpose, "TransposeV1", ADPT_DESC(Transpose))
+REG_ADPT_DESC(TransposeNOD, prim::kPrimTransposeNOD->name(), ADPT_DESC(Transpose))
 
 // SpaceToDepth
 INPUT_MAP(SpaceToDepth) = {{1, INPUT_DESC(x)}};
