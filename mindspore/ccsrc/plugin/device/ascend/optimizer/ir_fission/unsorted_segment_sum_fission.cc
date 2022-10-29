@@ -89,6 +89,9 @@ CNodePtr UnsortedSegmentSumFission::CreateUnsortedSegmentSum(const FuncGraphPtr 
     common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(orig_sum, 0)}, {shape},
                                                 new_sum.get());
   }
+  if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, orig_sum)) {
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kUnsortedSegmentSumOpName), new_sum);
+  }
   return new_sum;
 }
 

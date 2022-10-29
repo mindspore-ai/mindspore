@@ -55,10 +55,11 @@ const AnfNodePtr UnsortedSegmentSumReplace::Process(const FuncGraphPtr &func_gra
 
   // Convert attr num_segments to the tensor input
   auto num_segments = common::AnfAlgo::GetNodeAttr<int64_t>(node, kNumSegments);
+  const auto num_segments_type = kInt32;
   auto value_node =
-    kernel_graph->NewValueNode(std::make_shared<tensor::Tensor>(static_cast<int32_t>(num_segments), kInt32));
+    kernel_graph->NewValueNode(std::make_shared<tensor::Tensor>(static_cast<int32_t>(num_segments), num_segments_type));
   MS_EXCEPTION_IF_NULL(value_node);
-
+  // create UnsortedSegmentSum
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kUnsortedSegmentSumOpName))};
   (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   new_inputs.push_back(value_node);
@@ -66,12 +67,28 @@ const AnfNodePtr UnsortedSegmentSumReplace::Process(const FuncGraphPtr &func_gra
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
-
-  if (!CheckAICoreSupportedAny(new_cnode)) {
+  // check support
+  auto input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(new_cnode, 0);
+  auto segmentid_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(new_cnode, 1);
+  auto builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
+  std::vector<TypeId> inputs_device_type = {input_dtype, segmentid_dtype, num_segments_type->type_id()};
+  std::vector<TypeId> outputs_device_type = {input_dtype};
+  std::vector<std::string> inputs_format = {kOpFormat_DEFAULT, kOpFormat_DEFAULT, kOpFormat_DEFAULT};
+  std::vector<std::string> outputs_format = {kOpFormat_DEFAULT};
+  builder.SetInputsDeviceType(inputs_device_type);
+  builder.SetOutputsDeviceType(outputs_device_type);
+  builder.SetInputsFormat(inputs_format);
+  builder.SetOutputsFormat(outputs_format);
+  if (!CheckAICoreSupportedSpec(new_cnode, builder.Build())) {
     MS_LOG(INFO) << "Replace unsorted_segment_sum_d op to unsorted_segment_sum op failed.";
     return nullptr;
   }
 
+  if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kUnsortedSegmentSumOpName), new_cnode);
+  }
+  new_cnode->set_primal_attrs(cnode->primal_attrs());
+  new_cnode->set_attrs(cnode->attrs());
   MS_LOG(INFO) << "Replace unsorted_segment_sum_d op to unsorted_segment_sum op success. use tbe aicore.";
   return new_cnode;
 }
