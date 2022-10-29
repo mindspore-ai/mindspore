@@ -146,6 +146,7 @@ class Worker {
   ThreadPool *pool_{nullptr};
   HQueue<TaskSplit> *local_task_queue_;
   size_t worker_id_{0};
+  std::vector<int> core_list_;
 };
 
 class MS_CORE_API ThreadPool {

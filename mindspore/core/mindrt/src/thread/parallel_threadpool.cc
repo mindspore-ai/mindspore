@@ -26,7 +26,9 @@ constexpr int kActorParallelThreshold = 5;
 void ParallelWorker::CreateThread() { thread_ = std::thread(&ParallelWorker::Run, this); }
 
 void ParallelWorker::Run() {
-  SetAffinity();
+  if (!core_list_.empty()) {
+    SetAffinity();
+  }
 #if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
   (void)pthread_setname_np(pthread_self(), ("ParallelThread_" + std::to_string(worker_id_)).c_str());
 #endif
