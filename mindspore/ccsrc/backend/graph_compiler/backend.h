@@ -74,7 +74,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   // Run single op in the PyNative mode.
   void RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
-
+  void RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
   // Execute all tasks in queue when lazy build is enabled in PyNative mode.
   void WaitTaskFinish() const override;
   // Clear resource when python exit.

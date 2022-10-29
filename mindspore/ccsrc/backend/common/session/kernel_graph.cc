@@ -654,11 +654,7 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
     value_node = std::make_shared<ValueNode>(input_tensor);
   }
   MS_EXCEPTION_IF_NULL(value_node);
-  // construct abstract of value node
-  auto type_of_tensor = input_tensor->Dtype();
-  auto shape_of_tensor = input_tensor->shape();
-  auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
-  value_node->set_abstract(abstract);
+  value_node->set_abstract(input_tensor->ToAbstract());
   // add value node to graph
   auto input_value_node = NewValueNode(value_node);
   AddValueNodeToGraph(input_value_node);
