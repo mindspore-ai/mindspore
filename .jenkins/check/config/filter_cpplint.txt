@@ -25,6 +25,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/cuda_impl/cuda_ops/concatv2_impl.cu"            "runtime/int"
 "mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.cc"            "runtime/threadsafe_fn"
 "mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.cc"            "runtime/references"
+"mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.h"            "runtime/references"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"
