@@ -1,16 +1,19 @@
 
-0.1.1	MindSpore*2.0.0:Š
-—
-bprop.109:xbprop.109:[CNode]110:1bprop.109:[CNode]110:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op61
-—
-bprop.109:ybprop.109:[CNode]111:3bprop.109:[CNode]111:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op62
+0.1.1	MindSpore*2.0.0:ø
+|(get_bprop_greater_equal.221:[CNode]227:1(get_bprop_greater_equal.221:[CNode]227:1"REF::bprop.228:Default/bprop.228-op86get_bprop_greater_equal.221*"
+ get_bprop_greater_equal.221:self*,
+*get_bprop_greater_equal.221:[Parameter]223*,
+*get_bprop_greater_equal.221:[Parameter]225*,
+*get_bprop_greater_equal.221:[Parameter]229*,
+*get_bprop_greater_equal.221:[Parameter]2302*
+(get_bprop_greater_equal.221:[CNode]227:1:@a77b6da365a4c263130e206e03e482c37a49718be3714fd1efc22e3d2805da4aJ/grad_math_ops.pyB²
+¶
+*get_bprop_greater_equal.221:[Parameter]223bprop.228:[CNode]222:2bprop.228:[CNode]222:2"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:.Default/S-Prim-hyper_map[zeros_like_leaf]-op87
+¶
+*get_bprop_greater_equal.221:[Parameter]225bprop.228:[CNode]224:4bprop.228:[CNode]224:4"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:.Default/S-Prim-hyper_map[zeros_like_leaf]-op88
 ˜
-bprop.109:[CNode]110:1
-bprop.109:[CNode]111:3bprop.109:[CNode]112:4bprop.109:[CNode]112:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op63	bprop.109*
-bprop.109:x*
-bprop.109:y*
-bprop.109:out*
-bprop.109:dout2
-bprop.109:[CNode]112:4:@a77b6da365a4c263130e206e03e482c37a49718be3714fd1efc22e3d2805da4aJ/grad_math_ops.pyPb&
-S-Prim-MakeTuple:5S-Prim-MakeTuplebH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]h
+bprop.228:[CNode]222:2
+bprop.228:[CNode]224:4bprop.228:[CNode]226:5bprop.228:[CNode]226:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op89	bprop.2282
+bprop.228:[CNode]226:5Pb&
+S-Prim-MakeTuple:6S-Prim-MakeTuplebH
+#S-Prim-hyper_map[zeros_like_leaf]:3!S-Prim-hyper_map[zeros_like_leaf]h

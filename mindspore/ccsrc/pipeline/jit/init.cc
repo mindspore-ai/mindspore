@@ -545,6 +545,8 @@ PYBIND11_MODULE(_c_expression, m) {
 #ifndef _WIN32
   (void)m.def("_export_bprop_mindir", &mindspore::ad::ExportBpropToMindir,
               "Export the backpropagation function to mindir file.");
+  (void)m.def("_check_bprop_mindir", &mindspore::ad::CheckMindir,
+              "Check whether a mindir file can be loaded and up to date.");
 #endif
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
 }

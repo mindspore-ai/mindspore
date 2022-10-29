@@ -1,16 +1,19 @@
 
-0.1.1	MindSpore*2.0.0:ç
-ò
-bprop.207:xbprop.207:[CNode]208:1bprop.207:[CNode]208:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:/Default/S-Prim-hyper_map[zeros_like_leaf]-op119
-ò
-bprop.207:ybprop.207:[CNode]209:3bprop.207:[CNode]209:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:/Default/S-Prim-hyper_map[zeros_like_leaf]-op120
+0.1.1	MindSpore*2.0.0:
+{'get_bprop_truncate_div.409:[CNode]415:1'get_bprop_truncate_div.409:[CNode]415:1"REF::bprop.416:Default/bprop.416-op168get_bprop_truncate_div.409*!
+get_bprop_truncate_div.409:self*+
+)get_bprop_truncate_div.409:[Parameter]411*+
+)get_bprop_truncate_div.409:[Parameter]413*+
+)get_bprop_truncate_div.409:[Parameter]417*+
+)get_bprop_truncate_div.409:[Parameter]4182)
+'get_bprop_truncate_div.409:[CNode]415:1:@a8f96e783e49fe455f7fee2dbda70043761c9bb3cbcd1c9ad3cd37eecd1f80e5J/grad_math_ops.pyB≥
+∂
+)get_bprop_truncate_div.409:[Parameter]411bprop.416:[CNode]410:2bprop.416:[CNode]410:2"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:/Default/S-Prim-hyper_map[zeros_like_leaf]-op169
+∂
+)get_bprop_truncate_div.409:[Parameter]413bprop.416:[CNode]412:4bprop.416:[CNode]412:4"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:/Default/S-Prim-hyper_map[zeros_like_leaf]-op170
 ô
-bprop.207:[CNode]208:1
-bprop.207:[CNode]209:3bprop.207:[CNode]210:4bprop.207:[CNode]210:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op121	bprop.207*
-bprop.207:x*
-bprop.207:y*
-bprop.207:out*
-bprop.207:dout2
-bprop.207:[CNode]210:4:@a8f96e783e49fe455f7fee2dbda70043761c9bb3cbcd1c9ad3cd37eecd1f80e5J/grad_math_ops.pyPbH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]b&
-S-Prim-MakeTuple:5S-Prim-MakeTupleh
+bprop.416:[CNode]410:2
+bprop.416:[CNode]412:4bprop.416:[CNode]414:5bprop.416:[CNode]414:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op171	bprop.4162
+bprop.416:[CNode]414:5Pb&
+S-Prim-MakeTuple:6S-Prim-MakeTuplebH
+#S-Prim-hyper_map[zeros_like_leaf]:3!S-Prim-hyper_map[zeros_like_leaf]h

@@ -1,10 +1,12 @@
 
-0.1.1	MindSpore*2.0.0:›
-s
-bprop.29:doutbprop.29:[CNode]30:1bprop.29:[CNode]30:1"REF::S-Prim-MakeTuple:2:Default/S-Prim-MakeTuple-op15bprop.29*
-
-bprop.29:x*
-bprop.29:out*
-bprop.29:dout2
-bprop.29:[CNode]30:1:@403d64b65284847b0b5f01f2121501208c9d8fb5c1da4b332a158de570991518J/grad_comm_ops.pyPb&
-S-Prim-MakeTuple:2S-Prim-MakeTupleh
+0.1.1	MindSpore*2.0.0:¢
+p#get_bprop_broad_cast.59:[CNode]62:1#get_bprop_broad_cast.59:[CNode]62:1"REF::bprop.63:Default/bprop.63-op23get_bprop_broad_cast.59*
+get_bprop_broad_cast.59:self*'
+%get_bprop_broad_cast.59:[Parameter]64*'
+%get_bprop_broad_cast.59:[Parameter]65*'
+%get_bprop_broad_cast.59:[Parameter]612%
+#get_bprop_broad_cast.59:[CNode]62:1:@403d64b65284847b0b5f01f2121501208c9d8fb5c1da4b332a158de570991518J/grad_comm_ops.pyB°
+‹
+%get_bprop_broad_cast.59:[Parameter]61bprop.63:[CNode]60:2bprop.63:[CNode]60:2"REF::S-Prim-MakeTuple:3:Default/S-Prim-MakeTuple-op24bprop.632
+bprop.63:[CNode]60:2Pb&
+S-Prim-MakeTuple:3S-Prim-MakeTupleh

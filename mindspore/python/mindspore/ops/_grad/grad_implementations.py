@@ -15,7 +15,6 @@
 
 """bprop primitives"""
 from mindspore.ops import _constants
-from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
@@ -34,14 +33,6 @@ def bprop_max_and_minimum_grad_grad(x, y, z, out, dout):
     out1 = F.cast(out[1] != 0, get_dtype(dout[1]))
     dz = out0 * dout[0] + out1 * dout[1]
     return F.zeros_like(x), F.zeros_like(y), dz
-
-
-@bprops.register("ReluGrad")
-def bprop_relu_grad_grad(x, y, out, dout):
-    """Backpropagator for primitive `ReluGrad`."""
-    input_grad = G.ReluGrad()
-    dy = input_grad(dout, y)
-    return dy, F.zeros_like(y)
 
 
 @bprops.register(_constants.kScalarAdd)

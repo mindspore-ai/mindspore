@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,37 +19,35 @@ import shutil
 import argparse
 import logging
 
-from mindspore.ops import operations as P
-from mindspore.ops import _constants
 import mindspore.ops._grad as g
-from mindspore.ops.operations import _grad_ops as G
 from mindspore._c_expression import _export_bprop_mindir
-
-serializable_bprop_ops = [P.ReLU, P.Identity, P.Range, P.OnesLike, P.ZerosLike, P.Argmax, P.Argmin, P.Broadcast,
-                          P.AssignAdd, P.AssignSub, P.IsFinite, P.ApproximateEqual, P.Sign, P.LogicalNot, P.Round,
-                          P.LinSpace, P.DropoutGenMask, P.OneHot, P.Assign, P.IOU, P.BNTrainingReduce, P.Equal,
-                          P.NotEqual, P.Greater, P.GreaterEqual, P.Less, P.LessEqual, P.LogicalAnd, P.LogicalOr,
-                          P.ReduceAll, P.ReduceAny, P.DropoutDoMask, P.DType, P.Shape, P.DynamicShape, P.Rank,
-                          P.Select, P.ScatterMax, P.ScatterMin, P.ScatterUpdate, G.ReluGrad, _constants.kTupleGetItem,
-                          P.FloorDiv, P.TruncateDiv, P.Minimum, P.Maximum, P.IsNan, P.IsInf, P.ReLUV2, "Depend",
-                          "stop_gradient", "Switch", "UpdateState", "Load"]
+from mindspore.ops._grad.grad_base import bprop_getters, bprops
 
 logging.getLogger().setLevel(logging.INFO)
 
 
-def run_generate():
-    for op in serializable_bprop_ops:
-        if not isinstance(op, str):
-            op = op.__name__
-        _export_bprop_mindir(op)
+def run_generate(bprop_mindir_install_dir, bprop_map):
+    for op_name in bprop_map.keys():
+        if not isinstance(op_name, str):
+            continue
+        if os.path.isfile(os.path.join(bprop_mindir_install_dir, op_name + "_bprop.mindir")):
+            _export_bprop_mindir(op_name)
+
+
+def run_generate_with_op_name(op_name):
+    _export_bprop_mindir(op_name)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Bprop generator")
+    parser = argparse.ArgumentParser(description="Bprop mindir generator")
     parser.add_argument('--mindspore_path', type=str, default=None,
                         help="The absolute path of the mindspore root directory where the bprop source files has been \
                         modified. If not specified, it will find the bprop source files in your mindspore installed \
                         path. Default: None.")
+    parser.add_argument('--op', type=str, default=None,
+                        help="The name of the operator whose bprop is to be transformed to mindir file. If not \
+                        specified, it will generate all the mindir files of bprop which has already been transform \
+                        to mindir. Default: None.")
 
     args_opt = parser.parse_args()
     # mindspore/ops/_grad/__init__.py
@@ -81,7 +79,12 @@ if __name__ == "__main__":
                 shutil.copy(file_path, bprop_installed_dir)
                 logging.info("copied: %s", file_path)
 
-    run_generate()
+    op = args_opt.op
+    if op is None:
+        run_generate(bprop_mindir_export_dir, bprop_getters)
+        run_generate(bprop_mindir_export_dir, bprops)
+    else:
+        run_generate_with_op_name(op)
 
     # If the specified bprop source directory is not on the mindspore installed path,
     # copy the generated mindir files to the mindir directory relative to the specified path.

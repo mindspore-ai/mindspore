@@ -1,20 +1,19 @@
 
-0.1.1	MindSpore*2.0.0:Ò
-í
-
-bprop.46:xbprop.46:[CNode]47:1bprop.46:[CNode]47:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op24
-í
-
-bprop.46:ybprop.46:[CNode]48:3bprop.46:[CNode]48:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op25
-ê
-bprop.46:[CNode]47:1
-bprop.46:[CNode]48:3bprop.46:[CNode]49:4bprop.46:[CNode]49:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op26bprop.46*
-
-bprop.46:x*
-
-bprop.46:y*
-bprop.46:out*
-bprop.46:dout2
-bprop.46:[CNode]49:4:@7fb54a66e55c2c40cd92783044880b792666a0d7fc794bb717bee3544337d6a0J/grad_math_ops.pyPbH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]b&
-S-Prim-MakeTuple:5S-Prim-MakeTupleh
+0.1.1	MindSpore*2.0.0:í
+Ç+get_bprop_approximate_equal.94:[CNode]100:1+get_bprop_approximate_equal.94:[CNode]100:1"REF::bprop.101:Default/bprop.101-op36get_bprop_approximate_equal.94*%
+#get_bprop_approximate_equal.94:self*.
+,get_bprop_approximate_equal.94:[Parameter]96*.
+,get_bprop_approximate_equal.94:[Parameter]98*/
+-get_bprop_approximate_equal.94:[Parameter]102*/
+-get_bprop_approximate_equal.94:[Parameter]1032-
++get_bprop_approximate_equal.94:[CNode]100:1:@7fb54a66e55c2c40cd92783044880b792666a0d7fc794bb717bee3544337d6a0J/grad_math_ops.pyB≠
+∂
+,get_bprop_approximate_equal.94:[Parameter]96bprop.101:[CNode]95:2bprop.101:[CNode]95:2"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:.Default/S-Prim-hyper_map[zeros_like_leaf]-op37
+∂
+,get_bprop_approximate_equal.94:[Parameter]98bprop.101:[CNode]97:4bprop.101:[CNode]97:4"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:.Default/S-Prim-hyper_map[zeros_like_leaf]-op38
+î
+bprop.101:[CNode]95:2
+bprop.101:[CNode]97:4bprop.101:[CNode]99:5bprop.101:[CNode]99:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op39	bprop.1012
+bprop.101:[CNode]99:5PbH
+#S-Prim-hyper_map[zeros_like_leaf]:3!S-Prim-hyper_map[zeros_like_leaf]b&
+S-Prim-MakeTuple:6S-Prim-MakeTupleh
