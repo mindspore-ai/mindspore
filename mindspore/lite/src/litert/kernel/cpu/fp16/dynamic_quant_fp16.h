@@ -22,12 +22,12 @@
 #include "src/litert/lite_kernel.h"
 
 namespace mindspore::kernel {
-class DynamicQuantCPUKernel : public LiteKernel {
+class DynamicQuantFp16CPUKernel : public LiteKernel {
  public:
-  DynamicQuantCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  DynamicQuantFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx), thread_num_(ctx->thread_num_) {}
-  ~DynamicQuantCPUKernel() override = default;
+  ~DynamicQuantFp16CPUKernel() override = default;
 
   int Prepare() override;
   int ReSize() override;
@@ -46,10 +46,9 @@ class DynamicQuantCPUKernel : public LiteKernel {
   int thread_n_stride_{0};
   int num_unit_{0};
   int8_t *int8_ptr_ = nullptr;
-  float *float32_ptr_ = nullptr;
-
-  float real_min_array_[8] = {0};
-  float real_max_array_[8] = {0};
+  float16_t *float16_ptr_ = nullptr;
+  float16_t real_min_array_[8] = {0};
+  float16_t real_max_array_[8] = {0};
   float real_min_ = FLT_MAX;
   float real_max_ = -FLT_MAX;
   int32_t src_dtype_{0};

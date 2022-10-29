@@ -54,6 +54,9 @@ int DynamicGatherInt8CPUKernel::Prepare() {
                   << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
+#ifdef ENABLE_FP16
+  enable_fp16_ = ms_context_->device_list_[0].device_info_.cpu_device_info_.enable_float16_;
+#endif
   if (in_tensors_.size() == kInputSize2) {
     CHECK_NULL_RETURN(in_tensors_.at(C2NUM));
     auto axis_data = reinterpret_cast<int *>(in_tensors_.at(C2NUM)->data());
@@ -99,6 +102,10 @@ int DynamicGatherInt8CPUKernel::Prepare() {
 }
 
 int DynamicGatherInt8CPUKernel::ReSize() {
+  // In the framework, the out_tensors data_type is forced to kNumberTypeFloat32
+  if (enable_fp16_) {
+    out_tensors_[0]->set_data_type(kNumberTypeFloat16);
+  }
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto in_shape = input_tensor->shape();
@@ -172,9 +179,19 @@ int DynamicGatherInt8CPUKernel::DoGather(int task_id) {
 
   auto input_ptr = static_cast<int8_t *>(input_tensor->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = static_cast<float *>(out_tensor->data());
-  CHECK_NULL_RETURN(output_ptr);
-
+  float *fp32_output_ptr = nullptr;
+#ifdef ENABLE_FP16
+  float16_t *fp16_output_ptr = nullptr;
+#endif
+  if (!enable_fp16_) {
+    fp32_output_ptr = static_cast<float *>(out_tensor->data());
+    CHECK_NULL_RETURN(fp32_output_ptr);
+#ifdef ENABLE_FP16
+  } else {
+    fp16_output_ptr = static_cast<float16_t *>(out_tensor->data());
+    CHECK_NULL_RETURN(fp16_output_ptr);
+#endif
+  }
   int indices_element_size = indices_tensor->ElementsNum();
   MS_CHECK_GT(indices_element_size, 0, RET_ERROR);
 
@@ -183,9 +200,18 @@ int DynamicGatherInt8CPUKernel::DoGather(int task_id) {
   auto thread_stride = stride * task_id;
 
   input_ptr += thread_stride * inner_size_ * limit_;
-  output_ptr += thread_stride * inner_size_ * indices_element_size;
-  DynamicGather(input_ptr, outer_size, inner_size_, limit_, indices_data_, indices_element_size_, output_ptr,
-                quant_param_->scale_in_, quant_param_->zp_in_);
+  if (!enable_fp16_) {
+    fp32_output_ptr += thread_stride * inner_size_ * indices_element_size;
+    DynamicGather(input_ptr, outer_size, inner_size_, limit_, indices_data_, indices_element_size_, fp32_output_ptr,
+                  quant_param_->scale_in_, quant_param_->zp_in_);
+#ifdef ENABLE_FP16
+  } else {
+    fp16_output_ptr += thread_stride * inner_size_ * indices_element_size;
+    DynamicGatherForFp16(input_ptr, outer_size, inner_size_, limit_, indices_data_, indices_element_size_,
+                         fp16_output_ptr, quant_param_->scale_in_, quant_param_->zp_in_);
+#endif
+  }
+
   return RET_OK;
 }
 

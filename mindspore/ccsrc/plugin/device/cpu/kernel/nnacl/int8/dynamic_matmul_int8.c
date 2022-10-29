@@ -54,6 +54,45 @@ void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_
   return;
 }
 
+#ifdef ENABLE_FP16
+void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4, float *multi_scales,
+                                    float16_t *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
+                                    const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type) {
+  /* *
+   * row4x4-major * row4x16-major => (int8)row-major
+   * support activation per-layer symmetric && weight per-layer/per-channel symmetric
+   * */
+  for (int r = 0; r < row; r++) {
+    int64_t s2 = a_sums[r];
+    for (int c = 0; c < col; c++) {
+      int r4div = r / C4NUM, r4mod = r % C4NUM;
+      int c16div = c / C16NUM, c16mod = c % C16NUM;
+      int32_t s1 = 0;
+      for (int d = 0; d < deep4; d++) {
+        int d4div = d / C4NUM, d4mod = d % C4NUM;
+        size_t ai = r4div * deep4 * C4NUM + d4div * C4NUM * C4NUM + r4mod * C4NUM + d4mod;
+        size_t bi = c16div * deep4 * C16NUM + d4div * C4NUM * C16NUM + c16mod * C4NUM + d4mod;
+        s1 += a[ai] * b[bi];
+      }
+      int64_t s3 = b_sums[c] * a_zp;
+      int64_t s4 = a_zp * b_zp_sum;
+      size_t ci = r * stride / sizeof(float16_t) + c;
+      out[ci] = multi_scales[c] * (s1 - s2 - s3 + s4);
+      if (bias != NULL) {
+        out[ci] += bias[c];
+      }
+      if (act_type == ActType_Relu) {
+        out[ci] = MSMAX(0, out[ci]);
+      } else if (act_type == ActType_Relu6) {
+        out[ci] = MSMAX(0, out[ci]);
+        out[ci] = MSMIN(C6NUM, out[ci]);
+      }
+    }
+  }
+  return;
+}
+#endif
+
 void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
                              int deep, int deep16, size_t stride, int input_zp, float input_scale,
                              const float *filter_scale, const int filter_zp, bool filter_per_channel,

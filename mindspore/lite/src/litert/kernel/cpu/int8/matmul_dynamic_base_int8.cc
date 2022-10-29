@@ -141,6 +141,12 @@ void MatmulDynamicBaseInt8CPUKernel::FreeTmpBuffer() {
     free(fp32_bias_ptr_);
     fp32_bias_ptr_ = nullptr;
   }
+#ifdef ENABLE_FP16
+  if (fp16_bias_ptr_ != nullptr) {
+    free(fp16_bias_ptr_);
+    fp16_bias_ptr_ = nullptr;
+  }
+#endif
   return;
 }
 
@@ -227,15 +233,32 @@ int MatmulDynamicBaseInt8CPUKernel::CopyBias() {
   if (in_tensors_.size() == kHasBiasSize) {
     CHECK_NULL_RETURN(in_tensors_[kBiasIndex]);
     auto bias_tensor = in_tensors_[kBiasIndex];
-    fp32_bias_ptr_ = static_cast<float *>(malloc(bias_tensor->Size()));
-    if (fp32_bias_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Memory allocation failed";
-      FreeTmpBuffer();
-      return RET_MEMORY_FAILED;
+
+#ifdef ENABLE_FP16
+    if (enable_fp16_) {
+      fp16_bias_ptr_ = static_cast<float16_t *>(malloc(bias_tensor->Size()));
+      if (fp16_bias_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "Memory allocation failed";
+        FreeTmpBuffer();
+        return RET_MEMORY_FAILED;
+      }
+      memcpy(fp16_bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float16_t));
     }
-    memcpy(fp32_bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float));
+#endif
+    if (!enable_fp16_) {
+      fp32_bias_ptr_ = static_cast<float *>(malloc(bias_tensor->Size()));
+      if (fp32_bias_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "Memory allocation failed";
+        FreeTmpBuffer();
+        return RET_MEMORY_FAILED;
+      }
+      memcpy(fp32_bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float));
+    }
   } else {
     fp32_bias_ptr_ = nullptr;
+#ifdef ENABLE_FP16
+    fp16_bias_ptr_ = nullptr;
+#endif
   }
   return RET_OK;
 }
@@ -247,12 +270,14 @@ int MatmulDynamicBaseInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[1]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
-      in_tensors_[1]->data_type() != mindspore::kNumberTypeInt8 ||
-      out_tensors_[0]->data_type() != mindspore::kNumberTypeFloat32) {
+      in_tensors_[1]->data_type() != mindspore::kNumberTypeInt8) {
     MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", input1 data_type is "
-                  << in_tensors_[1]->data_type() << ", output data_type is " << out_tensors_[0]->data_type();
+                  << in_tensors_[1]->data_type();
     return RET_ERROR;
   }
+#ifdef ENABLE_FP16
+  enable_fp16_ = ms_context_->device_list_[0].device_info_.cpu_device_info_.enable_float16_;
+#endif
   InitParameter();
   auto ret = MallocQuantParam();
   if (ret != RET_OK) {
@@ -291,6 +316,10 @@ int MatmulDynamicBaseInt8CPUKernel::Prepare() {
 }
 
 int MatmulDynamicBaseInt8CPUKernel::ReSize() {
+  // In the framework, the out_tensors data_type is forced to kNumberTypeFloat32
+  if (enable_fp16_) {
+    out_tensors_[0]->set_data_type(kNumberTypeFloat16);
+  }
   auto x_shape = in_tensors_.at(0)->shape();
   auto o_shape = out_tensors_.at(0)->shape();
   MS_ASSERT(o_shape.size() >= kSize2);
