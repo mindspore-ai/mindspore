@@ -63,7 +63,14 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
                          return elem;
                        });
 
-  if (IsDynamicShape(indices_shp) || IsDynamicShape(values_shp) || IsDynamicShape(dense_shape_vec)) {
+  for (const auto &elem_type : dense_shape->ElementsType()) {
+    if (!elem_type->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "For COOTensor, the element type of `shape` must be Int, but got "
+                              << elem_type->ToString();
+    }
+  }
+
+  if (IsDynamic(indices_shp) || IsDynamic(values_shp)) {
     MS_LOG(DEBUG) << "Dynamic shape in MakeCOOTensor's inputs! Ignore shape check.";
     AbstractBasePtrList element_list{indices, values, dense_shape};
     return std::make_shared<abstract::AbstractCOOTensor>(element_list);
@@ -79,13 +86,6 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   if (indices_shp[kIndexOne] != kDimTwo) {
     MS_EXCEPTION(ValueError) << "For COOTensor, `indices.shape[" << kIndexOne << "]` must be " << kDimTwo << ",but got "
                              << indices_shp[kIndexOne];
-  }
-
-  for (const auto &elem_type : dense_shape->ElementsType()) {
-    if (!elem_type->isa<Int>()) {
-      MS_EXCEPTION(TypeError) << "For COOTensor, the element type of `shape` must be Int, but got "
-                              << elem_type->ToString();
-    }
   }
 
   if (LongToSize(indices_shp[kIndexOne]) != dense_shape_vec.size()) {
