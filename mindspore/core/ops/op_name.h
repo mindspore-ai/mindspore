@@ -373,6 +373,7 @@ constexpr auto kUpper = "upper";
 constexpr auto kConjugate = "conjugate";
 constexpr auto KExclusive = "exclusive";
 constexpr auto KReverse = "reverse";
+constexpr auto KComputeEigenvectors = "compute_eigenvectors";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;

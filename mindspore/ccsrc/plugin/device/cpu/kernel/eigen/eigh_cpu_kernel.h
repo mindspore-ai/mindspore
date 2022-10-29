@@ -20,6 +20,7 @@
 #include <vector>
 #include <complex>
 #include <tuple>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -28,16 +29,19 @@ namespace kernel {
 
 using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
-class EighCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class EighCpuKernelMod : public NativeCpuKernelMod {
  public:
   EighCpuKernelMod() = default;
   ~EighCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
-  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -47,14 +51,14 @@ class EighCpuKernelMod : public DeprecatedNativeCpuKernelMod {
    * @tparam T , input Type
    */
   template <typename T>
-  void InitIOFunc(const CNodePtr &kernel_node);
+  void InitIOFunc();
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
   using EighFunc =
     std::function<bool(EighCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  using EighInitFunc = std::function<void(EighCpuKernelMod *, const CNodePtr &)>;
+  using EighInitFunc = std::function<void(EighCpuKernelMod *)>;
   static std::vector<std::tuple<KernelAttr, EighFunc, EighInitFunc>> func_list_;
   EighFunc kernel_func_;
   EighInitFunc init_io_func_;

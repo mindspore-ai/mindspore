@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/eigen/eigh_cpu_kernel.h"
 #include <algorithm>
 #include <tuple>
+#include <map>
 #include <type_traits>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "Eigen/Eigenvalues"
@@ -29,27 +30,15 @@ constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
 }  // namespace
 
-void EighCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  compute_eigen_vectors_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
-  lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
-  auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({A_shape})) {
-    return;
-  }
-  if (A_shape.size() != kShape2dDims) {
-    MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_ << "', a must be 2D, but got [" << A_shape.size()
-                      << "] dimensions.";
-  }
-  if (A_shape[kDim0] != A_shape[kDim1]) {
-    MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_
-                      << "', a must be a squre matrix like [N X N], but got [" << A_shape[kDim0] << " X "
-                      << A_shape[kDim1] << "].";
-  }
-  m_ = LongToSize(A_shape[kDim0]);
+bool EighCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  dtype_ = inputs[0]->GetDtype();
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  compute_eigen_vectors_ = GetValue<bool>(base_operator->GetAttr(C_EIEH_VECTOR));
+  lower_ = GetValue<bool>(base_operator->GetAttr(LOWER));
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Eigh does not support this kernel data type: " << kernel_attr;
@@ -57,6 +46,21 @@ void EighCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_func_ = std::get<1>(func_list_[index]);
   const size_t kTwoIdx = 2;
   init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
+  return true;
+}
+
+int EighCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  auto A_shape = inputs[0]->GetShapeVector();
+  m_ = LongToSize(A_shape[kDim0]);
+  init_io_func_(this);
+  return KRET_OK;
 }
 
 template <typename T>
@@ -83,8 +87,7 @@ void SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *out
 }
 
 template <typename T>
-void EighCpuKernelMod::InitIOFunc(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
+void EighCpuKernelMod::InitIOFunc() {
   (void)workspace_size_list_.emplace_back(m_ * m_ * sizeof(T));
 }
 
