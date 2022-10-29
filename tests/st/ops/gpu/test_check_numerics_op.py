@@ -17,8 +17,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
-from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore import Tensor, jit
 
 
 class CheckNumericsNet(nn.Cell):
@@ -26,7 +25,7 @@ class CheckNumericsNet(nn.Cell):
         super(CheckNumericsNet, self).__init__()
         self.checknumerics = P.CheckNumerics()
 
-    @ms_function
+    @jit
     def construct(self, input_x):
         return self.checknumerics(input_x)
 

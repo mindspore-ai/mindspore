@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor, context, ms_function
+from mindspore import Tensor, context, jit
 from mindspore import dataset as ds
 from mindspore.ops import operations as P
 from mindspore.common.jit_config import JitConfig
@@ -49,7 +49,7 @@ attention = Attention()
 relu = nn.ReLU()
 
 
-@ms_function
+@jit
 def dense_func(x, label):
     q, k, v = attention(x)
     k = P.Transpose()(k, (1, 0)) # (728, 32)
@@ -65,7 +65,7 @@ optimizer_adam.update_parameters_name("opt")
 grad_dens_func = ms.ops.value_and_grad(dense_func, None, optimizer_adam.parameters)
 
 
-@ms_function
+@jit
 def train_step(input_, label_):
     loss, grad = grad_dens_func(input_, label_)
     optimizer_adam(grad)
