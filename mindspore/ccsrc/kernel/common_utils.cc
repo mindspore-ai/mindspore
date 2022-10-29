@@ -974,17 +974,22 @@ float Scaling(size_t in_size, size_t out_size, bool align_corners) {
                                          : in_size / static_cast<float>(out_size);
 }
 
-float ScaleGrid(const int x, const float scale) { return static_cast<float>(x) * scale; }
-
+float ScaleGrid(const int x, const float scale, bool half_pixel_centers) {
+  if (half_pixel_centers) {
+    return (static_cast<float>(x) + 0.5f) * scale - 0.5f;
+  } else {
+    return static_cast<float>(x) * scale;
+  }
+}
 void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, const float scale,
-                                 CachedInterpolation *interpolation) {
+                                 CachedInterpolation *interpolation, bool half_pixel_centers) {
   interpolation[out_size].lower = 0;
   interpolation[out_size].upper = 0;
   for (size_t i = 0; i <= out_size - 1; ++i) {
-    const float in = ScaleGrid(i, scale);
+    const float in = ScaleGrid(i, scale, half_pixel_centers);
     const float in_f = std::floor(in);
-    interpolation[i].lower = std::max(static_cast<size_t>(in_f), static_cast<size_t>(0));
-    interpolation[i].upper = std::min(static_cast<size_t>(std::ceil(in)), in_size - 1);
+    interpolation[i].lower = std::max(static_cast<int64_t>(in_f), static_cast<int64_t>(0));
+    interpolation[i].upper = std::min(static_cast<int64_t>(std::ceil(in)), static_cast<int64_t>(in_size - 1));
     interpolation[i].lerp = in - in_f;
   }
 }

@@ -53,10 +53,17 @@ bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinear>(base_operator);
     MS_EXCEPTION_IF_NULL(resize_bilinear_op);
     align_corners_ = resize_bilinear_op->get_align_corners();
+    half_pixel_centers_ = resize_bilinear_op->get_half_pixel_centers();
   } else {
     auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinearV2>(base_operator);
     MS_EXCEPTION_IF_NULL(resize_bilinear_op);
     align_corners_ = resize_bilinear_op->get_align_corners();
+    half_pixel_centers_ = resize_bilinear_op->get_half_pixel_centers();
+  }
+
+  if (half_pixel_centers_ == true && align_corners_ == true) {
+    MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
+    return false;
   }
 
   dtype_ = inputs[0]->GetDtype();
@@ -86,7 +93,6 @@ int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (is_null_input_) {
     return static_cast<int>(KRET_OK);
   }
-
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
   size_t out_height = output_shape_[2];
@@ -143,8 +149,8 @@ bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPt
 
   std::vector<CachedInterpolation> ys(out_height + 1);
   std::vector<CachedInterpolation> xs(out_width + 1);
-  ComputeInterpolationWeights(out_height, in_height, height_scale, ys.data());
-  ComputeInterpolationWeights(out_width, in_width, width_scale, xs.data());
+  ComputeInterpolationWeights(out_height, in_height, height_scale, ys.data(), half_pixel_centers_);
+  ComputeInterpolationWeights(out_width, in_width, width_scale, xs.data(), half_pixel_centers_);
 
   float *cur_input_addr = float_input_addr;
   float *cur_output_addr = float_output_addr;
@@ -208,8 +214,8 @@ bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
 
   std::vector<CachedInterpolation> ys(out_height + 1);
   std::vector<CachedInterpolation> xs(out_width + 1);
-  ComputeInterpolationWeights(out_height, in_height, height_scale, ys.data());
-  ComputeInterpolationWeights(out_width, in_width, width_scale, xs.data());
+  ComputeInterpolationWeights(out_height, in_height, height_scale, ys.data(), half_pixel_centers_);
+  ComputeInterpolationWeights(out_width, in_width, width_scale, xs.data(), half_pixel_centers_);
 
   T *cur_input_addr = float_input_addr;
   T *cur_output_addr = float_output_addr;

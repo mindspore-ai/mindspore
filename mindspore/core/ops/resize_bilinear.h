@@ -48,6 +48,10 @@ class MIND_API ResizeBilinear : public BaseOperator {
   ///
   /// \return align_corners.
   bool get_align_corners() const;
+  /// \brief Get half_pixel_centers.
+  ///
+  /// \return half_pixel_centers.
+  bool get_half_pixel_centers() const;
 };
 abstract::AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args);
