@@ -3523,3 +3523,59 @@ def igammac(input, other):
     Computes upper regularized incomplete Gamma function.
     """
     return F.igammac(input, other)
+
+
+def isinf(input):
+    r"""
+    Determines which elements are inf or -inf for each position.
+    """
+    return F.isinf(input)
+
+
+def isnan(input):
+    r"""
+    Determines which elements are NaN for each position.
+    """
+    return F.isnan(input)
+
+
+def le(input, other):
+    r"""
+    Computes the boolean value of :math:`input <= other` element-wise.
+    """
+    return F.le(input, other)
+
+
+def less(input, other):
+    r"""
+    Computes the boolean value of :math:`input < other` element-wise.
+    """
+    return F.less(input, other)
+
+
+def logical_and(input, other):
+    r"""
+    Computes the "logical AND" of two tensors element-wise.
+    """
+    return F.logical_and(input, other)
+
+
+def logical_not(input):
+    r"""
+    Computes the "logical NOT" of input tensor element-wise.
+    """
+    return F.logical_not(input)
+
+
+def logical_or(input, other):
+    r"""
+    Computes the "logical OR" of two tensors element-wise.
+    """
+    return F.logical_or(input, other)
+
+
+def logical_xor(input, other):
+    r"""
+    Computes the "logical XOR" of two tensors element-wise.
+    """
+    return F.logical_xor(input, other)

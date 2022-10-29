@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 import numpy as np
 import pytest
 
-import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -34,9 +35,9 @@ class NetIsInf(nn.Cell):
         return self.isinf(x)
 
 
-x1 = Tensor(np.array([3, np.log(0), 1, np.log(0)]), ms.float32)
-x2 = Tensor(np.array([np.log(0), 1, np.log(0), 3]), ms.float32)
-x3 = Tensor(np.array([[np.log(0), 2], [np.log(0), np.log(0)]]), ms.float32)
+x1 = Tensor(np.array([3, np.log(0), 1, np.log(0)]), mstype.float32)
+x2 = Tensor(np.array([np.log(0), 1, np.log(0), 3]), mstype.float32)
+x3 = Tensor(np.array([[np.log(0), 2], [np.log(0), np.log(0)]]), mstype.float32)
 
 
 @pytest.mark.level0
@@ -68,9 +69,43 @@ def test_is_nan_cpu_dynamic_shape():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = NetIsInf()
-    x_dyn = Tensor(shape=[1, 32, 9, None], dtype=ms.float32)
+    x_dyn = Tensor(shape=[1, 32, 9, None], dtype=mstype.float32)
     net.set_inputs(x_dyn)
     x = np.random.randn(1, 32, 9, 9)
-    output = net(Tensor(x, ms.float32))
+    output = net(Tensor(x, mstype.float32))
     except_shape = (1, 32, 9, 9)
     assert output.asnumpy().shape == except_shape
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_isinf_functional_api_modes(mode):
+    """
+    Feature: Test isinf functional api.
+    Description: Test isinf functional api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mstype.float32)
+    output = F.isinf(x)
+    expected = np.array([False, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_isinf_tensor_api_modes(mode):
+    """
+    Feature: Test isinf tensor api.
+    Description: Test isinf tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mstype.float32)
+    output = x.isinf()
+    expected = np.array([False, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)

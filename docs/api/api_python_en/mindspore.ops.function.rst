@@ -186,6 +186,7 @@ Element-by-Element Operations
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
+    mindspore.ops.logical_xor
     mindspore.ops.logit
     mindspore.ops.log_matrix_determinant
     mindspore.ops.matrix_determinant
@@ -246,6 +247,7 @@ Comparison Functions
     mindspore.ops.intopk
     mindspore.ops.isclose
     mindspore.ops.isfinite
+    mindspore.ops.isinf
     mindspore.ops.isnan
     mindspore.ops.le
     mindspore.ops.less
