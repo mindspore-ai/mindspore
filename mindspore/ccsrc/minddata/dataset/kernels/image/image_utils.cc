@@ -16,11 +16,13 @@
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include <opencv2/imgproc/types_c.h>
 #include <algorithm>
+#include <fstream>
 #include <limits>
 #include <string>
 #include <vector>
 #include <stdexcept>
 #include <opencv2/imgcodecs.hpp>
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
@@ -2256,6 +2258,67 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
   TensorShape tensor_shape = TensorShape({(long int)buffer.size()});
   RETURN_IF_NOT_OK(Tensor::CreateFromMemory(tensor_shape, DataType(DataType::DE_UINT8), buffer.data(), output));
 
+  return Status::OK();
+}
+
+Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data) {
+  std::string err_msg;
+
+  if (data->type() != DataType::DE_UINT8) {
+    err_msg = "WriteFile: The type of the elements of data should be UINT8, but got " + data->type().ToString() + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  long int data_size = data->Size();
+  const char *data_buffer;
+  if (data_size >= kDeMaxDim || data_size < 0) {
+    err_msg = "WriteFile: Invalid data->Size() , should be >= 0 && < " + std::to_string(kDeMaxDim);
+    err_msg += " , but got " + std::to_string(data_size) + " for " + filename;
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  if (data_size > 0) {
+    data_buffer = (const char *)data->GetBuffer();
+    if (data_buffer == nullptr) {
+      err_msg = "WriteFile: Invalid data->GetBufferSize() , should not be nullptr.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+    TensorShape shape = data->shape();
+    int rank = shape.Rank();
+    if (rank != kMinImageChannel) {
+      err_msg = "WriteFile: The data has invalid dimensions. It should have only one dimension, but got ";
+      err_msg += std::to_string(rank) + " dimensions.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+
+  Path file(filename);
+  if (!file.Exists()) {
+    int file_descriptor;
+    RETURN_IF_NOT_OK(file.CreateFile(&file_descriptor));
+    RETURN_IF_NOT_OK(file.CloseFile(file_descriptor));
+  }
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("WriteFile: Invalid file path, " + filename + " can not get the real path.");
+  }
+  struct stat sb;
+  stat(realpath.value().c_str(), &sb);
+  if (S_ISREG(sb.st_mode) == 0) {
+    RETURN_STATUS_UNEXPECTED("WriteFile: Invalid file path, " + filename + " is not a regular file.");
+  }
+
+  std::ofstream fs(realpath.value().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+  CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "WriteFile: Failed to open the file: " + filename + " for writing.");
+
+  if (data_size > 0) {
+    fs.write(data_buffer, data_size);
+    if (fs.fail()) {
+      err_msg = "WriteFile: Failed to write the file " + filename;
+      fs.close();
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  fs.close();
   return Status::OK();
 }
 }  // namespace dataset
