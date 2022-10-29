@@ -277,7 +277,7 @@ def test_builtin_function_max_with_empty_sequence(mode):
     Description: Do not support the arg of max is an empty sequence.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return max(())
 
@@ -298,7 +298,7 @@ def test_builtin_function_max_with_several_elements_tensor(mode):
     Description: Do not support tensor with several elements.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return max(Tensor([1, 2, 3]), Tensor([3, 4, 5]))
 
@@ -319,7 +319,7 @@ def test_builtin_function_min_with_tensor_0d(mode):
     Description: Cannot iterate over a scalar tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return min(Tensor(1))
 
@@ -340,7 +340,7 @@ def test_builtin_function_min_with_tensor_1d(mode):
     Description: Test min() in graph mode when input is 1d tensor.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return min(Tensor([1]))
 
@@ -361,7 +361,7 @@ def test_builtin_function_min_with_tensor_number(mode):
     Description: Cannot contain both tensor and non-tensor type.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return min(Tensor(1), 4)
 
@@ -382,7 +382,7 @@ def test_builtin_function_max_with_several_elements_one_tensor(mode):
     Description: The arg of max do not support one tensor with more than one elements.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return max(Tensor([[1, 2, 3], [3, 4, 5]]))
 
@@ -403,7 +403,7 @@ def test_builtin_function_max_with_tensor_elements_in_two_tuple(mode):
     Description: The arg of max do not support two tensor with more than one elements.
     Expectation: No exception.
     """
-    @ms_function
+    @jit
     def foo():
         return max([Tensor([1, 2]), Tensor([3, 4])], [Tensor([5, 6]), Tensor([7, 8])])
 

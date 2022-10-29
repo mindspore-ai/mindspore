@@ -47,7 +47,7 @@ def test_cell_no_recursive():
     print(net(x, y))
 
 
-@ms.ms_function
+@ms.jit
 @ms.no_recursive
 def func(x, y):
     res = double(x) + double(y)

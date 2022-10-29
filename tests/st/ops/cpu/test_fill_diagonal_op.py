@@ -18,8 +18,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
-from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore import Tensor, jit
 
 
 class FillDiagonalNet(nn.Cell):
@@ -37,7 +36,7 @@ class FillDiagonalNet(nn.Cell):
                                 [0., 0., 5.]]).astype(nptype)
 
 
-    @ms_function
+    @jit
     def construct(self):
         return self.fill_diagonal(self.a)
 
@@ -61,7 +60,7 @@ class FillDiagonalDynamicNet(nn.Cell):
                                 [0., 0., 5.]]).astype(nptype)
 
 
-    @ms_function
+    @jit
     def construct(self):
         return self.fill_diagonal(self.a)
 

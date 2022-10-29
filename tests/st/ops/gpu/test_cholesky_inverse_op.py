@@ -19,8 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.math_ops as P
-from mindspore import Tensor
-from mindspore.common.api import ms_function
+from mindspore import Tensor, jit
 
 
 class CholeskyInverseNet(nn.Cell):
@@ -28,7 +27,7 @@ class CholeskyInverseNet(nn.Cell):
         super(CholeskyInverseNet, self).__init__()
         self.choleskyinverse = P.CholeskyInverse(upper=upper)
 
-    @ms_function
+    @jit
     def construct(self, x_ms):
         return self.choleskyinverse(x_ms)
 
