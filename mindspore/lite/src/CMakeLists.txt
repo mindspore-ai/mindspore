@@ -359,6 +359,7 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/opt_allocator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/matmul_activation_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/storage.cc
         ${TOOLS_DIR}/converter/optimizer.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
