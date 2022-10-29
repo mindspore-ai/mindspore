@@ -48,72 +48,51 @@ const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceProd", CUDNN_REDUCE_TENSOR_MUL},
 };
 
-#define STATIC_REGISTER(INPUTX, T) \
-  KernelAttr().AddInputAttr(INPUTX).AddOutputAttr(INPUTX), &ArrayReduceGpuKernelMod::LaunchKernel<T>
-
-#define DYN_REGISTER(INPUTX, AXIS, T) \
+#define REDUCE_REGISTER(INPUTX, AXIS, T) \
   KernelAttr().AddInputAttr(INPUTX).AddInputAttr(AXIS).AddOutputAttr(INPUTX), &ArrayReduceGpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::all_any_list_ = {
-  {STATIC_REGISTER(kNumberTypeBool, bool)},
-  {DYN_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
-  {DYN_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)}};
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)}};
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::prod_list_ = {
-  {STATIC_REGISTER(kNumberTypeFloat64, double)},
-  {STATIC_REGISTER(kNumberTypeFloat32, float)},
-  {STATIC_REGISTER(kNumberTypeFloat16, half)},
-  {STATIC_REGISTER(kNumberTypeInt8, int8_t)},
-  {STATIC_REGISTER(kNumberTypeComplex64, Complex<float>)},
-  {STATIC_REGISTER(kNumberTypeComplex128, Complex<double>)},
-  {DYN_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
-  {DYN_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
-  {DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
-  {DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
-  {DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
-  {DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
+  {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
+  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
+  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
+  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
+  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
+  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
+  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::sum_list_ = {
-  {STATIC_REGISTER(kNumberTypeFloat64, double)},
-  {STATIC_REGISTER(kNumberTypeFloat32, float)},
-  {STATIC_REGISTER(kNumberTypeFloat16, half)},
-  {STATIC_REGISTER(kNumberTypeBool, bool)},
-  {STATIC_REGISTER(kNumberTypeComplex64, Complex<float>)},
-  {STATIC_REGISTER(kNumberTypeComplex128, Complex<double>)},
-  {DYN_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
-  {DYN_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
-  {DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
-  {DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
-  {DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
-  {DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
-  {DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
+  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
+  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
+  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
+  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
+  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
+  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
+  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::max_min_mean_list_ = {
-  {STATIC_REGISTER(kNumberTypeFloat64, double)},
-  {STATIC_REGISTER(kNumberTypeFloat32, float)},
-  {STATIC_REGISTER(kNumberTypeFloat16, half)},
-  {STATIC_REGISTER(kNumberTypeComplex64, Complex<float>)},
-  {STATIC_REGISTER(kNumberTypeComplex128, Complex<double>)},
-  {DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
-  {DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
-  {DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
-  {DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
-  {DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
+  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
+  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
+  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
+  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
+  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
+  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
 std::map<std::string, std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>>>
   ArrayReduceGpuKernelMod::kernel_attr_list_ = {
@@ -171,6 +150,10 @@ bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     data_type_ = GetCudnnDataType(type_name);
   }
 
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
+  keep_dims_ = kernel_ptr->get_keep_dims();
+  skip_mode_ = kernel_ptr->get_skip_mode();
+
   InitResource();
   return true;
 }
@@ -202,27 +185,17 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
   auto inputA_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-
   std::vector<int64_t> attr_axis;
-  if (inputs.size() == kDynamicAxisInputNum) {
-    if (AnfAlgo::IsDynamicShapeSkipExecute(kernel_name_, inputs[kIndex1]->GetShapeVector())) {
-      need_skip_execute_ = true;
-      // As size of input_size_list_ is equal to size of inputs, input_size_list_[0] is safe.
-      input_size_ = input_size_list_[0];
-      return KRET_OK;
-    }
-    if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &attr_axis)) {
-      InitCudnnResource();
-      return KRET_OK;
-    }
-  } else {
-    if (kernel_ptr->HasAttr(kAttrAxis)) {
-      attr_axis = kernel_ptr->get_axis();
-    }
+  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &attr_axis)) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
   }
-  keep_dims_ = kernel_ptr->get_keep_dims();
+  if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kIndex1]->GetShapeVector())) {
+    need_skip_execute_ = true;
+    // As size of input_size_list_ is equal to size of inputs, input_size_list_[0] is safe.
+    input_size_ = input_size_list_[0];
+    return KRET_OK;
+  }
 
   int input_dim_length = SizeToInt(inputA_shape.size());
   for (auto axis : attr_axis) {

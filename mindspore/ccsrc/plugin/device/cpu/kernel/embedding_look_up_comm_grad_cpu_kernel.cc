@@ -50,7 +50,7 @@ void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   if (IsDynamic(input_shape_)) {
     return;
   }
-  if (input_shape_.size() < 1) {
+  if (input_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input must be at least 1-D, but got: " << input_shape_.size() << "-D";
   }
