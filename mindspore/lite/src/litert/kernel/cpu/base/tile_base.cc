@@ -42,6 +42,10 @@ int TileCPUKernel::ReSize() {
   CHECK_NULL_RETURN(tile_parameter_);
   if (in_tensors_.size() == kDoubleInputsSize) {
     CHECK_NULL_RETURN(in_tensors_.at(1));
+    if (in_tensors_[1]->data() == nullptr) {
+      resize_done_ = false;
+      return RET_OK;
+    }
     if (in_tensors_[1]->ElementsNum() > static_cast<int>(in_tensors_[0]->shape().size())) {
       MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
       return RET_ERROR;
@@ -131,6 +135,7 @@ int TileCPUKernel::FillOneDimTileParam() {
     tile_parameter_->fast_outer_size_ =
       static_cast<size_t>(in_tensors_.at(0)->ElementsNum()) / tile_parameter_->fast_stride_;
   }
+  resize_done_ = true;
   return RET_OK;
 }
 
@@ -163,6 +168,13 @@ int TileCPUKernel::Run() {
   output_addr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_addr_);
   CHECK_NULL_RETURN(output_addr_);
+  if (!resize_done_) {
+    int ret = ReSize();
+    if (ret != RET_OK || !resize_done_) {
+      MS_LOG(ERROR) << "Tile Resize error.";
+      return ret;
+    }
+  }
   if (one_dim_tile_) {
     return RunSimpleTile();
   }
