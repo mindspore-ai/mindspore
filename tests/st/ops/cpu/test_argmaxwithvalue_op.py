@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -24,6 +25,7 @@ from mindspore.ops import functional as F
 
 
 class NetArgmaxWithValue(nn.Cell):
+
     def __init__(self):
         super(NetArgmaxWithValue, self).__init__()
         axis = 0
@@ -34,6 +36,7 @@ class NetArgmaxWithValue(nn.Cell):
 
 
 class NetArgmaxWithValueBig(nn.Cell):
+
     def __init__(self, axis=0):
         super(NetArgmaxWithValueBig, self).__init__()
         self.argmax = P.ArgMaxWithValue(axis)
@@ -43,10 +46,9 @@ class NetArgmaxWithValueBig(nn.Cell):
 
 
 def argmaxwithvalue_base(data_type):
-    x = Tensor(np.array([[1., 20., 5.],
-                         [67., 8., 9.],
-                         [130., 24., 15.],
-                         [0.3, -0.4, -15.]]).astype(data_type))
+    x = Tensor(
+        np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
+                  [0.3, -0.4, -15.]]).astype(data_type))
     expect1 = np.array([2, 2, 2]).astype(data_type)
     expect2 = np.array([1, 0, 0, 0]).astype(data_type)
     expect11 = np.array([130, 24, 15]).astype(data_type)
@@ -97,6 +99,37 @@ def argmaxwithvalue_3d(data_type, shape_x):
     expect2 = np.maximum.reduce(x_np, 2)
     assert (output[0].asnumpy() == expect1).all()
     assert (output[1].asnumpy() == expect2).all()
+
+
+def dyn_case():
+    net = NetArgmaxWithValueBig()
+
+    x_dyn = Tensor(shape=[None, None], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+
+    x = Tensor(
+        np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
+                  [-0.5, 25, 100]]).astype(np.float32))
+    out = net(x)
+
+    expect_shape = (3,)
+    for i in range(2):
+        assert out[i].asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_dyn():
+    """
+    Feature: test ArgmaxWithValue dynamic shape in cpu.
+    Description: inputs is dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    dyn_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    dyn_case()
 
 
 @pytest.mark.level0

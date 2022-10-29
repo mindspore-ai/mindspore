@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -25,6 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class NetArgminWithValue(nn.Cell):
+
     def __init__(self, axis=0, keep_dims=False):
         super(NetArgminWithValue, self).__init__()
         self.argmin = P.ArgMinWithValue(axis=axis, keep_dims=keep_dims)
@@ -33,13 +35,42 @@ class NetArgminWithValue(nn.Cell):
         return self.argmin(x)
 
 
+def dyn_case():
+    net = NetArgminWithValue()
+
+    x_dyn = Tensor(shape=[None, None], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+
+    x = Tensor(
+        np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
+                  [-0.5, 25, 100]]).astype(np.float32))
+    out = net(x)
+
+    expect_shape = (3,)
+    for i in range(2):
+        assert out[i].asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argminwithvalue_dyn():
+    """
+    Feature: test ArgminWithValue dynamic shape in cpu.
+    Description: inputs is dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    dyn_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    dyn_case()
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argminwithvalue_fp32():
-    x = np.array([[1., 20., 5.],
-                  [67., 8., 9.],
-                  [130., 24., 15.],
+    x = np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
                   [-0.5, 25, 100]]).astype(np.float32)
     argmin_a0 = NetArgminWithValue(axis=0, keep_dims=False)
 
@@ -82,9 +113,7 @@ def test_argminwithvalue_fp32():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argminwithvalue_fp16():
-    x = np.array([[1., 20., 5.],
-                  [67., 8., 9.],
-                  [130., 24., 15.],
+    x = np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
                   [-0.5, 25, 100]]).astype(np.float16)
     argmin_a0 = NetArgminWithValue(axis=0, keep_dims=False)
 
