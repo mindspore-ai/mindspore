@@ -50,11 +50,17 @@ bool result_cmp(const result_para &a, const result_para &b) { return a.score > b
 
 namespace mindspore {
 namespace kernel {
-class CombinedNonMaxSuppressionCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CombinedNonMaxSuppressionCpuKernelMod : public NativeCpuKernelMod {
  public:
   CombinedNonMaxSuppressionCpuKernelMod() = default;
   ~CombinedNonMaxSuppressionCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -69,6 +75,7 @@ class CombinedNonMaxSuppressionCpuKernelMod : public DeprecatedNativeCpuKernelMo
   void nms_perclass(float *, float *, std::vector<non_max_suppression_local::result_para> &, int &);
   void CheckInput();
   void CheckOutput();
+
   int num_bath_ = 0;
   int num_boxes_ = 0;
   int q_ = 0;
@@ -87,7 +94,7 @@ class CombinedNonMaxSuppressionCpuKernelMod : public DeprecatedNativeCpuKernelMo
   float soft_nms_sigma_ = 0.0;
   bool pad_per_class_ = 0;
   bool clip_boxes_ = 1;
-  CNodeWeakPtr node_wpt_;
+
   std::vector<int64_t> input0_shape_;
   std::vector<int64_t> input1_shape_;
   std::vector<int64_t> input2_shape_;

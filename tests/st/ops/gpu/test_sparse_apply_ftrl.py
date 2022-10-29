@@ -24,29 +24,80 @@ import mindspore.common.dtype as mstype
 
 
 class Net(nn.Cell):
+
     def __init__(self):
         super(Net, self).__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5, use_locking=False)
-        self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
-        self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="accum")
-        self.linear = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="linear")
+        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001,
+                                                   l1=0.0,
+                                                   l2=0.0,
+                                                   lr_power=-0.5,
+                                                   use_locking=False)
+        self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)),
+                             name="var")
+        self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)),
+                               name="accum")
+        self.linear = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)),
+                                name="linear")
 
     def construct(self, grad, indices):
-        out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad,
+                                     indices)
         return out
 
 
-class Net_half(nn.Cell):
+class NetHalf(nn.Cell):
+
     def __init__(self):
-        super(Net_half, self).__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5, use_locking=False)
-        self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float16)), name="var")
-        self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float16)), name="accum")
-        self.linear = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float16)), name="linear")
+        super(NetHalf, self).__init__()
+        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001,
+                                                   l1=0.0,
+                                                   l2=0.0,
+                                                   lr_power=-0.5,
+                                                   use_locking=False)
+        self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float16)),
+                             name="var")
+        self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float16)),
+                               name="accum")
+        self.linear = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float16)),
+                                name="linear")
 
     def construct(self, grad, indices):
-        out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad,
+                                     indices)
         return out
+
+
+def dyn_case():
+    net = Net()
+
+    grad_dyn = Tensor(shape=[3, None, None], dtype=mstype.float32)
+    indices_dyn = Tensor(shape=[None], dtype=mstype.int32)
+
+    net.set_inputs(grad_dyn, indices_dyn)
+
+    grad = Tensor(np.ones([3, 3, 3]).astype(np.float32))
+    indices = Tensor([0, 1, 2], mstype.int32)
+
+    out = net(grad, indices)
+
+    expect_shape = (3, 3, 3)
+    for i in range(3):
+        assert out[i].asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_sparse_apply_ftrl_dyn():
+    """
+    Feature: test SparseApplyFtrl in PyNative and Graph modes.
+    Description: test dynamic shape case.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    dyn_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    dyn_case()
 
 
 @pytest.mark.level1
@@ -63,7 +114,8 @@ def test_ftrl():
                             [0.291479, 0.291479, 0.291479]],
                            [[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
-                            [0.291479, 0.291479, 0.291479]]]).astype(np.float32)
+                            [0.291479, 0.291479,
+                             0.291479]]]).astype(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     sparse_apply_ftrl = Net()
     sparse_apply_ftrl(gradient, indices)
@@ -83,12 +135,11 @@ def test_ftrl_sparse_int64_ind():
     expect_var = np.array([[[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479]],
-                           [[1, 1, 1],
-                            [1, 1, 1],
-                            [1, 1, 1]],
+                           [[1, 1, 1], [1, 1, 1], [1, 1, 1]],
                            [[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
-                            [0.291479, 0.291479, 0.291479]]]).astype(np.float32)
+                            [0.291479, 0.291479,
+                             0.291479]]]).astype(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     sparse_apply_ftrl = Net()
     sparse_apply_ftrl(gradient, indices)
@@ -113,13 +164,14 @@ def test_ftrl_half():
                             [0.291479, 0.291479, 0.291479]],
                            [[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
-                            [0.291479, 0.291479, 0.291479]]]).astype(np.float16)
+                            [0.291479, 0.291479,
+                             0.291479]]]).astype(np.float16)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    sparse_apply_ftrl = Net_half()
+    sparse_apply_ftrl = NetHalf()
     sparse_apply_ftrl(gradient, indices)
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    sparse_apply_ftrl = Net_half()
+    sparse_apply_ftrl = NetHalf()
     sparse_apply_ftrl(gradient, indices)
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
@@ -133,20 +185,20 @@ def test_ftrl_sparse_half_int64_ind():
     expect_var = np.array([[[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479]],
-                           [[1, 1, 1],
-                            [1, 1, 1],
-                            [1, 1, 1]],
+                           [[1, 1, 1], [1, 1, 1], [1, 1, 1]],
                            [[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
-                            [0.291479, 0.291479, 0.291479]]]).astype(np.float16)
+                            [0.291479, 0.291479,
+                             0.291479]]]).astype(np.float16)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    sparse_apply_ftrl = Net_half()
+    sparse_apply_ftrl = NetHalf()
     sparse_apply_ftrl(gradient, indices)
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    sparse_apply_ftrl = Net_half()
+    sparse_apply_ftrl = NetHalf()
     sparse_apply_ftrl(gradient, indices)
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -162,12 +214,13 @@ def test_ftrl_half_return_output():
                             [0.291479, 0.291479, 0.291479]],
                            [[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
-                            [0.291479, 0.291479, 0.291479]]]).astype(np.float16)
+                            [0.291479, 0.291479,
+                             0.291479]]]).astype(np.float16)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    sparse_apply_ftrl = Net_half()
+    sparse_apply_ftrl = NetHalf()
     output = sparse_apply_ftrl(gradient, indices)
     assert np.all(output[0].asnumpy() == expect_var)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    sparse_apply_ftrl = Net_half()
+    sparse_apply_ftrl = NetHalf()
     sparse_apply_ftrl(gradient, indices)
     assert np.all(output[0].asnumpy() == expect_var)

@@ -44,14 +44,13 @@ using complex128 = std::complex<double>;
 constexpr size_t kMaxTransposeSerialSize = 50331648;
 }  // namespace
 
-void ConjugateTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  perm_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-
+bool ConjugateTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs.at(kIndex0)->GetDtype();
+  perm_type_ = inputs.at(kIndex1)->GetDtype();
   launch_map_[kNumberTypeBool] = &ConjugateTransposeCpuKernelMod::LaunchKernel<bool>;
   launch_map_[kNumberTypeInt8] = &ConjugateTransposeCpuKernelMod::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &ConjugateTransposeCpuKernelMod::LaunchKernel<int16_t>;
@@ -72,6 +71,21 @@ void ConjugateTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     MS_LOG(EXCEPTION) << "For ConjugateTranspose: unsupported input data type: " << dtype_;
   }
+  return true;
+}
+
+int ConjugateTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+
+  return KRET_OK;
 }
 
 bool ConjugateTransposeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
