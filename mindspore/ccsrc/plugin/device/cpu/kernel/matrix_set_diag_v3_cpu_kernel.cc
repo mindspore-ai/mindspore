@@ -146,10 +146,11 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
       int64_t m = t / static_cast<int64_t>(input_columns_);
       int64_t n = t % static_cast<int64_t>(input_columns_);
       int64_t x = n - std::max(k_upper_, ZERO);
-      if (n - m == k_upper_)
+      if (n - m == k_upper_) {
         output_data[elem] = diagonal_data[LongToSize(index * static_cast<int64_t>(diagonal_columns_) + x)];
-      else
+      } else {
         output_data[elem] = input_data[elem];
+      }
     }
   } else {
     for (size_t elem = 0; elem < input_numelements_; ++elem) {
@@ -201,10 +202,11 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
           int64_t m = t / static_cast<int64_t>(input_columns_);
           int64_t n = t % static_cast<int64_t>(input_columns_);
           int64_t x = n - std::max(k_upper_, ZERO);
-          if (n - m == k_upper_)
+          if (n - m == k_upper_) {
             output_data[elem] = diagonal_data[LongToSize(index * static_cast<int64_t>(diagonal_columns_) + x)];
-          else
+          } else {
             output_data[elem] = input_data[elem];
+          }
         }
       } else {
         for (size_t elem = start; elem < end; ++elem) {

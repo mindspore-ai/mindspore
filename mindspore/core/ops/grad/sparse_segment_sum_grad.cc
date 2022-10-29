@@ -64,8 +64,8 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
     auto output_dim0_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
-    auto dim_zero = output_dim0_value_ptr_tensor[kInputIndex0];
-    if (dim_zero <= 0) {
+    int64_t dim_zero = static_cast<int64_t>(output_dim0_value_ptr_tensor[kInputIndex0]);
+    if (dim_zero <= static_cast<int64_t>(kInputIndex0)) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "' , tensor output_dim0 must > 0, "
                                << "but got [" << dim_zero << "].";
     } else {

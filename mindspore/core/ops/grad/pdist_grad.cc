@@ -35,11 +35,11 @@ abstract::ShapePtr PdistGradInferShape(const PrimitivePtr &primitive, const std:
   auto pdist_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   auto x_size = x_shape.size();
   if (!IsDynamic(grad_shape) && !IsDynamic(pdist_shape)) {
-    CheckAndConvertUtils::CheckValue("y_grad shape", grad_shape, kEqual, "y shape", pdist_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckValue("y_grad shape", grad_shape, kEqual, "y shape", pdist_shape, prim_name);
   }
-  const int64_t x_dim = 2;
+  const size_t x_dim = 2;
   if (!IsDynamicRank(x_shape)) {
-    CheckAndConvertUtils::CheckInteger("x dim", x_size, kEqual, x_dim, "PdistGrad");
+    (void)CheckAndConvertUtils::CheckInteger("x dim", x_size, kEqual, x_dim, "PdistGrad");
   }
 
   return std::make_shared<abstract::Shape>(x_shape);

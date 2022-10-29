@@ -88,7 +88,7 @@ void AddcmulCpuKernelMod::AddcmulMul1(const T *input1, const T *input2, T *outpu
     };
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= static_cast<int64_t>(output_shape_[i]);
+      output_size_ *= static_cast<size_t>(output_shape_[i]);
     }
     ParallelLaunchAutoSearch(mul_task, output_size_, this, &parallel_search_info_);
   }

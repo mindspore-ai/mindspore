@@ -26,8 +26,11 @@ namespace kernel {
 namespace {
 constexpr size_t kAffineGridInputsNum = 2;
 constexpr size_t kAffineGridOutputsNum = 1;
-constexpr size_t kRowNum12 = 12;
+constexpr size_t kRowNum2 = 2;
+constexpr size_t kRowNum3 = 3;
+constexpr size_t kRowNum4 = 4;
 constexpr size_t kRowNum6 = 6;
+constexpr size_t kRowNum12 = 12;
 enum kColNum : size_t {
   kColNum0 = 0,
   kColNum1,
@@ -78,7 +81,7 @@ void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPt
   out_shape.push_back(N);
   out_shape.push_back(H);
   out_shape.push_back(W);
-  out_shape.push_back(2);
+  out_shape.push_back(kColNum2);
   Eigen::VectorXd vecX, vecY;
   (void)vecX.setZero(static_cast<int64_t>(W), 1);
   (void)vecY.setZero(static_cast<int64_t>(H), 1);
@@ -104,29 +107,29 @@ void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPt
     for (size_t j = 0; j < W; j++) {
       all(static_cast<int64_t>(row), 0) = static_cast<double>(vecX(j));
       all(static_cast<int64_t>(row), 1) = static_cast<double>(vecY(i));
-      all(static_cast<int64_t>(row), 2) = 1.0;
+      all(static_cast<int64_t>(row), kColNum2) = 1.0;
       row += 1;
     }
   }
-  Eigen::MatrixXf theta(3, 2);
-  Eigen::MatrixXf result(H * W, 2);
+  Eigen::MatrixXf theta(kRowNum3, kColNum2);
+  Eigen::MatrixXf result(H * W, kColNum2);
   float result0;
   float result1;
   int64_t k_num = 0;
   for (size_t n = 0; n < N; n++) {
     theta(0, 0) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum0));
     theta(1, 0) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum1));
-    theta(2, 0) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum2));
+    theta(kRowNum2, 0) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum2));
     theta(0, 1) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum3));
     theta(1, 1) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum4));
-    theta(2, 1) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum5));
+    theta(kRowNum2, 1) = static_cast<float>(*(data_theta + (n * kRowNum6) + kColNum5));
     result = all * theta;
     for (size_t k = 0; k < H * W; k++) {
       result0 = result(static_cast<int64_t>(k), 0);
       result1 = result(static_cast<int64_t>(k), 1);
       *(output_y + k_num) = static_cast<T>(result0);
       *(output_y + k_num + 1) = static_cast<T>(result1);
-      k_num += 2;
+      k_num += kColNum2;
     }
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({output_type_}, {out_shape}, cnode_ptr_.lock().get());
@@ -150,7 +153,7 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPt
   out_shape.push_back(D);
   out_shape.push_back(H);
   out_shape.push_back(W);
-  out_shape.push_back(3);
+  out_shape.push_back(kColNum3);
   Eigen::VectorXd vecX, vecY, vecZ;
   (void)vecX.setZero(static_cast<int64_t>(W), 1);
   (void)vecY.setZero(static_cast<int64_t>(H), 1);
@@ -185,14 +188,14 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPt
       for (size_t k = 0; k < W; k++) {
         all1(static_cast<int64_t>(row), 0) = static_cast<double>(vecX(k));
         all1(static_cast<int64_t>(row), 1) = static_cast<double>(vecY(j));
-        all1(static_cast<int64_t>(row), 2) = static_cast<double>(vecZ(i));
-        all1(static_cast<int64_t>(row), 3) = 1.0;
+        all1(static_cast<int64_t>(row), kColNum2) = static_cast<double>(vecZ(i));
+        all1(static_cast<int64_t>(row), kColNum3) = 1.0;
         row += 1;
       }
     }
   }
-  Eigen::MatrixXf theta(4, 3);
-  Eigen::MatrixXf result(D * H * W, 3);
+  Eigen::MatrixXf theta(kRowNum4, kColNum3);
+  Eigen::MatrixXf result(D * H * W, kColNum3);
   float result0;
   float result1;
   float result2;
@@ -200,25 +203,25 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPt
   for (size_t n = 0; n < N; n++) {
     theta(0, 0) = static_cast<float>(*(data_theta + kColNum0 + (n * kRowNum12)));
     theta(1, 0) = static_cast<float>(*(data_theta + kColNum1 + (n * kRowNum12)));
-    theta(2, 0) = static_cast<float>(*(data_theta + kColNum2 + (n * kRowNum12)));
-    theta(3, 0) = static_cast<float>(*(data_theta + kColNum3 + (n * kRowNum12)));
+    theta(kRowNum2, 0) = static_cast<float>(*(data_theta + kColNum2 + (n * kRowNum12)));
+    theta(kRowNum3, 0) = static_cast<float>(*(data_theta + kColNum3 + (n * kRowNum12)));
     theta(0, 1) = static_cast<float>(*(data_theta + kColNum4 + (n * kRowNum12)));
     theta(1, 1) = static_cast<float>(*(data_theta + kColNum5 + (n * kRowNum12)));
-    theta(2, 1) = static_cast<float>(*(data_theta + kColNum6 + (n * kRowNum12)));
-    theta(3, 1) = static_cast<float>(*(data_theta + kColNum7 + (n * kRowNum12)));
-    theta(0, 2) = static_cast<float>(*(data_theta + kColNum8 + (n * kRowNum12)));
-    theta(1, 2) = static_cast<float>(*(data_theta + kColNum9 + (n * kRowNum12)));
-    theta(2, 2) = static_cast<float>(*(data_theta + kColNum10 + (n * kRowNum12)));
-    theta(3, 2) = static_cast<float>(*(data_theta + kColNum11 + (n * kRowNum12)));
+    theta(kRowNum2, 1) = static_cast<float>(*(data_theta + kColNum6 + (n * kRowNum12)));
+    theta(kRowNum3, 1) = static_cast<float>(*(data_theta + kColNum7 + (n * kRowNum12)));
+    theta(0, kColNum2) = static_cast<float>(*(data_theta + kColNum8 + (n * kRowNum12)));
+    theta(1, kColNum2) = static_cast<float>(*(data_theta + kColNum9 + (n * kRowNum12)));
+    theta(kRowNum2, kColNum2) = static_cast<float>(*(data_theta + kColNum10 + (n * kRowNum12)));
+    theta(kRowNum3, kColNum2) = static_cast<float>(*(data_theta + kColNum11 + (n * kRowNum12)));
     result = all1 * theta;
     for (size_t k = 0; k < D * H * W; k++) {
       result0 = result(static_cast<int64_t>(k), 0);
       result1 = result(static_cast<int64_t>(k), 1);
-      result2 = result(static_cast<int64_t>(k), 2);
+      result2 = result(static_cast<int64_t>(k), kColNum2);
       *(output_y + k_num) = static_cast<T>(result0);
       *(output_y + k_num + kColNum1) = static_cast<T>(result1);
       *(output_y + k_num + kColNum2) = static_cast<T>(result2);
-      k_num += 3;
+      k_num += kColNum3;
     }
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({output_type_}, {out_shape}, cnode_ptr_.lock().get());
@@ -230,7 +233,7 @@ bool AffineGridCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
                                           const std::vector<kernel::AddressPtr> &outputs) {
   if (output_size_dims_[0] == 4) {
     LaunchKernel_3D<T>(inputs, outputs);
-  } else if (output_size_dims_[0] == 5) {
+  } else if (output_size_dims_[0] == kColNum5) {
     LaunchKernel_4D<T>(inputs, outputs);
   }
   return true;
