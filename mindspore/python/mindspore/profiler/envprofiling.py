@@ -16,8 +16,7 @@
 import os
 import json
 import time
-from enum import Enum
-from mindspore import log as logger, context
+from mindspore import log as logger
 from mindspore.profiler import Profiler
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 
@@ -89,59 +88,18 @@ def combine_profile_options(profiling_options):
     return options
 
 
-def get_rank_id_and_target():
-    """Get device id and rank id and target of this training."""
-    device_target, dev_id, rank_id = "", "", ""
-    try:
-        dev_id = str(context.get_context("device_id"))
-        device_target = context.get_context("device_target").lower()
-    except ValueError as err:
-        logger.error("Profiling: fail to get context, %s", err)
-
-    if not dev_id or not dev_id.isdigit():
-        dev_id = os.getenv('DEVICE_ID')
-    if not dev_id or not dev_id.isdigit():
-        dev_id = "0"
-
-    if device_target and device_target not in [DeviceTarget.ASCEND.value, DeviceTarget.GPU.value,
-                                               DeviceTarget.CPU.value]:
-        msg = "Profiling: unsupported backend: %s" % device_target
-        raise RuntimeError(msg)
-
-    rank_id = os.getenv("RANK_ID")
-    if not rank_id or not rank_id.isdigit():
-        rank_id = "0"
-    rank_id = rank_id if device_target == DeviceTarget.ASCEND.value else dev_id
-    return device_target, rank_id
-
-
-class DeviceTarget(Enum):
-    """The device target enum."""
-    CPU = 'cpu'
-    GPU = 'gpu'
-    ASCEND = 'ascend'
-
-
 class EnvProfiler:
     """Collect and analyze training performance data, support calls during and after training."""
 
     def __init__(self):
         self._profiling_options = ''
-        self._profiler_manager = None
-        self._cpu_profiler = None
-        self._md_profiler = None
-        self._dynamic_status = False
         self._environ_enable = False
         self._output_path = False
-        self._process_name = ""
         self.memory = False
         self.hccl = False
         self.aicore_metrics = 0
         self.l2_cache = False
-        self.has_end = False
         self.sync_enable = True
-        self.device_target = ""
-        self.rank_id = ""
         self.start_time = 0
 
     def analyse(self):
@@ -159,7 +117,6 @@ class EnvProfiler:
         env_options = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
         if not env_options.get("pid", 0) == os.getpid():
             return
-        self.device_target, self.rank_id = get_rank_id_and_target()
         self.start_time = env_options.get("start_time")
         options = {
             "output_path": self._output_path,

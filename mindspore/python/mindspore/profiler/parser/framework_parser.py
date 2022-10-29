@@ -659,6 +659,8 @@ class GpuFrameWorkParser:
         with open(gpu_framework_file[0], 'r') as f_obj:
             framework_info = f_obj.readlines()
         for line_info in framework_info:
+            if line_info.startswith("InitDataSetQueue"):
+                continue
             line_info = line_info.strip(' ').strip('\n').split(';')
             if len(line_info) > 2 and line_info[2].isdigit():
                 graph_ids.add(int(line_info[2]))
