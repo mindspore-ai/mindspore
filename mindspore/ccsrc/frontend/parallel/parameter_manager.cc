@@ -416,6 +416,31 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   }
 }
 
+void InitOptimizerState(const FuncGraphPtr &root) {
+  auto parameters = root->parameters();
+  for (auto &parameter : parameters) {
+    if (!ParameterIsCloned(parameter)) {
+      continue;
+    }
+    auto param_ptr = parameter->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    auto param_info = param_ptr->param_info();
+    if (!param_info) {
+      MS_LOG(DEBUG) << "Parameter:" << parameter->DebugString() << " doesn't have param_info.";
+      continue;
+    }
+    auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
+    MS_EXCEPTION_IF_NULL(graph_executor);
+    auto phase = graph_executor->phase();
+    auto py_obj = GetPyParameterObj(param_info, CLONED_OBJ);
+    if (py::isinstance<py::none>(py_obj)) {
+      MS_LOG(WARNING) << "Parameter: " << parameter->DebugString() << " can't find python obj.";
+      continue;
+    }
+    (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, INIT_OPTIMIZER_STATE_FN, py_obj, py::str(phase));
+  }
+}
+
 void AutoParallelPostProcess(const FuncGraphPtr &root) {
   auto parameters = root->parameters();
   for (auto &param : parameters) {

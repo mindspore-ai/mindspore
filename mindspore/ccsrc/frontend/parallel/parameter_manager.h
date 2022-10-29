@@ -39,6 +39,7 @@ constexpr char OBJ[] = "obj";
 constexpr char CLONED_OBJ[] = "cloned_obj";
 constexpr char SLICE_PARAMETER_FN_PATH[] = "mindspore.parallel._utils";
 constexpr char SLICE_PARAMETER_FN_NAME[] = "_slice_parameter";
+constexpr char INIT_OPTIMIZER_STATE_FN[] = "_init_optimizer_state";
 
 using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
 using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
@@ -51,6 +52,7 @@ void HandleFullySplitParameters(const FuncGraphPtr &root);
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root);
 void HandleAdaFactorOpt(const FuncGraphPtr &root);
 void AutoParallelPostProcess(const FuncGraphPtr &root);
+void InitOptimizerState(const FuncGraphPtr &root);
 std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, const FuncGraphPtr &func_graph,
                                                        const std::string &name);

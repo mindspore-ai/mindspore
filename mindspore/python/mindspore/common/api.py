@@ -355,10 +355,6 @@ class _MindsporeFunctionExecutor:
         if _is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
             self._parallel_process_for_ms_function(phase)
 
-        if _is_pynative_parallel() and _pynative_executor.get_optimizer():
-            opt_states = _pynative_executor.get_optimizer().trainable_params()
-            self._optimizer_state_init(opt_states)
-
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
         ms_compile_cache.add(phase)

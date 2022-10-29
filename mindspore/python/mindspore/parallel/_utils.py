@@ -102,6 +102,16 @@ def _slice_parameter(parameter, phase, layout):
         parameter.set_data(new_tensor, True)
 
 
+def _init_optimizer_state(parameter, phase):
+    """init optimizer state"""
+    if not parameter.has_init:
+        return
+    graph_executor = GraphExecutor_.get_instance()
+    new_param = parameter.init_data()
+    parameter = new_param
+    graph_executor.updata_param_node_default_input(phase, {parameter.name: parameter})
+
+
 def _to_full_shapes(shapes, device_num):
     """Expanding batch dimension according to device_num, adapt to mindspore minddata graph solution."""
     new_shapes = []
