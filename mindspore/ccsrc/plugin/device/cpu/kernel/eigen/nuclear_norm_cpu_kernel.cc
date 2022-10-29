@@ -74,6 +74,37 @@ int NuclearNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
 
   input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_dtype = inputs[kIndex0]->GetDtype();
+
+  size_t x_type_size = (input_dtype == kNumberTypeFloat32) ? sizeof(float) : sizeof(double);
+  const size_t input_dimnum = input_shape.size();
+  dim_[0] = (dim_[0] < 0) ? dim_[0] + static_cast<int64_t>(input_dimnum) : dim_[0];
+  dim_[1] = (dim_[1] < 0) ? dim_[1] + static_cast<int64_t>(input_dimnum) : dim_[1];
+  const size_t dimsize0 = static_cast<size_t>(input_shape[dim_[0]]);
+  const size_t dimsize1 = static_cast<size_t>(input_shape[dim_[1]]);
+  // Init workspace size list
+  // This workspace size used for mat nuclearnorm calculation
+  size_t mat_size = x_type_size * dimsize0 * dimsize1;
+  (void)workspace_size_list_.emplace_back(mat_size);
+  // This workspace size used for ComputeMatrixNuclearNorm
+  (void)workspace_size_list_.emplace_back(mat_size);
+  size_t m = dimsize1;
+  size_t n = dimsize0;
+  size_t k = (m < n ? m : n);
+  size_t tU_size = x_type_size * m * k;
+  (void)workspace_size_list_.emplace_back(tU_size);
+  size_t tS_size = x_type_size * k;
+  (void)workspace_size_list_.emplace_back(tS_size);
+  size_t tVT_size = x_type_size * k * n;
+  (void)workspace_size_list_.emplace_back(tVT_size);
+  // This workspace size used for svd
+  const size_t dim[2] = {std::max(dimsize0, dimsize1), std::min(dimsize0, dimsize1)};
+  size_t U_size = x_type_size * dim[0] * dim[0];
+  (void)workspace_size_list_.emplace_back(U_size);
+  size_t V_size = x_type_size * dim[1] * dim[1];
+  (void)workspace_size_list_.emplace_back(V_size);
+  size_t S_size = x_type_size * dim[0] * dim[1];
+  (void)workspace_size_list_.emplace_back(S_size);
   return KRET_OK;
 }
 
@@ -324,20 +355,20 @@ void NuclearNormCpuKernelMod::SVD_tail_cal(const size_t dim[], T *U_, T *S_, T *
 
 template <typename T>
 void NuclearNormCpuKernelMod::svd(int *M, int *N, const T *A, const int *LDA, T *S, T *U, const int *LDU, T *VT,
-                                  const int *LDVT) {
+                                  const int *LDVT, const std::vector<kernel::AddressPtr> &workspace) {
   const size_t dim[2] = {std::max(static_cast<size_t>(*N), static_cast<size_t>(*M)),
                          std::min(static_cast<size_t>(*N), static_cast<size_t>(*M))};
-  T *U_ = new T[dim[0] * dim[0]];
+  T *U_ = GetDeviceAddress<T>(workspace, kIndex5);
   auto ret0 = memset_s(U_, dim[0] * dim[0] * sizeof(T), 0, dim[0] * dim[0] * sizeof(T));
   if (ret0 != EOK) {
     MS_LOG(EXCEPTION) << "For 'NuclearNorm', it does memset_s failed. Error no: " << ret0;
   }
-  T *V_ = new T[dim[1] * dim[1]];
+  T *V_ = GetDeviceAddress<T>(workspace, kIndex6);
   auto ret1 = memset_s(V_, dim[1] * dim[1] * sizeof(T), 0, dim[1] * dim[1] * sizeof(T));
   if (ret1 != EOK) {
     MS_LOG(EXCEPTION) << "For 'NuclearNorm', it does memset_s failed. Error no: " << ret1;
   }
-  T *S_ = new T[dim[0] * dim[1]];
+  T *S_ = GetDeviceAddress<T>(workspace, kIndex7);
 
   const size_t lda = static_cast<size_t>(*LDA);
 
@@ -363,10 +394,6 @@ void NuclearNormCpuKernelMod::svd(int *M, int *N, const T *A, const int *LDA, T 
 
   SVD<T>(dim, U_, S_, V_, static_cast<T>(-1));
   svd_tail<T>(M, N, S, S_, U, VT, U_, V_, dim, LDU, *LDVT);
-
-  delete[] U_;
-  delete[] S_;
-  delete[] V_;
 }
 
 template <typename T>
@@ -409,9 +436,10 @@ void NuclearNormCpuKernelMod::svd_tail(const int *M, const int *N, T *S, const T
 }
 
 template <typename T>
-T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, const T *mat) {
+T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, const T *mat,
+                                                    const std::vector<kernel::AddressPtr> &workspace) {
   size_t n1 = dim0, n2 = dim1;
-  T *M = new T[n1 * n2];
+  T *M = GetDeviceAddress<T>(workspace, kIndex1);
   size_t copy_size = dim0 * dim1 * sizeof(T);
   auto ret0 = memcpy_s(M, copy_size, &mat[0], copy_size);
   if (ret0 != EOK) {
@@ -420,24 +448,21 @@ T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, co
   int m = n2;
   int n = n1;
   int k = (m < n ? m : n);
-  T *tU = new T[m * k];
-  T *tS = new T[k];
-  T *tVT = new T[k * n];
-  svd<T>(&m, &n, &M[0], &m, &tS[0], &tU[0], &m, &tVT[0], &k);
+  T *tU = GetDeviceAddress<T>(workspace, kIndex2);
+  T *tS = GetDeviceAddress<T>(workspace, kIndex3);
+  T *tVT = GetDeviceAddress<T>(workspace, kIndex4);
+  svd<T>(&m, &n, &M[0], &m, &tS[0], &tU[0], &m, &tVT[0], &k, workspace);
   T nuclear_norm = 0.0;
   for (int i = 0; i < k; i++) {
     nuclear_norm += *(tS + i);
   }
-  delete[] tU;
-  delete[] tS;
-  delete[] tVT;
-  delete[] M;
 
   return nuclear_norm;
 }
 
 template <typename T, int32_t RANK>
 bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel::AddressPtr> &inputs,
+                                                       const std::vector<kernel::AddressPtr> &workspace,
                                                        const std::vector<kernel::AddressPtr> &outputs) {
   const size_t input_dimnum = input_shape.size();
   T *input_data_ptr = reinterpret_cast<T *>(inputs[0]->addr);
@@ -490,12 +515,12 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
   size_t copy_size = (dimsize0 * dimsize1) * sizeof(T);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      T *mat = new T[dimsize0 * dimsize1];
+      T *mat = GetDeviceAddress<T>(workspace, kIndex0);
       auto ret2 = memcpy_s(mat, copy_size, &permuted_tensor(i, 0, 0), copy_size);
       if (ret2 != EOK) {
         MS_LOG(EXCEPTION) << "For 'NuclearNorm', it does memcpy_s failed. Error no: " << ret2;
       }
-      T nuclear_norm = ComputeMatrixNuclearNorm<T>(dimsize0, dimsize1, mat);
+      T nuclear_norm = ComputeMatrixNuclearNorm<T>(dimsize0, dimsize1, mat, workspace);
       *(output_data_ptr + i) = nuclear_norm;
     }
   };
@@ -505,30 +530,30 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
 
 template <typename T>
 bool NuclearNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
+                                           const std::vector<kernel::AddressPtr> &workspace,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   bool res = true;
   switch (input_shape.size()) {
     case DIM_SIZE2:
-      res = ComputeTensorNuclearNorm<T, DIM_SIZE2>(inputs, outputs);
+      res = ComputeTensorNuclearNorm<T, DIM_SIZE2>(inputs, workspace, outputs);
       break;
     case DIM_SIZE3:
-      res = ComputeTensorNuclearNorm<T, DIM_SIZE3>(inputs, outputs);
+      res = ComputeTensorNuclearNorm<T, DIM_SIZE3>(inputs, workspace, outputs);
       break;
     case DIM_SIZE4:
-      res = ComputeTensorNuclearNorm<T, DIM_SIZE4>(inputs, outputs);
+      res = ComputeTensorNuclearNorm<T, DIM_SIZE4>(inputs, workspace, outputs);
       break;
     case DIM_SIZE5:
-      res = ComputeTensorNuclearNorm<T, DIM_SIZE5>(inputs, outputs);
+      res = ComputeTensorNuclearNorm<T, DIM_SIZE5>(inputs, workspace, outputs);
       break;
     case DIM_SIZE6:
-      res = ComputeTensorNuclearNorm<T, DIM_SIZE6>(inputs, outputs);
+      res = ComputeTensorNuclearNorm<T, DIM_SIZE6>(inputs, workspace, outputs);
       break;
     case DIM_SIZE7:
-      res = ComputeTensorNuclearNorm<T, DIM_SIZE7>(inputs, outputs);
+      res = ComputeTensorNuclearNorm<T, DIM_SIZE7>(inputs, workspace, outputs);
       break;
     case DIM_SIZE8:
-      res = ComputeTensorNuclearNorm<T, DIM_SIZE8>(inputs, outputs);
+      res = ComputeTensorNuclearNorm<T, DIM_SIZE8>(inputs, workspace, outputs);
       break;
     default:
       MS_LOG(EXCEPTION) << "Only tensors with ranks between 2 and 8 are "

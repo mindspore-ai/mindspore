@@ -73,19 +73,22 @@ class NuclearNormCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
                     T beta, const T S_max);
 
   template <typename T>
-  void svd(int *M, int *N, const T *A, const int *LDA, T *S, T *U, const int *LDU, T *VT, const int *LDVT);
+  void svd(int *M, int *N, const T *A, const int *LDA, T *S, T *U, const int *LDU, T *VT, const int *LDVT,
+           const std::vector<AddressPtr> &workspace);
 
   template <typename T>
   void svd_tail(const int *M, const int *N, T *S, const T *S_, T *U, T *VT, const T *U_, const T *V_,
                 const size_t dim[], const int *LDU, const int LDVT);
 
   template <typename T>
-  T ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, const T *mat);
+  T ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, const T *mat, const std::vector<AddressPtr> &workspace);
 
   template <typename T, int32_t RANK>
-  bool ComputeTensorNuclearNorm(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool ComputeTensorNuclearNorm(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                const std::vector<AddressPtr> &outputs);
 
   std::vector<int64_t> input_shape;
+  TypeId input_dtype{kTypeUnknown};
   std::vector<int64_t> dim_ = {0, 1};
   bool keepdim = false;
 };
