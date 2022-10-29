@@ -346,8 +346,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUpdateState, R{InferImplUpdateState, nullptr, true}},
     // Debug
     {prim::kPrimDebug, R{InferImplDebug, nullptr, true}},
-    // Dynamic shape testing
-    {prim::kPrimGpuConvertToDynamicShape, R{InferImplGpuConvertToDynamicShape, nullptr, true}},
     // RowTensor
     {prim::kPrimMakeRowTensor, R{InferImplMakeRowTensor, nullptr, true}},
     {prim::kPrimRowTensorGetValues, R{InferImplRowTensorGetValues, nullptr, true}},
