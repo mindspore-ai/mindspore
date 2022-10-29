@@ -199,6 +199,7 @@
     mindspore.Tensor.transpose
     mindspore.Tensor.triu
     mindspore.Tensor.true_divide
+    mindspore.Tensor.unbind
     mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad

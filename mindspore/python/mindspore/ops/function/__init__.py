@@ -50,6 +50,7 @@ from .array_func import (
     flatten,
     concat,
     stack,
+    unbind,
     unstack,
     tensor_slice,
     strided_slice,

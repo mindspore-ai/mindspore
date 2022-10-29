@@ -380,6 +380,7 @@ Array Operation
     mindspore.ops.tile
     mindspore.ops.top_k
     mindspore.ops.transpose
+    mindspore.ops.unbind
     mindspore.ops.unfold
     mindspore.ops.unique
     mindspore.ops.unique_consecutive

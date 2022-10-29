@@ -221,6 +221,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"nonzero", std::string("nonzero")},                                // nonzero()
        {"expand_dims", std::string("expand_dims")},                        // P.expand_dims()
        {"squeeze", std::string("squeeze")},                                // P.squeeze()
+       {"unbind", std::string("unbind")},                                  // P.Unstack()
        {"astype", std::string("astype")},                                  // P.cast()
        {"median", std::string("median")},                                  // P.median()
        {"cumsum", std::string("cumsum")},                                  // P.cumsum()
