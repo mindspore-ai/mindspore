@@ -121,6 +121,7 @@ class JiebaTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> from mindspore.dataset.text import JiebaMode
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> jieba_hmm_file = "/path/to/jieba/hmm/file"
@@ -175,6 +176,7 @@ class JiebaTokenizer(TextTensorOperation):
                 the better chance the word will be tokenized (default=None, use default frequency).
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import JiebaMode
             >>> jieba_hmm_file = "/path/to/jieba/hmm/file"
             >>> jieba_mp_file = "/path/to/jieba/mp/file"
@@ -292,6 +294,7 @@ class Lookup(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> # Load vocabulary from list
         >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
         >>> # Use Lookup operation to map tokens to ids
@@ -343,6 +346,7 @@ class Ngram(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> ngram_op = text.Ngram(3, separator="-")
         >>> output = ngram_op(["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"])
         >>> # output
@@ -428,6 +432,7 @@ class SentencePieceTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
         >>> sentence_piece_vocab_file = "/path/to/sentence/piece/vocab/file"
         >>> vocab = text.SentencePieceVocab.from_file([sentence_piece_vocab_file], 5000, 0.9995,
@@ -465,6 +470,7 @@ class SlidingWindow(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> dataset = ds.NumpySlicesDataset(data=[[1, 2, 3, 4, 5]], column_names="col1")
         >>> # Data before
         >>> # |     col1     |
@@ -511,6 +517,8 @@ class ToNumber(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
         >>> from mindspore import dtype as mstype
         >>> data = [["1", "2", "3"]]
         >>> dataset = ds.NumpySlicesDataset(data)
@@ -549,6 +557,7 @@ class ToVectors(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> # Load vectors from file
         >>> vectors = text.Vectors.from_file("/path/to/vectors/file")
         >>> # Use ToVectors operation to map tokens to vectors
@@ -583,6 +592,7 @@ class TruncateSequencePair(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> dataset = ds.NumpySlicesDataset(data={"col1": [[1, 2, 3]], "col2": [[4, 5]]})
         >>> # Data before
         >>> # |   col1    |   col2    |
@@ -621,6 +631,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=False)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
@@ -666,6 +677,7 @@ class WordpieceTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.text as text
         >>> vocab_list = ["book", "cholera", "era", "favor", "##ite", "my", "is", "love", "dur", "##ing", "the"]
         >>> vocab = text.Vocab.from_list(vocab_list)
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -744,6 +756,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -834,6 +847,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -849,8 +863,8 @@ if platform.system().lower() != 'windows':
             ...                                   with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
             >>> # If with_offsets=True, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> #                                                  ["offsets_start", dtype=uint32],
+            >>> #                                                  ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
             ...                                   unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
             ...                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
@@ -897,6 +911,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> case_op = text.CaseFold()
             >>> text_file_dataset = text_file_dataset.map(operations=case_op)
         """
@@ -917,7 +932,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
-            >>> import mindspore.dataset.text.transforms as text
+            >>> import mindspore.dataset.text as text
             >>>
             >>> replace_op = text.FilterWikipediaXML()
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
@@ -953,6 +968,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>> normalize_op = text.NormalizeUTF8(normalize_form=NormalizeForm.NFC)
             >>> text_file_dataset = text_file_dataset.map(operations=normalize_op)
@@ -994,6 +1010,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> pattern = 'Canada'
             >>> replace = 'China'
             >>> replace_op = text.RegexReplace(pattern, replace)
@@ -1037,6 +1054,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> # If with_offsets=False, default output is one column {["text", dtype=str]}
             >>> delim_pattern = r"[ |,]"
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=False)
@@ -1080,6 +1098,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
@@ -1121,6 +1140,7 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)

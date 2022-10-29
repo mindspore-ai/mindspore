@@ -201,7 +201,7 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
             The output image pixel value is exponentially related to the input image pixel value.
             gamma larger than 1 make the shadows darker,
             while gamma smaller than 1 make dark regions lighter.
-        gain (float, optional): The constant multiplier (default=1).
+        gain (float, optional): The constant multiplier (default=1.0).
 
     Raises:
         TypeError: If `gain` is not of type float.
@@ -461,7 +461,7 @@ class AutoAugment(ImageTensorOperation):
 
             - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
 
-            - Inter.AREA: means the interpolation method is area interpolation.
+            - Inter.AREA: means the interpolation method is pixel area interpolation.
 
         fill_value (Union[int, tuple[int]], optional): Pixel fill value for the area outside the transformed image.
             It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
@@ -469,8 +469,8 @@ class AutoAugment(ImageTensorOperation):
             (default=0).
 
     Raises:
-        TypeError: If `policy` is not of type AutoAugmentPolicy.
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `policy` is not of type :class:`mindspore.dataset.vision.AutoAugmentPolicy`.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `fill_value` is not an integer or a tuple of length 3.
         RuntimeError: If given tensor shape is not <H, W, C>.
 
@@ -564,12 +564,12 @@ class BoundingBoxAugment(ImageTensorOperation):
         transform (TensorOperation): Transformation operation to be applied on random selection
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
-            Range: [0, 1] (default=0.3).
+            Range: [0.0, 1.0] (default=0.3).
 
     Raises:
         TypeError: If `transform` is an image processing operation in :class:`mindspore.dataset.vision.transforms`.
         TypeError: If `ratio` is not of type float.
-        ValueError: If `ratio` is not in range [0, 1].
+        ValueError: If `ratio` is not in range [0.0, 1.0].
         RuntimeError: If given bounding box is invalid.
 
     Supported Platforms:
@@ -781,14 +781,15 @@ class CutMixBatch(ImageTensorOperation):
         image_batch_format (ImageBatchFormat): The method of padding. Can be any of
             [ImageBatchFormat.NHWC, ImageBatchFormat.NCHW].
         alpha (float, optional): Hyperparameter of beta distribution, must be larger than 0 (default = 1.0).
-        prob (float, optional): The probability by which CutMix is applied to each image, range: [0, 1] (default = 1.0).
+        prob (float, optional): The probability by which CutMix is applied to each image,
+            which must be in range: [0.0, 1.0] (default = 1.0).
 
     Raises:
         TypeError: If `image_batch_format` is not of type :class:`mindspore.dataset.vision.ImageBatchFormat`.
         TypeError: If `alpha` is not of type float.
         TypeError: If `prob` is not of type float.
         ValueError: If `alpha` is less than or equal 0.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
@@ -1710,7 +1711,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
             - Inter.CUBIC: means the interpolation method is bicubic interpolation, here is the same as Inter.BICUBIC.
             - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
               should be in 3 channels format.(PIL input is not supported)
-            - Inter.AREA, area interpolation.(PIL input is not supported)
+            - Inter.AREA, pixel area interpolation.(PIL input is not supported)
 
     Raises:
         TypeError: If `start_points` is not of type Sequence[Sequence[int, int]] of length 4.
@@ -1812,7 +1813,7 @@ class RandAugment(ImageTensorOperation):
 
             - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
 
-            - Inter.AREA: means the interpolation method is area interpolation.
+            - Inter.AREA: means the interpolation method is pixel area interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the transformed
             image. It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
@@ -1861,13 +1862,13 @@ class RandomAdjustSharpness(ImageTensorOperation):
             Degree of 0.0 gives a blurred image, degree of 1.0 gives the original image,
             and degree of 2.0 increases the sharpness by a factor of 2.
         prob (float, optional): Probability of the image being sharpness adjusted, which
-            must be in range of [0, 1] (default=0.5).
+            must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `degree` is not of type float.
         TypeError: If `prob` is not of type float.
         ValueError: If `degree` is negative.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -2041,7 +2042,7 @@ class RandomAutoContrast(ImageTensorOperation):
         ignore (Union[int, sequence], optional): The background pixel values to be ignored, each of
             which must be in range of [0, 255] (default=None).
         prob (float, optional): Probability of the image being automatically contrasted, which
-            must be in range of [0, 1] (default=0.5).
+            must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `cutoff` is not of type float.
@@ -2049,7 +2050,7 @@ class RandomAutoContrast(ImageTensorOperation):
         TypeError: If `prob` is not of type float.
         ValueError: If `cutoff` is not in range [0.0, 50.0).
         ValueError: If `ignore` is not in range [0, 255].
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -2482,11 +2483,11 @@ class RandomEqualize(ImageTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image being equalized, which
-            must be in range of [0, 1] (default=0.5).
+            must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -2515,7 +2516,8 @@ class RandomErasing(PyTensorOperation):
     See `Random Erasing Data Augmentation <https://arxiv.org/pdf/1708.04896.pdf>`_.
 
     Args:
-        prob (float, optional): Probability of performing erasing. Default: 0.5.
+        prob (float, optional): Probability of performing erasing, which
+            must be in range of [0.0, 1.0] (default: 0.5).
         scale (Sequence[float, float], optional): Range of area scale of the erased area relative
             to the original image to select from, arranged in order of (min, max).
             Default: (0.02, 0.33).
@@ -2537,7 +2539,7 @@ class RandomErasing(PyTensorOperation):
         TypeError: If `value` is not of type integer, string, or sequence.
         TypeError: If `inplace` is not of type boolean.
         TypeError: If `max_attempts` is not of type integer.
-        ValueError: If `prob` is not in range of [0, 1].
+        ValueError: If `prob` is not in range of [0.0, 1.0].
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
         ValueError: If `value` is not in range of [0, 255].
@@ -2591,11 +2593,12 @@ class RandomGrayscale(PyTensorOperation):
     Randomly convert the input PIL Image to grayscale.
 
     Args:
-        prob (float, optional): Probability of performing grayscale conversion. Default: 0.1.
+        prob (float, optional): Probability of performing grayscale conversion,
+            which must be in range of [0.0, 1.0] (default: 0.1).
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range of [0, 1].
+        ValueError: If `prob` is not in range of [0.0, 1.0].
 
     Supported Platforms:
         ``CPU``
@@ -2644,11 +2647,12 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
     Randomly flip the input image horizontally with a given probability.
 
     Args:
-        prob (float, optional): Probability of the image being flipped, which must be in range of [0, 1] (default=0.5).
+        prob (float, optional): Probability of the image being flipped,
+            which must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -2686,11 +2690,12 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
     Flip the input image horizontally randomly with a given probability and adjust bounding boxes accordingly.
 
     Args:
-        prob (float, optional): Probability of the image being flipped, which must be in range of [0, 1] (default=0.5).
+        prob (float, optional): Probability of the image being flipped,
+            which must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -2717,11 +2722,12 @@ class RandomInvert(ImageTensorOperation):
     Randomly invert the colors of image with a given probability.
 
     Args:
-        prob (float, optional): Probability of the image being inverted, which must be in range of [0, 1] (default=0.5).
+        prob (float, optional): Probability of the image being inverted,
+            which must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
@@ -2792,8 +2798,9 @@ class RandomPerspective(PyTensorOperation):
     Randomly apply perspective transformation to the input PIL Image with a given probability.
 
     Args:
-        distortion_scale (float, optional): Scale of distortion, in range of [0, 1]. Default: 0.5.
-        prob (float, optional): Probability of performing perspective transformation. Default: 0.5.
+        distortion_scale (float, optional): Scale of distortion, in range of [0.0, 1.0]. Default: 0.5.
+        prob (float, optional): Probability of performing perspective transformation, which
+            must be in range of [0.0, 1.0] (default: 0.5).
         interpolation (Inter, optional): Method of interpolation. It can be Inter.BILINEAR,
             Inter.NEAREST or Inter.BICUBIC. Default: Inter.BICUBIC.
 
@@ -2805,8 +2812,8 @@ class RandomPerspective(PyTensorOperation):
         TypeError: If `distortion_scale` is not of type float.
         TypeError: If `prob` is not of type float.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
-        ValueError: If `distortion_scale` is not in range of [0, 1].
-        ValueError: If `prob` is not in range of [0, 1].
+        ValueError: If `distortion_scale` is not in range of [0.0, 1.0].
+        ValueError: If `prob` is not in range of [0.0, 1.0].
 
     Supported Platforms:
         ``CPU``
@@ -3154,7 +3161,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
 
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
-            - Inter.AREA, means the interpolation method is area interpolation.
+            - Inter.AREA, means the interpolation method is pixel area interpolation.
 
         expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
@@ -3246,7 +3253,7 @@ class RandomSelectSubpolicy(ImageTensorOperation):
     Args:
         policy (list[list[tuple[TensorOperation, float]]]): List of sub-policies to choose from.
             A sub-policy is a list of tuple[operation, prob], where operation is a data processing operation and prob
-            is the probability that this operation will be applied, and the prob values must be in range [0, 1].
+            is the probability that this operation will be applied, and the prob values must be in range [0.0, 1.0].
             Once a sub-policy is selected, each operation within the sub-policy with be applied in sequence according
             to its probability.
 
@@ -3370,11 +3377,12 @@ class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
     Randomly flip the input image vertically with a given probability.
 
     Args:
-        prob (float, optional): Probability of the image being flipped. Default=0.5.
+        prob (float, optional): Probability of the image being flipped, which
+            must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -3412,11 +3420,12 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
     Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
 
     Args:
-        prob (float, optional): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image being flipped,
+            which must be in range of [0.0, 1.0] (default=0.5).
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -4098,7 +4107,7 @@ class TrivialAugmentWide(ImageTensorOperation):
 
             - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
 
-            - Inter.AREA: means the interpolation method is area interpolation.
+            - Inter.AREA: means the interpolation method is pixel area interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside
             the transformed image.

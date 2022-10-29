@@ -21,7 +21,6 @@
 #include "mindspore/core/load_mindir/load_model.h"
 #if !defined(_WIN32) && !defined(_WIN64)
 #include "cxx_api/dlutils.h"
-#include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/include/dataset/execute.h"
 #endif
 #include "utils/crypto.h"

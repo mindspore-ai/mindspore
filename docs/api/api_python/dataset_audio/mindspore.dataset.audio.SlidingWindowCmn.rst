@@ -3,7 +3,7 @@ mindspore.dataset.audio.SlidingWindowCmn
 
 .. py:class:: mindspore.dataset.audio.SlidingWindowCmn(cmn_window=600, min_cmn_window=100, center=False, norm_vars=False)
 
-    应用滑动窗口倒谱平均值（和可选的方差）标准化每个对话语句。
+    对每个话语应用滑动窗口倒谱均值（和可选方差）归一化。
 
     参数：
         - **cmn_window** (int, 可选) - 用于运行平均CMN计算的帧中窗口，默认值：600。

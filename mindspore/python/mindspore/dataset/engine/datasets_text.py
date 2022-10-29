@@ -1588,7 +1588,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
     A source dataset that reads and parses WikiText2 and WikiText103 datasets.
 
     The generated dataset has one column :py:obj:`[text]`, and
-    the tensor of column :py:obj:`text` is of the string type.
+    the tensor of column `text` is of the string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1614,9 +1614,13 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
-    Examples:
-        >>> wiki_text_dataset_dir = "/path/to/wiki_text_dataset_directory"
-        >>> dataset = ds.WikiTextDataset(dataset_dir=wiki_text_dataset_dir, usage='all')
+    Raises:
+        RuntimeError: If `dataset_dir` does not contain data files or invalid.
+        ValueError: If `num_samples` is invalid (< 0).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     About WikiTextDataset dataset:
 
@@ -1647,6 +1651,10 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
           journal={arXiv preprint arXiv:1609.07843},
           year={2016}
         }
+
+    Examples:
+        >>> wiki_text_dataset_dir = "/path/to/wiki_text_dataset_directory"
+        >>> dataset = ds.WikiTextDataset(dataset_dir=wiki_text_dataset_dir, usage='all')
     """
 
     @check_wiki_text_dataset

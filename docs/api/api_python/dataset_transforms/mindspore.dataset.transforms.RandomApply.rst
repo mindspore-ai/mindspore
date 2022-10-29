@@ -7,7 +7,7 @@ mindspore.dataset.transforms.RandomApply
 
     参数：
         - **transforms** (list) - 一个数据增强的列表。
-        - **prob** (float, 可选) - 随机应用某个数据增强的概率，默认值：0.5。
+        - **prob** (float, 可选) - 随机应用某个数据增强的概率，取值范围：[0.0, 1.0]。默认值：0.5。
 
     异常：
         - **TypeError** - 参数 `transforms` 类型不为list。

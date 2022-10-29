@@ -1173,6 +1173,9 @@ class Dataset:
         Returns:
             Dataset, dataset zipped.
 
+        Raises:
+            TypeError: The parameter is not dataset object or tuple of dataset objects.
+
         Examples:
             >>> # Create a dataset which is the combination of dataset and dataset_1
             >>> dataset = dataset.zip(dataset_1)

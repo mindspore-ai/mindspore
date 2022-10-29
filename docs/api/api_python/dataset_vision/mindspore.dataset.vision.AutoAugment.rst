@@ -22,14 +22,14 @@ mindspore.dataset.vision.AutoAugment
           - **Inter.NEAREST**：表示插值方法是最近邻插值。
           - **Inter.BILINEAR**：表示插值方法是双线性插值。
           - **Inter.BICUBIC**：表示插值方法为双三次插值。
-          - **Inter.AREA**：表示插值方法为面积插值。
+          - **Inter.AREA**：表示插值方法为像素区域插值。
 
         - **fill_value** (Union[int, tuple[int]], 可选) - 填充的像素值。
           如果是3元素元组，则分别用于填充R、G、B通道。
           如果是整数，则用于所有 RGB 通道。 `fill_value` 值必须在 [0, 255] 范围内，默认值：0。
 
     异常：
-        - **TypeError** - 如果 `policy` 不是AutoAugmentPolicy类型。
-        - **TypeError** - 如果 `interpolation` 不是Inter类型。
+        - **TypeError** - 如果 `policy` 不是 :class:`mindspore.dataset.vision.AutoAugmentPolicy` 类型。
+        - **TypeError** - 如果 `interpolation` 不是 :class:`mindsore.dataset.vision.Inter` 类型。
         - **TypeError** - 如果 `fill_value` 不是整数或长度为3的元组。
         - **RuntimeError** - 如果给定的张量形状不是<H, W, C>。

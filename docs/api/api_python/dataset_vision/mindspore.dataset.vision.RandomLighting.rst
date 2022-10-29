@@ -9,6 +9,6 @@ mindspore.dataset.vision.RandomLighting
         - **alpha** (float, 可选) - 图像的强度，必须是非负的。默认值：0.05。
 
     异常：
-        - **TypeError** - 如果 `alpha` 的类型不为bool。
+        - **TypeError** - 如果 `alpha` 的类型不为float。
         - **ValueError** - 如果 `alpha` 为负数。
         - **RuntimeError** - 如果输入图像的shape不是 <H, W, C>。

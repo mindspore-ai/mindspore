@@ -192,7 +192,7 @@ class ScaleType(str, Enum):
 
 class WindowType(str, Enum):
     """
-    Window Function types,
+    Window Function types.
 
     Possible enumeration values are: WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN,
     WindowType.KAISER.

@@ -393,6 +393,10 @@ def get_image_num_channels(image):
     Returns:
         int, the number of input image channels.
 
+    Raises:
+        RuntimeError: If `image` has invalid dimensions which should be larger than 1.
+        TypeError: If `image` is not of type <class 'numpy.ndarray'> or <class 'PIL.Image.Image'>.
+
     Examples:
         >>> num_channels = vision.get_image_num_channels(image)
     """
@@ -418,6 +422,10 @@ def get_image_size(image):
 
     Returns:
         list[int, int], the image size.
+
+    Raises:
+        RuntimeError: If `image` has invalid dimensions which should be larger than 1.
+        TypeError: If `image` is not of type <class 'numpy.ndarray'> or <class 'PIL.Image.Image'>.
 
     Examples:
         >>> image_size = vision.get_image_size(image)
