@@ -5,7 +5,7 @@ mindspore.nn.Rprop
 
     弹性反向传播（Rprop）算法的实现。
 
-    请参阅论文 `A Direct Adaptive Method for Faster Backpropagation Learning <https://ieeexplore.ieee.org/document/298623>`_ 。
+    请参阅论文 `A Direct Adaptive Method for Faster Backpropagation Learning: The RPROP Algorithm. <https://ieeexplore.ieee.org/document/298623>`_ 。
 
     更新公式如下：
 
@@ -34,12 +34,12 @@ mindspore.nn.Rprop
           .. include:: mindspore.nn.optim_group_gc.rst
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 学习率。默认值：0.1。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
-        - **etas** (tuple[float, float]) - 乘法的增加或减少的因子（etaminus, etaplus）。
-        - **step_sizes** (tuple[float, float]) - 允许的最小和最大步长（min_step_sizes, max_step_size）。
+        - **etas** (tuple[float, float]) - 乘法的增加或减少的因子（etaminus, etaplus）。默认值：(0.5, 1.2)。
+        - **step_sizes** (tuple[float, float]) - 允许的最小和最大步长（min_step_sizes, max_step_size）。默认值：(1e-6, 50.)。
         - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
 
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
@@ -49,7 +49,7 @@ mindspore.nn.Rprop
 
     输出：
         Tensor[bool]，值为True。
-        
+
     异常：
         - **TypeError** - 如果 `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
         - **TypeError** - 如果 `parameters` 的元素不是Parameter或字典。

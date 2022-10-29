@@ -17,7 +17,7 @@ mindspore.nn.ASGD
             \mu_{t} = \frac{1}{\max(1, t - t0)}
         \end{gather*}
     
-    :math:`\lambda` 代表衰减项， :math:`\mu` 和 :math:`\eta` 被跟踪以更新 :math:`ax` 和 :math:`w` ， :math:`t0` 代表开始平均的点， :math:`\α` 代表 :math:`\eta` 更新的系数， :math:`ax` 表示平均参数值， :math:`t` 表示当前步数（step），:math:`g` 表示 `gradients` ， :math:`w` 表示 `params` 。
+    :math:`\lambda` 代表衰减项， :math:`\mu` 和 :math:`\eta` 被跟踪以更新 :math:`ax` 和 :math:`w` ， :math:`t0` 代表开始平均的点， :math:`\alpha` 代表 :math:`\eta` 更新的系数， :math:`ax` 表示平均参数值， :math:`t` 表示当前步数（step），:math:`g` 表示 `gradients` ， :math:`w` 表示 `params` 。
 
     .. note::
         如果参数未分组，则优化器中的 `weight_decay` 将应用于名称中没有"beta"或"gamma"的参数。用户可以对参数进行分组，以更改权重衰减策略。当参数分组时，每个组都可以设置 `weight_decay` ，如果没有，将应用优化器中的 `weight_decay` 。
@@ -31,7 +31,7 @@ mindspore.nn.ASGD
           .. include:: mindspore.nn.optim_group_gc.rst
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) -
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 学习率。默认值：0.1。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 

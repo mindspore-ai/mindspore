@@ -27,7 +27,7 @@ mindspore.nn.AdaptiveAvgPool3d
         - **output_size** (Union[int, tuple]) - 指定输出特征图的尺寸，可以是个tuple :math:`(D, H, W)`，也可以是一个int值D来表示输出尺寸为 :math:`(D, D, D)` 。:math:`D`，:math:`H` 和 :math:`W` 可以是int值或者None，其中None表示输出大小与对应的输入的大小相同。
 
     输入：
-        - **x** (Tensor) - AdaptiveAvgPool3d的输入，是4D或者5D的Tensor。
+        - **x** (Tensor) - AdaptiveAvgPool3d的输入，是4D或者5D的Tensor。数据类型：float16，float32或者float64。
 
     输出：
         Tensor，与输入 `x` 的数据类型相同。

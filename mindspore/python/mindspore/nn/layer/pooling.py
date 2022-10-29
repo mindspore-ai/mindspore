@@ -516,7 +516,7 @@ class AvgPool3d(Cell):
     is :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
     .. warning::
-        "kernel_size" is in the range [1, 255]. "stride" is in the range [1, 63].
+        `kernel_size` is in the range [1, 255]. `stride` is in the range [1, 63].
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
@@ -525,11 +525,11 @@ class AvgPool3d(Cell):
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
-            is an int number that represents depth, height and width are both kernel_size, or a tuple
+            can be an int number that represents depth, height and width, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the depth, height and width of movement are both stride, or a tuple of three int numbers that
+        stride (Union[int, tuple[int]]): The distance of kernel moving, can be an int number that represents
+            the depth, height and width of movement, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. The value must be a positive integer.
             If the value is None, the default value `kernel_size` is used.
         padding (Union(int, tuple[int])): The padding value to be filled. Default: 0. The value cannot be negative.
@@ -943,7 +943,7 @@ class AdaptiveAvgPool3d(Cell):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
 
-    Suppose the last 3 dimension size of x is :math:`(inD, inH, inW)`, the last 3 dimension size of output is
+    Suppose the last 3 dimension size of x is :math:`(inD, inH, inW)`, then the last 3 dimension size of output is
     :math:`(outD, outH, outW)`.
 
     .. math::
@@ -961,12 +961,13 @@ class AdaptiveAvgPool3d(Cell):
         \end{array}
 
     Args:
-        output_size (Union[int, tuple]): he target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
             or an int D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
             which means the output size is the same as that of the input.
 
     Inputs:
-        - **x** (Tensor) - The input of AdaptiveAvgPool3d, which is a 5D or 4D Tensor.
+        - **x** (Tensor) - The input of AdaptiveAvgPool3d, which is a 5D or 4D Tensor,
+          with float16, float32 or float64 data type.
 
     Outputs:
         Tensor, with the same type as the `x`.
@@ -1208,13 +1209,13 @@ class AdaptiveMaxPool3d(Cell):
             Default: False.
 
     Inputs:
-        - **x** (Tensor) - It is a 4D or 5D Tensor with int8, int16, int32, int64, uint8, uint16, uint32,
-          uint64, float16, float32 or float64 data type.
+        - **x** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)` . The suppoerted dtypes
+          are int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 and float64 data type.
 
     Outputs:
-        - **y** (Tensor) - A Tensor, with the same number of dims and data type as the `x`.
-        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
-          `y` and int32 data type. It will output only when `return_indices` is True.
+        - **y** (Tensor) - Tensor, has the same number of dims and data type as the `x` .
+        - **argmax** (Tensor) - Tensor, the indices of the maximum values along with the outputs, has the same shape as
+          `y` and a dtype of int32. Return this only when `return_indices` is True.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -1263,15 +1264,16 @@ class FractionalMaxPool2d(Cell):
     Fractional MaxPooling is described in the paper `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_.
 
     Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel window used to take the maximum value.
-            The target `kernel_size` is H x W. `kernel_size` can be a tuple, or a single K for K x K.
-            specifying the window size (H, W) of the input tensor.
-        output_size (Union[int, tuple[int]]): The target output size is H x W.
-            `output_size` can be a tuple, or a single H for H x H.
-            specifying the size (H, W) of the output tensor.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width of the kernel, or a tuple
+            of two int numbers that represent height and width respectively.
+            The value must be a positive integer.
+        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
+            is an int number that represents height and width, or a tuple
+            of two int numbers that represent height and width respectively.
+            The value must be a positive integer.
             Default: None.
-        output_ratio (Union[float, tuple[float]]): The target `output_ratio` is H x W.
-            `output_ratio` can be a tuple, or a single H for H x H.
+        output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).
             Default: None.
@@ -1288,7 +1290,7 @@ class FractionalMaxPool2d(Cell):
 
     Outputs:
         - **y** (Tensor) - Has the same type as the `input_x`.
-          Has the shape :math:`(N, C, output\underline{~}shape{H}, output\underline{~}shape{W})`.
+          Has the shape :math:`(N, C, H, W)`.
 
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int64 data type. It will output only when `return_indices` is True.
@@ -1393,15 +1395,16 @@ class FractionalMaxPool3d(Cell):
     D the feature depth, H is the feature height, and W is the feature width.
 
     Args:
-        kernel_size (Union[int, tuple[int]]): The target `kernel_size` is D x H x W.
-            `kernel_size` can be a tuple, or a single K for K x K x K.
-            specifying the window size (D, H, W) of the input tensor.
-        output_size (Union[int, tuple[int]]): The target `output_size` is D x H x W.
-            `output_size` can be a tuple, or a single H for H x H x H.
-            Specifying the size (D, H, W) of the output tensor.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents depth, height and width of the kernel, or a tuple
+            of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer.
+        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
+            is an int number that represents depth, height and width, or a tuple
+            of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer.
             Default: None.
-        output_ratio (Union[float, tuple[float]]): The target `output_ratio` is D x H x W.
-            `output_ratio` can be a tuple, or a single H for H x H x H.
+        output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, double, and value is between (0, 1).
             Default: None.
@@ -1419,7 +1422,7 @@ class FractionalMaxPool3d(Cell):
     Outputs:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
           Has the same data type with `imput_x`.
-          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` .
+          Tensor of shape :math:`(N, C, D, H, W)` .
 
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int32 data type. It will output only when `return_indices` is True.
