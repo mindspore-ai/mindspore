@@ -30,12 +30,26 @@
 
 namespace mindspore {
 namespace kernel {
-class TripletMarginLossCPUKernelMod : public DeprecatedNativeCpuKernelMod {
+constexpr int kParallel = 28;
+constexpr int kParallelunit = 1024;
+constexpr int kPInit = 2;
+constexpr auto kEps = 1e-6;
+constexpr int kInitParam = 1;
+constexpr auto kInputNumber = 4;
+constexpr auto kOutputNumber = 1;
+constexpr auto kNumber1 = 1;
+class TripletMarginLossCPUKernelMod : public NativeCpuKernelMod {
  public:
   TripletMarginLossCPUKernelMod() = default;
   ~TripletMarginLossCPUKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -174,32 +188,26 @@ class TripletMarginLossCPUKernelMod : public DeprecatedNativeCpuKernelMod {
                         std::vector<T> &calculate_swap, size_t j, size_t k, float &calc_swap_sum,
                         const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
-  void CheckParam(const CNodePtr &kernel_node);
-  int64_t p = 2;
-  bool swap = false;
-  float eps = 1e-6;
-  std::string reduction = MEAN;
-  size_t input_num = 1;
-  size_t output_num = 1;
-  size_t kParallelDataNum = 1;
-  TypeId dtype_0{kTypeUnknown};
-  TypeId dtype_1{kTypeUnknown};
-  TypeId dtype_2{kTypeUnknown};
-  TypeId dtype_3{kTypeUnknown};
-  ShapeVector x_shape;
-  ShapeVector positive_shape;
-  ShapeVector negative_shape;
-  ShapeVector broadcast_shape;
-  ShapeVector x_reshape_vector;
-  ShapeVector positive_reshape_vector;
-  ShapeVector negative_reshape_vector;
-  size_t numelements = 1;
-  size_t data_num = 1;
-  size_t data_num_each_batch = 1;
-  size_t index = 1;
-  size_t batch_size = 1;
-  size_t once_compute_size = 1;
-  bool broadcast = false;
+  int64_t p_{kPInit};
+  bool swap_{false};
+  float eps_{kEps};
+  std::string reduction_{MEAN};
+  size_t kParallelDataNum_{kParallel * kParallelunit};
+  TypeId dtype_0_{kTypeUnknown};
+  ShapeVector x_shape_;
+  ShapeVector positive_shape_;
+  ShapeVector negative_shape_;
+  ShapeVector broadcast_shape_;
+  ShapeVector x_reshape_vector_;
+  ShapeVector positive_reshape_vector_;
+  ShapeVector negative_reshape_vector_;
+  size_t numelements_{kInitParam};
+  size_t data_num_{kInitParam};
+  size_t data_num_each_batch_{kInitParam};
+  size_t index_{kInitParam};
+  size_t batch_size_{kInitParam};
+  size_t once_compute_size_{kInitParam};
+  bool broadcast_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
