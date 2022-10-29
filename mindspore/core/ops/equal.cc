@@ -45,6 +45,22 @@ void EqualImpl(void *x1, void *x2, void *result, size_t size) {
   }
 }
 
+template <typename T>
+void EqualFloatImpl(void *x1, void *x2, void *result, size_t size) {
+  MS_EXCEPTION_IF_NULL(x1);
+  MS_EXCEPTION_IF_NULL(x2);
+  MS_EXCEPTION_IF_NULL(result);
+  T *x1_data = static_cast<T *>(x1);
+  T *x2_data = static_cast<T *>(x2);
+  auto result_data = static_cast<bool *>(result);
+  MS_EXCEPTION_IF_NULL(x1_data);
+  MS_EXCEPTION_IF_NULL(x2_data);
+  MS_EXCEPTION_IF_NULL(result_data);
+  for (size_t i = 0; i < size; ++i) {
+    result_data[i] = std::abs(x1_data[i] - x2_data[i]) < std::numeric_limits<T>::epsilon();
+  }
+}
+
 abstract::ShapePtr EqualInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
@@ -112,7 +128,7 @@ ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
       break;
     }
     case kNumberTypeFloat: {
-      EqualImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      EqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     case kNumberTypeFloat16: {
@@ -120,11 +136,11 @@ ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
       break;
     }
     case kNumberTypeFloat32: {
-      EqualImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      EqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     case kNumberTypeFloat64: {
-      EqualImpl<double>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      EqualFloatImpl<double>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     case kNumberTypeComplex64: {

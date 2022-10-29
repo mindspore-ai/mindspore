@@ -102,7 +102,9 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     not_equal = P.NotEqual()
     cast = P.Cast()
     reduce_sum = P.ReduceSum(keep_dims)
-    nonzero_bool = not_equal(x, 0)
+    zeros = P.Zeros()
+    tensor_0 = zeros(x.shape, x.dtype)
+    nonzero_bool = not_equal(x, tensor_0)
     # ReduceSum only support float16 or float32 tensor.
     nonzero_val = cast(nonzero_bool, mstype.float32)
     nonzero_num = cast(reduce_sum(nonzero_val, axis), dtype)
