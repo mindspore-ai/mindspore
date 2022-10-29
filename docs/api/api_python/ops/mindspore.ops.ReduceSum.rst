@@ -18,7 +18,7 @@ mindspore.ops.ReduceSum
     输出：
         Tensor，具有与输入 `x` 相同的shape。
 
-        - 如果轴为()，且keep_dims为False，则输出一个0维Tensor，表示输入Tensor中所有元素的和。
+        - 如果轴为()，且keep_dims为False，skip_mode为False，则输出一个0维Tensor，表示输入Tensor中所有元素的和。
 
         - 如果轴为()，且skip_mode为True，则不进行ReduceSum运算，输出Tensor等于输入Tensor。
 
