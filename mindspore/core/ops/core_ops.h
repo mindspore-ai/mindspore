@@ -1293,6 +1293,7 @@ GVAR_DEF(PrimitivePtr, kPrimOrgqr, std::make_shared<Primitive>("Orgqr"));
 GVAR_DEF(PrimitivePtr, kPrimTriuIndices, std::make_shared<Primitive>("TriuIndices"));
 GVAR_DEF(PrimitivePtr, kPrimTrilIndices, std::make_shared<Primitive>("TrilIndices"));
 GVAR_DEF(PrimitivePtr, kPrimEig, std::make_shared<Primitive>("Eig"));
+GVAR_DEF(PrimitivePtr, kPrimEigh, std::make_shared<Primitive>("Eigh"));
 GVAR_DEF(PrimitivePtr, kPrimQr, std::make_shared<Primitive>("Qr"));
 GVAR_DEF(PrimitivePtr, kPrimMatrixLogarithm, std::make_shared<Primitive>(kMatrixLogarithm));
 

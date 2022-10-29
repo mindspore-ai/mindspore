@@ -23,6 +23,8 @@
 #include <vector>
 #include <complex>
 #include <algorithm>
+#include <map>
+#include <string>
 #include <type_traits>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/triangle_matrix_copy_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
@@ -31,47 +33,54 @@
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "mindspore/core/ops/eigh.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr char C_EIEH_VECTOR[] = "compute_eigenvectors";
-constexpr char LOWER[] = "lower";
 template <typename T>
-class EighGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class EighGpuKernelMod : public NativeGpuKernelMod {
  public:
   EighGpuKernelMod() : is_null_input_(false) {}
   ~EighGpuKernelMod() = default;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    compute_eigen_vectors_ = static_cast<bool>(GetAttr<bool>(kernel_node, C_EIEH_VECTOR));
-    lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, LOWER));
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->GetPrim()->name();
+    dtype_ = inputs[0]->GetDtype();
+
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::Eigh>(base_operator);
+    if (kernel_ptr == nullptr) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', kernel_ptr is null.";
+      return false;
+    }
+    compute_eigen_vectors_ = kernel_ptr->get_compute_eigen_vectors();
+    lower_ = kernel_ptr->get_lower();
     if (compute_eigen_vectors_) {
       jobz_ = CUSOLVER_EIG_MODE_VECTOR;
     } else {
       jobz_ = CUSOLVER_EIG_MODE_NOVECTOR;
     }
     cusolver_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    is_null_input_ = CHECK_SHAPE_NULL(A_shape, kernel_name, "input");
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
+    }
+    auto A_shape = inputs[0]->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(A_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_RESIZE_FAILED;
     }
-    if (A_shape.size() != kShape2dDims) {
-      MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name << "', a should be 2D, but got [" << A_shape.size()
-                        << "] dimensions.";
-    }
-    if (A_shape[kDim0] != A_shape[kDim1]) {
-      MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name
-                        << "', a should be a squre matrix like [N X N], but got [" << A_shape[kDim0] << " X "
-                        << A_shape[kDim1] << "].";
-    }
+
     m_ = LongToSizeClipNeg(A_shape[0]);
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -101,10 +110,10 @@ class EighGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     int *devInfo = GetDeviceAddress<int>(workspace, kDim0);
     auto w_v_addr = GetDeviceAddress<T>(workspace, kDim1);  // temp eigenvector before transpose
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(w_v_addr, inout_A_addr, m_ * m_ * sizeof(T), cudaMemcpyDeviceToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Copy to input matrix failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(w_v_addr, inout_A_addr, m_ * m_ * sizeof(T), cudaMemcpyDeviceToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Copy to input matrix failed");
     size_t lda_ = m_;
     int lwork = 0;
     if constexpr (std::is_same_v<T, float>) {
@@ -135,10 +144,9 @@ class EighGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Copy to device result failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,
+                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "Copy to device result failed");
     if (info_gpu != 0) {
       MS_LOG_EXCEPTION << kernel_name_ << " launch gpu kernel fail for dtype:" << dtype_;
     }
@@ -146,15 +154,8 @@ class EighGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {
-    // In/out matrix, eigenvector
-    input_size_list_.push_back(m_ * m_ * sizeof(T));
-    // Eigenvalues
-    output_size_list_.push_back(m_ * sizeof(T));
+  void InitSizeLists() {
     // Eigenvector if need
-    if (compute_eigen_vectors_) {
-      output_size_list_.push_back(m_ * m_ * sizeof(T));  // eigenvector output
-    }
     workspace_size_list_.push_back(sizeof(int));
     workspace_size_list_.push_back(m_ * m_ * sizeof(T));
     // Transpose scalar workspace
@@ -175,6 +176,7 @@ class EighGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool lower_{true};
   bool is_null_input_;
   std::vector<T *> h_array_{};
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
