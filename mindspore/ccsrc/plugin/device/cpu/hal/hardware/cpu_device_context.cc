@@ -36,6 +36,7 @@
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
+#include "plugin/device/cpu/optimizer/softmax_grad_fusion.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
@@ -134,6 +135,8 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     SingleOpGraphOptimize(kernel_graph);
     UpdateKernelRefInfo(kernel_graph);
   } else {
+    // The passes in this function must be before ops select: SetOperatorInfo()
+    OptimizeMindIR(kernel_graph);
     // Update Graph Dynamic Shape Attr.
     opt::AddDynamicShapeAttrPass(kernel_graph);
 
@@ -170,6 +173,16 @@ void CPUKernelExecutor::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
     MS_EXCEPTION_IF_NULL(kernel_info);
     kernel_info->set_ref_map(kernel_attr_list[0].GetAllOutInRef(), kernel_attr_list[0].GetOutInRefMap());
   }
+}
+
+void CPUKernelExecutor::OptimizeMindIR(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::SoftmaxGradFusionCpu>("softmax_grad_fusion_cpu"));
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
 }
 
 void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {

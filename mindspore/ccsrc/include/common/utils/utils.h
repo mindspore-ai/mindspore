@@ -437,6 +437,7 @@ constexpr auto kUpdateCacheOpName = "UpdateCache";
 constexpr auto kUpdateStateOpName = "UpdateState";
 constexpr auto kDynamicBroadcastToOpName = "DynamicBroadcastTo";
 constexpr auto kCheckValidOpName = "CheckValid";
+constexpr auto kSoftmaxGradFusionOpName = "SoftmaxGradFusion";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
