@@ -808,7 +808,7 @@ def set_fast_recovery(fast_recovery):
     (yet with slightly different random augmentations).
 
     Args:
-        fast_recovery (bool): Whether the dataset pipeline recovers in fast mode. Default: True
+        fast_recovery (bool): Whether the dataset pipeline recovers in fast mode.
 
     Raises:
         TypeError: If `fast_recovery` is not a boolean data type.
@@ -823,10 +823,10 @@ def set_fast_recovery(fast_recovery):
 
 def get_fast_recovery():
     """
-    Get the fast_recovery flag of the dataset pipeline
+    Get whether the fast recovery mode is enabled for the current dataset pipeline.
 
     Returns:
-        bool, whether the dataset recovers fast in failover reset
+        bool, whether the dataset recovers fast in failover reset.
 
     Examples:
         >>> is_fast_recovery = ds.config.get_fast_recovery()

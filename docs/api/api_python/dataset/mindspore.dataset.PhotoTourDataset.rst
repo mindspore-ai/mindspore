@@ -5,26 +5,26 @@ mindspore.dataset.PhotoTourDataset
 
     读取和解析PhotoTour数据集的源数据集。
 
-    当 `usage` = 'train'，生成的数据集有一列 `[image]` ，数据类型为uint8。
-    当 `usage` ≠ 'train'，生成的数据集有三列: `[image1, image2, matches]`。 `image1` 、 `image2` 列的数据类型为uint8。 `matches` 列的数据类型为uint32。
+    根据给定的 `usage` 配置，生成数据集具有不同的输出列：
+    - `usage` = 'train'，输出列： `[image, dtype=uint8]` 。
+    - `usage` ≠ 'train'，输出列： `[image1, dtype=uint8]` 、 `[image2, dtype=uint8]` 、 `[matches, dtype=uint32]` 。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **name** (str) - 要加载的数据集内容名称，可以取值为'notredame'， 'yosemite'， 'liberty'， 'notredame_harris'， 'yosemite_harris' 或 'liberty_harris'。
+        - **name** (str) - 要加载的数据集内容名称，可以取值为'notredame'、'yosemite'、'liberty'、'notredame_harris'、'yosemite_harris' 或 'liberty_harris'。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'或'test'。默认值：None，将被设置为'train'。
           取值为'train'时，每个 `name` 的数据集样本数分别为{'notredame': 468159, 'yosemite': 633587, 'liberty': 450092, 'liberty_harris': 379587, 'yosemite_harris': 450912, 'notredame_harris': 325295}。
           取值为'test'时，将读取100,000个测试样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
-        - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器，默认值：None，下表中会展示不同配置的预期行为。
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
-        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
+        - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None，下表中会展示不同配置的预期行为。
+        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
+        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
-        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
@@ -32,7 +32,8 @@ mindspore.dataset.PhotoTourDataset
         - **ValueError** - `dataset_dir` 不存在。
         - **ValueError** - `usage` 不是["train", "test"]中的任何一个。
         - **ValueError** - `name` 不是["notredame", "yosemite", "liberty","notredame_harris", "yosemite_harris", "liberty_harris"]中的任何一个。
-        - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

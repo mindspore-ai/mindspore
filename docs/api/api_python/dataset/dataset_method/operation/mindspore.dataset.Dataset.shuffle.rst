@@ -3,7 +3,7 @@ mindspore.dataset.Dataset.shuffle
 
 .. py:method:: mindspore.dataset.Dataset.shuffle(buffer_size)
 
-    使用以下策略混洗此数据集的行：
+    通过创建 `buffer_size` 大小的缓存来混洗该数据集。
 
     1. 生成一个混洗缓冲区包含 `buffer_size` 条数据行。
 
