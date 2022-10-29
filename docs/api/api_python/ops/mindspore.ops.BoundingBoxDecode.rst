@@ -8,9 +8,9 @@ mindspore.ops.BoundingBoxDecode
     算子的功能是计算偏移量，此算子将偏移量转换为Bbox，用于在后续图像中标记目标等。
 
     参数：
-        - **means** (tuple) - 计算 `deltas` 的均值。默认值：（0.0, 0.0, 0.0, 0.0, 0.0）。
-        - **stds** (tuple) - 计算 `deltas` 的标准差。默认值：（1.0, 1.0, 1.0, 1.0）。
         - **max_shape** (tuple) - 解码框计算的上限值。
+        - **means** (tuple) - 计算 `deltas` 的均值。默认值：（0.0, 0.0, 0.0, 0.0）。
+        - **stds** (tuple) - 计算 `deltas` 的标准差。默认值：（1.0, 1.0, 1.0, 1.0）。
         - **wh_ratio_clip** (float) - 解码框计算的宽高比限制。默认值：0.016。
 
     输入：

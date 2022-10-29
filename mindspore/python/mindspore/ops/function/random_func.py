@@ -482,10 +482,10 @@ def choice_with_mask(input_x, count=256, seed=0, seed2=0):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
 
-    The input_x must be a tensor of rank not less than 1. If its rank is greater than or equal to 2,
+    The `input_x` must be a tensor whose rank is not less than 1. If its rank is greater than or equal to 2,
     the first dimension specifies the number of samples.
-    The index tensor and the mask tensor have the fixed shapes. The index tensor denotes the index of the nonzero
-    sample, while the mask tensor denotes which elements in the index tensor are valid.
+    The returned index tensor denotes the index of the nonzero
+    sample, the mask tensor denotes which elements in the index tensor are valid.
 
     Args:
         input_x (Tensor[bool]): The input tensor.

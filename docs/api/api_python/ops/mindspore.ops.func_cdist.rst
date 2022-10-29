@@ -3,22 +3,22 @@ mindspore.ops.cdist
 
 .. py:function:: mindspore.ops.cdist(x, y, p=2.0)
 
-    批量计算两个Tensor每一批次所有向量两两之间的p-范数距离。
+    计算两个Tensor每对列向量之间的p-norm距离。
 
     参数：
-        - **x** (Tensor) - 输入tensor x，输入shape [B, P, M]，B维度可以为0，即shape为 [P, M]。
-        - **y** (Tensor) - 输入tensor y，输入shape [B, R, M]。
-        - **p** (float) - P -范数距离的P值，P∈[0，∞]。默认值:2.0。
+        - **x** (Tensor) - 输入Tensor，shape为 :math: `(B, P, M)` ，B维度为0时该维度被忽略，shape为 :math:`(P, M)` 。在GPU上支持数据类型为[float32, float64]，在CPU上支持[float32]。 
+        - **y** (Tensor) - 输入Tensor，shape为 :math: `(B, R, M)` ，与 `x` 的数据类型一致。
+        - **p** (float，可选) - 计算向量对p-norm距离的P值，P∈[0，∞]。默认值:2.0。
 
     返回：
-        Tensor，p-范数距离，shape为[B, P, R]。
+        Tensor，p-范数距离，数据类型与 `x` 一致，shape为(B, P, R)。
 
     异常：
-        - **TypeError** - `input_x` 或 `input_x` 不是Tensor。
-        - **TypeError** - `input_x` 或 `input_y` 的数据类型不是float16，也不是float32。
+        - **TypeError** - `x` 或 `y` 不是Tensor。
+        - **TypeError** - `x` 或 `y` 的数据类型在GPU环境不是float32或者float64，在CPU环境不是float32。
         - **TypeError** - `p` 不是float32。
         - **ValueError** - `p` 是负数。
-        - **ValueError** - `input_x` 与 `input_y` 维度不同。
-        - **ValueError** - `input_x` 与 `input_y` 的维度不是2，也不是3。
+        - **ValueError** - `x` 与 `y` 维度不同。
+        - **ValueError** - `x` 与 `y` 的维度既不是2，也不是3。
         - **ValueError** - 单批次训练下 `x` 和 `y` 的shape不一样。
         - **ValueError** - `x` 和 `y` 的列数不一样。

@@ -6,7 +6,7 @@ mindspore.ops.choice_with_mask
     对输入进行随机取样，返回取样索引和掩码。
 
     输入必须是秩不小于1的Tensor。如果其秩大于等于2，则第一个维度指定样本数。
-    索引Tensor为取样的索引，掩码Tensor表示索引Tensor中的哪些元素取值为True。
+    返回的索引Tensor为非空样本值的索引，掩码Tensor说明索引Tensor中的哪些元素是有效的。
 
     参数：
         - **input_x** (Tensor[bool]) - 输入Tensor，bool类型。秩必须大于等于1且小于等于5。

@@ -224,9 +224,9 @@ class BoundingBoxDecode(Primitive):
     which is used to mark the target in the subsequent images, etc.
 
     Args:
+        max_shape (tuple): The max size limit for decoding box calculation.
         means (tuple): The means of deltas calculation. Default: (0.0, 0.0, 0.0, 0.0).
         stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
-        max_shape (tuple): The max size limit for decoding box calculation.
         wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
 
     Inputs:

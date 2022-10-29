@@ -3769,24 +3769,26 @@ def lcm(x1, x2):
 
 def cdist(x, y, p=2.0):
     """
-    Computes batched the p-norm distance between each pair of the two collections of row vectors.
+    Computes p-norm distance between each pair of row vectors of two input Tensors.
 
     Args:
         x (Tensor): Input tensor of shape :math:`(B, P, M)`.
           Letter :math:`B` represents 0 or positive int number.
           When :math:`B` is equal to 0, it means this dimension can be ignored,
-          i.e. shape of the tensor is :math:`(P, M)`.
-        y (Tensor): Input tensor of shape :math:`(B, R, M)`.
-        p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
+          i.e. shape of the tensor is :math:`(P, M)`. The supported dtype is
+          [float32, float64] on GPU, or [float32] on CPU.
+        y (Tensor): Input tensor of shape :math:`(B, R, M)`, has the same dtype as `x`.
+        p (float, optional): P value for the p-norm distance to calculate between each
+          vector pair, P ∈ [0,∞]. Default: 2.0.
 
     Returns:
-        Tensor, has the same dtype as `x`, which shape is :math:`(B, P, R)`.
+        Tensor, p-norm distance, has the same dtype as `x`, its shape is :math:`(B, P, R)`.
 
     Raises:
-        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If `x` or `y` is not Tensor.
         TypeError: If dtype of x or y is not in [float32, float64] on GPU, or is not in [float32] on CPU.
-        TypeError: If `p` is not a float.
-        ValueError: If `p` is a negative float.
+        TypeError: If `p` is not float32.
+        ValueError: If `p` is negative.
         ValueError: If dimension of `x` is not the same as `y`.
         ValueError: If dimension of `x` or `y` is neither 2 nor 3.
         ValueError: If the batch shape of `x` is not the same as the shape of `y`.
@@ -6331,7 +6333,7 @@ def cholesky(input_x, upper=False):
         TypeError: If `upper` is not a bool.
         TypeError: If dtype of `input_x` is not one of: float64, float32.
         TypeError: If `input_x` is not a Tensor.
-        ValueError: If `input_x` is not batch square.
+        ValueError: If `input_x` is not a or a batch of square matrix.
         ValueError: If `input_x` is not symmetric positive definite.
 
     Supported Platforms:
@@ -6368,7 +6370,7 @@ def cholesky_inverse(input_x, upper=False):
         The input must be either an upper triangular matrix or a lower triangular matrix.
 
     Args:
-        input_x (Tensor): The input tensor. Types: float32, float64.
+        input_x (Tensor): The input tensor with a rank of 2. Supported dtypes: float32, float64.
         upper(bool): Whether to return a lower or upper triangular matrix. Default: False.
 
     Returns:

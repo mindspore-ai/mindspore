@@ -10,9 +10,9 @@ mindspore.ops.bounding_box_decode
     参数：
         - **anchor_box** (Tensor) - 锚框。锚框的shape必须为 :math:`(n, 4)` 。
         - **deltas** (Tensor) - 框的增量。它的shape与 `anchor_box` 相同。
-        - **means** (tuple) - 计算 `deltas` 的均值。默认值：（0.0, 0.0, 0.0, 0.0, 0.0）。
-        - **stds** (tuple) - 计算 `deltas` 的标准差。默认值：（1.0, 1.0, 1.0, 1.0）。
         - **max_shape** (tuple) - 解码框计算的上限值。
+        - **means** (tuple) - 计算 `deltas` 的均值。默认值：（0.0, 0.0, 0.0, 0.0）。
+        - **stds** (tuple) - 计算 `deltas` 的标准差。默认值：（1.0, 1.0, 1.0, 1.0）。
         - **wh_ratio_clip** (float) - 解码框计算的宽高比限制。默认值：0.016。
 
     返回：

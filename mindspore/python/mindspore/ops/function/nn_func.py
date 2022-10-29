@@ -1009,15 +1009,14 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
 
 def celu(x, alpha=1.0):
     r"""
-    Computes celu (Continuously differentiable exponential linear units) of input tensors element-wise.
+    celu activation function, computes celu (Continuously differentiable exponential
+    linear units) of input tensors element-wise. The formula is defined as follows:
 
     .. math::
 
         \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
 
-    It returns :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))` element-wise.
-
-    The picture about celu looks like this `celu <https://arxiv.org/abs/1704.07483>`_.
+    For more details, please refer to `celu <https://arxiv.org/abs/1704.07483>`_.
 
     Args:
         x (Tensor): The input of celu with data type of float16 or float32.
@@ -1028,9 +1027,9 @@ def celu(x, alpha=1.0):
 
     Raises:
         TypeError: If `alpha` is not a float.
-        ValueError: If `alpha` has the value of 0.
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `alpha` has the value of 0.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -3102,15 +3101,16 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
 
         out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
 
-    where :math:`ccor` is the cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
+    where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_  operator,
+    :math:`C_{in}` is the input channel number, :math:`j` ranges
     from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
     of kernel and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`, where :math:`\text{
     kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the convolution kernel.
     The full kernel has shape :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where group is the group number to split the input in the channel dimension.
+    where `group` is the group number to split the input in the channel dimension.
 
-    If the 'pad_mode' is set to be "valid", the output height and width will be
+    If the `pad_mode` is set to be "valid", the output height and width will be
     :math:`\left \lfloor{
     1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
     (\text{kernel_size[0]} - 1) \times(\text{dilation[0]} - 1)} {\text { stride[0] }}} \right \rfloor` and
@@ -3121,10 +3121,12 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
 
     Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
+    For output height and width on other `pad_mode`, please refer to formula on `mindspore.nn.Conv2d
+    <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Conv2d.html>`_.
 
     The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
-    http://cs231n.github.io/convolutional-networks/.
+    `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
 
     Args:
         inputs (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -3487,7 +3489,7 @@ def bias_add(input_x, bias):
 
 def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     r"""
-    Computes the binary cross entropy between predivtive value `logits` and target value `labels`.
+    Computes the binary cross entropy between predictive value `logits` and target value `labels`.
 
     Set `logits` as :math:`x`, `labels` as :math:`y`, output as :math:`\ell(x, y)`, the
     weight of nth batch of binary cross entropy is :math:`w_n`.
@@ -3512,7 +3514,7 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         - The value of `labels` must be `0` or `l`.
 
     Args:
-        logits (Tensor): The predivtive value whose data type must be float16 or float32,
+        logits (Tensor): The predictive value whose data type must be float16 or float32.
             The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         labels (Tensor): The target value which has the same shape and data type as `logits`.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.

@@ -24,8 +24,8 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
     r"""
     Blackman window function.
 
-    The input `window_length` is a tensor that datatype must be a integer, which
-    controlling the returned window size. In particular, If `window_length` is equal to `1`,
+    The input `window_length` is a tensor with datatype int,
+    it determines the returned window size. In particular, if `window_length` is equal to `1`,
     the returned window contains a single value `1`.
     Attr `periodic` determines whether the returned window trims off the last duplicate value
     from the symmetric window and is ready to be used as a periodic window with functions.
@@ -35,7 +35,7 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
 
         w[n] = 0.42 - 0.5 cos(\frac{2\pi n}{N - 1}) + 0.08 cos(\frac{4\pi n}{N - 1})
 
-        \text{where : N is the full window size.}
+    where N is the full window size, and n is natural number less than N:[0, 1, ..., N-1].
 
     Args:
         window_length (Tensor): the size of returned window, with data type int32, int64.
