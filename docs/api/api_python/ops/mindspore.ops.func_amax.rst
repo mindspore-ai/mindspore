@@ -3,7 +3,7 @@ mindspore.ops.amax
 
 .. py:function:: mindspore.ops.amax(x, axis=(), keep_dims=False)
 
-    默认情况下，使用指定维度的最大值代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
+    默认情况下，移除输入所有维度，返回 `x` 中的最大值。也可仅缩小指定维度 `axis` 大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
 
     参数：
         - **x** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。秩应小于8。
@@ -19,6 +19,6 @@ mindspore.ops.amax
 
     异常：
         - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `axis` 不是以下数据类型之一：int、Tuple或List。
+        - **TypeError** - `axis` 不是以下数据类型之一：int、tuple或list。
         - **TypeError** - `keep_dims` 不是bool类型。
         - **ValueError** - `axis` 超出范围。

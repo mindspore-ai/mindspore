@@ -243,8 +243,8 @@ class Add(_MathBinaryOp):
 
 class Addcdiv(Primitive):
     r"""
-    Performs the element-wise division of tensor x1 by tensor x2,
-    multiply the result by the scalar value and add it to input_data.
+    Performs the element-wise division of tensor `x1` by tensor `x2`,
+    multiply the result by the scalar `value` and add it to `input_data`.
 
     .. math::
         y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
@@ -260,9 +260,9 @@ class Addcdiv(Primitive):
 
     Raises:
         TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
-        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
-        ValueError: If `value` could not be broadcast to tensors with shapes of `x1/x2`.
-        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1/x2)`.
+        ValueError: If `x1` could not be broadcast to `x2`.
+        ValueError: If `value` could not be broadcast to `x1/x2`.
+        ValueError: If `input_data` could not be broadcast to `value*(x1/x2)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -286,8 +286,8 @@ class Addcdiv(Primitive):
 
 class Addcmul(Primitive):
     r"""
-    Performs the element-wise product of tensor x1 and tensor x2,
-    multiply the result by the scalar value and add it to input_data.
+    Performs the element-wise product of tensor `x1` and tensor `x2`,
+    multiply the result by the scalar `value` and add it to `input_data`.
 
     .. math::
         output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
@@ -306,9 +306,9 @@ class Addcmul(Primitive):
         TypeError: If dtype of `input_data` is not one of: float32, float16, int32.
         TypeError: If dtype of `x1` or `x2` is not one of: float32, float16, int32.
         TypeError: If dtype of `value` is not one of: float32, float16, int32.
-        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
-        ValueError: If `value` could not be broadcast to tensors with shapes of `x1` * `x2`.
-        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
+        ValueError: If `x1` could not be broadcast to `x2`.
+        ValueError: If `value` could not be broadcast to `x1` * `x2`.
+        ValueError: If `input_data` could not be broadcast to `value*(x1*x2)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

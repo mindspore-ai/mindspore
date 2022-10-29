@@ -160,7 +160,7 @@ def adaptive_avg_pool3d(input_x, output_size):
     Args:
         input_x (Tensor): The input of adaptive_avg_pool3d, which is a 5D or 4D Tensor.
         output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
-            or an int D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
+            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
             which means the output size is the same as that of the input.
 
     Returns:
@@ -221,8 +221,6 @@ def check_non_negative_int(arg_value, arg_name=None, prim_name=None):
 
 def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True):
     r"""
-    1D average pooling for temporal data.
-
     Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, avg_pool1d outputs regional average in the
@@ -239,8 +237,9 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.
         kernel_size (int): The size of kernel window used to take the average value, Default: 1.
-        stride (int): The distance of kernel moving, an int number that represents the width of movement is `stride`,
-            Default: 1.
+        stride (int): The distance of kernel moving, an int number that represents the height and
+            width of movement are both strides, or a tuple of two int numbers that represent height and width of
+            movement respectively. Default: 1.
         padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
             and right are the same, equal to pad. If `padding` is a tuple of `2` integers, the padding of left and right
             equal to `padding[0]` and `padding[1]` correspondingly. Default: 0.
@@ -364,8 +363,6 @@ def _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_overr
 def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True,
                divisor_override=0):
     r"""
-    Average pooling operation.
-
     Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs regional average in the
     :math:`(H_{in}, W_{in})`-dimension. Given kernel size :math:`(k_{h}, k_{w})` and `strides` , the operation
@@ -452,20 +449,18 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True,
                divisor_override=0):
     r"""
-    3D Average pooling operation.
-
     Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, avg_pool3d outputs regional average in the
     :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride
     :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
-    .. warning::
-        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
-
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+    .. warning::
+        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Currently support float16 and
@@ -545,9 +540,9 @@ def adaptive_max_pool3d(x, output_size, return_indices=False):
         x (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
             int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
         output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
-            or an int D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
+            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
             which means the output size is the same as that of the input.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output,
+        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output,
             else would not be output. Default: False.
 
     Returns:
@@ -3397,6 +3392,8 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     mean of `input_x`, :math:`variance` is the variance of `input_x`.
 
     .. warning::
+        - If this operation is used for inferring and output "reserve_space_1" and "reserve_space_2" are usable,
+            then "reserve_space_1" and "reserve_space_2" have the same value as "mean" and "variance" respectively.
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
     .. note::
@@ -3477,9 +3474,10 @@ def bias_add(input_x, bias):
 
 def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     r"""
-    Computes the binary cross entropy between the logits and the labels.
+    Computes the binary cross entropy between predivtive value `logits` and target value `labels`.
 
-    Sets `logits` as :math:`x`, `labels` as :math:`y`, output as :math:`\ell(x, y)`.
+    Set `logits` as :math:`x`, `labels` as :math:`y`, output as :math:`\ell(x, y)`, the
+    weight of nth batch of binary cross entropy is :math:`w_n`.
     Let,
 
     .. math::
@@ -3501,17 +3499,18 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         - The value of `labels` must be `0` or `l`.
 
     Args:
-        logits (Tensor): The input Tensor. The data type must be float16 or float32,
+        logits (Tensor): The predivtive value whose data type must be float16 or float32,
             The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        labels (Tensor): The label Tensor which has the same shape and data type as `logits`.
+        labels (Tensor): The target value which has the same shape and data type as `logits`.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
+            Its shape must be able to broadcast to that of `logits` and `labels`.
             And it must have the same shape and data type as `logits`. Default: None.
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
+            Its value must be one of 'none', 'mean' or 'sum', not case-sensitive. Default: 'mean'.
 
     Returns:
-        Tensor, has the same dtype as `logits`. if `reduction` is 'none', then it has the same shape as `logits`.
-        Otherwise, it is a scalar Tensor.
+        Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
+        Otherwise, returns a scalar Tensor.
 
     Raises:
         TypeError: If `logits`, `labels` or `weight` is not a Tensor.

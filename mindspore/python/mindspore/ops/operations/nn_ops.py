@@ -4891,7 +4891,7 @@ class AdamWeightDecay(PrimitiveWithInfer):
           it should have the the shape as `var`. The data type can be float16 or float32.
         - **v** (Parameter) - The 2nd moment vector in the updating formula,
           it should have the same shape and dtype as `m`.
-        - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`,
+        - **lr** (float) - :math:`lr` in the updating formula. The paper suggested value is :math:`10^{-8}`,
           the data type should be float32.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
           the data type should be float32. The paper suggested value is :math:`0.9`
@@ -4902,12 +4902,22 @@ class AdamWeightDecay(PrimitiveWithInfer):
         - **decay** (float) - The weight decay value, must be a scalar tensor with float32 data type.
           Default: 0.0.
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
+
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
         - **v** (Tensor) - The same shape and data type as `v`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `lr`, `beta1`, `beta2`, `epsilon` or `decay` is not a float32.
+        TypeError: If `var`, `m` or `v` is not a Parameter with dtype float16 or float32.
+        TypeError: If `gradient` is not a Tensor.
+        ValueError: - If `eps` <= 0.
+        ValueError: - If `beta1`, `beta2` is not in range (0.0,1.0).
+        ValueError: - If `decay` < 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5620,7 +5630,8 @@ class BinaryCrossEntropy(Primitive):
         l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
     In which, :math:`L` indicates the loss of all batch_sizes, :math:`l` indicates the loss of one batch_size,
-    and n indicates one batch_size in the 1-N range. Then,
+    and n indicates one batch_size in the 1-N range, :math:`w_n` indicates the
+    weight of nth batch of binary cross entropy. Then,
 
     .. math::
         \ell(x, y) = \begin{cases}
@@ -5638,15 +5649,15 @@ class BinaryCrossEntropy(Primitive):
             Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
 
     Inputs:
-        - **logits** (Tensor) - The input Tensor. The data type must be float16 or float32,
+        - **logits** (Tensor) - The predivtive value whose data type must be float16 or float32,
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
+        - **labels** (Tensor) - The target value which has the same shape and data type as `logits`.
         - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
           And it must have the same shape and data type as `logits`. Default: None.
 
     Outputs:
-        Tensor, has the same dtype as `logits`. if `reduction` is 'none', then it has the same shape as `logits`.
-        Otherwise, it is a scalar Tensor.
+        Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
+        Otherwise, returns a scalar Tensor.
 
     Raises:
         TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.

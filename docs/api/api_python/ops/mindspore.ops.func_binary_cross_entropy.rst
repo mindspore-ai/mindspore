@@ -3,9 +3,9 @@ mindspore.ops.binary_cross_entropy
 
 .. py:function:: mindspore.ops.binary_cross_entropy(logits, labels, weight=None, reduction='mean')
 
-    计算预测值和目标值之间的二值交叉熵损失。
+    计算预测值 `logits` 和 目标值 `labels` 之间的二值交叉熵损失。    
 
-    将输入 `logits` 设置为 :math:`x` ，输入 `labels` 设置为 :math:`y` ，输出设置为 :math:`\ell(x, y)` 。则，
+    将 `logits` 设置为 :math:`x` ， `labels` 设置为 :math:`y` ，输出设置为 :math:`\ell(x, y)` ，第n个batch二值交叉熵的权重为 :math:`w_n`。则，
 
     .. math::
         L = \{l_1,\dots,l_N\}^\top, \quad
@@ -21,12 +21,13 @@ mindspore.ops.binary_cross_entropy
         \end{cases}
 
     .. warning::
-        `x` 的值必须要在0-1范围之内，`y` 的值必须是 `0` 或者 `1` 。
+        - `x` 的值必须要在0-1范围内。
+        - `y` 的值必须是 `0` 或者 `1` 。
 
     参数：
         - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。
         - **labels** (Tensor) - 输入目标值，shape与 `logits` 相同。数据类型为float16或float32。
-        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
+        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。默认值：None。
         - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果 'none' ，则不执行 `reduction` 。默认值：'mean' 。
 
     返回：

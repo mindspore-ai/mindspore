@@ -4615,9 +4615,9 @@ def logsumexp(x, axis, keep_dims=False):
 
 def amin(x, axis=(), keep_dims=False):
     r"""
-    Reduces a dimension of a tensor by the minimum value in the dimension, by default. And also can
-    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
-    controlling `keep_dims`.
+    Reduces all dimensions of a tensor by returning the minimum value in `x`, by default. And also can
+    reduce a dimension of `x` along specified `axis`.  `keep_dims` determines whether the dimensions of
+    output and input are the same.
 
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
@@ -4691,9 +4691,9 @@ def amin(x, axis=(), keep_dims=False):
 
 def amax(x, axis=(), keep_dims=False):
     r"""
-    Reduces a dimension of a tensor by the maximum value in this dimension, by default. And also can
-    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
-    controlling `keep_dims`.
+    Reduces all dimensions of a tensor by returning the maximum value in `x`, by default. And also can
+    reduce a dimension of `x` along specified `axis`.  `keep_dims` determines whether the dimensions of
+    output and input are the same.
 
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
@@ -6044,8 +6044,9 @@ def accumulate_n(x):
     r"""
     Computes accumulation of all input tensors element-wise.
 
-    AccumulateNV2 is similar to AddN, but there is a significant difference among them: AccumulateNV2 will not wait
-    for all of its inputs to be ready before summing. That is to say, AccumulateNV2 is able to save memory when inputs
+    :func:`mindspore.ops.accumulate_n` is similar to :func:`mindspore.ops.addn`,
+    but there is a significant difference between them: accumulate_n will not wait
+    for all of its inputs to be ready before summing. That is to say, accumulate_n is able to save memory when inputs
     are ready at different time since the minimum temporary storage is proportional to the output size rather than the
     input size.
 
@@ -6054,7 +6055,7 @@ def accumulate_n(x):
             number to be added together. Each element of tuple or list should have the same shape.
 
     Returns:
-        Tensor, has the same shape and dtype as each entry of the `x`.
+        Tensor, has the same shape and dtype as each entry of `x`.
 
     Raises:
         TypeError: If `x` is neither tuple nor list.

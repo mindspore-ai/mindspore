@@ -3,7 +3,7 @@ mindspore.ops.batch_norm
 
 .. py:function:: mindspore.ops.batch_norm(input_x, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5)
 
-    对输入数据进行归一化和更新参数。
+    对输入数据进行批量归一化和更新参数。
 
     批量归一化广泛应用于卷积神经网络中。此运算对输入应用归一化，避免内部协变量偏移，详见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。使用mini-batch数据和学习参数进行训练，学习的参数见如下公式中，
 
