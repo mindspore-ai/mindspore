@@ -107,6 +107,7 @@ using EmitterPtr = std::shared_ptr<Emitter>;
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs);
 NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs);
 NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs);
+NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs);
 NodePtr operator-(const NodePtr &node);
 }  // namespace expander
 }  // namespace mindspore

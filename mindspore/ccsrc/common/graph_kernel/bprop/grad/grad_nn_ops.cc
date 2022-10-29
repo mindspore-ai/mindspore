@@ -1236,4 +1236,268 @@ REG_BPROP_BUILDER("MultiMarginLoss").SetBody([](const BpropIRBuilder *ib) -> Nod
              {{"p", ib->GetAttr("p")}, {"margin", ib->GetAttr("margin")}, {"reduction", ib->GetAttr("reduction")}});
   return {dx, ib->ZerosLike(target), ib->ZerosLike(weight)};
 });
+
+REG_BPROP_BUILDER("DropoutGenMask").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto shape = ib->GetInput(kIndex0);
+  auto keep_prob = ib->GetInput(kIndex1);
+  return {ib->ZerosLike(shape), ib->ZerosLike(keep_prob)};
+});
+
+REG_BPROP_BUILDER("DropoutDoMask").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto y = ib->GetInput(kIndex1);
+  auto keep_prob = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  return {ib->Emit("DropoutDoMask", {dout, y, keep_prob}), ib->ZerosLike(y), ib->ZerosLike(keep_prob)};
+});
+
+REG_BPROP_BUILDER("ReluGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dgrad = ib->Emit("ReluGrad", {dout, y});
+  return {dgrad, ib->ZerosLike(y)};
+});
+
+REG_BPROP_BUILDER("GridSampler3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_x = ib->GetInput(kIndex0);
+  auto grid = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto tmp = ib->Emit("GridSampler3DGrad", {dout, input_x, grid},
+                      {{"interpolation_mode", ib->GetAttr("interpolation_mode")},
+                       {"padding_mode", ib->GetAttr("padding_mode")},
+                       {"align_corners", ib->GetAttr("align_corners")}});
+  auto dx = ib->TupleGetItem(tmp, 0);
+  auto dgrid = ib->TupleGetItem(tmp, 1);
+  return {dx, dgrid};
+});
+
+REG_BPROP_BUILDER("ReLUV3").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dgrad = ib->Emit("ReluGrad", {dout, out});
+  return {dgrad};
+});
+
+REG_BPROP_BUILDER("GridSampler2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_x = ib->GetInput(kIndex0);
+  auto grid = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto tmp = ib->Emit("GridSampler2DGrad", {dout, input_x, grid},
+                      {{"interpolation_mode", ib->GetAttr("interpolation_mode")},
+                       {"padding_mode", ib->GetAttr("padding_mode")},
+                       {"align_corners", ib->GetAttr("align_corners")}});
+  auto dx = ib->TupleGetItem(tmp, 0);
+  auto dgrid = ib->TupleGetItem(tmp, 1);
+  return {dx, dgrid};
+});
+
+REG_BPROP_BUILDER("ResizeLinear1D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_x = ib->GetInput(kIndex0);
+  auto size = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("ResizeLinear1DGrad", {dout, input_x},
+                     {{"coordinate_transformation_mode", ib->GetAttr("coordinate_transformation_mode")}});
+  return {dx, ib->ZerosLike(size)};
+});
+
+REG_BPROP_BUILDER("MaxPool3DWithArgmax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("MaxPool3DGradWithArgmax", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 1)},
+                     {{"ksize", ib->GetAttr("ksize")},
+                      {"strides", ib->GetAttr("strides")},
+                      {"pads", ib->GetAttr("pads")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"ceil_mode", ib->GetAttr("ceil_mode")},
+                      {"format", ib->GetAttr("format")}});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("MaxUnpool2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto argmax = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("MaxUnpool2DGrad", {x, dout, argmax},
+                     {{"ksize", ib->GetAttr("ksize")},
+                      {"strides", ib->GetAttr("strides")},
+                      {"pads", ib->GetAttr("pads")},
+                      {"output_shape", ib->GetAttr("output_shape")},
+                      {"format", ib->GetAttr("format")}});
+  auto dargmax = ib->ZerosLike(argmax);
+  return {dx, dargmax};
+});
+
+REG_BPROP_BUILDER("MaxUnpool3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto argmax = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("MaxUnpool3DGrad", {x, dout, argmax},
+                     {{"ksize", ib->GetAttr("ksize")},
+                      {"strides", ib->GetAttr("strides")},
+                      {"pads", ib->GetAttr("pads")},
+                      {"output_shape", ib->GetAttr("output_shape")},
+                      {"format", ib->GetAttr("format")}});
+  auto dargmax = ib->ZerosLike(argmax);
+  return {dx, dargmax};
+});
+
+REG_BPROP_BUILDER("NthElement").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto indicators =
+    ib->Cast(ib->Emit("Equal", {ib->Emit("ExpandDims", {out, ib->Tensor(-1)}), input_x}), ib->GetDtype(input_x));
+  dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+  auto num_select = ib->Emit("ExpandDims", {ib->ReduceSum(indicators, {-1}), ib->Tensor(-1)});
+  return {ib->Mul((ib->Emit("Div", {indicators, num_select})), dout), ib->ZerosLike(ib->GetInput(kIndex1))};
+});
+
+REG_BPROP_BUILDER("AdaptiveAvgPool3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_shape = ib->Tensor(ib->GetShape(x));
+  auto dx = ib->Emit("AdaptiveAvgPool3DGrad", {dout, ib->Cast(x_shape, kInt32)});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("AdaptiveAvgPool2DV1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("AdaptiveAvgPool2DGradV1", {dout}, {{"orig_input_shape", MakeValue(ib->GetShape(x))}});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("FractionalMaxPool").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit(
+    "FractionalMaxPoolGrad",
+    {x, ib->TupleGetItem(out, 0), ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 1), ib->TupleGetItem(out, 2)},
+    {{"overlapping", ib->GetAttr("overlapping")}});
+
+  return {dx};
+});
+
+REG_BPROP_BUILDER("FractionalMaxPool3DWithFixedKsize").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto random_samples = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("FractionalMaxPool3DGradWithFixedKsize", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 1)},
+                     {{"format", ib->GetAttr("format")}});
+  return {dx, ib->ZerosLike(random_samples)};
+});
+
+REG_BPROP_BUILDER("FractionalAvgPool").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_shape = ib->GetShape(x);
+
+  auto dx = ib->Emit("FractionalAvgPoolGrad",
+                     {ib->Cast(ib->Tensor(x_shape), kInt64), ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 1),
+                      ib->TupleGetItem(out, 2)},
+                     {{"overlapping", ib->GetAttr("overlapping")}, {"max_length", MakeValue<int64_t>(1000000)}});
+
+  return {dx};
+});
+
+REG_BPROP_BUILDER("PSROIPooling").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto spatial_scale = ib->GetAttr("spatial_scale");
+  auto group_size = ib->GetAttr("group_size");
+  auto output_dim = ib->GetAttr("output_dim");
+  auto x = ib->GetInput(kIndex0);
+  auto rois = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto shape = ib->GetShape(x);
+  ShapeVector input_size;
+  for (size_t i = 2; i < shape.size(); i++) {
+    input_size.push_back(shape[i]);
+  }
+  auto dx = ib->Emit("PSROIPoolingGrad", {dout, rois},
+                     {
+                       {"input_size", MakeValue(input_size)},
+                       {"spatial_scale", spatial_scale},
+                       {"group_size", group_size},
+                       {"output_dim", output_dim},
+                     });
+  return {dx, ib->ZerosLike(rois)};
+});
+
+REG_BPROP_BUILDER("AvgPoolV1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto orig_input_shape = ib->Value<ShapeVector>(ib->GetShape(x));
+  auto dx = ib->Emit("AvgPoolGradV1", {orig_input_shape, dout},
+                     {
+                       {"kernel_size", ib->GetAttr("kernel_size")},
+                       {"strides", ib->GetAttr("strides")},
+                       {"pad_mode", ib->GetAttr("pad_mode")},
+                       {"format", ib->GetAttr("format")},
+                     });
+  return {dx};
+});
+
+REG_BPROP_BUILDER("MaxPoolV1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("MaxPoolGradV1", {x, out, dout},
+                     {
+                       {"kernel_size", ib->GetAttr("kernel_size")},
+                       {"strides", ib->GetAttr("strides")},
+                       {"pad_mode", ib->GetAttr("pad_mode")},
+                       {"format", ib->GetAttr("format")},
+                     });
+  return {dx};
+});
+
+REG_BPROP_BUILDER("CTCLossV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto log_probs = ib->GetInput(kIndex0);
+  auto targets = ib->GetInput(kIndex1);
+  auto input_lengths = ib->GetInput(kIndex2);
+  auto target_lengths = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+  auto grad = ib->Emit("CTCLossV2Grad",
+                       {ib->TupleGetItem(dout, 0), log_probs, targets, input_lengths, target_lengths,
+                        ib->TupleGetItem(out, 0), ib->TupleGetItem(out, 1)},
+                       {{"blank", ib->GetAttr("blank")},
+                        {"reduction", ib->GetAttr("reduction")},
+                        {"zero_infinity", ib->GetAttr("zero_infinity")}});
+  return {grad, ib->ZerosLike(targets), ib->ZerosLike(input_lengths), ib->ZerosLike(target_lengths)};
+});
+
+REG_BPROP_BUILDER("InstanceNormV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto gamma = ib->GetInput(kIndex1);
+  auto mean = ib->GetInput(kIndex3);
+  auto variance = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto saved_mean = ib->TupleGetItem(out, 1);
+  auto saved_variance = ib->TupleGetItem(out, 2);
+  auto grad_ops_out =
+    ib->Emit("InstanceNormV2Grad", {ib->TupleGetItem(dout, 0), x, gamma, mean, variance, saved_mean, saved_variance},
+             {{"is_training", ib->GetAttr("is_training")},
+              {"epsilon", ib->GetAttr("epsilon")},
+              {"momentum", ib->GetAttr("momentum")}});
+  auto dx = ib->TupleGetItem(grad_ops_out, 0);
+  auto dgamma = ib->TupleGetItem(grad_ops_out, 1);
+  auto dbeta = ib->TupleGetItem(grad_ops_out, 2);
+  return {dx, dgamma, dbeta, ib->ZerosLike(mean), ib->ZerosLike(variance)};
+});
+
+REG_BPROP_BUILDER("FractionalMaxPoolWithFixedKsize").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto random_samples = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("FractionalMaxPoolGradWithFixedKsize", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 1)},
+                     {{"ksize", ib->GetAttr("ksize")},
+                      {"output_shape", ib->GetAttr("output_shape")},
+                      {"format", ib->GetAttr("format")}});
+  return {dx, ib->ZerosLike(random_samples)};
+});
 }  // namespace mindspore::expander::bprop

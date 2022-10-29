@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_EXPANDER_COMMON_UTILS_H_
 
 #include <vector>
+#include <utility>
 #include "common/graph_kernel/bprop/expander/node.h"
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 
@@ -61,7 +62,15 @@ std::vector<int64_t> GetTupleIntFromValueNode(const NodePtr &node);
 int64_t GetIntFromValueNode(const NodePtr &node);
 std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex);
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
+std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 
 NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &dout);
+NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &out,
+                     const NodePtr &dout);
+std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, ShapeVector axis);
+ShapeVector GetAxisValue(const NodePtr &axis);
+NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
+                           const NodePtr &out, const NodePtr &dout, const bool is_max);
+TypeId PromoteBinaryDtype(TypeId t1, TypeId t2);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_EXPANDER_COMMON_UTILS_H_
