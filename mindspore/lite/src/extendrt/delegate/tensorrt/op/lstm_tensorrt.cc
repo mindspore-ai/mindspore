@@ -144,6 +144,8 @@ int LSTMTensorRT::AddLSTMLayers(TensorRTContext *ctx) {
       MS_LOG(ERROR) << "add sequence_size_input_ input tensor failed for " << op_name_;
       return RET_ERROR;
     }
+    op_binding_tensor_.push_back(
+      BindingHelper{(op_name_ + "_seq_input"), &params_.sequence_size_, nvinfer1::DataType::kINT32, sizeof(int)});
   } else {
     hidden_init = input(ctx, HIDDEN_IN_TENSOR_INIT).trt_tensor_;
     cell_init = input(ctx, CELL_IN_TENSOR_INIT).trt_tensor_;
