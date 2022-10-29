@@ -122,11 +122,10 @@ bool KLDivLossCpuKernelMod::LaunchNoneReduction(const std::vector<AddressPtr> &i
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; ++i) {
+      T diff = static_cast<T>(array_log[iter.GetInputPosB()] - array_x[iter.GetInputPosA()]);
+      array_y[i] = static_cast<T>(diff * array_target[iter.GetInputPosB()]);
       if (std::isnan(static_cast<float>(array_log[iter.GetInputPosB()]))) {
         array_y[i] = static_cast<T>(0);
-      } else {
-        T diff = static_cast<T>(array_log[iter.GetInputPosB()] - array_x[iter.GetInputPosA()]);
-        array_y[i] = static_cast<T>(diff * array_target[iter.GetInputPosB()]);
       }
       iter.GenNextPos();
     }
@@ -155,11 +154,10 @@ bool KLDivLossCpuKernelMod::LaunchOther(const std::vector<AddressPtr> &inputs, c
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; ++i) {
+      T diff = static_cast<T>(array_log[iter.GetInputPosB()] - array_x[iter.GetInputPosA()]);
+      array_tmp[i] = static_cast<T>(diff * array_target[iter.GetInputPosB()]);
       if (std::isnan(static_cast<float>(array_log[iter.GetInputPosB()]))) {
         array_tmp[i] = static_cast<T>(0);
-      } else {
-        T diff = static_cast<T>(array_log[iter.GetInputPosB()] - array_x[iter.GetInputPosA()]);
-        array_tmp[i] = static_cast<T>(diff * array_target[iter.GetInputPosB()]);
       }
       iter.GenNextPos();
     }

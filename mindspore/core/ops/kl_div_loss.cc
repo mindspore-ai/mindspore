@@ -43,6 +43,8 @@ abstract::ShapePtr KLDivLossInferShape(const PrimitivePtr &primitive, const std:
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
+  // Delete when all backends support broadcast
+  CheckAndConvertUtils::Check("x shape", input_x_shape, kEqual, input_target_shape, op_name, ValueError);
   auto reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
   if (reduction == kNone) {
     auto broadcast_shape = CalBroadCastShape(input_x_shape, input_target_shape, op_name, "x", "target");
