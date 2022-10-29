@@ -33,6 +33,11 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
   auto set_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto set_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto set_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(set_indices_shape) || IsDynamicRank(set_values_shape) || IsDynamicRank(set_shape_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   auto set_indices_shape_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices",
                                            SizeToLong(set_indices_shape.size()), kEqual, set_indices_shape_num,
@@ -41,10 +46,18 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
                                            kEqual, 1, op_name);
   (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_shape", SizeToLong(set_shape_shape.size()),
                                            kEqual, 1, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices or set_shape", set_indices_shape[1],
-                                           kEqual, set_shape_shape[0], op_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices or set_values", set_indices_shape[0],
-                                           kEqual, set_values_shape[0], op_name);
+
+  if (IsDynamic(set_shape_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
+  if (!IsDynamic(set_indices_shape) && !IsDynamic(set_values_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices or set_shape",
+                                             set_indices_shape[1], kEqual, set_shape_shape[0], op_name);
+    (void)CheckAndConvertUtils::CheckInteger("dimension of SetSize input set_indices or set_values",
+                                             set_indices_shape[0], kEqual, set_values_shape[0], op_name);
+  }
+
   MS_EXCEPTION_IF_NULL(primitive->GetAttr("validate_indices"));
   auto shape_size_dim = set_shape_shape[0];
   bool gen_value_succ = false;
@@ -109,6 +122,18 @@ TypePtr SetSizeInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(SetSize, BaseOperator);
+
+void SetSize::Init(const bool validate_indices) { set_validate_indices(validate_indices); }
+
+void SetSize::set_validate_indices(const bool &validate_indices) {
+  (void)AddAttr(kValidateIndices, api::MakeValue(validate_indices));
+}
+
+bool SetSize::get_validate_indices() const {
+  auto value_ptr = GetAttr(kValidateIndices);
+  return GetValue<bool>(value_ptr);
+}
+
 AbstractBasePtr SetSizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
