@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_H_
 
+#include <cuda.h>
 #if CUDA_VERSION > 11000
 #include <curand_kernel.h>
 #include <cuda/std/atomic>
@@ -74,7 +75,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   bool Erase(const Key *keys, size_t key_num, void *stream) override;
 
   // Reserves space for at least the specified number of elements.
-  bool Reserve(size_t count) override { return true; }
+  bool Reserve(size_t new_capacity, void *stream) override;
 
   // Export all keys and values in hash map, the order of each element of keys and values is consistent.
   // Note: Even if the elements of the hash map are unchanged, the order of the key-value pair returned by the function
@@ -92,7 +93,10 @@ class GPUHashTable : public HashTable<Key, Value> {
   size_t capacity() const override { return capacity_; }
 
   // Get the number of elements.
-  size_t size() const override { return size_; };
+  size_t size() const override { return size_; }
+
+  // Clear all elements of hash table.
+  bool Clear();
 
  private:
   // Find elements with specific keys, if the key does not exist, initialize the value for the key based on the
@@ -113,6 +117,20 @@ class GPUHashTable : public HashTable<Key, Value> {
   // initialize normal distribution random generator states on GPU.
   bool InitNormalDistRandomGenerator(cudaStream_t stream);
 
+  // Initialize the hash map: create cuda dynamic map and initialize the atomic counter.
+  void Initialize(const Allocator &alloc);
+  // Finalize the hash map: destroy cuda dynamic map and free the GPU memory for the atomic counter and blocks.
+  void Finalize();
+
+  // Allocate GPU memory use char_alloc_.
+  template <typename T>
+  void AllocateMemory(size_t size, T **ptr);
+  // Free GPU memory use char_alloc_.
+  void FreeMemory(void *ptr);
+
+  // Reset the buffer that record block and idle status.
+  bool ResetBlockAndIdleFlag(cudaStream_t stream);
+
   // Record all block memory that contain all values.
   std::vector<Value *> blocks_;
   // Record all first address of blocks, the buffer is on device memory.
@@ -128,9 +146,9 @@ class GPUHashTable : public HashTable<Key, Value> {
 
   // The counter record the idle slot number, if the contents of a slot are erased, the slot is marked with the idle
   // status.
-  cuda::atomic<std::size_t, cuda::thread_scope_device> *idle_index_{nullptr};
+  cuda::atomic<int32_t, cuda::thread_scope_device> *erased_counter_{nullptr};
   // The buffer keep all the idle slot position(offset index to the beginning of block).
-  int32_t *idel_slot_{nullptr};
+  int32_t *erased_slot_{nullptr};
 
   // The value dimension for each key.
   size_t value_dim_;
@@ -140,8 +158,6 @@ class GPUHashTable : public HashTable<Key, Value> {
   // The default value used to initialize the values for missing keys.
   Value default_value_;
 
-  // The allocator used to alloacte gpu memory for index.
-  IndexAllocatorType index_alloc_;
   // The common allocator used to alloacte gpu memory.
   CharAllocatorType char_alloc_;
 

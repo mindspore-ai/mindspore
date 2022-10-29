@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#if CUDA_VERSION > 11000
 #include "plugin/device/gpu/hal/device/gpu_hash_table.h"
 
+#if CUDA_VERSION > 11000
 #include <cuco/dynamic_map.cuh>
 #include <random>
 #include <algorithm>
@@ -78,33 +78,75 @@ struct CudaDynamicMap {
 template <typename Key, typename Value, typename Allocator>
 GPUHashTable<Key, Value, Allocator>::GPUHashTable(int32_t value_dim, const std::string &initializer,
                                                   const Allocator &alloc)
-    : value_dim_(value_dim), initializer_(initializer), default_value_(0), index_alloc_(alloc), char_alloc_(alloc) {
-  cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
-  cuda_dynamic_map_ = std::make_unique<CudaDynamicMap<Key, int32_t, Allocator>>(static_cast<Key>(-1), -1,
-                                                                                static_cast<Key>(-2), alloc, stream);
-  CHECK_CUDA_RET(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
-
-  CHECK_CUDA_RET(
-    cudaMallocManaged(&insert_success_number_, sizeof(cuda::atomic<std::size_t, cuda::thread_scope_device>)),
-    "cudaMallocManaged");
+    : value_dim_(value_dim), initializer_(initializer), default_value_(0), char_alloc_(alloc) {
+  Initialize(alloc);
 }
 
 template <typename Key, typename Value, typename Allocator>
 GPUHashTable<Key, Value, Allocator>::GPUHashTable(int32_t value_dim, const Value &default_value, const Allocator &alloc)
-    : value_dim_(value_dim), initializer_(""), default_value_(default_value), index_alloc_(alloc), char_alloc_(alloc) {
-  cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
-  cuda_dynamic_map_ = std::make_unique<CudaDynamicMap<Key, int32_t, Allocator>>(static_cast<Key>(-1), -1,
-                                                                                static_cast<Key>(-2), alloc, stream);
-  CHECK_CUDA_RET(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
-
-  CHECK_CUDA_RET(
-    cudaMallocManaged(&insert_success_number_, sizeof(cuda::atomic<std::size_t, cuda::thread_scope_device>)),
-    "cudaMallocManaged");
+    : value_dim_(value_dim), initializer_(""), default_value_(default_value), char_alloc_(alloc) {
+  Initialize(alloc);
 }
 
 template <typename Key, typename Value, typename Allocator>
 GPUHashTable<Key, Value, Allocator>::~GPUHashTable() {
+  Finalize();
+}
+
+template <typename Key, typename Value, typename Allocator>
+void GPUHashTable<Key, Value, Allocator>::Initialize(const Allocator &alloc) {
+  cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
+  cuda_dynamic_map_ = std::make_unique<CudaDynamicMap<Key, int32_t, Allocator>>(static_cast<Key>(-1), -1,
+                                                                                static_cast<Key>(-2), alloc, stream);
+
+  CudaAtomicSize host_init_atomic_size_t(0);
+  CudaAtomicInt host_init_atomic_int(0);
+
+  AllocateMemory(sizeof(CudaAtomicSize), &current_index_);
+  AllocateMemory(sizeof(CudaAtomicInt), &erased_counter_);
+
+  CHECK_CUDA_RET(
+    cudaMemcpyAsync(current_index_, &host_init_atomic_size_t, sizeof(CudaAtomicSize), cudaMemcpyHostToDevice, stream),
+    "cudaMemcpyAsync");
+  CHECK_CUDA_RET(
+    cudaMemcpyAsync(erased_counter_, &host_init_atomic_int, sizeof(CudaAtomicInt), cudaMemcpyHostToDevice, stream),
+    "cudaMemcpyAsync");
+
+  CHECK_CUDA_RET(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+
+  CHECK_CUDA_RET(cudaMallocManaged(&insert_success_number_, sizeof(CudaAtomicSize)), "cudaMallocManaged");
+}
+
+template <typename Key, typename Value, typename Allocator>
+void GPUHashTable<Key, Value, Allocator>::Finalize() {
+  cuda_dynamic_map_ = nullptr;
+
+  FreeMemory(current_index_);
+  FreeMemory(erased_counter_);
+
+  for (size_t i = 0; i < blocks_.size(); i++) {
+    FreeMemory(blocks_[i]);
+    FreeMemory(idle_flags_[i]);
+  }
+
+  FreeMemory(blocks_ptr_);
+  FreeMemory(idle_flags_ptr_);
+
+  FreeMemory(random_gen_state_);
+
   CHECK_CUDA_RET(cudaFree(insert_success_number_), "cudaFree");
+}
+
+template <typename Key, typename Value, typename Allocator>
+template <typename T>
+void GPUHashTable<Key, Value, Allocator>::AllocateMemory(size_t size, T **ptr) {
+  MS_EXCEPTION_IF_NULL(ptr);
+  *ptr = reinterpret_cast<T *>(std::allocator_traits<CharAllocatorType>::allocate(char_alloc_, size));
+}
+
+template <typename Key, typename Value, typename Allocator>
+void GPUHashTable<Key, Value, Allocator>::FreeMemory(void *ptr) {
+  std::allocator_traits<CharAllocatorType>::deallocate(char_alloc_, reinterpret_cast<char *>(ptr), 0);
 }
 
 template <typename Key, typename Value, typename Allocator>
@@ -121,14 +163,15 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   MS_ERROR_IF_NULL(key);
   MS_ERROR_IF_NULL(outputs);
   MS_ERROR_IF_NULL(stream);
-  int *indices = std::allocator_traits<IndexAllocatorType>::allocate(index_alloc_, key_num);
+  int *indices = nullptr;
+  AllocateMemory(key_num * sizeof(int), &indices);
   MS_ERROR_IF_NULL(indices);
 
   // 1. Get all indices in blocks according to the key.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
-  Reserve(size_ + key_num);
+  Reserve(size_ + key_num, stream);
   // 2. Insert default value according to initializer, initializer can be 'normal', 'zeros' or 'ones'.
   RETURN_IF_FALSE_WITH_LOG(InsertDefaultValueByInitializer(key_num, initializer, indices, cuda_stream),
                            "Insert default value for miss keys failed.");
@@ -137,7 +180,7 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   size_t total_size = value_dim_ * key_num;
   GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(value_dim_, total_size, indices,
                                                                      elements_per_block_, blocks_ptr_, outputs);
-  std::allocator_traits<IndexAllocatorType>::deallocate(index_alloc_, indices, key_num);
+  FreeMemory(indices);
   return true;
 }
 
@@ -147,14 +190,15 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   MS_ERROR_IF_NULL(key);
   MS_ERROR_IF_NULL(outputs);
   MS_ERROR_IF_NULL(stream);
-  int *indices = std::allocator_traits<IndexAllocatorType>::allocate(index_alloc_, key_num);
+  int *indices = nullptr;
+  AllocateMemory(key_num * sizeof(int), &indices);
   MS_ERROR_IF_NULL(indices);
 
   // 1. Get all indices in blocks according to the key.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
-  Reserve(size_ + key_num);
+  Reserve(size_ + key_num, stream);
   // 2. Insert default value into map by specific value.
   InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(
     value_dim_, key_num, indices, elements_per_block_, default_value, idle_flags_ptr_, blocks_ptr_);
@@ -163,7 +207,7 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   size_t total_size = value_dim_ * key_num;
   GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(value_dim_, total_size, indices,
                                                                      elements_per_block_, blocks_ptr_, outputs);
-  std::allocator_traits<IndexAllocatorType>::deallocate(index_alloc_, indices, key_num);
+  FreeMemory(indices);
   return true;
 }
 
@@ -172,20 +216,21 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *key, size_t key_num,
   MS_ERROR_IF_NULL(key);
   MS_ERROR_IF_NULL(value);
   MS_ERROR_IF_NULL(stream);
-  int *indices = std::allocator_traits<IndexAllocatorType>::allocate(index_alloc_, key_num);
+  int *indices = nullptr;
+  AllocateMemory(key_num * sizeof(int), &indices);
   MS_ERROR_IF_NULL(indices);
 
   // 1. Get all indices in blocks according to the key.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
-  Reserve(size_ + key_num);
+  Reserve(size_ + key_num, stream);
   // 2. Insert values into map by indices in blocks.
   size_t total_insert_size = value_dim_ * key_num;
   InsertValues<<<GET_BLOCKS(total_insert_size), GET_THREADS, 0, cuda_stream>>>(
     value_dim_, total_insert_size, indices, value, elements_per_block_, idle_flags_ptr_, blocks_ptr_);
 
-  std::allocator_traits<IndexAllocatorType>::deallocate(index_alloc_, indices, key_num);
+  FreeMemory(indices);
   return true;
 }
 
@@ -200,12 +245,120 @@ bool GPUHashTable<Key, Value, Allocator>::Erase(const Key *keys, size_t key_num,
 }
 
 template <typename Key, typename Value, typename Allocator>
+bool GPUHashTable<Key, Value, Allocator>::Clear() {
+  cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
+  // Need wait all task on stream finish.
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+
+  size_ = 0;
+  // 1. Reset cuda dynamic map.
+  cuda_dynamic_map_ = std::make_unique<CudaDynamicMap<Key, int32_t, Allocator>>(
+    static_cast<Key>(-1), -1, static_cast<Key>(-2), Allocator(), stream);
+
+  CudaAtomicSize host_init_atomic_size_t(0);
+  CudaAtomicInt host_init_atomic_int(0);
+
+  // 2. Reset cuda atomic counter.
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(
+    cudaMemcpyAsync(current_index_, &host_init_atomic_size_t, sizeof(CudaAtomicSize), cudaMemcpyHostToDevice, stream),
+    "cudaMemcpyAsync");
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(
+    cudaMemcpyAsync(erased_counter_, &host_init_atomic_int, sizeof(CudaAtomicInt), cudaMemcpyHostToDevice, stream),
+    "cudaMemcpyAsync");
+
+  // 3. Reset idle status.
+  std::vector<int8_t> init_idle_flags(elements_per_block_, 1);
+  for (size_t i = 0; i < idle_flags_.size(); i++) {
+    CHECK_CUDA_RET_WITH_RETURN_FALSE(
+      cudaMemcpyAsync(idle_flags_[i], init_idle_flags.data(), init_idle_flags.size() * sizeof(bool),
+                      cudaMemcpyHostToDevice, stream),
+      "cudaMemcpyAsync");
+  }
+
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+  return true;
+}
+
+template <typename Key, typename Value, typename Allocator>
+bool GPUHashTable<Key, Value, Allocator>::Reserve(size_t new_capacity, void *stream) {
+  // There is sufficient space in hash table, need not to reserve.
+  if (capacity() >= new_capacity) {
+    return true;
+  }
+  MS_ERROR_IF_NULL(stream);
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
+
+  // Allocate new block and idle flag until the capacity of hash table reaches desired capacity.
+  size_t old_blocks_num = blocks_.size();
+  std::vector<int8_t> init_idle_flags(elements_per_block_, 1);
+  size_t remain_num = new_capacity - capacity();
+  while (remain_num > 0) {
+    // Allocate a new block.
+    Value *new_block = nullptr;
+    AllocateMemory(value_dim_ * elements_per_block_ * sizeof(Value), &new_block);
+    MS_ERROR_IF_NULL(new_block);
+    blocks_.push_back(new_block);
+
+    // Allocate a new idle flag for new block.
+    bool *new_block_idle_flag = nullptr;
+    AllocateMemory(elements_per_block_ * sizeof(bool), &new_block_idle_flag);
+    MS_ERROR_IF_NULL(new_block_idle_flag);
+    idle_flags_.push_back(new_block_idle_flag);
+
+    // Set initialized value for idle flag.
+    CHECK_CUDA_RET_WITH_RETURN_FALSE(
+      cudaMemcpyAsync(new_block_idle_flag, init_idle_flags.data(), init_idle_flags.size() * sizeof(bool),
+                      cudaMemcpyHostToDevice, cuda_stream),
+      "cudaMemcpyAsync");
+
+    remain_num -= std::min(remain_num, elements_per_block_);
+    capacity_ += elements_per_block_;
+  }
+
+  // Wait all task on the stream finish, because the blocks_ptr_ need to reallocate, there may be some kernels are using
+  // the blocks_ptr_ and idle_flags_ptr_.
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(cuda_stream), "cudaStreamSynchronize");
+
+  return ResetBlockAndIdleFlag(cuda_stream);
+}
+
+template <typename Key, typename Value, typename Allocator>
+bool GPUHashTable<Key, Value, Allocator>::ResetBlockAndIdleFlag(cudaStream_t cuda_stream) {
+  // Free old GPU memory for blocks_ptr_ and idle_flags_.
+  FreeMemory(blocks_ptr_);
+  FreeMemory(idle_flags_ptr_);
+
+  size_t cur_blocks_num = blocks_.size();
+  // Allocate new GPU memory for blocks_ptr_.
+  Value *new_blocks_ptr = nullptr;
+  AllocateMemory(cur_blocks_num * sizeof(Value *), &new_blocks_ptr);
+  blocks_ptr_ = reinterpret_cast<Value **>(new_blocks_ptr);
+  MS_ERROR_IF_NULL(blocks_ptr_);
+
+  // Allocate new GPU memory for idle_flags_ptr_.
+  bool *new_idle_flags_ptr = nullptr;
+  AllocateMemory(cur_blocks_num * sizeof(bool *), &new_idle_flags_ptr);
+  idle_flags_ptr_ = reinterpret_cast<bool **>(new_idle_flags_ptr);
+  MS_ERROR_IF_NULL(idle_flags_ptr_);
+
+  // Update the content for blocks pointer recorder and idle flags pointer recorder.
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(
+    cudaMemcpyAsync(blocks_ptr_, blocks_.data(), cur_blocks_num * sizeof(Value *), cudaMemcpyHostToDevice, cuda_stream),
+    "cudaMemcpyAsync");
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemcpyAsync(idle_flags_ptr_, idle_flags_.data(), cur_blocks_num * sizeof(bool *),
+                                                   cudaMemcpyHostToDevice, cuda_stream),
+                                   "cudaMemcpyAsync");
+  return true;
+}
+
+template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::GetKeysAndValues(Key *keys, Value *values, void *stream) {
   MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(values);
   MS_ERROR_IF_NULL(cuda_dynamic_map_);
   auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
-  int *indices = std::allocator_traits<IndexAllocatorType>::allocate(index_alloc_, size_);
+  int *indices = nullptr;
+  AllocateMemory(size_ * sizeof(int), &indices);
   MS_ERROR_IF_NULL(indices);
 
   // 1. Export all keys and indices from dynamic map.
@@ -217,7 +370,7 @@ bool GPUHashTable<Key, Value, Allocator>::GetKeysAndValues(Key *keys, Value *val
   size_t total_size = value_dim_ * size_;
   GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(value_dim_, total_size, indices,
                                                                      elements_per_block_, blocks_ptr_, values);
-  std::allocator_traits<IndexAllocatorType>::deallocate(index_alloc_, indices, size_);
+  FreeMemory(indices);
   return true;
 }
 
@@ -244,9 +397,12 @@ bool GPUHashTable<Key, Value, Allocator>::Import(const DataLenPair &input_data) 
   size_t values_len = input_values.second;
 
   // 2. Allocate temp buffer to keys and values.
-  char *device_keys = std::allocator_traits<CharAllocatorType>::allocate(char_alloc_, keys_len);
-  char *device_values = std::allocator_traits<CharAllocatorType>::allocate(char_alloc_, values_len);
+  Key *device_keys = nullptr;
+  AllocateMemory(keys_len, &device_keys);
   MS_ERROR_IF_NULL(device_keys);
+
+  Value *device_values = nullptr;
+  AllocateMemory(values_len, &device_values);
   MS_ERROR_IF_NULL(device_values);
 
   // 3. Copy input keys and values to device.
@@ -257,16 +413,15 @@ bool GPUHashTable<Key, Value, Allocator>::Import(const DataLenPair &input_data) 
     cudaMemcpyAsync(device_values, host_values, values_len, cudaMemcpyHostToDevice, stream), "cudaMemcpyAsync");
 
   // 4. Insert input keys and values to hash table.
-  RETURN_IF_FALSE_WITH_LOG(Insert(reinterpret_cast<Key *>(device_keys), keys_len / sizeof(Key),
-                                  reinterpret_cast<Value *>(device_values), stream),
+  RETURN_IF_FALSE_WITH_LOG(Insert(device_keys, keys_len / sizeof(Key), device_values, stream),
                            "Insert keys and values failed.");
   CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
 
   // 5. Free temp buffer to keys and values.
-  std::allocator_traits<CharAllocatorType>::deallocate(char_alloc_, device_keys, keys_len);
-  std::allocator_traits<CharAllocatorType>::deallocate(char_alloc_, device_values, values_len);
-  input_data_list.clear();
+  FreeMemory(device_keys);
+  FreeMemory(device_values);
 
+  input_data_list.clear();
   return true;
 }
 
@@ -292,18 +447,19 @@ bool GPUHashTable<Key, Value, Allocator>::Export(const DataLenPair &keys, const 
                  std::to_string(status.second) + "].");
 
   // 2. Allocate temp buffer to keys, values and status.
-  char *device_keys = std::allocator_traits<CharAllocatorType>::allocate(char_alloc_, keys_len);
-  char *device_values = std::allocator_traits<CharAllocatorType>::allocate(char_alloc_, values_len);
-  char *device_status = std::allocator_traits<CharAllocatorType>::allocate(char_alloc_, status_len);
+  Key *device_keys = nullptr;
+  Value *device_values = nullptr;
+  Status *device_status = nullptr;
+  AllocateMemory(keys_len, &device_keys);
+  AllocateMemory(values_len, &device_values);
+  AllocateMemory(status_len, &device_status);
   MS_ERROR_IF_NULL(device_keys);
   MS_ERROR_IF_NULL(device_values);
   MS_ERROR_IF_NULL(device_status);
 
   // 3. Export all keys and indices and store into temp buffer.
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
-  RETURN_IF_FALSE_WITH_LOG(
-    GetKeysAndValues(reinterpret_cast<Key *>(device_keys), reinterpret_cast<Value *>(device_values), stream),
-    "Get keys and values failed.");
+  RETURN_IF_FALSE_WITH_LOG(GetKeysAndValues(device_keys, device_values, stream), "Get keys and values failed.");
 
   // Note: Get all status.
   // 4. Copy keys, values and status from device temp buffer to host.
@@ -316,9 +472,9 @@ bool GPUHashTable<Key, Value, Allocator>::Export(const DataLenPair &keys, const 
   CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
 
   // 5. Free temp buffer to keys, values and status.
-  std::allocator_traits<CharAllocatorType>::deallocate(char_alloc_, device_keys, keys_len);
-  std::allocator_traits<CharAllocatorType>::deallocate(char_alloc_, device_values, values_len);
-  std::allocator_traits<CharAllocatorType>::deallocate(char_alloc_, device_status, status_len);
+  FreeMemory(device_keys);
+  FreeMemory(device_values);
+  FreeMemory(device_status);
 
   return true;
 }
@@ -365,7 +521,7 @@ bool GPUHashTable<Key, Value, Allocator>::GetIndicesByKeys(const Key *key, size_
     // otherwise find a valid position in block.
     LookupIndices<block_size, tile_size, Key, typename CucoDynamicMap<Key, int32_t, Allocator>::mutable_view_type,
                   typename CucoDynamicMap<Key, int32_t, Allocator>::view_type><<<grid_size, block_size, 0, stream>>>(
-      key, item_num, insert_miss_key, dynamic_map.get_submaps().size(), submap_idx, idel_slot_, idle_index_,
+      key, item_num, insert_miss_key, dynamic_map.get_submaps().size(), submap_idx, erased_slot_, erased_counter_,
       dynamic_map.get_submap_mutable_views().data().get(), dynamic_map.get_submap_views().data().get(),
       insert_success_number_, current_index_, indices);
 
@@ -424,8 +580,7 @@ bool GPUHashTable<Key, Value, Allocator>::InitNormalDistRandomGenerator(cudaStre
 
   // 1. Allocate memory for all random generator states.
   auto total_random_state_num = random_gen_threads_per_block_ * random_gen_block_count_;
-  random_gen_state_ = reinterpret_cast<curandStatePhilox4_32_10_t *>(std::allocator_traits<CharAllocatorType>::allocate(
-    char_alloc_, IntToSize(total_random_state_num) * sizeof(curandStatePhilox4_32_10_t)));
+  AllocateMemory(IntToSize(total_random_state_num) * sizeof(curandStatePhilox4_32_10_t), &random_gen_state_);
   MS_ERROR_IF_NULL(random_gen_state_);
 
   // 2. Initialize normal distribution random generator states.

@@ -41,7 +41,10 @@ if(ENABLE_GPU)
 
     if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND ${CUDA_VERSION} VERSION_GREATER "11.0")
         string(REPLACE "-arch=sm_53;" "" CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+        string(REPLACE "-gencode=arch=compute_53,code=sm_53;" "" CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+        list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_70,code=sm_70)
         list(APPEND CUDA_NVCC_FLAGS -std=c++17)
+        list(REMOVE_DUPLICATES CUDA_NVCC_FLAGS)
         cuda_add_library(gpu_hash_table STATIC ${CUDA_SRC_LIST})
     endif()
 
