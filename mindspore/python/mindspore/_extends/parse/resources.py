@@ -20,7 +20,7 @@ from __future__ import absolute_import
 import ast
 import math
 
-from mindspore import RowTensorInner, RowTensor, SparseTensor, COOTensor, CSRTensor
+from mindspore import RowTensorInner, RowTensor, SparseTensor, COOTensor, CSRTensor, MapTensor
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops import Primitive
 from mindspore.ops.composite import multitype_ops
@@ -174,7 +174,8 @@ convert_object_map = {
     RowTensor:      F.make_row_tensor,
     SparseTensor:   F.make_sparse_tensor,
     COOTensor:      F.make_coo_tensor,
-    CSRTensor:      F.make_csr_tensor
+    CSRTensor:      F.make_csr_tensor,
+    MapTensor:      F.make_map_tensor
 }
 
 if not security.enable_security():

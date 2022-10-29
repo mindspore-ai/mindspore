@@ -60,7 +60,7 @@ class MS_CORE_API MapTensor final : public Tensor {
     data_type_ = value_dtype;
     value_shape_ = value_shape;
     shape_ = {abstract::Shape::kShapeDimAny};
-    (void)shape_.insert(shape_.end(), value_shape.begin(), value_shape.end());
+    (void)shape_.insert(shape_.cend(), value_shape.cbegin(), value_shape.cend());
     ShapeVector key_shape = {abstract::Shape::kShapeDimAny};
     key_tensor_ = std::make_shared<Tensor>(key_dtype, key_shape);
     value_tensor_ = std::make_shared<Tensor>(value_dtype, value_shape);
@@ -135,17 +135,21 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \brief Get the key tensor of MapTensor data.
   ///
   /// \return The key tensor.
-  const TensorPtr &KeyTensor() const { return key_tensor_; }
+  const TensorPtr &key_tensor() const { return key_tensor_; }
 
   /// \brief Get the value tensor of MapTensor data.
   ///
   /// \return The value tensor.
-  const TensorPtr &ValueTensor() const { return value_tensor_; }
+  const TensorPtr &value_tensor() const { return value_tensor_; }
 
   /// \brief Get the status tensor of MapTensor data.
   ///
   /// \return The status tensor.
-  const TensorPtr &StatusTensor() const { return status_tensor_; }
+  const TensorPtr &status_tensor() const { return status_tensor_; }
+
+  void set_key_tensor(const TensorPtr key_tensor) { key_tensor_ = key_tensor; }
+
+  void set_value_tensor(const TensorPtr value_tensor) { value_tensor_ = value_tensor; }
 
  private:
   // Data type of the key.

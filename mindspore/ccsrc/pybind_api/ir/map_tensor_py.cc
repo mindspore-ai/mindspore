@@ -17,6 +17,7 @@
 #include "pybind_api/ir/map_tensor_py.h"
 #include <memory>
 #include <string>
+#include <utility>
 #include "pybind11/pytypes.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "include/common/pybind_api/api_register.h"
@@ -79,6 +80,23 @@ static tensor::TensorPtr PyMapTensorGet(const MapTensorPtr &map_tensor, const te
   return map_tensor->Get(key_tensor);
 }
 
+static tensor::TensorPtr PyMapTensorGetKeys(const MapTensorPtr &map_tensor) {
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  return map_tensor->key_tensor();
+}
+
+static tensor::TensorPtr PyMapTensorGetValues(const MapTensorPtr &map_tensor) {
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  return map_tensor->value_tensor();
+}
+
+static std::pair<tensor::TensorPtr, tensor::TensorPtr> PyMapTensorGetData(const MapTensorPtr &map_tensor) {
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  auto keys = map_tensor->key_tensor();
+  auto values = map_tensor->value_tensor();
+  return std::pair<tensor::TensorPtr, tensor::TensorPtr>(keys, values);
+}
+
 namespace tensor {
 void RegMapTensor(py::module *m) {
   // Define python MapTensor class.
@@ -88,13 +106,17 @@ void RegMapTensor(py::module *m) {
     .def_property_readonly("key_dtype", &MapTensor::KeyDtype)
     .def_property_readonly("value_dtype", &MapTensor::ValueDtype)
     .def_property_readonly("value_shape", &MapTensor::value_shape)
+    .def_property_readonly("size", &MapTensor::size)
     .def("get", &PyMapTensorGet)
     .def("put", &MapTensor::Put)
     .def("erase", &MapTensor::Erase)
     .def("export", &MapTensorPy::ExportAsNumpy)
     .def("update", &MapTensorPy::UpdateFromNumpy)
     .def("__str__", &MapTensor::ToString)
-    .def("__repr__", &MapTensor::ToString);
+    .def("__repr__", &MapTensor::ToString)
+    .def("get_keys", &PyMapTensorGetKeys)
+    .def("get_values", &PyMapTensorGetValues)
+    .def("get_data", &PyMapTensorGetData);
 }
 }  // namespace tensor
 }  // namespace mindspore
