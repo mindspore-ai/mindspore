@@ -24,8 +24,8 @@ namespace mindspore::kernel {
 void MatmulFp32ARM32CPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;
   matrix_b_.need_pack = true;
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12MajorParallel : RowMajor2Col12MajorParallel;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col4MajorParallel : RowMajor2Row4MajorParallel;
+  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
+  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col4Major : RowMajor2Row4Major;
   row_tile_ = C12NUM;
   col_tile_ = C4NUM;
   col_min_unit_ = C4NUM;
