@@ -256,8 +256,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
   }
 
   // the following pass needs to check the return value.
-  fusions = {std::make_shared<opt::ReduceSameOpInHorizon>(param), std::make_shared<opt::MulReduceFusion>(),
-             std::make_shared<opt::ReshapeReduceFusion>(),        std::make_shared<opt::AblateReshapeLikeOp>(),
+  fusions = {std::make_shared<opt::ReduceSameOpInHorizon>(param), std::make_shared<opt::ReshapeReduceFusion>(),
+             std::make_shared<opt::AblateReshapeLikeOp>(),        std::make_shared<opt::MulReduceFusion>(),
              std::make_shared<opt::ConcatConcatFusion>(),         std::make_shared<opt::ReduceStackFusion>(),
              std::make_shared<opt::RemoveTransitivityOp>(),       std::make_shared<opt::StridedSliceFusion>(),
              std::make_shared<opt::RemoveTransitivityOp>(),       std::make_shared<opt::ReshapeShapeFusion>(),

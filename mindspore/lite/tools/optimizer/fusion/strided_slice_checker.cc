@@ -134,10 +134,11 @@ int StridedSliceChecker::GetConstTensor(const CNodePtr &strided_slice, size_t in
                   << strided_slice->fullname_with_scope();
     return lite::RET_NOT_SUPPORT;
   }
-  if (lite::FetchConstData(strided_slice, index, converter::kFmkTypeMs, data_info, false) != lite::RET_OK) {
+  if (lite::FetchConstData(strided_slice, index, converter::kFmkTypeMs, data_info, true) != lite::RET_OK) {
     MS_LOG(ERROR) << "Get Strided_slice " << index << "-input failed, node is " << strided_slice->fullname_with_scope();
     return lite::RET_ERROR;
   }
+  data_info->data_ptr_ = data_info->data_.data();
   if (data_info->data_ptr_ == nullptr ||
       (data_info->data_type_ != kNumberTypeInt && data_info->data_type_ != kNumberTypeInt32)) {
     MS_LOG(ERROR) << "Get Strided_slice's constant failed, node name is " << strided_slice->fullname_with_scope();
