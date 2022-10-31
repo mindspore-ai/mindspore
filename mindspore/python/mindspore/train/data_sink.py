@@ -179,7 +179,7 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
             f"but device target is {context.get_context('device_target')}.")
 
     loop = sink_size
-    if jit_config is not None:
+    if jit_config is None:
         loop = 1
     ori_next_op, is_info_queue = _init_sink_dataset(dataset, loop, input_signature)
 
