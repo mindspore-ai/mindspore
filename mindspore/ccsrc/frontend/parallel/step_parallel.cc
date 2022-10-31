@@ -1725,7 +1725,8 @@ StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const
   StrategyPtr strategyPtr;
   std::shared_ptr<Strategies> strategy_v_ptr = operator_->GenerateBatchStrategiesWithCheck();
   MS_EXCEPTION_IF_NULL(strategy_v_ptr);
-  strategyPtr = NewStrategy(0, *strategy_v_ptr);
+  auto stage_id = g_device_manager->stage_id();
+  strategyPtr = NewStrategy(stage_id, *strategy_v_ptr);
   std::vector<ValuePtr> elements;
   for (size_t i = 0; i < strategy_v_ptr->size(); i++) {
     elements.push_back(MakeValue((*strategy_v_ptr)[i]));
