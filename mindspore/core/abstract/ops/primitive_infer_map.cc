@@ -91,7 +91,6 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kGatherV2 = prim::kPrimGatherV2->name();
   static const auto &kGatherD = prim::kPrimGatherD->name();
   static const auto &kSparseGatherV2 = prim::kPrimSparseGatherV2->name();
-  static const auto &kRange = prim::kPrimRange->name();
   static const auto &kRangeV2 = prim::kPrimRangeV2->name();
   static const auto &kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
   static const auto &kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
@@ -157,7 +156,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kGatherV2, ShapeSet{2}},
                                          {kGatherD, ShapeSet{1}},
                                          {kSparseGatherV2, ShapeSet{2}},
-                                         {kRange, ShapeSet{0, 1, 2}},
                                          {kRangeV2, ShapeSet{0, 1, 2}},
                                          {kResizeBicubic, ShapeSet{1}},
                                          {kConv2DBackpropFilter, ShapeSet{2}},
@@ -276,7 +274,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMatMul, R{InferImplMatMul, nullptr, true}},
     {prim::kPrimRealInner, R{InferImplReal, nullptr, true}},
     // Array
-    {prim::kPrimRange, R{InferImplRange, nullptr, true}},
     {prim::kPrimArrayToScalar, R{InferImplArrayToScalar, nullptr, true}},
     {prim::kPrimBroadcastShape, R{InferImplBroadCastShape, nullptr, true}},
     {prim::kPrimUnique, R{InferImplUnique, nullptr, true}},

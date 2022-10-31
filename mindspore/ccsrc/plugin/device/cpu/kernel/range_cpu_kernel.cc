@@ -35,68 +35,67 @@ T Sign(T num) {
 }
 }  // namespace
 
-void RangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  is_need_retrieve_output_shape_ = true;
-}
-
-bool RangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool RangeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRangeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRangeOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int or float, but got "
-                      << TypeIdLabel(dtype_);
-  }
-  if (!node_wpt_.expired()) {
-    auto node = node_wpt_.lock();
-    if (!node) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
-    }
-    ShapeVector out_shape{SizeToLong(output_size_)};
-    TypeId out_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
-    common::AnfAlgo::SetOutputInferTypeAndShape({out_type}, {out_shape}, node.get());
-  }
-  return true;
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 template <typename T>
-void RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                     const std::vector<AddressPtr> &outputs) {
   auto start = reinterpret_cast<T *>(inputs[0]->addr)[0];
   auto limit = reinterpret_cast<T *>(inputs[1]->addr)[0];
   auto delta = reinterpret_cast<T *>(inputs[2]->addr)[0];
   if (delta == static_cast<T>(0)) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the delta can not be 0.";
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", the delta can not be 0.";
+    return false;
   }
 
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t max_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
-    if (std::is_integral<T>::value) {
-      output_size_ = static_cast<size_t>((std::abs(limit - start) + std::abs(delta) - 1) / std::abs(delta));
-    } else {
-      output_size_ = static_cast<size_t>(std::ceil((limit - start) / delta));
-    }
-    if (output_size_ > max_size) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the output element number exceeds the maximum number.";
-    }
-    for (size_t index = 0; index < output_size_; index++) {
+    for (size_t index = 0; index < output_size; index++) {
       output[index] = delta * index + start;
     }
   } else {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", upper bound and larger bound inconsistent with step sign.";
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", upper bound and larger bound inconsistent with step sign.";
+    return false;
   }
+  return true;
+}
+
+const std::vector<std::pair<KernelAttr, RangeCpuKernelMod::KernelRunFunc>> &RangeCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, RangeCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &RangeCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &RangeCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &RangeCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
+     &RangeCpuKernelMod::LaunchKernel<int64_t>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Range, RangeCpuKernelMod);
