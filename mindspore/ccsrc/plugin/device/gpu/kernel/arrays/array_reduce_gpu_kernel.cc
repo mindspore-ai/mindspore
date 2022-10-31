@@ -198,6 +198,7 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
 
   int input_dim_length = SizeToInt(inputA_shape.size());
+  axis_.clear();
   for (auto axis : attr_axis) {
     axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
   }
