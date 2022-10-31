@@ -773,23 +773,25 @@ class CSRTensor(CSRTensor_):
         validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
-    def mm(self, dense_matrix: Tensor) -> Tensor:
+    def mm(self, matrix: Union[Tensor, CSRTensor]) -> Union[Tensor, CSRTensor]:
         """
-        Return the matrix multiplication result of the right-multiply dense matrix of the CSRTensor.
-        The CSRTensor with shape `[M, N]` needs to adapt the dense matrix with shape `[N, K]`
-        to get the dense matrix with result `[M, K]`.
+        Return the matrix multiplication result of the right-multiply matrix（dense or CSRTensor） of the CSRTensor.
+        The CSRTensor with shape `[M, N]` needs to adapt the right matrix with shape `[N, K]`
+        to get the dense matrix or CSRTensor with result `[M, K]`.
 
         Note:
-            Currently only supports CPU backend with LLVM 12.0.1 installed.
+            If right matrix is CSRTensor, currently only supports GPU backend.
+            if right matrix is Tensor, currently supports CPU backend with LLVM 12.0.1 or GPU backend.
 
         Args:
-            dense_matrix (Tensor): A dense Tensor, its shape[0] should be equal to csr_tensor.shape[1]
+            matrix (Tensor or CSRTensor): A dense Tensor or CSRTensor,
+                its shape[0] should be equal to csr_tensor.shape[1]
 
         Returns:
-            Tensor.
+            Tensor or CSRTensor.
 
         Supported Platforms:
-            ``GPU`` ``CPU``
+            ``CPU`` ``GPU``
 
         Examples:
             >>> from mindspore import Tensor, CSRTensor
@@ -804,9 +806,11 @@ class CSRTensor(CSRTensor_):
             [[2. 4.]
             [1. 2.]]
         """
-        validator.check_value_type('dense_matrix', dense_matrix, (Tensor_,), 'CSRTensor.mm')
-        return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values,
-                                                        self.shape, dense_matrix)
+        if isinstance(matrix, CSRTensor):
+            return tensor_operator_registry.get("csr_mm")(self, matrix)
+        validator.check_value_type('matrix', matrix, (Tensor_,), 'CSRTensor.mm')
+        return tensor_operator_registry.get("csr_mm_akg")()(self.indptr, self.indices, self.values,
+                                                            self.shape, matrix)
 
     def sum(self, axis: int) -> Tensor:
         """

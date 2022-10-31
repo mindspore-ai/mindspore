@@ -413,6 +413,7 @@ Array操作
     mindspore.ops.dense_to_sparse_coo
     mindspore.ops.dense_to_sparse_csr
     mindspore.ops.csr_add
+    mindspore.ops.csr_mm
     mindspore.ops.csr_softmax
     mindspore.ops.csr_to_coo
     mindspore.ops.sparse_add

@@ -28,11 +28,12 @@ from mindspore._checkparam import Rel
 from mindspore.ops import _constants
 from mindspore.ops.function import *
 from mindspore.ops.function.sparse_func import sparse_add
+from mindspore.ops.function.sparse_func import csr_mm
 from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops
-from mindspore.ops.operations import _csr_ops
 from mindspore.ops.operations import _inner_ops
+from mindspore.ops.operations import _csr_ops
 from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
@@ -468,7 +469,8 @@ tensor_operator_registry.register('csr2coo', csr2coo)
 tensor_operator_registry.register('coo2csr', coo2csr)
 tensor_operator_registry.register('csr_div', csr_div)
 tensor_operator_registry.register('csr_mv', csr_mv)
-tensor_operator_registry.register('csr_mm', _csr_ops.CSRMM)
+tensor_operator_registry.register('csr_mm_akg', _csr_ops.CSRMM)
+tensor_operator_registry.register('csr_mm', csr_mm)
 tensor_operator_registry.register('csr_reduce_sum', csr_reduce_sum)
 tensor_operator_registry.register('dense_to_sparse_csr', dense_to_sparse_csr)
 tensor_operator_registry.register('dense_to_sparse_coo', dense_to_sparse_coo)

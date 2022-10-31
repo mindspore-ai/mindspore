@@ -36,8 +36,8 @@ from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median
 from ...ops.operations._inner_ops import Format
-from ...ops.operations import _map_tensor_ops
 from ...ops.operations import _csr_ops
+from ...ops.operations import _map_tensor_ops
 from ...ops.primitive import constexpr
 from ...common import dtype as mstype
 
@@ -3095,9 +3095,11 @@ def csr_mv(x, dense_vector):
     return F.csr_mv(x, dense_vector)
 
 
-def csr_mm(x, dense):
+def csr_mm(x, matrix):
     """Implementation of `mm` for CSRTensor."""
-    return _csr_mm(x.indptr, x.indices, x.values, x.shape, dense)
+    if isinstance(matrix, CSRTensor):
+        return F.csr_mm(x, matrix)
+    return _csr_mm(x.indptr, x.indices, x.values, x.shape, matrix)
 
 
 def csr_to_tuple(x):
