@@ -62,7 +62,7 @@ int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   data_format_ = input_device_format;
   std::string format = GetValue<std::string>(base_operator->GetAttr("format"));
   string::size_type pos = format.find("C");
-  if (pos == std::string::npos || pos >= num_dims_) {
+  if (pos == std::string::npos) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'data_format', but got " << format;
   }
   if (pos >= num_dims_) {
