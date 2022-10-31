@@ -173,3 +173,8 @@ if [ "$MSLITE_ENABLE_SERVER_INFERENCE" = on ];then
   echo 'run ModelParallelRunner api ut test'
   ./lite-test --gtest_filter="ModelParallelRunnerTest.*"
 fi
+
+if [ "$MSLITE_ENABLE_KERNEL_EXECUTOR" = on ];then
+  echo 'run kernel executor api ut test'
+  ./lite-test --gtest_filter="KernelExecutorTest.*"
+fi

@@ -27,24 +27,30 @@
 #include "src/litert/infer_manager.h"
 #include "src/litert/kernel_registry.h"
 #include "src/litert/cxx_api/kernel_executor/kernel_executor_impl.h"
+#include "src/litert/cxx_api/kernel_executor/op_converter.h"
+#include "src/litert/cpu_info.h"
 
 namespace mindspore {
 namespace {
-constexpr size_t INITIAL_SIZE = 1024;
 std::unordered_set<std::string> support_ops = {
-  "Abs",       "Activation",    "AddFusion", "ArgMaxFusion", "ArgMinFusion", "AvgPoolFusion",
-  "BatchNorm", "Ceil",          "Concat",    "Custom",       "Conv2DFusion", "Conv2dTransposeFusion",
-  "DivFusion", "Equal",         "Flatten",   "Gather",       "GatherNd",     "MatMulFusion",
-  "Maximum",   "MaxPoolFusion", "Minimum",   "MulFusion",    "PadFusion",    "PReLUFusion",
-  "Range",     "Reshape",       "Resize",    "Softmax",      "StridedSlice", "TopKFusion",
-  "Transpose", "Where",
+  "Abs",       "ReLU",      "Sigmoid", "Add",      "Argmax",  "Argmin",          "AvgPool",
+  "BatchNorm", "Ceil",      "Concat",  "Custom",   "Conv2D",  "Conv2DTranspose", "Div",
+  "Equal",     "Flatten",   "Gather",  "GatherNd", "MatMul",  "Maximum",         "MaxPool",
+  "Minimum",   "Mul",       "Pad",     "PReLU",    "Reshape", "Softmax",         "StridedSlice",
+  "TopK",      "Transpose",
 };
 std::unordered_map<std::string, int> ops_output_num = {
-  {"ArgMaxFusion", 2},
-  {"ArgMinFusion", 2},
-  {"TopKFusion", 2},
+  {"TopK", 2},
 };
 }  // namespace
+
+KernelExecutorImpl::KernelExecutorImpl() {
+  fbb_ = std::make_shared<flatbuffers::FlatBufferBuilder>();
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+  lite::CpuInfo cpu_info;
+  support_fp16_ = cpu_info.ArmIsSupportFp16();
+#endif
+}
 
 KernelExecutorImpl::~KernelExecutorImpl() {
   FreeAllResource();
@@ -67,7 +73,10 @@ Status KernelExecutorImpl::Build(const std::shared_ptr<ops::BaseOperator> &op, c
     return kLiteError;
   } else {
     int output_num = ops_output_num.find(op_name) != ops_output_num.end() ? ops_output_num.at(op_name) : 1;
-    InitTensors(inputs, output_num);
+    status = InitTensors(inputs, output_num);
+    if (status != kSuccess) {
+      return status;
+    }
     status = GetCpuKernel(ms_context);
   }
 
@@ -95,7 +104,10 @@ Status KernelExecutorImpl::Build(const std::shared_ptr<ops::Custom> &op, const s
   if (status != kSuccess) {
     return status;
   }
-  InitTensors(inputs, output_num);
+  status = InitTensors(inputs, output_num);
+  if (status != kSuccess) {
+    return status;
+  }
   status = GetCustomKernel(ms_context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "get custom kernel error.";
@@ -120,7 +132,10 @@ Status KernelExecutorImpl::ReSize(const std::vector<MSTensor> &inputs) {
     MS_LOG(ERROR) << "wrong inputs size.";
     return kLiteError;
   }
-  InitTensors(inputs, 0);
+  auto status = InitTensors(inputs, 0);
+  if (status != kSuccess) {
+    return status;
+  }
   kernel_->set_in_tensors(inputs_);
   kernel_->set_out_tensors(outputs_);
   int ret;
@@ -131,6 +146,7 @@ Status KernelExecutorImpl::ReSize(const std::vector<MSTensor> &inputs) {
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "do infer shape error.";
+    FreeAllResource();
     return static_cast<StatusCode>(ret);
   }
   ret = kernel_->ReSize();
@@ -169,6 +185,7 @@ Status KernelExecutorImpl::Execute(const std::vector<MSTensor> &inputs, std::vec
     }
     auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(user_input.impl());
     inputs_[i] = static_cast<lite::Tensor *>(lite_impl->lite_tensor());
+    inputs_[i]->set_category(lite::Category::GRAPH_INPUT);
   }
   kernel_->set_in_tensors(inputs_);
   int ret = kernel_->Execute();
@@ -197,15 +214,24 @@ Status KernelExecutorImpl::BuildInit(const std::shared_ptr<ops::BaseOperator> &o
     return kLiteNullptr;
   }
   FreeAllResource();
-  data_type_ = static_cast<enum TypeId>(inputs[FIRST_INPUT].DataType());
-  if (data_type_ != kNumberTypeInt8 && data_type_ != kNumberTypeFloat16 && data_type_ != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "unsupported datatype.";
-    return kLiteNullptr;
+  auto converter_op = op;
+  auto op_creator = lite::OpsConverterRegistry::GetInstance()->GetOpsConverterCreator(op->name());
+  if (op_creator != nullptr) {
+    converter_op = op_creator(op);
   }
-  std::unique_ptr<mindspore::schema::PrimitiveT> prim_t = lite::GetPrimitiveT(op);
-  flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
-  primitive_ = lite::ConvertToPrimitive(prim_t.get(), &fbb);
-  fbb.Clear();
+  data_type_ = static_cast<enum TypeId>(inputs[FIRST_INPUT].DataType());
+  if (op->name() != "Custom") {
+    if (data_type_ != kNumberTypeFloat32 && data_type_ != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << "unsupported datatype.";
+      return kLiteError;
+    } else if (data_type_ == kNumberTypeFloat16 && !support_fp16_) {
+      MS_LOG(ERROR) << "inputs dataType is Fp16 but Hw cap NOT support FP16.";
+      return kLiteError;
+    }
+  }
+
+  std::unique_ptr<mindspore::schema::PrimitiveT> prim_t = lite::GetPrimitiveT(converter_op);
+  primitive_ = lite::ConvertToPrimitive(prim_t.get(), fbb_.get());
   if (primitive_ == nullptr) {
     MS_LOG(ERROR) << "convert to primitive nullptr.";
     return kLiteNullptr;
@@ -255,14 +281,17 @@ Status KernelExecutorImpl::GetCustomKernel(const std::shared_ptr<Context> &ms_co
     get_kernel = lite::KernelRegistry::GetInstance()->GetKernelExec(inputs_, outputs_, context_.get(), ms_context.get(),
                                                                     desc, nullptr, &kernel_, primitive_);
   }
-
-  // if found kernel, do infershape
-  if (get_kernel == RET_OK) {
-    int ret = KernelInferShape(inputs_, outputs_, primitive_, context_->GetProviders(), schema_version_);
-    return static_cast<StatusCode>(ret);
+  if (get_kernel != RET_OK) {
+    MS_LOG(ERROR) << "get custom KernelExec error.";
+    return static_cast<StatusCode>(get_kernel);
   }
 
-  return static_cast<StatusCode>(get_kernel);
+  int ret = KernelInferShape(inputs_, outputs_, primitive_, context_->GetProviders(), schema_version_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "custom kernel infer shape error. please check inputs size and shape.";
+    return static_cast<StatusCode>(ret);
+  }
+  return kSuccess;
 }
 
 Status KernelExecutorImpl::GetCpuKernel(const std::shared_ptr<Context> &ms_context) {
@@ -274,38 +303,40 @@ Status KernelExecutorImpl::GetCpuKernel(const std::shared_ptr<Context> &ms_conte
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type_, NHWC, prim_type_};
   int get_kernel = lite::KernelRegistry::GetInstance()->GetKernelExec(inputs_, outputs_, context_.get(),
                                                                       ms_context.get(), desc, parameter_, &kernel_);
-  if (get_kernel == RET_OK) {
-    int ret = KernelInferShape(inputs_, outputs_, parameter_);
-    return static_cast<StatusCode>(ret);
+  if (get_kernel != RET_OK) {
+    MS_LOG(ERROR) << "get cpu KernelExec error.";
+    return static_cast<StatusCode>(get_kernel);
   }
 
-  return static_cast<StatusCode>(get_kernel);
+  int ret = KernelInferShape(inputs_, outputs_, parameter_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "cpu kernel infer shape error. please check inputs size and shape.";
+    return static_cast<StatusCode>(ret);
+  }
+  return kSuccess;
 }
 
-void KernelExecutorImpl::InitTensors(const std::vector<MSTensor> &inputs, const int output_num) {
+Status KernelExecutorImpl::InitTensors(const std::vector<MSTensor> &inputs, const int output_num) {
   inputs_.clear();
   for (const auto &tensor : inputs) {
     if (tensor.impl() == nullptr) {
       MS_LOG(ERROR) << "Tensor " << tensor.Name() << " is nullptr.";
+      return kLiteNullptr;
     }
     auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl());
     auto lite_tensor = static_cast<lite::Tensor *>(lite_impl->lite_tensor());
-    if (data_type_ == kNumberTypeInt8 && lite_tensor->quant_params().empty()) {
-      Int8TensorAddQuantParam(lite_tensor);
-    }
     inputs_.emplace_back(lite_tensor);
   }
   for (int i = 0; i < output_num; ++i) {
     lite::Tensor *output_tensor = new (std::nothrow) lite::Tensor();
     if (output_tensor == nullptr) {
       MS_LOG(ERROR) << "Failed to allocate tensor.";
+      return kLiteNullptr;
     }
     output_tensor->set_category(lite::Category::VAR);
-    if (data_type_ == kNumberTypeInt8) {
-      Int8TensorAddQuantParam(output_tensor);
-    }
     outputs_.emplace_back(output_tensor);
   }
+  return kSuccess;
 }
 
 void KernelExecutorImpl::FreeAllResource() {
@@ -373,12 +404,5 @@ bool KernelExecutorImpl::TensorIsValid(const MSTensor &ms_tensor, const lite::Te
     }
   }
   return true;
-}
-
-void KernelExecutorImpl::Int8TensorAddQuantParam(lite::Tensor *lite_tensor) {
-  lite::LiteQuantParam quant_param;
-  quant_param.scale = 1;
-  quant_param.zeroPoint = 0;
-  lite_tensor->set_quant_params({quant_param});
 }
 }  // namespace mindspore

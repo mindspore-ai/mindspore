@@ -59,7 +59,7 @@ class MS_API KernelExecutor {
                const std::shared_ptr<Context> &ms_context, const int output_num);
 
   /// \brief ReSize KernelExecutor. Change the shape and data type of inputs.
-  ///        Notice: Conv2DFusion can't update weight and bias by this method.
+  ///        Notice: Conv2D can't update weight and bias by this method.
   ///
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
   ///
@@ -69,7 +69,9 @@ class MS_API KernelExecutor {
   /// \brief Execute KernelExecutor.
   ///
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
+  ///                   Notices: inputs Tensor should be freed by user.
   /// \param[in] outputs Which is a pointer to a vector.The outputs are filled in the container in sequence.
+  ///                    Notices: outputs Tensor will be freed by ~KernelExecutorImpl(), user needn't free it.
   ///
   /// \return Status.
   Status Execute(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);

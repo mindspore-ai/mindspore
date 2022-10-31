@@ -15,6 +15,7 @@ endif()
 add_library(kernel_executor SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor_impl.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/op_converter.cc
         ${TOP_DIR}/mindspore/lite/src/common/ops/ops_utils.cc
         ${TOP_DIR}/mindspore/lite/src/common/primitive_t_utils.cc
         ${TOP_DIR}/mindspore/lite/src/common/ops/ops_def.cc)
@@ -25,7 +26,6 @@ target_link_libraries(kernel_executor
         mindspore-lite
         mindspore_core
         mindspore::json
-        mindspore::protobuf
         mindspore::flatbuffers)
 
 if(USE_GLOG)
