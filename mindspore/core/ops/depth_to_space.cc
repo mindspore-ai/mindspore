@@ -75,15 +75,18 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
                              << block_size;
   }
   (void)CheckAndConvertUtils::CheckInteger("block_size", block_size % dim_1, kEqual, 0, prim_name);
-  if (input_args[kInputIndex0]->BuildShape()->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-1});
-  }
-  (void)CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)",
-                                           x_shape[dim_1] % (block_size * block_size), kEqual, 0, prim_name);
   auto out_shape = x_shape;
-  out_shape[dim_1] /= block_size * block_size;
-  out_shape[dim_2] *= block_size;
-  out_shape[dim_3] *= block_size;
+  if (out_shape[dim_1] != abstract::Shape::kShapeDimAny) {
+    (void)CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)",
+                                             x_shape[dim_1] % (block_size * block_size), kEqual, 0, prim_name);
+    out_shape[dim_1] /= block_size * block_size;
+  }
+  if (out_shape[dim_2] != abstract::Shape::kShapeDimAny) {
+    out_shape[dim_2] *= block_size;
+  }
+  if (out_shape[dim_3] != abstract::Shape::kShapeDimAny) {
+    out_shape[dim_3] *= block_size;
+  }
   if (format == Format::NHWC) {
     out_shape = {out_shape[dim_0], out_shape[dim_2], out_shape[dim_3], out_shape[dim_1]};
   }
