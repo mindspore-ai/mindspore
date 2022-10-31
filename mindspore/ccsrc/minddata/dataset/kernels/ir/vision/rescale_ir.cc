@@ -15,7 +15,7 @@
  */
 #include "minddata/dataset/kernels/ir/vision/rescale_ir.h"
 
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
 #include "minddata/dataset/kernels/image/rescale_op.h"
 #endif
 
@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace dataset {
 namespace vision {
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
 // RescaleOperation
 RescaleOperation::RescaleOperation(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
 

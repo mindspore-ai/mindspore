@@ -15,7 +15,7 @@
  */
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
 
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
 #include "minddata/dataset/kernels/image/swap_red_blue_op.h"
 #endif
 
@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace dataset {
 namespace vision {
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
 // SwapRedBlueOperation.
 SwapRedBlueOperation::SwapRedBlueOperation() {}
 

@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DATA_TYPE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DATA_TYPE_H_
 
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
 #include <opencv2/core/hal/interface.h>
 #endif
 
@@ -83,7 +83,7 @@ class DataType {
     {"bytes", 0, "bytes", "S", kCVInvalidType}                                           // DE_BYTES
   };
 #else
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
   static inline const TypeInfo kTypeInfo[] = {
     // name, sizeInBytes, pybindTypem formatDescriptor, openCV
     {"unknown", 0, "object", "", kCVInvalidType},  // DE_UNKNOWN
@@ -158,7 +158,7 @@ class DataType {
   /// \return the number of bytes of the type.
   uint8_t SizeInBytes() const;
 
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
   // Convert from DataType to OpenCV type
   /// \return
   uint8_t AsCVType() const;

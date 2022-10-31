@@ -302,6 +302,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
                 ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
                 ${MINDDATA_DIR}/kernels/image/rescale_op.cc
                 ${MINDDATA_DIR}/kernels/ir/vision/rescale_ir.cc
+                ${MINDDATA_DIR}/core/cv_tensor.cc
                 )
         endif()
 

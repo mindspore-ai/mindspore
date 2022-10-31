@@ -61,7 +61,7 @@ Status GlobalContext::Init() {
 
   // Create some tensor allocators for the different types and hook them into the pool.
   tensor_allocator_ = std::make_unique<Allocator<Tensor>>(mem_pool_);
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
   cv_tensor_allocator_ = std::make_unique<Allocator<CVTensor>>(mem_pool_);
 #endif
   device_tensor_allocator_ = std::make_unique<Allocator<DeviceTensor>>(mem_pool_);

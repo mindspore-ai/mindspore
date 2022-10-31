@@ -27,10 +27,58 @@
 #include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/util/random.h"
-
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include "minddata/dataset/core/cv_tensor.h"
+#endif
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
 namespace mindspore {
 namespace dataset {
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rescale, float shift) {
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+  if (!input_cv->mat().data) {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Rescale: load image failed.");
+  }
+  cv::Mat input_image = input_cv->mat();
+  std::shared_ptr<CVTensor> output_cv;
+  RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), DataType(DataType::DE_FLOAT32), &output_cv));
+  try {
+    input_image.convertTo(output_cv->mat(), CV_32F, rescale, shift);
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Rescale: " + std::string(e.what()));
+  }
+  return Status::OK();
+}
+
+Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
+  try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "SwapRedBlue", {3, 5, 11}));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      input_cv->shape().Size() > kChannelIndexHWC,
+      "SwapRedAndBlue: rank of input data should be greater than:" + std::to_string(kChannelIndexHWC) +
+        ", but got:" + std::to_string(input_cv->shape().Size()));
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
+    if (input_cv->shape().Size() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
+      RETURN_STATUS_UNEXPECTED("SwapRedBlue: image shape should be in <H,W,C> format, but got:" +
+                               input_cv->shape().ToString());
+    }
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
+
+    cv::cvtColor(input_cv->mat(), output_cv->mat(), static_cast<int>(cv::COLOR_BGR2RGB));
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("SwapRedBlue: " + std::string(e.what()));
+  }
+}
+#endif
+
 bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input) {
   const unsigned char *kJpegMagic = (unsigned char *)"\xFF\xD8\xFF";
   constexpr size_t kJpegMagicLen = 3;
