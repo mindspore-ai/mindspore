@@ -2855,7 +2855,26 @@ class Unstack(Primitive):
     r"""
     Unstacks tensor in specified axis.
 
-    Refer to :func:`mindspore.ops.unstack` for more detail.
+    Unstacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
+
+    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
+    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
+
+    This is the opposite of pack.
+
+    Args:
+        input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
+            A tensor to be unstacked and the rank of the tensor must be greater than 0.
+        axis (int): Dimension along which to unpack. Default: 0.
+            Negative values wrap around. The range is [-R, R).
+        num (Union[None, int]): The number of output tensors.
+            Automatically inferred by input_x and axis if None. Default: None.
+
+    Returns:
+        A tuple of tensors, the shape of each objects is the same.
+
+    Raises:
+        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
