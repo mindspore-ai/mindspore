@@ -80,18 +80,21 @@ KernelGraphPtr KernelGraphUtils::ConstructKernelGraph(const FuncGraphPtr &func_g
   front_backend_graph_map_[func_graph.get()] = graph;
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();
   graph->set_device_target(device_target);
+  // Create parameter
+  for (const auto &node : func_graph->parameters()) {
+    MS_LOG(DEBUG) << "Start create new node, node = " << node->DebugString();
+    auto graph_inputs = graph->MutableInputs();
+    MS_EXCEPTION_IF_NULL(graph_inputs);
+    auto new_parameter = CreateNewParameter(node, graph.get());
+    graph_inputs->push_back(new_parameter);
+    graph->FrontBackendMapAdd(node, new_parameter);
+  }
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    MS_LOG(DEBUG) << "Start create new cnode, node = " << node->DebugString();
-    // Create parameter
     if (node->isa<Parameter>()) {
-      auto graph_inputs = graph->MutableInputs();
-      MS_EXCEPTION_IF_NULL(graph_inputs);
-      auto new_parameter = CreateNewParameter(node, graph.get());
-      graph_inputs->push_back(new_parameter);
-      graph->FrontBackendMapAdd(node, new_parameter);
       continue;
     }
+    MS_LOG(DEBUG) << "Start create new node, node = " << node->DebugString();
     // Create value node
     if (node->isa<ValueNode>()) {
       // Create common value node

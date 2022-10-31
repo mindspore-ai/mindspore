@@ -939,7 +939,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGrap
   // Create parameter
   for (const auto &node : func_graph->parameters()) {
     MS_EXCEPTION_IF_NULL(node);
-    MS_LOG(DEBUG) << "Start create new cnode, node = " << node->DebugString();
+    MS_LOG(DEBUG) << "Start create new node, node = " << node->DebugString();
     auto graph_inputs = graph->MutableInputs();
     MS_EXCEPTION_IF_NULL(graph_inputs);
     auto new_parameter = CreateNewParameter(node, graph.get());
@@ -951,7 +951,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGrap
     if (node->isa<Parameter>()) {
       continue;
     }
-    MS_LOG(DEBUG) << "Start create new cnode, node = " << node->DebugString();
+    MS_LOG(DEBUG) << "Start create new node, node = " << node->DebugString();
     // Create value node
     if (node->isa<ValueNode>()) {
       // Create common value node

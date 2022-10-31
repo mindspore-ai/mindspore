@@ -86,7 +86,7 @@ class DfGraphConvertor {
     } else {
       ConfigManager::GetInstance().set_parallel_strategy(ParallelStrategy::ONE_DEVICE);
     }
-    is_kernel_graph_ = anf_graph_->type_name() == kKernelGraphClassName;
+    is_kernel_graph_ = anf_graph_->type_name() == kKernelGraphTypeName;
     df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
     std::string graph_type = is_kernel_graph_ ? "kernel_graph" : "func_graph";
     std::string graph_name = anf_graph_->ToString();

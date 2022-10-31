@@ -99,8 +99,8 @@ const char kFuncGraphFlagBackPropEntry[] = "back_prop_entry";
 const char kFuncGraphFlagReAutoMonad[] = "re_auto_monad";
 const char kFuncGraphFlagRecursive[] = "recursive";
 
-const char kFuncGraphClassName[] = "FuncGraph";
-const char kKernelGraphClassName[] = "KernelGraph";
+const char kFuncGraphTypeName[] = "FuncGraph";
+const char kKernelGraphTypeName[] = "KernelGraph";
 
 class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
  public:
