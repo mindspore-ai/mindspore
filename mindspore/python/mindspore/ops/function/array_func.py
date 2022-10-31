@@ -51,6 +51,7 @@ from mindspore.common import Tensor
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
+from mindspore._c_expression import Tensor as Tensor_
 
 eye_ = P.Eye()
 fill_ = P.Fill()
@@ -1000,8 +1001,8 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
 
     Args:
         x (Tensor): The input tensor.
-        return_idx (bool, optional): Whether to return the indices of the end position of each element in the
-            original input list in the returned unique list. Default: False.
+        return_idx (bool, optional): Whether to return the index of where the element in the original input
+        maps to the position in the output. Default: False.
         return_counts (bool, optional): Whether to return the counts of each unique element. Default: False.
         axis (int, optional): The dimension to apply unique. If None, the unique of the flattened input is
             returned. If specified, it must be int32 or int64. Default: None.
@@ -1016,16 +1017,16 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        RuntimeError: If `axis` is not in the range of :math:`[-ndim, ndim-1]`.
+        TypeError: If dtype of `x` is not supported.
+        TypeError: If `return_idx` is not a bool.
+        TypeError: If `return_counts` is not a bool.
+        TypeError: If `axis` is not an int.
+        ValueError: If `axis` is not in the range of :math:`[-ndim, ndim-1]`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import ops
-        >>> from mindspore import Tensor
-        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1, 1, 2]), mstype.int32)
         >>> output, idx, counts = ops.unique_consecutive(x, True, True, None)
         >>> print(output)
@@ -1035,6 +1036,9 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
         >>> print(counts)
         [2 2 1 2 1]
     """
+
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("For 'unique_consecutive', 'x' must be Tensor.")
     unique_consecutive_op = _get_cache_prim(UniqueConsecutive)(return_idx, return_counts, axis)
     output, idx, counts = unique_consecutive_op(x)
     if return_idx and return_counts:
