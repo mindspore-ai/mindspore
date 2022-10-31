@@ -55,7 +55,7 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
   std::vector<int64_t> x_dense_shape_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   const int64_t rank_x = x_dense_shape_shape[0];
-  if (rank_x != kDefalutRank && rank_x != kBatchRank) {
+  if (!IsDynamic(x_dense_shape_shape) && rank_x != kDefalutRank && rank_x != kBatchRank) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input x_dense_shape should "
                              << "have rank 2 or 3, but got " << rank_x << ".";
   }
@@ -63,10 +63,13 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
   auto x_indices_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  std::vector<ShapeVector> all_shapes = {x_indices_shape, x_values_shape, x_dense_shape_shape};
+  auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
   const int64_t x_indices_rank = static_cast<int64_t>(x_indices_shape.size());
   const int64_t x_values_rank = static_cast<int64_t>(x_values_shape.size());
   const int64_t x_dense_shape_rank = static_cast<int64_t>(x_dense_shape_shape.size());
-  if (x_indices_rank != kIndicesRank || x_values_rank != 1 || x_dense_shape_rank != 1) {
+  if ((!IsDynamicRank(x_indices_shape) && x_indices_rank != kIndicesRank) || x_values_rank != 1 ||
+      x_dense_shape_rank != 1) {
     MS_EXCEPTION(ValueError) << "For SparseTensorToCSRSparseMatrix, input x_indices should be a 2-D tensor"
                              << ", but got " << x_indices_shape.size() << "-D"
                              << ", input x_values should be a 1-D tensor"
@@ -74,16 +77,11 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
                              << ", input x_dense_shape should be a 1-D tensor"
                              << ", but got " << x_dense_shape_shape.size() << "-D";
   }
-  if (x_indices_shape[0] != x_values_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", x_indices.shape[0] and x_values.shape[0] should be the same"
-                             << ", but got x_indices.shape[0] = " << x_indices_shape[0]
-                             << ", x_values.shape[0] = " << x_values_shape[0];
-  }
-  if (x_indices_shape[1] != x_dense_shape_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", x_indices.shape[1] and x_dense_shape.shape[0] should be the same"
-                             << ", but got x_indices.shape[1] = " << x_indices_shape[1]
-                             << ", x_dense_shape.shape[0] = " << x_dense_shape_shape[0];
+  if (!is_dynamic) {
+    (void)CheckAndConvertUtils::CheckInteger("x_indices.shape[0] and x_values.shape[0]", x_indices_shape[0], kEqual,
+                                             x_values_shape[0], prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("x_indices.shape[1] and x_dense_shape.shape[0]", x_indices_shape[1],
+                                             kEqual, x_dense_shape_shape[0]);
   }
   auto y_dense_shape_shape = input_args[kInputIndex2]->BuildShape();
   abstract::ShapePtr y_dense_shape_shape_list = y_dense_shape_shape->cast<abstract::ShapePtr>();
@@ -118,8 +116,8 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
       y_row_pointers_shape_list = std::make_shared<abstract::Shape>(y_row_pointers_shape);
     }
   } else {
-    ShapeVector y_batch_pointers_shape = {-2};
-    ShapeVector y_row_pointers_shape = {-2};
+    ShapeVector y_batch_pointers_shape = {-1};
+    ShapeVector y_row_pointers_shape = {-1};
     y_batch_pointers_shape_list = std::make_shared<abstract::Shape>(y_batch_pointers_shape);
     y_row_pointers_shape_list = std::make_shared<abstract::Shape>(y_row_pointers_shape);
   }
@@ -140,6 +138,7 @@ AbstractBasePtr SparseTensorToCSRSparseMatrixInfer(const abstract::AnalysisEngin
   auto infer_shape = SparseTensorToCSRSparseMatrixInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseTensorToCSRSparseMatrix, prim::kPrimSparseTensorToCSRSparseMatrix,
                              SparseTensorToCSRSparseMatrixInfer, nullptr, true);
 REGISTER_HOST_DEPENDS(kNameSparseTensorToCSRSparseMatrix, {2});
