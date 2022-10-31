@@ -278,8 +278,9 @@ void SliceGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs)
     if (size_[i] == -1) {
       size_[i] = input_shape[i] - begin_[i];
     }
-    if (input_shape[i] > 0 && size_[i] <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the element of 'size' must be greater than 0, but got "
+    if (input_shape[i] > 0 && size_[i] < 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the element of 'size' must be greater than or equal to 0, but got "
                         << "size[" << i << "]: " << size_[i];
     }
   }
