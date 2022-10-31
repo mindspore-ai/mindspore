@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SSPADDMM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SSPADDMM_CPU_KERNEL_H_
 
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -25,11 +26,17 @@
 
 namespace mindspore {
 namespace kernel {
-class SspaddmmCPUKernelMod : public DeprecatedNativeCpuKernelMod {
+class SspaddmmCPUKernelMod : public NativeCpuKernelMod {
  public:
   SspaddmmCPUKernelMod() = default;
   ~SspaddmmCPUKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -39,7 +46,7 @@ class SspaddmmCPUKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void CheckSparseIndices(const TypeId &indices_dtype, void *indices_addr, void *shape_addr, size_t num,
                           const std::string &x_name) const;
-  void CheckParam(const CNodePtr &kernel_node) const;
+
   template <typename T, typename S>
   void CheckSparseIndicesLegal(void *indices_addr, void *shape_addr, size_t num, const std::string &x_name) const;
   template <typename T>
