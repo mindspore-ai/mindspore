@@ -962,8 +962,8 @@ REG_BPROP_BUILDER("MaskedFill").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto bout = BinopGradCommon(ib, input_data, mask, dinput, dvalue);
   dvalue = ib->ReduceSum(bout[1]);
   dinput = ib->Cast(bout[0], ib->GetDtype(input_data));
-  if (ib->GetDtypeId(value) == kObjectTypeNumber) {
-    dvalue = ib->ZerosLike(ib->Tensor(1, ib->GetDtype(value)));
+  if (value->isa<ValueNode>()) {
+    dvalue = ib->ZerosLike(value);
   } else {
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
   }
@@ -1151,5 +1151,189 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetBody([](const BpropIRBuilder *ib) -
   auto dx = ib->Reshape(jac, {x_d, x_h, x_w, x_n, x_c});
   dx = ib->Emit("Transpose", {dx, ib->Value<ShapeVector>({3, 4, 0, 1, 2})});
   return {dx};
+});
+
+REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
+  auto theta = ib->GetInput(kIndex0);
+  auto output_size = GetAxisValue(ib->GetInput(kIndex1));
+  auto dout = ib->GetInput(kIndex3);
+  auto dtype = ib->GetDtype(theta);
+
+  auto start = ib->Tensor(-1, dtype);
+  auto stop = ib->Tensor(1, dtype);
+  auto zero = ib->Tensor(0, dtype);
+  auto perm1 = ib->Value<ShapeVector>({1, 0});
+  auto perm2 = ib->Value<ShapeVector>({0, 2, 1});
+  if (output_size.size() == 5) {
+    const auto n_value = output_size[kIndex0];
+    const auto d_value = output_size[kIndex2];
+    const auto h_value = output_size[kIndex3];
+    const auto w_value = output_size[kIndex4];
+    auto vecx = (w_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(w_value)}) : zero;
+    auto vecy = (h_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(h_value)}) : zero;
+    auto vecz = (d_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(d_value)}) : zero;
+    if (!align_corners) {
+      vecx = (vecx * ib->Tensor(w_value - 1, dtype)) / ib->Tensor(w_value, dtype);
+      vecy = (vecy * ib->Tensor(h_value - 1, dtype)) / ib->Tensor(h_value, dtype);
+      vecz = (vecz * ib->Tensor(d_value - 1, dtype)) / ib->Tensor(d_value, dtype);
+    }
+    auto out = (h_value * d_value != 1) ? ib->Tile(vecx, {h_value * d_value, 1}) : vecx;
+    auto one = ib->Reshape(out, {h_value * w_value * d_value, 1});
+    out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
+    out = ib->Emit("Transpose", {out, perm1});
+    if (d_value != 1) {
+      out = ib->Tile(out, {d_value, 1});
+    }
+    auto two = ib->Reshape(out, {h_value * w_value * d_value, 1});
+    out = (w_value * h_value != 1) ? ib->Tile(vecz, {w_value * h_value, 1}) : ib->ExpandDims(vecz, 0);
+    out = ib->Emit("Transpose", {out, perm1});
+    auto tre = ib->Reshape(out, {h_value * w_value * d_value, 1});
+    auto fou = ib->Emit("OnesLike", {tre});
+    auto output = ib->Concat({one, two, tre, fou}, 1);
+    output = ib->Emit("Transpose", {output, perm1});
+    if (n_value != 1) {
+      output = ib->Tile(output, {n_value, 1});
+    }
+    output = ib->Reshape(output, {n_value, 4, h_value * w_value * d_value});
+    dout = ib->Reshape(dout, {n_value, d_value * h_value * w_value, 3});
+    auto dtheta = ib->BatchMatMul(output, dout);
+    dtheta = ib->Emit("Transpose", {dtheta, perm2});
+    return {dtheta, tre};
+  }
+  if (output_size.size() == 4) {
+    auto x_shape = ib->GetShape(dout);
+    const auto n_value = x_shape[kIndex0];
+    const auto h_value = x_shape[kIndex1];
+    const auto w_value = x_shape[kIndex2];
+    auto vecx = (w_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(w_value)}) : zero;
+    auto vecy = (h_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(h_value)}) : zero;
+    if (!align_corners) {
+      vecx = (vecx * ib->Tensor(w_value - 1, dtype)) / ib->Tensor(w_value, dtype);
+      vecy = (vecy * ib->Tensor(h_value - 1, dtype)) / ib->Tensor(h_value, dtype);
+    }
+    auto out = (h_value != 1) ? ib->Tile(vecx, {h_value, 1}) : vecx;
+    auto one = ib->Reshape(out, {h_value * w_value, 1});
+    out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
+    out = ib->Emit("Transpose", {out, perm1});
+    auto two = ib->Reshape(out, {h_value * w_value, 1});
+    auto tre = ib->Emit("OnesLike", {two});
+    auto output = ib->Concat({one, two, tre}, 1);
+    output = ib->Emit("Transpose", {output, perm1});
+    output = ib->Tile(output, {n_value, 1});
+    output = ib->Reshape(output, {n_value, 3, h_value * w_value});
+    dout = ib->Reshape(dout, {n_value, h_value * w_value, 2});
+    auto dtheta = ib->BatchMatMul(output, dout);
+    dtheta = ib->Emit("Transpose", {dtheta, perm2});
+    return {dtheta, tre};
+  }
+  MS_LOG(EXCEPTION) << "For op[" << ib->name() << "], the length of output_size should be 4 or 5, but got "
+                    << output_size.size();
+  return {};
+});
+
+NodePtrList SegmentMinOrMaxGrad(const BpropIRBuilder *ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto segment_ids = ib->GetInput(kIndex1);
+  auto output = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto input_x_type = ib->GetDtype(input_x);
+  if (input_x_type->type_id() != kNumberTypeFloat32) {
+    input_x = ib->Cast(input_x, kFloat32);
+    output = ib->Cast(output, kFloat32);
+    dout = ib->Cast(dout, kFloat32);
+  }
+  auto zero_value = ib->Value<int64_t>(0);
+  auto gathered_outputs = ib->Emit("Gather", {output, segment_ids, zero_value});
+  auto is_selected = ib->Equal(input_x, gathered_outputs);
+  const int64_t max_len = 1000000;
+  auto num_selected =
+    ib->Emit("SegmentSum", {ib->Cast(is_selected, kFloat32), segment_ids}, {{"max_length", MakeValue(max_len)}});
+  auto weighted_grads = ib->Div(dout, num_selected);
+  auto gathered_grads = ib->Emit("Gather", {weighted_grads, segment_ids, zero_value});
+  auto dx = ib->Select(is_selected, gathered_grads, ib->ZerosLike(input_x));
+  if (input_x_type->type_id() != kNumberTypeFloat32) {
+    dx = ib->Cast(dx, input_x_type);
+  }
+  return {dx, ib->ZerosLike(segment_ids)};
+}
+REG_BPROP_BUILDER("SegmentMax").SetBody(SegmentMinOrMaxGrad);
+REG_BPROP_BUILDER("SegmentMin").SetBody(SegmentMinOrMaxGrad);
+
+REG_BPROP_BUILDER("TensorScatterElements").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto indices = ib->GetInput(kIndex1);
+  auto update = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto axis = ib->GetAttr("axis");
+  auto x_grad = ib->Emit("TensorScatterElements", {dout, indices, ib->ZerosLike(update)},
+                         {{"axis", axis}, {"reduction", ib->GetAttr("reduction")}});
+  auto update_grad = ib->Emit("GatherD", {dout, ib->EmitValue(axis), indices});
+  return {x_grad, ib->ZerosLike(indices), update_grad};
+});
+
+REG_BPROP_BUILDER("ScatterAddWithAxis").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto axis = ib->GetAttr("axis");
+  auto indices = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex4);
+  auto dout_shape = ib->GetShape(dout);
+  auto index_shape = ib->GetShape(indices);
+  NodePtr update_grad = nullptr;
+  if (dout_shape != index_shape) {
+    ShapeVector slice_list(dout_shape.size(), 0);
+    std::vector<ShapeVector> pad_list;
+    pad_list.reserve(dout_shape.size());
+    for (size_t i = 0; i < dout_shape.size(); i++) {
+      (void)pad_list.emplace_back(ShapeVector{0, dout_shape[i] - index_shape[i]});
+    }
+    auto out_index = ib->Emit("Pad", {indices}, {{"paddings", MakeValue(pad_list)}});
+    auto out_gather = ib->Emit("GatherD", {dout, ib->EmitValue(axis), out_index});
+    update_grad = ib->Emit("Slice", {out_gather, ib->Value(slice_list), ib->Value(index_shape)});
+  } else {
+    update_grad = ib->Emit("GatherD", {dout, ib->EmitValue(axis), indices});
+  }
+  return {dout, ib->ZerosLike(indices), update_grad};
+});
+
+REG_BPROP_BUILDER("Expand").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex3);
+  auto dout_shape = ib->GetShape(dout);
+  if (dout_shape.empty()) {
+    return {ib->ReduceSum(dout), ib->ZerosLike(dout)};
+  }
+  auto x_shape = ib->GetShape(x);
+  auto leading_dims = dout_shape.size() - x_shape.size();
+  auto reduce_dims = Range(SizeToLong(leading_dims));
+  for (size_t j = leading_dims; j < dout_shape.size(); ++j) {
+    if (x_shape[j - leading_dims] == 1 && dout_shape[j] != 1) {
+      reduce_dims.push_back(j);
+    }
+  }
+  if (!reduce_dims.empty()) {
+    dout = ib->ReduceSum(dout, reduce_dims, true);
+  }
+  auto dx = leading_dims > 0 ? ib->Reshape(dout, x_shape) : dout;
+  return {dx, ib->ZerosLike(dout)};
+});
+
+REG_BPROP_BUILDER("SegmentMean").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_x = ib->GetInput(kIndex0);
+  auto segment_ids = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto input_x_type = ib->GetDtype(input_x);
+  if (input_x_type->type_id() != kNumberTypeFloat32) {
+    input_x = ib->Cast(input_x, kFloat32);
+    dout = ib->Cast(dout, kFloat32);
+  }
+  auto x_rank = ib->GetShape(input_x).size();
+  auto ones_shape = ib->GetShape(segment_ids) + ShapeVector(x_rank - 1, 1LL);
+  auto ones = ib->Emit("Fill", {ib->EmitValue(kFloat32), ib->Value(ones_shape), ib->Tensor(1, kFloat32)});
+  const int64_t max_len = 1000000;
+  auto scaled_grad = ib->Div(dout, ib->Emit("SegmentSum", {ones, segment_ids}, {{"max_length", MakeValue(max_len)}}));
+  auto dx = ib->Emit("Gather", {scaled_grad, segment_ids, ib->Value<int64_t>(0)});
+  if (input_x_type->type_id() != kNumberTypeFloat32) {
+    dx = ib->Cast(dx, input_x_type);
+  }
+  return {dx, ib->ZerosLike(segment_ids)};
 });
 }  // namespace mindspore::expander::bprop
