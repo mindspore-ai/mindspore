@@ -1040,6 +1040,10 @@ Status ModelPool::WarmUpForAllWorker(const std::vector<MSTensor> &inputs, std::v
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  if (MS_UNLIKELY((inputs.size() == 0 || inputs.front().Shape().size() == 0))) {
+    MS_LOG(ERROR) << "inputs is invalid. input size: " << inputs.size();
+    return kLiteError;
+  }
   if (MS_UNLIKELY(!is_warm_up_)) {
     std::unique_lock<std::mutex> warm_up_l(warm_up_mutex);
     if (!is_warm_up_) {
@@ -1054,10 +1058,6 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   }
   int max_wait_worker_node_id = 0;
   int max_wait_worker_num = 0;
-  if (inputs.size() == 0 || inputs.front().Shape().size() == 0) {
-    MS_LOG(ERROR) << "inputs is invalid. input size: " << inputs.size();
-    return kLiteError;
-  }
   auto available_worker = GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num);
   if (available_worker != nullptr) {
     // dispatch tasks directly to workers
