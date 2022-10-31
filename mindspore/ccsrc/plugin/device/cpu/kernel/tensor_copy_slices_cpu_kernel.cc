@@ -59,65 +59,57 @@ void TensorCopySlicesCpuKernelMod::InitOffsetAndCopySize(const std::vector<int64
   copy_size_ = GetCopySize(dim_offset, begin, end) * type_size;
 }
 
-void TensorCopySlicesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  update_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  cnode_ptr_ = kernel_node;
+bool TensorCopySlicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  data_type_ = inputs.at(kIndex0)->GetDtype();
+  return true;
+}
 
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kTensorCopySlicesInputsNum) {
-    return;
+int TensorCopySlicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-
-  auto kernel_args = GetArgsFromCNode(kernel_node);
-  if (kernel_args == nullptr) {
-    get_value_before_launch_ = false;
-    return;
-  }
-
+  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  update_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  begin_shape_ = inputs.at(kIndex2)->GetShapeVector();
+  end_shape_ = inputs.at(kIndex3)->GetShapeVector();
+  stride_shape_ = inputs.at(kIndex4)->GetShapeVector();
+  get_value_before_launch_ = false;
   std::vector<int64_t> begin, end, stride;
-  auto get_begin = TryGetIntValue(kernel_args->inputs, kBeginIdx, kernel_name_, &begin, false);
-  auto get_end = TryGetIntValue(kernel_args->inputs, kEndIdx, kernel_name_, &end, false);
-  auto get_stride = TryGetIntValue(kernel_args->inputs, kStridesIdx, kernel_name_, &stride, false);
+  auto get_begin = TryGetIntValue(inputs, kBeginIdx, kernel_name_, &begin, false);
+  auto get_end = TryGetIntValue(inputs, kEndIdx, kernel_name_, &end, false);
+  auto get_stride = TryGetIntValue(inputs, kStridesIdx, kernel_name_, &stride, false);
   if (get_begin && get_end && get_stride) {
     FillSlice(&begin, &end);
     InitOffsetAndCopySize(begin, end, stride);
     get_value_before_launch_ = true;
   }
-
-  get_value_before_launch_ = false;
+  return KRET_OK;
 }
 
 bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> & /* workspace */,
                                           const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTensorCopySlicesDynamicInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTensorCopySlicesOutputsNum, kernel_name_);
 
   auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
   auto update_addr = reinterpret_cast<uint8_t *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
   if (!get_value_before_launch_) {
-    auto cnode = cnode_ptr_.lock();
-    auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
-    auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
-    auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
-    if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of 'begin', 'end', 'strides' must be equal "
-                           "to 1, but got the dimension of 'begin': "
-                        << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
-                        << ", and the dimension of 'strides': " << stride_shape.size();
-    }
     auto begin_ptr = reinterpret_cast<int64_t *>(inputs[2]->addr);
     auto end_ptr = reinterpret_cast<int64_t *>(inputs[3]->addr);
     auto strides_ptr = reinterpret_cast<int64_t *>(inputs[4]->addr);
-    std::vector<int64_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
-    std::vector<int64_t> end{end_ptr, end_ptr + end_shape[0]};
-    std::vector<int64_t> stride{strides_ptr, strides_ptr + stride_shape[0]};
+    std::vector<int64_t> begin{begin_ptr, begin_ptr + begin_shape_[0]};
+    std::vector<int64_t> end{end_ptr, end_ptr + end_shape_[0]};
+    std::vector<int64_t> stride{strides_ptr, strides_ptr + stride_shape_[0]};
     FillSlice(&begin, &end);
     InitOffsetAndCopySize(begin, end, stride);
   }

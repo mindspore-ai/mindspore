@@ -19,18 +19,23 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class SubAndFilterCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SubAndFilterCpuKernelMod : public NativeCpuKernelMod {
  public:
   SubAndFilterCpuKernelMod() = default;
   ~SubAndFilterCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -51,13 +56,24 @@ class SubAndFilterCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return support_list;
   }
 
+ protected:
+  void SyncData() override;
+  void ResetResource() noexcept {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; };
+
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
+  std::vector<KernelTensorPtr> outputs_ = {};
+  int64_t out_size_;
   size_t batch_size_{1};
-  TypeId input_x_dtype_{kTypeUnknown};
-  CNodeWeakPtr node_wpt_;
+  TypeId x_dtype_{kTypeUnknown};
+  size_t x_dtype_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore
