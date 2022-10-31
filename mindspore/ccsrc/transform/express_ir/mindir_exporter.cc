@@ -785,10 +785,13 @@ bool IrExportBuilder::SetAbstractToNodeProto(const AbstractBasePtr &abs, mind_ir
     if (!SetCOOTensorToProto(coo_tensor_abs, attr_proto)) {
       return false;
     }
+  } else if (type->isa<TypeNone>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_NONE);
   } else {
     MS_LOG(ERROR) << "Type of cnode need to be supported: " << type->type_name();
     return false;
   }
+
   return true;
 }
 

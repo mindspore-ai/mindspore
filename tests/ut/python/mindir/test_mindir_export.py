@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 from mindspore.nn import Cell, GraphCell
-
+from mindspore import ops
 from mindspore import Tensor, export, load, Parameter, dtype, context
 
 
@@ -24,6 +24,7 @@ def test_export_control_flow():
     Description: test mindir export when parameter is not use
     Expectation: No exception.
     """
+
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -52,3 +53,23 @@ def test_export_control_flow():
     export_out = g_net(Tensor(x), Tensor(y))
     correct_out = net(Tensor(x), Tensor(y))
     assert np.allclose(export_out.asnumpy(), correct_out.asnumpy())
+
+
+def test_mindir_export_none():
+    """
+    Feature: Test MindIR Export model
+    Description: test mindir export type none
+    Expectation: No exception.
+    """
+    class TestCell(Cell):
+        def __init__(self):
+            super(TestCell, self).__init__()
+            self.relu = ops.ReLU()
+        def construct(self, x):
+            return self.relu(x), None, None
+
+    input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]))
+    net = TestCell()
+    export(net, input_tensor, file_name="none_net", file_format='MINDIR')
+    graph = load("none_net.mindir")
+    assert graph is not None

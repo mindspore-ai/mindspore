@@ -212,17 +212,27 @@ std::string ParseCNodeName(const string &name) {
   }
 
 PARSE_MINDIR_ATTR_IN_INT_FORM(int8_t, int8_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(int16_t, int16_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(int32_t, int32_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(int64_t, int64_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(uint8_t, uint8_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(uint16_t, uint16_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(uint32_t, uint32_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(uint64_t, uint64_t)
+
 PARSE_MINDIR_ATTR_IN_INT_FORM(int32_t, bool)
 
 PARSE_MINDIR_ATTR_IN_SCALAR_FORM(double, double)
+
 PARSE_MINDIR_ATTR_IN_SCALAR_FORM(float, float)
+
 PARSE_MINDIR_ATTR_IN_SCALAR_FORM(string, string)
 
 ValuePtr ParseAttrInSingleScalar_string_string(const mind_ir::AttributeProto &attr_proto) {
@@ -337,6 +347,9 @@ abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType
     }
     case mind_ir::AttributeProto_AttributeType_BOOL: {
       return kBool->ToAbstract();
+    }
+    case mind_ir::AttributeProto_AttributeType_NONE: {
+      return kNone->ToAbstract();
     }
     case mind_ir::AttributeProto_AttributeType_FUNCGRAPHCLOSURE:
     case mind_ir::AttributeProto_AttributeType_PRIMITIVECLOSURE:
@@ -1799,6 +1812,7 @@ AnfNodePtr MSANFModelParser::GetAnfNode(const std::string &node_name) {
     return it->second;
   }
 }
+
 bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primitive_proto) {
   static auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   auto &prim_type = primitive_proto.op_type();
