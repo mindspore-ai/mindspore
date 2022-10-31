@@ -33,15 +33,16 @@ class MapTensorGpuKernelMod : public NativeGpuKernelMod {
   MapTensorGpuKernelMod() = default;
   ~MapTensorGpuKernelMod() override = default;
 
-  void set_input_user_data(UserData *const user_data, size_t input_index) { input_user_data_[input_index] = user_data; }
-  void set_output_user_data(UserData *const user_data, size_t output_index) {
+  void set_input_user_data(UserData *const user_data, size_t input_index) override {
+    input_user_data_[input_index] = user_data;
+  }
+  void set_output_user_data(UserData *const user_data, size_t output_index) override {
     output_user_data_[output_index] = user_data;
   }
 
  protected:
   std::map<size_t, UserData *> input_user_data_;
   std::map<size_t, UserData *> output_user_data_;
-  void *hash_table_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

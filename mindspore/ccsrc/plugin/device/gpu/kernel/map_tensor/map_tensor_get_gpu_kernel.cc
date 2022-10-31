@@ -88,7 +88,7 @@ bool MapTensorGetGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 
   auto user_data = input_user_data_[kIndex0];
   MS_EXCEPTION_IF_NULL(user_data);
-  auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, ValueType>>("user_data_data");
+  auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
   return hash_table_ptr->Find(static_cast<KeyType *>(inputs[kIndex1]->addr), inputs[kIndex1]->size / sizeof(KeyType),
                               static_cast<ValueType *>(outputs[kIndex0]->addr), stream_ptr);

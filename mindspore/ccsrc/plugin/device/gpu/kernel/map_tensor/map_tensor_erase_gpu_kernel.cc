@@ -88,10 +88,10 @@ bool MapTensorEraseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   auto user_data = input_user_data_[kIndex0];
   MS_EXCEPTION_IF_NULL(user_data);
 
-  auto hash_table_value_type = user_data->get<TypeId>("hash_table_value_type");
+  auto hash_table_value_type = user_data->get<TypeId>(kHashTableValueType);
   TypeId value_type = *hash_table_value_type;
   if (value_type == kNumberTypeFloat32) {
-    auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, float>>("user_data_data");
+    auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, float>>(kUserDataData);
     if (hash_table_ptr == nullptr) {
       MS_LOG(EXCEPTION) << "Failed to get gpu hash table pointer with value type:" << value_type;
     }
