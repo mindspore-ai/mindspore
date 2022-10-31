@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0(the "License");
 # you may not use this file except in compliance with the License.
@@ -135,3 +135,21 @@ def test_mul_int32():
     err = np.ones(shape=exp.shape) * 1.0e-5
     assert np.all(diff < err)
     assert out.shape == exp.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_mul_tensor_api_modes(mode):
+    """
+    Feature: Test mul tensor api.
+    Description: Test mul tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor([1.0, 2.0, 3.0], mstype.float32)
+    y = Tensor([4.0, 5.0, 6.0], mstype.float32)
+    output = x.mul(y)
+    expected = np.array([4., 10., 18.], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)

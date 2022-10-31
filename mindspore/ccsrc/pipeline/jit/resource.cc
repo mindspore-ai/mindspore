@@ -357,6 +357,13 @@ BuiltInTypeMap &GetMethodMap() {
        {"logical_not", std::string("logical_not")},                        // logical_not()
        {"logical_or", std::string("logical_or")},                          // logical_or()
        {"logical_xor", std::string("logical_xor")},                        // logical_xor()
+       {"lstsq", std::string("lstsq")},                                    // lstsq()
+       {"mvlgamma", std::string("mvlgamma")},                              // mvlgamma()
+       {"matmul", std::string("matmul")},                                  // matmul()
+       {"maximum", std::string("maximum")},                                // maximum()
+       {"mul", std::string("mul")},                                        // mul()
+       {"neg", std::string("neg")},                                        // neg()
+       {"ne", std::string("ne")},                                          // ne()
      }},
     {kObjectTypeRowTensorType,
      {

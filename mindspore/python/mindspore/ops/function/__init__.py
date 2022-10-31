@@ -118,6 +118,8 @@ from .array_func import (
     fold,
     unfold,
     diagonal,
+    lstsq,
+    mvlgamma,
 )
 from .parameter_func import (
     assign,

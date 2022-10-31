@@ -3639,7 +3639,7 @@ class Tensor(Tensor_):
         reduce_ = tensor_operator_registry.get("reduce")
         reduce_max = tensor_operator_registry.get("reduce_max")
         maximum = tensor_operator_registry.get("maximum")
-        return reduce_(self, reduce_max(keepdims), cmp_fn=maximum(), axis=axis, keepdims=keepdims,
+        return reduce_(self, reduce_max(keepdims), cmp_fn=maximum, axis=axis, keepdims=keepdims,
                        initial=initial, where=where)
 
     def min(self, axis=None, keepdims=False, initial=None, where=True):
@@ -4132,9 +4132,9 @@ class Tensor(Tensor_):
         if xmin is not None:
             xmin = Tensor(xmin).astype(x.dtype)
             if x.ndim == 0 and xmin.ndim == 0:
-                x = tensor_operator_registry.get("maximum")()(x.reshape((1,)), xmin).squeeze()
+                x = tensor_operator_registry.get("maximum")(x.reshape((1,)), xmin).squeeze()
             else:
-                x = tensor_operator_registry.get("maximum")()(x, xmin)
+                x = tensor_operator_registry.get("maximum")(x, xmin)
         if xmax is not None:
             xmax = Tensor(xmax).astype(x.dtype)
             if x.ndim == 0 and xmax.ndim == 0:
@@ -7319,7 +7319,7 @@ class Tensor(Tensor_):
             - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
         Args:
-            y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+            other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
                 the second input should be a number.Number or bool value, or a Tensor whose data type is
                 number or bool\_. When the first input is Scalar, the second input must be a Tensor whose
                 data type is number or bool\_.
@@ -7328,7 +7328,7 @@ class Tensor(Tensor_):
             Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
         Raises:
-            TypeError: If neither `other` is not a Tensor.
+            TypeError: If `other` is not a Tensor.
 
         Supported Platforms:
             ``Ascend`` ``CPU`` ``GPU``
@@ -7364,7 +7364,7 @@ class Tensor(Tensor_):
             - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
         Args:
-            y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+            other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
                 the second input should be a number.Number or bool value, or a Tensor whose data type is
                 number or bool\_. When the first input is Scalar, the second input must be a Tensor whose
                 data type is number or bool\_.
@@ -7373,7 +7373,7 @@ class Tensor(Tensor_):
             Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
         Raises:
-            TypeError: If neither `input` nor `other` is a Tensor.
+            TypeError: If `other` is not a Tensor.
 
         Supported Platforms:
             ``Ascend`` ``CPU`` ``GPU``
@@ -7532,6 +7532,284 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('logical_xor')(self, other)
+
+
+    def lstsq(self, A):
+        r"""
+        Computes the solutions of the least squares and minimum norm problems of full-rank
+        matrix `x` of size :math:`(m \times n)` and matrix `a` of size :math:`(m \times k)`.
+
+        If :math:`m \geq n`, `lstsq` solves the least-squares problem:
+
+        .. math::
+
+           \begin{array}{ll}
+           \min_y & \|xy-a\|_2.
+           \end{array}
+
+        If :math:`m < n`, `lstsq` solves the least-norm problem:
+
+        .. math::
+
+           \begin{array}{llll}
+           \min_y & \|y\|_2 & \text{subject to} & xy = a.
+           \end{array}
+
+        Args:
+            A (Tensor) - The m by k matrix equivalent to `a` in above.
+                The input tensor whose data type is float16, float32 or float64.
+
+        Returns:
+            Tensor, the least squares or minimum norm problems solution, which has shape :math:`(n \times k)`.
+            The data type is the same with `input`.
+
+        Raises:
+            TypeError: If `A` is not a Tensor.
+            TypeError: If dtype of input tensor or `A` is not one of: float16, float32, float64.
+            TypeError: If the dtypes of input tensor and `A` are not the same.
+            ValueError: If the dimension of input tensor is not equal to 2.
+            ValueError: If the dimension of `A` is not equal to 2 or 1.
+            ValueError: If the length of input_dims[0] is not equal to the length of A_dims[0].
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[2,1,5],[3,5,1],[1,1,1]]),mindspore.float32)
+            >>> a = Tensor(np.array([[10,5],[15,8],[7,4]]),mindspore.float32)
+            >>> output = x.lstsq(a)
+            >>> print(output)
+            [[17.000002  11.000002 ]
+             [-6.5000005 -4.500001 ]
+             [-3.500002  -2.5000017]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('lstsq')(self, A)
+
+
+    def mvlgamma(self, p):
+        r"""
+        Computes the multivariate log-gamma function with dimension p element-wise.
+
+        The following tex shows the mathematical calculation process of Mvlgamma:
+
+        .. math::
+
+            \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
+
+        where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
+
+        Args:
+            p (int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
+
+        Returns:
+            Tensor, has the same shape and type as input tensor.
+
+        Raises:
+            TypeError: If dtype of input tensor is neither float32 nor float64.
+            TypeError: If `p` is not an int.
+            ValueError: If `p` is not greater than or equal to 1.
+            ValueError: If all elements of input tensor are not greater than (p-1)/2.
+
+        Supported Platforms:
+            ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)
+            >>> y = x.mvlgamma(p=3)
+            >>> print(y)
+            [[2.694925 5.402975 9.140645]
+             [5.402975 1.596312 13.64045]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('mvlgamma')(self, p)
+
+
+    def matmul(self, tensor2):
+        r"""
+        Returns the matrix product of two tensors.
+
+        Note:
+            Numpy arguments `out`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+            not supported.
+            On CPU, the supported dtypes are np.float16 and np.float32.
+            On GPU, the supported dtypes are np.float16 and np.float32.
+
+        Args:
+            tensor2 (Tensor): Second input tensor, scalar not allowed.
+              The last dimension of input tensor must be the same size as the second last dimension of `tensor2`.
+              And the shape of input tensor and tensor2 could be broadcast.
+
+        Returns:
+            Tensor or scalar, the matrix product of the inputs. This is a scalar only
+            when both input tensor, `tensor2` are 1-d vectors.
+
+        Raises:
+            ValueError: If the last dimension of input tensor is not the same size as the
+                second-to-last dimension of `tensor2`, or if a scalar value is passed in.
+            ValueError: If the shape of input tensor and `tensor2` could not broadcast together.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
+            >>> y = Tensor(np.arange(4*5).reshape(4, 5), mindspore.float32)
+            >>> output = x.matmul(y)
+            >>> print(output)
+            [[[  70.   76.   82.   88.   94.]
+            [ 190.  212.  234.  256.  278.]
+            [ 310.  348.  386.  424.  462.]]
+            [[ 430.  484.  538.  592.  646.]
+            [ 550.  620.  690.  760.  830.]
+            [ 670.  756.  842.  928. 1014.]]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('matmul')(self, tensor2)
+
+
+    def maximum(self, other):
+        r"""
+        Computes the maximum of input tensors element-wise.
+
+        Note:
+            - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data
+              types consistent.
+            - The inputs must be two tensors or one tensor and one scalar.
+            - When the inputs are two tensors,
+              dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+            - When the inputs are one tensor and one scalar,
+              the scalar could only be a constant.
+            - Broadcasting is supported.
+            - If one of the elements being compared is a NaN, then that element is returned.
+
+        .. math::
+            output_i = max(input_i, other_i)
+
+        Args:
+            other (Union[Tensor, Number, bool]): The second input is a number or
+                a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+            ValueError: If `input` and `other` are not the same shape.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
+            >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
+            >>> output = x.maximum(y)
+            >>> print(output)
+            [4. 5. 6.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('maximum')(self, other)
+
+
+    def mul(self, value):
+        r"""
+        Multiplies two tensors element-wise.
+
+        .. note::
+            - Inputs of input tensor and `value` comply with the implicit type conversion rules to make
+              the data types consistent.
+            - The inputs must be two tensors or one tensor and one scalar.
+            - When the inputs are two tensors,
+              dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
+            - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+        Args:
+            value (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+                the second input should be a number.Number or bool value, or a Tensor whose data type is number
+                or bool\_. When the first input is Scalar, the second input must be a Tensor whose data type is
+                number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If input tensor and `value` is not one of the following: Tensor, number.Number, bool.
+            ValueError: If input tensor and `value` are not the same shape.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+            >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
+            >>> output = x.mul(y)
+            >>> print(output)
+            [ 4. 10. 18.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('mul')(self, value)
+
+
+    def neg(self):
+        r"""
+        Returns a tensor with negative values of the input tensor element-wise.
+
+        .. math::
+
+            out_{i} = - x_{i}
+
+        Returns:
+            Tensor, has the same shape and dtype as input.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
+            >>> output = x.neg()
+            >>> print(output)
+            [-1.  -2.   1.  -2.   0.   3.5]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('neg')(self)
+
+
+    def ne(self, other):
+        r"""
+        Computes the non-equivalence of two tensors element-wise.
+
+        Note:
+            - Input tensor and `other` comply with the implicit type conversion rules to make the data
+              types consistent.
+            - The inputs must be two tensors or one tensor and one scalar.
+            - When the inputs are two tensors, the shapes of them could be broadcast.
+            - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+            - Broadcasting is supported.
+
+        Args:
+            other (Union[Tensor, Number, bool]): The second input is a number or
+                a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+
+        Raises:
+            TypeError: If input tensor and `other` is not one of the following: Tensor, Number, bool.
+            TypeError: If neither input tensor and `other` is a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+            >>> output = x.ne(2.0)
+            >>> print(output)
+            [ True False  True]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('ne')(self, other)
 
 
 class RowTensorInner(RowTensor_):

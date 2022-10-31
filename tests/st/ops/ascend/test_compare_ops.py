@@ -138,3 +138,21 @@ def test_less_tensor_api_modes(mode):
     output = x.less(y)
     expected = np.array([False, False, True])
     np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_ne_tensor_api_modes(mode):
+    """
+    Feature: Test ne tensor api.
+    Description: Test ne tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    x = Tensor([1, 2, 3], mstype.float32)
+    output = x.ne(2.0)
+    expected = np.array([True, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)

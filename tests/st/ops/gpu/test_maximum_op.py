@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 
 
 class Net(Cell):
@@ -270,3 +271,22 @@ def test_maximum_int():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_maximum_tensor_api_modes(mode):
+    """
+    Feature: Test maximum tensor api.
+    Description: Test maximum tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([1.0, 5.0, 3.0], mstype.float32)
+    y = Tensor([4.0, 2.0, 6.0], mstype.float32)
+    output = x.maximum(y)
+    expected = np.array([4., 5., 6.], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+  

@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 
 
 class NetNeg(nn.Cell):
@@ -255,3 +256,20 @@ def test_neg_complex128():
     Expectation: just test
     """
     neg_complex(np.complex128)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_neg_tensor_api_modes(mode):
+    """
+    Feature: Test neg tensor api.
+    Description: Test neg tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([1, 2, -1, 2, 0, -3.5], mstype.float32)
+    output = x.neg()
+    expected = np.array([-1, -2, 1, -2, 0, 3.5], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)
