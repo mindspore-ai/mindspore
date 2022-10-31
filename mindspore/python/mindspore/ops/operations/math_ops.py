@@ -4301,7 +4301,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         return mstype.float32
 
 
-class NPUClearFloatStatus(PrimitiveWithInfer):
+class NPUClearFloatStatus(Primitive):
     """
     Clears the flag which stores the overflow status.
 
@@ -4362,16 +4362,6 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUClearFloatStatus"""
-
-    def infer_shape(self, x_shape):
-        cls_name = self.name
-        validator.check_equal_int(len(x_shape), 1, "len(x_shape)", cls_name)
-        validator.check_equal_int(x_shape[0], 8, "x_shape[0]", cls_name)
-        return [8]
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float16, mstype.float32], self.name)
-        return mstype.float32
 
 
 class Cos(Primitive):
