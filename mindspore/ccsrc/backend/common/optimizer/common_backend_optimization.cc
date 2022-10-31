@@ -70,7 +70,6 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
-  common_pm->AddPass(std::make_shared<ClipByNormFission>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   common_pm->AddPass(std::make_shared<AddTrainingAttr>());
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
