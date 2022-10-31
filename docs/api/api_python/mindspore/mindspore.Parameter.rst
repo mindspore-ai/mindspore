@@ -168,7 +168,6 @@
 
         表示参数是否唯一。
 
-    .. py:method:: value
-        :property:
+    .. py:method:: value()
 
         返回参数的值。
