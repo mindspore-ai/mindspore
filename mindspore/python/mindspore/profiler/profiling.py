@@ -170,6 +170,7 @@ class Profiler:
         self._cpu_profiler = None
         self._gpu_profiler = None
         self._md_profiler = None
+        self._is_heterogeneous = False
         self._profiler_manager = None
         self._timeline_meta = []
         self._init_time = None
@@ -311,6 +312,10 @@ class Profiler:
 
         self._cpu_profiler.stop()
 
+        cpu_op_file = glob.glob(os.path.join(self._output_path, 'cpu_op_type_info_*'))
+        if self._device_target and self._device_target != DeviceTarget.CPU.value and cpu_op_file:
+            self._is_heterogeneous = True
+
         ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         if self._device_target and self._device_target == DeviceTarget.CPU.value:
             self._cpu_analyse()
@@ -323,11 +328,7 @@ class Profiler:
         logger.info("Profiling: all the data have been analyzed.")
         ProfilerInfo.set_analyse_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         ProfilerInfo.set_rank_size(self._rank_size)
-        is_heterogeneous = False
-        cpu_op_file = glob.glob(os.path.join(self._output_path, 'cpu_op_type_info_*'))
-        if self._device_target and self._device_target == DeviceTarget.CPU.value and cpu_op_file:
-            is_heterogeneous = True
-        ProfilerInfo.set_heterogeneous(is_heterogeneous)
+        ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
         ProfilerInfo.save(self._output_path)
 
     def start(self):
@@ -841,20 +842,19 @@ class Profiler:
         finally:
             pass
 
-        # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
-        if not self._dynamic_status:
-            try:
-                logger.info("Profiling: analyzing the step trace data.")
+        try:
+            if self._is_support_step_info_collect() and not self._dynamic_status:
                 points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
-            except ProfilerException as err:
-                logger.warning(err.message)
-            finally:
-                pass
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
 
-        else:
+        if self._dynamic_status:
             dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
             dynamic_parser.write_dynamic_shape_data()
 
+        # Get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
         flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id, self._rank_id,
                                    is_training_mode_flag)
         logger.info("Profiling: analyzing the operation FLOPs.")
@@ -901,25 +901,44 @@ class Profiler:
         except ProfilerException as err:
             logger.warning(err.message)
 
-        parser = GpuFrameWorkParser(self._output_path, self._dev_id)
-        graph_ids = parser.get_graph_ids()
-        ProfilerInfo.set_graph_ids(graph_ids)
-
-        # analyse step trace info
         try:
-            logger.info("Profiling: analyzing the step trace info.")
-            self._analyse_step_trace(
-                is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
-                is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
-            )
-            if len(graph_ids) > 1:
-                logger.warning("Current model has multiple sub graphs, the segmentation of steps may be inaccurate.")
+            self._analyse_step_relation_info(timeline_generator)
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
-        if self._dynamic_status:
-            parser.analyse_dynamic_shape_data(self._timeline_meta)
+
+    def _is_support_step_info_collect(self, analyse_step_trace=True):
+        """Whether iteration related information needs to be parsed."""
+        profiler_info = ProfilerInfo.get_profiler_info()
+        graph_ids = profiler_info.get("graph_ids")
+        if len(graph_ids) > 1:
+            analyse_step_trace = False
+            logger.warning(
+                "[Profiler]Current model has multiple sub graphs, the segmentation of steps may be inaccurate.")
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            analyse_step_trace = False
+            logger.warning(
+                "[Profiler]Pynative mode does not support collecting step trace performance data currently.")
+        if self._is_heterogeneous:
+            analyse_step_trace = False
+            logger.warning(
+                "[Profiler]Profiler does not support collecting step trace performance data for heterogeneous "
+                "scenarios currently.")
+        return analyse_step_trace
+
+    def _analyse_step_relation_info(self, timeline_generator):
+        """Parse iteration related information."""
+        parser = GpuFrameWorkParser(self._output_path, self._dev_id)
+        graph_ids = parser.get_graph_ids()
+        ProfilerInfo.set_graph_ids(graph_ids)
+        if self._is_support_step_info_collect():
+            self._analyse_step_trace(
+                is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
+                is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
+            )
+            if self._dynamic_status:
+                parser.analyse_dynamic_shape_data(self._timeline_meta)
 
     def _get_step_reduce_op_type(self):
         """Gets all communication operator names."""
