@@ -21,6 +21,7 @@
 #include "base/float16.h"
 #include "abstract/utils.h"
 #include "mindspore/core/ops/fill.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/arrays/fill_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fill_impl.cuh"
 #include "include/common/utils/utils.h"
@@ -30,12 +31,15 @@ namespace kernel {
 #define FILL_GPU_REG(MS_T, MS_U, MS_V, T) \
   { KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_U).AddOutputAttr(MS_V), &FillGpuKernelMod::LaunchKernel<T> }
 
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 const std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> &FillGpuKernelMod::GetFuncList() const {
   static std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> func_list;
   std::vector<TypeId> shape_type_list = {kNumberTypeInt32, kNumberTypeInt64};
-  std::vector<TypeId> value_type_list = {kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,   kNumberTypeInt64,
-                                         kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeUInt8,
-                                         kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,  kNumberTypeBool};
+  std::vector<TypeId> value_type_list = {
+    kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,     kNumberTypeInt64,     kNumberTypeFloat16,
+    kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeUInt8,     kNumberTypeUInt16,    kNumberTypeUInt32,
+    kNumberTypeUInt64,  kNumberTypeBool,    kNumberTypeComplex64, kNumberTypeComplex128};
 
   std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc> type_pair;
   for (auto i : shape_type_list) {
@@ -65,6 +69,10 @@ const std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> &FillG
           type_pair = FILL_GPU_REG(i, j, value_type_list[k], uint64_t);
         } else if (value_type_list[k] == kNumberTypeBool) {
           type_pair = FILL_GPU_REG(i, j, value_type_list[k], bool);
+        } else if (value_type_list[k] == kNumberTypeComplex64) {
+          type_pair = FILL_GPU_REG(i, j, value_type_list[k], Complex<float>);
+        } else if (value_type_list[k] == kNumberTypeComplex128) {
+          type_pair = FILL_GPU_REG(i, j, value_type_list[k], Complex<double>);
         }
         func_list.emplace_back(type_pair);
       }

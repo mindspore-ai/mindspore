@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <complex>
 
 #include "abstract/abstract_value.h"
 #include "ops/op_utils.h"
@@ -40,7 +41,6 @@ static tensor::TensorPtr CreateValuedTensor(const TypePtr &type, const std::vect
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   const size_t &mem_size = IntToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
-  //  std::cout << "test for const num: " << num->cast<UInt8ImmPtr>()->value();
   std::map<TypeId, std::function<void()>> type_dict{
     {kNumberTypeBool,
      [&tensor_data, mem_size, &num]() { SetTensorData<bool>(tensor_data, static_cast<bool>(num), mem_size); }},
@@ -66,6 +66,32 @@ static tensor::TensorPtr CreateValuedTensor(const TypePtr &type, const std::vect
      [&tensor_data, mem_size, &num]() { SetTensorData<float>(tensor_data, static_cast<float>(num), mem_size); }},
     {kNumberTypeFloat64,
      [&tensor_data, mem_size, &num]() { SetTensorData<double>(tensor_data, static_cast<double>(num), mem_size); }},
+  };
+  const auto &tensor_type = tensor->data_type();
+  auto iter = type_dict.find(tensor_type);
+  if (iter == type_dict.end()) {
+    MS_LOG(EXCEPTION) << "unsupported data type: " << tensor_type;
+  }
+  iter->second();
+  return tensor;
+}
+
+template <typename T>
+static tensor::TensorPtr CreateComplexTensor(const TypePtr &type, const std::vector<int64_t> &shape, T num) {
+  MS_EXCEPTION_IF_NULL(type);
+  auto type_id = type->type_id();
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
+  const size_t &mem_size = IntToSize(tensor->ElementsNum());
+  auto tensor_data = tensor->data_c();
+  std::map<TypeId, std::function<void()>> type_dict{
+    {kNumberTypeComplex64,
+     [&tensor_data, mem_size, &num]() {
+       SetTensorData<std::complex<float>>(tensor_data, static_cast<std::complex<float>>(num), mem_size);
+     }},
+    {kNumberTypeComplex128,
+     [&tensor_data, mem_size, &num]() {
+       SetTensorData<std::complex<double>>(tensor_data, static_cast<std::complex<double>>(num), mem_size);
+     }},
   };
   const auto &tensor_type = tensor->data_type();
   auto iter = type_dict.find(tensor_type);
@@ -106,7 +132,7 @@ class FillInfer : public abstract::OpInferBase {
     }
     auto input2_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[inputsIndex[kIndex2]]->BuildShape())[kShape];
-    if (input2_shape.size() != 0) {
+    if (input2_shape.size() > 1 || (input2_shape.size() == 1 && input2_shape[0] > 1)) {
       MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                               << "', the shape size of 'input2' must be 0, but got: " << input2_shape.size() << ".";
     }
@@ -148,7 +174,7 @@ class FillInfer : public abstract::OpInferBase {
     } else {
       input2_element_dtype = input2_dtype;
     }
-    if (input2_shape.size() != 0) {
+    if (input2_shape.size() > 1 || (input2_shape.size() == 1 && input2_shape[0] > 1)) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', the value input only takes scalar or scalar within a tensor!";
     }
@@ -162,8 +188,8 @@ class FillInfer : public abstract::OpInferBase {
     }
     auto output_dtype = dtype_value->cast<TypePtr>();
 
-    const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,
-                                           kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+    const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,
+                                           kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     CheckAndConvertUtils::CheckSubClass("dtype", input2_element_dtype, valid_types, prim_name);
     return CheckAndConvertUtils::CheckSubClass("dtype", output_dtype, valid_types, prim_name);
   }
@@ -183,7 +209,7 @@ class FillInfer : public abstract::OpInferBase {
     auto tmp_shape = InferShape(prim, input_args);
     MS_EXCEPTION_IF_NULL(tmp_shape);
     auto infered_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tmp_shape)[kShape];
-
+    auto input_value_tensor = input_value_ptr->cast<tensor::TensorPtr>();
     tensor::TensorPtr infer_result;
     if (input_value_type_id == kNumberTypeBool) {
       infer_result = CreateValuedTensor<bool>(infered_type, infered_shape, GetValue<bool>(input_value_ptr));
@@ -191,8 +217,14 @@ class FillInfer : public abstract::OpInferBase {
       infer_result = CreateValuedTensor<float>(infered_type, infered_shape, GetValue<float>(input_value_ptr));
     } else if (input_value_type_id == kNumberTypeInt32) {
       infer_result = CreateValuedTensor<int32_t>(infered_type, infered_shape, GetValue<int32_t>(input_value_ptr));
-    } else {
+    } else if (input_value_type_id == kNumberTypeInt64) {
       infer_result = CreateValuedTensor<int64_t>(infered_type, infered_shape, GetValue<int64_t>(input_value_ptr));
+    } else if (input_value_type_id == kNumberTypeComplex64) {
+      infer_result = CreateComplexTensor<std::complex<float>>(
+        infered_type, infered_shape, static_cast<std::complex<float> *>(input_value_tensor->data_c())[0]);
+    } else if (input_value_type_id == kNumberTypeComplex128) {
+      infer_result = CreateComplexTensor<std::complex<double>>(
+        infered_type, infered_shape, static_cast<std::complex<double> *>(input_value_tensor->data_c())[0]);
     }
     return infer_result;
   }
