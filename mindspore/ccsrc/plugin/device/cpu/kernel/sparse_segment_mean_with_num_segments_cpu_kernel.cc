@@ -32,15 +32,29 @@ constexpr size_t kSparseSegmentMeanWithNumSegmentsOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-void SparseSegmentMeanWithNumSegmentsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  indices_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  segment_ids_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
-  y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
+bool SparseSegmentMeanWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                        const std::vector<KernelTensorPtr> &inputs,
+                                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  x_dtype_ = inputs.at(kIndex0)->GetDtype();
+  indices_dtype_ = inputs.at(kIndex1)->GetDtype();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentMeanWithNumSegmentsInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentMeanWithNumSegmentsOutputsNum, kernel_name_);
+  return true;
+}
+
+int SparseSegmentMeanWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                         const std::vector<KernelTensorPtr> &inputs,
+                                                         const std::vector<KernelTensorPtr> &outputs,
+                                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 bool SparseSegmentMeanWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -131,13 +145,6 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
       y_addr[j + oldindex * n] /= static_cast<T1>(countnum);
     }
   }
-}
-
-void SparseSegmentMeanWithNumSegmentsCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kSparseSegmentMeanWithNumSegmentsInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseSegmentMeanWithNumSegmentsOutputsNum, kernel_name_);
 }
 
 std::vector<KernelAttr> SparseSegmentMeanWithNumSegmentsCpuKernelMod::GetOpSupport() {

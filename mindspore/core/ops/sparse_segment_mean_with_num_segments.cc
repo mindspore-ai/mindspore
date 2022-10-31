@@ -47,7 +47,8 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
   if (x_shape.size() < kRankOne) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of x cannot be less than 1.";
   }
-  if (indices_shape[kShapeZero] != segment_ids_shape[kShapeZero]) {
+  if (!IsDynamic(indices_shape) && !IsDynamic(segment_ids_shape) &&
+      indices_shape[kShapeZero] != segment_ids_shape[kShapeZero]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", indices and segment_ids's ranks mismatch.";
   }
   if (num_segments_shape.size() > kRankOne) {
@@ -58,28 +59,31 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1.";
     }
   }
-  if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
-      !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
-    auto num_segments_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(abstract::Shape::kShapeRankAny));
+  }
+  if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>() &&
+      input_args[kInputIndex3]->BuildValue()->isa<tensor::Tensor>()) {
+    auto num_segments = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_segments);
+    auto num_segments_value = num_segments->BuildValue();
     MS_EXCEPTION_IF_NULL(num_segments_value);
-    auto num_segments_value_ptr = num_segments_value->BuildValue();
-    MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
-    auto num_segments_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim_name);
-    size_t dim_zero = num_segments_value_ptr_tensor.back();
-    if (dim_zero < kDimOne) {
+    auto num_segments_value_tensor =
+      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value, prim_name);
+    size_t dim_zero = num_segments_value_tensor.back();
+    if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
-                               << ", num_segments must be bigger than the largest id of segment_ids.";
+                               << ", num_segments must bigger than the last number of segment_ids, "
+                               << "but got " << dim_zero << ".";
     } else {
       ShapeVector y_shape = x_shape;
-      y_shape[kShapeZero] = dim_zero;
+      y_shape[kInputIndex0] = static_cast<int64_t>(dim_zero);
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
-    std::vector<int64_t> output_shape = {-2};
-    std::vector<int64_t> min_shape = {1};
-    std::vector<int64_t> max_shape = {1};
-    return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+    ShapeVector output_shape = x_shape;
+    output_shape[kInputIndex0] = -1;
+    return std::make_shared<abstract::Shape>(output_shape);
   }
 }
 

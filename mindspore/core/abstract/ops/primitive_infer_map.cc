@@ -131,6 +131,9 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSetSize = prim::kPrimSetSize->name();
   static const auto &kDynamicStitch = prim::kPrimDynamicStitch->name();
   static const auto &kSparseTensorDenseMatmul = prim::kPrimSparseTensorDenseMatmul->name();
+  static const auto &kSparseSegmentMeanWithNumSegments = prim::kPrimSparseSegmentMeanWithNumSegments->name();
+  static const auto &kSparseSegmentSqrtN = prim::kPrimSparseSegmentSqrtN->name();
+  static const auto &kSparseSegmentSqrtnWithNumSegments = prim::kPrimSparseSegmentSqrtNWithNumSegments->name();
   static const auto &kSparseMatrixTranspose = prim::kPrimSparseMatrixTranspose->name();
   static const auto &kSparseToDense = prim::kPrimSparseToDense->name();
   static const auto &kParameterizedTruncatedNormal = prim::kPrimParameterizedTruncatedNormal->name();
@@ -207,6 +210,9 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kSetSize, ShapeSet{2}},
                                          {kDynamicStitch, ShapeSet{0}},
                                          {kSparseTensorDenseMatmul, ShapeSet{2}},
+                                         {kSparseSegmentMeanWithNumSegments, ShapeSet{3}},
+                                         {kSparseSegmentSqrtN, ShapeSet{2}},
+                                         {kSparseSegmentSqrtnWithNumSegments, ShapeSet{3}},
                                          {kSparseMatrixTranspose, ShapeSet{0}},
                                          {kParameterizedTruncatedNormal, ShapeSet{0}},
                                          {kSparseToDense, ShapeSet{2}}};
