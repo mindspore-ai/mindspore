@@ -313,12 +313,12 @@ FuncGraphPtr VmapGeneralPreprocess::GenerateFuncGraph(const AbstractBasePtrList 
                              &offset](const AbstractBasePtrList &args_spec_list) -> const AbstractBasePtrList & {
     if (args_size == 2) {
       auto arg = args_spec_list[1];
-      if (!arg->isa<abstract::AbstractTuple>()) {
-        MS_LOG(EXCEPTION) << "The second input to VmapGeneralPreprocess should be AbstractTuple but got: "
+      if (!arg->isa<abstract::AbstractSequence>()) {
+        MS_LOG(EXCEPTION) << "The second input to VmapGeneralPreprocess should be AbstractSequence but got: "
                           << arg->ToString() << ".";
       }
-      auto arg_tuple = arg->cast<abstract::AbstractTuplePtr>();
-      const auto &arg_tuple_elements = arg_tuple->elements();
+      auto arg_seq = arg->cast<abstract::AbstractSequencePtr>();
+      const auto &arg_tuple_elements = arg_seq->elements();
       if (arg_tuple_elements.back()->isa<abstract::AbstractTuple>()) {
         // Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped
         // into a tuple. We need to process the internal elements separately and then re-wrap
