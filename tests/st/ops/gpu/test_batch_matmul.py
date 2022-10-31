@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+from packaging import version
 import numpy as np
 import pytest
 import mindspore as ms
@@ -25,6 +26,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
+from mindspore.run_check._check_version import GPUEnvChecker
 
 
 class BatchMatMulNet(nn.Cell):
@@ -401,23 +403,27 @@ def test_batchmatmul_type_float64():
 def test_batchmatmul_type_int8():
     """
     Feature: test bmm with dtype int8.
-    Description: test bmm with dtype int8.
+    Description: test bmm with dtype int8. It is only supported on CUDA_VERSION >= 11.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    input_list = []
-    input_x1 = Tensor(np.ones(shape=[4, 1, 4]), ms.int8)
-    input_x2 = Tensor(np.ones(shape=[4, 4, 4]), ms.int8)
-    input_list.append(input_x1)
-    input_list.append(input_x2)
-    fact = BatchMatMulTestNet(inputs=input_list)
-    out = fact.forward_mindspore_impl()
-    expect = np.array([[[4, 4, 4, 4]],
-                       [[4, 4, 4, 4]],
-                       [[4, 4, 4, 4]],
-                       [[4, 4, 4, 4]]], np.int32)
-    assert (out.asnumpy() == expect).all()
-    assert str(out.dtype) == "Int32"
+    env_checker = GPUEnvChecker()
+    v = env_checker.get_cudart_version()
+    env_version = version.parse(v)
+    if env_version.major >= 11:
+        input_list = []
+        input_x1 = Tensor(np.ones(shape=[4, 1, 4]), ms.int8)
+        input_x2 = Tensor(np.ones(shape=[4, 4, 4]), ms.int8)
+        input_list.append(input_x1)
+        input_list.append(input_x2)
+        fact = BatchMatMulTestNet(inputs=input_list)
+        out = fact.forward_mindspore_impl()
+        expect = np.array([[[4, 4, 4, 4]],
+                           [[4, 4, 4, 4]],
+                           [[4, 4, 4, 4]],
+                           [[4, 4, 4, 4]]], np.int32)
+        assert (out.asnumpy() == expect).all()
+        assert str(out.dtype) == "Int32"
 
 
 @pytest.mark.level0
@@ -430,37 +436,41 @@ def test_batchmatmul_type_complex64():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    input_list = []
-    input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
-                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
-                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
-                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]]]).astype(np.complex64))
-    input_x2 = Tensor(np.array([[[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
-                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
-                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
-                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]]]).astype(np.complex64))
-    input_list.append(input_x1)
-    input_list.append(input_x2)
-    fact = BatchMatMulTestNet(inputs=input_list)
-    out = fact.forward_mindspore_impl()
-    expect = np.array([[[8+0j, 8+0j, 8+0j, 8+0j]],
-                       [[8+0j, 8+0j, 8+0j, 8+0j]],
-                       [[8+0j, 8+0j, 8+0j, 8+0j]],
-                       [[8+0j, 8+0j, 8+0j, 8+0j]]], np.complex64)
-    assert (out.asnumpy() == expect).all()
-    assert str(out.dtype) == "Complex64"
+    env_checker = GPUEnvChecker()
+    v = env_checker.get_cudart_version()
+    env_version = version.parse(v)
+    if env_version.major >= 11:
+        input_list = []
+        input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                    [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                    [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                    [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]]]).astype(np.complex64))
+        input_x2 = Tensor(np.array([[[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                    [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                    [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                    [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]]]).astype(np.complex64))
+        input_list.append(input_x1)
+        input_list.append(input_x2)
+        fact = BatchMatMulTestNet(inputs=input_list)
+        out = fact.forward_mindspore_impl()
+        expect = np.array([[[8+0j, 8+0j, 8+0j, 8+0j]],
+                           [[8+0j, 8+0j, 8+0j, 8+0j]],
+                           [[8+0j, 8+0j, 8+0j, 8+0j]],
+                           [[8+0j, 8+0j, 8+0j, 8+0j]]], np.complex64)
+        assert (out.asnumpy() == expect).all()
+        assert str(out.dtype) == "Complex64"
 
 
 @pytest.mark.level0
@@ -473,34 +483,38 @@ def test_batchmatmul_type_complex128():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    input_list = []
-    input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
-                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
-                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
-                                [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]]]).astype(np.complex128))
-    input_x2 = Tensor(np.array([[[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
-                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
-                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
-                                [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
-                                 [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]]]).astype(np.complex128))
-    input_list.append(input_x1)
-    input_list.append(input_x2)
-    fact = BatchMatMulTestNet(inputs=input_list)
-    out = fact.forward_mindspore_impl()
-    expect = np.array([[[8+0j, 8+0j, 8+0j, 8+0j]],
-                       [[8+0j, 8+0j, 8+0j, 8+0j]],
-                       [[8+0j, 8+0j, 8+0j, 8+0j]],
-                       [[8+0j, 8+0j, 8+0j, 8+0j]]], np.complex128)
-    assert (out.asnumpy() == expect).all()
-    assert str(out.dtype) == "Complex128"
+    env_checker = GPUEnvChecker()
+    v = env_checker.get_cudart_version()
+    env_version = version.parse(v)
+    if env_version.major >= 11:
+        input_list = []
+        input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                    [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                    [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
+                                    [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]]]).astype(np.complex128))
+        input_x2 = Tensor(np.array([[[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                    [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                    [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]],
+                                    [[1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j],
+                                     [1 - 1j, 1 - 1j, 1 - 1j, 1 - 1j]]]).astype(np.complex128))
+        input_list.append(input_x1)
+        input_list.append(input_x2)
+        fact = BatchMatMulTestNet(inputs=input_list)
+        out = fact.forward_mindspore_impl()
+        expect = np.array([[[8+0j, 8+0j, 8+0j, 8+0j]],
+                           [[8+0j, 8+0j, 8+0j, 8+0j]],
+                           [[8+0j, 8+0j, 8+0j, 8+0j]],
+                           [[8+0j, 8+0j, 8+0j, 8+0j]]], np.complex128)
+        assert (out.asnumpy() == expect).all()
+        assert str(out.dtype) == "Complex128"
