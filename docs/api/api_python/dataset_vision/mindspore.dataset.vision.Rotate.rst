@@ -24,4 +24,4 @@ mindspore.dataset.vision.Rotate
         - **TypeError** - 当 `center` 的类型不为tuple。
         - **TypeError** - 当 `fill_value` 的类型不为int或tuple[int]。
         - **ValueError** - 当 `fill_value` 取值不在[0, 255]范围内。
-        - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。
+        - **RuntimeError** - 当输入图像的shape不为<H, W>或<..., H, W, C>。

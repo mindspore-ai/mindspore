@@ -404,6 +404,58 @@ TEST_F(MindDataTestPipeline, TestRotatePass) {
   iter->Stop();
 }
 
+/// Feature: Rotate op
+/// Description: Test Rotate op by processing tensor with dim more than 3
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestRotateBatch) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRotateBatch.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 3;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds, choose batch size 3 to test high dimension input
+  int32_t batch_size = 3;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto rotate = std::make_shared<vision::Rotate>(90, InterpolationMode::kLinear, false, std::vector<float>{-1, -1},
+                                                 std::vector<uint8_t>{255, 255, 255});
+
+  // Rotate the image 90 degrees
+  ds = ds->Map({rotate});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 /// Feature: RGB2BGR op
 /// Description: Test RGB2BGR op basic usage
 /// Expectation: Output is equal to the expected output
