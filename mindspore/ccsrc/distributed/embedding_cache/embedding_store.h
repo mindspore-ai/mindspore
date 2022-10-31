@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace distributed {
 template <typename K, typename V>
-class BACKEND_EXPORT EmbeddingStore {
+class EmbeddingStore {
  public:
   EmbeddingStore(std::string, size_t, size_t) {}
   ~EmbeddingStore() = default;
