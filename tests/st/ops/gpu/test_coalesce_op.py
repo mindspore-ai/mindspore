@@ -15,23 +15,56 @@
 
 import numpy as np
 import pytest
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops.operations import array_ops as aps
 
-
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 class NetCoalesce(nn.Cell):
+
     def __init__(self):
         super(NetCoalesce, self).__init__()
         self.coalesce = aps.Coalesce()
 
     def construct(self, x, y, z):
         return self.coalesce(x, y, z)
+
+
+def dyn_case():
+    net = NetCoalesce()
+    x_indices_dyn = Tensor(shape=[2, None], dtype=ms.int64)
+    x_values_dyn = Tensor(shape=[None], dtype=ms.float32)
+    x_shape_dyn = Tensor(shape=[None], dtype=ms.int64)
+    net.set_inputs(x_indices_dyn, x_values_dyn, x_shape_dyn)
+
+    x_indices = Tensor([[1, 2, 3, 3, 2], [2, 2, 2, 2, 2]], dtype=mstype.int64)
+    x_values = Tensor([1, 2, 3, 4, 5], dtype=mstype.float32)
+    x_shape = Tensor([5, 5], dtype=mstype.int64)
+    out = net(x_indices, x_values, x_shape)
+
+    expect_shapes = [(2, 3), (3,), (2,)]
+    for i in range(3):
+        assert out[i].asnumpy().shape == expect_shapes[i]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_coalesce_dyn():
+    """
+    Feature: Coalesce function.
+    Description:  test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    dyn_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    dyn_case()
 
 
 @pytest.mark.level0

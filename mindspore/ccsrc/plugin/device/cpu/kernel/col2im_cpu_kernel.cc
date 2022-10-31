@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/col2im_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
 #include <string>
+#include "ops/col2im.h"
+#include "plugin/device/cpu/kernel/col2im_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 
 namespace mindspore {
@@ -28,19 +29,28 @@ constexpr size_t kCol2ImOutputsNum = 1;
 constexpr int64_t kInt64Number2 = 2;
 }  // namespace
 
-void Col2ImCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  cnode_ptr_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool Col2ImCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  y_type_ = outputs.at(kIndex0)->GetDtype();
+  PrimitivePtr prim = base_operator->GetPrim();
+  kernel_size_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrKernelSize));
+  dilation_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrDilation));
+  padding_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrPadding));
+  stride_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrStride));
+  return true;
+}
 
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  y_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, kIndex0);
-  y_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
-
-  kernel_size_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrKernelSize);
-  dilation_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrDilation);
-  padding_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrPadding);
-  stride_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStride);
+int Col2ImCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  y_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  return KRET_OK;
 }
 
 bool Col2ImCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,

@@ -96,22 +96,24 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto output_size_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto output_size_value = input_args[kInputIndex1]->BuildValue();
+
+  constexpr int64_t output_size_dim0 = 2;
+  constexpr int64_t x_size = 4;
+
   if (output_size_shape.size() != 1) {
     MS_EXCEPTION(ValueError) << "For 'Col2Im', 'output_size' must be a 1D Tensor, but got a "
                              << output_size_shape.size() << "-D Tensor.";
   }
-  constexpr int64_t output_size_dim0 = 2;
-  if (output_size_shape[0] != output_size_dim0) {
+  if (!IsDynamic(output_size_shape) && output_size_shape[0] != output_size_dim0) {
     MS_EXCEPTION(ValueError)
       << "For 'Col2Im', 'output_size' must be a 1D Tensor with 2 elements, but got a 1-D Tensor with "
       << output_size_shape[0] << " elements.";
   }
-  constexpr int64_t x_size = 4;
+  if (!IsDynamicRank(x_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("x dimension", SizeToLong(x_shape.size()), kEqual, x_size, op_name);
+  }
+
   constexpr int64_t attr_size = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x dimension", SizeToLong(x_shape.size()), kEqual, x_size, op_name);
-  auto batch = x_shape[kInputIndex0];
-  auto channel = x_shape[kInputIndex1];
 
   auto kernel_size_ptr = primitive->GetAttr(kKernelSize);
   MS_EXCEPTION_IF_NULL(kernel_size_ptr);
@@ -139,24 +141,21 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckPositiveVector(kPadding, padding, op_name);
   (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero(kStride, stride, op_name);
 
-  bool is_compile = (output_size_value->isa<AnyValue>() || output_size_value->isa<None>());
-  ShapeVector y_shape = {batch, channel};
-  if (is_compile) {
-    int64_t max_len = x_shape[kInputIndex2] * x_shape[kInputIndex3];
-    (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
-    (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
-    ShapeVector y_shape_min = {batch, channel, 0, 0};
-    ShapeVector y_shape_max = {batch, channel, max_len, max_len};
-    return std::make_shared<abstract::Shape>(y_shape, y_shape_min, y_shape_max);
-  } else {
-    MS_EXCEPTION_IF_NULL(output_size_value);
-    auto output_size_tensor_ptr = output_size_value->cast<tensor::TensorPtr>();
-    auto output_size = reinterpret_cast<int32_t *>(output_size_tensor_ptr->data_c());
-    (void)y_shape.emplace_back(static_cast<int64_t>(output_size[kInputIndex0]));
-    (void)y_shape.emplace_back(static_cast<int64_t>(output_size[kInputIndex1]));
-    Col2ImShapeCheck(x_shape, kernel_size, dilation, padding, stride, static_cast<int64_t>(output_size[kInputIndex0]),
-                     static_cast<int64_t>(output_size[kInputIndex1]));
+  auto output_size_ptr = input_args[kInputIndex1];
+  MS_EXCEPTION_IF_NULL(output_size_ptr);
+  auto output_size_value = GetShapeValue(primitive, output_size_ptr);
+
+  auto is_dynamic_rank = IsDynamicRank(x_shape) || IsDynamicRank(output_size_value);
+  if (is_dynamic_rank) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1});
   }
+
+  if (!(IsDynamic(x_shape) || IsDynamic(output_size_value))) {
+    Col2ImShapeCheck(x_shape, kernel_size, dilation, padding, stride, output_size_value[kInputIndex0],
+                     output_size_value[kInputIndex1]);
+  }
+
+  ShapeVector y_shape = {x_shape[0], x_shape[1], output_size_value[0], output_size_value[1]};
   return std::make_shared<abstract::Shape>(y_shape);
 }
 
@@ -176,6 +175,7 @@ AbstractBasePtr Col2ImInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(shapes, types);
 }
 
+REGISTER_HOST_DEPENDS(kNameCol2Im, {1});
 MIND_API_OPERATOR_IMPL(Col2Im, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Col2Im, prim::kPrimCol2Im, Col2ImInfer, nullptr, true);
 }  // namespace ops

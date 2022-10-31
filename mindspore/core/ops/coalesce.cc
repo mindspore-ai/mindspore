@@ -57,10 +57,10 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
   auto x_values_shape_ptr = x_values_shape_BaseShapePtr->cast<abstract::ShapePtr>();
   auto x_shape_shape_ptr = x_shape_shape_BaseShapePtr->cast<abstract::ShapePtr>();
 
-  if (IsDynamicRank(x_indices_shape) || IsDynamicRank(x_values_shape) || IsDynamicRank(x_shape_shape)) {
-    abstract::ShapePtr x_indices_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
-    abstract::ShapePtr x_values_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
-    abstract::ShapePtr x_shape_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  if (IsDynamicRank(x_indices_shape)) {
+    abstract::ShapePtr x_indices_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1});
+    abstract::ShapePtr x_values_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-1});
+    abstract::ShapePtr x_shape_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-1});
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{x_indices_shape_dyn, x_values_shape_dyn, x_shape_shape_dyn});
   }

@@ -31,26 +31,38 @@
 
 namespace mindspore {
 namespace kernel {
-class CoalesceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CoalesceCpuKernelMod : public NativeCpuKernelMod {
  public:
   CoalesceCpuKernelMod() = default;
   ~CoalesceCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+ protected:
+  void SyncData() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void CheckParam(const CNodePtr &kernel_node) const;
+
   void Check(const std::vector<AddressPtr> &inputs) const;
+
+  std::vector<KernelTensorPtr> outputs_ = {};
   TypeId dtype_{kTypeUnknown};
   size_t values_size_{0};
   size_t shape_size_{0};
   size_t jump = 0;
-  CNodeWeakPtr node_wpt_;
+  ShapeVector y_shape_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
