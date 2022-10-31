@@ -45,18 +45,16 @@ abstract::ShapePtr RightShiftInferShape(const PrimitivePtr &primitive, const std
 TypePtr RightShiftInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  (void)abstract::CheckDtypeSame(prim_name, x, y);
-  auto input_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  if (!input_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input type must be tensor, but got: " << input_type->ToString() << ".";
-  }
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto y_type = input_args[kInputIndex1]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  MS_EXCEPTION_IF_NULL(y_type);
+  std::map<std::string, TypePtr> types;
+  types.insert({"input_x", x_type});
+  types.insert({"input_y", y_type});
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);
-  return input_type;
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  return x_type;
 }
 }  // namespace
 

@@ -53,7 +53,7 @@ int RightShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   input_shape_1_ = inputs.at(kIndex0)->GetShapeVector();
   input_shape_2_ = inputs.at(kIndex1)->GetShapeVector();
   output_shape_ = outputs.at(kIndex0)->GetShapeVector();
-  return true;
+  return KRET_OK;
 }
 
 bool RightShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
