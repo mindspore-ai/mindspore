@@ -23,6 +23,7 @@ import math
 import copy
 import numpy as np
 
+import mindspore
 from mindspore import log as logger
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
 from mindspore.train.callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
@@ -506,6 +507,10 @@ class Model:
         _device_number_check(self._parallel_mode, self._device_number)
 
         if train_dataset:
+            if not isinstance(train_dataset, mindspore.dataset.Dataset):
+                raise TypeError("The type of 'train_dataset' must be `Dataset`, "
+                                "but got {}.".format(type(train_dataset)))
+
             _parameter_broadcast_check(self._parallel_mode, self._parameter_broadcast)
             if self._parameter_broadcast:
                 self._train_network.set_broadcast_flag()
@@ -523,6 +528,9 @@ class Model:
                 break
 
         if valid_dataset:
+            if not isinstance(valid_dataset, mindspore.dataset.Dataset):
+                raise TypeError("The type of 'valid_dataset' must be `Dataset`, "
+                                "but got {}.".format(type(valid_dataset)))
             if not self._metric_fns:
                 raise RuntimeError("If define `valid_dataset`, metric fn can not be None or empty, "
                                    "you should set the argument 'metrics' for model.")
