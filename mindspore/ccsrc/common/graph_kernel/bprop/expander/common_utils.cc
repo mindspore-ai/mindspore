@@ -20,7 +20,9 @@
 #include <vector>
 #include <utility>
 #include <limits>
+#include <set>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "ops/core_ops.h"
 #include "utils/anf_utils.h"
@@ -68,7 +70,67 @@ void ComputeReduceIndex(const std::vector<int64_t> &x_rev, const std::vector<int
   std::reverse(grad_x_reduce_idx->begin(), grad_x_reduce_idx->end());
   std::reverse(grad_y_reduce_idy->begin(), grad_y_reduce_idy->end());
 }
+
+TypeId GetOutputDtype(TypeId t1, TypeId t2, bool use_complex = false) {
+  static std::unordered_map<TypeId, int> complex_priority_map{
+    {kNumberTypeFloat32, 0}, {kNumberTypeFloat32, 1}, {kNumberTypeComplex64, 2}, {kNumberTypeComplex128, 4}};
+  static std::unordered_map<TypeId, int> type_priority_map{
+    {kNumberTypeBool, 0},  {kNumberTypeUInt8, 1},   {kNumberTypeInt8, 2},     {kNumberTypeUInt16, 3},
+    {kNumberTypeInt16, 4}, {kNumberTypeUInt32, 5},  {kNumberTypeInt32, 6},    {kNumberTypeUInt64, 7},
+    {kNumberTypeInt64, 8}, {kNumberTypeFloat16, 9}, {kNumberTypeFloat32, 10}, {kNumberTypeFloat64, 11}};
+  int priority_1 = 0;
+  int priority_2 = 0;
+  if (use_complex) {
+    if (complex_priority_map.find(t1) == complex_priority_map.end() ||
+        complex_priority_map.find(t2) == complex_priority_map.end()) {
+      MS_EXCEPTION(ValueError) << "Complex binary op type promotion not supported for " << TypeIdToString(t1) << " and "
+                               << TypeIdToString(t2);
+    }
+    priority_1 = complex_priority_map[t1];
+    priority_2 = complex_priority_map[t2];
+  } else {
+    if (type_priority_map.find(t1) == type_priority_map.end() ||
+        type_priority_map.find(t2) == type_priority_map.end()) {
+      MS_EXCEPTION(ValueError) << "Binary op type promotion not supported for " << TypeIdToString(t1) << " and "
+                               << TypeIdToString(t2);
+    }
+    priority_1 = type_priority_map[t1];
+    priority_2 = type_priority_map[t2];
+  }
+  return (priority_1 > priority_2 ? t1 : t2);
+}
 }  // namespace
+
+ShapeVector GetAxisValue(const NodePtr &axis) {
+  MS_EXCEPTION_IF_NULL(axis);
+  auto axis_node = axis->get<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(axis_node);
+  return GetAxisList(axis_node->value());
+}
+
+std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector axis) {
+  auto rank = input_shape.size();
+  std::set<int64_t> reduction_indices_set;
+  ShapeVector perm;
+  int64_t reduced_num = 1;
+  int64_t other_num = 1;
+  for (auto i : axis) {
+    i = (i + rank) % rank;
+    reduction_indices_set.insert(i);
+    reduced_num *= input_shape[i];
+    perm.emplace_back(i);
+  }
+  ShapeVector other_indices;
+  for (int64_t i = 0; i < (int64_t)rank; i++) {
+    if (reduction_indices_set.find(i) == reduction_indices_set.end()) {
+      other_indices.emplace_back(i);
+      other_num *= input_shape[i];
+      perm.emplace_back(i);
+    }
+  }
+  ShapeVector pack_shape{reduced_num, other_num};
+  return std::make_pair(pack_shape, perm);
+}
 
 std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_t> &x_shape,
                                                         const std::vector<int64_t> &y_shape) {
@@ -144,6 +206,7 @@ std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vecto
 }
 
 std::vector<int64_t> GetAxisList(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
   std::vector<int64_t> result;
   if (value->isa<ValueSequence>()) {
     const auto &vals = value->cast<ValueSequencePtr>()->value();
@@ -385,6 +448,18 @@ std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm) {
   return res;
 }
 
+std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
+  if (axis < 0) {
+    axis += rank;
+  }
+  auto trans = Range(axis);
+  auto after_axis = Range(axis + 1, rank - 1);
+  trans.push_back(rank - 1);
+  trans.insert(trans.end(), after_axis.begin(), after_axis.end());
+  trans.push_back(axis);
+  return trans;
+}
+
 int64_t GetIntFromValueNode(const NodePtr &node) {
   if (!node->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "The output of node should be value node, but got " << node->get()->ToString();
@@ -426,5 +501,61 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<in
   auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
   return ib->Emit("Tile", {grad, ib->Value(tile_scaling)});
+}
+
+NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &out,
+                     const NodePtr &dout) {
+  auto input_shape = ib->GetShape(x);
+  auto output_shape_kept_dims = ReduceShape(input_shape, axis);
+  auto y = ib->Reshape(out, output_shape_kept_dims);
+  auto grad = ib->Reshape(dout, output_shape_kept_dims);
+  auto indicators = ib->Cast(ib->Emit("Equal", {y, x}), ib->GetDtype(grad));
+  auto minn = 1e-24;
+  auto min_num = ib->Tensor(minn, ib->GetDtype(grad));
+  auto num_selected =
+    ib->Reshape(ib->Emit("ReduceSum", {indicators, ib->Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(false)}}),
+                output_shape_kept_dims) +
+    min_num;
+  return indicators / num_selected * grad;
+}
+
+NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
+                           const NodePtr &out, const NodePtr &dout, const bool is_max) {
+  auto x_shape = ib->GetShape(x);
+  auto x_axis = axis;
+  auto onehot_axis = x_axis;
+  NodePtr dout_expand;
+  NodePtr new_out = out;
+  if (keep_dims) {
+    dout_expand = ib->TupleGetItem(dout, 1);
+    if (is_max) {
+      new_out = ib->Emit("ArgMaxWithValue", {x}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
+    } else {
+      new_out = ib->Emit("ArgMinWithValue", {x}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
+    }
+  } else {
+    dout_expand = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(onehot_axis)});
+  }
+  auto out_shape = ib->GetShape(ib->TupleGetItem(new_out, 0));
+  if (onehot_axis >= SizeToLong(out_shape.size())) {
+    onehot_axis = -1;
+  }
+  auto type_x = ib->GetDtype(x);
+  auto on_value = ib->Tensor(1, type_x);
+  auto off_value = ib->Tensor(0, type_x);
+  int64_t depth = x_shape[axis];
+  auto dx =
+    dout_expand * ib->Emit("OneHot", {ib->TupleGetItem(new_out, 0), ib->Value<int64_t>(depth), on_value, off_value},
+                           {{"axis", MakeValue(onehot_axis)}});
+  return dx;
+}
+
+TypeId PromoteBinaryDtype(TypeId t1, TypeId t2) {
+  if (t1 == t2) {
+    return t1;
+  }
+  static std::unordered_set<TypeId> complex_types{kNumberTypeComplex64, kNumberTypeComplex128};
+  return GetOutputDtype(
+    t1, t2, (complex_types.find(t1) != complex_types.end() || complex_types.find(t2) != complex_types.end()));
 }
 }  // namespace mindspore::expander::bprop

@@ -38,6 +38,19 @@ NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   return {ib->MakeTuple(result)};
 }
 
+NodePtrList MatrixDeterminantGradFunc(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
+  auto new_shape = ib->GetShape(ib->TupleGetItem(out, 1));
+  new_shape.push_back(1);
+  new_shape.push_back(1);
+  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), new_shape);
+  auto dx = ib->Mul(multipliers, x_adj_inv);
+  return {dx};
+}
+
 REG_BPROP_BUILDER(kMatMulOpName).SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
   auto ta = builder->GetAttr<bool>("transpose_a");
   auto tb = builder->GetAttr<bool>("transpose_b");
@@ -353,7 +366,7 @@ REG_BPROP_BUILDER("CumSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   auto dout = ib->GetInput(kIndex3);
   return {
     ib->Emit("CumSum", {dout, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}}),
-    ib->ZerosLike(ib->Tensor(0, ib->GetDtype(axis)))};
+    ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("MulNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -608,19 +621,19 @@ REG_BPROP_BUILDER("CumProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
     ib->Emit("CumProd", {x, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}});
   out = ib->Emit("CumSum", {ib->Mul(prod, dout), axis},
                  {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}});
-  return {ib->RealDiv(out, x), ib->ZerosLike(ib->Tensor(0, ib->GetDtype(axis)))};
+  return {ib->RealDiv(out, x), ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("ReduceAll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
-  return {ib->ZerosLike(x), ib->ZerosLike(ib->Tensor(0, ib->GetDtype(axis)))};
+  return {ib->ZerosLike(x), ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("ReduceAny").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
-  return {ib->ZerosLike(x), ib->ZerosLike(ib->Tensor(0, ib->GetDtype(axis)))};
+  return {ib->ZerosLike(x), ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("IsFinite").SetBody(CheckBpropExpander);
@@ -822,5 +835,317 @@ REG_BPROP_BUILDER(kSquareSumAllOpName).SetBody([](const BpropIRBuilder *ib) -> N
   auto dx = dout_0 * x * ib->Tensor(2.0, ib->GetDtype(x));
   auto dy = dout_1 * y * ib->Tensor(2.0, ib->GetDtype(y));
   return {dx, dy};
+});
+
+REG_BPROP_BUILDER("Hypot").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x1 = ib->GetInput(kIndex0);
+  auto x2 = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto x1_f32 = ib->Cast(x1, kFloat32);
+  auto x2_f32 = ib->Cast(x2, kFloat32);
+  auto out_f32 = ib->Cast(out, kFloat32);
+  auto dout_f32 = ib->Cast(dout, kFloat32);
+  auto dx1 = ib->Mul(ib->Emit("Div", {x1_f32, out_f32}), dout_f32);
+  auto dx2 = ib->Mul(ib->Emit("Div", {x2_f32, out_f32}), dout_f32);
+  auto tmp = BinopGradCommon(ib, x1_f32, x2_f32, dx1, dx2);
+  auto result_dx1 = ib->Cast(tmp[0], ib->GetDtype(x1));
+  auto result_dx2 = ib->Cast(tmp[1], ib->GetDtype(x2));
+  return {result_dx1, result_dx2};
+});
+
+REG_BPROP_BUILDER("Trunc").SetBody(CheckBpropExpander);
+
+REG_BPROP_BUILDER("Ger").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_x = ib->GetInput(kIndex0);
+  auto input_y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto m1 = ib->Emit("ExpandDims", {ib->TupleGetItem(input_y, 0), ib->Tensor(1)});
+  auto m2 = ib->Emit("ExpandDims", {ib->TupleGetItem(input_x, 0), ib->Tensor(1)});
+  auto dx = ib->Emit("Squeeze", {ib->MatMul(dout, m1, false, false)}, {{"axis", MakeValue(1)}});
+  ShapeVector perm = {1, 0};
+  auto transpose = ib->Emit("Transpose", {dout, ib->EmitValue(MakeValue(perm))});
+  auto dy = ib->Emit("Squeeze", {ib->MatMul(transpose, m2, false, false)}, {{"axis", MakeValue(1)}});
+  return {dx, dy};
+});
+
+REG_BPROP_BUILDER("Cross").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input1 = ib->GetInput(kIndex0);
+  auto input2 = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return {ib->Emit("Cross", {input2, dout}, {{"dim", ib->GetAttr("dim")}}),
+          ib->Emit("Cross", {dout, input1}, {{"dim", ib->GetAttr("dim")}})};
+});
+
+REG_BPROP_BUILDER("Median").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx =
+    ib->Cast(ib->Emit("MedianGrad", {ib->TupleGetItem(dout, 0), x, ib->TupleGetItem(out, 0), ib->TupleGetItem(out, 1)},
+                      {{"global_median", ib->GetAttr("global_median")},
+                       {"axis", ib->GetAttr("axis")},
+                       {"keep_dims", ib->GetAttr("keep_dims")}}),
+             ib->GetDtype(x));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Trace").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto shape = ib->GetShape(x);
+  auto dx =
+    ib->Emit("TraceGrad", {dout, ib->Cast(ib->Emit("TupleToArray", {ib->EmitValue(MakeValue(shape))}), kInt64)});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Erfinv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto root_pi_over_two =
+    ib->Cast(ib->RealDiv((ib->Emit("Sqrt", {ib->Tensor(pi)})), ib->Tensor(2)), ib->GetDtype(dout));
+  auto out_square = ib->Emit("Square", {out});
+  auto dx = ib->Mul((ib->Mul(dout, root_pi_over_two)), (ib->Emit("Exp", {out_square})));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Bernoulli").SetBody(CompareBpropExpander);
+
+REG_BPROP_BUILDER("ReduceSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = SumGrad(ib, x, GetAxisValue(axis), dout);
+  return {dx, ib->ZerosLike(axis)};
+});
+
+REG_BPROP_BUILDER("CumSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto axis = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return {
+    ib->Emit("CumSum", {dout, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}}),
+    ib->ZerosLike(axis)};
+});
+
+REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto input_shape = ib->GetShape(x);
+  auto output_shape_kept_dims = ReduceShape(input_shape, GetAxisValue(axis));
+  dout = ib->Emit("Reshape", {dout, ib->Value<ShapeVector>(output_shape_kept_dims)});
+  auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
+  auto grad = ib->Emit("Tile", {dout, ib->Value<ShapeVector>(tile_scaling)});
+  auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetAxisValue(axis));
+  auto permuted = ib->Emit("Transpose", {x, ib->Value<ShapeVector>(perm)});
+  auto permuted_shape = ib->GetShape(permuted);
+  auto reshaped = ib->Reshape(permuted, pack_shape);
+  auto left = ib->Emit("CumProd", {reshaped, ib->Tensor(0, ib->GetDtype(axis))},
+                       {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(false)}});
+  auto right = ib->Emit("CumProd", {reshaped, ib->Tensor(0, ib->GetDtype(axis))},
+                        {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
+  auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
+  out = ib->Mul((ib->Emit("Transpose", {y, ib->Value<ShapeVector>(InvertPermutation(perm))})), grad);
+  auto dx = ib->Reshape(out, input_shape);
+  return {dx, ib->ZerosLike(axis)};
+});
+
+REG_BPROP_BUILDER("ReduceMax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = MinOrMaxGrad(ib, x, GetAxisValue(axis), out, dout);
+  return {dx, ib->ZerosLike(axis)};
+});
+
+REG_BPROP_BUILDER("ReduceMin").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = MinOrMaxGrad(ib, x, GetAxisValue(axis), out, dout);
+  return {dx, ib->ZerosLike(axis)};
+});
+
+REG_BPROP_BUILDER("ReduceMean").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto grad = SumGrad(ib, x, GetAxisValue(axis), dout);
+  auto shape_x = ib->GetShape(x);
+  auto shape_out = ib->GetShape(out);
+  auto getSize = [](const ShapeVector shape) {
+    int64_t size = 1;
+    for (auto &i : shape) {
+      size *= i;
+    }
+    return size;
+  };
+  auto div_shape = getSize(shape_x) / getSize(shape_out);
+  auto dx = ib->RealDiv(grad, ib->Tensor(div_shape, ib->GetDtype(grad)));
+  return {dx, ib->ZerosLike(axis)};
+});
+
+REG_BPROP_BUILDER("ArgMaxWithValue").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto axis = GetValue<int64_t>(ib->GetAttr("axis"));
+  auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ArgminOrArgmaxGrad(ib, x, axis, keep_dims, out, dout, true);
+  return {dx};
+});
+
+REG_BPROP_BUILDER("ArgMinWithValue").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto axis = GetValue<int64_t>(ib->GetAttr("axis"));
+  auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ArgminOrArgmaxGrad(ib, x, axis, keep_dims, out, dout, false);
+  return {dx};
+});
+
+REG_BPROP_BUILDER("ComplexAbs").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  return {ib->Emit("DivNoNan", {ib->Mul(ib->Emit("Complex", {dout, ib->ZerosLike(dout)}), x),
+                                ib->Emit("Complex", {out, ib->ZerosLike(out)})})};
+});
+
+REG_BPROP_BUILDER("Real").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto dout = ib->GetInput(kIndex2);
+  auto zero = ib->ZerosLike(dout);
+  return {ib->Emit("Complex", {dout, zero})};
+});
+
+REG_BPROP_BUILDER("Imag").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto dout = ib->GetInput(kIndex2);
+  auto zero = ib->ZerosLike(dout);
+  return {ib->Emit("Complex", {zero, dout})};
+});
+
+REG_BPROP_BUILDER("Betainc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_a = ib->GetInput(kIndex0);
+  auto input_b = ib->GetInput(kIndex1);
+  auto input_x = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto sx = ib->GetShape(input_x);
+  auto log_beta =
+    (ib->Emit("LGamma", {input_a}) + ib->Emit("LGamma", {input_b})) - (ib->Emit("LGamma", {ib->Add(input_a, input_b)}));
+  auto partial_x = ib->Emit(
+    "Exp", {ib->Sub((ib->Add((ib->Mul((ib->Sub(input_b, ib->Tensor(1, ib->GetDtype(input_b)))),
+                                      (ib->Emit("Log1p", {ib->Neg(input_x)})))),
+                             (ib->Emit("Xlogy", {ib->Sub(input_a, ib->Tensor(1, ib->GetDtype(input_b))), input_x})))),
+                    log_beta)});
+  return {ib->ZerosLike(input_a), ib->ZerosLike(input_b), ib->Reshape(ib->Mul(partial_x, dout), sx)};
+});
+
+REG_BPROP_BUILDER("LogMatrixDeterminant").SetBody(MatrixDeterminantGradFunc);
+
+REG_BPROP_BUILDER("MatrixDeterminant").SetBody(MatrixDeterminantGradFunc);
+
+REG_BPROP_BUILDER("MatrixPower").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto n = GetValue<int64_t>(ib->GetAttr("n"));
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  dout = ib->Cast(dout, kFloat32);
+  x = ib->Cast(x, kFloat32);
+  auto power = n;
+  auto dx = ib->ZerosLike(x);
+  auto EmitBmmPowerGrad = [&ib, &dx, &dout](int repeat, const NodePtr &a, const NodePtr &b) {
+    for (int i = 0; i < repeat; ++i) {
+      dx = ib->Add(dx, (ib->BatchMatMul(b, ib->Emit("MatrixPower", {a}), false, false)));
+      dout = ib->BatchMatMul(a, b, true, true);
+    }
+  };
+  if (power < 0) {
+    auto x_inv = ib->Emit("MatrixPower", {x});
+    EmitBmmPowerGrad(-power, x_inv, dout);
+    dx = ib->BatchMatMul(dx, x_inv, false, false);
+    dx = ib->BatchMatMul(x_inv, dx, true, true);
+    dx = ib->Emit("Neg", {dx});
+  } else {
+    EmitBmmPowerGrad(power, x, dout);
+  }
+  dx = ib->Cast(dx, ib->GetDtype(out));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("MatrixSolve").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto adjoint = GetValue<bool>(ib->GetAttr("adjoint"));
+  auto input_a = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto out_type = ib->GetDtype(out);
+  if (out_type == kFloat64) {
+    out = ib->Cast(out, kFloat32);
+  }
+  auto grad_b = ib->Emit("MatrixSolve", {input_a, dout}, {{"adjoint", MakeValue(!adjoint)}});
+  auto grad_b_type = ib->GetDtype(grad_b);
+  if (grad_b_type == kFloat64) {
+    grad_b = ib->Cast(grad_b, kFloat32);
+  }
+  auto a_shape = ib->GetShape(input_a);
+  auto matrix_rank = a_shape.size();
+  auto EmitBmmGrad = [&ib](const NodePtr &a, const NodePtr &b) -> NodePtr {
+    auto grad_a = ib->BatchMatMul(a, b, false, false);
+    grad_a = ib->Emit("Neg", {grad_a});
+    return grad_a;
+  };
+  auto EmitMatmulGrad = [&ib](const NodePtr &a, const NodePtr &b) -> NodePtr {
+    auto grad_a = ib->MatMul(a, b, false, true);
+    grad_a = ib->Emit("Neg", {grad_a});
+    return grad_a;
+  };
+  if (adjoint) {
+    if (matrix_rank > 2) {
+      return {EmitBmmGrad(out, grad_b), grad_b};
+    } else {
+      return {EmitMatmulGrad(out, grad_b), grad_b};
+    }
+  } else {
+    if (matrix_rank > 2) {
+      return {EmitBmmGrad(grad_b, out), grad_b};
+    } else {
+      return {EmitMatmulGrad(grad_b, out), grad_b};
+    }
+  }
+});
+
+REG_BPROP_BUILDER("MatrixInverse").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->MatMul(dout, out);
+  dx = ib->MatMul(out, dx);
+  dx = ib->Emit("Neg", {dx});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("MatrixExp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto shape_x = ib->GetShape(x);
+  auto x_len = shape_x.size();
+  ShapeVector input_perm = Range(0, static_cast<int64_t>(x_len));
+  input_perm[-1] = input_perm[-2];
+  input_perm[-2] = static_cast<int64_t>(x_len - 1);
+  auto x_transpose = ib->Emit("Transpose", {x, ib->EmitValue(MakeValue(input_perm))});
+  auto zero_matrix = ib->ZerosLike(x);
+  auto meta_grad_up = ib->Emit("Concat", {{x_transpose, dout}}, {{"axis", MakeValue(-1)}});
+  auto meta_grad_down = ib->Emit("Concat", {{zero_matrix, x_transpose}}, {{"axis", MakeValue(-1)}});
+  auto meta_grad = ib->Emit("Concat", {{meta_grad_up, meta_grad_down}}, {{"axis", MakeValue(-2)}});
+  meta_grad = ib->Emit("MatrixExp", {meta_grad});
+  ShapeVector begins(x_len, 0);
+  auto n = shape_x[-1];
+  begins[-1] = n;
+  shape_x[-2] = n;
+  shape_x[-1] = n;
+  return {ib->Emit("Slice", {meta_grad, ib->EmitValue(MakeValue(begins)), ib->EmitValue(MakeValue(shape_x))})};
 });
 }  // namespace mindspore::expander::bprop

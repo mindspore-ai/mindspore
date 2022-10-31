@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <unordered_set>
+
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
+#include "common/graph_kernel/bprop/expander/common_utils.h"
 
 namespace mindspore::expander::bprop {
 static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
@@ -149,5 +152,61 @@ REG_BPROP_BUILDER("ResizeBilinearV2").SetBody([](const BpropIRBuilder *ib) -> No
     "ResizeBilinearGrad", {dout, x},
     {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
   return {dx, ib->ZerosLike(size)};
+});
+
+REG_BPROP_BUILDER("ConvertToDynamic").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto dout = ib->GetInput(kIndex2);
+  return {dout};
+});
+
+REG_BPROP_BUILDER("_VirtualPipelineEnd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("_VirtualPipelineEnd", {dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("FillV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto shape = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex3);
+  auto dout_typeptr = ib->GetDtype(dout);
+  auto dout_type = dout_typeptr->type_id();
+  std::unordered_set<TypeId> type_list{TypeId::kNumberTypeInt8,   TypeId::kNumberTypeInt16,  TypeId::kNumberTypeInt32,
+                                       TypeId::kNumberTypeInt64,  TypeId::kNumberTypeUInt8,  TypeId::kNumberTypeUInt16,
+                                       TypeId::kNumberTypeUInt32, TypeId::kNumberTypeUInt64, TypeId::kNumberTypeFloat16,
+                                       TypeId::kNumberTypeFloat64};
+
+  if (type_list.count(dout_type) > 0) {
+    dout = ib->Cast(dout, kFloat32);
+  }
+  auto dvalue = ib->ReduceSum(dout);
+  return {ib->ZerosLike(shape), ib->Cast(dvalue, dout_typeptr)};
+});
+
+REG_BPROP_BUILDER(kTensorCopySlicesOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto update = ib->GetInput(kIndex1);
+  auto begin = ib->GetInput(kIndex2);
+  auto end = ib->GetInput(kIndex3);
+  auto stride = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto x_grad = ib->Emit(kTensorCopySlicesOpName, {dout, ib->ZerosLike(update), begin, end, stride});
+  constexpr int64_t begin_mask = 0;
+  constexpr int64_t end_mask = 0;
+  constexpr int64_t ellipsis_mask = 0;
+  constexpr int64_t new_axis_mask = 0;
+  constexpr int64_t shrink_axis_mask = 0;
+  auto update_grad = ib->Emit(kStridedSliceOpName, {dout, begin, end, stride},
+                              {{kAttrBeginMask, MakeValue(begin_mask)},
+                               {kAttrEndMask, MakeValue(end_mask)},
+                               {kAttrEllipsisMask, MakeValue(ellipsis_mask)},
+                               {kAttrNewAxisMask, MakeValue(new_axis_mask)},
+                               {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
+  return {x_grad, update_grad, ib->ZerosLike(begin), ib->ZerosLike(end), ib->ZerosLike(stride)};
+});
+
+REG_BPROP_BUILDER("Roll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto dout = ib->GetInput(kIndex2);
+  std::vector<int64_t> shift = GetAxisList(ib->GetAttr("shift"));
+  std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
+  return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });
 }  // namespace mindspore::expander::bprop
