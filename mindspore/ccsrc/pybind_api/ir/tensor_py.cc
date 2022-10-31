@@ -127,6 +127,7 @@ static std::string GetPyTypeFormat(TypeId data_type) {
       return py::format_descriptor<int8_t>::format();
     case TypeId::kNumberTypeInt16:
       return py::format_descriptor<int16_t>::format();
+    case TypeId::kNumberTypeInt:
     case TypeId::kNumberTypeInt32:
       return py::format_descriptor<int32_t>::format();
     case TypeId::kNumberTypeInt64:

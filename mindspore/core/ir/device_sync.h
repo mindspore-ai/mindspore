@@ -27,6 +27,7 @@
 using std::string;
 
 namespace mindspore {
+using UserDataPtr = std::shared_ptr<UserData>;
 // Interface for data synchornize between device and host.
 class DeviceSync {
  public:
@@ -70,10 +71,15 @@ class DeviceSync {
 
   virtual ~DeviceSync() {}
 
+  virtual UserDataPtr user_data() const { return user_data_; }
+  virtual void set_user_data(const UserDataPtr &user_data) { user_data_ = user_data; }
+
  protected:
   mutable size_t original_ref_count_{1};
   // It will be decreased in the running, and reset by original_ref_count_ when it is zero.
   mutable size_t ref_count_{1};
+  // User data is the extra data required by the kernel launch in addition to device ptr.
+  UserDataPtr user_data_{nullptr};
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;
 }  // namespace mindspore

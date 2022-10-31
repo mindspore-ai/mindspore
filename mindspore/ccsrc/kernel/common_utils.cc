@@ -102,7 +102,7 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
   // Other abstract class, such as AbstractCSRTensor and AbstractCOOTensor, is converted to AbstractTensor early time.
   abstract::BaseShapePtr res_shape;
-  if (abs->isa<abstract::AbstractTensor>()) {
+  if (abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractMapTensor>()) {
     res_shape = abs->BuildShape();
   } else if (abs->isa<abstract::AbstractScalar>()) {
     res_shape = std::make_shared<abstract::Shape>(ShapeVector{});

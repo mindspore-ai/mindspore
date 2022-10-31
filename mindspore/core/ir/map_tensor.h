@@ -126,11 +126,17 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \param[in] data [ExportData] The data.
   void Update(const ExportData &data);
 
-  /// \brief Update MapTensor from exported data.
+  /// \brief Exported MapTensor data.
   ///
   /// \param[in] full [bool] True for full export, false for incremental export.
   /// \return The exported data.
   ExportData Export(bool full = false);
+
+  /// \brief Exported MapTensor data from device.
+  ///
+  /// \param[in] full [bool] True for full export, false for incremental export.
+  /// \return The exported data.
+  ExportData ExportDataFromDevice(DeviceSyncPtr device_sync);
 
   /// \brief Get the key tensor of MapTensor data.
   ///
@@ -150,6 +156,8 @@ class MS_CORE_API MapTensor final : public Tensor {
   void set_key_tensor(const TensorPtr key_tensor) { key_tensor_ = key_tensor; }
 
   void set_value_tensor(const TensorPtr value_tensor) { value_tensor_ = value_tensor; }
+
+  void set_status_tensor(const TensorPtr status_tensor) { status_tensor_ = status_tensor; }
 
  private:
   // Data type of the key.
