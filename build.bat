@@ -23,7 +23,9 @@ SET BUILD_PATH=%BASE_PATH%/build
 
 SET threads=8
 SET ENABLE_GITEE=OFF
-
+SET ENABLE_INCREDIBUILD=OFF
+SET ENABLE_MSVC=OFF
+set BUILD_TYPE=Release
 set VERSION_STR=''
 for /f "tokens=1" %%a in (version.txt) do (set VERSION_STR=%%a)
 
@@ -35,6 +37,22 @@ IF %errorlevel% == 0 (
 IF "%FROM_GITEE%" == "1" (
     echo "DownLoad from gitee"
     SET ENABLE_GITEE=ON
+)
+
+ECHO %1%|FINDSTR "^ms_vs"
+IF %errorlevel% == 0 (
+    echo "use msvc compiler"
+    SET ENABLE_MSVC=ON
+) else (
+    echo "use mingw compiler"
+)
+
+where buildconsole
+IF %errorlevel% == 0 (
+    echo "use buildconsole to speed up compile"
+    SET ENABLE_INCREDIBUILD=ON
+) else (
+    echo "fail to find buildconsole"
 )
 
 IF NOT EXIST "%BUILD_PATH%" (
@@ -70,6 +88,7 @@ IF "%1%" == "lite" (
         echo "======Start gen VS2019 Project for MS cpu debug======"
         cmake -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MODE=ON -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
             -G "Visual Studio 16 2019" -A x64 ../..
+        set BUILD_TYPE=Debug
     ) ELSE (
         echo "======Start gen MinGW64 Project for MS cpu ======"
         cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
@@ -82,12 +101,12 @@ IF NOT %errorlevel% == 0 (
     EXIT /b 1
 )
 
-IF "%1%" == "ms_vs_gpu" (
-    cmake --build . --config Release --target package
-) ELSE IF "%1%" == "ms_vs_cpu" (
-    cmake --build . --config Release --target package
-) ELSE IF "%1%" == "ms_vs_cpu_debug" (
-    cmake --build . --config Debug --target package
+IF ON == %ENABLE_MSVC% (
+    IF ON == %ENABLE_INCREDIBUILD% (
+        buildconsole /command="cmake --build . --config %BUILD_TYPE% --target package"
+    ) ELSE (
+        cmake --build . --config %BUILD_TYPE% --target package
+    )
 ) ELSE (
     cmake --build . --target package -- -j%threads%
 )
