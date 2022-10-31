@@ -4186,6 +4186,70 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     return ((sign(out) * ops.relu(ops.abs(out))) * (kw * kh)).pow(1.0 / norm_type)
 
 
+def mse_loss(input_x, target, reduction='mean'):
+    r"""
+    Calculates the mean squared error between the predicted value and the label value.
+
+    For detailed information, please refer to :class:`mindspore.nn.MSELoss`.
+
+    Args:
+        input_x (Tensor): Tensor of any dimension.
+        target (Tensor): The input label. Tensor of any dimension, same shape as the `input_x` in common cases.
+          However, it supports that the shape of `input_x` is different from the shape of `target`
+          and they should be broadcasted to each other.
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "none" and "sum".
+            Default: "mean".
+
+    Returns:
+        Tensor, loss of type float, the shape is zero if `reduction` is 'mean' or 'sum',
+        while the shape of output is the broadcasted shape if `reduction` is 'none'.
+
+    Raises:
+        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `input_x` and `target` have different shapes and cannot be broadcasted.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
+        >>> output = ops.mse_loss(logits, labels, reduction='none')
+        >>> print(output)
+        [[0. 1. 4.]
+         [0. 0. 1.]]
+    """
+    if not isinstance(input_x, (Tensor, Tensor_)):
+        raise TypeError("For ops.mse_loss, the `input_x` must be tensor")
+    if not isinstance(target, (Tensor, Tensor_)):
+        raise TypeError("For ops.mse_loss, the `target` must be tensor")
+    if reduction not in ['mean', 'none', 'sum']:
+        raise ValueError("For ops.mse_loss, `reduction` value should be either 'mean', 'none' or 'sum'.")
+
+    x = _get_cache_prim(P.Square)()(input_x - target)
+    input_dtype = x.dtype
+    x = _get_cache_prim(P.Cast)()(x, mstype.float32)
+
+    average_flag = True
+    reduce_flag = True
+    if reduction == 'sum':
+        average_flag = False
+    if reduction == 'none':
+        reduce_flag = False
+
+    perm = _get_cache_prim(P.Range)()(Tensor(0, mstype.int32),
+                                      Tensor(len(x.shape), mstype.int32),
+                                      Tensor(1, mstype.int32))
+
+    if reduce_flag and average_flag:
+        x = _get_cache_prim(P.ReduceMean)()(x, perm)
+
+    if reduce_flag and not average_flag:
+        x = _get_cache_prim(P.ReduceSum)()(x, perm)
+
+    return _get_cache_prim(P.Cast)()(x, input_dtype)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -4248,5 +4312,6 @@ __all__ = [
     'max_unpool1d',
     'max_unpool2d',
     'max_unpool3d',
+    'mse_loss',
 ]
 __all__.sort()
