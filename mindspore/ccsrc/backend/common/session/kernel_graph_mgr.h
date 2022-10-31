@@ -46,9 +46,12 @@ class BACKEND_EXPORT KernelGraphMgr {
   KernelGraphMgr() {}
   virtual ~KernelGraphMgr() {}
 
+  // The parameter is_enable_zero_copy means if the parameter in graph can avoid copy when it is executed, and it is
+  // true in subgraph sink mode, and the device address shared for partial parameters and internal parameters in graph
+  // would be disabled.
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
                                                     DeviceType device_target = DeviceType::kUnknown,
-                                                    bool common_opt = true);
+                                                    bool common_opt = true, bool is_enable_zero_copy = false);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                     std::vector<KernelGraphPtr> *all_out_graph,
