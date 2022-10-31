@@ -23,17 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class RpcKernelMod : public DeprecatedNativeCpuKernelMod {
+class RpcKernelMod : public NativeCpuKernelMod {
  public:
-  RpcKernelMod() : remote_input_(nullptr) {}
+  RpcKernelMod() : remote_input_(nullptr), is_dynamic_shape_(false) {}
   ~RpcKernelMod() override = default;
-
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override {
-    return true;
-  }
-
-  void InitKernel(const CNodePtr &kernel_node) override { return; }
 
   // Set and get remote data as input.
   void SetRemoteInput(MessageBase *const msg) { remote_input_ = msg; }
@@ -41,6 +34,9 @@ class RpcKernelMod : public DeprecatedNativeCpuKernelMod {
 
  protected:
   MessageBase *remote_input_;
+
+  // Whether this kernel sends or receives dynamic shape data.
+  bool is_dynamic_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

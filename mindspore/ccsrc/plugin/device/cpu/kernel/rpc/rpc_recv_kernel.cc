@@ -21,36 +21,71 @@
 
 namespace mindspore {
 namespace kernel {
-int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  // Reassign the memory size of recv kernel's inputs.
-  for (size_t i = 0; i < inputs.size(); i++) {
-    auto int64_shape = inputs[i]->GetShapeVector();
-    if (IsDynamic(int64_shape)) {
-      // Shape is invalid before recv data.
-      MS_LOG(DEBUG) << "The recv kernel's input " << i << " shape inferred is still dynamic:" << int64_shape;
-      return KRET_UNKNOWN_SHAPE;
-    }
-
-    int64_t size = 1;
-    (void)GetShapeSize(int64_shape, TypeIdToType(inputs[i]->GetDtype()), &size);
-    input_size_list_[i] = LongToSize(size);
+bool RpcRecvKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                              const std::vector<AddressPtr> &) {
+  if (recv_monad_) {
+    MS_LOG(DEBUG) << "RpcRecv has a monad as input, no need to launch it.";
+    return true;
   }
-  // Reassign the memory size of recv kernel's outputs.
-  for (size_t i = 0; i < outputs.size(); i++) {
-    auto int64_shape = outputs[i]->GetShapeVector();
-    if (IsDynamic(int64_shape)) {
-      // Shape is invalid before recv data.
-      MS_LOG(DEBUG) << "The recv kernel's output " << i << " shape inferred is still dynamic:" << int64_shape;
-      return KRET_UNKNOWN_SHAPE;
-    }
 
-    int64_t size = 1;
-    (void)GetShapeSize(int64_shape, TypeIdToType(outputs[i]->GetDtype()), &size);
-    output_size_list_[i] = LongToSize(size);
+  MS_EXCEPTION_IF_NULL(remote_input_);
+  // If the string body is not empty, it means we need to copy data from 'body' instead of raw pointer 'data'.
+  bool use_string_msg = !remote_input_->Body().empty();
+  auto data_ptr = use_string_msg ? (remote_input_->Body().data()) : (static_cast<char *>(remote_input_->data));
+  size_t data_size = use_string_msg ? (remote_input_->Body().size()) : (remote_input_->size);
+
+  if (is_dynamic_shape_) {
+    if (real_data_offset_.empty()) {
+      MS_LOG(EXCEPTION) << "Dynamic shape data must have data offsets to copy from source message.";
+    }
+    for (size_t i = 0; i < inputs.size(); i++) {
+      MS_EXCEPTION_IF_NULL(inputs[i]->addr);
+      int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + real_data_offset_[i], inputs[i]->size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "memcpy_s for recv output " << i << " failed, ret code: " << ret;
+      }
+    }
+  } else {
+    size_t offset = 0;
+    for (size_t i = 0; i < inputs.size(); i++) {
+      MS_EXCEPTION_IF_NULL(inputs[i]->addr);
+      int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + offset, inputs[i]->size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
+      }
+
+      offset += inputs[i]->size;
+      // Maybe the size of data from remote is smaller than inputs size, need to break in advance to avoid illegal
+      // memory access. For example, the 'umonad' inputs of RpcRecvKernel is not sent from remote.
+      // This should be fixed in graph optimizing step.
+      if (offset == data_size) {
+        break;
+      }
+    }
   }
-  return 0;
+
+  // Pay attention that the remote_input_ is a pointer of MessageBase which is allocated as heap memory by rpc module.
+  // We need to delete it after launching kernel.
+  delete remote_input_;
+  return true;
+}
+
+bool RpcRecvKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  // If the inputs size is 0, this means the input is a monad value.
+  if (inputs.empty()) {
+    recv_monad_ = true;
+  }
+
+  // RpcRecv kernel is similar with Unique, the next op's infer op must be launched after RpcRecv kernel is done.
+  is_need_retrieve_output_shape_ = true;
+
+  // The dynamic shape flag affects the 'Launch' method.
+  is_dynamic_shape_ = std::any_of(inputs.begin(), inputs.end(),
+                                  [](const auto &kernel_tensor) { return kernel_tensor->IsDynamicShape(); });
+  return true;
 }
 
 std::vector<KernelAttr> RpcRecvKernelMod::GetOpSupport() {

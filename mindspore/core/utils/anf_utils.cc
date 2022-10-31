@@ -341,6 +341,15 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
     auto tuple_type = type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
     res = tuple_type->size();
+    // Some nodes could have monad outputs like RpcRecv. We need to jump these outputs.
+    if (NeedJumpMonadOutput(node) && tuple_type->elements()[res - 1]->isa<MonadType>()) {
+      for (size_t i = 0; i < tuple_type->elements().size(); i++) {
+        if (tuple_type->elements()[i]->isa<MonadType>()) {
+          res = i;
+          break;
+        }
+      }
+    }
   } else if (type->isa<TypeNone>()) {
     res = 0;
   } else if (type->isa<CSRTensorType>()) {
@@ -351,6 +360,9 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
     // Currently, COOTensor only supports 2-D matrix (shape has 2 values). 4 outputs = 2 Tensors + 2 shape values.
     constexpr size_t kCOOTensorOutputNum = 4;
     res = kCOOTensorOutputNum;
+  } else if (NeedJumpMonadOutput(node) && type->isa<MonadType>()) {
+    // Some nodes could have monad outputs like RpcRecv. We need to jump these outputs.
+    res = 0;
   } else {
     res = 1;
   }
@@ -592,6 +604,21 @@ mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &AnfUtils::GetReal
     cnode->set_user_data(real_input_info);
   }
   return real_input_info->real_input_nodes;
+}
+
+bool AnfUtils::NeedJumpMonadOutput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
+
+  std::vector<std::string> jump_monad_output_nodes = {kRpcRecvOpName};
+  if (std::find(jump_monad_output_nodes.begin(), jump_monad_output_nodes.end(), GetCNodeName(cnode)) !=
+      jump_monad_output_nodes.end()) {
+    return true;
+  }
+  return false;
 }
 
 void FlatParameterFinder::AddParameter(const ParameterPtr &param) {
