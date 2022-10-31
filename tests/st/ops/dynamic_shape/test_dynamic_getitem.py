@@ -547,10 +547,6 @@ def test_dynamic_getitem_tuple():
     dynamic_input = Tensor(shape=(2, None, 3), dtype=mstype.float32)
     input_np = np.random.randn(2, 4, 3).astype(np.float32)
 
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
-    fact.forward_cmp()
-    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
@@ -586,10 +582,6 @@ def test_dynamic_getitem_tuple_001():
     dynamic_input = Tensor(shape=(3, 4, None, 2), dtype=mstype.float32)
     input_np = np.random.randn(3, 4, 5, 2).astype(np.float32)
 
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
-    fact.forward_cmp()
-    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
@@ -629,10 +621,6 @@ def test_dynamic_getitem_tuple_002():
                            dtype=mstype.float32)  # (1,2,4,5,2,None)
     input_np = np.random.randn(3, 4, 5, 2, 4).astype(np.float32)
 
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
-    fact.forward_cmp()
-    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
