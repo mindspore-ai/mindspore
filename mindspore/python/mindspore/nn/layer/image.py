@@ -565,7 +565,7 @@ class PixelShuffle(Cell):
     Applies a pixelshuffle operation over an input signal composed of several input planes. This is useful for
     implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
-    <https://arxiv.org/abs/1609.05158> `_ .
+    <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the input is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
     :math:`(*, C, H \times r, W \times r)`, where r is an upscale factor and * is zero or more batch dimensions.
@@ -577,7 +577,7 @@ class PixelShuffle(Cell):
         - **x** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and
           the length of third to last dimension can be divisible by `upscale_factor` squared.
 
-    Output:
+    Outputs:
         - **output** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` .
 
     Raises:
@@ -610,7 +610,7 @@ class PixelUnshuffle(Cell):
 
     Applies a pixelunshuffle operation over an input signal composed of several input planes. For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
-    <https://arxiv.org/abs/1609.05158> `_ .
+    <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the input is of shape :math:`(*, C, H \times r, W \times r)` , and the output is of shape
     :math:`(*, C \times r^2, H, W)` , where r is a downscale factor and * is zero or more batch dimensions.
@@ -622,7 +622,7 @@ class PixelUnshuffle(Cell):
         - **x** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `x` is larger than
           2, and the length of second to last dimension or last dimension can be divisible by `downscale_factor` .
 
-    Output:
+    Outputs:
         - **output** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` .
 
     Raises:
