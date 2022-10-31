@@ -196,7 +196,7 @@ Status NNAPIDelegate::Build(DelegateModel<schema::Primitive> *model) {
   }
 
   // Update the kernels of delegate model.
-  ReplaceNodes(std::shared_ptr<LiteDelegateGraph>(model));
+  ReplaceNodes(std::make_shared<LiteDelegateGraph>(*model));
   return mindspore::kSuccess;
 }
 
