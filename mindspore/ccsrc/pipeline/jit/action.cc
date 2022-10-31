@@ -1060,9 +1060,8 @@ bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr
         auto &user_node = user.first;
         if (common::AnfAlgo::HasAbstractRef(user_node) || common::AnfAlgo::SequenceHasAbstractRef(user_node)) {
           if (device_target == kAscendDevice) {
-            MS_LOG(WARNING) << "On the Ascend platform, when the return value of the control flow subgraph is "
-                            << "parameter, the performance may be degraded. The value of the parameter can be returned "
-                            << "to improve the performance. "
+            MS_LOG(WARNING) << "On the Ascend platform, if you read-only access to the parameter, "
+                            << "you can take the value of the parameter, so that the system can do more optimization. "
                             << "For example, change 'return param' to 'return param.value()'\n"
                             << "Please check your code:" << trace::GetDebugInfo(user_node->debug_info());
           }
