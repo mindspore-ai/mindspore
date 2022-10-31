@@ -43,7 +43,7 @@ class InstanceNormV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   template <typename T>
-  void CollectStatsKernel(const kernel::AddressPtr &x, float *_mean_, float *_var_sum);
+  void CollectStatsKernel(const kernel::AddressPtr &x, float *_mean_, float *_var_sum) const;
 
   void CollectLinearAndConstant(const typename TTypes<float>::Vec &gamma, const typename TTypes<float>::Vec &beta,
                                 const typename TTypes<float>::Vec &running_mean,
