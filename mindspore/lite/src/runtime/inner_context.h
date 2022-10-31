@@ -96,6 +96,8 @@ struct InnerContext : public Context {
   int node_id_ = -1;
 #endif
 
+  BindMode bind_mode_{Power_NoBind};
+  size_t actor_thread_num_{0};
   ThreadPool *thread_pool_{nullptr};
 
   // key is the precursor tensor's pointer, value is the group of successors' pointer.

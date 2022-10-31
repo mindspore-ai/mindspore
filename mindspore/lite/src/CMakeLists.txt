@@ -138,6 +138,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pack_weight_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_flow_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool_manager.cc
         )
 
 # set(MODEL_LOADER_FRAMEWORK_SRC

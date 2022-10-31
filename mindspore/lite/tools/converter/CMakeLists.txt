@@ -136,6 +136,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/runtime/runtime_shape_fusion_pass.cc
         ${SRC_DIR}/runtime/runtime_pass.cc
         ${SRC_DIR}/runtime/inner_context.cc
+        ${SRC_DIR}/runtime/thread_pool_manager.cc
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/runtime/tensor_category.cc
         ${SRC_DIR}/runtime/schema_tensor_wrapper.cc
