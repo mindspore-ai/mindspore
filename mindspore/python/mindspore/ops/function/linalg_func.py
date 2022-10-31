@@ -20,6 +20,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.function.math_func import _check_input_dtype, _check_attr_dtype
 from mindspore._c_expression import Tensor as Tensor_
 
@@ -143,9 +144,9 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         if rtol is None:
             rtol = max(ops.shape(x)) * ops.Eps()(Tensor(1.0, x.dtype))
 
-    if not ops.IsInstance()(rtol, mstype.tensor):
+    if not inner.IsInstance()(rtol, mstype.tensor):
         rtol = Tensor(rtol, mstype.float32)
-    if not ops.IsInstance()(atol, mstype.tensor):
+    if not inner.IsInstance()(atol, mstype.tensor):
         atol = Tensor(atol, mstype.float32)
 
     if not hermitian:

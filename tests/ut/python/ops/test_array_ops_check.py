@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
@@ -35,15 +36,6 @@ class ExpandDimsNet(nn.Cell):
     def construct(self, x):
         return self.op(x, self.axis)
 
-
-class IsInstanceNet(nn.Cell):
-    def __init__(self, inst):
-        super(IsInstanceNet, self).__init__()
-        self.inst = inst
-        self.op = P.IsInstance()
-
-    def construct(self, t):
-        return self.op(self.inst, t)
 
 
 class ReshapeNet(nn.Cell):
@@ -86,40 +78,34 @@ raise_set = [
 
     # input x scala, not Tensor
     ('SameTypeShape0', {
-        'block': (P.SameTypeShape(), {'exception': TypeError, 'error_keywords': ['SameTypeShape']}),
+        'block': (inner.SameTypeShape(), {'exception': TypeError, 'error_keywords': ['SameTypeShape']}),
         'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
     # input y scala, not Tensor
     ('SameTypeShape1', {
-        'block': (P.SameTypeShape(), {'exception': TypeError, 'error_keywords': ['SameTypeShape']}),
+        'block': (inner.SameTypeShape(), {'exception': TypeError, 'error_keywords': ['SameTypeShape']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), 5.0],
         'skip': ['backward']}),
     # type of x and y not match
     ('SameTypeShape2', {
-        'block': (P.SameTypeShape(), {'exception': TypeError, 'error_keywords': ['SameTypeShape']}),
+        'block': (inner.SameTypeShape(), {'exception': TypeError, 'error_keywords': ['SameTypeShape']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.int32))],
         'skip': ['backward']}),
     # shape of x and y not match
     ('SameTypeShape3', {
-        'block': (P.SameTypeShape(), {'exception': ValueError, 'error_keywords': ['SameTypeShape']}),
+        'block': (inner.SameTypeShape(), {'exception': ValueError, 'error_keywords': ['SameTypeShape']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 3]).astype(np.float32))],
         'skip': ['backward']}),
 
     # sub_type is None
     ('IsSubClass0', {
-        'block': (P.IsSubClass(), {'exception': TypeError, 'error_keywords': ['IsSubClass']}),
+        'block': (inner.IsSubClass(), {'exception': TypeError, 'error_keywords': ['IsSubClass']}),
         'desc_inputs': [None, mstype.number],
         'skip': ['backward']}),
     # type_ is None
     ('IsSubClass1', {
-        'block': (P.IsSubClass(), {'exception': TypeError, 'error_keywords': ['IsSubClass']}),
+        'block': (inner.IsSubClass(), {'exception': TypeError, 'error_keywords': ['IsSubClass']}),
         'desc_inputs': [mstype.number, None],
-        'skip': ['backward']}),
-
-    # t is not mstype.Type
-    ('IsInstance1', {
-        'block': (IsInstanceNet(5.0), {'exception': TypeError, 'error_keywords': ['IsInstance']}),
-        'desc_inputs': [None],
         'skip': ['backward']}),
 
     # input x is scalar, not Tensor

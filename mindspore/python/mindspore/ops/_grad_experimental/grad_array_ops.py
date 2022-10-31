@@ -48,6 +48,7 @@ from mindspore.ops.operations.array_ops import Col2Im
 from mindspore.ops.operations.array_ops import StridedSliceV2
 from mindspore.ops.operations._grad_ops import StridedSliceV2Grad
 from mindspore.ops.operations.random_ops import LogNormalReverse
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops._utils.utils import is_shape_unknown
@@ -105,7 +106,7 @@ def get_bprop_masked_select(self):
     """Generate bprop for MaskedFill"""
     mul_op = P.Mul()
     sum_op = P.ReduceSum()
-    is_instance_op = P.IsInstance()
+    is_instance_op = inner.IsInstance()
 
     def bprop(input_data, mask, value, out, dout):
         mask = F.cast(mask, mstype.float32)

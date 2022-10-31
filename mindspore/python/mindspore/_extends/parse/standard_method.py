@@ -35,7 +35,7 @@ from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median
-from ...ops.operations._inner_ops import Format
+from ...ops.operations._inner_ops import Format, issubclass_
 from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
 from ...ops.primitive import constexpr
@@ -2643,7 +2643,7 @@ def ge(x, y):
 
 def while_cond(x):
     """For while condition, if the condition is a tensor, the loop will not be unrolled"""
-    if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
+    if issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
         is_cond = check_is_tensor_bool_cond(F.shape(x))
         if is_cond:
             return F.cast(x, mstype.bool_)

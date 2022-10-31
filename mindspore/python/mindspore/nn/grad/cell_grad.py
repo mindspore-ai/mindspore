@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from mindspore.nn.cell import Cell
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import Primitive
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit
@@ -80,7 +81,7 @@ class Jvp(Cell):
         self.first_grad_single_value = _FirstGradSingleValue(fn)
         self.first_grad_single_value.add_flags(enable_tuple_grad_first=True)
         self.second_grad_op = C.GradOperation(sens_param=True)
-        self.issubclass_ = P.IsSubClass()
+        self.issubclass_ = inner.IsSubClass()
         self.typeof = Primitive('typeof')
         self.make_tuple = Primitive('MakeTuple')
         self.tuple_len = Primitive("tuple_len")
@@ -122,7 +123,7 @@ class _JvpInner(Cell):
         self.first_grad_single_value = _JvpFirstGradSingleValue()
         self.first_grad_single_value.add_flags(enable_tuple_grad_first=True)
         self.second_grad_op = C.GradOperation(sens_param=True)
-        self.issubclass_ = P.IsSubClass()
+        self.issubclass_ = inner.IsSubClass()
         self.typeof = Primitive('typeof')
         self.make_tuple = Primitive('MakeTuple')
         self.tuple_len = Primitive("tuple_len")
@@ -182,7 +183,7 @@ class Vjp(Cell):
         self.fn = fn
         self.grad = C.GradOperation(get_all=True, sens_param=True)
         self.grad_single_value = C.GradOperation(sens_param=True)
-        self.issubclass_ = P.IsSubClass()
+        self.issubclass_ = inner.IsSubClass()
         self.typeof = Primitive('typeof')
         self.tuple_len = Primitive("tuple_len")
 

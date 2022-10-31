@@ -152,7 +152,6 @@ bessel_k1e_ = BesselK1e()
 equal_ = P.Equal()
 isfinite_ = P.IsFinite()
 isnan_ = P.IsNan()
-same_type_shape_ = P.SameTypeShape()
 maximum_ = P.Maximum()
 minimum_ = P.Minimum()
 lerp_ = P.Lerp()
@@ -3196,36 +3195,6 @@ def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
             neginf = (float)(np.finfo(np.float32).min)
     _nan_to_num = _get_cache_prim(NanToNum)(nan=nan, posinf=posinf, neginf=neginf)
     return _nan_to_num(x)
-
-
-def same_type_shape(input_x, input_y):
-    """
-    Checks whether the data type and shape of two tensors are the same.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        input_y (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
-
-    Returns:
-        Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
-        if data type and shape of `input_x` and `input_y` are the same.
-
-    Raises:
-        TypeError: If the data types of `input_x` and `input_y` are not the same.
-        ValueError: If the shapes of `input_x` and `input_y` are not the same.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> input_y = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = ops.same_type_shape(input_x, input_y)
-        >>> print(output)
-        [[2. 2.]
-         [2. 2.]]
-    """
-    return same_type_shape_(input_x, input_y)
 
 
 def maximum(x, y):
@@ -7138,7 +7107,6 @@ __all__ = [
     'linspace',
     'matrix_solve',
     'std',
-    'same_type_shape',
     'maximum',
     'minimum',
     'median',

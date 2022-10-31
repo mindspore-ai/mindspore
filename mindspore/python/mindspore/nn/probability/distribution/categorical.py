@@ -18,6 +18,7 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.functional import stop_gradient
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore._checkparam import Validator
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype
@@ -149,7 +150,7 @@ class Categorical(Distribution):
         self.fill = P.Fill()
         self.gather = P.GatherNd()
         self.greater = P.Greater()
-        self.issubclass = P.IsSubClass()
+        self.issubclass = inner.IsSubClass()
         self.less = P.Less()
         # when the graph kernel mode is enable
         # use Log directly as akg will handle the corner cases

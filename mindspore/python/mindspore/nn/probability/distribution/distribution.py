@@ -17,6 +17,7 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore._checkparam import Validator as validator
 from ._utils.utils import raise_none_error, cast_to_tensor, set_param_type, cast_type_for_device,\
     raise_not_implemented_util
@@ -115,7 +116,7 @@ class Distribution(Cell):
         self.exp_base = exp_generic
         self.fill_base = P.Fill()
         self.log_base = log_generic
-        self.sametypeshape_base = P.SameTypeShape()
+        self.sametypeshape_base = inner.SameTypeShape()
         self.sq_base = P.Square()
         self.sqrt_base = P.Sqrt()
         self.shape_base = P.Shape()

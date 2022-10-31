@@ -15,6 +15,7 @@
 """Utility functions to help distribution class."""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common import dtype as mstype
 
 
@@ -26,7 +27,7 @@ def exp_generic(input_x):
     exp = P.Exp()
     cast = P.Cast()
     dtype = P.DType()
-    checktype = P.IsSubClass()
+    checktype = inner.IsSubClass()
 
     if not checktype(dtype(input_x), mstype.float_):
         input_x = cast(input_x, mstype.float32)
@@ -48,7 +49,7 @@ def log_generic(input_x):
     dtype = P.DType()
     shape = P.Shape()
     select = P.Select()
-    checktype = P.IsSubClass()
+    checktype = inner.IsSubClass()
 
     if not checktype(dtype(input_x), mstype.float_):
         input_x = cast(input_x, mstype.float32)

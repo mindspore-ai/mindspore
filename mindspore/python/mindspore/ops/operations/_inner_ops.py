@@ -2178,3 +2178,228 @@ class MixedPrecisionCast(Primitive):
             return data
 
         return self.hyper_map(cast_inner, x)
+
+
+class CheckBprop(PrimitiveWithInfer):
+    """
+    Checks whether the data type and the shape of corresponding elements from tuples x and y are the same.
+
+    Args:
+        prim_to_check (str): The name of the primitive being checked. Default: ''.
+
+    Inputs:
+        - **input_x** (tuple[Tensor]) - The `input_x` contains the outputs of bprop to be checked.
+        - **input_y** (tuple[Tensor]) - The `input_y` contains the inputs of bprop to check against.
+
+    Outputs:
+        Tuple[Tensor], the `input_x`,
+        if data type and shape of corresponding elements from `input_x` and `input_y` are the same.
+
+    Raises:
+        TypeError: If `input_x` or `input_y` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.op = ops.CheckBprop()
+        ...     def construct(self, x, y):
+        ...         return self.op(x, y)
+        ...
+        >>> net = Net()
+        >>> input_x = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
+        >>> input_y = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
+        >>> output = net(input_x, input_y)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.00000000e+00,  2.00000000e+00],
+         [ 2.00000000e+00,  2.00000000e+00]]),)
+    """
+
+    @prim_attr_register
+    def __init__(self, prim_to_check=""):
+        """Initialize CheckBprop"""
+        self.prim_to_check = prim_to_check
+
+    def infer_shape(self, xshapes, yshapes):
+        """infer shape"""
+        tips = f"user defined method 'bprop'"
+        validator.check_value_type('grads', xshapes, (tuple,), tips)
+        validator.check_value_type('params', yshapes, (tuple,), tips)
+        if not len(xshapes) == len(yshapes):
+            raise ValueError(f"For {tips} the number of return values(gradients) must be equal to "
+                             f"the number of input arguments except 'out' and 'dout', "
+                             f"which is:{len(yshapes)} but got {len(xshapes)}.")
+        checking_range = len(yshapes)
+        for i in range(checking_range):
+            xshape = xshapes[i]
+            yshape = yshapes[i]
+            if not xshape or not yshape:
+                continue
+            if xshape != yshape:
+                raise ValueError(f"For {tips}, the {i}th return value(gradient of the {i}th argument) "
+                                 f"should have the same shape as the {i}th argument, "
+                                 f"which is:{yshape}, but got: {xshape}.")
+        return xshapes
+
+    def infer_dtype(self, xdtypes, ydtypes):
+        """infer dtype"""
+        tips = f"user defined method 'bprop'"
+        validator.check_value_type('grads', xdtypes, (tuple,), tips)
+        validator.check_value_type('params', ydtypes, (tuple,), tips)
+        if not len(xdtypes) == len(ydtypes):
+            raise ValueError(f"For {tips}, the number of return values(gradients) must be equal to "
+                             f"the number of input arguments except 'out' and 'dout', "
+                             f"which is:{len(ydtypes)} but got {len(xdtypes)}.")
+        checking_range = len(ydtypes)
+        for i in range(checking_range):
+            xdtype = xdtypes[i]
+            ydtype = ydtypes[i]
+            if isinstance(xdtype, mstype.anything_type) or isinstance(ydtype, mstype.anything_type):
+                continue
+            if isinstance(ydtype, mstype.function_type):
+                if not isinstance(xdtype, mstype.env_type_type):
+                    raise TypeError(f"For {tips}, the {i}th return value(gradient of the {i}th argument) type "
+                                    f"should be {mstype.env_type_type}, but got {xdtype}.")
+            if xdtype != ydtype:
+                raise TypeError(f"For {tips}, the {i}th return value(gradient of the {i}th argument) "
+                                f"should have the same dtype as the {i}th argument, "
+                                f"which is:{ydtype}, but got: {xdtype}.")
+        return xdtypes
+
+check_bprop = CheckBprop()
+
+
+class SameTypeShape(PrimitiveWithInfer):
+    """
+    Checks whether the data type and shape of two tensors are the same.
+
+    Refer to :func:`mindspore.ops.same_type_shape` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+        >>> input_y = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+        >>> output = ops.SameTypeShape()(input_x, input_y)
+        >>> print(output)
+        [[2. 2.]
+         [2. 2.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Same"""
+
+    def __call__(self, x, y):
+        """run in PyNative mode"""
+        validator.check_value_type('x', x, Tensor, self.name)
+        validator.check_value_type('y', y, Tensor, self.name)
+        validator.check('x dtype', x.dtype, 'y dtype', y.dtype, Rel.EQ, self.name, TypeError)
+        validator.check('x shape', x.shape, 'y shape', y.shape, Rel.EQ, self.name)
+        return x
+
+    def __infer__(self, x, y):
+        validator.check_subclass('x', x['dtype'], mstype.tensor, self.name)
+        validator.check_subclass('y', y['dtype'], mstype.tensor, self.name)
+        validator.check('x dtype', x['dtype'], 'y dtype', y['dtype'], Rel.EQ, self.name, TypeError)
+        validator.check('x shape', x['shape'], 'y shape', y['shape'], Rel.EQ, self.name)
+        return x
+
+same_type_shape_ = SameTypeShape()
+
+
+class IsSubClass(PrimitiveWithInfer):
+    """
+    Checks whether this type is a sub-class of another type.
+
+    Inputs:
+        - **sub_type** (mindspore.dtype) - The type to be checked. Only constant value is allowed.
+        - **type_** (mindspore.dtype) - The target type. Only constant value is allowed.
+
+    Outputs:
+        bool, the check result.
+
+    Raises:
+        TypeError: If `sub_type` or `type_` is not a Type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = ops.IsSubClass()(mindspore.int32,  mindspore.intc)
+        >>> print(output)
+        True
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __infer__(self, sub_type, type_):
+        sub_type_t = sub_type['value']
+        type_v = type_['value']
+
+        validator.check_value_type("sub_type", sub_type_t, [mstype.Type], self.name)
+        validator.check_value_type("type_", type_v, [mstype.Type], self.name)
+
+        value = mstype._issubclass_(sub_type_t, type_v)  # pylint: disable=W0212
+
+        out = {'shape': (),
+               'dtype': mstype.type_type,
+               'value': value}
+        return out
+
+
+issubclass_ = IsSubClass()
+
+
+class IsInstance(PrimitiveWithInfer):
+    """
+    Checks whether an object is an instance of a target type.
+
+    Inputs:
+        - **inst** (Any Object) - The instance to be checked. Only constant value is allowed.
+        - **type_** (mindspore.dtype) - The target type. Only constant value is allowed.
+
+    Outputs:
+        bool, the check result.
+
+    Raises:
+        TypeError: If `type_` is not a Type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> inst = 1
+        >>> output = ops.IsInstance()(inst, mindspore.int32)
+        >>> print(output)
+        False
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __infer__(self, inst, type_):
+        sub_type_t = inst['dtype']
+        type_v = type_['value']
+
+        validator.check_value_type("type_", type_v, [mstype.Type], self.name)
+
+        if type_v == mstype.list_:
+            value = isinstance(sub_type_t, list)
+        elif type_v == mstype.tuple_:
+            value = isinstance(sub_type_t, tuple)
+        else:
+            value = mstype._issubclass_(sub_type_t, type_v)  # pylint: disable=W0212
+
+        out = {'shape': (),
+               'dtype': mstype.type_type,
+               'value': value}
+        return out

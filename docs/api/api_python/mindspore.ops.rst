@@ -314,7 +314,6 @@ Reduction算子
     :template: classtemplate.rst
 
     mindspore.ops.ApproximateEqual
-    mindspore.ops.CheckBprop
     mindspore.ops.Equal
     mindspore.ops.EqualCount
     mindspore.ops.Greater
@@ -322,15 +321,12 @@ Reduction算子
     mindspore.ops.InTopK
     mindspore.ops.IsFinite
     mindspore.ops.IsInf
-    mindspore.ops.IsInstance
     mindspore.ops.IsNan
-    mindspore.ops.IsSubClass
     mindspore.ops.Less
     mindspore.ops.LessEqual
     mindspore.ops.Maximum
     mindspore.ops.Minimum
     mindspore.ops.NotEqual
-    mindspore.ops.SameTypeShape
     mindspore.ops.TopK
 
 线性代数算子

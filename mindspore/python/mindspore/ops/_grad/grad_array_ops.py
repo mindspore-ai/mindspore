@@ -34,6 +34,7 @@ from mindspore.ops._grad.grad_base import dyn_rank, convert_to_tensor, dyn_inver
     dyn_fill
 from mindspore.ops._grad.grad_base import sum_grad_reduce_axis
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
+from ..operations._inner_ops import DynamicBroadcastGradientArgs, IsSubClass
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -44,7 +45,7 @@ reshape = P.Reshape()
 size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
-is_sub_class = P.IsSubClass()
+is_sub_class = IsSubClass()
 
 
 @bprop_getters.register(P.Fill)
