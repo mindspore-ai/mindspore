@@ -162,7 +162,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   CharAllocatorType char_alloc_;
 
   // The dynamic hash table on GPU.
-  std::unique_ptr<CudaDynamicMap<Key, int32_t, Allocator>> cuda_dynamic_map_;
+  std::unique_ptr<CudaDynamicMap<Key, int32_t, Allocator>> cuda_dynamic_map_{nullptr};
 
   // Record the number of elements in the map.
   size_t size_{0};

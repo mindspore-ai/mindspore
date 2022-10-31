@@ -121,7 +121,7 @@ __global__ void InitNormalDisRandomGen(uint32_t seed, curandStatePhilox4_32_10_t
 // Insert default normal distribution random value.
 template <typename Value>
 __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
-                                            size_t elements_per_block, const Value &mean, const Value &stddev,
+                                            size_t elements_per_block, const Value mean, const Value stddev,
                                             curandStatePhilox4_32_10_t *state, bool **idle_flags_ptr,
                                             Value *const *blocks_ptr) {
   size_t total_thread_num = blockDim.x * gridDim.x;
@@ -129,7 +129,7 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
     if (!idle_flags_ptr[block_idx][offset_in_block]) {
-      return;
+      continue;
     }
 
     const size_t current_pos_in_block = offset_in_block * value_dim;
@@ -155,7 +155,7 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
     }
 
     // 4. Update latest random state back to global memory.
-    state[pos] = localState;
+    state[pos % total_thread_num] = localState;
     idle_flags_ptr[block_idx][offset_in_block] = false;
   }
 }
@@ -163,14 +163,14 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
 // Insert default value into map by specific value.
 template <typename Value>
 __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
-                                   size_t elements_per_block, const Value &default_value, bool **idle_flags_ptr,
+                                   size_t elements_per_block, const Value default_value, bool **idle_flags_ptr,
                                    Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num;
        pos += blockDim.x * gridDim.x) {
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
     if (!idle_flags_ptr[block_idx][offset_in_block]) {
-      return;
+      continue;
     }
 
     const size_t current_pos_in_block = offset_in_block * value_dim;

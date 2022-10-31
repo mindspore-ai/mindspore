@@ -129,10 +129,16 @@ void GPUHashTable<Key, Value, Allocator>::Finalize() {
     FreeMemory(idle_flags_[i]);
   }
 
-  FreeMemory(blocks_ptr_);
-  FreeMemory(idle_flags_ptr_);
+  if (blocks_ptr_) {
+    FreeMemory(blocks_ptr_);
+  }
+  if (idle_flags_ptr_) {
+    FreeMemory(idle_flags_ptr_);
+  }
 
-  FreeMemory(random_gen_state_);
+  if (random_gen_state_) {
+    FreeMemory(random_gen_state_);
+  }
 
   CHECK_CUDA_RET(cudaFree(insert_success_number_), "cudaFree");
 }
@@ -166,12 +172,12 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   int *indices = nullptr;
   AllocateMemory(key_num * sizeof(int), &indices);
   MS_ERROR_IF_NULL(indices);
+  Reserve(size_ + key_num, stream);
 
   // 1. Get all indices in blocks according to the key.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
-  Reserve(size_ + key_num, stream);
   // 2. Insert default value according to initializer, initializer can be 'normal', 'zeros' or 'ones'.
   RETURN_IF_FALSE_WITH_LOG(InsertDefaultValueByInitializer(key_num, initializer, indices, cuda_stream),
                            "Insert default value for miss keys failed.");
@@ -193,12 +199,12 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   int *indices = nullptr;
   AllocateMemory(key_num * sizeof(int), &indices);
   MS_ERROR_IF_NULL(indices);
+  Reserve(size_ + key_num, stream);
 
   // 1. Get all indices in blocks according to the key.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
-  Reserve(size_ + key_num, stream);
   // 2. Insert default value into map by specific value.
   InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(
     value_dim_, key_num, indices, elements_per_block_, default_value, idle_flags_ptr_, blocks_ptr_);
@@ -219,12 +225,12 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *key, size_t key_num,
   int *indices = nullptr;
   AllocateMemory(key_num * sizeof(int), &indices);
   MS_ERROR_IF_NULL(indices);
+  Reserve(size_ + key_num, stream);
 
   // 1. Get all indices in blocks according to the key.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
-  Reserve(size_ + key_num, stream);
   // 2. Insert values into map by indices in blocks.
   size_t total_insert_size = value_dim_ * key_num;
   InsertValues<<<GET_BLOCKS(total_insert_size), GET_THREADS, 0, cuda_stream>>>(
@@ -325,8 +331,12 @@ bool GPUHashTable<Key, Value, Allocator>::Reserve(size_t new_capacity, void *str
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::ResetBlockAndIdleFlag(cudaStream_t cuda_stream) {
   // Free old GPU memory for blocks_ptr_ and idle_flags_.
-  FreeMemory(blocks_ptr_);
-  FreeMemory(idle_flags_ptr_);
+  if (blocks_ptr_) {
+    FreeMemory(blocks_ptr_);
+  }
+  if (idle_flags_ptr_) {
+    FreeMemory(idle_flags_ptr_);
+  }
 
   size_t cur_blocks_num = blocks_.size();
   // Allocate new GPU memory for blocks_ptr_.
