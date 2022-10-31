@@ -62,8 +62,8 @@ static int FillRoiPooling(NnieRunCfg *cfg, NnieTensors *inputs, int idx) {
 int NnieInit(NnieHandle *h, NnieTensors *inputs) {
   NnieModel *model = &(h->cfg_.model_);
 
-  if (inputs->size_ <= 1) {
-    LOGE("inputs size need greater than 1!");
+  if (inputs->size_ <= 0) {
+    LOGE("inputs size need greater than 0!");
     return HI_FAILURE;
   }
   if (NnieLoadModel(h->model_buf_, h->buf_size_, model) != HI_SUCCESS) {
