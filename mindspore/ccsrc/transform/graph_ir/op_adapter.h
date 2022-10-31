@@ -491,14 +491,14 @@ class OpAdapter : public BaseOpAdapter {
 
   size_t GetOutputSize(const TypePtr &type) const {
     if (!type->isa<Tuple>()) {
-      return 1;
+      return (type->isa<MonadType>() || type->isa<TypeNone>() || type->isa<TypeNull>()) ? 0 : 1;
     }
     size_t output_size = 0;
     auto tuple_type = type->cast<std::shared_ptr<Tuple>>();
     MS_EXCEPTION_IF_NULL(tuple_type);
     auto elements = tuple_type->elements();
     for (const auto &element : elements) {
-      if (element->isa<MonadType>()) {
+      if (element->isa<MonadType>() || element->isa<TypeNone>() || element->isa<TypeNull>()) {
         continue;
       }
       output_size = output_size + GetOutputSize(element);
