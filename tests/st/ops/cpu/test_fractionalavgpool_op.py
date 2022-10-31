@@ -230,3 +230,155 @@ def test_fractionalavgpool_pynative_dynamic():
         assert np.allclose(output_y, expect_output_y)
         assert np.allclose(output_row_pooling_sequence, expect_output_row_pooling_sequence)
         assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.env_onecard
+def test_fractionalavgpoolgrad_graph_dynamic():
+    """
+    Feature: FractionalAvgPool
+    Description: Test of input
+    Expectation: The results are as expected
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    types = [np.float32, np.float64, np.int32, np.int64]
+    for type_i in types:
+        x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9,
+                             10, 11, 12, 13, 14, 15, 16]).reshape([1, 4, 4, 1]).astype(type_i))
+        net = NetFractionalAvgPool()
+        output = net(x)
+        output_y = output[0].asnumpy()
+        output_row_pooling_sequence = output[1].asnumpy()
+        output_col_pooling_sequence = output[2].asnumpy()
+        expect_output_y = np.array([[[[3.5], [5.5]], [[11.5], [13.5]]]]).astype(type_i)
+        expect_output_row_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        expect_output_col_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        assert np.allclose(output_y, expect_output_y)
+        assert np.allclose(output_row_pooling_sequence, expect_output_row_pooling_sequence)
+        assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
+
+        net = NetFractionalAvgPoolRealRandom()
+        output = net(x)
+        type0 = output[0].asnumpy().dtype
+        assert type0 == type_i
+
+        net = NetFractionalAvgPoolOverlapPing()
+        output = net(x)
+        output_y = output[0].asnumpy()
+        output_row_pooling_sequence = output[1].asnumpy()
+        output_col_pooling_sequence = output[2].asnumpy()
+        expect_output_y = np.array([[[[6], [7.5]], [[12], [13.5]]]]).astype(type_i)
+        expect_output_row_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        expect_output_col_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        assert np.allclose(output_y, expect_output_y)
+        assert np.allclose(output_row_pooling_sequence, expect_output_row_pooling_sequence)
+        assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
+
+        netgrad = NetFractionalAvgPoolGrad()
+        x_shape = Tensor(np.array([1, 4, 4, 1]).astype(np.int64))
+        out_backprop = Tensor(np.ones([1, 2, 2, 1]).astype(type_i))
+
+        set_input_dyn = []
+        dy_shape_0 = [None for _ in x_shape.shape]
+        input_dyn_0 = Tensor(shape=dy_shape_0, dtype=x_shape.dtype)
+        set_input_dyn.append(input_dyn_0)
+
+        dy_shape_1 = [None for _ in out_backprop.shape]
+        input_dyn_1 = Tensor(shape=dy_shape_1, dtype=out_backprop.dtype)
+        set_input_dyn.append(input_dyn_1)
+
+        dy_shape_2 = [None for _ in output[1].shape]
+        input_dyn_2 = Tensor(shape=dy_shape_2, dtype=output[1].dtype)
+        set_input_dyn.append(input_dyn_2)
+
+        dy_shape_3 = [None for _ in output[2].shape]
+        input_dyn_3 = Tensor(shape=dy_shape_3, dtype=output[2].dtype)
+        set_input_dyn.append(input_dyn_3)
+
+        netgrad.set_inputs(*set_input_dyn)
+
+        output_grad = netgrad(x_shape, out_backprop, output[1], output[2])
+        output_grad_y = output_grad[0].asnumpy()
+        expect_output_grad_y = np.array([[[[0.25], [0.25], [0.25], [0.25]],
+                                          [[0.25], [0.25], [0.25], [0.25]],
+                                          [[0.25], [0.25], [0.25], [0.25]],
+                                          [[0.25], [0.25], [0.25], [0.25]]]]).astype(type_i)
+        assert np.allclose(output_grad_y, expect_output_grad_y)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.env_onecard
+def test_fractionalavgpoolgrad_pynative_dynamic():
+    """
+    Feature: FractionalAvgPool
+    Description: Test of input
+    Expectation: The results are as expected
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    types = [np.float32, np.float64, np.int32, np.int64]
+    for type_i in types:
+        x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9,
+                             10, 11, 12, 13, 14, 15, 16]).reshape([1, 4, 4, 1]).astype(type_i))
+        net = NetFractionalAvgPool()
+        output = net(x)
+        output_y = output[0].asnumpy()
+        output_row_pooling_sequence = output[1].asnumpy()
+        output_col_pooling_sequence = output[2].asnumpy()
+        expect_output_y = np.array([[[[3.5], [5.5]], [[11.5], [13.5]]]]).astype(type_i)
+        expect_output_row_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        expect_output_col_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        assert np.allclose(output_y, expect_output_y)
+        assert np.allclose(output_row_pooling_sequence, expect_output_row_pooling_sequence)
+        assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
+
+        net = NetFractionalAvgPoolRealRandom()
+        output = net(x)
+        type0 = output[0].asnumpy().dtype
+        assert type0 == type_i
+
+        net = NetFractionalAvgPoolOverlapPing()
+        output = net(x)
+        output_y = output[0].asnumpy()
+        output_row_pooling_sequence = output[1].asnumpy()
+        output_col_pooling_sequence = output[2].asnumpy()
+        expect_output_y = np.array([[[[6], [7.5]], [[12], [13.5]]]]).astype(type_i)
+        expect_output_row_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        expect_output_col_pooling_sequence = np.array([0, 2, 4]).astype(np.int64)
+        assert np.allclose(output_y, expect_output_y)
+        assert np.allclose(output_row_pooling_sequence, expect_output_row_pooling_sequence)
+        assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
+
+        netgrad = NetFractionalAvgPoolGrad()
+        x_shape = Tensor(np.array([1, 4, 4, 1]).astype(np.int64))
+        out_backprop = Tensor(np.ones([1, 2, 2, 1]).astype(type_i))
+
+        set_input_dyn = []
+        dy_shape_0 = [None for _ in x_shape.shape]
+        input_dyn_0 = Tensor(shape=dy_shape_0, dtype=x_shape.dtype)
+        set_input_dyn.append(input_dyn_0)
+
+        dy_shape_1 = [None for _ in out_backprop.shape]
+        input_dyn_1 = Tensor(shape=dy_shape_1, dtype=out_backprop.dtype)
+        set_input_dyn.append(input_dyn_1)
+
+        dy_shape_2 = [None for _ in output[1].shape]
+        input_dyn_2 = Tensor(shape=dy_shape_2, dtype=output[1].dtype)
+        set_input_dyn.append(input_dyn_2)
+
+        dy_shape_3 = [None for _ in output[2].shape]
+        input_dyn_3 = Tensor(shape=dy_shape_3, dtype=output[2].dtype)
+        set_input_dyn.append(input_dyn_3)
+
+        netgrad.set_inputs(*set_input_dyn)
+
+        output_grad = netgrad(x_shape, out_backprop, output[1], output[2])
+        output_grad_y = output_grad[0].asnumpy()
+        expect_output_grad_y = np.array([[[[0.25], [0.25], [0.25], [0.25]],
+                                          [[0.25], [0.25], [0.25], [0.25]],
+                                          [[0.25], [0.25], [0.25], [0.25]],
+                                          [[0.25], [0.25], [0.25], [0.25]]]]).astype(type_i)
+        assert np.allclose(output_grad_y, expect_output_grad_y)

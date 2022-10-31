@@ -31,6 +31,7 @@ namespace ops {
 namespace {
 constexpr size_t kInpuSizes = 4;
 constexpr size_t kInpuDims = 1;
+constexpr int64_t kDynamicRankValue = -2;
 abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -55,17 +56,25 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
   auto shape_ptr = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape]);
   auto shape_v = shape_ptr->shape();
-  if (shape_v[kInputIndex0] != SizeToLong(kInpuSizes)) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the input 'orig_input_tensor_shape' tensor shape must = 4.";
-  }
   if (shape_v.size() > kInpuDims) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the input 'orig_input_tensor_shape' tensor must be a 1-D tensor.";
   }
 
+  std::vector<int64_t> output_shape;
+  if (IsDynamicRank(shape_v)) {
+    output_shape.push_back(kDynamicRankValue);
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+
+  if (IsDynamic(shape_v)) {
+    output_shape = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                    abstract::Shape::kShapeDimAny};
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+
   if (!input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex0]->BuildValue()->isa<None>()) {
-    std::vector<int64_t> output_shape;
     int64_t shape_m = 1;
     auto input_shape_ptr = reinterpret_cast<int64_t *>(input_shape_tensor->data_c());
     for (auto i = 0; i < shape_v[kInputIndex0]; ++i) {
@@ -83,7 +92,6 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
     return std::make_shared<abstract::Shape>(output_shape);
   } else {
     const uint32_t input_shapes = static_cast<uint32_t>(std::pow(max_length, 1.0 / shape_v[kInputIndex0]));
-    std::vector<int64_t> output_shape;
     ShapeVector shape_min;
     ShapeVector shape_max;
     for (int i = 0; i < shape_v[kInputIndex0]; i++) {
