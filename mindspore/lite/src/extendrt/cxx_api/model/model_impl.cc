@@ -31,6 +31,8 @@
 namespace mindspore {
 namespace {
 const char *const kExecutionPlan = "execution_plan";
+const char *const kConfigModelFileSection = "model_file";
+const char *const kConfigMindIRPathKey = "mindir_path";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 }  // namespace
@@ -87,7 +89,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
   const void *model_buff = model_data;
   size_t model_size = data_size;
-  auto mindir_path = GetConfig("model_file", "mindir_path");
+  auto mindir_path = GetConfig(kConfigModelFileSection, kConfigMindIRPathKey);
   if (mindir_path == "") {
     // user does not set mindir_path, convert from model_path
     mindir_path = model_path.substr(0, model_path.rfind("/"));

@@ -24,6 +24,7 @@
 #include "runtime/hardware/device_context.h"
 
 namespace mindspore {
+/// \brief Adaptive Graph Executor for cloud Graph Executor to solve interface conflicts.
 class LiteGraphExecutor : public device::GraphExecutor {
  public:
   LiteGraphExecutor() = default;

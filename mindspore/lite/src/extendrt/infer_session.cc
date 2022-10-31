@@ -33,6 +33,8 @@ static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,  
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static bool is_infer_single_op = true;
 static bool is_use_lite_session = false;
+
+/// \brief Default Infer Session Implementation, using kernelmod, not implemented now.
 class DefaultInferSession : public InferSession {
  public:
   explicit DefaultInferSession(const std::shared_ptr<Context> &context) {}
