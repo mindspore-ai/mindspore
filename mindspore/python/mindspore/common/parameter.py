@@ -35,7 +35,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.parallel._tensor import _get_slice_index
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table, \
-    _enable_distributed_mindrt, _is_ps_mode
+                                           _is_ps_mode
 from mindspore.parallel._ps_context import _reinsert_hash_table_size
 from mindspore.parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
 from mindspore.common.seed import _get_global_and_op_seed
@@ -278,13 +278,6 @@ class Parameter(Tensor_):
         return new_type
 
     @staticmethod
-    def _not_init_data():
-        is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
-        if is_worker_or_server or _is_role_sched() or _is_in_parallel_mode():
-            return True
-        return False
-
-    @staticmethod
     def _get_parameter_new_args(data, rc):
         """Set `set_data` of current `Parameter`."""
         if isinstance(data, bool):
@@ -298,8 +291,7 @@ class Parameter(Tensor_):
                 # make a copy of Tensor to init the parameter.
                 return (Tensor, data.asnumpy())
 
-            is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
-            not_init_data = is_worker_or_server or _is_role_sched() or _is_in_parallel_mode()
+            not_init_data = _is_role_sched() or _is_in_parallel_mode()
             if not_init_data:
                 # do not init data while in auto parallel.
                 return (Tensor, None, data.dtype, data.shape, data.init)
@@ -758,9 +750,6 @@ class Parameter(Tensor_):
             _insert_weight_init_info(self.name, global_seed, op_seed)
 
         init_data_args = self._get_init_data_args(layout)
-
-        if _is_role_pserver() and not _enable_distributed_mindrt():
-            return self
 
         if self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Tensor) and \
                 self.init_mode.init is not None and (_is_role_worker() or _is_role_sched()):

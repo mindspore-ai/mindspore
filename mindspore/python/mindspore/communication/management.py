@@ -20,8 +20,7 @@ from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
     MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
-    _not_require_collective_comm_lib, _check_mpi_envs, _use_old_ps, \
-    _set_elegant_exit_handle
+    _check_mpi_envs, _set_elegant_exit_handle
 from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster
 
 
@@ -117,8 +116,6 @@ def init(backend_name=None):
         >>> from mindspore.communication import init
         >>> init()
     """
-    if _not_require_collective_comm_lib():
-        return
     host_init = _host_distribute()
     device_target = context.get_context("device_target")
 
@@ -137,7 +134,7 @@ def init(backend_name=None):
                         "but got the type : {}".format(type(backend_name)))
 
     if backend_name == "hccl":
-        if not _use_old_ps() and _is_ps_mode():
+        if _is_ps_mode():
             # Use MindSpore cluster to build network for Parameter Server traning.
             init_cluster()
             if _is_role_sched() or _is_role_pserver():

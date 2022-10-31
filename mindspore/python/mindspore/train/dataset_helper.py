@@ -27,8 +27,8 @@ from mindspore import context, nn
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, \
     _to_full_shapes, _get_pipeline_stages
-from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
-                                   _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_sched, _is_ps_mode, \
+                                           _enable_distributed_mindrt
 from mindspore.ops import operations as P
 
 
@@ -231,7 +231,7 @@ def connect_network_with_dataset(network, dataset_helper):
         raise RuntimeError(
             "The API 'connect_network_with_dataset' should be called in dataset sink mode.")
 
-    if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
+    if _is_role_sched():
         return network
 
     if not hasattr(aux, '__network__'):
@@ -333,10 +333,8 @@ class DatasetHelper:
                 iterclass = _DatasetIterGE
             else:
                 if context.get_context("mode") == context.GRAPH_MODE:
-                    if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
+                    if _is_role_sched():
                         iterclass = _DatasetIterPSServer
-                    elif _is_role_worker() and _is_ps_mode() and not _enable_distributed_mindrt():
-                        iterclass = _DatasetIterPSWork
                     elif (context.get_context("device_target") == "Ascend") or \
                          (context.get_context("device_target") == "GPU"):
                         iterclass = _DatasetIterMSLoopSink
@@ -592,22 +590,6 @@ class _DatasetIterPSServer(_DatasetIter):
 
         def op():
             return _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num=1)
-
-        self.op = op
-
-
-class _DatasetIterPSWork(_DatasetIter):
-    """Iter for context on MS_WORKER"""
-
-    def __init__(self, dataset, sink_size, epoch_num):
-        super().__init__(dataset, sink_size, epoch_num)
-        if sink_size > 0:
-            self.sink_count = sink_size
-        else:
-            self.sink_count = dataset.get_dataset_size()
-
-        def op():
-            return tuple()
 
         self.op = op
 

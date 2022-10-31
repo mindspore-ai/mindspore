@@ -359,7 +359,7 @@ class EmbeddingLookup(Cell):
             self.embedding_table.key = param_key
             _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size, param_key)
 
-        if  _enable_distributed_mindrt():
+        if _enable_distributed_mindrt():
             self.rank_id = get_rank()
             if self.is_ps_server:
                 self._slice_pserver_embeddings("zeros")

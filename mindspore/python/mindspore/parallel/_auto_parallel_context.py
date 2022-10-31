@@ -19,7 +19,7 @@ import threading
 from mindspore import context
 import mindspore.log as logger
 from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx, _set_fusion_strategy_by_size
-from mindspore.parallel._ps_context import _is_role_pserver, _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_role_pserver
 from mindspore._c_expression import AutoParallelContext
 from mindspore._checkparam import args_type_check, Validator
 
@@ -373,8 +373,6 @@ class _AutoParallelContext:
     def get_parallel_mode(self):
         """Get parallel mode."""
         self.check_context_handle()
-        if _is_role_pserver() and not _enable_distributed_mindrt():
-            return context.ParallelMode.STAND_ALONE
         return self._context_handle.get_parallel_mode()
 
     def set_strategy_search_mode(self, search_mode):

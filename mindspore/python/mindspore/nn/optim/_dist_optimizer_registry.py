@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from inspect import isfunction
 
-from mindspore.parallel._ps_context import _get_ps_context, _is_ps_mode, _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _get_ps_context, _is_ps_mode
 
 
 _create_func_map = {}
@@ -92,7 +92,7 @@ def get_creating_func():
     Returns creating functions for distributed optimizers.
     """
     # Only support optimizers in parameter server mode for now.
-    if _is_ps_mode() and _enable_distributed_mindrt():
+    if _is_ps_mode():
         return create_optimizers_on_pserver
     return no_distributed_optimizer
 

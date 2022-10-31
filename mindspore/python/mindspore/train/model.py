@@ -594,7 +594,7 @@ class Model:
             callbacks = cb_params.list_callback
         cb_params.train_dataset_element = None
         cb_params.network = self._network
-        if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
+        if _is_role_sched():
             epoch = 1
         # Embedding cache server only run one step.
         if (_is_role_pserver() or _is_role_sched()) and _cache_enable():
@@ -698,7 +698,7 @@ class Model:
                 if need_exec_callback_step_end:
                     list_callback.on_train_step_end(run_context)
 
-                if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
+                if _is_role_sched():
                     os._exit(0)
                 # Embedding cache server only run one step.
                 if is_embedding_cache_server:
@@ -911,7 +911,7 @@ class Model:
                     self._loss_scale_manager.update_loss_scale(overflow)
 
                 list_callback.on_train_step_end(run_context)
-                if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
+                if _is_role_sched():
                     os._exit(0)
                 # Embedding cache server only run one step.
                 if is_embedding_cache_server:

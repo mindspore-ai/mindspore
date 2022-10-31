@@ -51,7 +51,8 @@ import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
-from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _get_ps_context, _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _get_ps_context,\
+                                           _enable_distributed_mindrt
 from mindspore.dataset.engine.offload import GetOffloadModel
 
 import mindspore.dataset.transforms.c_transforms as c_transforms
@@ -434,7 +435,7 @@ class Dataset:
 
     @staticmethod
     def _noop_mode():
-        if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
+        if _is_role_sched():
             return True
         return False
 
