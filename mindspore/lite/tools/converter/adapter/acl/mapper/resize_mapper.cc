@@ -48,15 +48,15 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get primitive from cnode failed.";
     return lite::RET_ERROR;
   }
+  if (ProcScaleInput(cnode, src_prim) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Proc scale input failed.";
+    return lite::RET_ERROR;
+  }
   auto val_ptr = src_prim->GetAttr(ops::kMethod);
   CHECK_NULL_RETURN(val_ptr);
   int64_t method = GetValue<int64_t>(val_ptr);
   PrimitivePtr dst_prim = nullptr;
   if (method == static_cast<int64_t>(mindspore::ResizeMethod::NEAREST)) {
-    if (ProcScaleInput(cnode, src_prim) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Proc scale input failed.";
-      return lite::RET_ERROR;
-    }
     dst_prim = std::make_shared<acl::ResizeNearestNeighborV2>();
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::LINEAR)) {
     dst_prim = std::make_shared<acl::ResizeBilinearV2>();

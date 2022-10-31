@@ -55,6 +55,7 @@ ADD_CONVERTER_TBE_OP(Quant)
 ADD_CONVERTER_TBE_OP(Dequant)
 ADD_CONVERTER_TBE_OP(SpaceToBatchTF)
 ADD_CONVERTER_TBE_OP(BatchToSpaceTF)
+ADD_CONVERTER_TBE_OP(ClipByValue)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
