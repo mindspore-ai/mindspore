@@ -6267,7 +6267,7 @@ class ApplyProximalAdagrad(Primitive):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
 
-class SparseApplyProximalAdagrad(PrimitiveWithCheck):
+class SparseApplyProximalAdagrad(Primitive):
     r"""
     Updates relevant entries according to the proximal adagrad algorithm.
     Compared with :class:`mindspore.ops.ApplyProximalAdagrad`,
@@ -6364,20 +6364,6 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
                                 outputs=['var', 'accum'])
         self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
-
-    def check_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape,
-                    grad_shape, indices_shape):
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-
-    def check_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype,
-                    grad_dtype, indices_dtype):
-        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, [mstype.float16, mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({"l1": l1_dtype}, [mstype.float16, mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({"l2": l2_dtype}, [mstype.float16, mstype.float32], self.name)
-        valid_dtypes = [mstype.int32, mstype.int64]
-        validator.check_tensor_dtype_valid('indices', indices_dtype, valid_dtypes, self.name)
 
 
 class ApplyAddSign(Primitive):
