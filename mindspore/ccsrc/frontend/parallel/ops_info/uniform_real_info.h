@@ -54,6 +54,7 @@ class UniformRealInfo : public OperatorInfo {
 
   int64_t seed_ = 0;
   int64_t seed2_ = 0;
+  static int64_t SEED_NUM;
 };
 }  // namespace parallel
 }  // namespace mindspore

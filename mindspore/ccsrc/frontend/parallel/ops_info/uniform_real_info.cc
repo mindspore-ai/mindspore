@@ -29,6 +29,8 @@
 
 namespace mindspore {
 namespace parallel {
+int64_t UniformRealInfo::SEED_NUM = 1;
+
 Status UniformRealInfo::InferAttrs() {
   if (infer_attrs_completed_) {
     return SUCCESS;
@@ -53,6 +55,7 @@ Status UniformRealInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Seed2 must be greater or equal to zero, bug got " << seed2_;
     return FAILED;
   }
+  infer_strategy_mode_ = INDEPENDENT_MODE;
   return SUCCESS;
 }
 
@@ -139,12 +142,17 @@ void UniformRealInfo::ReplaceNodeInputOrAttrs() {
 
     // Update seed according rank_id
     int64_t rank_id = g_device_manager->rank_index_in_stage();
-    int64_t seed_bias;
+    int64_t seed_bias = 0;
+    // When seed and seed2 are both 0, ensure that the 0th card in each group has the same result
+    if (seed_ == 0 && seed2_ == 0) {
+      seed_bias += SEED_NUM;
+      ++SEED_NUM;
+    }
     if (repeated_num_in_dev_matrix_right_) {
-      seed_bias = rank_id / repeated_calc_num_;
+      seed_bias += rank_id / repeated_calc_num_;
     } else {
       int64_t device_num = stage_device_size_;
-      seed_bias = rank_id % (device_num / repeated_calc_num_);
+      seed_bias += rank_id % (device_num / repeated_calc_num_);
     }
 
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));

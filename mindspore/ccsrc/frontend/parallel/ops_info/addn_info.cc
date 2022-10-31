@@ -31,6 +31,8 @@ Status AddNInfo::CheckStrategy(const StrategyPtr &strategy) {
   Strategies strategies = strategy->GetInputDim();
   for (size_t i = 1; i < strategies.size(); ++i) {
     if (strategies[i] != strategies[0]) {
+      MS_LOG(ERROR) << name_ << ": The strategy for each input must be equal to strategies[0]: " << strategies[0]
+                    << ", but got strategies[" << i << "]: " << strategies[i];
       return FAILED;
     }
   }

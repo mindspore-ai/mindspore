@@ -362,10 +362,10 @@ Operator CreateDivOp(float scale) {
   OperatorName operator_name = REAL_DIV;
   OperatorAttrs operator_attrs;
   OperatorParams operator_param;
-  size_t parameter_pos = 2;
+  constexpr size_t parameter_pos = 2;
   mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(scale);
   ValuePtr scale_value = MakeValue(tensor_ptr);
-  operator_param.push_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
+  (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
   OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
 
   Operator op = std::make_pair(operator_name, operator_arg);
@@ -2322,6 +2322,18 @@ AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple
   return tensor_node->cast<AnfNodePtr>();
 }
 
+Operator CreateDivOpWithType(float divisor, const TypePtr &dtype) {
+  OperatorName operator1_name = REAL_DIV;
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(divisor, dtype);
+  ValuePtr op1_param_value = MakeValue(tensor_ptr);
+  Attr op1_param = std::make_pair("divisor", op1_param_value);
+  OperatorParams operator1_params = {std::make_pair(op1_param, 2)};
+  OperatorAttrs operator1_attrs;
+  OperatorArgs operator1_args = std::make_pair(operator1_attrs, operator1_params);
+  Operator div_op = std::make_pair(operator1_name, operator1_args);
+  return div_op;
+}
+
 ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype) {
   // Create AllReduceSum op
   Operator op0 = CreateAllReduceOp(REDUCE_OP_SUM, forward_group[0].name());
@@ -2329,21 +2341,13 @@ ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, con
   MS_LOG(INFO) << "The group of forward all reduce is " << group_name;
 
   // Create RealDiv op
-  OperatorName operator1_name = REAL_DIV;
   std::vector<Device> device_list = forward_group[0].GetDevicesList();
-  auto divisor = static_cast<float>(device_list.size());
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(divisor, dtype);
-  ValuePtr op1_param_value = MakeValue(tensor_ptr);
-  Attr op1_param = std::make_pair("divisor", op1_param_value);
-  OperatorParams operator1_params = {std::make_pair(op1_param, 2)};
-  OperatorAttrs operator1_attrs;
-  OperatorArgs operator1_args = std::make_pair(operator1_attrs, operator1_params);
-  Operator op1 = std::make_pair(operator1_name, operator1_args);
-  ForwardOp forward_op = {op0, op1};
-
+  auto divisor = SizeToFloat(device_list.size());
+  Operator op1 = CreateDivOpWithType(divisor, dtype);
   std::string dtype_name = dtype->ToString();
   MS_LOG(INFO) << "The divisor of Div op is " << device_list.size() << ", the dtype is " << dtype_name;
-  return forward_op;
+
+  return {op0, op1};
 }
 }  // namespace parallel
 }  // namespace mindspore

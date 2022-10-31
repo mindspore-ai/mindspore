@@ -41,6 +41,7 @@ Status KLDivLossInfo::CheckStrategy(const StrategyPtr &strategy) {
                   << StrategyToString(strategies);
     return FAILED;
   }
+  batch_split_num_ = strategies[0][0];
   return SUCCESS;
 }
 
@@ -128,6 +129,11 @@ Status KLDivLossInfo::InferForwardCommunication() {
     forward_op_ = CreateReduceMeanForwardOp(group_list_, element_type);
   } else {
     (void)forward_op_.emplace_back(CreateAllReduceOp(REDUCE_OP_SUM, group_list_[0].name()));
+    if (reduction_ == BATCH_MEAN) {
+      // Divided by the number of devices in the Batch dimension
+      auto element_type = outputs_dtype_->cast<mindspore::TensorTypePtr>()->element();
+      (void)forward_op_.emplace_back(CreateDivOpWithType(SizeToFloat(batch_split_num_), element_type));
+    }
   }
   MS_LOG(INFO) << name_ << ": The group name of forward all reduce is " << group_list_[0].name();
 

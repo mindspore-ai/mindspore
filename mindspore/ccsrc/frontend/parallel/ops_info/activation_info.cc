@@ -252,7 +252,7 @@ Status CumOpBase::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   auto axis_split = input_strategy[LongToSize(axis_)];
-  if (axis_split > 1) {
+  if (axis_split != NO_SPLIT_STRATEGY) {
     MS_LOG(ERROR) << "Currently, CumSum does not support the sharding strategies which splits axis.";
     return FAILED;
   }

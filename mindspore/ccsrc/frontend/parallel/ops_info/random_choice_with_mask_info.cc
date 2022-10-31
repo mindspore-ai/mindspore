@@ -29,6 +29,7 @@ Status RandomChoiceWithMaskInfo::GetAttrs() {
   if (attrs_.find(SEED2) != attrs_.end()) {
     seed2_ = GetValue<int64_t>(attrs_[SEED2]);
   }
+  infer_strategy_mode_ = INDEPENDENT_MODE;
   return SUCCESS;
 }
 
@@ -85,37 +86,13 @@ Status RandomChoiceWithMaskInfo::InferAsLossDivisor() {
 }
 
 void RandomChoiceWithMaskInfo::ReplaceNodeInputOrAttrs() {
+  // seed and seed2 cannot both be 0.
   if (seed_ != 0 || seed2_ != 0) {
     return;
-  }
-  if (cnode_->HasAttr(SEED)) {
-    cnode_->EraseAttr(SEED);
-  }
-  if (cnode_->HasAttr(SEED2)) {
-    cnode_->EraseAttr(SEED2);
   }
   cnode_->AddAttr(SEED, MakeValue(SEED_NUM));
   cnode_->AddAttr(SEED2, MakeValue(SEED_NUM));
   ++SEED_NUM;
-}
-
-void RandomChoiceWithMaskInfo::CheckGPUBackend() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (backend != kGPUDevice) {
-    MS_LOG(EXCEPTION) << name_ << ": The backend is " << backend << " , only support on GPU backend now.";
-  }
-}
-
-Status RandomChoiceWithMaskInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
-  CheckGPUBackend();
-  return OperatorInfo::Init(in_strategy, out_strategy);
-}
-
-Status RandomChoiceWithMaskInfo::InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy) {
-  CheckGPUBackend();
-  return OperatorInfo::InitForCostModel(strategy, out_strategy);
 }
 
 void RandomChoiceWithMaskInfo::ReComputeBatchSplitFlagList() { split_flag_list_[0] = false; }

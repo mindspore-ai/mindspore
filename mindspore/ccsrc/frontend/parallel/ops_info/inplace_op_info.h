@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_ADD_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_ADD_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_OP_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_OP_INFO_H_
 
 #include <memory>
 #include <string>
@@ -27,12 +27,12 @@
 
 namespace mindspore {
 namespace parallel {
-class InplaceAddInfo : public OperatorInfo {
+class InplaceOpBase : public OperatorInfo {
  public:
-  InplaceAddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                 const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<InplaceAddCost>()) {}
-  ~InplaceAddInfo() override = default;
+  InplaceOpBase(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost) {}
+  ~InplaceOpBase() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
   void ReComputeBatchSplitFlagList() override;
@@ -48,14 +48,30 @@ class InplaceAddInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
 };
 
-class InplaceSubInfo : public InplaceAddInfo {
+class InplaceAddInfo : public InplaceOpBase {
+ public:
+  InplaceAddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : InplaceOpBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<InplaceAddCost>()) {}
+  ~InplaceAddInfo() override = default;
+};
+
+class InplaceSubInfo : public InplaceOpBase {
  public:
   InplaceSubInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                  const PrimitiveAttrs &attrs)
-      : InplaceAddInfo(name, inputs_shape, outputs_shape, attrs) {}
-  ~InplaceSubInfo() = default;
+      : InplaceOpBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<InplaceSubCost>()) {}
+  ~InplaceSubInfo() override = default;
+};
+
+class InplaceUpdateInfo : public InplaceOpBase {
+ public:
+  InplaceUpdateInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                    const PrimitiveAttrs &attrs)
+      : InplaceOpBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<InplaceUpdateCost>()) {}
+  ~InplaceUpdateInfo() override = default;
 };
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_ADD_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_OP_INFO_H_
