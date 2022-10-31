@@ -60,8 +60,10 @@ class MirrorPadInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     auto input_x_shape_ptr = input_args[0]->BuildShape();
     MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-    if (input_x_shape_ptr->IsDynamic()) {
-      return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
+    auto input_x_shape = input_x_shape_ptr->cast<abstract::ShapePtr>();
+    // Dynamic rank process.
+    if (IsDynamicRank(input_x_shape->shape())) {
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
     auto paddings = input_args[1]->BuildValue();
     MS_EXCEPTION_IF_NULL(paddings);
@@ -88,6 +90,9 @@ class MirrorPadInfer : public abstract::OpInferBase {
                                << size << " dims";
     }
     for (int64_t i = 0; i < size; i++) {
+      if (x_shape[i] == abstract::Shape::kShapeDimAny) {
+        continue;
+      }
       if (paddings_attr[i].first < 0 || paddings_attr[i].second < 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
       }
@@ -111,7 +116,12 @@ class MirrorPadInfer : public abstract::OpInferBase {
     }
     std::vector<int64_t> out_shape;
     for (size_t i = 0; i < x_shape.size(); i++) {
-      (void)out_shape.emplace_back(x_shape[i] + paddings_attr[i].first + paddings_attr[i].second);
+      // In dynamic situation , if input axis is dynamic, output axis is dynamic too.
+      if (x_shape[i] == abstract::Shape::kShapeDimAny) {
+        (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
+      } else {
+        (void)out_shape.emplace_back(x_shape[i] + paddings_attr[i].first + paddings_attr[i].second);
+      }
     }
     return std::make_shared<abstract::Shape>(out_shape);
   }
