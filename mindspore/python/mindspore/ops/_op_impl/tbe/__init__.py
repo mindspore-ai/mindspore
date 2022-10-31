@@ -415,9 +415,7 @@ from .square_sum_all_ds import _square_sum_all_ds_tbe
 from .pack import _pack_tbe
 from .pack_ds import _pack_ds_tbe
 from .unpack import _unpack_tbe
-from .unstack_with_num import _unstack_with_num
 from .unpack_ds import _unpack_ds_tbe
-from .unstack_with_num_ds import _unstack_ds_with_num
 from .scatter_update import _scatter_update_tbe
 from .prelu import _prelu_tbe
 from .prelu_ds import _prelu_ds_tbe

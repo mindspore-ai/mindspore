@@ -20,7 +20,6 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.array_ops import Fills, NonZero
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
@@ -807,7 +806,7 @@ def get_bprop_stack(self):
     axis = self.axis
 
     def bprop(x, out, dout):
-        stack_grad = inner.UnstackWithNum(len(x), axis)
+        stack_grad = P.Unstack(num=len(x), axis=axis)
         out = stack_grad(dout)
         if is_sub_class(F.typeof(x), ms.list_):
             ret = []
