@@ -36,26 +36,30 @@ namespace {
 constexpr char kSupportedReduceOp[] = "sum";
 }  // namespace
 
-void AllReduceCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
+bool AllReduceCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
-  auto group = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, GROUP);
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  auto group = GetValue<std::string>(prim->GetAttr(GROUP));
   if (group != kMCCLGlobalGroupName) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support " << kMCCLGlobalGroupName << " on CPU, but got " << group;
   }
-  auto reduce_op = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, OP);
+  auto reduce_op = GetValue<std::string>(prim->GetAttr(OP));
   if (reduce_op != kSupportedReduceOp) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support reduce sum on CPU, but got " << reduce_op;
   }
 #else
   MS_LOG(EXCEPTION) << "The CPU kernel allreduce is only supported on linux platform.";
 #endif
+  return true;
 }
 
 std::vector<KernelAttr> AllReduceCPUKernelMod::GetOpSupport() {

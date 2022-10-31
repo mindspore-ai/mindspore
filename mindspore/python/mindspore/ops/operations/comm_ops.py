@@ -103,7 +103,7 @@ def check_hcom_group_valid(group, prim_name=None):
                            f"'group': {group}. Please start by using mpi-run.")
 
 
-class AllReduce(PrimitiveWithInfer):
+class AllReduce(Primitive):
     """
     Reduces the tensor data across all devices in such a way that all devices will get the same final result.
 
@@ -174,13 +174,6 @@ class AllReduce(PrimitiveWithInfer):
         self.add_prim_attr('fusion', 0)
         self.add_prim_attr('index', 0)
         self.add_prim_attr('no_eliminate', True)
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        check_collective_target_dtype('x', x_dtype, self.name)
-        return x_dtype
 
 
 class AllGather(PrimitiveWithInfer):
