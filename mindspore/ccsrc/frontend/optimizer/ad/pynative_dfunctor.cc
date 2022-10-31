@@ -15,6 +15,8 @@
  */
 
 #include "frontend/optimizer/ad/pynative_dfunctor.h"
+
+#include <memory>
 #include "ir/func_graph_cloner.h"
 
 namespace mindspore {
@@ -29,6 +31,34 @@ tensor::TensorPtr PynativeDFunctor::GenNewTensorInner(const TypePtr &type_elem, 
   auto type = tensor_type->element();
   MS_EXCEPTION_IF_NULL(type);
   return std::make_shared<tensor::Tensor>(type->type_id(), shape->shape());
+}
+
+ValuePtr PynativeDFunctor::NewValue(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
+  MS_EXCEPTION_IF_NULL(type_elem);
+  MS_EXCEPTION_IF_NULL(shape_elem);
+  if (shape_elem->isa<abstract::TupleShape>()) {
+    auto tuple_shape = shape_elem->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    auto tuple_type = type_elem->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    size_t output_num = tuple_type->elements().size();
+    std::vector<ValuePtr> value_list;
+    for (size_t i = 0; i < output_num; ++i) {
+      auto sub_shape_elem = tuple_shape->shape()[i];
+      auto sub_type_elem = tuple_type->elements()[i];
+      ValuePtr new_value = NewValue(sub_type_elem, sub_shape_elem);
+      value_list.push_back(new_value);
+    }
+    return std::make_shared<ValueTuple>(value_list);
+  } else {
+    if (type_elem->isa<TensorType>()) {
+      return GenNewTensorInner(type_elem, shape_elem);
+    } else if (shape_elem->isa<abstract::NoShape>()) {
+      ShapeVector NoShape;
+      return std::make_shared<tensor::Tensor>(type_elem->type_id(), NoShape);
+    }
+  }
+  MS_LOG(EXCEPTION) << "Unknown shape: " << shape_elem->ToString() << ", type: " << type_elem->ToString();
 }
 
 ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
@@ -64,7 +94,7 @@ ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
     for (size_t i = 0; i < output_num; ++i) {
       auto shape_elem = tuple_shape->shape()[i];
       auto type_elem = tuple_type->elements()[i];
-      output_values.push_back(GenNewTensorInner(type_elem, shape_elem));
+      output_values.push_back(NewValue(type_elem, shape_elem));
     }
     auto value_tuple = std::make_shared<ValueTuple>(output_values);
     return gen_output_value_node(value_tuple);

@@ -27,6 +27,7 @@ namespace ad {
 class PynativeDFunctor {
  public:
   static ValueNodePtr GenNewTensor(const CNodePtr &cnode_morph);
+  static ValuePtr NewValue(const TypePtr &type_elem, const BaseShapePtr &shape_elem);
   static tensor::TensorPtr GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem);
   static void GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_node, FuncGraphPtr *bprop_graph,
                                              FuncGraphPtr *fprop_graph);
