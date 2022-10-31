@@ -76,7 +76,6 @@ Activation Functions
     :template: classtemplate.rst
 
     mindspore.ops.celu
-    mindspore.ops.dropout
     mindspore.ops.elu
     mindspore.ops.fast_gelu
     mindspore.ops.gelu
