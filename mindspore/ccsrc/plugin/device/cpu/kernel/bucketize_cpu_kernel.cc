@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/bucketize_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include "ops/bucketize.h"
+#include "plugin/device/cpu/kernel/bucketize_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/convert_utils_base.h"
 
@@ -29,13 +30,26 @@ const size_t kParallelDataNumSameShape = 64 * 1024;
 const size_t kParallelDataNumSameShapeMid = 35 * 1024;
 }  // namespace
 
-void BucketizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  boundaries_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "boundaries");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool BucketizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs.at(kIndex0)->GetDtype();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Bucketize>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  boundaries_ = kernel_ptr->get_boundaries();
+  return true;
+}
+
+int BucketizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  return KRET_OK;
 }
 
 bool BucketizeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
