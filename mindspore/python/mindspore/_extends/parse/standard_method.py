@@ -2358,10 +2358,18 @@ def broadcast_to(x, shape):
 
 def expand_dims(x, axis):
     """
-    Insert a dimension of shape 1 at the specified axis of Tensor
+    Insert a dimension of shape 1 at the specified axis of Tensor.
     """
     check_is_int(axis, 'axis')
     return P.ExpandDims()(x, axis)
+
+
+def unsqueeze(x, dim):
+    """
+    Insert a dimension of shape 1 at the specified axis of Tensor.
+    """
+    check_is_int(dim, 'dim')
+    return P.ExpandDims()(x, dim)
 
 
 def masked_fill(x, mask, value):

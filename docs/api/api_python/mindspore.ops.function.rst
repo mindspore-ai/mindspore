@@ -389,6 +389,7 @@ Array操作
     mindspore.ops.unsorted_segment_min
     mindspore.ops.unsorted_segment_prod
     mindspore.ops.unsorted_segment_sum
+    mindspore.ops.unsqueeze
     mindspore.ops.unstack
 
 类型转换

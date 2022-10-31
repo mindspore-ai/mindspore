@@ -441,6 +441,7 @@ tensor_operator_registry.register('gt', P.Greater)
 tensor_operator_registry.register('ge', P.GreaterEqual)
 tensor_operator_registry.register('shape', shape)
 tensor_operator_registry.register('squeeze', squeeze)
+tensor_operator_registry.register('unsqueeze', unsqueeze)
 tensor_operator_registry.register('expand_dims', expand_dims)
 # support GE backend for no compare operators
 tensor_operator_registry.register('cast', cast)

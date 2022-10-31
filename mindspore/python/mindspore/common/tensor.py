@@ -1746,6 +1746,15 @@ class Tensor(Tensor_):
         new_shape = validator.prepare_shape_for_squeeze(self.shape, axis)
         return tensor_operator_registry.get('reshape')()(self, new_shape)
 
+    def unsqueeze(self, dim):
+        """
+        For details, please refer to :func:`mindspore.ops.unsqueeze`.
+        """
+        self._init_check()
+        validator.check_is_int(dim, 'dim')
+        validator.check_int_range(dim, -self.ndim - 1, self.ndim + 1, Rel.INC_LEFT, 'dim')
+        return tensor_operator_registry.get('unsqueeze')(self, dim)
+
     def expand_dims(self, axis):
         """
         For details, please refer to :func:`mindspore.ops.expand_dims`.

@@ -389,6 +389,7 @@ Array Operation
     mindspore.ops.unsorted_segment_min
     mindspore.ops.unsorted_segment_prod
     mindspore.ops.unsorted_segment_sum
+    mindspore.ops.unsqueeze
     mindspore.ops.unstack
 
 Type Conversion
