@@ -3649,13 +3649,13 @@ def pixel_shuffle(x, upscale_factor):
     Applies a pixel_shuffle operation over an input signal composed of several input planes. This is useful for
     implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
-    <https://arxiv.org/abs/1609.05158> `_ .
+    <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the `x` is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
     :math:`(*, C, H \times r, W \times r)`, where `r` is an upscale factor and `*` is zero or more batch dimensions.
 
     Args:
-        x (Tensor)： Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and the
+        x (Tensor): Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and the
             length of third to last dimension can be divisible by `upscale_factor` squared.
         upscale_factor (int):  factor to increase spatial resolution by, and is a positive integer.
 
