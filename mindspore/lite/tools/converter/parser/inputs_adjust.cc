@@ -89,6 +89,10 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
       return lite::RET_ERROR;
     }
   }
+  if (param_node == nullptr) {
+    MS_LOG(ERROR) << "Build parameter failed.";
+    return lite::RET_ERROR;
+  }
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   auto tr = manager->Transact();

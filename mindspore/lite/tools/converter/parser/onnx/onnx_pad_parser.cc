@@ -24,6 +24,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr auto kNamePadContiguous = "pad_contiguous";
+constexpr int kPaddingDim = 2;
 constexpr int kInputSizeWithConstantValue = 3;
 }  // namespace
 
@@ -38,12 +39,12 @@ PrimitiveCPtr OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onn
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "pads") {
       const int size = onnx_node_attr.ints_size();
-      std::vector<std::vector<int64_t>> paddings(size / 2, std::vector<int64_t>(2, 0));
-      // begin1, begin2, begin3... end1, end2, end3... to
-      // begin1, end1, begin2, end2, begin3, end3...
-      for (int i = 0; i < size / 2; i++) {
-        paddings[i][0] = static_cast<int64_t>(onnx_node_attr.ints(i));
-        paddings[i][1] = static_cast<int64_t>(onnx_node_attr.ints(i + size / 2));
+      // will adjust the paddings in onnx_pad_adjust.
+      std::vector<std::vector<int64_t>> paddings(size / kPaddingDim, std::vector<int64_t>(kPaddingDim, 0));
+      for (int i = 0; i < size / kPaddingDim; i++) {
+        for (int j = 0; j < kPaddingDim; j++) {
+          paddings[i][j] = static_cast<int64_t>(onnx_node_attr.ints(i * kPaddingDim + j));
+        }
       }
       prim->set_paddings(paddings);
     } else if (attribute_name == "mode") {

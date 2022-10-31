@@ -17,13 +17,26 @@
 #include "tools/converter/adapter/acl/mapper/matmul_fusion_mapper.h"
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "tools/converter/adapter/acl/common/utils.h"
+#include "ops/batch_matmul.h"
 #include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
+  std::vector<int64_t> shape_vector;
+  if (acl::GetShapeVectorFromCNode(cnode, &shape_vector) != RET_OK) {
+    MS_LOG(ERROR) << "Get shape of cnode failed.";
+    return RET_ERROR;
+  }
+
   ops::MatMul mat_mul;
   auto dst_prim = mat_mul.GetPrim();
+  if (shape_vector.size() > DIMENSION_2D) {
+    ops::BatchMatMul batch_mat_mul;
+    dst_prim = batch_mat_mul.GetPrim();
+  }
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "MatMulFusion mapper failed.";
     return RET_ERROR;
