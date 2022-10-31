@@ -71,7 +71,6 @@ int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t ma
         return MINDRT_ERROR;
       }
       inner_pool_->SetActorThreadNum(actor_thread_num);
-      inner_pool_->DisableOccupiedActorThread();
       inner_pool_->SetKernelThreadNum(max_thread_num - actor_thread_num);
     }
     if (inner_pool_ != nullptr) {

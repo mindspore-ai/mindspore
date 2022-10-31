@@ -375,8 +375,8 @@ class _Context:
 
     def set_runtime_num_threads(self, runtime_num_threads):
         """Check and set runtime_num_threads."""
-        if runtime_num_threads <= 0:
-            raise ValueError("The num of thread must bigger than 0.")
+        if runtime_num_threads < 0:
+            raise ValueError("The num of thread must bigger than or equal to 0.")
         self.set_param(ms_ctx_param.runtime_num_threads, runtime_num_threads)
 
     def set_op_timeout(self, op_timeout):
@@ -926,7 +926,7 @@ def set_context(**kwargs):
         inter_op_parallel_num(int): The thread number of op parallel at the same time. Default value is 0,
             which means use the default num.
         runtime_num_threads(int): The thread pool number of cpu kernel used in runtime,
-            which must bigger than 0. Default value is 30, if you run many processes at
+            which must bigger than or equal to 0. Default value is 30, if you run many processes at
             the same time, you should set the value smaller to avoid thread contention.
         disable_format_transform (bool): Whether to disable the automatic format transform function from NCHW to NHWC.
             When the network training performance of fp16 is worse than fp32,

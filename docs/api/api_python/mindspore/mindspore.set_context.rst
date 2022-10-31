@@ -141,7 +141,7 @@ mindspore.set_context
         - **enable_compile_cache** (bool) - 表示是否加载或者保存前端编译的图。当 `enable_compile_cache` 被设置为True时，在第一次执行的过程中，一个硬件无关的编译缓存会被生成并且导出为一个MINDIR文件。当该网络被再次执行时，如果 `enable_compile_cache` 仍然为True并且网络脚本没有被更改，那么这个编译缓存会被加载。注意目前只支持有限的Python脚本更改的自动检测，这意味着可能有正确性风险。默认值：False。这是一个实验特性，可能会被更改或者删除。
         - **compile_cache_path** (str) - 保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录： `compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
         - **inter_op_parallel_num** (int) - 算子间并行数控制。 默认值为0，表示由框架默认指定。
-        - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，必须大于0。默认值为30，如果同时运行多个进程，应将该值设置得小一些，以避免线程争用。
+        - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，必须大于等于0。默认值为30，如果同时运行多个进程，应将该值设置得小一些，以避免线程争用。
         - **disable_format_transform** (bool) - 表示是否取消NCHW到NHWC的自动格式转换功能。当fp16的网络性能不如fp32的时，可以设置 `disable_format_transform` 为True，以尝试提高训练性能。默认值：False。
         - **support_binary** (bool) - 是否支持在图形模式下运行.pyc或.so。如果要支持在图形模式下运行.so或.pyc，可将 `support_binary` 置为True，并运行一次.py文件，从而将接口源码保存到接口定义.py文件中，因此要保证该文件可写。然后将.py文件编译成.pyc或.so文件，即可在图模式下运行。
         - **memory_optimize_level** (str) - 内存优化级别，默认值：O0。其值必须在 ['O0', 'O1'] 范围中。

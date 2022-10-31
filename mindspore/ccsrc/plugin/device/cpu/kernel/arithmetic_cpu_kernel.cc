@@ -28,6 +28,7 @@
 #include "plugin/device/cpu/kernel/nnacl/fp32/mul_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/power_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/sub_fp32.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -130,6 +131,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
     output_element_num_.clear();
     CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
+    is_init_broadcast_ = false;
     return KRET_OK;
   }
 
@@ -180,6 +182,20 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   }
 
  private:
+  void InitBroadCast() {
+    BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+    base_iter.SetPos(0);
+    input_index1_.clear();
+    input_index2_.clear();
+    input_index1_.resize(output_size_);
+    input_index2_.resize(output_size_);
+    for (size_t i = 0; i < output_size_; i++) {
+      input_index1_[i] = base_iter.GetInputPosA();
+      input_index2_[i] = base_iter.GetInputPosB();
+      base_iter.GenNextPos();
+    }
+    is_init_broadcast_ = true;
+  }
   void InitComputeFunc() {
     if (kernel_name_ == kAssignAdd || kernel_name_ == kAssignSub) {
       return;
@@ -229,10 +245,13 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
 
   ShapeVector input_shape1_;
   ShapeVector input_shape2_;
+  std::vector<size_t> input_index1_;
+  std::vector<size_t> input_index2_;
   std::vector<size_t> input_element_num1_;
   std::vector<size_t> input_element_num2_;
   ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
+  bool is_init_broadcast_{false};
 
   using TypeComputeFunc = std::function<void(ArithmeticCpuTypeFunc *, const T *in_x, const T *in_y, T *out)>;
   TypeComputeFunc compute_func_{nullptr};
@@ -268,13 +287,32 @@ void ArithmeticCpuTypeFunc<T>::AssignSub(T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::Add(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if constexpr (std::is_same_v<T, float>) {
+    if (input_shape1_ == input_shape2_) {
+      auto task = [input1, input2, out](size_t start, size_t end) {
+        (void)ElementAdd(input1 + start, input2 + start, out + start, end - start);
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+      return;
+    }
+    if (op_para_.in_elements_num0_ == 1 || op_para_.in_elements_num1_ == 1) {
+      auto task = [this, input1, input2, out](size_t start, size_t end) {
+        if (op_para_.in_elements_num0_ == 1) {
+          (void)ElementOptAdd(input1, input2 + start, out + start, end - start, &op_para_);
+        } else {
+          (void)ElementOptAdd(input1 + start, input2, out + start, end - start, &op_para_);
+        }
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+      return;
+    }
+  }
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()]);
-      iter.GenNextPos();
+      out[i] = static_cast<T>(input1[input_index1_[i]] + input2[input_index2_[i]]);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -282,13 +320,12 @@ void ArithmeticCpuTypeFunc<T>::Add(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::AddV2(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()]);
-      iter.GenNextPos();
+      out[i] = static_cast<T>(input1[input_index1_[i]] + input2[input_index2_[i]]);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -316,14 +353,12 @@ void ArithmeticCpuTypeFunc<T>::Sub(const T *input1, const T *input2, T *out) {
       return;
     }
   }
-
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
   auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()]);
-      iter.GenNextPos();
+      out[i] = static_cast<T>(input1[input_index1_[i]] - input2[input_index2_[i]]);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -351,17 +386,16 @@ void ArithmeticCpuTypeFunc<T>::Mul(const T *input1, const T *input2, T *out) {
       return;
     }
   }
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if constexpr (std::is_same_v<T, bool>) {
-        out[i] = static_cast<T>(input1[iter.GetInputPosA()] && input2[iter.GetInputPosB()]);
+        out[i] = static_cast<T>(input1[input_index1_[i]] && input2[input_index2_[i]]);
       } else {
-        out[i] = static_cast<T>(input1[iter.GetInputPosA()] * input2[iter.GetInputPosB()]);
+        out[i] = static_cast<T>(input1[input_index1_[i]] * input2[input_index2_[i]]);
       }
-      iter.GenNextPos();
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -391,14 +425,14 @@ void ArithmeticCpuTypeFunc<T>::RealDiv(const T *input1, const T *input2, T *out)
     return;
   }
 
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto dividend = input1[iter.GetInputPosA()];
-      auto divisor = input2[iter.GetInputPosB()];
-      iter.GenNextPos();
+      auto dividend = input1[input_index1_[i]];
+      auto divisor = input2[input_index2_[i]];
+
       auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
@@ -442,14 +476,14 @@ void ArithmeticCpuTypeFunc<T>::RealDivComplex(const T *input1, const T *input2, 
     return;
   }
 
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto dividend = input1[iter.GetInputPosA()];
-      auto divisor = input2[iter.GetInputPosB()];
-      iter.GenNextPos();
+      auto dividend = input1[input_index1_[i]];
+      auto divisor = input2[input_index2_[i]];
+
       auto zero = static_cast<T>(0);
       if (divisor == zero) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
@@ -463,14 +497,14 @@ void ArithmeticCpuTypeFunc<T>::RealDivComplex(const T *input1, const T *input2, 
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::Div(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto dividend = input1[iter.GetInputPosA()];
-      auto divisor = input2[iter.GetInputPosB()];
-      iter.GenNextPos();
+      auto dividend = input1[input_index1_[i]];
+      auto divisor = input2[input_index2_[i]];
+
       auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
@@ -492,14 +526,14 @@ void ArithmeticCpuTypeFunc<T>::Div(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::DivComplex(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto dividend = input1[iter.GetInputPosA()];
-      auto divisor = input2[iter.GetInputPosB()];
-      iter.GenNextPos();
+      auto dividend = input1[input_index1_[i]];
+      auto divisor = input2[input_index2_[i]];
+
       auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
@@ -516,14 +550,14 @@ void ArithmeticCpuTypeFunc<T>::DivComplex(const T *input1, const T *input2, T *o
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto dividend = input1[iter.GetInputPosA()];
-      auto divisor = input2[iter.GetInputPosB()];
-      iter.GenNextPos();
+      auto dividend = input1[input_index1_[i]];
+      auto divisor = input2[input_index2_[i]];
+
       auto zero = static_cast<T>(0);
       if constexpr (std::is_same_v<T, double>) {
         if (common::IsDoubleEqual(divisor, zero)) {
@@ -551,14 +585,14 @@ void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::FloorDiv(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto dividend = input1[iter.GetInputPosA()];
-      auto divisor = input2[iter.GetInputPosB()];
-      iter.GenNextPos();
+      auto dividend = input1[input_index1_[i]];
+      auto divisor = input2[input_index2_[i]];
+
       auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
@@ -580,14 +614,14 @@ void ArithmeticCpuTypeFunc<T>::FloorDiv(const T *input1, const T *input2, T *out
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::Mod(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto x = static_cast<double>(input1[iter.GetInputPosA()]);
-      auto y = static_cast<double>(input2[iter.GetInputPosB()]);
-      iter.GenNextPos();
+      auto x = static_cast<double>(input1[input_index1_[i]]);
+      auto y = static_cast<double>(input2[input_index2_[i]]);
+
       auto data_div = x / y;
       auto data_div_min = data_div < 0.0 ? data_div : 0.0;
       auto data_div_max = data_div > 0.0 ? data_div : 0.0;
@@ -602,14 +636,14 @@ void ArithmeticCpuTypeFunc<T>::Mod(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::FloorMod(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto x = static_cast<double>(input1[iter.GetInputPosA()]);
-      auto y = static_cast<double>(input2[iter.GetInputPosB()]);
-      iter.GenNextPos();
+      auto x = static_cast<double>(input1[input_index1_[i]]);
+      auto y = static_cast<double>(input2[input_index2_[i]]);
+
       auto res = x - floor(x / y) * y;
       out[i] = static_cast<T>((std::abs(res) > 1e-9) && ((res < 0.0) != (y < 0.0)) ? res + y : res);
     }
@@ -650,70 +684,63 @@ void ArithmeticCpuTypeFunc<T>::Pow(const T *input1, const T *input2, T *out) {
     }
   }
 
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
   if (output_size_ > kMaxPowSerialSize) {
-    auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-      auto iter = base_iter;
-      iter.SetPos(start);
+    auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        auto x = static_cast<double>(input1[iter.GetInputPosA()]);
-        auto y = static_cast<double>(input2[iter.GetInputPosB()]);
+        auto x = static_cast<double>(input1[input_index1_[i]]);
+        auto y = static_cast<double>(input2[input_index2_[i]]);
         out[i] = static_cast<T>(std::pow(x, y));
-        iter.GenNextPos();
       }
     };
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
   } else {
-    base_iter.SetPos(0);
     for (size_t i = 0; i < output_size_; i++) {
-      auto sx = static_cast<double>(input1[base_iter.GetInputPosA()]);
-      auto sy = static_cast<double>(input2[base_iter.GetInputPosB()]);
+      auto sx = static_cast<double>(input1[input_index1_[i]]);
+      auto sy = static_cast<double>(input2[input_index2_[i]]);
       out[i] = static_cast<T>(std::pow(sx, sy));
-      base_iter.GenNextPos();
     }
   }
 }
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::PowComplex(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
   if (output_size_ > kMaxPowSerialSize) {
-    auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-      auto iter = base_iter;
-      iter.SetPos(start);
+    auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        auto x = (input1[iter.GetInputPosA()]);
-        auto y = (input2[iter.GetInputPosB()]);
+        auto x = (input1[input_index1_[i]]);
+        auto y = (input2[input_index2_[i]]);
         out[i] = static_cast<T>(std::pow(x, y));
-        iter.GenNextPos();
       }
     };
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
   } else {
-    base_iter.SetPos(0);
     for (size_t i = 0; i < output_size_; i++) {
-      auto sx = (input1[base_iter.GetInputPosA()]);
-      auto sy = (input2[base_iter.GetInputPosB()]);
+      auto sx = (input1[input_index1_[i]]);
+      auto sy = (input2[input_index2_[i]]);
       out[i] = static_cast<T>(std::pow(sx, sy));
-      base_iter.GenNextPos();
     }
   }
 }
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::SquaredDifference(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      T diff = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
+      T diff = input1[input_index1_[i]] - input2[input_index2_[i]];
       if constexpr (std::is_same_v<T, bool>) {
         out[i] = static_cast<T>(diff);
       } else {
         out[i] = static_cast<T>(diff * diff);
       }
-      iter.GenNextPos();
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -721,14 +748,13 @@ void ArithmeticCpuTypeFunc<T>::SquaredDifference(const T *input1, const T *input
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      T diff = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
+      T diff = input1[input_index1_[i]] - input2[input_index2_[i]];
       out[i] = static_cast<T>(std::conj(diff) * diff);
-      iter.GenNextPos();
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -736,15 +762,15 @@ void ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex(const T *input1, const T
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::Xlogy(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto x1 = input1[iter.GetInputPosA()];
-      auto x2 = input2[iter.GetInputPosB()];
+      auto x1 = input1[input_index1_[i]];
+      auto x2 = input2[input_index2_[i]];
       auto logx2 = log(x2);
-      iter.GenNextPos();
+
       if constexpr (std::is_same_v<T, bool>) {
         out[i] = static_cast<T>(x1 && static_cast<bool>(logx2));
       } else {
@@ -757,14 +783,13 @@ void ArithmeticCpuTypeFunc<T>::Xlogy(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::Atan2(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
+  if (!is_init_broadcast_) {
+    InitBroadCast();
+  }
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(
-        atan2(static_cast<double>(input1[iter.GetInputPosA()]), static_cast<double>(input2[iter.GetInputPosB()])));
-      iter.GenNextPos();
+        atan2(static_cast<double>(input1[input_index1_[i]]), static_cast<double>(input2[input_index2_[i]])));
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -776,6 +801,41 @@ std::shared_ptr<CpuKernelFunc> SpecializeArithFunc() {
 }
 using ArithmeticCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFuncCreator>>> kernel_attr_list = {
+  {kAdd,
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeArithFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeArithFunc<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeArithFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeArithFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeArithFunc<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeArithFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeArithFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeArithFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     SpecializeArithFunc<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     SpecializeArithFunc<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithFunc<bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}},
   {kSub,
    {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      SpecializeArithFunc<int8_t>},
@@ -1182,7 +1242,8 @@ std::vector<KernelAttr> ArithmeticCpuKernelMod::GetOpSupport() {
 
   return support_list;
 }
-
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Add,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kAdd); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sub,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kSub); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mul,

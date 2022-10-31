@@ -25,6 +25,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/check_convert_utils.h"
 #include "ops/reduce.h"
+#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {
@@ -60,6 +61,8 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
   void ChooseFunc(const std::string &kernel_name_);
   void HandleInputAxis();
+  void SpecialExcute();
+  void CalAxesAndStride(std::vector<size_t> *axes, size_t *stride);
 
   enum class ReduceFuncType {
     kReduceAllType,
@@ -181,6 +184,26 @@ void ReduceAny(const T *in, T *out, size_t start, size_t end, TransposeIterator 
 }
 
 template <typename T>
+void ReduceCpuKernelFunc<T>::SpecialExcute() {
+  // special accelerate for axis = 1 and input has 2 dims
+  if ((reduce_type_ == ReduceFuncType::kReduceMeanType || reduce_type_ == ReduceFuncType::kReduceSumType) &&
+      axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == kDim2) {
+    simple_execute_ = true;
+  }
+  // special accelerate for axis[0] = 0 and other dims for axis is 1.
+  if (reduce_type_ == ReduceFuncType::kReduceSumType && axis_.size() >= 1 && axis_[0] == 0 &&
+      input_shape_.size() >= kDim2) {
+    simple_execute_ = true;
+    for (size_t i = 1; i < axis_.size(); ++i) {
+      if (static_cast<int64_t>(input_shape_.size()) > axis_[i] && input_shape_[axis_[i]] != 1) {
+        simple_execute_ = false;
+        break;
+      }
+    }
+  }
+}
+
+template <typename T>
 void ReduceCpuKernelFunc<T>::HandleInputAxis() {
   int64_t dimension = SizeToLong(input_shape_.size());
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
@@ -202,12 +225,8 @@ void ReduceCpuKernelFunc<T>::HandleInputAxis() {
   sort(axis_.begin(), axis_.end());
   auto last = std::unique(axis_.begin(), axis_.end());
   axis_.erase(last, axis_.end());
-  // special accelerate for axis = 1 and input has 2 dims
   if constexpr (std::is_same<T, float>::value) {
-    if ((reduce_type_ == ReduceFuncType::kReduceMeanType || reduce_type_ == ReduceFuncType::kReduceSumType) &&
-        axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == kDim2) {
-      simple_execute_ = true;
-    }
+    SpecialExcute();
   }
 }
 
@@ -287,6 +306,26 @@ void ReduceCpuKernelFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
+void ReduceCpuKernelFunc<T>::CalAxesAndStride(std::vector<size_t> *axes, size_t *stride) {
+  int dimension = SizeToInt(input_shape_.size());
+  size_t j = 0;
+  size_t k = 0;
+  for (int i = 0; i < dimension; ++i) {
+    if (j == axis_.size() || i != axis_[j]) {
+      (*axes)[k] = IntToSize(i);
+      ++k;
+    } else {
+      *stride *= LongToSize(input_shape_[IntToSize(i)]);
+      ++j;
+    }
+  }
+  for (auto &it : axis_) {
+    (*axes)[k] = IntToSize(it);
+    ++k;
+  }
+}
+
+template <typename T>
 bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
@@ -315,43 +354,41 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
     }
   } else {
     // Calculate transpose axes and stride
-    int dimension = SizeToInt(input_shape_.size());
     size_t stride = 1;
     std::vector<size_t> axes(input_shape_.size());
-    size_t j = 0;
-    size_t k = 0;
-    for (int i = 0; i < dimension; ++i) {
-      if (j == axis_.size() || i != axis_[j]) {
-        axes[k] = i;
-        ++k;
-      } else {
-        stride *= LongToSize(input_shape_[IntToSize(i)]);
-        ++j;
-      }
-    }
-    for (auto &it : axis_) {
-      axes[k] = it;
-      ++k;
-    }
+    CalAxesAndStride(&axes, &stride);
 
     size_t output_size = outputs[0]->size / sizeof(T);
     if constexpr (std::is_same<T, float>::value) {
       if (simple_execute_) {
-        auto task = [&](size_t start, size_t end) {
-          for (size_t i = start; i < end; ++i) {
-            (void)ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
-            if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-              output_addr[i] /= SizeToFloat(stride);
+        if (axis_[0] == 1) {
+          auto task = [&](size_t start, size_t end) {
+            for (size_t i = start; i < end; ++i) {
+              (void)ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
+              if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
+                output_addr[i] /= SizeToFloat(stride);
+              }
             }
-          }
-        };
-        ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
-        return true;
+          };
+          ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+          return true;
+        } else {
+          auto task = [&](size_t start, size_t end) {
+            int ret =
+              ReduceSumDim2Axis0(end - start, output_size, input_shape_[0], input_addr + start, output_addr + start);
+            if (ret != NNACL_OK) {
+              MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', ReduceSumDim2Axis0 failed.Error no: " << ret;
+            }
+          };
+          ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+          return true;
+        }
       }
     }
 
     // Calculate transpose shape
     std::vector<int64_t> transpose_shape(input_shape_.size());
+    int dimension = SizeToInt(input_shape_.size());
     for (int i = 0; i < dimension; ++i) {
       transpose_shape[i] = input_shape_[axes[i]];
     }
