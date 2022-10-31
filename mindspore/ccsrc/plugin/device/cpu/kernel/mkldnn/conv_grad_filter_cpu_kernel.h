@@ -20,18 +20,25 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class ConvGradFilterCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class ConvGradFilterCpuKernelMod : public MKLCpuKernelMod {
  public:
   ConvGradFilterCpuKernelMod() = default;
   explicit ConvGradFilterCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ConvGradFilterCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -42,6 +49,11 @@ class ConvGradFilterCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   size_t src_index_{0};
   size_t diff_dst_index_{1};
   std::string kernel_type_;
+  std::string format_;
+  int64_t group_;
+  std::string pad_mode_;
+  std::vector<int64_t> strides_include_nc_;
+  std::vector<int64_t> dilation_include_nc_;
 };
 }  // namespace kernel
 }  // namespace mindspore
