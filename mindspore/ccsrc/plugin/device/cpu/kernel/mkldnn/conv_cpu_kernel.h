@@ -17,21 +17,32 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_CPU_KERNEL_H_
 
+#include <map>
+#include <string>
 #include <vector>
 
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class ConvCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class ConvCpuKernelMod : public MKLCpuKernelMod {
  public:
   ConvCpuKernelMod() = default;
   ~ConvCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  std::string format_;
+  std::string pad_mode_;
+  int64_t group_;
 };
 }  // namespace kernel
 }  // namespace mindspore
