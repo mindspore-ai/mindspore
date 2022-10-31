@@ -825,6 +825,9 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
     after_shard = true;
   }
   if (root == nullptr && !after_shard) {
+    auto graph = info_[phase]->resource->func_graph();
+    MS_EXCEPTION_IF_NULL(graph);
+    parallel::InitOptimizerState(graph);
     return;
   }
   MS_EXCEPTION_IF_NULL(root);

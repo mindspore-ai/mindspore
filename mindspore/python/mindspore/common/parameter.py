@@ -492,13 +492,15 @@ class Parameter(Tensor_):
             Parameter, a new parameter.
         """
         x = copy(self)
-        x.param_info = self.param_info.clone()
+        param_info_clone = self.param_info.clone()
         info = self.param_info
         if hasattr(info, "cloned_obj"):
             info.cloned_obj.append(x)
         else:
             info.cloned_obj = [x]
         self.param_info = info
+        param_info_clone.cloned_obj = x
+        x.param_info = param_info_clone
         x.is_init = False
         x.init = self.init
         x.is_param_ps = self.is_param_ps
