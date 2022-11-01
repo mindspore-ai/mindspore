@@ -63,9 +63,9 @@ void AddOutputs(const CNodePtr &cnode, const std::vector<size_t> &input_indices)
     }
     auto node_to_output = cnode->input(index + 1);
     MS_EXCEPTION_IF_NULL(node_to_output);
-    abstract_list.emplace_back(node_to_output->abstract());
+    (void)abstract_list.emplace_back(node_to_output->abstract());
     if (!input_names_vec.empty() && !output_names_vec.empty() && index < input_names_vec.size()) {
-      output_names_vec.emplace_back(input_names_vec[index]);
+      (void)output_names_vec.emplace_back(input_names_vec[index]);
     }
   }
   if (!output_names_vec.empty()) {
