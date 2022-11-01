@@ -26,6 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class Net(nn.Cell):
+
     def __init__(self, pad_num):
         super(Net, self).__init__()
         self.uniq = P.UniqueWithPad()
@@ -33,6 +34,35 @@ class Net(nn.Cell):
 
     def construct(self, x):
         return self.uniq(x, self.pad_num)
+
+
+def dyn_case():
+    net = Net(0)
+
+    x_dyn = Tensor(shape=[None], dtype=mstype.int32)
+    net.set_inputs(x_dyn)
+
+    x = Tensor(np.array([1, 1, 2, 2, 3, 3, 4, 5]), dtype=mstype.int32)
+    out = net(x)
+
+    expect_shape = (8,)
+    for i in range(2):
+        assert out[i].asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_dyn():
+    """
+    Feature: test uniquewithpad in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    dyn_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    dyn_case()
 
 
 @pytest.mark.level0
@@ -107,12 +137,17 @@ def test_unique_with_pad_vmap():
     def cal_unique_with_pad(x):
         return P.UniqueWithPad()(x, -1)
 
-    x = Tensor(np.array([[[1, 2, 5, 2], [1, 2, 5, 2]], [[1, 2, 5, 2], [1, 2, 5, 2]]]).astype(np.int32))
+    x = Tensor(
+        np.array([[[1, 2, 5, 2], [1, 2, 5, 2]],
+                  [[1, 2, 5, 2], [1, 2, 5, 2]]]).astype(np.int32))
 
-    vmap_unique_with_pad = vmap(vmap(cal_unique_with_pad, in_axes=0), in_axes=0)
+    vmap_unique_with_pad = vmap(vmap(cal_unique_with_pad, in_axes=0),
+                                in_axes=0)
     outputs = vmap_unique_with_pad(x)
-    expect0 = np.array([[[1, 2, 5, -1], [1, 2, 5, -1]], [[1, 2, 5, -1], [1, 2, 5, -1]]]).astype(np.int32)
-    expect1 = np.array([[[0, 1, 2, 1], [0, 1, 2, 1]], [[0, 1, 2, 1], [0, 1, 2, 1]]]).astype(np.int32)
+    expect0 = np.array([[[1, 2, 5, -1], [1, 2, 5, -1]],
+                        [[1, 2, 5, -1], [1, 2, 5, -1]]]).astype(np.int32)
+    expect1 = np.array([[[0, 1, 2, 1], [0, 1, 2, 1]],
+                        [[0, 1, 2, 1], [0, 1, 2, 1]]]).astype(np.int32)
     assert np.allclose(outputs[0].asnumpy(), expect0)
     assert np.allclose(outputs[1].asnumpy(), expect1)
 

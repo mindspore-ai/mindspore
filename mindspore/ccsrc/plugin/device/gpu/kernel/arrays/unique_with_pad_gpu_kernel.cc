@@ -30,6 +30,7 @@ std::unique_ptr<cukernel::GpuKernelHelperBase> CreateUniqueWithPadKernelPtr(cons
                                                                             const uint32_t &device_id) {
   return std::make_unique<cukernel::UniqueWithPadHelperGpuKernel<T, S>>(kernel_name, device_id);
 }
+
 using UniqueWithPadPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
@@ -62,6 +63,7 @@ const std::vector<std::pair<KernelAttr, UniqueWithPadPtrCreatorFunc>> kernel_att
 
 bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   base_operator_ = base_operator;
   kernel_name_ = base_operator->name();
   auto batch_rank = base_operator->get_batch_rank();
@@ -69,13 +71,23 @@ bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
   batch_rank_ = static_cast<size_t>(batch_rank);
-  inputs_ = inputs;
-  outputs_ = outputs;
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
   }
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
+  return true;
+}
+
+int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  inputs_ = inputs;
+  outputs_ = outputs;
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   constexpr size_t kUniqueWithPadInputNum = 2;
@@ -102,10 +114,11 @@ bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
                         << Vector2Str(pad_shape) << " and input 'x' batch size: " << batch_size;
     }
   }
+
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
   input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
@@ -113,18 +126,7 @@ bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   is_need_retrieve_output_shape_ = false;
-  if (!is_input_dynamic_shape_.has_value()) {
-    bool is_input_dynamic_shape = false;
-    for (const auto &input : inputs) {
-      auto input_shape = input->GetShapeVector();
-      if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-        is_input_dynamic_shape = true;
-        break;
-      }
-    }
-    is_input_dynamic_shape_ = is_input_dynamic_shape;
-  }
-  return true;
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> UniqueWithPadGpuKernelMod::GetOpSupport() {

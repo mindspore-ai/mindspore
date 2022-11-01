@@ -280,7 +280,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimArrayToScalar, R{InferImplArrayToScalar, nullptr, true}},
     {prim::kPrimBroadcastShape, R{InferImplBroadCastShape, nullptr, true}},
     {prim::kPrimUnique, R{InferImplUnique, nullptr, true}},
-    {prim::kPrimUniqueWithPad, R{InferImplUniqueWithPad, nullptr, true}},
     {prim::kPrimUniqueGrad, R{InferImplUniqueGrad, nullptr, true}},
     {prim::kPrimEmbeddingLookup, R{InferImplEmbeddingLookup, nullptr, true}},
     {prim::kPrimSparseGatherV2, R{InferImplGatherV2, nullptr, true}},
