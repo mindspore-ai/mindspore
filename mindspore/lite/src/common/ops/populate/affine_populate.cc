@@ -21,6 +21,20 @@ using mindspore::schema::PrimitiveType_Affine;
 
 namespace mindspore {
 namespace lite {
+void DestroyAffineParas(OpParameter *parameter) {
+  MS_CHECK_PTR_IF_NULL(parameter);
+  MS_LOG(INFO) << "Destroy affine paras";
+  auto param = reinterpret_cast<AffineParameter *>(parameter);
+  if (param->matmul_parameter_ != nullptr) {
+    free(param->matmul_parameter_);
+    param->matmul_parameter_ = nullptr;
+  }
+  if (param->context_ != nullptr) {
+    free(param->context_);
+    param->context_ = nullptr;
+  }
+}
+
 static void ReleaseParam(AffineParameter *affine, MatMulParameter *matmul) {
   if (affine != nullptr) {
     free(affine);
@@ -44,6 +58,7 @@ OpParameter *PopulateAffineParameter(const void *prim) {
     return nullptr;
   }
   memset(affine_param, 0, sizeof(AffineParameter));
+  affine_param->op_parameter_.destroy_func_ = DestroyAffineParas;
   auto *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "malloc MatMulParameter failed.";
