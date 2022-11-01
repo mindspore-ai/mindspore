@@ -116,7 +116,7 @@ void RuntimeModel::InitLabel(const std::shared_ptr<DavinciModel> &davinci_model)
       continue;
     }
     auto label_set_task_info = std::static_pointer_cast<LabelSetTaskInfo>(task_info);
-
+    MS_EXCEPTION_IF_NULL(label_set_task_info);
     if (label_set_task_info->stream_id() >= stream_list_.size()) {
       MS_LOG(EXCEPTION) << "Invalid stream id " << label_set_task_info->stream_id() << " total stream num "
                         << stream_list_.size();

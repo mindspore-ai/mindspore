@@ -60,7 +60,7 @@ void LabelSwitchTask::Distribute() {
 
 void LabelSwitchTask::CheckParamValid() {
   MS_EXCEPTION_IF_NULL(stream_);
-
+  MS_EXCEPTION_IF_NULL(task_info_);
   if (task_info_->label_list().empty()) {
     MS_LOG(EXCEPTION) << "label_list is empty.";
   }

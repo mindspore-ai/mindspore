@@ -41,6 +41,7 @@ StreamSwitchTask::~StreamSwitchTask() {}
 
 void StreamSwitchTask::Distribute() {
   MS_LOG(INFO) << "Init StreamSwitchTask start.";
+  MS_EXCEPTION_IF_NULL(task_info_);
   MS_LOG(INFO) << "Stream " << task_info_->stream_id() << " active " << task_info_->true_stream_id();
   MS_EXCEPTION_IF_NULL(stream_);
 

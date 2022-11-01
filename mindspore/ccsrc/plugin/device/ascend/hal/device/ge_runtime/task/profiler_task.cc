@@ -35,6 +35,7 @@ ProfilerTask::~ProfilerTask() { stream_ = nullptr; }
 
 void ProfilerTask::Distribute() {
   MS_LOG(INFO) << "ProfilerTask Distribute start.";
+  MS_EXCEPTION_IF_NULL(task_info_);
   uint32_t model_id = 0;
   rtError_t rt_model_ret = rtModelGetId(model_handle_, &model_id);
   if (rt_model_ret != RT_ERROR_NONE) {

@@ -40,6 +40,7 @@ EventWaitTask::EventWaitTask(const ModelContext &model_context, const std::share
 EventWaitTask::~EventWaitTask() {}
 
 void EventWaitTask::Distribute() {
+  MS_EXCEPTION_IF_NULL(task_info_);
   MS_LOG(INFO) << "EventWaitTask Distribute start, stream: " << stream_ << ", event: " << event_
                << ", stream_id: " << task_info_->stream_id() << ", event_id: " << task_info_->event_id();
 

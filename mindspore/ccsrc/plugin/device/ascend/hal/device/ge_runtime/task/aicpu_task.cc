@@ -57,6 +57,7 @@ AicpuTask::~AicpuTask() {
 void AicpuTask::Distribute() {
   MS_LOG(INFO) << "InitAicpuTask start.";
   std::vector<void *> io_addrs;
+  MS_EXCEPTION_IF_NULL(task_info_);
   (void)io_addrs.insert(io_addrs.cend(), task_info_->input_data_addrs().cbegin(),
                         task_info_->input_data_addrs().cend());
   (void)io_addrs.insert(io_addrs.cend(), task_info_->output_data_addrs().cbegin(),
@@ -117,6 +118,7 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
   aicpu_param_head.length = args_size;
   aicpu_param_head.ioAddrNum = io_addrs_num;
 
+  MS_EXCEPTION_IF_NULL(task_info_);
   const auto &ext_info = task_info_->ext_info();
   uint32_t ext_size = SizeToUint(ext_info.size());
   if (ext_info.empty()) {
@@ -161,6 +163,7 @@ void AicpuTask::SetInputOutputAddrs(const std::vector<void *> &io_addrs, uint32_
 
 void AicpuTask::SetNodeDef(uint32_t node_def_len_offset, uint32_t node_def_addr_offset) {
   // Memcpy node def
+  MS_EXCEPTION_IF_NULL(task_info_);
   auto size = task_info_->node_def().size();
   auto rt_ret = aclrtMemcpy(static_cast<void *>(static_cast<uint8_t *>(args_) + node_def_len_offset), sizeof(uint32_t),
                             static_cast<const void *>(&size), sizeof(uint32_t), ACL_MEMCPY_HOST_TO_DEVICE);

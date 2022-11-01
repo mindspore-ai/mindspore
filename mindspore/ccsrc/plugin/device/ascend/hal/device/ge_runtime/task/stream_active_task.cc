@@ -42,6 +42,7 @@ StreamActiveTask::~StreamActiveTask() {}
 
 void StreamActiveTask::Distribute() {
   MS_LOG(INFO) << "Distribute start";
+  MS_EXCEPTION_IF_NULL(task_info_);
   MS_LOG(INFO) << "Stream " << task_info_->stream_id() << " active " << task_info_->active_stream_id();
   MS_EXCEPTION_IF_NULL(stream_);
   MS_EXCEPTION_IF_NULL(active_stream_);
