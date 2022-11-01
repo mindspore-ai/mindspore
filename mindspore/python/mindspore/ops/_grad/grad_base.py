@@ -149,5 +149,5 @@ def dyn_ones(shape, value_type):
 
 
 def sum_grad_reduce_axis(x, rx, keep_dims=False):
-    """sum the grad_reduce_axis. when rx is an empty tensor and skip_mode is True, we need skip this reduce"""
-    return P.ReduceSum(keep_dims=keep_dims, skip_mode=True)(x, rx)
+    """sum the grad_reduce_axis"""
+    return P.ReduceSum(keep_dims=keep_dims)(x, rx)

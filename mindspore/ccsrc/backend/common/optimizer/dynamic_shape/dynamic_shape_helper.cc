@@ -311,7 +311,12 @@ void InferOp(const CNodePtr &cnode, void *args) {
   }
 
   kernel::KernelArgs kernel_args;
-  InferShape(cnode, &kernel_args.depend_tensor_map, args);
+  if (AnfAlgo::IsDynamicShapeSkipExecute(cnode)) {
+    std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
+  } else {
+    InferShape(cnode, &kernel_args.depend_tensor_map, args);
+  }
 
   if (auto kernel_mod_type = kernel_mod->GetKernelModType(); IsCpuGpuKernelMod(kernel_mod_type)) {
     auto update = kernel::AbstractArgsFromCNode(cnode, IsDeprecatedCpuOrGpuKernelMod(kernel_mod_type));

@@ -465,7 +465,6 @@ constexpr auto kAttrReshapeType = "reshape_type";
 constexpr auto kAttrAxis = "axis";
 constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrKeepDims = "keep_dims";
-constexpr auto kAttrSkipMode = "skip_mode";
 constexpr auto kAttrShapeGamma = "shape_gamma";
 constexpr auto kAttrPerm = "perm";
 constexpr auto kAttrTransposeFirst = "transpose_first";
