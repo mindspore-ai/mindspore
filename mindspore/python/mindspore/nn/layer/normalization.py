@@ -331,7 +331,7 @@ class BatchNorm2d(_BatchNorm):
             raise ValueError(f"For '{cls_name}', the in_shape must have 4 dims, but got {dim}.")
 
 
-class BatchNorm3d(_BatchNorm):
+class BatchNorm3d(Cell):
     r"""
     Batch Normalization layer over a 5D input.
 
@@ -406,15 +406,7 @@ class BatchNorm3d(_BatchNorm):
                  moving_var_init='ones',
                  use_batch_statistics=None):
         """Initialize BatchNorm3d."""
-        super(BatchNorm3d, self).__init__(num_features,
-                                          eps,
-                                          momentum,
-                                          affine,
-                                          gamma_init,
-                                          beta_init,
-                                          moving_mean_init,
-                                          moving_var_init,
-                                          use_batch_statistics)
+        super(BatchNorm3d, self).__init__()
         self.bn2d = BatchNorm2d(num_features=num_features,
                                 eps=eps,
                                 momentum=momentum,
@@ -425,6 +417,8 @@ class BatchNorm3d(_BatchNorm):
                                 moving_var_init=moving_var_init,
                                 use_batch_statistics=use_batch_statistics,
                                 data_format="NCHW")
+        self.shape = P.Shape()
+        self.reshape = P.Reshape()
 
     @staticmethod
     @constexpr
