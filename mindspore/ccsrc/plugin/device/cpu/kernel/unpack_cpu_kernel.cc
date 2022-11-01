@@ -77,6 +77,11 @@ int UnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   unstack_param_.axis_ = origin_axis_;
 
   auto input_shape = inputs[0]->GetShapeVector();
+  int32_t shape_size = SizeToInt(input_shape.size());
+  if (unstack_param_.axis_ < -shape_size || unstack_param_.axis_ >= shape_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the `axis` should be in [" << -shape_size << ", " << shape_size
+                      << "), but got " << unstack_param_.axis_;
+  }
   if (unstack_param_.axis_ < 0) {
     unstack_param_.axis_ += input_shape.size();
   }

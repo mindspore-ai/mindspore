@@ -161,6 +161,11 @@ int CumSumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 void CumSumCpuKernelMod::Reshape() {
+  int shape_size = SizeToInt(shape_.size());
+  if (axis_ < -shape_size || axis_ >= shape_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the `axis` should be in [" << -shape_size << ", " << shape_size
+                      << "), but got " << axis_;
+  }
   axis_ = (axis_ < 0) ? axis_ + SizeToInt(shape_.size()) : axis_;
   dims_[kIndex0] = 1;
   dims_[kIndex1] = shape_[IntToSize(axis_)];

@@ -57,8 +57,13 @@ class UnpackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
     axis_ = static_cast<int32_t>(GetAttr<int64_t>(kernel_node, "axis"));
+    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    int32_t shape_size = SizeToInt(input_shape.size());
+    if (axis_ < -shape_size || axis_ >= shape_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the `axis` should be in [" << -shape_size << ", "
+                        << shape_size << "), but got " << axis_;
+    }
     if (axis_ < 0) {
-      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
       axis_ += SizeToInt(input_shape.size());
     }
     auto origin_data_format = AnfAlgo::GetOriginDataFormat(kernel_node);
@@ -82,7 +87,6 @@ class UnpackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     workspace_size_list_.push_back(sizeof(T *) * output_num_);
 
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
