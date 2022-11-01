@@ -44,8 +44,9 @@ bool ConvGradFilterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   group_ = GetValue<int64_t>(prim->GetAttr(GROUP));
   pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
   if (format_ != NCHW && format_ != NCDHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports " << NCHW << " or " << NCDHW << " format "
-                      << ", but got format: " << format_;
+    MS_LOG(ERROR) << kernel_name_ << " only supports " << NCHW << " or " << NCDHW << " format "
+                  << ", but got format: " << format_;
+    return false;
   }
   const auto stride_attr = format_ == NCHW ? STRIDE : STRIDES;
   const auto dilation_attr = format_ == NCHW ? DILATION : DILATIONS;
