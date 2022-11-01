@@ -21,8 +21,7 @@ import os
 
 # one sys count takes 10 ns, 1 ms has 100000 system count
 import re
-
-PER_MS_SYSCNT = 100000
+import stat
 
 
 def to_int(param, param_name):
@@ -73,6 +72,7 @@ def fwrite_format(output_data_path, data_source=None, is_print=False, is_start=F
         else:
             f.write(data_source)
             f.write("\n")
+    os.chmod(output_data_path, stat.S_IREAD | stat.S_IWRITE)
 
     if is_print:
         if isinstance(data_source, (list, tuple)):
@@ -279,7 +279,8 @@ def calculate_percent(partial, total):
 
 def to_millisecond(sys_count, limit=4):
     """Translate system count to millisecond."""
-    return round(sys_count / PER_MS_SYSCNT, limit)
+    per_ms_syscnt = 100000
+    return round(sys_count / per_ms_syscnt, limit)
 
 
 def get_field_value(row_info, field_name, header, time_type='realtime'):

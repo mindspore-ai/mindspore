@@ -88,6 +88,14 @@ class Profiler:
             - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub\_/write_bw_scalar etc.
 
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True. Default: False.
+        sync_enable (bool, optional): (GPU only) Whether the profiler collects operators in a synchronous way.
+            Default: True.
+
+            - True: The synchronous way. Before sending the operator to the GPU, the CPU records the start timestamp.
+              Then the operator is returned to the CPU after execution, and the end timestamp is recorded,
+              The duration of the operator is the difference between the two timestamps.
+            - False: The asynchronous way. The duration of the operator is that of sending from the CPU to the GPU.
+              This method can reduce the impact of adding profiler on training time.
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
@@ -137,6 +145,7 @@ class Profiler:
         ...     # Profiler end
         ...     profiler.analyse()
     """
+    SIZE_LIMIT = 500 * 1024 * 1024  # 500MB
 
     _hwts_output_filename_target = "output_format_data_hwts_"
     _opcompute_output_filename_target = "output_op_compute_time_"
@@ -185,6 +194,7 @@ class Profiler:
         # default aicore_metrics type is ArithmeticUtilization
         self._aicore_metrics_id = 0
         self._l2_cache = "off"
+        self._data_process_enable = True
         self._parser_kwargs(kwargs)
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -389,10 +399,12 @@ class Profiler:
         self._cpu_profiler.step_profiling_enable(True)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            self._md_profiler.start()
+            if self._data_process_enable:
+                self._md_profiler.start()
             self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            self._md_profiler.start()
+            if self._data_process_enable:
+                self._md_profiler.start()
             self._ascend_graph_start()
         ProfilerInfo.set_profiling_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
@@ -437,9 +449,9 @@ class Profiler:
         # No need to stop anything if parse profiling data offline
         if self._is_offline_parser():
             return
-
-        self._md_profiler.stop()
-        self._md_profiler.save(self._output_path)
+        if self._data_process_enable:
+            self._md_profiler.stop()
+            self._md_profiler.save(self._output_path)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
             self._gpu_profiler.stop()
@@ -462,7 +474,8 @@ class Profiler:
         self._device_target = context.get_context("device_target").lower()
         self._profiler_manager = c_expression.ProfilerManager.get_instance()
         self._cpu_profiler = c_expression.Profiler.get_instance("CPU")
-        self._md_profiler = cde.GlobalContext.profiling_manager()
+        if self._data_process_enable:
+            self._md_profiler = cde.GlobalContext.profiling_manager()
         if self._device_target == DeviceTarget.GPU.value:
             self._gpu_profiler = c_expression.Profiler.get_instance("GPU")
 
@@ -516,8 +529,9 @@ class Profiler:
     def _gpu_profiler_init(self, kwargs):
         """Gpu profiler init."""
         # Setup and start MindData Profiling
-        self._md_profiler = cde.GlobalContext.profiling_manager()
-        self._md_profiler.init()
+        if self._data_process_enable:
+            self._md_profiler = cde.GlobalContext.profiling_manager()
+            self._md_profiler.init()
         self._parse_parameter_for_gpu(kwargs)
 
         gpu_profiler = c_expression.Profiler
@@ -532,8 +546,9 @@ class Profiler:
     def _ascend_profiler_init(self, kwargs):
         """Ascend profiler init."""
         # Setup and start MindData Profiling
-        self._md_profiler = cde.GlobalContext.profiling_manager()
-        self._md_profiler.init()
+        if self._data_process_enable:
+            self._md_profiler = cde.GlobalContext.profiling_manager()
+            self._md_profiler.init()
         self._init_time = int(time.time() * 10000000)
         logger.info("Profiling: profiling init time: %d", self._init_time)
         self._parse_parameter_for_ascend(kwargs)
@@ -675,8 +690,7 @@ class Profiler:
         timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
                                                     self._rank_size, context.get_context("mode"))
         timeline_analyser.init_pynative_timeline()
-        size_limit = 100 * 1024 * 1024  # 100MB
-        timeline_analyser.write_timeline(size_limit)
+        timeline_analyser.write_timeline(Profiler.SIZE_LIMIT)
         timeline_analyser.write_timeline_summary()
 
     def _ascend_analyse(self):
@@ -957,11 +971,10 @@ class Profiler:
     def _cpu_analyse(self):
         """Collect and analyse cpu performance data."""
 
-        size_limit = 100 * 1024 * 1024  # 100MB
         try:
             timeline_generator = CpuTimelineGenerator(self._output_path, context.get_context("mode"))
             timeline_generator.init_timeline()
-            timeline_generator.write_timeline(size_limit)
+            timeline_generator.write_timeline(Profiler.SIZE_LIMIT)
             timeline_generator.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
@@ -1057,18 +1070,16 @@ class Profiler:
         min_cycle_counter = min(aicpu_parser.min_cycle_counter, optime_parser.min_cycle_counter)
         timeline_analyser.init_timeline(all_reduce_info, framework_info, aicpu_info,
                                         min_cycle_counter, source_path)
-        size_limit = 100 * 1024 * 1024  # 100MB
-        timeline_analyser.write_timeline(size_limit)
+        timeline_analyser.write_timeline(Profiler.SIZE_LIMIT)
         timeline_analyser.write_timeline_summary()
 
     def _generate_timeline(self, reduce_op_type):
         """Used for gpu, generate timeline info, write to json format file."""
         try:
-            size_limit = 100 * 1024 * 1024  # 100MB
             timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id, self._rank_size,
                                                       context.get_context("mode"))
             timeline_generator.init_timeline(reduce_op_type)
-            self._timeline_meta = timeline_generator.write_timeline(size_limit)
+            self._timeline_meta = timeline_generator.write_timeline(Profiler.SIZE_LIMIT)
             timeline_generator.write_timeline_summary()
             return timeline_generator
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
@@ -1290,11 +1301,15 @@ class Profiler:
         if not isinstance(l2_cache_enable, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter l2_cache must be bool, "
                             f"but got type {type(l2_cache_enable)}")
-
         if l2_cache_enable:
             self._l2_cache = "on"
         else:
             self._l2_cache = "off"
+
+        self._data_process_enable = kwargs.pop("data_process_enable", True)
+        if not isinstance(self._data_process_enable, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter data_process_enable must be bool, "
+                            f"but got type {type(self.data_process_enable)}")
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""
@@ -1314,6 +1329,7 @@ class Profiler:
                             "The hccl_parser-{version}-py3-none-any.whl package is usually located "
                             "in the /usr/local/Ascend/tools Directory", err)
             raise ImportError(err) from err
+
         logger.info("Parse hccl info successfully.")
         logger.info("Start analyse hccl info.")
         hccl_parse = HcclParser(hccl_path, self._dev_id, self._rank_id, self._output_path)

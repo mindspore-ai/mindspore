@@ -24,41 +24,6 @@ from mindspore.profiler.common.util import fwrite_format, get_file_join_name
 from mindspore import log as logger
 from mindspore.profiler.common.struct_type import StructType
 
-AiCpuStruct = namedtuple(
-    'AiCpuStruct', ['magic_number', 'data_tag', 'stream_id', 'task_id', 'run_start', 'run_start_counter',
-                    'compute_start', 'memcpy_start', 'memcpy_end', 'run_end', 'run_end_counter', 'thread',
-                    'device', 'submit_tick', 'schedule_tick', 'tick_before_run', 'tick_after_fun', 'kernel_type',
-                    'dispatch_time', 'total_time', 'FFTS_thread_id', 'version']
-)
-
-AI_CPU_STRUCT = dict(
-    magic_number=StructType.UINT16,
-    data_tag=StructType.UINT16,
-    stream_id=StructType.UINT16,
-    task_id=StructType.UINT16,
-    run_start=StructType.UINT64,
-    run_start_counter=StructType.UINT64,
-
-    compute_start=StructType.UINT64,
-    memcpy_start=StructType.UINT64,
-    memcpy_end=StructType.UINT64,
-    run_end=StructType.UINT64,
-    run_end_counter=StructType.UINT64,
-    thread=StructType.UINT32,
-
-    device=StructType.UINT32,
-    submit_tick=StructType.UINT64,
-    schedule_tick=StructType.UINT64,
-    tick_before_run=StructType.UINT64,
-    tick_after_fun=StructType.UINT64,
-    kernel_type=StructType.UINT32,
-
-    dispatch_time=StructType.UINT32,
-    total_time=StructType.UINT32,
-    FFTS_thread_id=StructType.UINT16,
-    version=StructType.UINT8
-)
-
 
 class DataPreProcessParser:
     """
@@ -69,6 +34,41 @@ class DataPreProcessParser:
          output_filename(str): The output data path and name.
 
     """
+    AI_CPU_STRUCT = dict(
+        magic_number=StructType.UINT16,
+        data_tag=StructType.UINT16,
+        stream_id=StructType.UINT16,
+        task_id=StructType.UINT16,
+        run_start=StructType.UINT64,
+        run_start_counter=StructType.UINT64,
+
+        compute_start=StructType.UINT64,
+        memcpy_start=StructType.UINT64,
+        memcpy_end=StructType.UINT64,
+        run_end=StructType.UINT64,
+        run_end_counter=StructType.UINT64,
+        thread=StructType.UINT32,
+
+        device=StructType.UINT32,
+        submit_tick=StructType.UINT64,
+        schedule_tick=StructType.UINT64,
+        tick_before_run=StructType.UINT64,
+        tick_after_fun=StructType.UINT64,
+        kernel_type=StructType.UINT32,
+
+        dispatch_time=StructType.UINT32,
+        total_time=StructType.UINT32,
+        FFTS_thread_id=StructType.UINT16,
+        version=StructType.UINT8
+    )
+
+    AiCpuStruct = namedtuple(
+        'AiCpuStruct', ['magic_number', 'data_tag', 'stream_id', 'task_id', 'run_start', 'run_start_counter',
+                        'compute_start', 'memcpy_start', 'memcpy_end', 'run_end', 'run_end_counter', 'thread',
+                        'device', 'submit_tick', 'schedule_tick', 'tick_before_run', 'tick_after_fun', 'kernel_type',
+                        'dispatch_time', 'total_time', 'FFTS_thread_id', 'version']
+    )
+
     _source_file_target_old = 'DATA_PREPROCESS.dev.AICPU.'
     _source_file_target = 'DATA_PREPROCESS.AICPU.'
     _dst_file_title = 'title:DATA_PREPROCESS AICPU'
@@ -132,11 +132,11 @@ class DataPreProcessParser:
         serial_number = 1
 
         i = 0
-        ai_cpu_format = StructType.format(AI_CPU_STRUCT.values())
-        ai_cpu_size = StructType.sizeof(AI_CPU_STRUCT.values())
+        ai_cpu_format = StructType.format(DataPreProcessParser.AI_CPU_STRUCT.values())
+        ai_cpu_size = StructType.sizeof(DataPreProcessParser.AI_CPU_STRUCT.values())
         while i < len(content):
             ai_cpu_data = struct.unpack(ai_cpu_format, content[i:i + ai_cpu_size])
-            ai_cpu = AiCpuStruct(*ai_cpu_data)
+            ai_cpu = DataPreProcessParser.AiCpuStruct(*ai_cpu_data)
             if ai_cpu.task_id < self._task_id_threshold:
                 node_type_name = f'{ai_cpu.stream_id}_{ai_cpu.task_id}'
                 if self._op_task_dict and node_type_name in self._op_task_dict:
