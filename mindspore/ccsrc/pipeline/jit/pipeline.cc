@@ -1131,15 +1131,19 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
     std::string base_name = GetBaseNameForIR(SizeToLong(action_index), action_name);
 
     // Generate IR file in human-readable format
-    if (action_index == action_size - 1) {
-      DumpIR(base_name + ".ir", graph, false, kWholeStack);
+    static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
+    if (switch_order) {
+      ExportIR(base_name + ".ir", graph);
     } else {
-      DumpIR(base_name + ".ir", graph, false, kTopStack);
+      if (action_index == action_size - 1) {
+        DumpIR(base_name + ".ir", graph, false, kWholeStack);
+      } else {
+        DumpIR(base_name + ".ir", graph, false, kTopStack);
+      }
     }
-    // Generate IR file in a heavily commented format, which can also be reloaded
-    ExportIR(base_name + ".dat", graph);
-    // Generate IR file in dot format, which can be converted to svg file using graphviz dot command
-    draw::Draw(base_name + ".dot", graph);
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+      draw::Draw(base_name + ".dot", graph);
+    }
   }
 }
 #endif
@@ -1218,7 +1222,9 @@ void Pipeline::Run() {
 
 #ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && (user_graph != nullptr)) {
-    draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+      draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
+    }
   }
 #endif
   MS_LOG(INFO) << "End";

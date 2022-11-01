@@ -702,7 +702,9 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(anf_graph);
 #ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    draw::Draw("anf_graph.dot", anf_graph);  // for debug
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPH_DOT)) {
+      draw::Draw("anf_graph.dot", anf_graph);  // for debug
+    }
     DumpIR("anf_graph.ir", anf_graph, true);
   }
 #endif

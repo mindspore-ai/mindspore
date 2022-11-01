@@ -29,6 +29,7 @@
 #include "ir/tensor.h"
 #include "pipeline/jit/debug/anf_ir_utils.h"
 #include "include/common/debug/common.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "utils/log_adapter.h"
@@ -46,17 +47,17 @@ using abstract::AnfNodeConfigPtr;
 
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
   if (abs == nullptr) {
-    return "NullAbstract";
+    return "<NullAbstract>";
   }
   auto shape = abs->BuildShape()->cast<abstract::BaseShapePtr>();
   TypePtr type = abs->BuildType();
   std::ostringstream oss;
   if ((shape != nullptr) && (type != nullptr)) {
-    oss << type->DumpText() << shape->DumpText();
+    oss << "<" << type << ", " << shape->ToString() << ">";
   } else if (type != nullptr) {
-    oss << type->DumpText();
+    oss << "<" << type << ">";
   } else {
-    oss << "Undefined";
+    oss << "<null>";
   }
   return oss.str();
 }
@@ -196,7 +197,7 @@ std::string AnalyzeFailExporter::GetNodeType(const AnfNodePtr &node) {
   } catch (const std::exception &e) {
     MS_LOG(INFO) << "Exception: " << e.what();
   }
-  return "Undefined";
+  return "<null>";
 }
 
 AbstractBasePtr AnalyzeFailExporter::GetNodeAbstract(const AnfNodePtr &node) {
@@ -293,7 +294,7 @@ void AnalyzeFailExporter::OutputCNode(std::ostringstream &oss, const CNodePtr &c
     oss << "    #" << GetAnfNodeText(func_graph, inputs[0], *apply_map) << ".prototype = " << op_comment;
   }
   // Output comment
-  OutputStatementComment(oss, cnode);
+  OutputStatementComment(cnode, func_graph, oss);
   oss << "\n";
 }
 
