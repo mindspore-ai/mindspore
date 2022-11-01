@@ -39,24 +39,21 @@ std::vector<int64_t> GetFormatShape(const int64_t &format, const std::vector<int
   }
   return output_shape;
 }
+
 abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (IsDynamic(input_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
-  }
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
   const int64_t x_min_rank = 2;
   const int64_t x_max_rank = 5;
-  const int64_t last_dims = 2;
-  const int64_t three_dims = 3;
-  const int64_t error_size = 1;
   CheckAndConvertUtils::CheckInRange("dims of input_x", input_shape.size(), kIncludeBoth, {x_min_rank, x_max_rank},
                                      prim_name);
   auto data_format_ptr = primitive->GetAttr("format");
@@ -78,7 +75,6 @@ abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the data_format must be NCHW, NHWC, or NCDHW, but got: " << attr_value_str << ".";
   }
-  auto input_shape_ = GetFormatShape(data_format, input_shape);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
@@ -89,6 +85,9 @@ abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
                              << "', NCDHW format only support 5-dims input in Ascend or CPU target, but got "
                              << attr_value_str << ".";
   }
+  const int64_t last_dims = 2;
+  const int64_t three_dims = 3;
+  const int64_t error_size = 1;
   if (data_format == static_cast<int64_t>(Format::NCHW) && input_shape.size() == three_dims &&
       input_shape[last_dims] == error_size && (is_ascend || is_cpu)) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -96,8 +95,8 @@ abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
                                 "the last dimension size should greater than 1, but got "
                              << error_size << ".";
   }
-
-  return std::make_shared<abstract::Shape>(input_shape_);
+  auto output_shape = GetFormatShape(data_format, input_shape);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 TypePtr BiasAddGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
