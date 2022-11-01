@@ -369,7 +369,13 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
   }
 
   auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
-  if ((tensor_address == nullptr) || (tensor_address == device_address)) {
+  if (tensor_address == nullptr) {
+    return;
+  }
+  if (tensor_address == device_address) {
+    tensor_address->SetNodeIndex(input_node, 0);
+    tensor_address->set_original_ref_count(SIZE_MAX);
+    tensor_address->ResetRefCount();
     return;
   }
 
