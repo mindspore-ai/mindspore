@@ -60,25 +60,9 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   input_elements_ = 0;
 
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
-  std::vector<int64_t> m_shape = inputs[kIndexM]->GetShapeVector();
-  std::vector<int64_t> v_shape = inputs[kIndexV]->GetShapeVector();
   std::vector<int64_t> beta1_power_shape = inputs[kIndexBeta1Power]->GetShapeVector();
   std::vector<int64_t> beta2_power_shape = inputs[kIndexBeta2Power]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kIndexLr]->GetShapeVector();
-  std::vector<int64_t> grad_shape = inputs[kIndexGrad]->GetShapeVector();
-
-  if (var_shape.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
-    return KRET_RESIZE_FAILED;
-  }
-
-  if (!IsSameShape(var_shape, m_shape) || !IsSameShape(var_shape, v_shape) || !IsSameShape(var_shape, grad_shape)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shapes of 'm/v/grad/var' must be the same, "
-                  << "but get the shapes of 'm': " << Vector2Str(m_shape) << ", 'v': " << Vector2Str(v_shape)
-                  << ", 'grad': " << Vector2Str(grad_shape) << " and 'var': " << Vector2Str(var_shape);
-    return KRET_RESIZE_FAILED;
-  }
 
   if (!IsSameShape(beta1_power_shape, beta2_power_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shapes of 'beta1_power' and 'beta2_power' must be the same, "
