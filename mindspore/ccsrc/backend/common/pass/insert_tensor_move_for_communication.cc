@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace opt {
-constexpr auto kSingleOutput = 1;
+constexpr auto kSingleNum = 1;
 
 bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -29,12 +29,15 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
 
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
-    if (node == nullptr || !common::AnfAlgo::IsFusedCommunicationOp(node)) {
+    if (node == nullptr || !common::AnfAlgo::IsCommunicationOp(node)) {
       continue;
     }
     auto communication_op = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(communication_op);
-    auto input_num = common::AnfAlgo::GetInputNum(communication_op);
+    auto input_num = common::AnfAlgo::GetInputTensorNum(communication_op);
+    if (input_num <= kSingleNum) {
+      continue;
+    }
     for (size_t i = 0; i < input_num; ++i) {
       auto input = common::AnfAlgo::GetInputNode(communication_op, i);
       // Need to insert TensorMove in these cases:
@@ -70,8 +73,8 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
-    if (!common::AnfAlgo::IsFusedCommunicationOp(output_with_index.first) ||
-        common::AnfAlgo::GetOutputTensorNum(output_with_index.first) == kSingleOutput) {
+    if (!common::AnfAlgo::IsCommunicationOp(output_with_index.first) ||
+        common::AnfAlgo::GetOutputTensorNum(output_with_index.first) <= kSingleNum) {
       continue;
     }
     candidate_set.insert(output_with_index.first);
