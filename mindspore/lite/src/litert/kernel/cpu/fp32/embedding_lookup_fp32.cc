@@ -51,6 +51,10 @@ int EmbeddingLookupCPUKernel::ReSize() {
   param_->layer_num_ = 0;
   for (size_t i = 0; i < in_tensors_.size() - 1; ++i) {
     CHECK_NULL_RETURN(in_tensors_.at(i));
+    if (in_tensors_[i]->shape().empty()) {
+      MS_LOG(ERROR) << "Index: " << i << " has invalid vector size: " << in_tensors_[i]->shape().size();
+      return RET_ERROR;
+    }
     param_->layer_num_ += in_tensors_[i]->shape()[0];
   }
   return RET_OK;
