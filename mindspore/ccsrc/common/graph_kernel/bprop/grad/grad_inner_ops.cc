@@ -209,4 +209,31 @@ REG_BPROP_BUILDER("Roll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
   return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });
+
+REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto inputs = ib->GetInput(kIndex0);
+  auto size = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto shp = ib->GetShape(inputs);
+  std::vector<int64_t> new_shp;
+  for (size_t i = 2; i < shp.size(); i++) {
+    new_shp.push_back(shp[i]);
+  }
+  return {
+    ib->Emit("ResizeNearestNeighborGrad", {dout, ib->Value(shp)}, {{"align_corners", ib->GetAttr("align_corners")}}),
+    ib->ZerosLike(size)};
+});
+
+REG_BPROP_BUILDER("ParallelResizeBilinear").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto size = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("ParallelResizeBilinearGrad", {dout, x, size},
+                     {{"ori_image_size", ib->GetAttr("ori_image_size")},
+                      {"src_start_w", ib->GetAttr("src_start_w")},
+                      {"dst_start_w", ib->GetAttr("dst_start_w")},
+                      {"align_corners", ib->GetAttr("align_corners")},
+                      {"half_pixel_centers", MakeValue(false)}});
+  return {dx, ib->ZerosLike(size)};
+});
 }  // namespace mindspore::expander::bprop

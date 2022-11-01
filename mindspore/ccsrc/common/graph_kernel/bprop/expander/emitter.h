@@ -77,12 +77,26 @@ class Emitter {
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
     return Emit(kSelectOpName, {cond, lhs, rhs});
   }
-  NodePtr Less(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kLessOpName, {lhs, rhs}); }
-  NodePtr LessEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kLessEqualOpName, {lhs, rhs}); }
-  NodePtr Greater(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kGreaterOpName, {lhs, rhs}); }
-  NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kGreaterEqualOpName, {lhs, rhs}); }
-  NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kEqualOpName, {lhs, rhs}); }
-  NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("NotEqual", {lhs, rhs}); }
+  NodePtr Less(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+    return CmpOpWithCast(kLessOpName, lhs, rhs, dst_type);
+  }
+  NodePtr LessEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+    return CmpOpWithCast(kLessEqualOpName, lhs, rhs, dst_type);
+  }
+  NodePtr Greater(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+    return CmpOpWithCast(kGreaterOpName, lhs, rhs, dst_type);
+  }
+  NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+    return CmpOpWithCast(kGreaterEqualOpName, lhs, rhs, dst_type);
+  }
+  NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+    return CmpOpWithCast(kEqualOpName, lhs, rhs, dst_type);
+  }
+  NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+    return CmpOpWithCast("NotEqual", lhs, rhs, dst_type);
+  }
+  NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalAnd", {lhs, rhs}); }
+  NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalOr", {lhs, rhs}); }
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
   NodePtr ZerosLike(const NodePtr &node) const;
@@ -108,6 +122,10 @@ class Emitter {
 
  protected:
   NodePtr NewNode(const AnfNodePtr &anfnode) const { return std::make_shared<Node>(anfnode, this); }
+  NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) const {
+    auto node = Emit(op, {lhs, rhs});
+    return dst_type == nullptr ? node : Cast(node, dst_type);
+  }
 
   FuncGraphPtr func_graph_;
   ExpanderInferPtr infer_{nullptr};

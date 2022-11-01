@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <unordered_set>
+
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
 #include "common/graph_kernel/bprop/expander/common_utils.h"
 
 namespace mindspore::expander::bprop {
-constexpr auto pi = acos(-1.0);
-
 NodePtrList CheckBpropExpander(const BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   return {ib->ZerosLike(x)};
@@ -1023,8 +1023,7 @@ REG_BPROP_BUILDER("Betainc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto input_x = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto sx = ib->GetShape(input_x);
-  auto log_beta =
-    (ib->Emit("LGamma", {input_a}) + ib->Emit("LGamma", {input_b})) - (ib->Emit("LGamma", {ib->Add(input_a, input_b)}));
+  auto log_beta = (LGamma(ib, input_a) + LGamma(ib, input_b)) - LGamma(ib, ib->Add(input_a, input_b));
   auto partial_x = ib->Emit(
     "Exp", {ib->Sub((ib->Add((ib->Mul((ib->Sub(input_b, ib->Tensor(1, ib->GetDtype(input_b)))),
                                       (ib->Emit("Log1p", {ib->Neg(input_x)})))),
@@ -1353,7 +1352,6 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> N
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
-
     for (size_t i = 0; i < rank - 2; i++) {
       paddings.emplace_back(ShapeVector{0LL, 0LL});
     }
@@ -1366,7 +1364,6 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> N
       strides.emplace_back(1LL);
     }
     end[rank - 2] = -1;
-
     return ib->Emit(
       "Pad",
       {ib->Emit("StridedSlice",
@@ -1397,7 +1394,6 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> N
   auto rhs = ib->GetInput(kIndex3);
   auto out = ib->GetInput(kIndex4);
   auto grad = ib->GetInput(kIndex5);
-
   auto superdiag_type = ib->GetDtype(superdiag);
   auto superdiag_conj = MatrixTranspose(ib, superdiag);
   auto maindiag_conj = MatrixTranspose(ib, maindiag);
@@ -1424,5 +1420,303 @@ REG_BPROP_BUILDER("AddV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return {BinopGradCommon(ib, x, y, dout, dout)};
+});
+
+REG_BPROP_BUILDER("Addcdiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_data = ib->GetInput(kIndex0);
+  auto x1 = ib->GetInput(kIndex1);
+  auto x2 = ib->GetInput(kIndex2);
+  auto value = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dinput_data = dout;
+  std::unordered_set<TypeId> type_list{TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat16,
+                                       TypeId::kNumberTypeFloat64};
+  auto dout_typeptr = ib->GetDtype(dout);
+  if (type_list.count(dout_typeptr->type_id()) > 0) {
+    input_data = ib->Cast(input_data, kFloat32);
+    x1 = ib->Cast(x1, kFloat32);
+    x2 = ib->Cast(x2, kFloat32);
+    value = ib->Cast(value, kFloat32);
+    dinput_data = ib->Cast(dinput_data, kFloat32);
+  }
+  auto inner_out = ib->Add((ib->Mul(value, ib->Div(x1, x2))), input_data);
+  auto dx2 = ib->Neg(ib->Mul(ib->Mul(ib->Mul(x1, value), ib->Pow(x2, ib->Tensor(-2, ib->GetDtype(x2)))), dinput_data));
+  auto dx1 = ib->Mul(dinput_data, ib->Div(value, x2));
+  auto dvalue = ib->Mul(dinput_data, ib->Div(x1, x2));
+  auto tmp_dinput_data = BinopGradCommon(ib, inner_out, input_data, dout, dinput_data);
+  dinput_data = tmp_dinput_data[1];
+  auto tmp_dx1 = BinopGradCommon(ib, inner_out, x1, dout, dx1);
+  dx1 = tmp_dx1[1];
+  auto tmp_dx2 = BinopGradCommon(ib, inner_out, x2, dout, dx2);
+  dx2 = tmp_dx2[1];
+  auto tmp_dvalue = BinopGradCommon(ib, inner_out, value, dout, dvalue);
+  dvalue = tmp_dvalue[1];
+  if (type_list.count(dout_typeptr->type_id()) > 0) {
+    dinput_data = ib->Cast(dinput_data, dout_typeptr);
+    dx1 = ib->Cast(dx1, dout_typeptr);
+    dx2 = ib->Cast(dx2, dout_typeptr);
+    dvalue = ib->Cast(dvalue, dout_typeptr);
+  }
+  return {dinput_data, dx1, dx2, dvalue};
+});
+
+REG_BPROP_BUILDER("Addcmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto input_data = ib->GetInput(kIndex0);
+  auto x1 = ib->GetInput(kIndex1);
+  auto x2 = ib->GetInput(kIndex2);
+  auto value = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  std::unordered_set<TypeId> type_list{TypeId::kNumberTypeInt8,    TypeId::kNumberTypeInt16,
+                                       TypeId::kNumberTypeInt64,   TypeId::kNumberTypeUInt8,
+                                       TypeId::kNumberTypeFloat16, TypeId::kNumberTypeFloat64};
+  auto dout_typeptr = ib->GetDtype(dout);
+  if (type_list.count(dout_typeptr->type_id()) > 0) {
+    input_data = ib->Cast(input_data, kFloat32);
+    x1 = ib->Cast(x1, kFloat32);
+    x2 = ib->Cast(x2, kFloat32);
+    value = ib->Cast(value, kFloat32);
+  }
+  auto dinput_data = dout;
+  auto dx1 = ib->Mul(dout, ib->Mul(value, x2));
+  auto dx2 = ib->Mul(dout, ib->Mul(value, x1));
+  auto inner_out = ib->Add((ib->Mul((ib->Mul(x1, x2)), value)), input_data);
+  auto dvalue = ib->Mul(dout, ib->Mul(x1, x2));
+  auto tmp_dinput_data = BinopGradCommon(ib, inner_out, input_data, dout, dinput_data);
+  dinput_data = tmp_dinput_data[1];
+  auto tmp_dx1 = BinopGradCommon(ib, inner_out, x1, dout, dx1);
+  dx1 = tmp_dx1[1];
+  auto tmp_dx2 = BinopGradCommon(ib, inner_out, x2, dout, dx2);
+  dx2 = tmp_dx2[1];
+  auto tmp_dvalue = BinopGradCommon(ib, inner_out, value, dout, dvalue);
+  dvalue = tmp_dvalue[1];
+  if (type_list.count(dout_typeptr->type_id()) > 0) {
+    dinput_data = ib->Cast(dinput_data, dout_typeptr);
+    dx1 = ib->Cast(dx1, dout_typeptr);
+    dx2 = ib->Cast(dx2, dout_typeptr);
+    dvalue = ib->Cast(dvalue, dout_typeptr);
+  }
+  return {dinput_data, dx1, dx2, dvalue};
+});
+
+REG_BPROP_BUILDER("LpNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto p = GetValue<int64_t>(ib->GetAttr("p"));
+  auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
+  auto axis = GetAxisList(ib->GetAttr("axis"));
+  auto input_x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto input_x_shape = ib->GetShape(input_x);
+  if ((!keep_dims) && (!input_x_shape.empty())) {
+    for (const auto &i : axis) {
+      dout = ib->Emit("ExpandDims", {dout, ib->Value(i)});
+      out = ib->Emit("ExpandDims", {out, ib->Value(i)});
+    }
+  }
+  if (p == 0) {
+    return {ib->ZerosLike(input_x)};
+  }
+  if (p == 1) {
+    return {ib->Mul(dout, (ib->Sign(input_x)))};
+  }
+  if (p == 2) {
+    auto input_scaled = input_x;
+    auto scale_v = ib->RealDiv(dout, out);
+    return {ib->Mul(input_scaled, scale_v)};
+  } else {
+    auto input_x_abs = ib->Emit("Abs", {input_x});
+    auto input_scaled = ib->Mul(ib->Pow(input_x_abs, ib->Tensor(p - 2)), input_x);
+    auto scale_v = ib->RealDiv(dout, ib->Pow(out, ib->Tensor(p - 1)));
+    return {ib->Mul(input_scaled, scale_v)};
+  }
+});
+
+REG_BPROP_BUILDER("Renorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto p = FloatToInt(GetValue<float>(ib->GetAttr("p")));
+  float ext = 1e-07;
+  auto dim = GetAxisList(ib->GetAttr("dim"))[0];
+  auto max_norm = GetValue<float>(ib->GetAttr("maxnorm"));
+  auto input_x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto shape = ib->GetShape(input_x);
+  int64_t new_dim = dim >= 0 ? dim : (SizeToLong(shape.size()) + dim);
+  std::vector<int64_t> dims;
+  for (int64_t i = 0; i < SizeToLong(shape.size()); i++) {
+    if (i != new_dim) {
+      dims.push_back(i);
+    }
+  }
+  auto norm = ib->Emit(
+    "LpNorm", {input_x},
+    {{"keep_dims", MakeValue(true)}, {"axis", MakeValue(dims)}, {"p", MakeValue(p)}, {"epsilon", MakeValue(1e-12)}});
+  norm = ib->Emit("BroadcastTo", {norm}, {{"shape", MakeValue(shape)}});
+  auto grad_out = ib->Mul(input_x, dout);
+  grad_out = ib->ReduceSum(grad_out, dims, true);
+  NodePtr norm_bp = nullptr;
+  if (p == 1) {
+    auto sig = ib->Sign(input_x);
+    norm_bp = ib->Mul(sig, grad_out);
+  } else if (p == 2) {
+    auto m = ib->Mul(input_x, (ib->RealDiv(grad_out, norm)));
+    norm_bp = ib->Emit("MaskedFill",
+                       {m, ib->Equal(norm, (ib->Tensor(0.0, ib->GetDtype(norm)))), ib->Tensor(0.0, ib->GetDtype(m))});
+  } else {
+    auto abs_ = ib->Emit("Abs", {input_x});
+    auto input_scaled = ib->Mul(input_x, ib->Pow(abs_, ib->Tensor(p - 2)));
+    auto pow_ = ib->Pow(norm, ib->Tensor(p - 1));
+    auto scale_v = ib->RealDiv(grad_out, pow_);
+    scale_v = ib->Emit("MaskedFill", {scale_v, ib->Equal(norm, (ib->Tensor(0.0, ib->GetDtype(norm)))),
+                                      ib->Tensor(0.0, ib->GetDtype(scale_v))});
+    norm_bp = ib->Mul(input_scaled, scale_v);
+  }
+
+  auto v = ib->Add(norm, ib->Tensor(ext, ib->GetDtype(norm)));
+  auto inv_norm = ib->Reciprocal(v);
+  auto grad_norm = ib->Mul(ib->Mul(ib->Tensor(max_norm, ib->GetDtype(inv_norm)), inv_norm),
+                           ib->Sub(dout, (ib->Mul(inv_norm, norm_bp))));
+  auto q = ib->Greater(norm, ib->Tensor(max_norm, ib->GetDtype(norm)));
+  return {ib->Select(q, grad_norm, dout)};
+});
+
+REG_BPROP_BUILDER("ReduceStd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto axis = GetAxisList(ib->GetAttr("axis"));
+  auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
+  auto unbiased = GetValue<bool>(ib->GetAttr("unbiased"));
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto std_d = ib->TupleGetItem(dout, 0);
+  auto std = ib->TupleGetItem(out, 0);
+  auto mean_d = ib->TupleGetItem(dout, 1);
+  auto mean = ib->TupleGetItem(out, 1);
+  auto x_shape = ib->GetShape(x);
+  if (axis.empty() && !x_shape.empty()) {
+    for (int64_t i = 0; i < SizeToLong(x_shape.size()); i++) {
+      axis.push_back(i);
+    }
+  }
+  (void)std::transform(axis.begin(), axis.end(), axis.begin(), [&x_shape](const int64_t &c) {
+    if (c < 0) {
+      return c + SizeToLong(x_shape.size());
+    }
+    return c;
+  });
+  for (size_t i = 1; i < axis.size(); ++i) {
+    for (size_t j = 0; j < axis.size() - i; ++j) {
+      if (axis[j] > (axis[j + 1])) {
+        std::swap(axis[j], axis[j + 1]);
+      }
+    }
+  }
+  if (!keep_dims && !x_shape.empty()) {
+    for (const auto &i : axis) {
+      std_d = ib->Emit("ExpandDims", {std_d, ib->Value(i)});
+      std = ib->Emit("ExpandDims", {std, ib->Value(i)});
+      mean_d = ib->Emit("ExpandDims", {mean_d, ib->Value(i)});
+      mean = ib->Emit("ExpandDims", {mean, ib->Value(i)});
+    }
+  }
+  auto dx = ib->Sub(x, mean);
+  dx = ib->Mul(dx, std_d);
+  dx = ib->Div(dx, std);
+  int64_t num = 1;
+  for (const auto &i : axis) {
+    num *= x_shape[LongToSize(i)];
+  }
+  if (unbiased) {
+    dx = ib->Div(dx, ib->Tensor(num - 1, ib->GetDtype(dx)));
+  } else {
+    dx = ib->Div(dx, ib->Tensor(num, ib->GetDtype(dx)));
+  }
+  auto temp = ib->Div(mean_d, ib->Tensor(num, ib->GetDtype(mean_d)));
+  dx = ib->Add(dx, temp);
+  return {dx};
+});
+
+REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  bool reverse = GetValue<bool>(ib->GetAttr("reverse"));
+  NodePtr dtype_min = nullptr;
+  auto fp64_flag = false;
+  if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat16) {
+    dtype_min = ib->Tensor(-65500e+0, kFloat16);
+  } else {
+    if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat32) {
+      dtype_min = ib->Tensor(-3.4028235e+38, kFloat32);
+    } else {
+      if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat64) {
+        dout = ib->Cast(dout, kFloat32);
+        x = ib->Cast(x, kFloat32);
+        out = ib->Cast(out, kFloat32);
+        dtype_min = ib->Tensor(-3.4028235e+38, kFloat32);
+        fp64_flag = true;
+      }
+    }
+  }
+  dtype_min = ib->Emit("BroadcastTo", {dtype_min}, {{"shape", MakeValue(ib->GetShape(dout))}});
+  auto log_grad_positive =
+    ib->Emit("Select", {ib->Greater(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Emit("Log", {dout}), dtype_min});
+  auto log_grad_negative = ib->Emit(
+    "Select", {ib->Less(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Emit("Log", {ib->Neg(dout)}), dtype_min});
+  auto output_pos =
+    ib->Emit("Exp", {ib->Add((ib->Emit("CumulativeLogsumexp", {ib->Sub(log_grad_positive, out), axis},
+                                       {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}})),
+                             x)});
+  auto output_neg =
+    ib->Emit("Exp", {ib->Add((ib->Emit("CumulativeLogsumexp", {ib->Sub(log_grad_negative, out), axis},
+                                       {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}})),
+                             x)});
+  if (fp64_flag) {
+    output_pos = ib->Cast(output_pos, kFloat64);
+    output_neg = ib->Cast(output_neg, kFloat64);
+    x = ib->Cast(x, kFloat64);
+  }
+  return {ib->Sub(output_pos, output_neg), ib->ZerosLike(x)};
+});
+
+REG_BPROP_BUILDER("NPUAllocFloatStatus").SetBody([](const BpropIRBuilder *ib) -> NodePtrList { return {}; });
+
+REG_BPROP_BUILDER("NPUGetFloatStatus").SetBody(CheckBpropExpander);
+
+REG_BPROP_BUILDER("NPUClearFloatStatus").SetBody(CheckBpropExpander);
+
+NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
+  auto a = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto sa = ib->GetShape(a);
+  auto sx = ib->GetShape(x);
+  auto rax = BroadcastGradientArgs(sa, sx);
+  auto ra = rax[0];
+  auto rx = rax[1];
+  auto partial_a = ib->Emit("IgammaGradA", {a, x});
+  auto lgamma = LGamma(ib, a);
+  auto partial_x = ib->Emit(
+    "Exp",
+    {ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Emit("Log", {x})))))),
+             lgamma)});
+  NodePtr r1, r2;
+  if (ra.size()) {
+    r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra), sa);
+  } else {
+    r1 = ib->Reshape(ib->Mul(partial_a, dout), sa);
+  }
+  if (rx.size()) {
+    r2 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_x, dout), rx), sx);
+  } else {
+    r2 = ib->Reshape(ib->Mul(partial_x, dout), sx);
+  }
+  return {r1, r2};
+}
+
+REG_BPROP_BUILDER("Igamma").SetBody([](const BpropIRBuilder *ib) -> NodePtrList { return IgammaBpropExpander(ib); });
+
+REG_BPROP_BUILDER("Igammac").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto r_dx = IgammaBpropExpander(ib);
+  r_dx[0] = ib->Neg(r_dx[0]);
+  r_dx[1] = ib->Neg(r_dx[1]);
+  return r_dx;
 });
 }  // namespace mindspore::expander::bprop

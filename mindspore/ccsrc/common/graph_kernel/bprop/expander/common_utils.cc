@@ -561,4 +561,65 @@ TypeId PromoteBinaryDtype(TypeId t1, TypeId t2) {
   return GetOutputDtype(
     t1, t2, (complex_types.find(t1) != complex_types.end() || complex_types.find(t2) != complex_types.end()));
 }
+
+NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
+  auto k_lanczos_gamma = 7;
+  auto k_base_lanczos_coeff = 0.9999999999998099;
+  double k_lanczos_coefficients[8] = {676.520368121885098567009190444019, -1259.13921672240287047156078755283,
+                                      771.3234287776530788486528258894,   -176.61502916214059906584551354,
+                                      12.507343278686904814458936853,     -0.13857109526572011689554707,
+                                      9.984369578019570859563e-6,         1.50563273514931155834e-7};
+  auto input_dtype = ib->GetDtype(x);
+  auto one_half = ib->Tensor(0.5, input_dtype);
+  auto one = ib->Tensor(1, input_dtype);
+  auto zero = ib->Tensor(0, input_dtype);
+  auto log_sqrt_two_pi = ib->Tensor((log_2 + log_pi) / 2, input_dtype);
+  auto lanczos_gamma_plus_one_half = k_lanczos_gamma + 0.5;
+  auto log_lanczos_gamma_plus_one_half = log(lanczos_gamma_plus_one_half);
+  auto inf = std::numeric_limits<double>::infinity();
+  auto infinity = ib->Emit(
+    "Fill", {ib->EmitValue(input_dtype), ib->Value<ShapeVector>(ib->GetShape(x)), ib->Tensor(inf, input_dtype)});
+  auto need_to_reflect = ib->Emit("Less", {x, one_half});
+  auto neg_input = ib->Neg(x);
+  auto z = ib->Emit("Select", {need_to_reflect, neg_input, ib->Sub(x, one)});
+  auto CalculateReflectedX = [&ib, &z, &k_base_lanczos_coeff, &k_lanczos_coefficients]() -> NodePtr {
+    auto z_dtype = ib->GetDtype(z);
+    NodePtr reflex_x = ib->Tensor(k_base_lanczos_coeff, z_dtype);
+    for (int i = 0; i < 8; ++i) {
+      auto btmp = ib->Add(z, ib->Tensor(i, z_dtype));
+      btmp = ib->Add(btmp, (ib->Tensor(1, z_dtype)));
+      auto product = ib->RealDiv((ib->Tensor(k_lanczos_coefficients[i], z_dtype)), btmp);
+      reflex_x = ib->Add(product, reflex_x);
+    }
+    return reflex_x;
+  };
+  auto reflex_x = CalculateReflectedX();
+  auto lanczos_tensor = ib->Tensor(lanczos_gamma_plus_one_half, input_dtype);
+  auto log_lanczos_tensor = ib->Tensor(log_lanczos_gamma_plus_one_half, input_dtype);
+  auto t = ib->Add(z, lanczos_tensor);
+  auto log_t = ib->Add((ib->Emit("Log1p", {ib->RealDiv(z, lanczos_tensor)})), log_lanczos_tensor);
+  auto log_y = ib->Add((ib->Add((ib->Emit("Log", {reflex_x})),
+                                (ib->Mul((ib->Sub((ib->Add(z, one_half)), (ib->RealDiv(t, log_t)))), log_t)))),
+                       log_sqrt_two_pi);
+  auto abs_input = ib->Emit("Abs", {x});
+  auto abs_frac_input = ib->Sub(abs_input, (ib->Emit("Floor", {abs_input})));
+  auto new_x = ib->Emit("Select", {ib->Emit("LessEqual", {x, zero}),
+                                   ib->Emit("Select", {ib->Emit("Equal", {abs_frac_input, zero}), infinity, x}), x});
+  auto reduced_frac_input =
+    ib->Emit("Select", {ib->Emit("Greater", {abs_frac_input, one_half}), ib->Sub(one, abs_frac_input), abs_frac_input});
+  auto reflection_denom =
+    ib->Emit("Log", {ib->Emit("Sin", {ib->Mul(ib->Tensor(pi, ib->GetDtype(reduced_frac_input)), reduced_frac_input)})});
+  auto reflection =
+    ib->Emit("Select", {ib->Emit("IsFinite", {reflection_denom}),
+                        ib->Add((ib->Sub((ib->Neg(reflection_denom)), log_y)), ib->Tensor(log_pi, ib->GetDtype(log_y))),
+                        ib->Neg(reflection_denom)});
+  auto result = ib->Emit("Select", {need_to_reflect, reflection, log_y});
+  return ib->Emit("Select", {ib->Emit("IsFinite", {new_x}), result, infinity});
+}
+
+bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types) {
+  return std::any_of(template_types.begin(), template_types.end(), [&check_type](const TypePtr &accept) -> bool {
+    return IsIdentidityOrSubclass(check_type, accept);
+  });
+}
 }  // namespace mindspore::expander::bprop

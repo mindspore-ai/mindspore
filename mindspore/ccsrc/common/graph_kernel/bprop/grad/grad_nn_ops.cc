@@ -30,6 +30,7 @@ REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
                       {"dilation", ib->GetAttr("dilation")},
                       {"stride", ib->GetAttr("stride")},
                       {"group", ib->GetAttr("group")},
+                      {"groups", ib->GetAttr("group")},
                       {"format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
@@ -41,6 +42,7 @@ REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
                       {"dilation", ib->GetAttr("dilation")},
                       {"stride", ib->GetAttr("stride")},
                       {"group", ib->GetAttr("group")},
+                      {"groups", ib->GetAttr("group")},
                       {"format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
@@ -422,7 +424,9 @@ REG_BPROP_BUILDER("Conv3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("Conv3DBackpropInput", {w, dout, ib->Value<ShapeVector>(ib->GetShape(x))},
+  auto x_shape = ib->GetShape(x);
+  auto w_shape = ib->GetShape(w);
+  auto dx = ib->Emit("Conv3DBackpropInput", {w, dout, ib->Value<ShapeVector>(x_shape)},
                      {{"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad", ib->GetAttr("pad")},
                       {"strides", ib->GetAttr("strides")},
@@ -434,8 +438,9 @@ REG_BPROP_BUILDER("Conv3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
                       {"format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"input_size", MakeValue(x_shape)},
                       {"mode", ib->GetAttr("mode")}});
-  auto dw = ib->Emit("Conv3DBackpropFilter", {x, dout, ib->Value<ShapeVector>(ib->GetShape(w))},
+  auto dw = ib->Emit("Conv3DBackpropFilter", {x, dout, ib->Value<ShapeVector>(w_shape)},
                      {{"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad", ib->GetAttr("pad")},
                       {"strides", ib->GetAttr("strides")},
@@ -447,6 +452,7 @@ REG_BPROP_BUILDER("Conv3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
                       {"format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"filter_size", MakeValue(w_shape)},
                       {"mode", ib->GetAttr("mode")}});
   return {dx, dw};
 });
@@ -459,6 +465,7 @@ REG_BPROP_BUILDER("Conv3DTranspose").SetBody([](const BpropIRBuilder *ib) -> Nod
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+  auto w_shape = ib->GetShape(w);
   auto dx = ib->Emit("Conv3D", {dout, w},
                      {{"out_channel", ib->GetAttr("in_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
@@ -472,9 +479,10 @@ REG_BPROP_BUILDER("Conv3DTranspose").SetBody([](const BpropIRBuilder *ib) -> Nod
                       {"group", ib->GetAttr("groups")},
                       {"groups", ib->GetAttr("groups")},
                       {"data_format", ib->GetAttr("format")}});
-  auto dw = ib->Emit("Conv3DBackpropFilter", {dout, x, ib->Value<ShapeVector>(ib->GetShape(w))},
+  auto dw = ib->Emit("Conv3DBackpropFilter", {dout, x, ib->Value<ShapeVector>(w_shape)},
                      {{"out_channel", ib->GetAttr("in_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"filter_size", MakeValue(w_shape)},
                       {"mode", ib->GetAttr("mode")},
                       {"pad_mode", MakeValue("pad")},
                       {"pad", ib->GetAttr("pad_list")},
@@ -544,6 +552,7 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtr
     dgrad = ib->Emit("MaxPoolGradGrad", {x1, x2, dout},
                      {{"kernel_size", ib->GetAttr("kernel_size")},
                       {"strides", ib->GetAttr("strides")},
+                      {"format", MakeValue("NCHW")},
                       {"pad_mode", ib->GetAttr("pad_mode")}});
   } else {
     auto x2_shape = ib->GetShape(x2);
@@ -1507,5 +1516,54 @@ REG_BPROP_BUILDER("AdaptiveAvgPool2D").SetBody([](const BpropIRBuilder *ib) -> N
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AdaptiveAvgPool2DGrad", {x, dout});
   return {dx};
+});
+
+REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto logits = ib->GetInput(kIndex0);
+  auto labels = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto grad_loss = ib->TupleGetItem(dout, 0);
+  auto softmax_grad = ib->TupleGetItem(out, 1);
+  grad_loss = ib->Emit("ExpandDims", {grad_loss, ib->Value<int64_t>(-1)});
+  auto grad = ib->Mul(grad_loss, softmax_grad);
+  auto btmp = ib->TupleGetItem(dout, 1);
+  if (ib->TupleGetItem(dout, 1) != nullptr) {
+    auto softmax = ib->Emit("Softmax", {logits}, {{"axis", MakeValue(ShapeVector{1})}});
+    auto x = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(1)});
+    auto y = ib->Emit("ExpandDims", {softmax, ib->Value<int64_t>(2)});
+    auto matmul_tmp = ib->BatchMatMul(x, y);
+    grad =
+      grad +
+      (ib->TupleGetItem(dout, 1) - ib->Emit("Squeeze", {matmul_tmp}, {{"axis", MakeValue(ShapeVector{1})}})) * softmax;
+  }
+  return {grad, ib->ZerosLike(labels)};
+});
+
+REG_BPROP_BUILDER("DepthwiseConv2dNative").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("DepthwiseConv2dNativeBackpropInput", {ib->Value<ShapeVector>(ib->GetShape(x)), w, dout},
+                     {{"channel_multiplier", ib->GetAttr("channel_multiplier")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"pad_list", ib->GetAttr("pad_list")},
+                      {"mode", ib->GetAttr("mode")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"group", ib->GetAttr("group")}});
+  auto dw = ib->Emit("DepthwiseConv2dNativeBackpropFilter", {x, ib->Value<ShapeVector>(ib->GetShape(w)), dout},
+                     {{"channel_multiplier", ib->GetAttr("channel_multiplier")},
+                      {"kernel_size", ib->GetAttr("kernel_size")},
+                      {"pad_mode", ib->GetAttr("pad_mode")},
+                      {"pad", ib->GetAttr("pad")},
+                      {"pad_list", ib->GetAttr("pad_list")},
+                      {"mode", ib->GetAttr("mode")},
+                      {"stride", ib->GetAttr("stride")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"group", ib->GetAttr("group")}});
+  return {dx, dw};
 });
 }  // namespace mindspore::expander::bprop
