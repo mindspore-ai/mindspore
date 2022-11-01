@@ -39,13 +39,13 @@ abstract::TupleShapePtr DenseToCSRSparseMatrixInferShape(const PrimitivePtr &pri
   const int64_t kOne = 1;
   const int64_t kIndicesRank = 2;
   const int64_t kDefalutRank = 2;
-  const int64_t kBatchRank = 3;
   const int64_t rank = SizeToLong(dense_input_shape.size());
   const int64_t indices_rank = SizeToLong(indices_shape.size());
   auto dense_input_is_dynamic_rank = IsDynamicRank(dense_input_shape);
-  if (rank != kDefalutRank && rank != kBatchRank && !dense_input_is_dynamic_rank) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input dense matrix should "
-                             << "have rank 2 or 3, but got " << rank << ".";
+  // Frontend functional interface only support 2-D now
+  if (rank != kDefalutRank && !dense_input_is_dynamic_rank) {
+    MS_EXCEPTION(ValueError) << "Currently only support 2-D Tensor when converting to CSRTensor,"
+                             << " but got Tensor dimension: " << rank << ".";
   }
   if (indices_rank != kIndicesRank && !IsDynamicRank(indices_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', indices should "

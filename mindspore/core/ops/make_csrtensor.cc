@@ -67,12 +67,6 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
     return elem;
   });
 
-  if (values_shp.size() + 1 != shape_vec.size()) {
-    MS_EXCEPTION(ValueError) << "Values' dimension should equal to CSRTensor's dimension - 1, but got"
-                             << "Values' dimension: " << values_shp.size()
-                             << ", CSRTensor's dimension: " << shape_vec.size() << ".";
-  }
-
   for (const auto &elem_type : shape->ElementsType()) {
     if (!elem_type->isa<Int>()) {
       MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << elem_type->ToString();
@@ -83,6 +77,12 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
     MS_LOG(DEBUG) << "Dynamic shape in MakeCSRTensor's inputs! Ignore shape check.";
     std::vector<abstract::AbstractBasePtr> element_list{indptr, indices, values, shape};
     return std::make_shared<abstract::AbstractCSRTensor>(element_list);
+  }
+
+  if (values_shp.size() + 1 != shape_vec.size()) {
+    MS_EXCEPTION(ValueError) << "Values' dimension should equal to CSRTensor's dimension - 1, but got"
+                             << "Values' dimension: " << values_shp.size()
+                             << ", CSRTensor's dimension: " << shape_vec.size() << ".";
   }
 
   if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {

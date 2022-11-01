@@ -435,8 +435,6 @@ def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
     """
     if not isinstance(tensor, Tensor):
         raise_type_error("For functional operator dense_to_sparse_csr, input argument must be a Tensor.")
-    if len(tensor.shape) != 2:
-        raise_value_error("Currently only support 2-D Tensor when converting to CSRTensor.")
     indices = tensor.nonzero().astype("int32")
     _, _, indptr, indices, values = dense_to_csr(tensor, indices)
     return CSRTensor(indptr, indices, values, tensor.shape)
