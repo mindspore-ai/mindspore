@@ -54,6 +54,8 @@ void AddOutputAndCallerToMap(const CNodePtr &cnode, mindspore::HashMap<AnfNodePt
 
 void SkipSameOp(const AnfNodePtr &old_node, const AnfNodePtr &new_node, mindspore::HashSet<AnfNodePtr> *seen_node) {
   MS_EXCEPTION_IF_NULL(seen_node);
+  MS_EXCEPTION_IF_NULL(old_node);
+  MS_EXCEPTION_IF_NULL(new_node);
   if (old_node->isa<CNode>() && new_node->isa<CNode>() &&
       (common::AnfAlgo::GetCNodeName(old_node) == common::AnfAlgo::GetCNodeName(new_node))) {
     (void)seen_node->insert(new_node);

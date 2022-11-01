@@ -33,6 +33,8 @@ mindspore::HashMap<std::string, mindspore::HashSet<std::string>> MarkOp{
   {"LSTM", {"LSTMGradWeight", "LSTMGrad", "LSTMGradData"}}};
 
 bool CheckOP(const FuncGraphManagerPtr &manager, const AnfNodePtr &cnode, const mindspore::HashSet<std::string> &set) {
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(cnode);
   for (const auto &node_index : manager->node_users()[cnode]) {
     auto output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);

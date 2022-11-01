@@ -43,10 +43,13 @@ constexpr size_t kType64Len = 8;
 constexpr auto kNopNodeRealInputIndex = 1;
 
 void UpdateDumpFlagAndDebugInfo(const CNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
+  MS_EXCEPTION_IF_NULL(node);
   std::vector<AnfNodePtr> orig_real_cnodes;
   for (auto &orig_node : orig_nodes) {
+    MS_EXCEPTION_IF_NULL(orig_node);
     if (AnfUtils::IsRealCNodeKernel(orig_node)) {
       auto orig_cnode = orig_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(orig_cnode);
       if (common::AnfAlgo::HasNodeAttr(kAttrDump, orig_cnode)) {
         common::AnfAlgo::CopyNodeAttr(kAttrDump, orig_cnode, node);
       }
@@ -160,6 +163,7 @@ bool HasSymmetricalKernelInfo(const AnfNodePtr &node_x, const AnfNodePtr &node_y
 
 const AnfNodePtr EliminateDependTransop(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
 
   auto transop_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kTransOpInputTensorNum);
   MS_EXCEPTION_IF_NULL(transop_cnode);
@@ -620,6 +624,8 @@ ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vec
 }
 
 CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node, const bool is_input) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
   std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
   BaseShapePtr shape;
   if (is_input) {
@@ -640,6 +646,8 @@ CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, cons
 
 AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
                           const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto new_node = graph->NewCNode(new_node_inputs);
   MS_EXCEPTION_IF_NULL(new_node);
 
@@ -840,6 +848,7 @@ AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
 
 AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &primitive,
                                                     const AbstractBasePtrList &input_abstract) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto dynamic_inputs_list = primitive->GetAttr(kAttrDynInputSizes);
   if (dynamic_inputs_list == nullptr) {
     return input_abstract;
