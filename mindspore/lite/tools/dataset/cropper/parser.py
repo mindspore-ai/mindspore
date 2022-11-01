@@ -65,6 +65,7 @@ class SimpleParser(Parser):
         :param user_filename: filename of user code
         :return: a list of ops present in the file
         """
+        user_filename = os.path.realpath(user_filename)
         if not os.path.isfile(user_filename):
             raise FileNotFoundError("file does not exist: {}".format(user_filename))
         with open(user_filename) as f:

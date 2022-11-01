@@ -71,6 +71,8 @@ Status IWSLT2017Node::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("IWSLT2017Node", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateStringValue("IWSLT2017Node", usage_, {"train", "valid", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateEnum("IWSLT2017Node", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
   const int kLanguagePairSize = 2;
   if (language_pair_.size() != kLanguagePairSize) {
     std::string err_msg =

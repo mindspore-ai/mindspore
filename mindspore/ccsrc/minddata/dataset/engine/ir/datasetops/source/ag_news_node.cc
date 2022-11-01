@@ -61,6 +61,8 @@ Status AGNewsNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateStringValue("AGNewsDataset", usage_, {"train", "test", "all"}));
   RETURN_IF_NOT_OK(ValidateScalar("AGNewsDataset", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("AGNewsDataset", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateEnum("AGNewsDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
 
   if (!column_names_.empty()) {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("AGNewsDataset", "column_names", column_names_));

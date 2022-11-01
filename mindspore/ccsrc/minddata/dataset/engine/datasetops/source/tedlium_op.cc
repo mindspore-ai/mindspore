@@ -68,6 +68,11 @@ Status TedliumOp::PrepareData() {
       usage_list_.push_back(usage_);
     } else if (usage_ == "all") {
       usage_list_ = {"train", "test", "dev"};
+    } else {
+      RETURN_STATUS_UNEXPECTED(
+        "Invalid parameter, usage should be \"train\", \"test\", \"dev\" or \"all\" when "
+        "specify \"release1\" or \"release2\" , got " +
+        usage_);
     }
     for (int32_t i = 0; i < usage_list_.size(); ++i) {
       Path stm_folder = root_folder / usage_list_[i] / "stm";
@@ -77,6 +82,8 @@ Status TedliumOp::PrepareData() {
     if (usage_ == "all") {
       Path stm_folder = root_folder / "data" / "stm";
       RETURN_IF_NOT_OK(ReadStmFolderRows(stm_folder, "data"));
+    } else {
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, usage should be \"all\" when specify \"release3\" , got " + usage_);
     }
   }
   std::sort(audio_files_.begin(), audio_files_.end());

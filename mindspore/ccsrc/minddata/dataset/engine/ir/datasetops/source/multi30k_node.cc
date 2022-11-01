@@ -100,6 +100,8 @@ Status Multi30kNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("Multi30kDataset", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("Multi30kDataset", multi30k_files_list_));
   RETURN_IF_NOT_OK(ValidateStringValue("Multi30kDataset", usage_, {"train", "valid", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateEnum("Multi30kDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
 
   const int kLanguagePairSize = 2;
   if (language_pair_.size() != kLanguagePairSize) {

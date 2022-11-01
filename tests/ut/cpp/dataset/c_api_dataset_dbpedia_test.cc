@@ -473,64 +473,6 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleFilesA) {
 }
 
 /// Feature: DBpediaDataset
-/// Description: Test DBpediaDataset with ShuffleMode::kInfile
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleFilesB) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetShuffleFilesB.";
-
-  // Set configuration
-  uint32_t original_seed = GlobalContext::config_manager()->seed();
-  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
-  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  GlobalContext::config_manager()->set_seed(130);
-  GlobalContext::config_manager()->set_num_parallel_workers(4);
-
-  std::string folder_path = datasets_root_path_ + "/testDBpedia/";
-  std::vector<std::string> column_names = {"class", "title", "content"};
-  std::shared_ptr<Dataset> ds = DBpedia(folder_path, "test", 0, ShuffleMode::kInfile);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  EXPECT_NE(row.find("class"), row.end());
-  std::vector<std::vector<std::string>> expected_result = {
-    {"5", "My Bedroom", "Look at this room. It's my bedroom."},
-    {"8", "My English teacher", "She has two big eyes and a small mouth."},
-    {"6", "My Holiday", "I have a lot of fun every day."}};
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    for (int j = 0; j < column_names.size(); j++) {
-      auto text = row[column_names[j]];
-      std::shared_ptr<Tensor> de_text;
-      ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
-      std::string_view sv;
-      ASSERT_OK(de_text->GetItemAt(&sv, {}));
-      std::string ss(sv);
-      EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
-    }
-    ASSERT_OK(iter->GetNextRow(&row));
-    i++;
-  }
-
-  // Expect 3 samples
-  EXPECT_EQ(i, 3);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-
-  // Restore configuration
-  GlobalContext::config_manager()->set_seed(original_seed);
-  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
-}
-
-/// Feature: DBpediaDataset
 /// Description: Test DBpediaDataset with ShuffleMode::kGlobal
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleGlobal) {

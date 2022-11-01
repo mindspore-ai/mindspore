@@ -271,6 +271,8 @@ Status LFWOp::ParseImageIds() {
       RETURN_IF_NOT_OK(ParsePeopleImageIds(annotation_vector_string));
     } else if (task_ == "pairs") {
       RETURN_IF_NOT_OK(ParsePairsImageIds(annotation_vector_string));
+    } else {
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, task should be \"people\" or \"pairs\", got " + task_);
     }
   }
   return Status::OK();
@@ -308,6 +310,8 @@ Status LFWOp::CountTotalRows(int64_t *count) {
     *count = static_cast<int64_t>(image_label_people_.size());
   } else if (task_ == "pairs") {
     *count = static_cast<int64_t>(image_label_pair_.size());
+  } else {
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, task should be \"people\" or \"pairs\", got " + task_);
   }
   return Status::OK();
 }

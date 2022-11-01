@@ -119,6 +119,9 @@ Status WIDERFaceOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
     } else {
       path_list = {img_name, val_path, val_path, val_path, val_path, val_path, val_path, val_path};
     }
+  } else {
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, usage should be \"train\", \"test\", \"valid\" or \"all\", got " +
+                             usage_);
   }
   trow->setPath(path_list);
   return Status::OK();

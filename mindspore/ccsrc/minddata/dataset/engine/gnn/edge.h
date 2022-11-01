@@ -61,6 +61,8 @@ class Edge {
   // @param NodeIdType *src_id - Source node id returned
   // @param NodeIdType *dst_id - Destination node id returned
   Status GetNode(NodeIdType *src_id, NodeIdType *dst_id) {
+    RETURN_UNEXPECTED_IF_NULL(src_id);
+    RETURN_UNEXPECTED_IF_NULL(dst_id);
     *src_id = src_id_;
     *dst_id = dst_id_;
     return Status::OK();

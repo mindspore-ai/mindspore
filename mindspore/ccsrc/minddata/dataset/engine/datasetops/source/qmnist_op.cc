@@ -168,6 +168,11 @@ Status QMnistOp::WalkAllFiles() {
     label_names_.push_back((root_dir / Path(test_prefix + "-" + label_ext)).ToString());
     image_names_.push_back((root_dir / Path(nist_prefix + "-" + image_ext)).ToString());
     label_names_.push_back((root_dir / Path(nist_prefix + "-" + label_ext)).ToString());
+  } else {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid parameter, usage should be \"train\", \"test\", \"test10k\", \"test50k\", "
+      "\"nist\" or \"all\", got " +
+      usage_);
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(

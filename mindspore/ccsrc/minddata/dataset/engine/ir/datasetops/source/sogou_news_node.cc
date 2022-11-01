@@ -60,6 +60,8 @@ Status SogouNewsNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("SogouNewsNode", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateStringValue("SogouNewsNode", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateEnum("SogouNewsNode", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
   if (num_samples_ < 0) {
     std::string err_msg = "SogouNewsNode: Invalid number of samples: " + std::to_string(num_samples_);
     MS_LOG(ERROR) << err_msg;

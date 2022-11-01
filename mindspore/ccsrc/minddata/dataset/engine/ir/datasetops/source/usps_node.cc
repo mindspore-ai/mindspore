@@ -62,6 +62,8 @@ Status USPSNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateStringValue("USPSDataset", usage_, {"train", "test", "all"}));
   RETURN_IF_NOT_OK(ValidateScalar("USPSDataset", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("USPSDataset", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateEnum("USPSDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
   return Status::OK();
 }
 

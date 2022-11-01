@@ -60,6 +60,8 @@ Status UDPOSNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateStringValue("UDPOSNode", usage_, {"train", "test", "valid", "all"}));
   RETURN_IF_NOT_OK(ValidateScalar("UDPOSNode", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("UDPOSNode", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateEnum("UDPOSNode", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
   return Status::OK();
 }
 

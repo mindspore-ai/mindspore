@@ -577,68 +577,6 @@ TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesA) {
 }
 
 /// Feature: YelpReviewDataset
-/// Description: Test YelpReviewDataset with ShuffleMode::kInfile
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesB) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesYelpReviewDatasetShuffleFilesB.";
-
-  // Set configuration.
-  uint32_t original_seed = GlobalContext::config_manager()->seed();
-  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
-  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  GlobalContext::config_manager()->set_seed(130);
-  GlobalContext::config_manager()->set_num_parallel_workers(4);
-
-  std::string dataset_dir = datasets_root_path_ + "/testYelpReview/polarity";
-  std::vector<std::string> column_names = {"label", "text"};
-
-  std::shared_ptr<Dataset> ds = YelpReview(dataset_dir, "all" , 0, ShuffleMode::kInfile);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row.
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  EXPECT_NE(row.find("label"), row.end());
-  std::vector<std::vector<std::string>> expected_result = {
-      {"1", "The food today is terrible.\\n"},
-      {"2", "\\\"Yelp\\\" service was very good.\\n"},
-      {"2", "The food is delicious today.\\n"},
-      {"1", "\\\"Yelp\\\" service was very bad.\\n"},
-      {"1", "Today's drink tastes bad.\\n"}
-  };
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    for (int j = 0; j < column_names.size(); j++) {
-      auto text = row[column_names[j]];
-      std::shared_ptr<Tensor> de_text;
-      ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
-      std::string_view sv;
-      ASSERT_OK(de_text->GetItemAt(&sv, {}));
-      std::string ss(sv);
-      EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
-    }
-    ASSERT_OK(iter->GetNextRow(&row));
-    i++;
-  }
-
-  // Expect 5 samples.
-  EXPECT_EQ(i, 5);
-
-  // Manually terminate the pipeline.
-  iter->Stop();
-
-  // Restore configuration.
-  GlobalContext::config_manager()->set_seed(original_seed);
-  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
-}
-
-/// Feature: YelpReviewDataset
 /// Description: Test YelpReviewDataset with ShuffleMode::kGlobal
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesGlobal) {
