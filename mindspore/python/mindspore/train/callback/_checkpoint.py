@@ -26,7 +26,6 @@ from mindspore import nn
 from mindspore._checkparam import Validator
 from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import save_checkpoint, _save_graph
-from mindspore.parallel._ps_context import _is_role_pserver, _get_ps_mode_rank, _enable_distributed_mindrt
 from mindspore.parallel._cell_wrapper import destroy_allgather_cell
 from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
 from mindspore.train.callback._callback import Callback, set_cur_net
@@ -419,8 +418,6 @@ class ModelCheckpoint(Callback):
         Args:
             run_context (RunContext): Context of the train running.
         """
-        if _is_role_pserver() and not _enable_distributed_mindrt():
-            self._prefix = "PServer_" + str(_get_ps_mode_rank()) + "_" + self._prefix
         cb_params = run_context.original_args()
 
         # In disaster recovery scenario, the training process may be rolled back to the last step where

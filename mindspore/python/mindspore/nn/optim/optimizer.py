@@ -32,7 +32,7 @@ import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
-from mindspore.parallel._ps_context import _is_ps_mode, _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_ps_mode
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule
@@ -351,7 +351,7 @@ class Optimizer(Cell):
         """
         Whether use distributed optimizers.
         """
-        return _is_ps_mode() and _enable_distributed_mindrt()
+        return _is_ps_mode()
 
     def flatten_gradients(self, gradients):
         """

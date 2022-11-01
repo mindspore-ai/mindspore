@@ -126,25 +126,6 @@ def _check_mpi_envs():
     return False
 
 
-def _use_old_ps():
-    """
-    Whether use old framework to launch Parameter Server training.
-    """
-    return os.getenv("USE_OLD_PS") == "True"
-
-
-def _not_require_collective_comm_lib():
-    '''
-    Whether collective communication library is required in this training mode.
-    For example, scheduler and server do not require actual collective communication in parameter server mode.
-    '''
-    # Environment variable USE_OLD_PS is set by user and used to run
-    # parameter server training with old framework.
-    if _use_old_ps() and (_is_role_sched() or _is_role_pserver()):
-        return True
-    return False
-
-
 def _check_bypass_rank_id_and_size():
     '''
     Whether bypass calling c++ API to get rank id and size, instead, use fake rank id 0 and rank size 1.
@@ -152,10 +133,8 @@ def _check_bypass_rank_id_and_size():
     '''
     if _is_role_sched():
         return True
-    if _use_old_ps() and _is_role_pserver():
-        return True
     device_target = context.get_context("device_target")
-    if not _use_old_ps() and _is_ps_mode() and _get_ps_context("worker_num") == 1 and device_target == "Ascend":
+    if _is_ps_mode() and _get_ps_context("worker_num") == 1 and device_target == "Ascend":
         return True
     return False
 
@@ -181,8 +160,6 @@ def check_parameter_available(func):
         Wrapper. If not available, raise Error.
     """
     def wrapper(*args, **kargs):
-        if _not_require_collective_comm_lib():
-            return func(*args, **kargs)
         if not GlobalComm.INITED:
             raise RuntimeError("Distributed Communication has not been inited")
         group = None

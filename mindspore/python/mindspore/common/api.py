@@ -37,7 +37,7 @@ from mindspore.common.sparse_tensor import RowTensor as PythonRowTensor
 from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, \
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
     _ms_memory_recycle
-from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
     _get_pipeline_stages, _is_in_auto_parallel_mode
 from mindspore._checkparam import Validator
@@ -1409,8 +1409,7 @@ class _CellGraphExecutor:
         return self._graph_executor.get_allreduce_fusion(real_phase)
 
     def __call__(self, obj, *args, phase='predict'):
-        if context.get_context("precompile_only") or \
-                (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
+        if context.get_context("precompile_only") or _is_role_sched():
             return None
         return self.run(obj, *args, phase=phase)
 
