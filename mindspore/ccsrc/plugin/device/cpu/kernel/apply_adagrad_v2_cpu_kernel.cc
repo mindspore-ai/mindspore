@@ -138,7 +138,7 @@ bool ApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
       }
       T dividend = sqrt(accum[i]) + eps_param;
       // if dividend is zero, add a small number to avoid division by zero
-      if (dividend == zero) {
+      if (std::equal_to<T>()(dividend, zero)) {
         dividend = dividend + eps_if_zero;
       }
       // update var: var -= lr * grad * \frac{1}{\sqrt{accum} * eps}
@@ -168,16 +168,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradV2CpuKernelMod::ApplyAdagradV2Func
        .AddOutInRef(0, 0)
        .AddOutInRef(1, 1),
      &ApplyAdagradV2CpuKernelMod::LaunchKernel<float>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutInRef(0, 0)
-       .AddOutInRef(1, 1),
-     &ApplyAdagradV2CpuKernelMod::LaunchKernel<float16>},
 };
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyAdagradV2, ApplyAdagradV2CpuKernelMod);

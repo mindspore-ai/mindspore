@@ -64,6 +64,11 @@ int ConvGradFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   auto dst_shape = inputs[diff_dst_index_]->GetDeviceShapeAdaptively();
   auto weight_shape = outputs[0]->GetDeviceShapeAdaptively();
   size_t src_dim = src_shape.size();
+  if (src_dim != weight_shape.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the rank of input must be euqal to weight's, but got input shape: " << src_shape
+                      << ", weight shape: " << weight_shape;
+  }
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "Conv Grad only supports 4D/5D input, but got " << src_dim << "D!";
   }

@@ -178,6 +178,7 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
   }
   auto out_size = get_element_num(output_shape_);
+  // memset_s does not support data that more than 2GB.
   memset(out, 0, out_size * sizeof(T));
 
   // out_cargo_size

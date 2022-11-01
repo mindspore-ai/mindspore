@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/eigen/gamma_cpu_kernel.h"
 #include <cmath>
-#include <ctime>
 #include <random>
 #include <functional>
 #include "Eigen/Core"

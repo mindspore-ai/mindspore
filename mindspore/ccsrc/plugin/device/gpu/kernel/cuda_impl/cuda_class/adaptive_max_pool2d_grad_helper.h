@@ -110,6 +110,11 @@ class AdaptiveMaxPool2DGradHelperGpuKernel : public GpuKernelHelperBase {
     // call cuda kernel
     const int shape_dim = output_shape_.size();  // dx grad dim 3 or 4
     auto input_shape = input_shape_[0];          // dy
+    const int kMinDims = 3;
+    if (shape_dim < kMinDims || SizeToInt(input_shape.size()) < kMinDims) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the rank of input and output can not less than " << kMinDims
+                        << ", but got output shape: " << output_shape_ << ", input shape: " << input_shape_;
+    }
     const int n = (shape_dim == dyDimSmall ? 1 : output_shape_[0]);
     const int c = (shape_dim == dyDimSmall ? output_shape_[0] : output_shape_[1]);
     const int in_h = input_shape[input_shape.size() - hIdx];

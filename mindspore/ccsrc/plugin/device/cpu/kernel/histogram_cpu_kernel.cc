@@ -127,7 +127,7 @@ void HistogramCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       int64_t pos =
         static_cast<int64_t>((elt - static_cast<InterType>(leftmost_edge)) / step * static_cast<InterType>(bins_));
       pos = std::min(pos, nbins_minus_1);
-      hist_local[pos] += LongToUlong(1);
+      hist_local[pos] += static_cast<int32_t>(1);
     }
     // Locks and updates the common output
     const std::lock_guard<std::mutex> lock(hist_mutex);

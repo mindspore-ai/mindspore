@@ -138,7 +138,10 @@ bool CdistGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   float *t1_start = reinterpret_cast<float *>(inputs[1]->addr);
   float *t2_start = reinterpret_cast<float *>(inputs[2]->addr);
   float *res_start = reinterpret_cast<float *>(outputs[0]->addr);
-  memset(res_start, 0, batch_ * r0_ * r1_ * sizeof(float));
+  auto ret = memset_s(res_start, outputs[0]->size, 0, batch_ * r0_ * r1_ * sizeof(float));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+  }
   if (p_ == 0.0) {
     return true;
   }

@@ -50,6 +50,11 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   auto weight_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
   auto dst_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
   auto src_dim = src_shape.size();
+  if (src_dim != weight_shape.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the rank of input must be euqal to weight's, but got input shape: " << src_shape
+                      << ", weight shape: " << weight_shape;
+  }
   if (src_dim == SHAPE_4D && format_ != NCHW) {
     MS_LOG(ERROR) << kernel_name_ << " only supports 4D input with format NCHW, but got format " << format_;
     return KRET_RESIZE_FAILED;

@@ -64,6 +64,11 @@ int ConvGradInputCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   std::vector<int64_t> weight_shape = inputs[weight_index_]->GetDeviceShapeAdaptively();
   std::vector<int64_t> dst_shape = inputs[diff_dst_index_]->GetDeviceShapeAdaptively();
   size_t src_dim = src_shape.size();
+  if (src_dim != weight_shape.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the rank of input must be euqal to weight's, but got input shape: " << src_shape
+                      << ", weight shape: " << weight_shape;
+  }
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "Conv grad only supports 4D/5D input, but got " << src_dim << "D!";
   }

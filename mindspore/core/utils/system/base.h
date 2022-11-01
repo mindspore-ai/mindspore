@@ -36,9 +36,6 @@ using uint16 = uint16_t;
 using uint32 = uint32_t;
 using uint64 = uint64_t;
 
-#define MS_MALLOC(size) malloc(size)
-#define MS_FREE(ptr) free(ptr)
-
 // Use the macro to confirm the system env
 #if defined(ANDROID) || defined(__ANDROID__)
 

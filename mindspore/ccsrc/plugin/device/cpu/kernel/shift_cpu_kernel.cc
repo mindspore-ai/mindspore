@@ -139,7 +139,10 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
       size_t output_offset = offset + LongToSize(copy_dst_begin_ * inner_size);
       size_t copy_size = copy_size_ * inner_size * sizeof(T);
       size_t dst_max_size = outputs[0]->size - output_offset;
-      (void)memcpy_s(output + output_offset, dst_max_size, input + input_offset, copy_size);
+      auto ret = memcpy_s(output + output_offset, dst_max_size, input + input_offset, copy_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed, ret=" << ret;
+      }
       size_t fill_offset = offset + LongToSize(fill_begin_ * inner_size);
       (void)std::fill_n(output + fill_offset, fill_size_ * inner_size, fill_value);
     }

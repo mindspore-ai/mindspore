@@ -126,7 +126,7 @@ bool UnpackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   size_t total_size = input_size_ * sizeof(T);
   if (total_size >= kMaxDataSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the input data size cannot larger than 2GB, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input data size cannot larger than 2GB, but got "
                       << total_size << " bytes";
   }
   int data_size = SizeToInt(sizeof(T));

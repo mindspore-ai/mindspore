@@ -18,6 +18,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kPadV3ConstantModeInputsNum = 3;
+
 template <typename T, typename S>
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreatePadV3KernelPtr(const std::string &kernel_name,
                                                                     const uint32_t &device_id) {
@@ -174,6 +176,7 @@ int PadV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   input_shapes.emplace_back(padding_shape);
   output_shapes.emplace_back(out_shape);
   if (attr_ptr_->mode == ops::kConstant) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadV3ConstantModeInputsNum, kernel_name_);
     std::vector<int64_t> constant_value_shape = inputs[2]->GetShapeVector();
     input_shapes.emplace_back(constant_value_shape);
   }

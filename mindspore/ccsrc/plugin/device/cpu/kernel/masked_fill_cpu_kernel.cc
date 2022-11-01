@@ -81,7 +81,9 @@ int MaskedFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
   value_size_ =
     LongToSize(std::accumulate(value_shape.begin(), value_shape.end(), int64_t(1), std::multiplies<int64_t>()));
+  MS_EXCEPTION_IF_ZERO("value_size", value_size_);
   inner_size_ = output_size_ / value_size_;
+  MS_EXCEPTION_IF_ZERO("inner_size", inner_size_);
   mask_index_.clear();
   input_index_.clear();
   mask_index_.resize(output_size_);
