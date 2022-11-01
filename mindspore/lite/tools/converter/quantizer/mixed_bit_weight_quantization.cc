@@ -50,6 +50,8 @@ void MixedBitWeightQuantization::CalculateBiasCorrection(float *weights, int ele
     variance_dequant += std::pow(origin_dequant_datas[i] - average_dequant, exponent);
     variance_raw += std::pow(weights[i] - average_raw, exponent);
   }
+  MS_ASSERT(variance_dequant >= 0);
+  MS_ASSERT(variance_raw >= 0);
   variance_dequant = std::sqrt(variance_dequant / element_num);
   variance_raw = std::sqrt(variance_raw / element_num);
   if (fabs(variance_dequant) < DBL_EPSILON) {
