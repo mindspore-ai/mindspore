@@ -2306,11 +2306,6 @@ def floor(x):
     return x.__floor__()
 
 
-def trunc(x):
-    """Implementation of `trunc`."""
-    return x.__trunc__()
-
-
 def uadd(x):
     """Implementation of `uadd`."""
     return x.__pos__()
@@ -3656,3 +3651,31 @@ def ne(input, other):
     Computes the non-equivalence of two tensors element-wise.
     """
     return F.ne(input, other)
+
+
+def sinh(input):
+    r"""
+    Computes hyperbolic sine of the input element-wise.
+    """
+    return F.sinh(input)
+
+
+def sort(input, dim=-1, descending=False):
+    r"""
+    Sorts the elements of the input tensor along a given dimension in ascending order by value.
+    """
+    return P.Sort(axis=dim, descending=descending)(input)
+
+
+def trunc(input):
+    r"""
+    Returns a new tensor with the truncated integer values of the elements of input.
+    """
+    return F.trunc(input)
+
+
+def imag(input):
+    r"""
+    Returns a new tensor containing imaginary value of the input.
+    """
+    return F.imag(input)

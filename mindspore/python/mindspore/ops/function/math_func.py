@@ -160,7 +160,6 @@ matrix_exp_ = MatrixExp()
 exp2_ = P.Pow()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
-trunc_ = P.Trunc()
 sparse_segment_mean_ = SparseSegmentMean()
 xlogy_ = P.Xlogy()
 square_ = P.Square()
@@ -2406,29 +2405,29 @@ def truncate_mod(x, y):
     return truncate_mod_(x, y)
 
 
-def trunc(input_x):
+def trunc(input):
     r"""
-    Returns a new tensor with the truncated integer values of the elements of input.
+    Returns a new tensor with the truncated integer values of the elements of the input tensor.
 
     Args:
-        input_x (Tensor): input_x is a tensor.
+        input (Tensor): The input tensor.
 
     Returns:
         Tensor, the same shape and data type as the input.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
-        >>> output = ops.trunc(input_x)
+        >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
+        >>> output = ops.trunc(x)
         >>> print(output)
-        [ 3. 0. 0. -3.]
+        [3. 0. 0. -3.]
     """
-    return trunc_(input_x)
+    return _get_cache_prim(P.Trunc)()(input)
 
 
 def ldexp(x, other):
@@ -6801,6 +6800,32 @@ def logical_xor(input, other):
     return logical_xor_op(input, other)
 
 
+def imag(input):
+    r"""
+    Returns a new tensor containing imaginary value of the `input`.
+    If `input` is real, it will return zeros.
+
+    Args:
+        input (Tensor): The input tensor to compute to.
+
+    Returns:
+        Tensor, the shape is the same as the `input`.
+
+    Raises:
+       TypeError: If `input` is not a Tensor.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)
+        >>> output = ops.imag(x)
+        >>> print(output)
+        0.4
+    """
+    return _get_cache_prim(P.Imag)()(input)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -6963,5 +6988,6 @@ __all__ = [
     'igammac',
     'isinf',
     'logical_xor',
+    'imag',
 ]
 __all__.sort()

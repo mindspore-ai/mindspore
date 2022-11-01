@@ -21,6 +21,7 @@ from mindspore import Tensor
 import mindspore.context as context
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.common import dtype as mstype
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 
@@ -108,3 +109,20 @@ def test_sinh_fp64():
     expect_grad_output = np.array([2.04013351e-01, 1.28977775e+00, 1.33366732e+01, 2.91906743e+04]).astype(np.float64)
     assert np.allclose(output_ms.asnumpy(), expect_output)
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_sinh_tensor_api_modes(mode):
+    """
+    Feature: Test sinh tensor api.
+    Description: Test sinh tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([0.62, 0.28, 0.43, 0.62], mstype.float32)
+    output = x.sinh()
+    expected = np.array([0.6604918, 0.28367308, 0.44337422, 0.6604918], np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)

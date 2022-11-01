@@ -118,3 +118,21 @@ def test_vmap_trunc():
     out_vmap = F.vmap(net, in_axes=0)(inp)
 
     assert np.array_equal(out_manual.asnumpy(), out_vmap.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_trunc_tensor_api_modes(mode):
+    """
+    Feature: Test trunc tensor api.
+    Description: Test trunc tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+
+    x = Tensor([3.4742, 0.5466, -0.8008, -3.9079], mstype.float32)
+    output = x.trunc()
+    expected = np.array([3, 0, 0, -3], np.float32)
+    np.testing.assert_array_equal(output.asnumpy(), expected)

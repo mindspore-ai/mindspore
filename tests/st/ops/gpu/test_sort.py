@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
+
 
 class SortNet(nn.Cell):
     def __init__(self, axis, descending):
@@ -45,6 +47,7 @@ def sort_1d(descending, nptype):
 
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
     np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
+
 
 def sort_3d(descending, nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -192,11 +195,13 @@ def dynamic_sort_3d(descending, nptype):
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
     np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sort1d_float16():
     sort_1d(False, np.float16)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -204,11 +209,13 @@ def test_sort1d_float16():
 def test_sort1d_descending_float16():
     sort_1d(True, np.float16)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sort1d_float32():
     sort_1d(False, np.float32)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -216,11 +223,13 @@ def test_sort1d_float32():
 def test_sort1d_descending_float32():
     sort_1d(True, np.float32)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sort3d_float16():
     sort_3d(False, np.float16)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -228,17 +237,20 @@ def test_sort3d_float16():
 def test_sort3d_descending_float16():
     sort_3d(True, np.float16)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sort3d_float32():
     sort_3d(False, np.float32)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sort3d_descending_float32():
     sort_3d(True, np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -250,3 +262,22 @@ def test_gpu_dynamic_sort3d_descending_float32():
     Expectation: the result match with numpy result
     """
     dynamic_sort_3d(True, np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_sort_tensor_api_modes(mode):
+    """
+    Feature: Test sort tensor api.
+    Description: Test sort tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([[8, 2, 1], [5, 9, 3], [4, 6, 7]], mstype.float16)
+    (output_1, output_2) = x.sort()
+    expected_1 = np.array([[1, 2, 8], [3, 5, 9], [4, 6, 7]], np.float16)
+    expected_2 = np.array([[2, 1, 0], [2, 0, 1], [0, 1, 2]])
+    np.testing.assert_array_equal(output_1.asnumpy(), expected_1)
+    np.testing.assert_array_equal(output_2.asnumpy(), expected_2)
