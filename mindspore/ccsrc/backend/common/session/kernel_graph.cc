@@ -914,10 +914,6 @@ bool KernelGraph::IsRefOutputMapValue(const AnfWithOutIndex &pair) const {
 }
 
 AnfWithOutIndex KernelGraph::GetRefCorrespondOutput(const AnfWithOutIndex &out_pair) const {
-  if (!IsInRefOutputMap(out_pair)) {
-    MS_LOG(EXCEPTION) << "Out_pair is not in RefOutputMap, node is " << out_pair.first->DebugString() << ", index is "
-                      << out_pair.second;
-  }
   return ref_out_in_map_.at(out_pair);
 }
 
