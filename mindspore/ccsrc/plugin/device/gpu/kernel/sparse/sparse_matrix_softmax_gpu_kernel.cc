@@ -68,7 +68,7 @@ int SparseMatrixSoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   input_row_pointers_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
                                             inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
   row_pointers_elements_ =
-    std::accumulate(input_row_pointers_.begin(), input_row_pointers_.end(), 1, std::multiplies<size_t>());
+    std::accumulate(input_row_pointers_.begin(), input_row_pointers_.end(), 1, std::multiplies<size_t>()) - 1;
 
   input_col_indices_ = std::vector<size_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
                                            inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
