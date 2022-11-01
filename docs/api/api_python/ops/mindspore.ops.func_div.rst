@@ -19,12 +19,12 @@ mindspore.ops.div
         - **rounding_mode** (str, 可选) - 应用于结果的舍入类型。三种类型被定义为None、"floor" 和 "trunc" 。默认值：None。
 
           - **None**: 默认行为。相当于Python中的 `true division` 或NumPy中的 `true_divide` 。
-          - **floor**: 将除法的结果向下舍入。相当于Python中的 `floor division` 或NumPy中的 `floor_divide` 。
-          - **trunc**: 将除法的结果舍入到零。相当于C型整数除法。
+          - **"floor"**: 将除法的结果向下舍入。相当于Python中的 `floor division` 或NumPy中的 `floor_divide` 。
+          - **"trunc"**: 将除法的结果舍入到零。相当于C型整数除法。
 
     返回：
         Tensor，输出的shape与广播后的shape相同，数据类型取两个输入中精度较高或数字较高的。
 
     异常：
         - **TypeError** - 如果 `input` 和 `other` 不是以下之一：Tensor、Number、bool。
-        - **ValueError** - 如果 `rounding_mode` 不是以下之一：None、floor、trunc。
+        - **ValueError** - 如果 `rounding_mode` 不是以下之一：None、"floor"、"trunc"。

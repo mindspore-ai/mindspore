@@ -4517,19 +4517,20 @@ def expand(input_x, size):
 
     Args:
         input_x (Tensor): The shape of tensor is (x_1, x_2, ..., x_R).
-        size (Tensor): The new shape of `input_x`.
+        size (Tensor): The expanded shape of `input_x`.
 
     Returns:
-        y (Tensor) - Tensor after expansion.
+        y (Tensor) - Tensor after expansion whose shape is `size`.
 
     Raises:
-        TypeError: If any input is not Tensor.
+        TypeError: If `input_x` or `size` is not Tensor.
         TypeError: If the type of `size` is not one of the following dtype: int16, int32, int64.
-        ValueError: If `size` is not a 1-D tensor.
         ValueError: If the size of `size` is less than the size of `input_x.shape`.
+        ValueError: If `size` is not a 1-D tensor.
         ValueError: If the expanded `size` is not equal to the existing shape of `input_x` at a dimension
             that is not 1.
-        ValueError: If the expanded `size` < 0 and it is in a leading, non-existing dimension.
+        ValueError: If the expanded `size` < 0 and it is in a leading position, corresponding to
+            a non-existing dimension in `input_x`.
         ValueError: If the number of elements of output is more than 1000000.
 
     Supported Platforms:
@@ -4681,21 +4682,30 @@ def _check_diagonal_axes(dim1, dim2, x_ndim):
 
 def diagonal(input, offset=0, dim1=0, dim2=1):
     """
-    Returns a partial view of input with the its diagonal elements with respect to `dim1` and `dim2`
-        appended as a dimension at the end of the shape.
+    Returns specified diagonals of `input`.
+
+    If `input` is 2-D, returns the diagonal of `input` with the given offset.
+    If `a` has more than two
+    dimensions, then the axes specified by `dim1` and `dim2` are used to determine
+    the 2-D sub-array whose diagonal is returned. The shape of the resulting
+    array can be determined by removing `dim1` and `dim2` and appending an index
+    to the right equal to the size of the resulting diagonals.
 
     Args:
-        input (Tensor): The input tensor. Must be at least 2-dimensional.
+        a (Tensor): Array from which the diagonals are taken.
         offset (int, optional): Offset of the diagonal from the main diagonal.
-            Can be positive or negative. Default: 0.
-        dim1 (int, optional): Dimension to be used as the first dim of the 2-D
-            sub-arrays from which the diagonals should be taken. Default: 0.
-        dim2 (int, optional): Dimension to be used as the second dim of the 2-D
-            sub-arrays from which the diagonals should be taken. Default: 1.
+            Can be positive or negative. Defaults: 0.
+        dim1 (int, optional): Axis to be used as the first axis of the 2-D
+            sub-arrays from which the diagonals should be taken. Defaults to
+            first axis (0).
+        dim2 (int, optional): Axis to be used as the second axis of the 2-D
+            sub-arrays from which the diagonals should be taken. Defaults to
+            second axis (1).
 
     Returns:
-        Tensor, a partial view of input with the its diagonal elements with respect to `dim1` and `dim2`
-            appended as a dimension at the end of the shape.
+        Tensor, if `input` is 2-D, then `input` 1-D array containing the diagonal. If
+        ``input.ndim > 2``, then the dimensions specified by `dim1` and `dim2` are removed,
+        and a new axis inserted at the end corresponding to the diagonal.
 
     Raises:
         ValueError: if the input tensor has less than two dimensions.

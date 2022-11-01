@@ -10,7 +10,7 @@ mindspore.ops.HookBackward
 
     参数：
         - **hook_fn** (Function) - Python函数。钩子函数。
-        - **cell_id** (str) - 用于标识钩子注册的函数是否实际注册在指定的cell对象上。例如，'nn.Conv2d'是一个cell对象。cell_id的默认值为空字符串("")，在这种情况下，系统将自动注册cell_id的值。cell_id的值目前不支持自定义值。
+        - **cell_id** (str，可选) - 用于标识钩子注册的函数是否实际注册在指定的cell对象上。例如，:class:`mindspore.nn.Conv2d` 是一个cell对象。默认值：""，此情况下系统将自动注册 `cell_id` 的值。 此参数目前不支持自定义。
 
     输入：
         - **input** (Tensor) - 需要导出的变量的梯度。

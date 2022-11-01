@@ -2425,7 +2425,8 @@ class ReduceStd(Primitive):
 
 class Einsum(Primitive):
     """
-    This operator uses equation to represent a tuple of tensors operations.
+    Sums the product of the elements of the input Tensor along
+    dimensions specified notation based on the Einstein summation convention(Einsum).
     You can use this operator to perform diagonal/reducesum/transpose/matmul/mul/inner product operations, etc.
 
     The inputs must be a tuple of tensors.
@@ -2603,8 +2604,8 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     width and determined by the inputs `range` and the arguments `nbins`.
 
     Args:
-        dtype (str, optional): An optional attribute. The dtype must be "int32". Default: "int32".
         nbins (int): The number of histogram bins, the type is a positive integer.
+        dtype (str, optional): An optional attribute. The dtype must be str. Default: "int32".
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
@@ -2612,12 +2613,12 @@ class HistogramFixedWidth(PrimitiveWithInfer):
           x <= range[0] will be mapped to histogram[0], x >= range[1] will be mapped to histogram[-1].
 
     Outputs:
-        Tensor, the type is int32.
+        1-D Tensor, whose length is the type is `nbins` with dtype of int32.
 
     Raises:
         TypeError: If `dtype` is not a str or `nbins` is not an int.
         ValueError: If `nbins` is less than 1.
-        ValueError: If `dtype` is neither 'int32' nor 'int64'.
+        ValueError: If `dtype` is not 'int32'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -3016,7 +3017,7 @@ class DivNoNan(Primitive):
         - **x1** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
           `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_.
         - **x2** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
           a bool when the first input is a bool or a tensor whose data type is number or bool\_.
           When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -3858,7 +3859,7 @@ class GreaterEqual(PrimitiveWithCheck):
 
 class Lerp(Primitive):
     """
-    Computes the minimum of input tensors element-wise.
+    Calculate the linear interpolation between two tensors based on the weight parameter.
 
     Refer to :func:`mindspore.ops.lerp` for more detail.
 
@@ -4172,7 +4173,7 @@ class FloatStatus(Primitive):
     Determines if the elements contain Not a Number(NaN), infinite or negative infinite. 0 for normal, 1 for overflow.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. The data type must be float16 or float32.
+        - **x** (Tensor) - The input tensor. The data type must be float16, float32 or float64.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:

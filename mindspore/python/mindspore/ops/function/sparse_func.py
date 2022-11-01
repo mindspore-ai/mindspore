@@ -629,16 +629,16 @@ def csr_softmax(logits: CSRTensor, dtype: mstype):
     Calculates the softmax of a CSRTensorMatrix.
 
     Args:
-        logits (CSRTensor): Sparse CSR Tensor.
-        dtype (dtype): Data type.
+        logits (CSRTensor): Input sparse CSRTensor.
+        dtype (dtype): Input data type.
 
     Returns:
         CSRTensor, a csr_tensor containing
 
-        - **indptr** -  indicates the start and end point for `values` in each row.
-        - **indices** - the column positions of all non-zero values of the input.
-        - **values** - the non-zero values of the dense tensor.
-        - **shape** - the shape of the csr_tensor.
+        - **indptr** - Indicates the start and end point for non-zero values in each row.
+        - **indices** - The column positions of all non-zero values of the input.
+        - **values** - The non-zero values of the dense tensor.
+        - **shape** - The shape of the csr_tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -682,18 +682,18 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
         operator may return an error of fail execute.
 
     Args:
-        a (CSRTensor): Sparse CSR Tensor.
-        b (CSRTensor): Sparse CSR Tensor.
+        a (CSRTensor): Input sparse CSRTensor.
+        b (CSRTensor): Input sparse CSRTensor.
         alpha(Tensor): Dense Tensor, its shape must be able to broadcast to a.
         beta(Tensor): Dense Tensor, its shape must be able to broadcast to b.
 
     Returns:
         CSRTensor, a csr_tensor containing the following parts.
 
-        - **indptr** -  indicates the start and end point for `values` in each row.
-        - **indices** - the column positions of all non-zero values of the input.
-        - **values** - the non-zero values of the dense tensor.
-        - **shape** - the shape of the csr_tensor.
+        - **indptr** -  Indicates the start and end point for non-zero values in each row.
+        - **indices** - The column positions of all non-zero values of the input.
+        - **values** - The non-zero values of the dense tensor.
+        - **shape** - The shape of the csr_tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``

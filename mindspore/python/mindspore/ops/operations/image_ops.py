@@ -289,10 +289,10 @@ class CropAndResize(Primitive):
           the image coordinate at y * (image_height - 1), so as the [0, 1] interval of normalized image height is
           mapped to [0, image_height - 1] in image height coordinates. We do allow y1 > y2, in which case the sampled
           crop is an up-down flipped version of the original image. The width dimension is treated similarly.
-          Normalized coordinates outside the [0, 1] range are allowed, in which case we use extrapolation_value to
+          Normalized coordinates outside the [0, 1] range are allowed, in which case we use `extrapolation_value` to
           extrapolate the input image values. Types allowed: float32.
         - **box_index** (Tensor) - A 1-D tensor of shape [num_boxes] with int32 values in [0, batch).
-          The value of box_ind[i] specifies the image that the i-th box refers to. Types allowed: int32.
+          The value of `box_index`[i] specifies the image that the i-th box refers to. Types allowed: int32.
         - **crop_size** (Tuple[int]) - A tuple of two int32 elements: (crop_height, crop_width).
           Only constant value is allowed. All cropped image patches are resized to this size.
           The aspect ratio of the image content is not preserved. Both crop_height and crop_width need to be positive.

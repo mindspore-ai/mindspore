@@ -4169,7 +4169,7 @@ class LSTM(PrimitiveWithInfer):
         num_layers (int): Number of layers of stacked LSTM.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`.
         bidirectional (bool): Specifies whether it is a bidirectional LSTM.
-        dropout (float): If not 0, append `Dropout` layer on the outputs of each
+        dropout (float, optional): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. The range of dropout is [0.0, 1.0].
 
     Inputs:
@@ -7042,12 +7042,20 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 class Dropout(PrimitiveWithCheck):
     """
     During training, randomly zeroes some of the elements of the input tensor
-    with probability 1-`keep_prob` from a Bernoulli distribution.
+    with probability 1-`keep_prob` from a Bernoulli distribution. It plays the
+    role of reducing neuron correlation and avoid overfitting.
 
     Refer to :func:`mindspore.ops.dropout` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> dropout = ops.Dropout3D(keep_prob=0.5)
+        >>> x = Tensor(np.ones([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output, mask = dropout(x)
+        >>> print(output.shape)
+        (1, 2, 3, 4, 5)
     """
 
     @prim_attr_register

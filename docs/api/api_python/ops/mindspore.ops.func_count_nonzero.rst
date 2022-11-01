@@ -13,3 +13,8 @@ mindspore.ops.count_nonzero
 
     返回：
         Tensor，非零元素的数量。数据类型由 `dtype` 所指定。
+
+    异常：
+        - **TypeError** - `axis` 不是int、tuple或者list。
+        - **ValueError** - `axis` 不在[-x.ndim, x.ndim)范围内。
+

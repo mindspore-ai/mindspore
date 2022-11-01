@@ -5748,9 +5748,9 @@ class EditDistance(Primitive):
     i and j here in may be considered as lengths of a and b.
 
     .. warning::
-        - Unorded `truth_indices` or `hypothesis_indices` might lead to expected result, so it is suggested to
-          make sure `truth_indices` and `hypothesis_indices` are both in ascending order before
-          calling this API.
+        Unorded `truth_indices` or `hypothesis_indices` might lead to expected result, so it is suggested to
+        make sure `truth_indices` and `hypothesis_indices` are both in ascending order before
+        calling this API.
 
     Args:
         normalize (bool): If true, edit distances are normalized by length of truth. Default: True.
@@ -6824,8 +6824,8 @@ class ExtractVolumePatches(Primitive):
 
     Outputs:
         Tensor, has the same type as input.
-        If padding is VALID, the shape is :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
-        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)`; if padding is SAME, the shape is :math:`(
+        If padding is "VALID", the shape is :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
+        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)`; if padding is "SAME", the shape is :math:`(
         x_n, k_d * k_h * k_w * x_c, (x_d + s_d - 1) / s_d, (x_h + s_h - 1) / s_h, (x_w + s_w - 1) / s_w)`.
 
     Raises:

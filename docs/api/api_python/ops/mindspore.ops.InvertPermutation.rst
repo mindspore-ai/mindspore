@@ -18,4 +18,4 @@ mindspore.ops.InvertPermutation
         
     异常：
         - **TypeError** - 如果 `input_x` 既不是tuple也不是list。
-        - **TypeError** - 如果 `input_x` 的元素不是整数。
+        - **TypeError** - 如果 `input_x` 的元素不是int。

@@ -973,7 +973,8 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
 def dropout(x, p=0.5, seed0=0, seed1=0):
     """
     During training, randomly zeroes some of the elements of the input tensor
-    with probability `p` from a Bernoulli distribution.
+    with probability `p` from a Bernoulli distribution. It plays the role of
+    reducing neuron correlation and avoid overfitting.
 
     Args:
         x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
@@ -3771,14 +3772,15 @@ def glu(x, axis=-1):
     See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
 
     Args:
-        x (Tensor): :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
-        axis (int): the dimension on which to split the input. Default: -1.
+        x (Tensor): Tensor to be splited. Its dtype is number.Number, and shape is :math:`(\ast_1, N, \ast_2)`
+            where `*` means, any number of additional dimensions.
+        axis (int, optional): the dimension on which to split the input. It must be int. Default: -1.
 
     Returns:
         Tensor of shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`, with the same dtype as the `x`.
 
     Raises:
-        TypeError: If dtype of `x` is not a number.
+        TypeError: If dtype of `x` is not number.Number.
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
@@ -3870,8 +3872,6 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
 
 def multi_label_margin_loss(inputs, target, reduction='mean'):
     r"""
-    MultilabelMarginLoss operation.
-
     Creates a criterion that optimizes a multi-class multi-classification
     hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
     and output :math:`y` (which is a 2D `Tensor` of target class indices).
@@ -3892,7 +3892,7 @@ def multi_label_margin_loss(inputs, target, reduction='mean'):
     Args:
         inputs (Tensor): Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
             is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        target (Tensor): Ground truth data, with the same shape as `x`, data type must be int32 and
+        target (Tensor): Ground truth data, with the same shape as `inputs`, data type must be int32 and
             label targets padded by -1.
         reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
             'sum'. Default: 'mean'.
@@ -3946,7 +3946,8 @@ def elu(input_x, alpha=1.0):
             \alpha(e^{x}  - 1) & \text{if } x \le 0\\
             x & \text{if } x \gt 0\\
         \end{array}\right.
-
+    Where :math:`x` is the element of input Tensor, :math:`\alpha` is param `alpha`,
+    it determines the smoothness of ELU.
     The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
     Activation_function#/media/File:Activation_elu.svg>`_ .
 

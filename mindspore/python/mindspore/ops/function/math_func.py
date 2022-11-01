@@ -627,10 +627,10 @@ def div(input, other, rounding_mode=None):
 
             - None: Default behavior. Equivalent to true division in Python or `true_divide` in NumPy.
 
-            - floor: Rounds the results of the division down. Equivalent to floor division in Python
+            - "floor": Rounds the results of the division down. Equivalent to floor division in Python
               or `floor_divide` in NumPy.
 
-            - trunc: Rounds the results of the division towards zero. Equivalent to C-style integer division.
+            - "trunc": Rounds the results of the division towards zero. Equivalent to C-style integer division.
               Default: None.
 
     Returns:
@@ -639,7 +639,7 @@ def div(input, other, rounding_mode=None):
 
     Raises:
         TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
-        ValueError: If `rounding_mode` value is not None, `floor` or `trunc`.
+        ValueError: If `rounding_mode` value is not None, "floor" or "trunc".
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -680,7 +680,8 @@ def floor_div(x, y):
 
         out_{i} = \\text{floor}( \\frac{x_i}{y_i})
 
-    where the :math:`floor` indicates the Floor operator, for more details, please refer to the Floor operator.
+    where the :math:`floor` indicates the Floor operator, for more details,
+    please refer to the :class:`mindspore.ops.Floor` operator.
 
     Args:
         x (Union[Tensor, Number, bool]): The first input is a number or
@@ -774,10 +775,11 @@ def floor_mod(x, y):
 
         out_{i} =\text{floor}(x_{i} // y_{i})
 
-    where the :math:`floor` indicates the Floor operator, for more details, please refer to the Floor operator.
+    where the :math:`floor` indicates the Floor operator, for more details,
+    please refer to the :class:`mindspore.ops.Floor` operator.
 
     .. warning::
-        - The input data does not support 0.
+        - Data of input `y` should not be 0, or the maximum value of its dtype will be returned.
         - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
@@ -1258,7 +1260,8 @@ def cos(x):
         out_i = cos(x_i)
 
     .. warning::
-        If use Float64, there may be a problem of missing precision.
+        Supported dtypes are float16 and float32, and using float64 may
+        cause a problem of missing precision.
 
     Args:
         x (Tensor): The shape of tensor is
@@ -2178,11 +2181,12 @@ def matrix_determinant(x):
     Computes the determinant of one or more square matrices.
 
     Args:
-        x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+        x (Tensor): A matrix to be calculated, its shape should be :math:`[..., M, M]` who must
+          have at least two dimensions, and the last two
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor, The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.
+        Tensor. The shape is `x.shape[:-2]`, and the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2242,14 +2246,13 @@ def log_matrix_determinant(x):
     Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
     Args:
-        x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+        x (Tensor): A matrix to be calculated, its shape is :math:`[..., M, M]`.
+          The matrix must be at least two dimensions, and the last two
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-
-        Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.
-
-        Tensor, The absolute values of the log determinants. The shape is :math:`x\_shape[:-2]`,
+        Tensor. The signs of the log determinants. The shape is `x.shape[:-2]`, and the dtype is same as `x`.
+        Tensor. The absolute values of the log determinants. The shape is :math:`x.shape[:-2]`, and
         the dtype is same as `x`.
 
     Raises:
@@ -3141,13 +3144,13 @@ def median(x, global_median=False, axis=0, keep_dims=False):
     Computes the median of input tensor.
 
     .. warning::
-        When attr `global_median` is True, the second output Tensor value is meaningless.
+        When attr `global_median` is True, the second output Tensor `value` is meaningless.
 
     Args:
-        x (Tensor): The first input is a tensor whose data type is number.
+        x (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
         global_median (bool): Whether the output tensor is the global median of all input tensor elements or not.
           Default: False.
-        axis (int): The dimension need to reduce. Default: 0.
+        axis (int, optional): The dimension need to reduce. Default: 0.
         keep_dims (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
     Returns:
@@ -3853,7 +3856,7 @@ def lerp(start, end, weight):
 
     Args:
         start (Tensor): The tensor with the starting points. Data type must be float16 or float32.
-        end (Tensor): The tensor with the ending points. Data type must be float16 or float32.
+        end (Tensor): The tensor with the ending points. Data type must be the same as `start`.
         weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
             or a scalar tensor with float16 or float32 data type.
 
@@ -4279,7 +4282,7 @@ def cummax(x, axis):
 
 def cumsum(x, axis, dtype=None):
     """
-    Computes the cumulative sum of input Tensor along axis.
+    Computes the cumulative sum of input Tensor along `axis`.
 
     .. math::
 
@@ -4767,9 +4770,9 @@ def amax(x, axis=(), keep_dims=False):
 
 def mean(x, axis=(), keep_dims=False):
     r"""
-    Reduces a dimension of a tensor by averaging all elements in the dimension, by default. And also can reduce
-    a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
-    controlling `keep_dims`.
+    Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
+    And reduce a dimension of `x` along the specified `axis`. `keep_dims`
+    determines whether the dimensions of the output and input are the same.
 
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
@@ -6508,10 +6511,10 @@ def less_equal(input, other):
 
     .. note::
         - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
-            consistent.
+          consistent.
         - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors, dtypes of them cannot be both bool , and the shapes of them
-            can be broadcast.
+        - When the inputs are two tensors, dtypes of them cannot be both bool, and the shapes of them
+          can be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
