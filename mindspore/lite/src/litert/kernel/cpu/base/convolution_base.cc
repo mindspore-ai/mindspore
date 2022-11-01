@@ -109,8 +109,12 @@ int ConvolutionBaseCPUKernel::Prepare() {
   auto input = this->in_tensors_.front();
   auto output = this->out_tensors_.front();
   CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(in_tensors_[1]);
   CHECK_NULL_RETURN(output);
   CHECK_NULL_RETURN(conv_param_);
+  MS_CHECK_TRUE_MSG(input->shape().size() == C4NUM, RET_ERROR, "Conv-like: input-shape should be 4D.");
+  MS_CHECK_TRUE_MSG(in_tensors_[1]->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
+  MS_CHECK_TRUE_MSG(output->shape().size() == C4NUM, RET_ERROR, "Conv-like: out-shape should be 4D.");
   conv_param_->input_batch_ = input->Batch();
   conv_param_->input_h_ = input->Height();
   conv_param_->input_w_ = input->Width();
@@ -494,7 +498,8 @@ void ConvolutionBaseCPUKernel::UpdateOriginWeightAndBias() {
   if (in_tensors_.at(kWeightIndex)->data() != nullptr) {
     origin_weight_ = in_tensors_.at(kWeightIndex)->data();
   }
-  if (in_tensors_.size() == kInputSize2 && in_tensors_.at(kBiasIndex)->data() != nullptr) {
+  if (in_tensors_.size() == kInputSize2 && in_tensors_.at(kBiasIndex) != nullptr &&
+      in_tensors_.at(kBiasIndex)->data() != nullptr) {
     origin_bias_ = in_tensors_.at(kBiasIndex)->data();
   }
 }

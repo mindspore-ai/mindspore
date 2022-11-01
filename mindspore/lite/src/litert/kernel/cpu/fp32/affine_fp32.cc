@@ -61,7 +61,14 @@ bool AffineFp32CPUKernel::CheckAffineValid() {
   if (in_tensors_.size() < kAffineMinInputNum) {
     return false;
   }
+  if (std::any_of(in_tensors_.begin(), in_tensors_.end(), [](const auto &in_tensor) { return in_tensor == nullptr; })) {
+    return false;
+  }
   if (out_tensors_.size() != kAffineMaxOutputNum) {
+    return false;
+  }
+  if (std::any_of(out_tensors_.begin(), out_tensors_.end(),
+                  [](const auto &out_tensor) { return out_tensor == nullptr; })) {
     return false;
   }
   return true;
@@ -153,6 +160,7 @@ int AffineFp32CPUKernel::FullRunInit() {
 int AffineFp32CPUKernel::IncrementInit() {
   auto out_tensor = out_tensors_.at(kOutputIndex);
   auto out_shape = out_tensor->shape();
+  MS_CHECK_TRUE_MSG(out_shape.size() >= C3NUM, RET_ERROR, "Out-shape is invalid, which must be 3D or bigger.");
   matmul_col_ = out_shape.at(kInputCol);
   matmul_row_ = out_shape.at(kInputRow);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul_row_, matmul_col_, RET_ERROR);
@@ -279,6 +287,7 @@ kernel::LiteKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
 
 kernel::LiteKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
   auto input_shape = in_tensors_.front()->shape();
+  MS_CHECK_TRUE_MSG(!input_shape.empty(), nullptr, "First input-shape is empty.");
   int src_col = input_shape.at(input_shape.size() - 1);
   int context_dims = affine_parameter_->context_size_;
   int affine_splice_output_col = affine_parameter_->output_dim_;
@@ -294,7 +303,9 @@ kernel::LiteKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
   MS_CHECK_TRUE_MSG(increment_input_ != nullptr, nullptr, "Create a new-tensor failed.");
 
   // matmul_output == 1 * matmul_col
-  int matmul_col = out_tensors_.front()->shape().back();
+  auto out_shape = out_tensors_.front()->shape();
+  MS_CHECK_TRUE_MSG(!out_shape.empty(), nullptr, "Out-shape is empty.");
+  int matmul_col = out_shape.back();
   increment_output_ = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, {1, 1, matmul_col});
   MS_CHECK_TRUE_MSG(increment_output_ != nullptr, nullptr, "Create a new-tensor failed.");
   increment_output_->MallocData();

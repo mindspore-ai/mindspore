@@ -22,10 +22,12 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext *ctx) {
+  MS_CHECK_TRUE_MSG(input != nullptr, nullptr, "input must be not a nullptr.");
   float16_t *fp16_data = nullptr;
   auto data_type = input->data_type();
   if (data_type == kNumberTypeFloat32) {
     auto ele_num = input->ElementsNum();
+    MS_CHECK_TRUE_MSG(ctx != nullptr, nullptr, "ctx must be not a nullptr.");
     fp16_data = reinterpret_cast<float16_t *>(ctx->allocator->Malloc(ele_num * sizeof(float16_t)));
     if (fp16_data == nullptr) {
       MS_LOG(ERROR) << "malloc fp16_data failed.";
@@ -40,10 +42,12 @@ float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext 
 }
 
 float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx) {
+  MS_CHECK_TRUE_MSG(output != nullptr, nullptr, "output must be not as nullptr.");
   float16_t *fp16_data = nullptr;
   auto data_type = output->data_type();
   if (data_type == kNumberTypeFloat32) {
     auto ele_num = output->ElementsNum();
+    MS_CHECK_TRUE_MSG(ctx != nullptr, nullptr, "ctx must be not a nullptr.");
     fp16_data = reinterpret_cast<float16_t *>(ctx->allocator->Malloc(ele_num * sizeof(float16_t)));
     if (fp16_data == nullptr) {
       MS_LOG(ERROR) << "malloc fp16_data failed.";
@@ -56,9 +60,11 @@ float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx)
 }
 
 int ConvertFp32TensorToFp16(lite::Tensor *tensor, const lite::InnerContext *ctx) {
+  MS_CHECK_TRUE_MSG(tensor != nullptr, RET_ERROR, "ConvertFp32TensorToFp16 failed, due to the tensor is a nullptr.");
   if (tensor->data_type() == TypeId::kNumberTypeFloat16) {
     return RET_OK;
   }
+  MS_CHECK_TRUE_MSG(ctx != nullptr, RET_ERROR, "ConvertFp32TensorToFp16 failed, due to the ctx is a nullptr.");
   auto fp32_data = tensor->data();
   tensor->set_data(nullptr);
   tensor->set_data_type(TypeId::kNumberTypeFloat16);

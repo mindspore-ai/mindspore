@@ -44,6 +44,7 @@ int ConvolutionSWCPUKernel::Prepare() {
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(filter_tensor);
+    MS_CHECK_TRUE_MSG(filter_tensor->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
     auto input_channel = filter_tensor->Channel();
     auto output_channel = filter_tensor->Batch();
     int kernel_h = filter_tensor->Height();

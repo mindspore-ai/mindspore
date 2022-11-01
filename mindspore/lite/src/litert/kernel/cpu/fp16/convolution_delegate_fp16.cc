@@ -50,6 +50,7 @@ void ConvolutionDelegateFP16CPUKernel::FreeCopiedData() {
 }
 
 void *ConvolutionDelegateFP16CPUKernel::CopyData(const lite::Tensor *tensor) {
+  MS_CHECK_TRUE_MSG(tensor != nullptr, nullptr, "tensor must be not a nullptr.");
   auto data_type = tensor->data_type();
   if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "Not supported data type: " << data_type;
@@ -68,19 +69,21 @@ void *ConvolutionDelegateFP16CPUKernel::CopyData(const lite::Tensor *tensor) {
 int ConvolutionDelegateFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   if (!InferShapeDone()) {
-    auto weight_tensor = in_tensors_.at(kWeightIndex);
-    CHECK_NULL_RETURN(weight_tensor);
     origin_weight_ = weight_tensor->data() != nullptr ? CopyData(weight_tensor) : nullptr;
     need_free_ = need_free_ | WEIGHT_NEED_FREE;
     if (in_tensors_.size() == C3NUM) {
+      CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex));
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
       need_free_ = need_free_ | BIAS_NEED_FREE;
     }
     return RET_OK;
   }
-  origin_weight_ = in_tensors_.at(kWeightIndex)->data();
+  origin_weight_ = weight_tensor->data();
   if (in_tensors_.size() == C3NUM) {
+    CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex));
     origin_bias_ = in_tensors_.at(kBiasIndex)->data();
     MS_ASSERT(origin_bias_ != nullptr);
   }

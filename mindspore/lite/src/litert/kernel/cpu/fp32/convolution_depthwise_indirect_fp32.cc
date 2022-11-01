@@ -41,6 +41,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Prepare() {
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_[kWeightIndex];
     CHECK_NULL_RETURN(weight_tensor);
+    MS_CHECK_TRUE_MSG(weight_tensor->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
 #ifdef ENABLE_AVX
     int div_flag = C8NUM;
 #else
