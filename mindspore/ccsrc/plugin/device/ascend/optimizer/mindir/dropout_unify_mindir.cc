@@ -252,17 +252,30 @@ abstract::ShapePtr GetDropoutInputShape(const AnfNodePtr &input) {
   MS_EXCEPTION_IF_NULL(input_shape);
   return input_shape;
 }
+
+bool NotDuplicatedDropout(const BaseRef &n) {
+  if (utils::isa<CNodePtr>(n)) {
+    auto in = utils::cast<CNodePtr>(n);
+    MS_EXCEPTION_IF_NULL(in);
+    if (IsPrimitiveCNode(in, prim::kPrimDropout)) {
+      if (!in->HasAttr(kAttrDuplicated) || GetValue<bool>(in->GetAttr(kAttrDuplicated)) != true) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 }  // namespace
 
 const BaseRef DropoutAndDropoutGradUnifyMindIR::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
   VarPtr Y = std::make_shared<Var>();
-  auto dropout_prim = std::make_shared<Primitive>(kDropoutOpName);
+  auto dropout_var = std::make_shared<CondVar>(NotDuplicatedDropout);
   auto tuple_getitem_prim = prim::kPrimTupleGetItem;
   auto dropout_grad_prim = std::make_shared<Primitive>(kDropoutGradOpName);
-  MS_EXCEPTION_IF_NULL(dropout_prim);
+  MS_EXCEPTION_IF_NULL(dropout_var);
   MS_EXCEPTION_IF_NULL(dropout_grad_prim);
-  auto ref0 = VectorRef({dropout_prim, X});
+  auto ref0 = VectorRef({dropout_var, X});
   auto ref1 = VectorRef({tuple_getitem_prim, ref0, Y});
   return VectorRef({dropout_grad_prim, grad_input_, ref1});
 }

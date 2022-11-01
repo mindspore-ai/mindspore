@@ -19,12 +19,14 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDropoutGenMask = "DropoutGenMask";
+constexpr auto kNameStatelessDropOutGenMask = "StatelessDropOutGenMask";
 
 /// \brief Generates the mask value for the input shape.
 /// Refer to Python API @ref mindspore.ops.DropoutGenMask for more details.
@@ -33,9 +35,20 @@ class MIND_API DropoutGenMask : public BaseOperator {
   MIND_API_BASE_MEMBER(DropoutGenMask);
   /// \brief Constructor.
   DropoutGenMask() : BaseOperator(kNameDropoutGenMask) {}
+  /// \brief Constructor with op name.
+  explicit DropoutGenMask(const std::string &name) : BaseOperator(name) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DropoutGenMask for the inputs.
   void Init() const {}
 };
+
+/// \brief Generates the mask value for the input shape.
+class MIND_API StatelessDropOutGenMask : public DropoutGenMask {
+ public:
+  MIND_API_BASE_MEMBER(StatelessDropOutGenMask);
+  /// \brief Constructor.
+  StatelessDropOutGenMask() : DropoutGenMask(kNameStatelessDropOutGenMask) {}
+};
+
 abstract::AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

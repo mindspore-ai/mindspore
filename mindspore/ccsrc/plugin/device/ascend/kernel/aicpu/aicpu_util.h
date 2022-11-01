@@ -182,6 +182,7 @@ constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kRange = "Range";
 constexpr auto kSliceGrad = "SliceGrad";
+constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
 constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
@@ -243,6 +244,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kZerosLike,
                                           kEqual,
                                           kOnesLike,
+                                          kStatelessDropOutGenMask,
                                           kTopK,
                                           kSign};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
