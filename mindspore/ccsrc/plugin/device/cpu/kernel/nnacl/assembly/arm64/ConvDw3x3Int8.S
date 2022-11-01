@@ -201,9 +201,25 @@ SKIP_LEFTSHIFT1:
   sqrdmulh v22.4s, v22.4s, v27.4s
   sqrdmulh v23.4s, v23.4s, v27.4s
   sqrdmulh v24.4s, v24.4s, v27.4s
+
+  and v12.16b, v21.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v21.4s, v21.4s, v12.4s
   sqrshl v21.4s, v21.4s, v28.4s
+
+  and v12.16b, v22.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v22.4s, v22.4s, v12.4s
   sqrshl v22.4s, v22.4s, v28.4s
+
+  and v12.16b, v23.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v23.4s, v23.4s, v12.4s
   sqrshl v23.4s, v23.4s, v28.4s
+
+  and v12.16b, v24.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v24.4s, v24.4s, v12.4s
   sqrshl v24.4s, v24.4s, v28.4s
   b OUTZP1
 
@@ -213,8 +229,17 @@ PER_CHANNEL_POST1:
   sqrdmulh v21.4s, v21.4s, v27.4s
   sqrdmulh v23.4s, v23.4s, v27.4s
   ldr q26, [x12, #16]
+
+  and v12.16b, v21.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v21.4s, v21.4s, v12.4s
   sqrshl v21.4s, v21.4s, v28.4s
+
+  and v12.16b, v23.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v23.4s, v23.4s, v12.4s
   sqrshl v23.4s, v23.4s, v28.4s
+
   ldr q27, [x11, #16]
   sqshl v22.4s, v22.4s, v26.4s
   sqshl v24.4s, v24.4s, v26.4s
@@ -222,8 +247,17 @@ PER_CHANNEL_POST1:
   sqrdmulh v22.4s, v22.4s, v27.4s
   sqrdmulh v24.4s, v24.4s, v27.4s
   ld1 {v26.4s}, [x12]
+
+  and v12.16b, v22.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v22.4s, v22.4s, v12.4s
   sqrshl v22.4s, v22.4s, v28.4s
+
+  and v12.16b, v24.16b, v28.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v24.4s, v24.4s, v12.4s
   sqrshl v24.4s, v24.4s, v28.4s
+
   ld1 {v27.4s}, [x11]
   ld1 {v28.4s}, [x13]
 
