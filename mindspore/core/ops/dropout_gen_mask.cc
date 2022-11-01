@@ -152,6 +152,7 @@ TypePtr DropoutGenMaskInferType(const PrimitivePtr &primitive, const std::vector
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(DropoutGenMask, BaseOperator);
+MIND_API_OPERATOR_IMPL(StatelessDropOutGenMask, DropoutGenMask);
 AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -162,5 +163,7 @@ AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const P
                                 DropoutGenMaskInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DropoutGenMask, prim::kPrimDropoutGenMask, DropoutGenMaskInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(StatelessDropOutGenMask, prim::kPrimStatelessDropOutGenMask, DropoutGenMaskInfer, nullptr,
+                             true);
 }  // namespace ops
 }  // namespace mindspore

@@ -30,7 +30,7 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {prim::kTupleGetItem, 
   "identity", "partial", "env_setitem", "env_getitem", "env_add",
   "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "ScalarSummary",
   "ImageSummary", "TensorSummary", "Debug", "HistogramSummary", "col2im_v1", "resolve", "BroadcastGradientArgs",
-  "InvertPermutation", "DropoutGenMask", "embed", "create_instance", "RefToEmbed",
+  "InvertPermutation", "DropoutGenMask", "StatelessDropOutGenMask", "embed", "create_instance", "RefToEmbed",
   "stop_gradient", "UpdateState", "Load", "Switch", "Print", "call_instance"};
 #else
 static const std::set<std::string> PARALLEL_BLACK_LIST_ = {prim::kTupleGetItem, "J", "list_getitem",
@@ -38,8 +38,8 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {prim::kTupleGetItem, 
   "list_append", "list_map", "list_reduce", "tuple_reversed", "tile_shape", "tuple_div", "tuple_to_array",
   "make_dict", "make_slice", "string_eq", "VirtualLoss", "Return", "env_getitem",
   "identity", "partial", "env_setitem", "env_getitem", "env_add",
-  "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "Debug", "col2im_v1",
-  "resolve", "BroadcastGradientArgs", "InvertPermutation", "DropoutGenMask", "embed", "create_instance", "RefToEmbed",
+  "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "Debug", "col2im_v1", "resolve", "BroadcastGradientArgs",
+  "InvertPermutation", "DropoutGenMask", "StatelessDropOutGenMask", "embed", "create_instance", "RefToEmbed",
   "stop_gradient", "UpdateState", "Load", "Switch", "Print", "call_instance"};
 #endif
 static const std::set<PrimitivePtr> ALLGATHER_NODE_LIST_ = {prim::kPrimAllGather, prim::kPrimMiniStepAllGather,

@@ -342,6 +342,9 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
   ++recompute_id;
   recomputed_node->AddAttr(kAttrRecomputeId, MakeValue(recompute_id));
   origin_node->AddAttr(kAttrRecomputeId, MakeValue(recompute_id));
+  if (IsPrimitiveCNode(origin_node, prim::kPrimDropout) && origin_node->HasPrimalAttr(kAttrFusion)) {
+    recomputed_node->AddPrimalAttr(kAttrFusion, origin_node->GetPrimalAttr(kAttrFusion));
+  }
   return recomputed_node;
 }
 

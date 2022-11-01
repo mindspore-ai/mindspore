@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,17 @@ INPUT_MAP(DropOutGenMask) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(prob)}};
 ATTR_MAP(DropOutGenMask) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
                             {"Seed1", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(DropOutGenMask) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(DropOutGenMask, prim::kPrimDropoutGenMask->name(), ADPT_DESC(DropOutGenMask))
+REG_ADPT_DESC(DropOutGenMask, prim::kDropoutGenMask, ADPT_DESC(DropOutGenMask))
+
+// StatelessDropOutGenMask
+INPUT_MAP(StatelessDropOutGenMask) = {{1, INPUT_DESC(shape)},
+                                      {2, INPUT_DESC(prob)},
+                                      {3, INPUT_DESC(seed)},
+                                      {4, INPUT_DESC(seed1)},
+                                      {5, INPUT_DESC(offset)}};
+ATTR_MAP(StatelessDropOutGenMask) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(StatelessDropOutGenMask) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(StatelessDropOutGenMask, prim::kStatelessDropOutGenMask, ADPT_DESC(StatelessDropOutGenMask))
 
 // LinSpace
 INPUT_MAP(LinSpace) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(stop)}, {3, INPUT_DESC(num)}};

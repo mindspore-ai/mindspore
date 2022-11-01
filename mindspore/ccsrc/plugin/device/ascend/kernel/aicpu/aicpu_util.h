@@ -171,6 +171,7 @@ constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kEqual = "Equal";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
+constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -231,6 +232,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kZerosLike,
                                           kEqual,
                                           kOnesLike,
+                                          kStatelessDropOutGenMask,
                                           kSign};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
