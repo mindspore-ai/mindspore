@@ -85,7 +85,7 @@ class _DataWrapper(nn.Cell):
     dataset channel 'queue_name' and performs the forward computation.
     """
 
-    def __init__(self, network, dataset_types, dataset_shapes, queue_name, min_shapes=None, max_shapes=None):
+    def __init__(self, network, dataset_types, dataset_shapes, queue_name):
         super(_DataWrapper, self).__init__(
             auto_prefix=False, flags=network.get_flags())
         # Also copy the flag in `network` construct
@@ -94,11 +94,6 @@ class _DataWrapper(nn.Cell):
         self.add_flags(**flags)
         self.get_next = P.GetNext(
             dataset_types, dataset_shapes, len(dataset_types), queue_name)
-        if min_shapes is not None and max_shapes is not None:
-            Validator.check_value_type("min_shapes", min_shapes, [list, tuple])
-            Validator.check_value_type("max_shapes", max_shapes, [list, tuple])
-            self.get_next.add_prim_attr("min_shapes", min_shapes)
-            self.get_next.add_prim_attr("max_shapes", max_shapes)
         self.network = network
 
     def construct(self):
@@ -106,11 +101,10 @@ class _DataWrapper(nn.Cell):
         return self.network(*outputs)
 
 
-def _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name,
-                                    min_shapes=None, max_shapes=None):
+def _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name):
     if not isinstance(network, _DataWrapper):
         network = _DataWrapper(
-            network, dataset_types, dataset_shapes, queue_name, min_shapes, max_shapes)
+            network, dataset_types, dataset_shapes, queue_name)
     return network
 
 
@@ -126,18 +120,11 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     Generate new network with network and dataset info.
     """
     dataset_types, dataset_shapes = dataset_helper.types_shapes()
-    if not _has_dynamic_shape(dataset_shapes):
-        (min_shapes, max_shapes) = (None, None)
-    else:
-        (min_shapes, max_shapes) = dataset_helper.dynamic_min_max_shapes()
     if network.get_inputs() and None not in network.get_inputs():
         _check_inputs(network.get_inputs(), dataset_shapes, dataset_types)
-        min_shapes, max_shapes = None, None
     elif context.get_context("mode") == context.PYNATIVE_MODE:
         dataset_shapes = tuple([(-2,)] * len(dataset_shapes))
-        min_shapes, max_shapes = None, None
-    network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types,
-                                              queue_name, min_shapes, max_shapes)
+    network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name)
     return network
 
 
@@ -418,28 +405,6 @@ class DatasetHelper:
         """
         return self.iter.get_data_info()
 
-    def dynamic_min_max_shapes(self):
-        """
-        Return the minimum and maximum data length of dynamic source dataset.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> import numpy as np
-            >>>
-            >>> # Define a dataset pipeline
-            >>> def generator():
-            ...    for i in range(5):
-            ...        yield (np.ones((32, i)),)
-            >>>
-            >>> train_dataset = ms.dataset.GeneratorDataset(generator, ["data"])
-            >>> # config dynamic shape
-            >>> train_dataset.set_dynamic_columns(columns={"data": [32, None]})
-            >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
-            >>>
-            >>> min_shapes, max_shapes = dataset_helper.dynamic_min_max_shapes()
-        """
-        return self.iter.dynamic_min_max_shapes()
-
 
 class _DatasetIter:
     """Base iter for dataset helper"""
@@ -476,7 +441,6 @@ class _DatasetIter:
         self.release = dataset.__transfer_dataset__.release
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
-        self.dynamic_min_max_shapes = dataset.dynamic_min_max_shapes
         if hasattr(dataset.__transfer_dataset__, "_reset"):
             self._reset = dataset.__transfer_dataset__._reset  # pylint: disable=W0212
 

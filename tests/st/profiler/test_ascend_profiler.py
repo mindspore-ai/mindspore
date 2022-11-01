@@ -17,13 +17,15 @@ import glob
 import tempfile
 import numpy as np
 import pytest
+
+import mindspore
 import mindspore.context as context
+import mindspore.dataset as ds
 import mindspore.nn as nn
+from mindspore import Model
+from mindspore import Profiler
 from mindspore import Tensor
 from mindspore.ops import operations as P
-import mindspore.dataset as ds
-from mindspore import Profiler
-from mindspore import Model
 from tests.security_utils import security_off_wrap
 
 
@@ -132,7 +134,9 @@ def test_shape():
         network = NetWork()
         profiler = Profiler(output_path=tmpdir)
         dataset = ds.GeneratorDataset(dataset_generator, ["data1", "data2"])
-        dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [32, None]})
+        t0 = Tensor(dtype=mindspore.float32, shape=[32, None])
+        t1 = Tensor(dtype=mindspore.float32, shape=[32, None])
+        network.set_inputs(t0, t1)
         model = Model(network)
         model.train(1, dataset, dataset_sink_mode=True)
         profiler.analyse()

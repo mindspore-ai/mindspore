@@ -16,7 +16,6 @@
     mindspore.dataset.Dataset.repeat
     mindspore.dataset.Dataset.reset
     mindspore.dataset.Dataset.save
-    mindspore.dataset.Dataset.set_dynamic_columns
     mindspore.dataset.Dataset.shuffle
     mindspore.dataset.Dataset.skip
     mindspore.dataset.Dataset.split
@@ -54,7 +53,6 @@ Batch（批操作）
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.Dataset.dynamic_min_max_shapes
     mindspore.dataset.Dataset.get_batch_size
     mindspore.dataset.Dataset.get_class_indexing
     mindspore.dataset.Dataset.get_col_names

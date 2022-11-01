@@ -61,7 +61,9 @@ def run_async_dump(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     network = Net()
     dataset = ds.GeneratorDataset(dataset_generator, ['data1', 'data2'])
-    dataset.set_dynamic_columns(columns={'data1': [32, None], 'data2': [32, None]})
+    t0 = Tensor(dtype=mindspore.float32, shape=[32, None])
+    t1 = Tensor(dtype=mindspore.float32, shape=[32, None])
+    network.set_inputs(t0, t1)
     model = Model(network)
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'async_dump')
@@ -99,7 +101,9 @@ def run_e2e_dump():
         return
     network = Net()
     dataset = ds.GeneratorDataset(dataset_generator, ['data1', 'data2'])
-    dataset.set_dynamic_columns(columns={'data1': [32, None], 'data2': [32, None]})
+    t0 = Tensor(dtype=mindspore.float32, shape=[32, None])
+    t1 = Tensor(dtype=mindspore.float32, shape=[32, None])
+    network.set_inputs(t0, t1)
     model = Model(network)
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'e2e_dump')
