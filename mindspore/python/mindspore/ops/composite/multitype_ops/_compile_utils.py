@@ -24,7 +24,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, TopTypeof
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
-from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
+from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore.common._utils import is_shape_unknown
 
 slice_get_item = SliceGetItem()

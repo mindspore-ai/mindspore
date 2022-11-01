@@ -23,7 +23,8 @@ from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_gr
 from mindspore.communication.management import get_group_size, create_group
 from mindspore.nn.cell import Cell
 from mindspore.nn import SequentialCell
-from mindspore.common import Tensor, RowTensorInner
+from mindspore.common import Tensor
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.ops import functional as F

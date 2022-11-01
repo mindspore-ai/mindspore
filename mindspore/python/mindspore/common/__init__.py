@@ -25,7 +25,8 @@ from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, 
 from mindspore.common.dump import set_dump
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.seed import set_seed, get_seed
-from mindspore.common.tensor import Tensor, RowTensor, RowTensorInner, SparseTensor, COOTensor, CSRTensor, MapTensor
+from mindspore.common.tensor import Tensor, MapTensor
+from mindspore.common.sparse_tensor import RowTensor, RowTensorInner, SparseTensor, COOTensor, CSRTensor
 from mindspore.common.mutable import mutable
 from mindspore.common.jit_config import JitConfig
 
@@ -57,7 +58,7 @@ __all__ = [
 ]
 
 __all__.extend([
-    "Tensor", "RowTensor", "RowTensorInner", "SparseTensor", "COOTensor", "CSRTensor", "MapTensor", # tensor
+    "Tensor", "RowTensor", "SparseTensor", "COOTensor", "CSRTensor", "MapTensor", # tensor
     "no_recursive", "ms_function", "ms_class", 'jit', 'jit_class',  # api
     "Parameter", "ParameterTuple",  # parameter
     "dtype",

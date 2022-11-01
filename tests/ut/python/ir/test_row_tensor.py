@@ -30,8 +30,9 @@ from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops._utils.utils import generate_shape_index
-from mindspore import Tensor, RowTensorInner, context
+from mindspore import Tensor, context
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel

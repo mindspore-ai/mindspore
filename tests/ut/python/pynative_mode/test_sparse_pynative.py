@@ -21,7 +21,8 @@
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, Tensor, RowTensorInner, COOTensor
+from mindspore import context, Tensor, COOTensor
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops import composite as C
 
 @pytest.fixture(scope="module", autouse=True)

@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-from mindspore import RowTensorInner
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore import context, nn, Tensor, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore.common import jit

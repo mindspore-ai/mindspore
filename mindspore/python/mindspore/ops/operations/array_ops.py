@@ -34,7 +34,7 @@ from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.common.parameter import Parameter
-from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
+from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_

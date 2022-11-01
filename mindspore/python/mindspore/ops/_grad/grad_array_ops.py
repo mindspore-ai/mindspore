@@ -28,7 +28,7 @@ from mindspore.ops import functional as F
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
-from mindspore.common.tensor import RowTensorInner
+from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
 from .._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, dyn_fill
 from .._grad.grad_base import sum_grad_reduce_axis
