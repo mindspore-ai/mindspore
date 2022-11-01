@@ -1500,4 +1500,12 @@ REG_BPROP_BUILDER("FractionalMaxPoolWithFixedKsize").SetBody([](const BpropIRBui
                       {"format", ib->GetAttr("format")}});
   return {dx, ib->ZerosLike(random_samples)};
 });
+
+REG_BPROP_BUILDER("AdaptiveAvgPool2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  MS_LOG(WARNING) << "Bprop Expander under testing: " << ib->name();
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("AdaptiveAvgPool2DGrad", {x, dout});
+  return {dx};
+});
 }  // namespace mindspore::expander::bprop

@@ -42,6 +42,73 @@ std::tuple<NodePtr, NodePtr> PromoteTensor(const BpropIRBuilder *ib, const NodeP
   }
   return std::make_tuple(t1_new, t2_new);
 }
+
+NodePtr CsrMulDiv(const BpropIRBuilder *ib, const NodePtr &indptr, const NodePtr &indices, const NodePtr &values,
+                  const NodePtr &shape, const NodePtr &y, const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(y);
+  NodePtr new_y = y;
+  if (y->isa<ValueNode>()) {
+    auto value_node = y->get<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto v = value_node->value();
+    MS_EXCEPTION_IF_NULL(v);
+    // isinstance(y, (int, float, bool))
+    if (v->isa<Int64Imm>()) {
+      new_y = ib->Tensor(GetValue<int64_t>(v));
+    } else if (v->isa<FP32Imm>()) {
+      new_y = ib->Tensor(GetValue<float>(v));
+    } else if (v->isa<FP64Imm>()) {
+      new_y = ib->Tensor(GetValue<double>(v));
+    } else if (v->isa<BoolImm>()) {
+      new_y = ib->Tensor(GetValue<bool>(v));
+    }
+  }
+  if (ib->GetSize(new_y) == 1 && ib->GetShape(new_y).size() <= kDim2) {
+    // y is scalar
+    if (op_name == "CSRMul") {
+      return ib->Reshape(ib->Mul(values, new_y), ib->GetShape(values));
+    }
+    return ib->Reshape(ib->RealDiv(values, new_y), ib->GetShape(values));
+  }
+  NodePtr new_values = nullptr;
+  std::tie(new_values, new_y) = PromoteTensor(ib, values, y);
+  return ib->Emit(op_name, {indptr, indices, new_values, shape, new_y});
+}
+
+ShapeVector ShapeSlice(const ShapeVector &sh, size_t start, size_t end) {
+  ShapeVector res;
+  auto real_end = sh.size() > end ? end : sh.size();
+  for (size_t i = start; i < real_end; ++i) {
+    res.push_back(sh[i]);
+  }
+  return res;
+}
+
+ShapeVector InferOutShape(const ShapeVector &sh1, const ShapeVector &sh2) {
+  ShapeVector res;
+  if (sh1.size() > sh2.size()) {
+    for (size_t i = 0; i < sh1.size() - sh2.size(); ++i) {
+      res.push_back(sh1[i]);
+    }
+  } else if (sh1.size() < sh2.size()) {
+    for (size_t i = 0; i < sh2.size() - sh1.size(); ++i) {
+      res.push_back(sh2[i]);
+    }
+  }
+  auto n = sh1.size() > sh2.size() ? sh2.size() : sh1.size();
+  for (size_t i = 0; i < n; ++i) {
+    auto a = sh1[sh1.size() - n + i];
+    auto b = sh2[sh2.size() - n + i];
+    if (a == 1) {
+      res.push_back(b);
+    } else if (b == 1 || a == b) {
+      res.push_back(a);
+    } else {
+      MS_EXCEPTION(ValueError) << "shape1 and shape2 can not broadcast: " << sh1 << " vs " << sh2;
+    }
+  }
+  return res;
+}
 };  // namespace
 
 REG_BPROP_BUILDER("SparseToDense").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -177,6 +244,82 @@ REG_BPROP_BUILDER("CSRMV").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {ib->ZerosLike(indptr), ib->ZerosLike(indices), values_grad, ib->ZerosLike(zero), dense_grad};
 });
 
+REG_BPROP_BUILDER("CSRMul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto indptr = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto values = ib->GetInput(kIndex2);
+  auto shape = ib->GetInput(kIndex3);
+  auto dense = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto csr_tensor_grad_value = CsrMulDiv(ib, indptr, indices, dout, shape, dense, "CSRMul");
+  auto dense_grad_value = ib->Mul(dout, values);
+  auto dense_shape = ib->GetShape(dense);
+  if (dense_shape.size() == 1 || (dense_shape.size() > 1 && dense_shape[0] == 1)) {
+    MS_EXCEPTION(ValueError)
+      << "Backpropagation for CSRMul with broadcast for the first dimension is not supported! Use `*` instead";
+  }
+  NodePtr dense_grad = nullptr;
+  if (dense_shape.size() > 1 && dense_shape[1] == 1) {
+    dense_grad =
+      ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape, ib->Value(static_cast<int64_t>(1))});
+  } else {
+    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(ib->GetShape(indices).at(0))});
+    auto coo_idx = ib->Emit("Stack", {ib->MakeTuple({row, indices})}, {{"axis", MakeValue(static_cast<int64_t>(-1))}});
+    dense_grad = ib->Emit("TensorScatterUpdate", {ib->ZerosLike(dense), coo_idx, dense_grad_value});
+  }
+  return {ib->ZerosLike(indptr), ib->ZerosLike(indices), csr_tensor_grad_value, ib->ZerosLike(ib->Value<int64_t>(0)),
+          dense_grad};
+});
+
+REG_BPROP_BUILDER("CSRDiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto indptr = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto shape_node = ib->GetInput(kIndex3);
+  auto shape = GetAxisValue(shape_node);
+  auto dense = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto dense_shape = ib->GetShape(dense);
+  constexpr size_t batch_dim_csr_start = 2;
+  int64_t batch_dim_dense_start_i =
+    SizeToLong(dense_shape.size()) - SizeToLong(shape.size()) + SizeToLong(batch_dim_csr_start);
+  if (batch_dim_dense_start_i < 0) {
+    batch_dim_dense_start_i = 0;
+  }
+  auto batch_dim_dense_start = LongToSize(batch_dim_dense_start_i);
+  ShapeVector shape1 = ShapeSlice(shape, 0, batch_dim_csr_start);
+  ShapeVector shape2 = ShapeSlice(shape, batch_dim_csr_start, shape.size());
+  ShapeVector shape3 = ShapeSlice(shape, batch_dim_dense_start, shape.size());
+  ShapeVector dense_shape1 = ShapeSlice(dense_shape, 0, batch_dim_dense_start);
+  auto feature_dim = InferOutShape(shape1, dense_shape1);
+  auto shape_x = feature_dim + shape2;
+  auto shape_y = feature_dim + shape3;
+  auto tuple_out = BroadcastGradientArgs(shape_x, shape_y);
+  auto csr_div_res = CsrMulDiv(ib, indptr, indices, dout, shape_node, dense, "CSRDiv");
+  NodePtr csr_tensor_grad_value = csr_div_res;
+  if (!tuple_out[0].empty()) {
+    csr_tensor_grad_value = ib->ReduceSum(csr_div_res, tuple_out[0], true);
+  }
+  auto dense_grad_value = ib->Neg(ib->Mul(out, csr_tensor_grad_value));
+  if (dense_shape.size() == 1 || (dense_shape.size() > 1 && dense_shape[0] == 1)) {
+    MS_LOG(EXCEPTION)
+      << "Backpropagation for CSRDiv with broadcast for the first dimension is not supported! Use `/` instead";
+  }
+  NodePtr dense_grad = nullptr;
+  if (!tuple_out[1].empty()) {
+    dense_grad = ib->ReduceSum(csr_tensor_grad_value, tuple_out[1], true);
+  } else if (dense_shape.size() > 1 && dense_shape[1] == 1) {
+    dense_grad =
+      ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape_node, ib->Value(static_cast<int64_t>(1))});
+  } else {
+    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(ib->GetShape(indices).at(0))});
+    auto coo_idx = ib->Emit("Stack", {ib->MakeTuple({row, indices})}, {{"axis", MakeValue(static_cast<int64_t>(-1))}});
+    dense_grad = ib->Emit("TensorScatterUpdate", {ib->ZerosLike(dense), coo_idx, dense_grad_value});
+  }
+  return {ib->ZerosLike(indptr), ib->ZerosLike(indices), csr_tensor_grad_value, ib->ZerosLike(ib->Value<int64_t>(0)),
+          dense_grad};
+});
+
 REG_BPROP_BUILDER("CSR2COO").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto indptr = ib->GetInput(kIndex0);
   auto nnz = ib->GetInput(kIndex1);
@@ -189,6 +332,120 @@ REG_BPROP_BUILDER("COO2CSR").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {ib->ZerosLike(row_indices), ib->ZerosLike(height)};
 });
 
+REG_BPROP_BUILDER("MakeCOOTensor").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto indices = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex4);
+  auto dout_values = ib->TupleGetItem(dout, kIndex1);
+  return {ib->ZerosLike(indices), dout_values};
+});
+
+REG_BPROP_BUILDER("COOTensorGetIndices").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto coo_tensor = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto coo_tensor_values = ib->TupleGetItem(coo_tensor, kIndex1);
+  auto coo_tensor_shape = ib->TupleGetItem(coo_tensor, kIndex2);
+  return {ib->MakeTuple({dout, ib->ZerosLike(coo_tensor_values), coo_tensor_shape})};
+});
+
+REG_BPROP_BUILDER("COOTensorGetValues").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto coo_tensor = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto coo_tensor_indices = ib->TupleGetItem(coo_tensor, kIndex0);
+  auto coo_tensor_shape = ib->TupleGetItem(coo_tensor, kIndex2);
+  return {ib->MakeTuple({ib->ZerosLike(coo_tensor_indices), dout, coo_tensor_shape})};
+});
+
+REG_BPROP_BUILDER("COOTensorGetDenseShape").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto coo_tensor = ib->GetInput(kIndex0);
+  return {ib->ZerosLike(coo_tensor)};
+});
+
+REG_BPROP_BUILDER("MakeCSRTensor").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto indptr = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex5);
+  auto dout_values = ib->TupleGetItem(dout, kIndex2);
+  auto dout_shape = ib->TupleGetItem(dout, kIndex3);
+  return {ib->ZerosLike(indptr), ib->ZerosLike(indices), dout_values, dout_shape};
+});
+
+REG_BPROP_BUILDER("CSRTensorGetIndptr").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto csr_tensor = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto csr_tensor_indices = ib->TupleGetItem(csr_tensor, kIndex1);
+  auto csr_tensor_values = ib->TupleGetItem(csr_tensor, kIndex2);
+  auto csr_tensor_shape = ib->TupleGetItem(csr_tensor, kIndex3);
+  return {ib->MakeTuple({dout, ib->ZerosLike(csr_tensor_indices), ib->ZerosLike(csr_tensor_values), csr_tensor_shape})};
+});
+
+REG_BPROP_BUILDER("CSRTensorGetIndices").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto csr_tensor = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto csr_tensor_indptr = ib->TupleGetItem(csr_tensor, kIndex0);
+  auto csr_tensor_values = ib->TupleGetItem(csr_tensor, kIndex2);
+  auto csr_tensor_shape = ib->TupleGetItem(csr_tensor, kIndex3);
+  return {ib->MakeTuple({ib->ZerosLike(csr_tensor_indptr), dout, ib->ZerosLike(csr_tensor_values), csr_tensor_shape})};
+});
+
+REG_BPROP_BUILDER("CSRTensorGetValues").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto csr_tensor = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto csr_tensor_indptr = ib->TupleGetItem(csr_tensor, kIndex0);
+  auto csr_tensor_indices = ib->TupleGetItem(csr_tensor, kIndex1);
+  auto csr_tensor_shape = ib->TupleGetItem(csr_tensor, kIndex3);
+  return {ib->MakeTuple({ib->ZerosLike(csr_tensor_indptr), ib->ZerosLike(csr_tensor_indices), dout, csr_tensor_shape})};
+});
+
+REG_BPROP_BUILDER("CSRTensorGetDenseShape").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto csr_tensor = ib->GetInput(kIndex0);
+  return {ib->ZerosLike(csr_tensor)};
+});
+
+REG_BPROP_BUILDER("CSRSparseMatrixToDense").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto shape = ib->GetInput(kIndex0);
+  auto batch = ib->GetInput(kIndex1);
+  auto indptr = ib->GetInput(kIndex2);
+  auto indices = ib->GetInput(kIndex3);
+  auto values = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto tmp = ib->Emit("CSRSparseMatrixToSparseTensor", {shape, batch, indptr, indices, values});
+  auto res = ib->Emit("DenseToCSRSparseMatrix", {dout, ib->TupleGetItem(tmp, kIndex0)});
+  return {ib->TupleGetItem(res, kIndex0), ib->TupleGetItem(res, kIndex1), ib->TupleGetItem(res, kIndex2),
+          ib->TupleGetItem(res, kIndex3), ib->TupleGetItem(res, kIndex4)};
+});
+
+REG_BPROP_BUILDER("DenseToCSRSparseMatrix").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto indices = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto batch_ptr = ib->TupleGetItem(out, kIndex1);
+  auto row_ptr = ib->TupleGetItem(out, kIndex2);
+  auto col_ind = ib->TupleGetItem(out, kIndex3);
+  auto dvalue = ib->TupleGetItem(dout, kIndex4);
+  auto dense_shape = ib->GetShape(ib->GetInput(kIndex0));
+  auto is_default_rank = (dense_shape.size() == kDim2);
+  auto batch_size = is_default_rank ? 1 : dense_shape.at(kIndex0);
+  auto num_rows = is_default_rank ? dense_shape.at(kIndex0) : dense_shape.at(kIndex1);
+  auto num_cols = is_default_rank ? dense_shape.at(kIndex1) : dense_shape.at(kIndex2);
+  auto indices_type = ib->GetDtypeId(indices);
+  std::vector<int64_t> sh;
+  if (is_default_rank) {
+    sh = {num_rows, num_cols};
+  } else {
+    sh = {batch_size, num_rows, num_cols};
+  }
+  NodePtr shape = nullptr;
+  if (indices_type == kNumberTypeInt32) {
+    shape = ib->Tensor(sh, kInt32);
+  } else if (indices_type != kNumberTypeInt64) {
+    shape = ib->Tensor(sh);
+  } else {
+    MS_EXCEPTION(TypeError) << "For 'DenseToCSRSparseMatrix', 'indices' must be of type int32 or int64, but got: "
+                            << TypeIdToString(indices_type);
+  }
+  return {ib->Emit("CSRSparseMatrixToDense", {shape, batch_ptr, row_ptr, col_ind, dvalue}), ib->ZerosLike(indices)};
+});
+
 REG_BPROP_BUILDER("SparseSoftmax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto indices = ib->GetInput(kIndex0);
   auto values = ib->GetInput(kIndex1);
@@ -197,8 +454,9 @@ REG_BPROP_BUILDER("SparseSoftmax").SetBody([](const BpropIRBuilder *ib) -> NodeP
   auto dout = ib->GetInput(kIndex4);
   auto default_values = ib->Tensor(0, ib->GetDtype(values));
   auto out_dout = ib->Mul(out, dout);
-  auto sp_product =
-    ib->Emit("SparseToDenseV2", {indices, shape, out_dout, default_values}, {{"validate_indices", MakeValue(true)}});
+  constexpr int64_t max_length = 1000000;
+  auto sp_product = ib->Emit("SparseToDenseV2", {indices, shape, out_dout, default_values},
+                             {{"validate_indices", MakeValue(true)}, {"max_length", MakeValue<int64_t>(max_length)}});
   auto sum_reduced = ib->Neg(ib->ReduceSum(sp_product, {-1}, true));
   auto sp_sum = ib->Emit("SparseDenseCwiseAdd", {indices, dout, shape, sum_reduced});
   auto grad_x = ib->Mul(sp_sum, out);
@@ -263,5 +521,12 @@ REG_BPROP_BUILDER("SparseSegmentSum").SetBody([](const BpropIRBuilder *ib) -> No
 
 REG_BPROP_BUILDER("SparseSegmentSumWithNumSegments").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", true);
+});
+
+REG_BPROP_BUILDER("SparseTensorDenseAdd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x1_indices = ib->GetInput(kIndex0);
+  auto x1_shape = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex5);
+  return {ib->ZerosLike(x1_indices), ib->Emit("GatherNd", {dout, x1_indices}), ib->ZerosLike(x1_shape), dout};
 });
 }  // namespace mindspore::expander::bprop

@@ -286,6 +286,9 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
 
 std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step) {
   auto size = (stop - start) / step;
+  if (size <= 0) {
+    return {};
+  }
   size = ((stop - start) % step == 0) ? size : size + 1;
   std::vector<int64_t> range(size);
   std::generate(range.begin(), range.end(), [n = start - step, step]() mutable {

@@ -50,11 +50,21 @@ class Emitter {
   NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const {
     return Emit(prim::kReshape, {node, Tensor(shape)});
   }
+  NodePtr ExpandDims(const NodePtr &node, int64_t axis) const { return Emit(kExpandDimsOpName, {node, Value(axis)}); }
   NodePtr Abs(const NodePtr &node) const { return Emit(prim::kAbs, {node}); }
   NodePtr Neg(const NodePtr &node) const { return Emit(prim::kNeg, {node}); }
   NodePtr Reciprocal(const NodePtr &node) const { return Emit(prim::kReciprocal, {node}); }
   NodePtr Square(const NodePtr &node) const { return Emit(prim::kSquare, {node}); }
   NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
+  NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const {
+    return Emit(kTransposeOpName, {node, Value(perm)});
+  }
+  NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) const {
+    return Emit(kTileOpName, {node, Value(multiples)});
+  }
+  NodePtr Concat(const NodePtrList &inputs, int64_t axis) const {
+    return Emit(kConcatOpName, {MakeTuple(inputs)}, {{kAttrAxis, MakeValue(axis)}});
+  }
 
   NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kAdd, {lhs, rhs}); }
   NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kSub, {lhs, rhs}); }
