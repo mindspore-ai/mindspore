@@ -233,7 +233,11 @@ int ResetReshapeParameters(const AnfNodePtr &reshape_node) {
     tensor_data[i] = reshape_data[i - 1];
   }
 
-  lite::InitParameterFromTensorInfo(reshape_shape_param, tensor_info);
+  auto ret = lite::InitParameterFromTensorInfo(reshape_shape_param, tensor_info);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 }  // namespace
