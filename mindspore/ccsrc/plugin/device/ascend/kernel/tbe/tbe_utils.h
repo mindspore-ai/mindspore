@@ -42,13 +42,19 @@ constexpr size_t OP_DEBUG_LEVEL_2 = 2;  // 2: turn on op debug, gen cce file, tu
 constexpr size_t OP_DEBUG_LEVEL_3 = 3;  // 3: turn off op debug, keep kernel_meta
 constexpr size_t OP_DEBUG_LEVEL_4 = 4;  // 4: turn off op debug, gen _compute.json file
 
+typedef enum {
+  CCE_KERNEL = 0,
+  TBE_PREBUILD = 1,
+} saveType;
+
 class TbeUtils {
  public:
   TbeUtils() = default;
 
   ~TbeUtils() = default;
 
-  static void SaveJsonInfo(const std::string &json_name, const std::string &info);
+  static void SaveJsonInfo(const std::string &json_name, const std::string &info,
+                           saveType save_type = saveType::CCE_KERNEL);
 
   static void LoadCache();
 
@@ -63,8 +69,6 @@ class TbeUtils {
   static std::string GetBankPath();
 
   static std::string GetTuneDumpPath();
-
-  static void SavePrebuildInfo(const std::string &json_name, const std::string &build_res);
 
   static void SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag);
 
