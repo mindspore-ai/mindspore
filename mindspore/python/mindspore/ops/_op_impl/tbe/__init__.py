@@ -181,6 +181,7 @@ from .bn_training_update_grad_ds import _bn_training_update_grad_ds_tbe
 from .bn_infer import _bn_infer_tbe
 from .bn_infer_ds import _bn_infer_ds_tbe
 from .bn_infer_grad import _bn_infer_grad_tbe
+from .bn_infer_grad_ds import _bn_infer_grad_ds_tbe
 from .bn_inference import _bn_inference_tbe
 from .fused_dbn_dw import _fused_dbn_dw_tbe
 from .reciprocal import _reciprocal_tbe

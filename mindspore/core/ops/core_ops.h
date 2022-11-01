@@ -814,6 +814,7 @@ GVAR_DEF(PrimitivePtr, kPrimBatchNorm, std::make_shared<Primitive>("BatchNorm"))
 GVAR_DEF(PrimitivePtr, kPrimBatchNormWithActivation, std::make_shared<Primitive>("BatchNormWithActivation"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormWithAddAndActivation,
          std::make_shared<Primitive>("BatchNormWithAddAndActivation"));
+GVAR_DEF(PrimitivePtr, kPrimBNInferGrad, std::make_shared<Primitive>("BNInferGrad"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormGrad, std::make_shared<Primitive>("BatchNormGrad"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithActivation, std::make_shared<Primitive>("BatchNormGradWithActivation"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithAddAndActivation,
