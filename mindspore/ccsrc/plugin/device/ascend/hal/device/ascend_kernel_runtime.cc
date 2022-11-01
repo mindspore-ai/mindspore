@@ -100,6 +100,7 @@ void IntHandler(int, siginfo_t *, void *) {
 void AscendEnableDynamicRuntimeCache(const session::KernelGraph *graph) {
   const auto &node_list = FuncGraph::TopoSort(graph->get_return());
   for (auto &node : node_list) {
+    MS_EXCEPTION_IF_NULL(node);
     auto kernel_info = node->kernel_info();
     if (!kernel_info) {
       continue;
@@ -442,6 +443,7 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto ascend_device_address_ptr =
     std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(ascend_device_address_ptr);
   ascend_device_address_ptr->set_is_ptr_persisted(true);
   return ascend_device_address_ptr;
 }
@@ -453,6 +455,7 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto ascend_device_address_ptr = std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
                                                                          node_index, kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(ascend_device_address_ptr);
   ascend_device_address_ptr->set_is_ptr_persisted(true);
   return ascend_device_address_ptr;
 }
@@ -687,6 +690,7 @@ CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taski
     auto task_id = std::get<kTupleTaskId>(*iter.second);
     auto stream_id = std::get<kTupleStreamId>(*iter.second);
     if (task_id == taskid && stream_id == streamid) {
+      MS_EXCEPTION_IF_NULL(current_graph_);
       auto &execute_node = current_graph_->execution_order();
       auto node = std::find_if(execute_node.begin(), execute_node.end(), [&iter](const auto &node) {
         MS_EXCEPTION_IF_NULL(node);
@@ -813,6 +817,7 @@ void AscendKernelRuntime::GetLastNodesOnStream(const std::vector<CNodePtr> &kern
 void AscendKernelRuntime::GetShadowBackendNodeMap(const session::KernelGraph &graph,
                                                   std::map<AnfNodePtr, AnfNodePtr> *shadow_backend_node_map) {
   auto input_nodes = graph.input_nodes();
+  MS_EXCEPTION_IF_NULL(shadow_backend_node_map);
   for (auto &node : input_nodes) {
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(node, graph);
     for (auto &knode : input_nodes) {
@@ -977,6 +982,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
       auto args = kernel->user_data<kernel::KernelArgs>();
+      MS_EXCEPTION_IF_NULL(args);
       (void)kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map);
     }
     KernelLaunchInfo kernel_launch_info;
@@ -993,6 +999,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 
       for (auto size : workspace_size_list) {
         auto device_address_ptr = std::make_shared<AscendDeviceAddress>(nullptr, size, kAscendDevice, device_id);
+        MS_EXCEPTION_IF_NULL(device_address_ptr);
         device_address_ptr->set_is_ptr_persisted(true);
         auto device_ptr = runtime_instance->MallocMem(MemType::kDynamicMem, size, device_address_ptr);
         if (device_ptr == nullptr) {
@@ -1065,6 +1072,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
       for (size_t i = 0; i < input_num; ++i) {
         auto real_input_index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
         auto device_address = AnfAlgo::GetPrevNodeOutputAddr(node, real_input_index);
+        MS_EXCEPTION_IF_NULL(device_address);
         MS_LOG(INFO) << "Input idx " << i << " size " << device_address->size_ << " addr " << device_address->ptr_;
         int32_t value = 0;
         auto ret =
