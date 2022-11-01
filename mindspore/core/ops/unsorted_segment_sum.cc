@@ -25,54 +25,11 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "ops/unsorted_segment_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-void GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
-                         ShapeVector *num_vec) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const std::string &op_name = primitive->name();
-  int64_t num_segments_v;
-  // num_segments is a Tensor when UnsortedSegmentSum is a dynamic shape operator
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    auto n_value_ptr = input_args[kInputIndex2]->BuildValue();
-    MS_EXCEPTION_IF_NULL(n_value_ptr);
-    if (n_value_ptr->isa<tensor::Tensor>()) {
-      auto n_tensor_ptr = n_value_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_tensor_ptr);
-      num_segments_v = n_tensor_ptr->data_type() == kNumberTypeInt32 ? *static_cast<int32_t *>(n_tensor_ptr->data_c())
-                                                                     : *static_cast<int64_t *>(n_tensor_ptr->data_c());
-      (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
-      num_vec->push_back(num_segments_v);
-    } else {
-      auto n_abstract_tensor = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_abstract_tensor);
-      num_vec->push_back(-1);
-    }
-  } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
-    auto num_segments_input_type = input_args[kInputIndex2]->BuildType();
-    if (num_segments_input_type->type_id() == kNumberTypeInt64) {
-      auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(num_sample_ptr);
-      num_segments_v = GetValue<int64_t>(input_args[kInputIndex2]->BuildValue());
-    } else if (num_segments_input_type->type_id() == kNumberTypeInt32) {
-      auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(num_sample_ptr);
-      num_segments_v = GetValue<int32_t>(input_args[kInputIndex2]->BuildValue());
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << op_name << "' the third input build type is invalid:"
-                              << TypeIdToString(num_segments_input_type->type_id()) << ".";
-    }
-    (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
-    num_vec->push_back(num_segments_v);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << op_name
-                      << "', the third input type should be tensor or scalar, but got invalid abstract type:"
-                      << input_args[kInputIndex2]->type_name() << ".";
-  }
-}
-
 abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -108,7 +65,7 @@ abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
   abstract::CheckShapeAnyAndPositive(op_name + " segment_ids_shape", segment_ids_shape);
 
   ShapeVector num_vec;
-  GetNumSegmentsValue(primitive, input_args, &num_vec);
+  num_vec.push_back(GetNumSegmentsValue(primitive, input_args));
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto batch_rank_ptr = primitive->GetAttr(kBatchRank);

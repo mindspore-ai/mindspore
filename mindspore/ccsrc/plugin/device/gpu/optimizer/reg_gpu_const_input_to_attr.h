@@ -67,8 +67,6 @@ RER_GPU_STATIC_CONST_TO_ATTR(kSubscalarOpName, 1);
 RER_GPU_STATIC_CONST_TO_ATTR(kTensorCopySlicesOpName, 2, 3, 4);
 RER_GPU_STATIC_CONST_TO_ATTR(kTileOpName, 1);
 RER_GPU_STATIC_CONST_TO_ATTR(kTransposeOpName, 1);
-RER_GPU_STATIC_CONST_TO_ATTR(kUnsortedSegmentProdOpName, 2);
-RER_GPU_STATIC_CONST_TO_ATTR(kUnsortedSegmentSumOpName, 2);
 }  // namespace mindspore::opt
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_GPU_OPTIMIZER_REG_GPU_CONST_INPUT_TO_ATTR_H_
