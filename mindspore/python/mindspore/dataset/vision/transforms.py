@@ -1754,7 +1754,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
             raise TypeError("Current Interpolation is not supported with NumPy input.")
         return cde.PerspectiveOperation(self.start_points, self.end_points, Inter.to_c_type(self.interpolation))
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 

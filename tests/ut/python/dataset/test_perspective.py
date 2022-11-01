@@ -45,6 +45,31 @@ def generate_numpy_random_rgb(shape):
     return np.random.randint(0, 256, shape) / 255.
 
 
+def test_perspective_python_implement():
+    """
+    Feature: Perspective
+    Description: Test eager support for Perspective Python implementation
+    Expectation: Return output image successfully
+    """
+    img_in = np.array([[[211, 192, 16], [146, 176, 190], [103, 86, 18], [23, 194, 246]],
+                       [[17, 86, 38], [180, 162, 43], [197, 198, 224], [109, 3, 195]],
+                       [[172, 197, 74], [33, 52, 136], [120, 185, 76], [105, 23, 221]],
+                       [[197, 50, 36], [82, 187, 119], [124, 193, 164], [181, 8, 11]]], dtype=np.uint8)
+    img_in = PIL.Image.fromarray(img_in)
+    src = [[0, 63], [63, 63], [63, 0], [0, 0]]
+    dst = [[0, 32], [32, 32], [32, 0], [0, 0]]
+    perspective_op = vision.Perspective(src, dst, Inter.BILINEAR)
+    img_ms = np.array(perspective_op(img_in))
+    expect_result = np.array([[[139, 154, 71], [110, 122, 164], [0, 0, 0], [0, 0, 0]],
+                              [[121, 122, 91], [129, 110, 120], [0, 0, 0], [0, 0, 0]],
+                              [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                              [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]], dtype=np.uint8)
+    assert_allclose(img_ms.flatten(),
+                    expect_result.flatten(),
+                    rtol=1e-3,
+                    atol=0)
+
+
 def test_perspective_eager():
     """
     Feature: Perspective
