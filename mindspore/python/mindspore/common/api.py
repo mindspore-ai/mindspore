@@ -24,6 +24,7 @@ import time
 import ast
 import inspect
 import importlib
+from collections import OrderedDict
 from functools import wraps
 import numpy as np
 import mindspore as ms
@@ -903,9 +904,32 @@ def _build_broadcast_graph(broadcast_params_dict, broadcast_phase):
         broadcast_params_dict[param_name].set_data(param)
 
 
+def _get_auto_split_param_names(parameter_layout_dict):
+    auto_split_param_names = []
+    for key, value in parameter_layout_dict.items():
+        for dim in value[1]:
+            if dim != -1:
+                auto_split_param_names.append(key)
+                break
+    return auto_split_param_names
+
+
 def _parameter_broadcast(obj):
-    """Parameter broadcast."""
+    """
+    Parameter broadcast.
+    When the parallel mode is 'semi_auto_parallel' or 'auto_parallel', it will broadcast the parameters that have not
+    split.
+    """
+    auto_split_param_names = []
+    if _is_in_auto_parallel_mode():
+        auto_split_param_names = _get_auto_split_param_names(obj.parameter_layout_dict)
+
     broadcast_params_dict = obj.parameters_broadcast_dict()
+    if auto_split_param_names and broadcast_params_dict:
+        broadcast_params_dict = OrderedDict()
+        for param_name, param in obj.parameters_broadcast_dict().items():
+            if param_name not in auto_split_param_names:
+                broadcast_params_dict[param_name] = param
     broadcast_phase = "_broadcast_subgraph"
     _build_broadcast_graph(broadcast_params_dict, broadcast_phase)
 
