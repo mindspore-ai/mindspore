@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include "tools/optimizer/graph/node_infershape.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/common/node_util.h"
@@ -482,6 +483,12 @@ int InsertQuantNodeManager::InsertWeightQuantNode(const FuncGraphPtr &func_graph
   CHECK_NULL_RETURN(quant_cast_cnode);
   quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast_" +
                                             std::to_string(input_index));
+  opt::NodeInferShape infer;
+  auto status = infer.InferShape(quant_cast_cnode);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << quant_cast_cnode->fullname_with_scope() << " InferShape failed.";
+    return RET_ERROR;
+  }
   auto manager = func_graph->manager();
   CHECK_NULL_RETURN(manager);
   auto ret = manager->Replace(input_node, quant_cast_cnode);
