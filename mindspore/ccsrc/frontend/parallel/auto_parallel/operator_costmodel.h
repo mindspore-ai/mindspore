@@ -232,6 +232,7 @@ class SqrtCost : public CastCost {
 using TanhCost = SqrtCost;
 using EluCost = SqrtCost;
 using ReLUCost = SqrtCost;
+using identityCost = SqrtCost;
 using SigmoidCost = SqrtCost;
 using ReciprocalCost =
   SqrtCost;  // The derivative of 'Reciprocal' is different on 'Ascend' and 'GPU'. Here, 'Ascend' is chosen

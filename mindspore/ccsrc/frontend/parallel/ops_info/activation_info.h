@@ -184,6 +184,14 @@ class ReLUInfo : public ActivationOther {
   ~ReLUInfo() override = default;
 };
 
+class identityInfo : public ActivationOther {
+ public:
+  identityInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<identityCost>()) {}
+  ~identityInfo() override = default;
+};
+
 class RepeatElementsInfo : public ActivationOther {
  public:
   RepeatElementsInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
