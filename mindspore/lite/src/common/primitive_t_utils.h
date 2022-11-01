@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace lite {
-const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb);
-OpParameter *GetOpParameter(schema::PrimitiveT *primitive_t);
+const schema::Primitive *ConvertToPrimitive(const schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb);
+OpParameter *GetOpParameter(const schema::PrimitiveT *primitive_t);
 std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const std::shared_ptr<mindspore::ops::BaseOperator> &op);
 }  // namespace lite
 }  // namespace mindspore

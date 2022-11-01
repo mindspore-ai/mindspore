@@ -37,13 +37,13 @@ class MSOpsRegistry {
   }
   void InsertPrimitiveTMap(const std::string &name, PrimitiveTCreator creator) {
     std::string lower_name = name;
-    std::transform(name.begin(), name.end(), lower_name.begin(), ::tolower);
+    (void)std::transform(name.begin(), name.end(), lower_name.begin(), ::tolower);
     primitive_creators[lower_name] = creator;
   }
   PrimitiveTCreator GetPrimitiveCreator(const std::string &name) {
     std::string lower_name = name;
-    std::transform(name.begin(), name.end(), lower_name.begin(), ::tolower);
-    lower_name.erase(std::remove(lower_name.begin(), lower_name.end(), '_'), lower_name.end());
+    (void)std::transform(name.begin(), name.end(), lower_name.begin(), ::tolower);
+    (void)lower_name.erase(std::remove(lower_name.begin(), lower_name.end(), '_'), lower_name.end());
     if (primitive_creators.find(lower_name) != primitive_creators.end()) {
       return primitive_creators[lower_name];
     } else {
