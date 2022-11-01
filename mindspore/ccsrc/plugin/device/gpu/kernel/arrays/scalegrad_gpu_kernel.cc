@@ -50,6 +50,7 @@ void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr>
     ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_half, output_addr,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
+    MS_EXCEPTION_IF_NULL(scale_addr_float);
     ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_float, output_addr,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
   }
@@ -84,7 +85,9 @@ bool ScaleGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 
 bool ScaleGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ScaleGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   auto input_size = inputs.size();
   for (size_t index = 0; index < input_size; index++) {
