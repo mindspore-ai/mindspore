@@ -752,7 +752,7 @@ class Col2Im(Primitive):
         self.add_prim_attr('stride', self.stride)
 
 
-class Reshape(PrimitiveWithCheck):
+class Reshape(PrimitiveWithInfer):
     """
     Rearranges the input Tensor based on the given shape.
 
@@ -776,45 +776,85 @@ class Reshape(PrimitiveWithCheck):
         """Initialize Reshape"""
         self.init_prim_io_names(inputs=['tensor', 'shape'], outputs=['output'])
 
-    def infer_value(self, x, shape):
-        """infer value"""
+    @staticmethod
+    def _get_shape_and_range(x, shape):
+        """ get min and max shape when output shape is dynamic"""
+        x_shp = x['shape']
+        if is_shape_unknown(shape['shape']):
+            out_shape = [-2]
+            return out_shape
+
+        shape_rank = shape['shape'][0]
+        if not x_shp:
+            # x is a scalar, output shape fixed
+            out_shape = [1] * shape_rank
+            return out_shape
+
+        out_shape = [-1] * shape_rank
+
+        if "shape_value" in shape:
+            out_shape = shape["shape_value"]
+        return out_shape
+
+    def _update_shape_and_value(self, out, x, shape_v, dim_prod, neg_index):
+        """ update shape, value and min / max value of output when input shape is known"""
+        x_shp = x['shape']
+        if dim_prod <= 0:
+            raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
+                             f"the value of 'input_shape' is {shape_v}. "
+                             f"The product of 'input_shape' should > 0, but got {dim_prod}.")
+        arr_prod = np.prod(x_shp)
+        if neg_index != -1:
+            shape_v[neg_index] = int(arr_prod // dim_prod)
+            dim_prod *= shape_v[neg_index]
+        if dim_prod != arr_prod:
+            raise ValueError(f"For '{self.name}', the product of the 'input_x' shape "
+                             f"should be equal to product of 'input_shape', but got product of the"
+                             f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
+        out['shape'] = tuple(shape_v)
+
+        if x['value'] is not None:
+            out['value'] = Tensor(x['value'].asnumpy().reshape(shape_v))
+
+        return out
+
+    def __infer__(self, x, shape):
+        shape_v = shape['value']
+        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         # for shape is not constant
-        if shape is None or x is None:
-            return None
-        if isinstance(shape, Tensor_):
-            validator.check_tensor_dtype_valid("shape", shape.dtype, [mstype.int32, mstype.int64], self.name)
-            shape = shape.asnumpy().tolist()
+        if shape_v is None:
+            out_shape = self._get_shape_and_range(x, shape)
+            return {
+                'shape': out_shape,
+                'dtype': x['dtype'],
+                'value': None,
+            }
+
+        if isinstance(shape_v, Tensor_):
+            validator.check_tensor_dtype_valid("shape", shape['dtype'], [mstype.int32, mstype.int64], self.name)
+            shape_v = shape_v.asnumpy().tolist()
         else:
-            validator.check_value_type("shape", shape, [tuple], self.name)
-            shape = list(shape)
+            validator.check_value_type("shape", shape_v, [tuple], self.name)
+            shape_v = list(shape_v)
 
         neg_index = -1
         dim_prod = 1
-        for i, shp_i in enumerate(shape):
+        for i, shp_i in enumerate(shape_v):
             validator.check_value_type("shape[%d]" % i, shp_i, [int], self.name)
             if shp_i == -1:
                 if neg_index != -1:
                     raise ValueError(f"For '{self.name}', there can be at most one '-1' in 'input_shape', "
-                                     f"but got {shape}.")
+                                     f"but got {shape_v}.")
                 neg_index = i
             else:
                 dim_prod *= shp_i
-        out = None
-        if not is_shape_unknown(x.shape):
-            x_shp = x.shape
-            if dim_prod <= 0:
-                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
-                                 f"the value of 'input_shape' is {shape}. "
-                                 f"The product of 'input_shape' should > 0, but got {dim_prod}.")
-            arr_prod = np.prod(x_shp)
-            if neg_index != -1:
-                shape[neg_index] = int(arr_prod // dim_prod)
-                dim_prod *= shape[neg_index]
-            if dim_prod != arr_prod:
-                raise ValueError(f"For '{self.name}', the product of the 'input_x' shape "
-                                 f"should be equal to product of 'input_shape', but got product of the"
-                                 f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
-            out = Tensor(x.asnumpy().reshape(shape))
+
+        out = {'shape': shape_v,
+               'dtype': x['dtype'],
+               'value': None}
+
+        if not is_shape_unknown(x['shape']):
+            out = self._update_shape_and_value(out, x, shape_v, dim_prod, neg_index)
         return out
 
 
