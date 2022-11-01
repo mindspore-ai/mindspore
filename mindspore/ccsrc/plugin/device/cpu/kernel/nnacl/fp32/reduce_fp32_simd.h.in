@@ -196,7 +196,7 @@ static inline int64_t  ReduceSumDim2Axis0@SIMD_INSTRUCTION@(int64_t index, size_
     }
     SIMD_ST_F32(inner_dst, tmp);
   }
-  return NNACL_OK;
+  return index;
 }
 
 @SIMD_INSTRUCTION_END@
