@@ -1,7 +1,7 @@
 mindspore.nn.ChannelShuffle
 ============================
 
-.. py:class:: mindspore.nn.ChannelShuffle()
+.. py:class:: mindspore.nn.ChannelShuffle(groups)
 
     将shape的为 :math`(*, C, H, W)` 的Tensor的通道划分成 :math`g` 组，并将其以 :math`(*, C \frac g, g, H, W)` 的shape重新排列, 同时保持Tensor原有的shape。
 

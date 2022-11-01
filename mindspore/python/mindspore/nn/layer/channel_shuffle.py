@@ -36,7 +36,7 @@ class ChannelShuffle(Cell):
         Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If groups is not an int.
+        TypeError: If `groups` is not an int.
         ValueError: If `groups` is less than 1.
         ValueError: If dims of `x` is less than 3.
         ValueError: If number of channels can not be divisible by groups.
