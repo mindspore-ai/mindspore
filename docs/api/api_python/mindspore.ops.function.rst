@@ -145,6 +145,10 @@ mindspore.ops.function
     mindspore.ops.acosh
     mindspore.ops.add
     mindspore.ops.addn
+    mindspore.ops.arccosh
+    mindspore.ops.arcsin
+    mindspore.ops.arctan
+    mindspore.ops.arctan2
     mindspore.ops.asin
     mindspore.ops.asinh
     mindspore.ops.atan
