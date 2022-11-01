@@ -27,7 +27,7 @@ function Run_Converter() {
 function Run_TensorRT() {
     source /etc/profile.tensorrt8
     # cd ${tensorrt_path} || exit 1
-    # tar -zxf ${x86_path}/ascend_gpu_cpu/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    # tar -zxf ${x86_path}/cloud_fusion/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     # tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     # cd ${tensorrt_path}/mindspore-lite-${version}-linux-x64/ || exit 1
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-*'
@@ -166,7 +166,7 @@ done
 run_fail_not_return="OFF"
 basepath=$(pwd)
 echo "NVIDIA TensorRT, basepath is ${basepath}"
-x86_path=${release_path}/centos_x86/ascend_gpu_cpu  # ../release_pkg/lite
+x86_path=${release_path}/centos_x86/cloud_fusion  # ../release_pkg/lite
 #tensorrt_path=${x86_path}/server/tensorrt/cuda-11.1]
 
 cd ${x86_path}

@@ -66,7 +66,7 @@ echo ${basepath}
 if [[ $backend == "linux_arm64_tflite" ]]; then
   x86_path=${release_path}/linux_aarch64/
 else
-  x86_path=${release_path}/centos_x86/ascend_gpu_cpu
+  x86_path=${release_path}/centos_x86/cloud_fusion
 fi
 cd ${x86_path}
 file_name=$(ls *-linux-*.tar.gz)

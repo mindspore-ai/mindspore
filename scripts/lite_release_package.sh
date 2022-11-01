@@ -51,8 +51,8 @@ function linux_release_package()
     mkdir -p ${output_path}/release/linux/aarch64/ascend/
     mkdir -p ${output_path}/release/linux/x86_64/server/
     mkdir -p ${output_path}/release/linux/aarch64/server/
-    mkdir -p ${output_path}/release/linux/x86_64/ascend_gpu_cpu/
-    mkdir -p ${output_path}/release/linux/aarch64/ascend_cpu/
+    mkdir -p ${output_path}/release/linux/x86_64/cloud_fusion/
+    mkdir -p ${output_path}/release/linux/aarch64/cloud_fusion/
     mkdir -p ${output_path}/release/none/cortex_m7
 
     cp ${input_path}/none_cortex-m/mindspore*cortex-m7.tar.gz* ${output_path}/release/none/cortex_m7/
@@ -69,8 +69,8 @@ function linux_release_package()
     cp ${input_path}/centos_x86/tensorrt/mindspore*.tar.gz* ${output_path}/release/linux/x86_64/tensorrt/
     cp -r ${input_path}/centos_x86/server/* ${output_path}/release/linux/x86_64/server/
     cp -r ${input_path}/linux_aarch64/server/* ${output_path}/release/linux/aarch64/server/
-    cp -r ${input_path}/centos_x86/ascend_gpu_cpu/* ${output_path}/release/linux/x86_64/ascend_gpu_cpu/
-    cp -r ${input_path}/linux_aarch64/ascend/* ${output_path}/release/linux/aarch64/ascend_cpu/
+    cp -r ${input_path}/centos_x86/cloud_fusion/* ${output_path}/release/linux/x86_64/cloud_fusion/
+    cp -r ${input_path}/linux_aarch64/cloud_fusion/* ${output_path}/release/linux/aarch64/cloud_fusion/
 
     cp -r ${input_path}/linux_aarch32/nnie/Hi* ${output_path}/release/linux/nnie/
     cp -r ${input_path}/linux_aarch64/nnie/Hi* ${output_path}/release/linux/nnie/
