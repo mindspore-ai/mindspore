@@ -62,23 +62,20 @@ abstract::TupleShapePtr ApplyAdaMaxInferShape(const PrimitivePtr &primitive,
     // if vmap is not activated, constants could be either 0d or 1d.
     kInputShape = 1;
     if (beta1_power_shape.size() > 0) {
-      (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", SizeToLong(beta1_power_shape[0]), kEqual,
-                                               kInputShape, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", beta1_power_shape[0], kLessEqual, kInputShape,
+                                               prim_name);
     }
     if (lr_shape.size() > 0) {
-      (void)CheckAndConvertUtils::CheckInteger("lr's rank", SizeToLong(lr_shape[0]), kEqual, kInputShape, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("lr's rank", lr_shape[0], kLessEqual, kInputShape, prim_name);
     }
     if (beta1_shape.size() > 0) {
-      (void)CheckAndConvertUtils::CheckInteger("beta1's rank", SizeToLong(beta1_shape[0]), kEqual, kInputShape,
-                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("beta1's rank", beta1_shape[0], kLessEqual, kInputShape, prim_name);
     }
     if (beta2_shape.size() > 0) {
-      (void)CheckAndConvertUtils::CheckInteger("beta2's rank", SizeToLong(beta2_shape[0]), kEqual, kInputShape,
-                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("beta2's rank", beta2_shape[0], kLessEqual, kInputShape, prim_name);
     }
     if (epsilon_shape.size() > 0) {
-      (void)CheckAndConvertUtils::CheckInteger("epsilon's rank", SizeToLong(epsilon_shape[0]), kEqual, kInputShape,
-                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("epsilon's rank", epsilon_shape[0], kLessEqual, kInputShape, prim_name);
     }
   } else {
     // if vmap is activated, constants should have the same rank as kInputShape.
