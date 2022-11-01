@@ -30,15 +30,6 @@ namespace mindspore {
 namespace {
 constexpr auto kProviderGe = "ge";
 
-std::string GetOriginFuncGraphName(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-  MS_EXCEPTION_IF_NULL(kg);
-  FuncGraphPtr origin_graph = kg->GetFuncGraph();
-  MS_EXCEPTION_IF_NULL(origin_graph);
-  return origin_graph->ToString();
-}
-
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
 
@@ -78,26 +69,6 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
     }
   }
   return res;
-}
-
-void ReorderInputsAsFrontGraph(const KernelGraphPtr &kernel_graph, const FuncGraphPtr &origin_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  const auto &front_map = kernel_graph->front_backend_anf_map();
-  const auto &origin_parameters = origin_graph->get_inputs();
-  std::vector<AnfNodePtr> new_parameters;
-
-  for (const auto &param : origin_parameters) {
-    auto iter = front_map.find(param);
-    if (iter == front_map.end()) {
-      MS_LOG(EXCEPTION) << "Invalid kernel graph " << kernel_graph->ToString() << " cannot find parameters "
-                        << param->DebugString();
-    }
-    new_parameters.push_back(iter->second);
-  }
-
-  kernel_graph->set_parameters(new_parameters);
-  kernel_graph->SetGraphInputs(new_parameters);
-  kernel_graph->SetInputNodes();
 }
 
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
@@ -243,22 +214,16 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     MS_LOG(ERROR) << "Input param graph is nullptr.";
     return false;
   }
-  KernelGraphPtr kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-  if (kernel_graph == nullptr) {
+  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  if (kg == nullptr) {
     MS_LOG(ERROR) << "Dynamic cast kernel graph failed.";
     return false;
   }
-  FuncGraphPtr origin_graph = kernel_graph->GetFuncGraph();
-  if (origin_graph == nullptr) {
-    MS_LOG(ERROR) << "Origin graph of kernel failed.";
-    return false;
-  }
-  ReorderInputsAsFrontGraph(kernel_graph, origin_graph);
   // opt::GeOptimization(origin_graph);
-  (void)BuildDFGraph(origin_graph, GetParams(origin_graph), false);
+  (void)BuildDFGraph(kg, GetParams(kg), false);
   kernel_graph->set_run_mode(device::RunMode::kGraphMode);
   // copy init weight to device
-  RunGeInitGraph(origin_graph);
+  RunGeInitGraph(kg);
   return true;
 }
 
@@ -269,7 +234,8 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     MS_LOG(ERROR) << " Input param is nullptr.";
     return false;
   }
-  MS_LOG(INFO) << "GE run graph " << graph->ToString() << " start.";
+  auto graph_name = graph->ToString();
+  MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
   std::vector<tensor::TensorPtr> input_tensors;
   for (const auto &input : inputs) {
     auto tensor = std::make_shared<tensor::Tensor>(input);
@@ -279,7 +245,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
 
   // call ge rungraph
   transform::RunOptions run_options;
-  run_options.name = GetOriginFuncGraphName(graph);
+  run_options.name = graph_name;
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";

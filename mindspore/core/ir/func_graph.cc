@@ -804,7 +804,7 @@ void FuncGraph::set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forwa
 std::vector<AnfNodePtr> FuncGraph::TopoSort(const AnfNodePtr &node) { return mindspore::TopoSort(node); }
 
 const std::vector<AnfNodePtr> &FuncGraph::inputs() const {
-  if (type_name() == kFuncGraphClassName) {
+  if (type_name() == kFuncGraphTypeName) {
     return parameters();
   } else {
     return *inputs_;
