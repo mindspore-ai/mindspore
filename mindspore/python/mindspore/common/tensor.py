@@ -3321,6 +3321,37 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('dense_to_sparse_csr')(self)
 
+    def unbind(self, dim=0):
+        r"""
+        Removes a tensor dimension in specified axis.
+
+        Unstack a tensor of rank `R` along axis dimension, and output tensors will have rank `(R-1)`.
+
+        Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
+        the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
+
+        Args:
+            dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: 0.
+
+        Returns:
+            A tuple of tensors, the shape of each objects is the same.
+
+        Raises:
+            ValueError: If `dim` is out of the range [-R, R).
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+            >>> output = x.unbind()
+            >>> print(output)
+            (Tensor(shape=[3], dtype=Int64, value=[1, 2, 3]), Tensor(shape=[3], dtype=Int64, value=[4, 5, 6]),
+            Tensor(shape=[3], dtype=Int64, value=[7, 8, 9]))
+        """
+        self._init_check()
+        return tensor_operator_registry.get('unbind')(dim)(self)
+
     def unsorted_segment_min(self, segment_ids, num_segments):
         r"""
         For details, please refer to :func:`mindspore.ops.unsorted_segment_min`.

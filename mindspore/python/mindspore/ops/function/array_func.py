@@ -1451,6 +1451,40 @@ def unstack(input_x, axis=0):
     return _unstack(input_x)
 
 
+def unbind(x, dim=0):
+    r"""
+    Removes a tensor dimension in specified axis.
+
+    Unstacks a tensor of rank `R` along axis dimension, and output tensors will have rank `(R-1)`.
+
+    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
+    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
+
+    Args:
+        x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
+            A tensor to be unstacked and the rank of the tensor must be greater than 0.
+        dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: 0.
+
+    Returns:
+        A tuple of tensors, the shape of each objects is the same.
+
+    Raises:
+        ValueError: If axis is out of the range [-R, R).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        >>> output = ops.unbind(x, dim=0)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Int64, value=[1, 2, 3]), Tensor(shape=[3], dtype=Int64, value=[4, 5, 6]),
+        Tensor(shape=[3], dtype=Int64, value=[7, 8, 9]))
+    """
+    _unstack = _get_cache_prim(P.Unstack)(dim)
+    return _unstack(x)
+
+
 def expand_dims(input_x, axis):
     """
     Adds an additional dimension to `input_x` at the given axis.
@@ -4885,6 +4919,7 @@ __all__ = [
     'slice',
     'concat',
     'stack',
+    'unbind',
     'unstack',
     'scalar_cast',
     'scalar_to_tensor',
