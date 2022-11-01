@@ -27,35 +27,45 @@ constexpr size_t kConvInputsNum = 2;
 constexpr size_t kConvOutputsNum = 1;
 }  // namespace
 
-void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<int64_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int64_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<int64_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+bool ConvCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  MS_ERROR_IF_NULL(prim);
+  format_ = GetValue<std::string>(prim->GetAttr(kAttrFormat));
+  group_ = GetValue<int64_t>(prim->GetAttr(kAttrGroup));
+  pad_mode_ = GetValue<std::string>(prim->GetAttr(kAttrPadMode));
+  return true;
+}
 
-  size_t src_dim = src_shape.size();
-  if (AnfAlgo::IsShapesDynamic({src_shape, weight_shape, dst_shape})) {
-    return;
+int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
-    MS_LOG(EXCEPTION) << "Conv only supports 4D/5D input, but got " << src_dim << "D!";
+  auto src_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto weight_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto dst_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto src_dim = src_shape.size();
+  if (src_dim == SHAPE_4D && format_ != NCHW) {
+    MS_LOG(ERROR) << kernel_name_ << " only supports 4D input with format NCHW, but got format " << format_;
+    return KRET_RESIZE_FAILED;
   }
-  const auto format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, FORMAT);
-  if (src_dim == SHAPE_4D && format != NCHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with format NCHW, but got format " << format;
-  }
-  if (src_dim == SHAPE_5D && format != NCDHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with format NCDHW, but got format " << format;
+  if (src_dim == SHAPE_5D && format_ != NCDHW) {
+    MS_LOG(ERROR) << kernel_name_ << " only supports 5D input with format NCDHW, but got format " << format_;
+    return KRET_RESIZE_FAILED;
   }
   dnnl::memory::dims kernel_size(weight_shape.begin() + NC_LEN, weight_shape.end());
-  const size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
-  if (group > 1) {
-    if (src_shape[1] % group != 0) {
-      MS_LOG(EXCEPTION) << kernel_name_ << " requires channels must be divided by group!";
+  if (group_ > 1) {
+    if (src_shape[1] % group_ != 0) {
+      MS_LOG(ERROR) << kernel_name_ << " requires channels must be divided by group!";
+      return KRET_RESIZE_FAILED;
     }
-    (void)weight_shape.insert(weight_shape.begin(), group);
-    weight_shape[1] = weight_shape[1] / group;
+    (void)weight_shape.insert(weight_shape.begin(), group_);
+    weight_shape[1] = weight_shape[1] / group_;
   }
 
   const dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
@@ -63,16 +73,19 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   const auto stride_attr = src_dim == SHAPE_4D ? STRIDE : STRIDES;
   const auto dilation_attr = src_dim == SHAPE_4D ? DILATION : DILATIONS;
-  const auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
-  const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, stride_attr);
-  const auto dilation_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, dilation_attr);
+  auto prim = base_operator->GetPrim();
+  MS_ERROR_IF_NULL(prim);
+  const auto strides_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(stride_attr));
+  const auto dilation_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(dilation_attr));
   if (strides_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << "requires strides must be " << src_dim << "D, but got "
-                      << strides_include_nc.size() << "D!";
+    MS_LOG(ERROR) << kernel_name_ << "requires strides must be " << src_dim << "D, but got "
+                  << strides_include_nc.size() << "D!";
+    return KRET_RESIZE_FAILED;
   }
   if (dilation_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires dilation must be " << src_dim << "D, but got "
-                      << dilation_include_nc.size() << "D!";
+    MS_LOG(ERROR) << kernel_name_ << " requires dilation must be " << src_dim << "D, but got "
+                  << dilation_include_nc.size() << "D!";
+    return KRET_RESIZE_FAILED;
   }
   const dnnl::memory::dims strides(strides_include_nc.begin() + NC_LEN, strides_include_nc.end());
   const dnnl::memory::dims dilation(dilation_include_nc.begin() + NC_LEN, dilation_include_nc.end());
@@ -81,8 +94,8 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::dims padding_r;
   (void)std::transform(dilation.begin(), dilation.end(), std::back_inserter(dilates),
                        [](const int64_t &value) { return value - 1; });
-  PaddingInfo padding_info{pad_mode, kernel_size, strides, dilation, &padding_l, &padding_r};
-  GetPadding(kernel_node, src_shape, padding_info);
+  PaddingInfo padding_info{pad_mode_, kernel_size, strides, dilation, &padding_l, &padding_r};
+  GetPadding(base_operator, src_shape, padding_info);
 
   const auto desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
@@ -92,6 +105,7 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
+  return KRET_OK;
 }
 
 bool ConvCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
