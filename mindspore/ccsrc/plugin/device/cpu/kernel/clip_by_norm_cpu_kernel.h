@@ -71,6 +71,14 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector clip_norm_shape_;
   ShapeVector l2_norm_output_shape_;
   ShapeVector output_shape_;
+  size_t stride_ = 1;
+  std::vector<size_t> l2_norm_index_;
+  std::vector<size_t> div_index1_;
+  std::vector<size_t> div_index2_;
+  std::vector<size_t> mul_index1_;
+  std::vector<size_t> mul_index2_;
+  ParallelSearchInfo parallel_search_info_div_;
+  ParallelSearchInfo parallel_search_info_mul_;
 };
 }  // namespace kernel
 }  // namespace mindspore

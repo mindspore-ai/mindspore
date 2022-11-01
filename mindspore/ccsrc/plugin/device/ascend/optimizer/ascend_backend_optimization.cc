@@ -370,6 +370,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<LambFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
