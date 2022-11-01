@@ -368,4 +368,5 @@ Dynamic LR函数
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.ChannelShuffle
     mindspore.nn.Flatten
