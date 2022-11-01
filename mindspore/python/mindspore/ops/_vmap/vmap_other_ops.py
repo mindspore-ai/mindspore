@@ -83,7 +83,9 @@ def get_partical_vmap_rule(prim, axis_size):
             else:
                 val, dim = val_bdim
                 if dim is not None:
-                    _raise_value_error("The source axis of args in {} must be None, "
+                    _raise_value_error("In the scenario where vmap contains control flow, currently only the "
+                                       "case of each batch branch with the same processing operations is "
+                                       "supported, so that the source axis of args in {} must be None, "
                                        "but got {}.".format(prim_name, dim))
                 vals = vals + (val,)
 
