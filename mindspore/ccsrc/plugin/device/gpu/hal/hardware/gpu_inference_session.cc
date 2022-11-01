@@ -46,6 +46,7 @@ void GpuInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &kern
     MS_EXCEPTION_IF_NULL(device_address);
     if (!common::AnfAlgo::IsParameterWeight(pk_node)) {
       tensor = inputs[no_weight_input++];
+      MS_EXCEPTION_IF_NULL(tensor);
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                             LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                             tensor->data_c())) {
