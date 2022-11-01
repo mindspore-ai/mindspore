@@ -144,6 +144,7 @@ int CLEStrategy::CalcScaleWithTwoLayer(const CombinationLayer &layer_group, std:
   }
   for (size_t i = 0; i < range1.size(); i++) {
     // scale = range1 / sqrt(range1 * range2)
+    MS_ASSERT(range1.at(i) * range2.at(i) >= 0);
     auto sqrt_range = sqrt(range1.at(i) * range2.at(i));
     if (sqrt_range <= 0 || isnan(sqrt_range) || isinf(sqrt_range)) {
       MS_LOG(WARNING) << "sqrt_range <= 0, and set scale factor to default." << kDefaultScale;

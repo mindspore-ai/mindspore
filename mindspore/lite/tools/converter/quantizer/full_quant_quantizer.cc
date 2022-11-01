@@ -288,7 +288,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
       MS_LOG(ERROR) << "primitive is nullptr";
-      continue;
+      return RET_ERROR;
     }
     auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
     MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");

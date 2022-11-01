@@ -22,6 +22,7 @@
 #include <cfloat>
 #include <cmath>
 #include "tools/common/statistic_utils.h"
+#include "src/common/utils.h"
 
 namespace mindspore::lite::quant {
 int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {

@@ -42,6 +42,7 @@ int CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *grap
     MS_CHECK_TRUE_RET(in_tensor != nullptr, RET_NULL_PTR);
     auto in_quant_param = GetTensorQuantParam(in_tensor);
     if (in_quant_param != nullptr && !in_quant_param->inited) {
+      MS_CHECK_FALSE_MSG(in_tensor->quantParams.empty(), RET_ERROR, "in_tensor quantParams is empty.");
       in_tensor->quantParams.front() = std::move(out_quant_param);
     }
   }
@@ -69,6 +70,7 @@ int CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *grap
       if (out_quant_param->inited) {
         continue;
       }
+      MS_CHECK_FALSE_MSG(out_tensor->quantParams.empty(), RET_ERROR, "out_tensor quantParams is empty.");
       out_tensor->quantParams.front() = std::move(in_quant_param);
     }
   }

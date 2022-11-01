@@ -406,6 +406,7 @@ int DebugInfoManager::GetDataFromTensorMap(const mindspore::schema::Tensor &sche
   auto ret = WeightDecoder::DecompressTensor(*src_tensor, dst_tensor);
   if (ret == RET_NO_CHANGE) {
     if (src_tensor->length() < dst_tensor->Size()) {
+      delete src_tensor;
       MS_LOG(ERROR) << "Tensor data shape invalid";
       return RET_ERROR;
     }
@@ -414,6 +415,7 @@ int DebugInfoManager::GetDataFromTensorMap(const mindspore::schema::Tensor &sche
     // this buffer must be freed by framework and set own data to false, this memory will not be released.
     dst_tensor->set_own_data(false);
   } else if (ret != RET_OK) {
+    delete src_tensor;
     MS_LOG(ERROR) << "Decompress tensor data failed: " << ret;
     return ret;
   }

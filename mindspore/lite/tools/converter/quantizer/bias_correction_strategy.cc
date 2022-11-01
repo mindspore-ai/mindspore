@@ -429,7 +429,7 @@ int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_grap
     status = DoCNodeBiasCorrection(quant_func_graph, cnode, int32_bias);
     if (status != RET_OK) {
       MS_LOG(ERROR) << op_name << " do node bias correct failed.";
-      break;
+      return status;
     }
   }
   return status;
