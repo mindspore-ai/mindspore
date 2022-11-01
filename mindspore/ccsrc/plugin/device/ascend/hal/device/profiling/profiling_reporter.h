@@ -68,6 +68,7 @@ class ProfilingReporter {
   void DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id,
                          const KernelType kernel_type) const;
   void ReportStepPoint(const vector<std::shared_ptr<StepPointDesc>> &points);
+  void ReportParallelStrategy() const;
 
  private:
   uint32_t device_id_;

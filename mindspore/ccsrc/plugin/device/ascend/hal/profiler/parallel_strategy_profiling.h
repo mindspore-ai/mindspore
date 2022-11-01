@@ -34,6 +34,7 @@ class ParallelStrategy {
   ~ParallelStrategy() {}
   BACKEND_EXPORT void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
   void SaveParallelStrategyToFile();
+  std::string GetParallelStrategyForReport();
 
  private:
   irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph);

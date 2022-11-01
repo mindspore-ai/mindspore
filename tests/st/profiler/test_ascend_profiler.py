@@ -73,7 +73,7 @@ def test_ascend_profiling():
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
-        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/Framework*")) == 4
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/Framework*")) == 6
 
 
 @pytest.mark.level0

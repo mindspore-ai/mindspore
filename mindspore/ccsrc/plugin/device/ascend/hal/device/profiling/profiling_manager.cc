@@ -186,6 +186,8 @@ Status ProfilingManager::ProfHandleStart() {
 }
 
 Status ProfilingManager::ProfHandleStop() {
+  // Report Mindspore Framework data to Ascend Profiler before Stop
+  ProfilingUtils::ReportMindSporeFrameworkData();
   MS_LOG(INFO) << "Begin to stop profiling. Current profiling state is " << cur_state_;
   cur_state_ = kProfilingStop;
   return PROF_SUCCESS;

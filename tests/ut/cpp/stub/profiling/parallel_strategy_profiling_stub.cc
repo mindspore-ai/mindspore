@@ -27,6 +27,12 @@ std::shared_ptr<ParallelStrategy> &ParallelStrategy::GetInstance(){
 }
 
 void ParallelStrategy::SaveParallelStrategyToFile(){}
+
+std::string ParallelStrategy::GetParallelStrategyForReport() {
+  std::string data = "{\"config\": {\"ai_frame_type\": \"MindSpore\",\"parallelType\":"
+    "\"semi_auto_parallel\",\"rankId\":0}}";
+  return data;
+}
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

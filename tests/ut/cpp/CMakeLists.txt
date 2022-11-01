@@ -265,6 +265,7 @@ if(ENABLE_SECURITY)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/options.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc")
 endif()
+
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/parallel_strategy_profiling.cc")
 
