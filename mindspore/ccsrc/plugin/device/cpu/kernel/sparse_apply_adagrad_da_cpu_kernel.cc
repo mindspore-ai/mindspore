@@ -179,7 +179,7 @@ bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
       ga[j] = ga[j] + g[k];
       da[j] = da[j] + g[k] * g[k];
       if (l1_scalar > static_cast<T>(0.0)) {
-        var[j] = static_cast<T>(-1.0) * static_cast<T>(Sign(static_cast<double>(ga[j]))) *
+        var[j] = static_cast<T>(-1.0) * static_cast<T>(Sign(static_cast<float>(ga[j]))) *
                  static_cast<T>(std::fmax(
                    static_cast<double>((static_cast<T>(std::fabs(static_cast<double>(ga[j]))) / global_step_scalar) -
                                        l1_scalar),
@@ -209,14 +209,6 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyAdagradDACpu
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, int32_t>},
     {ADD_KERNEL(Int64, Int64, Int64, Int64, Int32, Int64, Int64, Int64, Int64, Int64),
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, int64_t>},
-    {ADD_KERNEL(UInt8, UInt8, UInt8, UInt8, Int32, UInt8, UInt8, UInt8, Int64, UInt8),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, uint8_t>},
-    {ADD_KERNEL(UInt16, UInt16, UInt16, UInt16, Int32, UInt16, UInt16, UInt16, Int64, UInt16),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, uint16_t>},
-    {ADD_KERNEL(UInt32, UInt32, UInt32, UInt32, Int32, UInt32, UInt32, UInt32, Int64, UInt32),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, uint32_t>},
-    {ADD_KERNEL(UInt64, UInt64, UInt64, UInt64, Int32, UInt64, UInt64, UInt64, Int64, UInt64),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, uint64_t>},
     {ADD_KERNEL(Float16, Float16, Float16, Float16, Int32, Float16, Float16, Float16, Int64, Float16),
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, float16>},
     {ADD_KERNEL(Float32, Float32, Float32, Float32, Int32, Float32, Float32, Float32, Int64, Float32),
@@ -231,14 +223,6 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyAdagradDACpu
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, int32_t>},
     {ADD_KERNEL(Int64, Int64, Int64, Int64, Int64, Int64, Int64, Int64, Int64, Int64),
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, int64_t>},
-    {ADD_KERNEL(UInt8, UInt8, UInt8, UInt8, Int64, UInt8, UInt8, UInt8, Int64, UInt8),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, uint8_t>},
-    {ADD_KERNEL(UInt16, UInt16, UInt16, UInt16, Int64, UInt16, UInt16, UInt16, Int64, UInt16),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, uint16_t>},
-    {ADD_KERNEL(UInt32, UInt32, UInt32, UInt32, Int64, UInt32, UInt32, UInt32, Int64, UInt32),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, uint32_t>},
-    {ADD_KERNEL(UInt64, UInt64, UInt64, UInt64, Int64, UInt64, UInt64, UInt64, Int64, UInt64),
-     &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, uint64_t>},
     {ADD_KERNEL(Float16, Float16, Float16, Float16, Int64, Float16, Float16, Float16, Int64, Float16),
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, float16>},
     {ADD_KERNEL(Float32, Float32, Float32, Float32, Int64, Float32, Float32, Float32, Int64, Float32),

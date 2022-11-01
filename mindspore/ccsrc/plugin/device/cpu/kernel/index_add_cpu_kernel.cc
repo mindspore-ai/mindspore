@@ -191,7 +191,7 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   const float block_size = 1024;
   const size_t inner_block_size = 100;
   if (HasDuplicateIndex(indices, y_axis_size_)) {
-    ParallelLaunch(heavy_task_block, outer_size_, CalcSizePerThread(outer_size_), this);
+    ParallelLaunch(heavy_task_block, outer_size_, SizeToFloat(CalcSizePerThread(outer_size_)), this);
   } else if (inner_size_ > 1 && inner_size_ <= inner_block_size) {
     ParallelLaunch(task_block, y_nums_ / inner_size_, block_size / inner_size_, this);
   } else {
