@@ -40,6 +40,9 @@ using ps::core::NodeCommand;
 // The time interval for send info or query info between worker and scheduler.
 constexpr uint32_t kWaitDuration = 5;
 
+// The retry number for MsCollectiveCommLib initializing.
+constexpr uint32_t kMSCollectiveRetryTime = 80;
+
 // The collective communication library for MindSpore self developed communication framework.
 class MsCollectiveCommLib : public CollectiveCommunicationLib {
  public:

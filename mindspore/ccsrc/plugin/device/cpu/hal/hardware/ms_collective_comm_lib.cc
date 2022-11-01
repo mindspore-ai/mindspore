@@ -17,12 +17,15 @@
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 
 #include "distributed/constants.h"
+#include "distributed/recovery/recovery_context.h"
 #include "runtime/collective/collective_communication_lib.h"
 #include "plugin/device/cpu/hal/hardware/allreduce_impl.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
+using distributed::recovery::RecoveryContext;
+
 // These keywords is used for synchronization of collective communication's metadata(eg. unique id).
 constexpr char kGroupInfoPrefix[] = "group_info_";
 constexpr char kGroupName[] = "group_name";
@@ -83,10 +86,12 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
   CHECK_IF_NULL(host_hash_names);
   CHECK_IF_NULL(cgn_);
 
-  bool success = false;
-  const size_t interval = 3;
   auto role = common::GetEnv(distributed::kEnvRole);
-  while (!success) {
+  bool success = false;
+  // It this is not recovery scenario, retry for 3*80s, which is 4 minutes.
+  const size_t interval = 3;
+  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
+  while (!success && --retry > 0) {
     auto hostnames = cgn_->GetHostNames(role);
     if (hostnames.size() < host_hash_names->size()) {
       (void)sleep(interval);
@@ -102,6 +107,9 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
       (*host_hash_names)[i] = host_hash;
     }
     success = true;
+  }
+  if (!success) {
+    MS_LOG(EXCEPTION) << "Failed to AllGather host's hash name due to timeout.";
   }
 
   return true;
@@ -152,9 +160,20 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
   // Create the group info which contains the unique id and send it to the meta server.
   std::string node_role_prefix = cgn_->role() + "_";
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
-  if (!cgn_->PutMetadata(group_info_key, root_info, root_info_size)) {
-    MS_LOG(WARNING) << "Failed to send unique id to the meta server.";
-    return false;
+
+  bool success = false;
+  // It this is not recovery scenario, retry for 3*80s, which is 4 minutes.
+  const size_t interval = 3;
+  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
+  while (!success && --retry > 0) {
+    success = cgn_->PutMetadata(group_info_key, root_info, root_info_size);
+    if (!success) {
+      MS_LOG(WARNING) << "Failed to send unique id for group " << group_name << ". Retry time " << retry;
+      (void)sleep(interval);
+    }
+  }
+  if (!success) {
+    MS_LOG(EXCEPTION) << "Failed to send unique id to the meta server node due to timeout.";
   }
   MS_LOG(INFO) << "The unique id for group " << group_name << " has been registered to the meta server.";
   return true;
@@ -169,9 +188,9 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
 
   bool success = false;
-  // Retry for 3*80s, which is 4 minutes.
+  // It this is not recovery scenario, retry for 3*80s, which is 4 minutes.
   const size_t interval = 3;
-  size_t retry = 80;
+  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
   while (!success && --retry > 0) {
     auto unique_id = cgn_->GetMetadata(group_info_key);
     if (unique_id.length() > 0) {
