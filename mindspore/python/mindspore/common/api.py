@@ -223,6 +223,14 @@ def _restore_mutable_attr(args_list, compile_args):
     return new_compile_args
 
 
+def _get_parameter_layout():
+    graph_executor = GraphExecutor_.get_instance()
+    layout = dict()
+    for phase in ms_compile_cache:
+        layout.update(graph_executor.get_parameter_layout(phase))
+    return layout
+
+
 def _get_args_for_run(obj, args_list):
     """Get the actual input args for runtime."""
     inputs = []
@@ -278,22 +286,23 @@ class _MindsporeFunctionExecutor:
         self._create_time = ms_create_time
         self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
 
-    def _set_compile_cache_dep_files(self):
-        # If enable compile cache, get the dependency files list
-        enable_compile_cache = context.get_context("enable_compile_cache")
-        if enable_compile_cache is None:
-            enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
-        if enable_compile_cache is True or enable_compile_cache == "1":
-            self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
+    @_wrap_func
+    def __call__(self, *args):
+        args_list = args
+        if self.obj is not None:
+            args_list = args_list[1:]
+        phase = ''
+        with _MsFunctionCompileContext():
+            phase = self.compile(args_list, self.fn.__name__)
+        if context.get_context("precompile_only"):
+            return None
+        new_inputs = self._generate_run_args(args_list)
+        output = self._graph_executor(tuple(new_inputs), phase)
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            _pynative_executor.set_graph_phase(phase)
+            output = _pynative_executor.grad_ms_function(output, *new_inputs)
 
-    def _parallel_process_for_ms_function(self, phase):
-        """Set parameter and optimizer states data according to sliced shape for shard"""
-        obj = self.shard_parent_obj if self.obj is None else self.obj
-        if not isinstance(obj, ms.nn.Cell):
-            return
-        obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
-        obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
-        _pynative_executor.get_top_cell().parameter_layout_dict = obj.parameter_layout_dict
+        return output
 
     def compile(self, args_list, method_name):
         """Returns pipeline for the given args."""
@@ -352,31 +361,10 @@ class _MindsporeFunctionExecutor:
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
-        if _is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
-            self._parallel_process_for_ms_function(phase)
-
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
         ms_compile_cache.add(phase)
         return phase
-
-    @_wrap_func
-    def __call__(self, *args):
-        args_list = args
-        if self.obj is not None:
-            args_list = args_list[1:]
-        phase = ''
-        with _MsFunctionCompileContext():
-            phase = self.compile(args_list, self.fn.__name__)
-        if context.get_context("precompile_only"):
-            return None
-        new_inputs = self._generate_run_args(args_list)
-        output = self._graph_executor(tuple(new_inputs), phase)
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            _pynative_executor.set_graph_phase(phase)
-            output = _pynative_executor.grad_ms_function(output, *new_inputs)
-
-        return output
 
     @staticmethod
     def _optimizer_state_init(opt_states):
@@ -387,6 +375,14 @@ class _MindsporeFunctionExecutor:
             prefix = opt_param.name[:opt_param.name.find(".")]
             if opt_param.has_init and (prefix in prefix_list or opt_param.name == "global_step"):
                 opt_param.init_data()
+
+    def _set_compile_cache_dep_files(self):
+        # If enable compile cache, get the dependency files list
+        enable_compile_cache = context.get_context("enable_compile_cache")
+        if enable_compile_cache is None:
+            enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
+        if enable_compile_cache is True or enable_compile_cache == "1":
+            self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
     def _generate_compile_args(self, args_list):
         """Chose dynamic shape tensors or actual input tensors as compile args."""
