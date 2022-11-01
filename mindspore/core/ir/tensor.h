@@ -34,6 +34,7 @@
 #include "utils/ms_exception.h"
 #include "ir/device_event.h"
 #include "utils/os.h"
+#include "ir/quantization_param.h"
 
 // brief mindspore namespace.
 //
@@ -755,6 +756,18 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return tensor name.
   const std::string &name() const { return tensor_name_; }
 
+  /// \brief Set tensor quant param.
+  ///
+  /// \param[in] quant_param The tensor quant param.
+  void set_quant_param(const std::vector<std::shared_ptr<QuantizationParam>> &quant_params) {
+    quant_params_.assign(quant_params.begin(), quant_params.end());
+  }
+
+  /// \brief Get the tensor quant param.
+  ///
+  /// \return tensor quant param.
+  const std::vector<std::shared_ptr<QuantizationParam>> &quant_params() const { return quant_params_; }
+
  private:
   void ExecuteLazyTask() const;
 
@@ -781,7 +794,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   std::function<void(void)> lazy_callback_{nullptr};
   UserData user_data_;
   TensorCompressionType compression_type_{kNoCompression};
-
+  std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
 };
 

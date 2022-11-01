@@ -453,6 +453,11 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
         MS_LOG(ERROR) << "Set parameter " << param->DebugString() << " to TensorProto failed.";
         return false;
       }
+      auto tensor = param->default_param()->cast<tensor::TensorPtr>();
+      if (tensor != nullptr) {
+        parameter_proto->set_compression_type(
+          static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
+      }
     } else {
       mind_ir::ValueInfoProto *input_proto = graph_proto->add_input();
       input_proto->set_name(param_name);

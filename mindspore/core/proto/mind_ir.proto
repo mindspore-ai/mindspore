@@ -168,7 +168,7 @@ message TensorProto {
   }
   message QuantParamProto {
     required string quant_algo_name = 1;
-    repeated AttributeProto attrs = 2;
+    repeated AttributeProto attribute = 2;
   }
   repeated int64 dims = 1;
   optional int32 data_type = 2;
@@ -186,7 +186,7 @@ message TensorProto {
   repeated int64 min_dims = 14;
   repeated int64 max_dims = 15;
   optional CompressionType compression_type = 16;
-  repeated QuantParamProto quant_param = 17;
+  repeated QuantParamProto quant_params = 17;
 }
 
 message ParallelProto {
