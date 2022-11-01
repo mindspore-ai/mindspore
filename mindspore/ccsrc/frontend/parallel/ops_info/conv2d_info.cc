@@ -1154,9 +1154,22 @@ Status Conv2DBackpropInputInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra[0];
   Dimensions weight_strategy = stra[1];
+  if (input_strategy.size() != 4 || weight_strategy.size() != 4) {
+    MS_LOG(ERROR) << name_
+                  << ": The size of input strategy or weight strategy must be 4, but the size of input strategy is "
+                  << input_strategy.size() << ", the size of weight strategy is " << weight_strategy.size();
+    return FAILED;
+  }
+
   if (input_strategy[1] != weight_strategy[0]) {
     MS_LOG(ERROR) << name_ << ": The shard num of c-out for input strategy is " << input_strategy[1]
                   << ", but the shard num of c-out for weight strategy is " << weight_strategy[0];
+    return FAILED;
+  }
+
+  if (weight_strategy[2] != 1 || weight_strategy[3] != 1) {
+    MS_LOG(ERROR) << name_ << ": The kernel size can not be split, but the strategy for kernel size is ("
+                  << weight_strategy[2] << ", " << weight_strategy[3] << ")";
     return FAILED;
   }
 

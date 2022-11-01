@@ -233,6 +233,21 @@ def test_conv2d_transpose_overlap_size_too_large():
         compile_net(net)
 
 
+def test_conv2d_transpose_split_kernel():
+    """
+    Feature: the kernel size can not be split
+    Description: split the kernel size
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 1), (1, 1, 2, 2))
+    strategy2 = ((8, 1, 1, 1),)
+    net = Net2(_w3, out_channel=8, kernel_size=(10, 10), pad_mode="same", stride=2,
+               strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
 def test_conv2d_transpose_pad_mode_no_need_exchange():
     """
     Feature: pad mode, and two direction send, w = 8, o = 16, s = 2, k = 1, n = 8, pad = (0, 0, 0, 0)
