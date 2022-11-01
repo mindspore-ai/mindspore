@@ -130,7 +130,35 @@ def op_network_with_step_num(dataset, step_num):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_tdt_produce_beyond_consume():
+    """
+    Feature: Test dataset sink mode.
+    Description: Send 10 data into tdt and count number of the out iter.
+    Expectation: Number of out iter equals to number of source data.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    batch_size = 64
+    repeat_num = 1
+    num_rows = 6400
+    beyond_step_num = 10
+    ds = dataset_cifar(batch_size=batch_size, repeat_num=repeat_num, num_rows=num_rows)
+
+    iter_num = op_network_with_step_num(ds, step_num=beyond_step_num)
+    logger.info("out_iter_num：%s", iter_num)
+    assert iter_num == 10
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tdt_consume_beyond_produce():
+    """
+    Feature: Test dataset sink mode.
+    Description: Number of source data is less than train loop.
+    Expectation: Returns fail and raises excrption.
+    """
     context.set_context(mode=context.GRAPH_MODE)
 
     batch_size = 64
@@ -146,21 +174,3 @@ def test_tdt_consume_beyond_produce():
     except RuntimeError as e:
         logger.info("when dataset batch num is less than train loop, error msg is %s", e)
         assert True
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_tdt_produce_beyond_consume():
-    context.set_context(mode=context.GRAPH_MODE)
-
-    batch_size = 64
-    repeat_num = 1
-    num_rows = 6400
-    beyond_step_num = 10
-    ds = dataset_cifar(batch_size=batch_size, repeat_num=repeat_num, num_rows=num_rows)
-
-    iter_num = op_network_with_step_num(ds, step_num=beyond_step_num)
-    logger.info("out_iter_num：%s", iter_num)
-    assert iter_num == 10
