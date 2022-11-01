@@ -1616,6 +1616,11 @@ bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const ke
       if (desc.arch != kernel::KERNEL_ARCH::kCPU) {
         return false;
       }
+#ifdef ENABLE_FP16
+      if (desc.data_type == kNumberTypeInt8 || desc.data_type == kNumberTypeUInt8) {
+        return true;
+      }
+#endif
       return (desc.data_type == kNumberTypeFloat16);
     }
     case kernel::SubGraphType::kCpuFP32SubGraph: {

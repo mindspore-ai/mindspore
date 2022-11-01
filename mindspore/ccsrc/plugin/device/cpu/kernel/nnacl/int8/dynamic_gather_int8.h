@@ -26,6 +26,13 @@ extern "C" {
 void DynamicGather(const int8_t *input, int outer_size, int inner_size, int limit, const int32_t *indices,
                    int indices_element_size, float *output, const float *scale_in, const int32_t *zp_in);
 void DynamicGatherArm64(const int8_t *src, float *output, int count_16, int zp, float scale);
+
+#ifdef ENABLE_FP16
+void DynamicGatherForFp16(const int8_t *input, int outer_size, int inner_size, int limit, const int32_t *indices,
+                          int indices_element_size, float16_t *output, const float *scale_in, const int32_t *zp_in);
+void DynamicGatherArm64ForFp16(const int8_t *src, float16_t *output, int count_16, int zp, float scale);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

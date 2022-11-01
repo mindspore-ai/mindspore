@@ -113,6 +113,9 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotImpl(int task_id) {
     }
   }
   auto out_stride = param_->col_ * sizeof(float);
+#ifdef ENABLE_FP16
+  auto out_stride_fp16 = param_->col_ * sizeof(float16_t);
+#endif
   int64_t act_type = static_cast<int64_t>(param_->act_type_);
   for (int r = 0; r < param_->row_; r += C4NUM) {
     size_t row = MSMIN(C4NUM, param_->row_ - r);
@@ -123,21 +126,41 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotImpl(int task_id) {
       auto col_offset = cur_stride + c;
       auto b_ptr = batch_b_ptr_ + col_offset * param_->deep_align_;
       int *weight_sums_ptr = current_sums + c;
-      auto out_ptr = batch_c_ptr_ + r * param_->col_ + col_offset;
-      auto bias = fp32_bias_ptr_;
-      if (bias != nullptr) {
-        bias += col_offset;
-      }
 
+      if (!enable_fp16_) {
+        auto out_ptr = fp32_batch_c_ptr_ + r * param_->col_ + col_offset;
+        auto bias = fp32_bias_ptr_;
+        if (bias != nullptr) {
+          bias += col_offset;
+        }
 #if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && (!defined(MACHINE_LINUX_ARM64))
-      DynamicMatmulSdot4x4x16AIWI(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias, row, col,
-                                  out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_,
-                                  quant_param_->filter_zp_[0] * param_->deep_, act_type);
+        DynamicMatmulSdot4x4x16AIWI(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias, row, col,
+                                    out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_,
+                                    quant_param_->filter_zp_[0] * param_->deep_, act_type);
 #else
-      DynamicMatmul4x4x16AIWI(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias, row, col,
-                              out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_,
-                              quant_param_->filter_zp_[0] * param_->deep_, act_type);
+        DynamicMatmul4x4x16AIWI(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias, row, col,
+                                out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_,
+                                quant_param_->filter_zp_[0] * param_->deep_, act_type);
 #endif
+#ifdef ENABLE_FP16
+      } else {
+        auto out_ptr = fp16_batch_c_ptr_ + r * param_->col_ + col_offset;
+        auto bias = fp16_bias_ptr_;
+        if (bias != nullptr) {
+          bias += col_offset;
+        }
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && (!defined(MACHINE_LINUX_ARM64))
+        DynamicMatmulSdot4x4x16AIWIForFp16(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias,
+                                           row, col, out_stride_fp16, input_sums_ptr, weight_sums_ptr,
+                                           quant_param_->input_zp_, quant_param_->filter_zp_[0] * param_->deep_,
+                                           act_type);
+#else
+        DynamicMatmul4x4x16AIWIForFp16(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias, row,
+                                       col, out_stride_fp16, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_,
+                                       quant_param_->filter_zp_[0] * param_->deep_, act_type);
+#endif
+#endif
+      }
     }
   }
   return RET_OK;
@@ -162,10 +185,20 @@ void MatMulDynamicSdotInt8Kernel::InitParameter() {
 int MatMulDynamicSdotInt8Kernel::MatMulDynamicRunArm64Sdot() {
   int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
   int8_t *b_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
-  float *c_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+#ifdef ENABLE_FP16
+  float16_t *fp16_c_ptr = nullptr;
+  if (enable_fp16_) {
+    fp16_c_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
+    CHECK_NULL_RETURN(fp16_c_ptr);
+  }
+#endif
+  float *fp32_c_ptr = nullptr;
+  if (!enable_fp16_) {
+    fp32_c_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+    CHECK_NULL_RETURN(fp32_c_ptr);
+  }
   CHECK_NULL_RETURN(a_ptr);
   CHECK_NULL_RETURN(b_ptr);
-  CHECK_NULL_RETURN(c_ptr);
 
   for (int i = 0; i < param_->batch; i++) {
     batch_input_ptr_ = a_ptr + a_offset_[i] * param_->row_ * param_->deep_;
@@ -178,8 +211,14 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicRunArm64Sdot() {
     batch_weight_ptr_ = b_ptr + b_offset_[i] * param_->col_ * param_->deep_;
     batch_sums_ = weight_sums_ + b_offset_[i] * param_->col_align_;
     batch_b_ptr_ = pack_b_ptr_ + b_offset_[i] * param_->col_align_ * param_->deep_align_;
-    batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
-
+#ifdef ENABLE_FP16
+    if (enable_fp16_) {
+      fp16_batch_c_ptr_ = fp16_c_ptr + i * param_->row_ * param_->col_;
+    }
+#endif
+    if (!enable_fp16_) {
+      fp32_batch_c_ptr_ = fp32_c_ptr + i * param_->row_ * param_->col_;
+    }
     ret = ParallelLaunch(this->ms_context_, Arm64SdotRun, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Arm64SdotRun error: [" << ret << "]";

@@ -67,13 +67,18 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   MatmulDynamicQuantParameter *quant_param_ = nullptr;
   int8_t *pack_a_ptr_ = nullptr;
   int8_t *pack_b_ptr_ = nullptr;
-  float *fp32_bias_ptr_ = nullptr;
+
   bool filter_per_channel_ = true;
   int8_t *batch_input_ptr_ = nullptr;
   int8_t *batch_weight_ptr_ = nullptr;
   int8_t *batch_a_ptr_ = nullptr;
   int8_t *batch_b_ptr_ = nullptr;
-  float *batch_c_ptr_ = nullptr;
+#ifdef ENABLE_FP16
+  float16_t *fp16_bias_ptr_ = nullptr;
+  float16_t *fp16_batch_c_ptr_ = nullptr;
+#endif
+  float *fp32_bias_ptr_ = nullptr;
+  float *fp32_batch_c_ptr_ = nullptr;
   int *input_sums_ = nullptr;
   int *weight_sums_ = nullptr;
   int row_tile_ = C4NUM;
@@ -82,6 +87,7 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   int channel_num_ = 0;
   int thread_count_ = 1;
   int thread_stride_ = 0;
+  bool enable_fp16_ = false;
   PackFunc b_pack_func_ = nullptr;
 };
 }  // namespace mindspore::kernel

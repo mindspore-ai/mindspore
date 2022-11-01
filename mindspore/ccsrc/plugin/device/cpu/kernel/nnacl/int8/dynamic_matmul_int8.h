@@ -39,6 +39,16 @@ void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, s
 void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
                              float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
                              const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
+#ifdef ENABLE_FP16
+void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4, float *multi_scales,
+                                    float16_t *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
+                                    const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
+void DynamicMatmulSdot4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4,
+                                        float *multi_scales, float16_t *bias, size_t row, size_t col, size_t stride,
+                                        const int32_t *a_sums, const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum,
+                                        int64_t act_type);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

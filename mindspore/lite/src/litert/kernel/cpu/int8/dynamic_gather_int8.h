@@ -46,6 +46,7 @@ class DynamicGatherInt8CPUKernel : public LiteKernel {
   int axis_ = 0;
   int indices_element_size_ = 0;
   int *indices_data_ = nullptr;
+  bool enable_fp16_ = false;
   DynamicGatherQuantArg *quant_param_ = nullptr;
 };
 }  // namespace mindspore::kernel

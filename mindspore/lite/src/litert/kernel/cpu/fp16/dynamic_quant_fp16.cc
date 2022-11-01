@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/litert/kernel/cpu/int8/dynamic_quant.h"
+#include "src/litert/kernel/cpu/fp16/dynamic_quant_fp16.h"
 #include <vector>
 #include <algorithm>
 #include "src/litert/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/dynamic_quant_parameter.h"
-#include "nnacl/int8/dynamic_quant_int8.h"
-#include "nnacl/int8/quant_dtype_cast_int8.h"
+#include "nnacl/fp16/dynamic_quant_fp16.h"
+#include "nnacl/fp16/quant_dtype_cast_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -37,7 +37,7 @@ constexpr int k8Bit = 8;
 constexpr int kMinNums = 512;
 constexpr float kDefaultRange = 0.01;
 }  // namespace
-int DynamicQuantCPUKernel::Prepare() {
+int DynamicQuantFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C1NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
   auto in_tensor = in_tensors_.front();
@@ -53,14 +53,13 @@ int DynamicQuantCPUKernel::Prepare() {
     MS_LOG(ERROR) << "param data type and tensor data type do not match.";
     return RET_ERROR;
   }
-
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int DynamicQuantCPUKernel::ReSize() {
+int DynamicQuantFp16CPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   if (num_unit_ < kMinNums) {
@@ -71,38 +70,37 @@ int DynamicQuantCPUKernel::ReSize() {
     thread_n_num_ = MSMIN(thread_n_num_, kBucketNums);
   }
   for (int i = 0; i < kBucketNums; ++i) {
-    real_min_array_[i] = FLT_MAX;
-    real_max_array_[i] = -FLT_MAX;
+    real_min_array_[i] = FLT16_MAX;
+    real_max_array_[i] = -FLT16_MAX;
   }
   MS_CHECK_GT(thread_n_num_, 0, RET_ERROR);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }
 
-int DynamicQuantCPUKernel::CalculateMinMax(int task_id) {
+int DynamicQuantFp16CPUKernel::CalculateMinMax(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
-  float *data = float32_ptr_ + thread_offset;
-
-  CalculateMinMaxFp32(data, num_unit_thread, &real_min_array_[task_id], &real_max_array_[task_id]);
+  float16_t *data = float16_ptr_ + thread_offset;
+  CalculateMinMaxFp16(data, num_unit_thread, &real_min_array_[task_id], &real_max_array_[task_id]);
   return RET_OK;
 }
 
-int CalculateMinMaxRun(void *cdata, int task_id, float, float) {
+int CalculateFp16MinMaxRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
-  auto g_kernel = reinterpret_cast<DynamicQuantCPUKernel *>(cdata);
+  auto g_kernel = reinterpret_cast<DynamicQuantFp16CPUKernel *>(cdata);
   auto ret = g_kernel->CalculateMinMax(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CalculateMinMaxRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "CalculateFp16MinMaxRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-void DynamicQuantCPUKernel::ReduceMinMaxFp32() {
+void DynamicQuantFp16CPUKernel::ReduceMinMaxFp32() {
   for (int i = 0; i < kBucketNums; i++) {
     if (real_min_array_[i] < real_min_) {
       real_min_ = real_min_array_[i];
@@ -114,7 +112,7 @@ void DynamicQuantCPUKernel::ReduceMinMaxFp32() {
   return;
 }
 
-void DynamicQuantCPUKernel::CalculateScaleZp() {
+void DynamicQuantFp16CPUKernel::CalculateScaleZp() {
   lite::LiteQuantParam quant_parm;
   double scale;
   int zp = 0;
@@ -140,7 +138,7 @@ void DynamicQuantCPUKernel::CalculateScaleZp() {
   return;
 }
 
-int DynamicQuantCPUKernel::QuantData(int task_id) {
+int DynamicQuantFp16CPUKernel::QuantData(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
@@ -150,8 +148,8 @@ int DynamicQuantCPUKernel::QuantData(int task_id) {
   int ret;
   TypeId data_type = out_tensors_.front()->data_type();
   if (data_type == TypeId::kNumberTypeInt8) {
-    ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                               quant_arg.zeroPoint, num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
+    ret = DoQuantizeFp16ToInt8(float16_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
+                               quant_arg.zeroPoint, num_unit_thread);
   } else {
     MS_LOG(ERROR) << "Data type not supported:" << data_type;
     return RET_PARAM_INVALID;
@@ -163,30 +161,37 @@ int DynamicQuantCPUKernel::QuantData(int task_id) {
   return RET_OK;
 }
 
-int QuantDataRun(void *cdata, int task_id, float, float) {
+int QuantFp16DataRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
-  auto g_kernel = reinterpret_cast<DynamicQuantCPUKernel *>(cdata);
+  auto g_kernel = reinterpret_cast<DynamicQuantFp16CPUKernel *>(cdata);
   auto ret = g_kernel->QuantData(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CalculateMinMaxRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "CalculateFp16MinMaxRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int DynamicQuantCPUKernel::Run() {
+int DynamicQuantFp16CPUKernel::Run() {
+  bool support_dtype = in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat16 &&
+                       out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8;
+  if (!support_dtype) {
+    MS_LOG(ERROR) << "Unsupported data type input:" << in_tensors_.front()->data_type()
+                  << ", output:" << out_tensors_.front()->data_type();
+    return RET_ERROR;
+  }
   int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data());
-  float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data());
   CHECK_NULL_RETURN(int8_ptr_);
-  CHECK_NULL_RETURN(float32_ptr_);
-  auto ret = ParallelLaunch(this->ms_context_, CalculateMinMaxRun, this, thread_n_num_);
+  float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_[0]->data());
+  CHECK_NULL_RETURN(float16_ptr_);
+  auto ret = ParallelLaunch(this->ms_context_, CalculateFp16MinMaxRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run error error_code[" << ret << "]";
     return RET_ERROR;
   }
   ReduceMinMaxFp32();
   CalculateScaleZp();
-  ret = ParallelLaunch(this->ms_context_, QuantDataRun, this, thread_n_num_);
+  ret = ParallelLaunch(this->ms_context_, QuantFp16DataRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run error error_code[" << ret << "]";
     return RET_ERROR;
@@ -194,14 +199,14 @@ int DynamicQuantCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *DynamicQuantCPUCreator(const std::vector<lite::Tensor *> &inputs,
-                                           const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                           const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *DynamicQuantFp16CPUCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) DynamicQuantCPUKernel(parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) DynamicQuantFp16CPUKernel(parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
     free(parameter);
@@ -215,15 +220,9 @@ kernel::LiteKernel *DynamicQuantCPUCreator(const std::vector<lite::Tensor *> &in
     MS_LOG(ERROR) << "outputs number should be 1, but " << outputs.size() << " is given.";
     return nullptr;
   }
-  bool support_dtype =
-    inputs[0]->data_type() == TypeId::kNumberTypeFloat32 && outputs[0]->data_type() == TypeId::kNumberTypeInt8;
-  if (!support_dtype) {
-    MS_LOG(ERROR) << "Unsupported data type input:" << inputs.front()->data_type()
-                  << ", output:" << outputs.front()->data_type();
-    return nullptr;
-  }
+
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DynamicQuant, DynamicQuantCPUCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_DynamicQuant, DynamicQuantFp16CPUCreator)
 }  // namespace mindspore::kernel
