@@ -12,28 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-test roll api
-"""
+
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
-import mindspore.ops as ops
-from mindspore.common.api import _cell_graph_executor
 
 
-class Roll(nn.Cell):
+class Net(nn.Cell):
     def construct(self, x):
-        return ops.roll(x, shifts=2, dims=0)
+        output = x.flip((0, 2))
+        return output
 
 
-def test_compile_roll():
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_flip_normal(mode):
     """
-    Feature: Test Roll
-    Description: Test the functionality of roll
-    Expectation: Success
+    Feature: tensor.flip
+    Description: Verify the result of flip
+    Expectation: success
     """
-    net = Roll()
-    x = ms.Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-    _cell_graph_executor.compile(net, x)
+    ms.set_context(mode=mode)
+    net = Net()
+    x = ms.Tensor(np.arange(8).reshape((2, 2, 2)))
+    out = net(x)
+    expect_out = np.array([[[5., 4.],
+                            [7., 6.]],
+                           [[1., 0.],
+                            [3., 2.]]])
+    assert np.allclose(out.asnumpy(), expect_out)

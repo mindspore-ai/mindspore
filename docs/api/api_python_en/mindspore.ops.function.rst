@@ -131,6 +131,8 @@ Mathematical Functions
     mindspore.ops.less_equal
     mindspore.ops.igamma
     mindspore.ops.igammac
+    mindspore.ops.is_floating_point
+    mindspore.ops.is_signed
 
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -333,6 +335,9 @@ Array Operation
     mindspore.ops.dyn_shape
     mindspore.ops.expand
     mindspore.ops.expand_dims
+    mindspore.ops.flip
+    mindspore.ops.fliplr
+    mindspore.ops.flipud
     mindspore.ops.fold
     mindspore.ops.gather
     mindspore.ops.gather_d

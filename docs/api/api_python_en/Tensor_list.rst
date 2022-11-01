@@ -89,6 +89,9 @@
     mindspore.Tensor.fill
     mindspore.Tensor.fills
     mindspore.Tensor.flatten
+    mindspore.Tensor.flip
+    mindspore.Tensor.fliplr
+    mindspore.Tensor.flipud
     mindspore.Tensor.float
     mindspore.Tensor.floor
     mindspore.Tensor.flush_from_cache
@@ -116,8 +119,10 @@
     mindspore.Tensor.invert
     mindspore.Tensor.isclose
     mindspore.Tensor.isfinite
+    mindspore.Tensor.is_floating_point
     mindspore.Tensor.isinf
     mindspore.Tensor.isnan
+    mindspore.Tensor.is_signed
     mindspore.Tensor.item
     mindspore.Tensor.itemset
     mindspore.Tensor.itemsize

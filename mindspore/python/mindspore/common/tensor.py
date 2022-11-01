@@ -3993,6 +3993,36 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('isnan')(self)
 
+    def flip(self, dims):
+        """
+        For details, please refer to :func:`mindspore.ops.flip`.
+        """
+        return tensor_operator_registry.get('flip')(self, dims)
+
+    def fliplr(self):
+        """
+        For details, please refer to :func:`mindspore.ops.fliplr`.
+        """
+        return tensor_operator_registry.get('fliplr')(self)
+
+    def flipud(self):
+        """
+        For details, please refer to :func:`mindspore.ops.flipud`.
+        """
+        return tensor_operator_registry.get('flipud')(self)
+
+    def is_floating_point(self):
+        """
+        For details, please refer to :func:`mindspore.ops.is_floating_point`.
+        """
+        return tensor_operator_registry.get('is_floating_point')(self)
+
+    def is_signed(self):
+        """
+        For details, please refer to :func:`mindspore.ops.is_signed`.
+        """
+        return tensor_operator_registry.get('is_signed')(self)
+
     def le(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.le`.
@@ -4306,7 +4336,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('ne')(self, other)
 
-
     def sinh(self):
         r"""
         Computes hyperbolic sine of the input element-wise.
@@ -4329,7 +4358,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('sinh')(self)
-
 
     def sort(self, dim=-1, descending=False):
         r"""
@@ -4368,7 +4396,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('sort')(axis=dim, descending=descending)(self)
 
-
     def trunc(self):
         r"""
         Returns a new tensor with the truncated integer values of the elements of input.
@@ -4387,7 +4414,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('trunc')(self)
-
 
     def imag(self):
         r"""

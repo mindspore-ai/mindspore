@@ -13,9 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """
-test roll api
+test is floating point api
 """
-import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -25,15 +24,15 @@ from mindspore.common.api import _cell_graph_executor
 
 class Roll(nn.Cell):
     def construct(self, x):
-        return ops.roll(x, shifts=2, dims=0)
+        return ops.is_floating_point(x)
 
 
-def test_compile_roll():
+def test_compile_is_floating_point():
     """
-    Feature: Test Roll
-    Description: Test the functionality of roll
+    Feature: Test is floating point
+    Description: Test the functionality of is floating point
     Expectation: Success
     """
     net = Roll()
-    x = ms.Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
+    x = ms.Tensor([1, 2, 3], ms.float32)
     _cell_graph_executor.compile(net, x)

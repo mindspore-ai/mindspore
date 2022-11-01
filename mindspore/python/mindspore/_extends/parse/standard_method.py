@@ -1231,6 +1231,41 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
     return F.isclose(x1, x2, rtol, atol, equal_nan)
 
 
+def flip(x, dims):
+    """
+    For details, please refer to :func:`mindspore.ops.flip`.
+    """
+    return F.flip(x, dims)
+
+
+def fliplr(x):
+    """
+    For details, please refer to :func:`mindspore.ops.fliplr`.
+    """
+    return F.fliplr(x)
+
+
+def flipud(x):
+    """
+    For details, please refer to :func:`mindspore.ops.flipud`.
+    """
+    return F.flipud(x)
+
+
+def is_floating_point(x):
+    """
+    For details, please refer to :func:`mindspore.ops.is_floating_point`.
+    """
+    return F.is_floating_point(x)
+
+
+def is_signed(x):
+    """
+    For details, please refer to :func:`mindspore.ops.is_signed`.
+    """
+    return F.is_signed(x)
+
+
 def inv(x):
     """
     Computes Reciprocal of input tensor element-wise.
