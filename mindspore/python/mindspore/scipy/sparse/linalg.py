@@ -347,7 +347,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
     _value_check(func_name, callback_type, None, 'callback_type', op='is', fmt='todo')
     if restart > size:
         restart = size
-    if not is_within_graph(A):
+    if not is_within_graph(b):
         x, info = GMRES(A, M, solve_method)(b, x0, tol, restart, maxiter, atol)
     else:
         x, info = GMRESV2(solve_method)(A, b, x0, tol, restart, maxiter, M, atol)
@@ -516,7 +516,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
     _type_check(func_name, maxiter, int, 'maxiter')
     _value_check(func_name, callback, None, 'callback', op='is', fmt='todo')
 
-    if not is_within_graph(A):
+    if not is_within_graph(b):
         x, info = CG(A, M)(b, x0, tol, atol, maxiter)
     else:
         x, info = CGv2()(A, b, x0, tol, atol, maxiter, M)
