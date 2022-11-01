@@ -484,8 +484,7 @@ AnfNodePtr ExpandVmapPrimitive(const AnfNodePtr &vnode, const pipeline::Resource
   }
   AnfNodePtr prim_vmap_rule = GetVmapRule(prim, resource, axis_size);
   if (prim_vmap_rule == nullptr) {
-    MS_LOG(EXCEPTION) << "Primitive " << prim->name() << " transform to VmapRule failed. NodeInfo: "
-                      << trace::GetDebugInfo(prim_vmap_rule->debug_info()) << ".";
+    MS_LOG(EXCEPTION) << "Primitive " << prim->name() << " transform to VmapRule failed.";
   }
   return prim_vmap_rule;
 }
