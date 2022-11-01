@@ -143,6 +143,14 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         )
 
+if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
+            )
+endif()
+
 if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
     set(LITE_SRC
             ${LITE_SRC}
@@ -165,7 +173,6 @@ if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     set(LITE_SRC
             ${LITE_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/common/decrypt.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
             )
 endif()
 
@@ -643,11 +650,6 @@ endif()
 if(MSLITE_ENABLE_MODEL_OBF)
     target_link_libraries(mindspore-lite ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
     target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
-endif()
-
-if(MSLITE_ENABLE_ACL AND (NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE))
-    target_link_libraries(mindspore-lite ascend_kernel_mid)
-    target_link_libraries(mindspore-lite_static ascend_kernel_mid)
 endif()
 
 add_subdirectory(extendrt)

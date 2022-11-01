@@ -433,6 +433,10 @@ if(PLATFORM_ARM64)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(MSLITE_ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch64/libmsdeobfuscator-lite.so
@@ -664,6 +668,10 @@ elseif(PLATFORM_ARM32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(MSLITE_ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch32/libmsdeobfuscator-lite.so
@@ -858,6 +866,10 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(MSLITE_ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/bin/linux-x64/msobfuscator
