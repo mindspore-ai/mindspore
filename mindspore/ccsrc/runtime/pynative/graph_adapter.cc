@@ -254,6 +254,7 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
     tensor->set_device_address(device_address);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     MS_EXCEPTION_IF_NULL(front_node);
+    MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetDeviceType() != device::DeviceType::kCPU && no_control_flow) {
       address_ref_count[device_address] += value_node_ref_count;
       device_address->AddHeldByNode(front_node->cast<ValueNodePtr>());
@@ -297,10 +298,12 @@ void GraphAdapter::ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
                                                    const std::vector<tensor::TensorPtr> &input_tensors,
                                                    const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(graph);
   size_t index = 0;
   for (const auto &input_node : graph->input_nodes()) {
     auto parameters = common::AnfAlgo::GetAllOutput(input_node);
     for (const auto &parameter : parameters) {
+      MS_EXCEPTION_IF_NULL(parameter);
       if (index >= input_tensors.size()) {
         MS_LOG(EXCEPTION) << "Parameter size out of range. Parameter index: " << index
                           << ", input size: " << input_tensors.size();
