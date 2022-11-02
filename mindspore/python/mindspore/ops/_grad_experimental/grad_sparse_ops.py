@@ -234,9 +234,7 @@ def get_bprop_sparse_segment_sum(self):
         return all_d
 
     def bprop(x, indices, segment_ids, out, dout):
-        shape_x = shape(x)
-        if is_shape_unknown(shape_x):
-            shape_x = dyn_shape_op(x)
+        shape_x = dyn_shape_op(x)
         output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         segment_ids = F.cast(segment_ids, mstype.int32)
         input0 = gather(dout, segment_ids, 0)
@@ -272,9 +270,7 @@ def get_bprop_sparse_segment_sum_with_num_segments(self):
         return all_d
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):
-        shape_x = shape(x)
-        if is_shape_unknown(shape_x):
-            shape_x = dyn_shape_op(x)
+        shape_x = dyn_shape_op(x)
         output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         segment_ids = F.cast(segment_ids, mstype.int32)
         input0 = gather(dout, segment_ids, 0)
