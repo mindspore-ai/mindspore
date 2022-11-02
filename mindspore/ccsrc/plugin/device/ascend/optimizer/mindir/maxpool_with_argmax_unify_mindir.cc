@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
 
   TypeId argmax_dtype = kNumberTypeUInt16;
   auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKernelSize);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(maxpool_with_argmax, IntToSize(0));
   auto argmax_shape = output_shape;
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
     MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
@@ -110,7 +110,7 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
 
   TypeId argmax_dtype = kNumberTypeUInt16;
   auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
-  auto argmax_shape = common::AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0);
+  auto argmax_shape = common::AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, IntToSize(0));
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
     MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
                       << argmax_shape.size() << ", kernel_size dim: " << ksize.size() << trace::DumpSourceLines(node);

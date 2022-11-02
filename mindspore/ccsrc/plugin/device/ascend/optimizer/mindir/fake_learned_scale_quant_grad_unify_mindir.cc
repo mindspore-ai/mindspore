@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,10 @@ void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerGra
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_d);
   lsq_perlayer_grad_d->set_scope(lsq_perlayer_grad_node->scope());
 
-  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 0),
-                common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(lsq_perlayer_grad_node, 0),
-                 common::AnfAlgo::GetOutputDetailShape(lsq_perlayer_grad_node, 0)};
+  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, IntToSize(0)),
+                common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, IntToSize(0))};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(lsq_perlayer_grad_node, IntToSize(0)),
+                 common::AnfAlgo::GetOutputDetailShape(lsq_perlayer_grad_node, IntToSize(0))};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, lsq_perlayer_grad_d.get());
 
   common::AnfAlgo::CopyNodeAttr(kAttrNeg_trunc, lsq_perlayer_grad_node, lsq_perlayer_grad_d);
@@ -83,8 +83,8 @@ void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerRed
   MS_EXCEPTION_IF_NULL(lsq_perlayer_reduce_grad);
   lsq_perlayer_reduce_grad->set_scope(lsq_perlayer_grad_node->scope());
 
-  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 1)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(lsq_perlayer_grad_node, 1)};
+  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, IntToSize(1))};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(lsq_perlayer_grad_node, IntToSize(1))};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, lsq_perlayer_reduce_grad.get());
 
   (*lsq_perlayer_reduce_grad_outputs).push_back(lsq_perlayer_reduce_grad);
@@ -109,10 +109,10 @@ void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChanne
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_d);
   lsq_perchannel_grad_d->set_scope(lsq_perchannel_grad_node->scope());
 
-  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 0),
-                common::AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(lsq_perchannel_grad_node, 0),
-                 common::AnfAlgo::GetOutputDetailShape(lsq_perchannel_grad_node, 0)};
+  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, IntToSize(0)),
+                common::AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, IntToSize(0))};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(lsq_perchannel_grad_node, IntToSize(0)),
+                 common::AnfAlgo::GetOutputDetailShape(lsq_perchannel_grad_node, IntToSize(0))};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, lsq_perchannel_grad_d.get());
 
   common::AnfAlgo::CopyNodeAttr(kAttrNeg_trunc, lsq_perchannel_grad_node, lsq_perchannel_grad_d);
