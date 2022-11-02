@@ -2907,14 +2907,16 @@ class Unstack(Primitive):
     This is the opposite of pack.
 
     Args:
-        input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
-            A tensor to be unstacked and the rank of the tensor must be greater than 0.
         axis (int): Dimension along which to unpack. Default: 0.
             Negative values wrap around. The range is [-R, R).
         num (Union[None, int]): The number of output tensors.
             Automatically inferred by input_x and axis if None. Default: None.
 
-    Returns:
+    Inputs:
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+          A tensor to be unstacked and the rank of the tensor must be greater than 0.
+
+    Outputs:
         A tuple of tensors, the shape of each objects is the same.
 
     Raises:
