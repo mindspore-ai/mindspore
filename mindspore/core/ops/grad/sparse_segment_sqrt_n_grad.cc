@@ -43,7 +43,7 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
                              << "tensor x's rank must be greater than 1, but got [" << x_shape.size() << "].";
   }
-  if (!IsDynamicRank(output_dim0_shape) && output_dim0_shape.size() != kInputIndex0) {
+  if (!IsDynamic(output_dim0_shape) && output_dim0_shape.size() != kInputIndex0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor output_dim0 should be a scalar, "
                              << "but got [" << output_dim0_shape.size() << "].";
   }
