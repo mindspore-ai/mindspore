@@ -51,6 +51,10 @@ void Init_MSC_VER_kernels(void) {
 
 bool SupportKernelC(int opType, int format, int dataType) {
   Init_MSC_VER_kernels();
+  const int length = 16;
+  if (REGIST_DT(dataType) < 0 || REGIST_DT(dataType) >= length) {
+    return false;
+  }
   KernelCreator creator = g_kernelCreatorRegistry[opType][format][REGIST_DT(dataType)];
   return creator != NULL;
 }

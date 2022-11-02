@@ -19,6 +19,11 @@
 
 int LogSoftmaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
+  const int input_size_limit = 1;
+  const int output_size_limit = 1;
+  if (inputs_size != input_size_limit || outputs_size != output_size_limit) {
+    return NNACL_ERR;
+  }
   int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
