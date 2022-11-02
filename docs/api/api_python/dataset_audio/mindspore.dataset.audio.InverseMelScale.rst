@@ -3,7 +3,7 @@ mindspore.dataset.audio.InverseMelScale
 
 .. py:class:: mindspore.dataset.audio.InverseMelScale(n_stft, n_mels=128, sample_rate=16000, f_min=0.0, f_max=None, max_iter=100000, tolerance_loss=1e-5, tolerance_change=1e-8, sgdargs=None, norm=NormType.NONE, mel_type=MelType.HTK)
 
-    使用转换矩阵求解STFT，形成梅尔频率的STFT。
+    使用转换矩阵从梅尔频率STFT求解普通频率的STFT。
 
     参数：
         - **n_stft** (int) - STFT中的频段数。

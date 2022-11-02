@@ -944,7 +944,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument can only
