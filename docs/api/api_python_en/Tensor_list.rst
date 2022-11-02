@@ -211,6 +211,7 @@
     mindspore.Tensor.unsorted_segment_max
     mindspore.Tensor.unsorted_segment_min
     mindspore.Tensor.unsorted_segment_prod
+    mindspore.Tensor.unsqueeze
     mindspore.Tensor.var
     mindspore.Tensor.view
     mindspore.Tensor.xdivy

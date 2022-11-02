@@ -59,6 +59,7 @@ from .array_func import (
     tuple_to_array,
     expand_dims,
     squeeze,
+    unsqueeze,
     transpose,
     scatter_nd,
     scatter_nd_add,

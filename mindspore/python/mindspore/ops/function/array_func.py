@@ -1520,6 +1520,41 @@ def expand_dims(input_x, axis):
     return expand_dims_(input_x, axis)
 
 
+def unsqueeze(input_x, dim):
+    """
+    Adds an additional dimension to `input_x` at the given dim.
+
+    Note:
+        If the specified dim is a negative number, the index is counted
+        backward from the end and starts at 1.
+
+    Args:
+        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        dim (int): Specifies the dimension index at which to expand
+            the shape of `input_x`. The value of `dim` must be in the range
+            `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
+
+    Returns:
+        Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
+        value of `dim` is 0. It has the same data type as `input_x`.
+
+    Raises:
+        TypeError: If `dim` is not an int.
+        ValueError: If `dim` is not in the valid range :math:`[-input_x.ndim-1, input_x.ndim]`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+        >>> output = ops.unsqueeze(input_tensor, dim=0)
+        >>> print(output)
+        [[[2. 2.]
+          [2. 2.]]]
+    """
+    return expand_dims_(input_x, dim)
+
+
 def squeeze(input_x, axis=()):
     """
     Return the Tensor after deleting the dimension of size 1 in the specified `axis`.
@@ -4928,6 +4963,7 @@ __all__ = [
     'tuple_to_array',
     'expand_dims',
     'squeeze',
+    'unsqueeze',
     'transpose',
     'scatter_nd',
     'scatter_nd_add',
