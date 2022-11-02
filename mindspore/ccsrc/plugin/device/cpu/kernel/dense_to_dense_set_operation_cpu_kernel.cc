@@ -150,10 +150,6 @@ bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_oper
                       << "but got " << set_operation_str << ".";
   }
 
-  x1_shape_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
-  x2_shape_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
-  outputs_ = outputs;
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -170,7 +166,7 @@ int DenseToDenseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_ope
                                                  const std::vector<KernelTensorPtr> &outputs,
                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
   auto ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != KRET_OK) {
+  if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
   outputs_ = outputs;

@@ -61,11 +61,6 @@ abstract::TupleShapePtr CSRSparseMatrixToSparseTensorInferShape(const PrimitiveP
   const int64_t kBatchRank = 3;
   std::vector<int64_t> x_dense_shape_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  const int64_t rank_x = x_dense_shape_shape[kZero];
-  if (rank_x != kDefalutRank && rank_x != kBatchRank) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input dense_shape should "
-                             << "have rank 2 or 3, but got " << rank_x << ".";
-  }
   auto prim_name = primitive->name();
   auto x_batch_pointers_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
@@ -92,14 +87,27 @@ abstract::TupleShapePtr CSRSparseMatrixToSparseTensorInferShape(const PrimitiveP
                              << ", input x_values should be a 1-D tensor"
                              << ", but got " << x_values_shape.size() << "-D";
   }
-  if (x_col_indices_shape[kZero] != x_values_shape[kZero]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", x_col_indices.shape[0] and x_values.shape[0] should be the same"
-                             << ", but got x_col_indices.shape[0] = " << x_col_indices_shape[kZero]
-                             << ", x_values.shape[0] = " << x_values_shape[kZero];
+  if (!IsDynamic(x_col_indices_shape) && !IsDynamic(x_values_shape)) {
+    if (x_col_indices_shape[kZero] != x_values_shape[kZero]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name
+                               << ", x_col_indices.shape[0] and x_values.shape[0] should be the same"
+                               << ", but got x_col_indices.shape[0] = " << x_col_indices_shape[kZero]
+                               << ", x_values.shape[0] = " << x_values_shape[kZero];
+    }
   }
-  ShapeVector indices_shape = {x_values_shape[kZero], rank_x};
-  ShapeVector values_shape = {x_values_shape[kZero]};
+  int64_t rank_x = x_dense_shape_shape[kZero];
+  if (!IsDynamic(x_dense_shape_shape)) {
+    if (rank_x != kDefalutRank && rank_x != kBatchRank) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input dense_shape should "
+                               << "have rank 2 or 3, but got " << rank_x << ".";
+    }
+  } else {
+    rank_x = abstract::Shape::kShapeDimAny;
+  }
+  auto x_values_shape_val =
+    x_values_shape[kZero] != abstract::Shape::kShapeRankAny ? x_values_shape[kZero] : abstract::Shape::kShapeDimAny;
+  ShapeVector indices_shape = {x_values_shape_val, rank_x};
+  ShapeVector values_shape = {x_values_shape_val};
   ShapeVector dense_shape_shape = {rank_x};
   std::vector<BaseShapePtr> shapes_list;
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(indices_shape));
