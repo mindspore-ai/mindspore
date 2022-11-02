@@ -45,6 +45,7 @@ from mindspore._checkparam import check_input_data, check_input_dataset, Validat
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common.api import _MindsporeFunctionExecutor
+from mindspore.common.api import _get_parameter_layout
 from mindspore.common.initializer import initializer, One
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -310,6 +311,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     logger.info("Execute the process of saving checkpoint files.")
 
     if isinstance(save_obj, nn.Cell):
+        parameter_layout_dict = save_obj.parameter_layout_dict
+        if _is_in_auto_parallel_mode() and not parameter_layout_dict:
+            parameter_layout_dict = _get_parameter_layout()
         save_obj.init_parameters_data()
         param_dict = OrderedDict()
         for _, param in save_obj.parameters_and_names():
@@ -321,8 +325,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
             # in automatic model parallel scenario, some parameters were split to all the devices,
             # which should be combined before saving
-            if key in save_obj.parameter_layout_dict:
-                param_data = _get_merged_param_data(save_obj, key, param_data, integrated_save)
+            if key in parameter_layout_dict:
+                param_data = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_data, integrated_save)
 
             each_param["data"] = param_data
             param_list.append(each_param)
@@ -945,7 +949,7 @@ def _save_graph(network, file_name):
             f.write(graph_pb)
 
 
-def _get_merged_param_data(net, param_name, param_data, integrated_save):
+def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, integrated_save):
     """
     Gets the merged data(tensor) from tensor slice, by device arrangement and tensor map.
 
@@ -957,7 +961,7 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
     Returns:
         Tensor, the combined tensor which with the whole data value.
     """
-    layout = net.parameter_layout_dict[param_name]
+    layout = parameter_layout_dict[param_name]
     if len(layout) < 6:
         logger.info("The layout dict does not contain the key %s", param_name)
         return param_data
