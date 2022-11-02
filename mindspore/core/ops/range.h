@@ -60,6 +60,8 @@ class MIND_API Range : public BaseOperator {
   ///
   /// \return delta.
   int64_t get_delta() const;
+
+  int64_t get_maxlen() const;
 };
 
 abstract::AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
