@@ -127,19 +127,19 @@ class Caltech101Dataset(GeneratorDataset):
             and the other is called Annotations, which stores annotations.
         target_type (str, optional): Target of the image. If `target_type` is 'category', return category represents
             the target class. If `target_type` is 'annotation', return annotation.
-            If `target_type` is 'all', return category and annotation (default=None, means 'category').
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data (default=1).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
-        decode (bool, optional): Whether or not to decode the images after reading (default=False).
+            If `target_type` is 'all', return category and annotation. Default: None, means 'category'.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data. Default: 1.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
+        decode (bool, optional): Whether or not to decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
 
     Raises:
@@ -288,23 +288,23 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
-        decode (bool, optional): Whether or not to decode the images after reading (default=False).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
+        decode (bool, optional): Whether or not to decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -417,24 +417,24 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_parallel_workers (int, optional): Number of workers to read the data (default=None, will use value set in
-            the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        usage (str, optional): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset
-            (default= 'all', will read all samples).
-        sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
-        decode (bool, optional): Whether to decode the images after reading (default=False).
-        extensions (list[str], optional): List of file extensions to be included in the dataset (default=None).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will include all images).
+        num_parallel_workers (int, optional): Number of workers to read the data. Default: None, will use value set in
+            the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None.
+        usage (str, optional): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset.
+            Default: 'all', will read all samples.
+        sampler (Sampler, optional): Object used to choose samples from the dataset. Default: None.
+        decode (bool, optional): Whether to decode the images after reading. Default: False.
+        extensions (list[str], optional): List of file extensions to be included in the dataset. Default: None.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will include all images.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: None, no decryption.
 
@@ -588,24 +588,24 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' . 'train' will read from 50,000
-            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 60,000 samples
-            (default=None, all samples).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
+            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 60,000 samples.
+            Default: None, all samples.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -720,24 +720,24 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' . 'train' will read from 50,000
-            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 60,000 samples
-            (default=None, all samples).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
+            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 60,000 samples.
+            Default: None, all samples.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into. Default: None. When this argument is specified, 'num_samples' reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -847,27 +847,27 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Acceptable usages include 'train', 'test', 'val' or 'all' if quality_mode is 'fine'
-            otherwise 'train', 'train_extra', 'val' or 'all' (default= 'train').
-        quality_mode (str, optional): Acceptable quality_modes include 'fine' or 'coarse' (default= 'fine').
+            otherwise 'train', 'train_extra', 'val' or 'all'. Default: 'train'.
+        quality_mode (str, optional): Acceptable quality_modes include 'fine' or 'coarse'. Default: 'fine'.
         task (str, optional): Acceptable tasks include 'instance',
-            'semantic', 'polygon' or 'color' (default= 'instance').
+            'semantic', 'polygon' or 'color'. Default: 'instance'.
         num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` is invalid or does not contain data files.
@@ -1018,26 +1018,26 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         annotation_file (str): Path to the annotation JSON file.
         task (str, optional): Set the task type for reading COCO data. Supported task types:
-            'Detection', 'Stuff', 'Panoptic', 'Keypoint' and 'Captioning' (default='Detection').
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the configuration file).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
-        sampler (Sampler, optional): Object used to choose samples from the dataset
-            (default=None, expected order behavior shown in the table).
+            'Detection', 'Stuff', 'Panoptic', 'Keypoint' and 'Captioning'. Default: 'Detection'.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the configuration file.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
+        sampler (Sampler, optional): Object used to choose samples from the dataset.
+            Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
-            output at the end :py:obj:`[_meta-filename, dtype=string]` (default=False).
+            output at the end :py:obj:`[_meta-filename, dtype=string]`. Default: False.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: None, no decryption.
 
@@ -1261,30 +1261,30 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include 'train', 'valid' or 'all' (default= 'train').
+        usage (str, optional): Acceptable usages include 'train', 'valid' or 'all'. Default: 'train'.
         downgrade (str, optional): Acceptable downgrades include 'bicubic', 'unknown', 'mild', 'difficult' or
-            'wild' (default= 'bicubic').
-        scale (str, optional): Acceptable scales include 2, 3, 4 or 8 (default=2).
+            'wild'. Default: 'bicubic'.
+        scale (str, optional): Acceptable scales include 2, 3, 4 or 8. Default: 2.
             When `downgrade` is 'bicubic', scale can be 2, 3, 4, 8.
             When `downgrade` is 'unknown', scale can only be 2, 3, 4.
             When `downgrade` is 'mild', 'difficult' or 'wild', scale can only be 4.
         num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` is invalid or does not contain data files.
@@ -1799,22 +1799,22 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         annotation_file (str): Path to the root directory that contains the annotation.
         num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=None).
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: None.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` is not valid or does not contain data files.
@@ -2203,29 +2203,29 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         extensions (list[str], optional): List of file extensions to be
-            included in the dataset (default=None).
+            included in the dataset. Default: None.
         class_indexing (dict, optional): A str-to-int mapping from folder name to index
-            (default=None, the folder names will be sorted
+            Default: None, the folder names will be sorted
             alphabetically and each class will be given a
-            unique index starting from 0).
-        decode (bool, optional): Decode the images after reading (default=False).
+            unique index starting from 0.
+        decode (bool, optional): Decode the images after reading. Default: False.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: None, no decryption.
 
@@ -2348,24 +2348,24 @@ class KITTIDataset(MappableDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be `train` or `test`. `train` will read 7481
-            train samples, `test` will read from 7518 test samples without label (default=None, will use `train`).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will include all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
-        sampler (Sampler, optional): Object used to choose samples from the dataset
-            (default=None, expected order behavior shown in the table).
+            train samples, `test` will read from 7518 test samples without label. Default: None, will use `train`.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will include all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
+        sampler (Sampler, optional): Object used to choose samples from the dataset.
+            Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
+        shard_id (int, optional): The shard ID within num_shards. Default: None. This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
@@ -2601,8 +2601,8 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the LFW dataset.
 
-    When task is "people", the generated dataset has two columns: :py:obj:`[image, label]`;
-    When task is "pairs", the generated dataset has three columns: :py:obj:`[image1, image2, label]`.
+    When task is 'people', the generated dataset has two columns: :py:obj:`[image, label]`;
+    When task is 'pairs', the generated dataset has three columns: :py:obj:`[image1, image2, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`image1` is of the uint8 type.
     The tensor of column :py:obj:`image2` is of the uint8 type.
@@ -2610,29 +2610,29 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str, optional): Set the task type of reading lfw data, support "people" and "pairs"
-            (default="people").
-        usage (str, optional): The image split to use, support "10fold", "train", "test" and "all"
-            (default="all", will read samples including train and test).
-        image_set (str, optional): Image set of image funneling to use, support "original", "funneled" or
-            "deepfunneled" (default="funneled", will read "funneled" set).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
+        task (str, optional): Set the task type of reading lfw data, support 'people' and 'pairs'.
+            Default: 'people'.
+        usage (str, optional): The image split to use, support '10fold', 'train', 'test' and 'all'.
+            Default: 'all', will read samples including train and test.
+        image_set (str, optional): Image set of image funneling to use, support 'original', 'funneled' or
+            'deepfunneled'. Default: 'funneled', will read 'funneled' set.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
+        shard_id (int, optional): The shard ID within num_shards. Default: None. This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -2763,26 +2763,26 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`
-            (default=None, will be set to `all`).
-        classes(Union[str, list[str]], optional): Choose the specific classes to load (default=None, means loading
-            all classes in root directory).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
+            Default: None, will be set to `all`.
+        classes(Union[str, list[str]], optional): Choose the specific classes to load. Default: None, means loading
+            all classes in root directory.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
+        shard_id (int, optional): The shard ID within num_shards. Default: None. This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If 'sampler' and 'shuffle' are specified at the same time.
@@ -2893,27 +2893,27 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_file (str): File to be read.
-        usage (str, optional): Acceptable usages include 'train', 'eval' and 'inference' (default= 'train').
+        usage (str, optional): Acceptable usages include 'train', 'eval' and 'inference'. Default: 'train'.
         num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, will include all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
+            Default: None, will include all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, will use value set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        class_indexing (dict, optional): A str-to-int mapping from label name to index
-            (default=None, the folder names will be sorted alphabetically and each
-            class will be given a unique index starting from 0).
-        decode (bool, optional): decode the images after reading (default=False).
+            dataset. Default: None, expected order behavior shown in the table.
+        class_indexing (dict, optional): A str-to-int mapping from label name to index.
+            Default: None, the folder names will be sorted alphabetically and each
+            class will be given a unique index starting from 0.
+        decode (bool, optional): decode the images after reading. Default: False.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the max number of samples per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If dataset_files are not valid or do not exist.
@@ -3015,22 +3015,22 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' . 'train' will read from 60,000
             train samples, 'test' will read from 10,000 test samples, 'all' will read from all 70,000 samples.
-            (default=None, will read all samples)
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will read all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
+            Default: None, will read all samples.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, will use value set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            dataset. Default: None, expected order behavior shown in the table.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -3135,25 +3135,25 @@ class OmniglotDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        background(bool, optional): Use the background dataset or the evaluation dataset
-            (default=None, will use the background dataset).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
+        background(bool, optional): Use the background dataset or the evaluation dataset.
+            Default: None, will use the background dataset.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
+        shard_id (int, optional): The shard ID within num_shards. Default: None. This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
@@ -3418,25 +3418,25 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be 'train-standard', 'train-challenge' or 'val'
-            (default=None, will be set to 'train-standard').
-        small (bool, optional): Use 256 * 256 images (True) or high resolution images (False) (default=False).
-        decode (bool, optional): Decode the images after reading (default=True).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will read all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
+        usage (str, optional): Usage of this dataset, can be 'train-standard', 'train-challenge' or 'val'.
+            Default: None, will be set to 'train-standard'.
+        small (bool, optional): Use 256 * 256 images (True) or high resolution images (False). Default: False.
+        decode (bool, optional): Decode the images after reading. Default: True.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, will use value set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            dataset. Default: None, expected order behavior shown in the table.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -3561,24 +3561,24 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train', 'test', 'test10k', 'test50k', 'nist'
-            or 'all' (default=None, will read all samples).
+            or 'all'. Default: None, will read all samples.
         compat (bool, optional): Whether the label for each example is class number (compat=True) or the full QMNIST
-            information (compat=False) (default=True).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will read all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
+            information (compat=False). Default: True.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, will use value set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            dataset. Default: None, expected order behavior shown in the table.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -3681,25 +3681,25 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
     A source dataset that generates random data.
 
     Args:
-        total_rows (int, optional): Number of samples for the dataset to generate
-            (default=None, number of samples is random).
-        schema (Union[str, Schema], optional): Path to the JSON schema file or schema object (default=None).
+        total_rows (int, optional): Number of samples for the dataset to generate.
+            Default: None, number of samples is random.
+        schema (Union[str, Schema], optional): Path to the JSON schema file or schema object. Default: None.
             If the schema is not provided, the random dataset generates a random schema.
-        columns_list (list[str], optional): List of column names of the dataset
-            (default=None, the columns will be named like this "c0", "c1", "c2" etc).
-        num_samples (int, optional): The number of samples to be included in the dataset
-            (default=None, all samples).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
+        columns_list (list[str], optional): List of column names of the dataset.
+            Default: None, the columns will be named like this "c0", "c1", "c2" etc.
+        num_samples (int, optional): The number of samples to be included in the dataset.
+            Default: None, all samples.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into. Default: None. When this argument is specified, 'num_samples' reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
     """
 
@@ -3796,21 +3796,21 @@ class SBDataset(GeneratorDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str, optional): Acceptable tasks include 'Boundaries' or 'Segmentation' (default= 'Boundaries').
-        usage (str, optional): Acceptable usages include 'train', 'val', 'train_noval' and 'all' (default= 'all').
+        task (str, optional): Acceptable tasks include 'Boundaries' or 'Segmentation'. Default: 'Boundaries'.
+        usage (str, optional): Acceptable usages include 'train', 'val', 'train_noval' and 'all'. Default: 'all'.
         num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=None).
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: None.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
 
     Raises:
@@ -3928,22 +3928,22 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        decode (bool, optional): Decode the images after reading (default=False).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will read all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading. Default: False.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, will use value set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            dataset. Default: None, expected order behavior shown in the table.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -4043,22 +4043,22 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_samples (int, optional): The number of samples to be included in the dataset
-            (default=None, will read all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
+        num_samples (int, optional): The number of samples to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -4170,23 +4170,23 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
             train samples, 'test' will read from 8,000 test samples,
             'unlabeled' will read from all 100,000 samples, and 'train+unlabeled'
             will read from 105000 samples, 'all' will read all the samples
-            (default=None, all samples).
+            Default: None, all samples.
         num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
+            dataset. Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` is not valid or does not exist or does not contain data files.
@@ -4337,18 +4337,18 @@ class SVHNDataset(GeneratorDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Specify the 'train', 'test', 'extra' or 'all' parts of dataset
-            (default=None, will read all samples).
-        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
-        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        usage (str, optional): Specify the 'train', 'test', 'extra' or 'all' parts of dataset.
+            Default: None, will read all samples.
+        num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all images.
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
-            (default=None, expected order behavior shown in the table).
+            Default: None, expected order behavior shown in the table.
         sampler (Sampler, optional): Object used to choose samples from the dataset. Random accessible
-            input is required (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            input is required. Default: None, expected order behavior shown in the table.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             Random accessible input is required. When this argument is specified, 'num_samples' reflects the max
             sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument must be specified only
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
 
     Raises:
@@ -4449,13 +4449,13 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'. 'train' will read from 7,291
             train samples, 'test' will read from 2,007 test samples, 'all' will read from all 9,298 samples.
-            (default=None, will read all samples)
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will read all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch
-            (default=Shuffle.GLOBAL). Bool type and Shuffle enum are both supported to pass in.
+            Default: None, will read all samples.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, will use value set in the config.
+        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
+            Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -4464,13 +4464,13 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
 
             - Shuffle.FILES: Shuffle files only.
 
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` is not valid or does not exist or does not contain data files.
@@ -4546,34 +4546,34 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str, optional): Set the task type of reading voc data, now only support 'Segmentation' or 'Detection'
-            (default= 'Segmentation').
-        usage (str, optional): Set the task type of ImageSets(default= 'train'). If task is 'Segmentation', image and
+        task (str, optional): Set the task type of reading voc data, now only support 'Segmentation' or 'Detection'.
+            Default: 'Segmentation'.
+        usage (str, optional): Set the task type of ImageSets. Default: 'train'. If task is 'Segmentation', image and
             annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is 'Detection', image and
             annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage are not set, image and
             annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
         class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
-            'Detection' task (default=None, the folder names will be sorted alphabetically and each
-            class will be given a unique index starting from 0).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
-        sampler (Sampler, optional): Object used to choose samples from the dataset
-            (default=None, expected order behavior shown in the table).
+            'Detection' task. Default: None, the folder names will be sorted alphabetically and each
+            class will be given a unique index starting from 0.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
+        sampler (Sampler, optional): Object used to choose samples from the dataset.
+            Default: None, expected order behavior shown in the table.
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+            into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column named
-            :py:obj:`[_meta-filename, dtype=string]` will be output at the end (default=False).
+            :py:obj:`[_meta-filename, dtype=string]` will be output at the end. Default: False.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: None, no decryption.
 
@@ -4753,23 +4753,23 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train', 'test', 'valid' or 'all'. 'train' will read
             from 12,880 samples, 'test' will read from 16,097 samples, 'valid' will read from 3,226 test samples
-            and 'all' will read all 'train' and 'valid' samples (default=None, will be set to 'all').
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, will read all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, expected order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
-        sampler (Sampler, optional): Object used to choose samples from the dataset
-            (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            and 'all' will read all 'train' and 'valid' samples. Default: None, will be set to 'all'.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, will use value set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table.
+        decode (bool, optional): Decode the images after reading. Default: False.
+        sampler (Sampler, optional): Object used to choose samples from the dataset.
+            Default: None, expected order behavior shown in the table.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument can only be specified
+        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument can only be specified
             when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.

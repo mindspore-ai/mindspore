@@ -312,8 +312,8 @@ class Dataset:
                                  NumpySlicesDataset(GeneratorDataset)
 
     Args:
-        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel
-            (default=None).
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel.
+            Default: None.
     """
 
     def __init__(self, children=None, num_parallel_workers=None, cache=None):
@@ -450,7 +450,7 @@ class Dataset:
         Serialize a pipeline into JSON string and dump into file if filename is provided.
 
         Args:
-            filename (str): filename of JSON file to be saved as (default="").
+            filename (str): filename of JSON file to be saved as. Default: ''.
 
         Returns:
             str, JSON string of the pipeline.
@@ -486,7 +486,7 @@ class Dataset:
             element_length_function (Callable, optional): A function that takes in
                 M arguments where M = len(column_names) and returns an integer. If no value
                 provided, parameter M the len(column_names) must be 1, and the size of the first
-                dimension of that column will be taken as the length (default=None).
+                dimension of that column will be taken as the length. Default: None.
             pad_info (dict, optional): The information about how to batch each column. The key
                 corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
@@ -495,13 +495,13 @@ class Dataset:
                 batch, and 0 will be used as the padding value. Any None dimensions will
                 be padded to the longest in the current batch, unless if
                 pad_to_bucket_boundary is True. If no padding is wanted, set pad_info
-                to None (default=None).
+                to None. Default: None.
             pad_to_bucket_boundary (bool, optional): If True, will pad each None
                 dimension in pad_info to the bucket_boundary minus 1. If there are any
-                elements that fall into the last bucket, an error will occur
-                (default=False).
+                elements that fall into the last bucket, an error will occur.
+                Default: False.
             drop_remainder (bool, optional): If True, will drop the last batch for each
-                bucket if it is not a full batch (default=False).
+                bucket if it is not a full batch. Default: False.
 
         Returns:
             Dataset, dataset bucketed and batched by length.
@@ -551,15 +551,15 @@ class Dataset:
             batch_size (Union[int, Callable]): The number of rows each batch is created with. An
                 int or callable object which takes exactly 1 parameter, BatchInfo.
             drop_remainder (bool, optional): Determines whether or not to drop the last block
-                whose data row number is less than batch size (default=False). If True, and if there are less
+                whose data row number is less than batch size. Default: False. If True, and if there are less
                 than batch_size rows available to make the last batch, then those rows will
                 be dropped and not propagated to the child node.
-            num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
-                (default=None).
+            num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel.
+                Default: None.
             **kwargs:
 
                 - per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], \
-                  (List[numpy.ndarray], ..., List[numpy.ndarray])], optional): Per batch map callable (default=None).
+                  (List[numpy.ndarray], ..., List[numpy.ndarray])], optional): Per batch map callable. Default: None.
                   A callable which takes (List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo) as input parameters.
                   Each list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists
                   should match with the number of entries in input_columns. The last parameter of the callable should
@@ -568,20 +568,20 @@ class Dataset:
                   as the input. output_columns is required if the number of output lists is different from input.
 
                 - input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of
-                  the list should match with signature of per_batch_map callable (default=None).
+                  the list should match with signature of per_batch_map callable. Default: None.
 
                 - output_columns (Union[str, list[str]], optional): List of names assigned to the columns
                   outputted by the last operation. This parameter is mandatory if len(input_columns) !=
                   len(output_columns). The size of this list must match the number of output
-                  columns of the last operation. (default=None, output columns will have the same
-                  name as the input columns, i.e., the columns will be replaced).
+                  columns of the last operation. Default: None, output columns will have the same
+                  name as the input columns, i.e., the columns will be replaced.
 
                 - python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with
-                  multi-processing. This option could be beneficial if the function is computational heavy
-                  (default=False).
+                  multi-processing. This option could be beneficial if the function is computational heavy.
+                  Default: False.
 
                 - max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to
-                  copy data between processes. This is only used if python_multiprocessing is set to True (default=16).
+                  copy data between processes. This is only used if python_multiprocessing is set to True. Default: 16.
 
         Returns:
             BatchDataset, dataset batched.
@@ -629,11 +629,11 @@ class Dataset:
             batch_size (Union[int, Callable]): The number of rows each batch is created with. An
                 int or callable object which takes exactly 1 parameter, BatchInfo.
             drop_remainder (bool, optional): Determines whether or not to drop the last block
-                whose data row number is less than batch size (default=False). If True, and if there are less
+                whose data row number is less than batch size. Default: False. If True, and if there are less
                 than batch_size rows available to make the last batch, then those rows will
                 be dropped and not propagated to the child node.
-            num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
-                (default=None).
+            num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel.
+                Default: None.
             pad_info (dict, optional): The information about how to batch each column. The key
                 corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
@@ -642,7 +642,7 @@ class Dataset:
                 batch, and 0 will be used as the padding value. Any None dimensions will
                 be padded to the longest in the current batch, unless if
                 pad_to_bucket_boundary is True. If no padding is wanted, set pad_info
-                to None (default=None).
+                to None. Default: None.
 
         Returns:
             PaddedBatchDataset, dataset batched.
@@ -670,8 +670,8 @@ class Dataset:
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
-            num_batch (int): the number of batches without blocking at the start of each epoch (default=1).
-            callback (function): The callback function that will be invoked when sync_update is called (default=None).
+            num_batch (int): the number of batches without blocking at the start of each epoch. Default: 1.
+            callback (function): The callback function that will be invoked when sync_update is called. Default: None.
 
         Returns:
             SyncWaitDataset, dataset added a blocking condition.
@@ -832,31 +832,31 @@ class Dataset:
                 applied on the dataset. Operations are applied in the order they appear in this list.
             input_columns (Union[str, list[str]], optional): List of the names of the columns that will be passed to
                 the first operation as input. The size of this list must match the number of
-                input columns expected by the first operation. (default=None, the first
+                input columns expected by the first operation. Default: None, the first
                 operation will be passed however many columns that are required, starting from
-                the first column).
+                the first column.
             output_columns (Union[str, list[str]], optional): List of names assigned to the columns outputted by
                 the last operation. This parameter is mandatory if len(input_columns) !=
                 len(output_columns). The size of this list must match the number of output
-                columns of the last operation. (default=None, output columns will have the same
-                name as the input columns, i.e., the columns will be replaced).
+                columns of the last operation. Default: None, output columns will have the same
+                name as the input columns, i.e., the columns will be replaced.
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
-                parallel (default=None, the value from the configuration will be used).
+                parallel. Default: None, the value from the configuration will be used.
             **kwargs:
 
                 - python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes.
-                  This option could be beneficial if the Python operation is computational heavy (default=False).
+                  This option could be beneficial if the Python operation is computational heavy. Default: False.
 
                 - max_rowsize (int, optional): Maximum size of row in MB that is used for shared memory allocation to
-                  copy data between processes.  This is only used if python_multiprocessing is set to True (Default=16).
+                  copy data between processes.  This is only used if python_multiprocessing is set to True. Default: 16.
 
                 - cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-                  (default=None, which means no cache is used).
+                  Default: None, which means no cache is used.
 
-                - callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called
-                  (Default=None).
+                - callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called.
+                  Default: None.
 
-                - offload (bool, optional): Flag to indicate whether offload is used (Default=None).
+                - offload (bool, optional): Flag to indicate whether offload is used. Default: None.
 
         Note:
             - Input `operations` accepts TensorOperations defined in mindspore.dataset part, plus user-defined
@@ -941,9 +941,9 @@ class Dataset:
         Args:
             predicate (callable): Python callable which returns a boolean value. If False then filter the element.
             input_columns (Union[str, list[str]], optional): List of names of the input columns. If not provided
-                or provided with None, the predicate will be applied on all columns in the dataset (default=None).
+                or provided with None, the predicate will be applied on all columns in the dataset. Default: None.
             num_parallel_workers (int, optional): Number of workers to process the dataset
-                in parallel (default=None).
+                in parallel. Default: None.
 
         Returns:
             Dataset, dataset filtered.
@@ -965,7 +965,7 @@ class Dataset:
             the repeat operation is used after the batch operation.
 
         Args:
-            count (int): Number of times the dataset is going to be repeated (default=None).
+            count (int): Number of times the dataset is going to be repeated. Default: None.
 
         Returns:
             Dataset, dataset repeated.
@@ -1018,7 +1018,7 @@ class Dataset:
                then take the given number of rows; otherwise take the given number of batches.
 
         Args:
-            count (int, optional): Number of elements to be taken from the dataset (default=-1).
+            count (int, optional): Number of elements to be taken from the dataset. Default: -1.
 
         Returns:
             Dataset, dataset taken.
@@ -1106,7 +1106,7 @@ class Dataset:
                 - The sum of split sizes > K, the difference of sigma(round(fi * K)) - K will be removed from the first
                   large enough split such that it will have at least 1 row after removing the difference.
 
-            randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
+            randomize (bool, optional): Determines whether or not to split the data randomly. Default: True.
                 If True, the data will be randomly split. Otherwise, each split will be created with
                 consecutive rows from the dataset.
 
@@ -1168,7 +1168,7 @@ class Dataset:
         name.
 
         Args:
-            datasets (Union[tuple, class Dataset]): A tuple of datasets or a single class Dataset
+            datasets (Union[Dataset, tuple[Dataset]]): A tuple of datasets or a single class Dataset
                 to be zipped together with this dataset.
 
         Returns:
@@ -1308,9 +1308,9 @@ class Dataset:
         Return a transferred Dataset that transfers data through a device.
 
         Args:
-            send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
+            send_epoch_end (bool, optional): Whether to send end of sequence to device or not. Default: True.
             create_data_info_queue (bool, optional): Whether to create queue which stores
-                types and shapes of data or not(default=False).
+                types and shapes of data or not. Default: False.
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -1387,8 +1387,8 @@ class Dataset:
 
         Args:
             file_name (str): Path to dataset file.
-            num_files (int, optional): Number of dataset files (default=1).
-            file_type (str, optional): Dataset format (default='mindrecord').
+            num_files (int, optional): Number of dataset files. Default: 1.
+            file_type (str, optional): Dataset format. Default: 'mindrecord'.
 
         """
         ir_tree, api_tree = self.create_ir_tree()
@@ -1412,14 +1412,14 @@ class Dataset:
         is not provided, the order of the columns will remain unchanged.
 
         Args:
-            columns (list[str], optional): List of columns to be used to specify the order of columns
-                (default=None, means all columns).
+            columns (list[str], optional): List of columns to be used to specify the order of columns.
+                Default: None, means all columns.
             num_epochs (int, optional): Maximum number of epochs that iterator can be iterated.
-                (default=-1, iterator can be iterated infinite number of epochs)
+                Default: -1, iterator can be iterated infinite number of epochs.
             output_numpy (bool, optional): Whether or not to output NumPy datatype.
-                If output_numpy=False, iterator will output MSTensor (default=False).
+                If output_numpy=False, iterator will output MSTensor. Default: False.
             do_copy (bool, optional): when output data type is mindspore.Tensor,
-                use this param to select the conversion method, only take False for better performance (default=True).
+                use this param to select the conversion method, only take False for better performance. Default: True.
 
         Returns:
             Iterator, tuple iterator over the dataset.
@@ -1446,10 +1446,10 @@ class Dataset:
         Create an iterator over the dataset. The data retrieved will be a dictionary datatype.
 
         Args:
-            num_epochs (int, optional): Maximum number of epochs that iterator can be iterated
-                (default=-1, iterator can be iterated infinite number of epochs).
+            num_epochs (int, optional): Maximum number of epochs that iterator can be iterated.
+                Default: -1, iterator can be iterated infinite number of epochs.
             output_numpy (bool, optional): Whether or not to output NumPy datatype,
-                if output_numpy=False, iterator will output MSTensor (default=False).
+                if output_numpy=False, iterator will output MSTensor. Default: False.
 
         Returns:
             Iterator, dictionary iterator over the dataset.
@@ -1823,8 +1823,8 @@ class Dataset:
             condition_name (str): The condition name that is used to toggle sending next row.
             num_batch (Union[int, None]): The number of batches (rows) that are released.
                 When num_batch is None, it will default to the number specified by the
-                sync_wait operation (default=None).
-            data (Any): The data passed to the callback, user defined (default=None).
+                sync_wait operation. Default: None.
+            data (Any): The data passed to the callback, user defined. Default: None.
         """
         if (not isinstance(num_batch, int) and num_batch is not None) or \
                 (isinstance(num_batch, int) and num_batch <= 0):
@@ -1863,7 +1863,7 @@ class Dataset:
 
     def get_repeat_count(self):
         """
-        Get the replication times in RepeatDataset (default is 1).
+        Get the replication times in RepeatDataset. Default: 1.
 
         Returns:
             int, the count of repeat.
@@ -2267,7 +2267,7 @@ class MappableDataset(SourceDataset):
                 - The sum of split sizes > K, the difference will be removed from the first large
                   enough split such that it will have at least 1 row after removing the difference.
 
-            randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
+            randomize (bool, optional): Determines whether or not to split the data randomly. Default: True.
                 If True, the data will be randomly split. Otherwise, each split will be created with
                 consecutive rows from the dataset.
 
@@ -2401,10 +2401,10 @@ class BatchDataset(UnionBaseDataset):
         batch_size (Union[int, function]): The number of rows each batch is created with. An
             int or callable which takes exactly 1 parameter, BatchInfo.
         drop_remainder (bool, optional): Determines whether or not to drop the last
-            possibly incomplete batch (default=False). If True, and if there are less
+            possibly incomplete batch. Default: False. If True, and if there are less
             than batch_size rows available to make the last batch, then those rows will
             be dropped and not propagated to the child node.
-        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel (default=None).
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: None.
         per_batch_map (callable, optional): Per batch map callable. A callable which takes
             (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch of
             Tensors on a given column. The number of lists should match with number of entries in input_columns. The
@@ -2414,10 +2414,10 @@ class BatchDataset(UnionBaseDataset):
         output_columns (Union[str, list[str]], optional): List of names assigned to the columns outputted by
             the last operation. This parameter is mandatory if len(input_columns) !=
             len(output_columns). The size of this list must match the number of output
-            columns of the last operation. (default=None, output columns will have the same
-            name as the input columns, i.e., the columns will be replaced).
+            columns of the last operation. Default: None, output columns will have the same
+            name as the input columns, i.e., the columns will be replaced.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes.  This is only used if python_multiprocessing is set to True (default=16).
+            data between processes.  This is only used if python_multiprocessing is set to True. Default: 16.
 
     """
 
@@ -2542,7 +2542,7 @@ class BlockReleasePair:
 
     Args:
         init_release_rows (int): Number of lines to allow through the pipeline.
-        callback (function): The callback function that will be called when release is called (default=None).
+        callback (function): The callback function that will be called when release is called. Default: None.
     """
 
     def __init__(self, init_release_rows, callback=None):
@@ -2614,10 +2614,10 @@ class PaddedBatchDataset(UnionBaseDataset):
         batch_size (Union[int, function]): The number of rows each batch is created with. An
             int or callable which takes exactly 1 parameter, BatchInfo.
         drop_remainder (bool, optional): Determines whether or not to drop the last
-            possibly incomplete batch (default=False). If True, and if there are less
+            possibly incomplete batch. Default: False. If True, and if there are less
             than batch_size rows available to make the last batch, then those rows will
             be dropped and not propagated to the child node.
-        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel (default=None).
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: None.
         pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
             will pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
     """
@@ -2687,7 +2687,7 @@ class SyncWaitDataset(UnionBaseDataset):
         input_dataset (Dataset): Input dataset to apply flow control.
         num_batch (int): Number of batches without blocking at the start of each epoch.
         condition_name (str): Condition name that is used to toggle sending next row.
-        callback (function): Callback function that will be invoked when sync_update is called (default=None).
+        callback (function): Callback function that will be invoked when sync_update is called. Default: None.
 
     Raises:
         RuntimeError: If condition name already exists.
@@ -3289,24 +3289,24 @@ class MapDataset(UnionBaseDataset):
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
         operations (Union[list[TensorOperation], list[functions]]): A function mapping a nested structure of tensors
-            to another nested structure of tensor (default=None).
-        input_columns (Union[str, list[str]]): List of names of the input columns
-            (default=None, the operations will be applied on the first columns in the dataset).
+            to another nested structure of tensor. Default: None.
+        input_columns (Union[str, list[str]]): List of names of the input columns.
+            Default: None, the operations will be applied on the first columns in the dataset.
             The size of the list should match the number of inputs of the first operation.
         output_columns (Union[str, list[str]], optional): List of names of the output columns.
-            The size of the list should match the number of outputs of the last operation
-            (default=None, output columns will be the input columns, i.e., the columns will
-            be replaced).
+            The size of the list should match the number of outputs of the last operation.
+            Default: None, output columns will be the input columns, i.e., the columns will
+            be replaced.
         num_parallel_workers (int, optional): Number of workers to process the dataset
-            in parallel (default=None).
+            in parallel. Default: None.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
-            option could be beneficial if the Python operation is computational heavy (default=False).
+            option could be beneficial if the Python operation is computational heavy. Default: False.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None, which means no cache is used).
-        callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None)
+            Default: None, which means no cache is used.
+        callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called. Default: None.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes.  This is only used if python_multiprocessing is set to True (default=16).
-        offload (bool, optional): Flag to indicate whether offload is used (Default=None).
+            data between processes. This is only used if python_multiprocessing is set to True. Default: 16.
+        offload (bool, optional): Flag to indicate whether offload is used. Default: None.
     """
 
     def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None,
@@ -3492,10 +3492,10 @@ class FilterDataset(UnionBaseDataset):
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
         predicate (callable): Python callable which returns a boolean value. If False then filter the element.
-        input_columns (Union[str, list[str]], optional): List of names of the input columns
-        (default=None, the predicate will be applied to all columns in the dataset).
+        input_columns (Union[str, list[str]], optional): List of names of the input columns.
+            Default: None, the predicate will be applied to all columns in the dataset.
         num_parallel_workers (int, optional): Number of workers to process the dataset
-            in parallel (default=None).
+            in parallel. Default: None.
     """
 
     def __init__(self, input_dataset, predicate, input_columns=None, num_parallel_workers=None):
@@ -3513,7 +3513,7 @@ class RepeatDataset(UnionBaseDataset):
 
     Args:
         input_dataset (Dataset): Input Dataset to be repeated.
-        count (int): Number of times the dataset will be repeated (default=-1, repeat indefinitely).
+        count (int): Number of times the dataset will be repeated. Default: -1, repeat indefinitely.
     """
 
     def __init__(self, input_dataset, count):
@@ -3804,9 +3804,9 @@ class TransferDataset(Dataset):
 
     Args:
         input_dataset (Dataset): Input Dataset to be transferred.
-        send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
+        send_epoch_end (bool, optional): Whether to send end of sequence to device or not. Default: True.
         create_data_info_queue (bool, optional): Whether to create queue which stores
-            types and shapes of data or not (default=False).
+            types and shapes of data or not. Default: False.
 
     Raises:
         TypeError: If device_type is empty.
@@ -3899,7 +3899,7 @@ class Schema:
     Class to represent a schema of a dataset.
 
     Args:
-        schema_file(str): Path of the schema file (default=None).
+        schema_file(str): Path of the schema file. Default: None.
 
     Returns:
         Schema object, schema info about dataset.
@@ -3928,8 +3928,8 @@ class Schema:
         Args:
             name (str): The new name of the column.
             de_type (str): Data type of the column.
-            shape (list[int], optional): Shape of the column
-                (default=None, [-1] which is an unknown shape of rank 1).
+            shape (list[int], optional): Shape of the column.
+                Default: None, [-1] which is an unknown shape of rank 1.
 
         Raises:
             ValueError: If column type is unknown.

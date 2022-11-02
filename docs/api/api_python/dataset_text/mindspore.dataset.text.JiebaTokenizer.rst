@@ -18,7 +18,7 @@ mindspore.dataset.text.JiebaTokenizer
           - **JiebaMode.HMM**：使用隐马尔可夫模型算法进行分词。
           - **JiebaMode.MIX**：使用隐式马尔科夫模型分词算法和最大概率法分词算法混合进行分词。
 
-        - **with_offsets** (bool, 可选) - 是否输出标记(token)的偏移量，默认值：False。
+        - **with_offsets** (bool, 可选) - 是否输出标记(token)的偏移量。默认值：False。
 
     异常：      
         - **ValueError** - 没有提供参数 `hmm_path` 或为None。

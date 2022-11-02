@@ -41,7 +41,7 @@ The data transform operation can be executed in the data processing pipeline or 
 
   .. code-block::
 
-      from mindspore.dataset import text
+      import mindspore.dataset.text as text
       from mindspore.dataset.text import NormalizeForm
 
       # construct vocab

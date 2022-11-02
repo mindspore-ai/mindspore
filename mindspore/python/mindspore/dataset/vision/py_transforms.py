@@ -113,7 +113,7 @@ class AutoContrast(py_transforms.PyTensorOperation):
 
     Args:
         cutoff (float, optional): Percent to cut off from the histogram on the low and
-            high ends, must be in range of [0.0, 50.0). Default: 0.0.
+            high ends, must be in range of [0.0, 50.0]. Default: 0.0.
         ignore (Union[int, Sequence[int]], optional): Background pixel value, which will be
             directly remapped to white. Default: None, means no background.
 

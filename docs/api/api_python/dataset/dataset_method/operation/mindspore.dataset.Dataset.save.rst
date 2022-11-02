@@ -62,5 +62,5 @@ mindspore.dataset.Dataset.save
 
     参数：
         - **file_name** (str) - 数据集文件的路径。
-        - **num_files** (int, 可选) - 数据集文件的数量，默认值：1。
-        - **file_type** (str, 可选) - 数据集格式，默认值：'mindrecord'。
+        - **num_files** (int, 可选) - 数据集文件的数量。默认值：1。
+        - **file_type** (str, 可选) - 数据集格式。默认值：'mindrecord'。

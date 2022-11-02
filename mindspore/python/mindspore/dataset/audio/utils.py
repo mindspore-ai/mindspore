@@ -221,7 +221,7 @@ def create_dct(n_mfcc, n_mels, norm=NormMode.NONE):
     Args:
         n_mfcc (int): Number of mfc coefficients to retain, the value must be greater than 0.
         n_mels (int): Number of mel filterbanks, the value must be greater than 0.
-        norm (NormMode, optional): Normalization mode, can be NormMode.NONE or NormMode.ORTHO (default=NormMode.NONE).
+        norm (NormMode, optional): Normalization mode, can be NormMode.NONE or NormMode.ORTHO. Default: NormMode.NONE.
 
     Returns:
         numpy.ndarray, the transformation matrix, to be right-multiplied to row-wise data of size (n_mels, n_mfcc).
@@ -306,8 +306,8 @@ def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NO
         f_max (float): Maximum of frequency in Hz.
         n_mels (int): Number of mel filterbanks.
         sample_rate (int): Sample rate.
-        norm (NormType, optional): Norm to use, can be NormType.NONE or NormType.SLANEY (Default: NormType.NONE).
-        mel_type (MelType, optional): Scale to use, can be MelType.HTK or MelType.SLANEY (Default: NormType.SLANEY).
+        norm (NormType, optional): Norm to use, can be NormType.NONE or NormType.SLANEY. Default: NormType.NONE.
+        mel_type (MelType, optional): Scale to use, can be MelType.HTK or MelType.SLANEY. Default: NormType.SLANEY.
 
     Returns:
         numpy.ndarray, the frequency transformation matrix.

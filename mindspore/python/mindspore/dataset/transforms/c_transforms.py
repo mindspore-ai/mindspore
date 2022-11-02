@@ -375,10 +375,10 @@ class Concatenate(TensorOperation):
     Tensor operation that concatenates all columns into a single tensor.
 
     Args:
-        axis (int, optional): Concatenate the tensors along given axis (Default=0).
-        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors
-            (Default=None).
-        append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
+        axis (int, optional): Concatenate the tensors along given axis. Default: 0.
+        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors.
+            Default: None.
+        append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors. Default: None.
 
     Raises:
         TypeError: If `axis` is not of type int.
@@ -534,7 +534,7 @@ class RandomApply(TensorOperation):
 
     Args:
         transforms (list): List of transformations to be applied.
-        prob (float, optional): The probability to apply the transformation list (default=0.5).
+        prob (float, optional): The probability to apply the transformation list. Default: 0.5.
 
     Raises:
         TypeError: If `transforms` is not of type list.

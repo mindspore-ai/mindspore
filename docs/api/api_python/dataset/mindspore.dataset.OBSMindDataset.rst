@@ -14,7 +14,7 @@
         - **sk** (str) - 访问密钥中的SK。
         - **sync_obs_path** (str) - 用于同步操作云存储上的路径，用户需要提前创建，目录路径的格式为s3://bucketName/objectKey。
         - **columns_list** (list[str]，可选) - 指定从MindRecord文件中读取的数据列。默认值：None，读取所有列。
-        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：mindspore.dataset.Shuffle.GLOBAL。
+        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：
 
@@ -22,8 +22,8 @@
           - **Shuffle.FILES**：仅混洗文件。
           - **Shuffle.INFILE**：保持读入文件的序列，仅混洗每个文件中的数据。
 
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。
-        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
+        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。
+        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
         - **shard_equal_rows** (bool, 可选) - 分布式训练时，为所有分片获取等量的数据行数。默认值：True。
           如果 `shard_equal_rows` 为False，则可能会使得每个分片的数据条目不相等，从而导致分布式训练失败。
           因此当每个TFRecord文件的数据数量不相等时，建议将此参数设置为True。注意，只有当指定了 `num_shards` 时才能指定此参数。
