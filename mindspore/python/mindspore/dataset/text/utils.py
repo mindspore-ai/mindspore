@@ -36,19 +36,25 @@ class CharNGram(cde.CharNGram):
     @check_from_file_vectors
     def from_file(cls, file_path, max_vectors=None):
         """
-        Build a CharNGram vector from a file.
+        Build a `CharNGram` vector from a file.
 
         Args:
-            file_path (str): Path of the file that contains the CharNGram vectors.
+            file_path (str): Path of the file that contains the `CharNGram` vectors.
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing max_vectors can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
 
         Returns:
             CharNGram, CharNGram vector build from a file.
 
+        Raises:
+            RuntimeError: If `file_path` contains invalid data.
+            ValueError: If `max_vectors` is invalid.
+            TypeError: If `max_vectors` is not type of integer.
+
         Examples:
+            >>> from mindspore.dataset import text
             >>> char_n_gram = text.CharNGram.from_file("/path/to/char_n_gram/file", max_vectors=None)
         """
 
@@ -73,12 +79,18 @@ class FastText(cde.FastText):
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing max_vectors can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
 
         Returns:
             FastText, FastText vector build from a file.
 
+        Raises:
+            RuntimeError: If `file_path` contains invalid data.
+            ValueError: If `max_vectors` is invalid.
+            TypeError: If `max_vectors` is not type of integer.
+
         Examples:
+            >>> from mindspore.dataset import text
             >>> fast_text = text.FastText.from_file("/path/to/fast_text/file", max_vectors=None)
         """
 
@@ -103,12 +115,18 @@ class GloVe(cde.GloVe):
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing max_vectors can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
 
         Returns:
             GloVe, GloVe vector build from a file.
 
+        Raises:
+            RuntimeError: If `file_path` contains invalid data.
+            ValueError: If `max_vectors` is invalid.
+            TypeError: If `max_vectors` is not type of integer.
+
         Examples:
+            >>> from mindspore.dataset import text
             >>> glove = text.GloVe.from_file("/path/to/glove/file", max_vectors=None)
         """
 
@@ -220,10 +238,11 @@ class SentencePieceVocab:
             SentencePieceVocab, vocab built from the dataset.
 
         Examples:
-            >>> from mindspore.dataset.text import SentencePieceModel
+            >>> import mindspore.dataset as ds
+            >>> from mindspore.dataset.text import SentencePieceVocab, SentencePieceModel
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
-            >>> vocab = text.SentencePieceVocab.from_dataset(dataset, ["text"], 5000, 0.9995,
-            ...                                              SentencePieceModel.UNIGRAM, {})
+            >>> vocab = SentencePieceVocab.from_dataset(dataset, ["text"], 5000, 0.9995,
+            ...                                         SentencePieceModel.UNIGRAM, {})
         """
 
         sentence_piece_vocab = cls()
@@ -262,9 +281,9 @@ class SentencePieceVocab:
             SentencePieceVocab, vocab built from the file.
 
         Examples:
-            >>> from mindspore.dataset.text import SentencePieceModel
-            >>> vocab = text.SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
-            ...                                           SentencePieceModel.UNIGRAM, {})
+            >>> from mindspore.dataset.text import SentencePieceVocab, SentencePieceModel
+            >>> vocab = SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
+            ...                                      SentencePieceModel.UNIGRAM, {})
         """
 
         sentence_piece_vocab = cls()
@@ -284,10 +303,10 @@ class SentencePieceVocab:
             filename (str): The name of the file.
 
         Examples:
-            >>> from mindspore.dataset.text import SentencePieceModel
-            >>> vocab = text.SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
-            ...                                           SentencePieceModel.UNIGRAM, {})
-            >>> text.SentencePieceVocab.save_model(vocab, "./", "m.model")
+            >>> from mindspore.dataset.text import SentencePieceVocab, SentencePieceModel
+            >>> vocab = SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
+            ...                                      SentencePieceModel.UNIGRAM, {})
+            >>> SentencePieceVocab.save_model(vocab, "./", "m.model")
         """
 
         cde.SentencePieceVocab.save_model(vocab.c_sentence_piece_vocab, path, filename)
@@ -337,12 +356,18 @@ class Vectors(cde.Vectors):
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing max_vectors can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
 
         Returns:
             Vectors, Vectors build from a file.
 
+        Raises:
+            RuntimeError: If `file_path` contains invalid data.
+            ValueError: If `max_vectors` is invalid.
+            TypeError: If `max_vectors` is not type of integer.
+
         Examples:
+            >>> from mindspore.dataset import text
             >>> vector = text.Vectors.from_file("/path/to/vectors/file", max_vectors=None)
         """
 
@@ -393,6 +418,8 @@ class Vocab:
             Vocab, Vocab object built from the dataset.
 
         Examples:
+            >>> import mindspore.dataset as ds
+            >>> from mindspore.dataset import text
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> vocab = text.Vocab.from_dataset(dataset, "text", freq_range=None, top_k=None,
             ...                                 special_tokens=["<pad>", "<unk>"],
@@ -421,6 +448,7 @@ class Vocab:
             Vocab, Vocab object built from the list.
 
         Examples:
+            >>> from mindspore.dataset import text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
         """
 
@@ -451,6 +479,7 @@ class Vocab:
             Vocab, Vocab object built from the file.
 
         Examples:
+            >>> from mindspore.dataset import text
             >>> # Assume vocab file contains the following content:
             >>> # --- begin of file ---
             >>> # apple,apple2
@@ -488,6 +517,7 @@ class Vocab:
             Vocab, Vocab object built from the dict.
 
         Examples:
+            >>> from mindspore.dataset import text
             >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
         """
 
@@ -503,6 +533,7 @@ class Vocab:
             A vocabulary consisting of word and id pairs.
 
         Examples:
+            >>> from mindspore.dataset import text
             >>> vocab = text.Vocab.from_list(["word_1", "word_2", "word_3", "word_4"])
             >>> vocabory_dict = vocab.vocab()
         """
@@ -522,6 +553,7 @@ class Vocab:
             The token id or list of token ids.
 
         Examples:
+            >>> from mindspore.dataset import text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
             >>> ids = vocab.tokens_to_ids(["w1", "w3"])
         """
@@ -545,6 +577,7 @@ class Vocab:
             The decoded token(s).
 
         Examples:
+            >>> from mindspore.dataset import text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
             >>> token = vocab.ids_to_tokens(0)
         """
@@ -569,6 +602,7 @@ def to_bytes(array, encoding='utf8'):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
         >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.str_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
@@ -595,6 +629,7 @@ def to_str(array, encoding='utf8'):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
         >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.bytes_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])

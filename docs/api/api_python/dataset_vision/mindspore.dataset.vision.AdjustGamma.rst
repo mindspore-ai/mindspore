@@ -12,7 +12,7 @@ mindspore.dataset.vision.AdjustGamma
 
     参数：
         - **gamma** (float) - 输出图像像素值与输入图像像素值呈指数相关。 `gamma` 大于1使阴影更暗，而 `gamma` 小于1使黑暗区域更亮。
-        - **gain** (float, 可选) - 常数乘数，默认值：1。
+        - **gain** (float, 可选) - 常数乘数，默认值：1.0。
 
     异常：
         - **TypeError** - 如果 `gain` 不是浮点类型。

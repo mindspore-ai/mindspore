@@ -3,7 +3,7 @@ mindspore.dataset.audio.WindowType
 
 .. py:class:: mindspore.dataset.audio.WindowType
 
-    窗口函数类型，
+    窗口函数类型。
 
     可选的枚举值包括：WindowType.BARTTT、WindowType.BACKMAN、WindowType.HAMMING、WindowType.HANN、WindowType.KAISER。
 

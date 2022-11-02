@@ -9,7 +9,7 @@ mindspore.dataset.vision.CutMixBatch
     参数：
         - **image_batch_format** (ImageBatchFormat) - 图像批处理输出格式。可以是 [ImageBatchFormat.NHWC、ImageBatchFormat.NCHW] 中的任何一个。
         - **alpha** (float, 可选) - β分布的超参数，必须大于0，默认值：1.0。
-        - **prob** (float, 可选) - 对每个图像应用剪切混合处理的概率，范围：[0.0, 1.0]，默认值：1.0。
+        - **prob** (float, 可选) - 对每个图像应用剪切混合处理的概率，取值范围：[0.0, 1.0]，默认值：1.0。
 
     异常：
         - **TypeError** - 如果 `image_batch_format` 不是 :class:`mindspore.dataset.vision.ImageBatchFormat` 的类型。

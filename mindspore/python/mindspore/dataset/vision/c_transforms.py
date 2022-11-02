@@ -151,7 +151,7 @@ class AdjustGamma(ImageTensorOperation):
             The output image pixel value is exponentially related to the input image pixel value.
             gamma larger than 1 make the shadows darker,
             while gamma smaller than 1 make dark regions lighter.
-        gain (float, optional): The constant multiplier (default=1).
+        gain (float, optional): The constant multiplier (default=1.0).
 
     Raises:
         TypeError: If `gain` is not of type float.
@@ -205,7 +205,7 @@ class AutoAugment(ImageTensorOperation):
 
             - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
 
-            - Inter.AREA: means the interpolation method is area interpolation.
+            - Inter.AREA: means the interpolation method is pixel area interpolation.
 
         fill_value (Union[int, tuple], optional): Pixel fill value for the area outside the transformed image.
             It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
@@ -1943,7 +1943,7 @@ class RandomRotation(ImageTensorOperation):
 
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
-            - Inter.AREA: means the interpolation method is area interpolation.
+            - Inter.AREA: means the interpolation method is pixel area interpolation.
 
         expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
             image to make it large enough to hold the entire rotated image.

@@ -504,6 +504,9 @@ class ComputeDeltas(AudioTensorOperation):
     .. math::
         d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
 
+    where :math:`d_{t}` is the deltas at time :math:`t` , :math:`c_{t}` is the spectrogram coefficients
+    at time :math:`t` , :math:`N` is :math:`(\text{win_length}-1)//2` .
+
     Args:
         win_length (int, optional): The window length used for computing delta, must be no less than 3 (default=5).
         pad_mode (BorderType, optional): Mode parameter passed to padding (default=BorderType.EDGE).It can be any of
@@ -1262,9 +1265,14 @@ class MaskAlongAxis(AudioTensorOperation):
 
     Args:
         mask_start (int): Starting position of the mask, which must be non negative.
-        mask_width (int): The width of the mask, which must be non negative.
+        mask_width (int): The width of the mask, which must be larger than 0.
         mask_value (float): Value to assign to the masked columns.
         axis (int): Axis to apply masking on (1 for frequency and 2 for time).
+
+    Raises:
+        ValueError: If `mask_start` is invalid (< 0).
+        ValueError: If `mask_width` is invalid (< 1).
+        ValueError: If `axis` is not type of integer or not within [1, 2].
 
     Examples:
         >>> import numpy as np
@@ -1298,6 +1306,10 @@ class MaskAlongAxisIID(AudioTensorOperation):
             [0, mask_param], must be non negative.
         mask_value (float): Value to assign to the masked columns.
         axis (int): Axis to apply masking on (1 for frequency and 2 for time).
+
+    Raises:
+        ValueError: If `mask_param` is invalid (< 0) or not type of integer.
+        ValueError: If `axis` is not type of integer or not within [1, 2].
 
     Examples:
         >>> import numpy as np

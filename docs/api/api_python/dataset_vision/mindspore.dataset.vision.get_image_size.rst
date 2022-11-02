@@ -10,3 +10,7 @@
 
     返回：
         list[int, int]，图像大小。
+
+    异常：
+        - **RuntimeError** - `image` 参数的维度小于2。
+        - **TypeError** - `image` 参数的类型既不是 np.ndarray，也不是 PIL Image。
