@@ -25,6 +25,7 @@ namespace lite {
 namespace {
 constexpr auto kCommonQuantParam = "common_quant_param";
 constexpr auto kFullQuantParam = "full_quant_param";
+constexpr auto kWeightQuantParam = "weight_quant_param";
 constexpr auto kMixedBitWeightQuantParam = "mixed_bit_weight_quant_param";
 constexpr auto kDataPreprocessParam = "data_preprocess_param";
 constexpr auto kRegistry = "registry";
@@ -93,7 +94,12 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
     MS_LOG(ERROR) << "ParseMicroParamString failed.";
     return ret;
   }
-
+  ret = ParseWeightQuantString(*maps);
+  (void)maps->erase(kWeightQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseWeightQuantString failed.";
+    return ret;
+  }
   for (const auto &config_info : *maps) {
     ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(config_info.first, config_info.second);
   }
@@ -223,6 +229,15 @@ int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map
                                                    {"support_parallel", micro_param_string_.support_parallel},
                                                    {"enable_micro", micro_param_string_.enable_micro}};
     return SetMapData(map, parse_map, kMicroParam);
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseWeightQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kWeightQuantParam) != maps.end()) {
+    const auto &map = maps.at(kWeightQuantParam);
+    std::map<std::string, std::string &> parse_map{{"dequant_strategy", weight_quant_string_.dequant_strategy}};
+    return SetMapData(map, parse_map, kWeightQuantParam);
   }
   return RET_OK;
 }

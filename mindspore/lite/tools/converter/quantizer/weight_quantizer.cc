@@ -238,7 +238,8 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
     auto tensor_quant_params = quant_param_holder->get_input_quant_params();
     MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
     auto quant_params = tensor_quant_params.at(idx - 1);
-    mindspore::TensorCompressionType compress_type = inference_dequant_ ? mindspore::kFSEInfer : mindspore::kFSE;
+    mindspore::TensorCompressionType compress_type =
+      param_->weightQuantParam.dequant_strategy == ON_THE_FLY ? mindspore::kFSEInfer : mindspore::kFSE;
     status = fse_encoder.Compress(parameter, quant_params, compress_type);
     if (status == RET_OK) {
       quant_param_holder->ClearQuantParams();
@@ -385,7 +386,7 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "Weight Quant failed.";
     return ret;
   }
-  if (inference_dequant_) {
+  if (param_->weightQuantParam.dequant_strategy == ON_THE_FLY) {
     return InsertQuantDtypeNode(func_graph);
   }
   return MarkGraphWeightQuantType(func_graph);

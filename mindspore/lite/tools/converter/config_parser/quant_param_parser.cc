@@ -250,5 +250,18 @@ int QuantParamParser::ParseActivationQuantizedMethod(const std::string &activati
     return RET_INPUT_PARAM_INVALID;
   }
 }
+
+int QuantParamParser::ParseWeightQuant(const WeightQuantString &weight_quant_string,
+                                       quant::WeightQuantParam *weight_quant) {
+  if (!weight_quant_string.dequant_strategy.empty()) {
+    if (weight_quant_string.dequant_strategy == "ON_THE_FLY") {
+      weight_quant->dequant_strategy = quant::ON_THE_FLY;
+    } else {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: dequant_strategy must be ON_THE_FLY.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

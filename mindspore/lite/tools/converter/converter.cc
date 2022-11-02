@@ -384,6 +384,11 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) 
     MS_LOG(ERROR) << "Parse full quant param failed.";
     return ret;
   }
+  ret = lite::QuantParamParser::ParseWeightQuant(config_parser.GetWeightQuantString(), &param->weightQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse full quant param failed.";
+    return ret;
+  }
   ret = lite::QuantParamParser::ParseMixedBitWeightQuant(config_parser.GetMixedBitWeightQuantString(),
                                                          &param->mixedBitWeightQuantParam);
   if (ret != RET_OK) {
