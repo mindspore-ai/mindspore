@@ -605,8 +605,8 @@ def obfuscate_model(obf_config, **kwargs):
             raise TypeError("The item in 'model_inputs' must be Tensor, but got {}.".format(type(item)))
     obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(obf_config)
     if customized_funcs and obf_password > 0:
-        logger.warning("Although customized_func and obf_password are set, the 'obf_password' mode would be"
-                       "applied, remember to set obf_password when loading obfuscated model.")
+        logger.warning("Although 'customized_func' and 'obf_password' are set, the 'obf_password' mode would be"
+                       " applied, remember to set 'obf_password' when loading obfuscated model.")
 
     if obf_password == 0:  # apply customized_func mode
         clean_funcs()
@@ -1366,8 +1366,8 @@ def _set_obfuscate_config(**kwargs):
                 "but got {}.".format(enc_mode))
     obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(kwargs.get('obf_config'))
     if customized_funcs and obf_password > 0:
-        logger.warning("Although customized_func and obf_password are set, the 'obf_password' mode would be"
-                       "applied, remember to set obf_password when loading obfuscated model.")
+        logger.warning("Although 'customized_func' and 'obf_password' are set, the 'obf_password' mode would be"
+                       " applied, remember to set 'obf_password' when loading obfuscated model.")
 
     if obf_password == 0:  # apply customized_func mode
         clean_funcs()
