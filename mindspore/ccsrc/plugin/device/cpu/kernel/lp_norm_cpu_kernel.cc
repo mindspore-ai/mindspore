@@ -171,7 +171,7 @@ bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   };
   CTask combine_task = [this, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      output[i] = std::pow(output[i], 1 / p_);
+      output[i] = std::max(std::pow(output[i], 1 / p_), epsilon_);
     }
   };
   if (is_parallel) {

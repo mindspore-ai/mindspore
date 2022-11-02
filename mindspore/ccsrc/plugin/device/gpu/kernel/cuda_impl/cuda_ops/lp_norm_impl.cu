@@ -55,7 +55,7 @@ template <typename T>
 __global__ void NormCalKernel(T *output, size_t output_elements, float p, float eps) {
   for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (output_elements);
        index += blockDim.x * gridDim.x) {
-    output[index] = pow(output[index], 1 / p);
+    output[index] = max(pow(output[index], 1 / p), eps);
   }
 }
 
