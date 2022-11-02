@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_GATHER_H_
-#define MINDSPORE_CORE_OPS_GATHER_H_
+#ifndef MINDSPORE_CORE_OPS_SPARSE_GATHER_V2_H_
+#define MINDSPORE_CORE_OPS_SPARSE_GATHER_V2_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -25,21 +25,18 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGather = "Gather";
+constexpr auto kNameSparseGatherV2 = "SparseGatherV2";
 /// \brief Returns a slice of the input tensor based on the specified indices and axis.
-/// Refer to Python API @ref mindspore.ops.Gather for more details.
-class MIND_API Gather : public BaseOperator {
+/// Refer to Python API @ref mindspore.ops.SparseGatherV2 for more details.
+class MIND_API SparseGatherV2 : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(Gather);
+  MIND_API_BASE_MEMBER(SparseGatherV2);
   /// \brief Constructor.
-  Gather() : BaseOperator(kNameGather) { InitIOName({"param", "indices", "axis"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Gather for the inputs.
+  SparseGatherV2() : BaseOperator(kNameSparseGatherV2) { InitIOName({"param", "indices", "axis"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SparseGatherV2 for the inputs.
   void Init() const {}
 };
-
-abstract::AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_GATHER_H_
+#endif  // MINDSPORE_CORE_OPS_SPARSE_GATHER_V2_H_

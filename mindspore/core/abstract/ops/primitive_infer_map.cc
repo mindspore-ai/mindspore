@@ -90,7 +90,6 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kGather = prim::kPrimGather->name();
   static const auto &kGatherV2 = prim::kPrimGatherV2->name();
   static const auto &kGatherD = prim::kPrimGatherD->name();
-  static const auto &kSparseGatherV2 = prim::kPrimSparseGatherV2->name();
   static const auto &kRangeV2 = prim::kPrimRangeV2->name();
   static const auto &kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
   static const auto &kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
@@ -158,7 +157,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kGather, ShapeSet{2}},
                                          {kGatherV2, ShapeSet{2}},
                                          {kGatherD, ShapeSet{1}},
-                                         {kSparseGatherV2, ShapeSet{2}},
                                          {kRangeV2, ShapeSet{0, 1, 2}},
                                          {kResizeBicubic, ShapeSet{1}},
                                          {kConv2DBackpropFilter, ShapeSet{2}},
@@ -286,7 +284,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUniqueWithPad, R{InferImplUniqueWithPad, nullptr, true}},
     {prim::kPrimUniqueGrad, R{InferImplUniqueGrad, nullptr, true}},
     {prim::kPrimEmbeddingLookup, R{InferImplEmbeddingLookup, nullptr, true}},
-    {prim::kPrimSparseGatherV2, R{InferImplGatherV2, nullptr, true}},
     {prim::kPrimUnsortedSegmentMax, R{InferImplUnsortedSegmentMax, nullptr, true}},
     {prim::kPrimUnsortedSegmentMin, R{InferImplUnsortedSegmentMin, nullptr, true}},
     {prim::kPrimScatterAdd, R{InferImplScatterAdd, nullptr, true}},

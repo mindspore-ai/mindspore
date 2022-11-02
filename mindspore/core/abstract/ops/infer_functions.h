@@ -164,8 +164,6 @@ AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitiveP
                                      const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list);
-AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                     const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
