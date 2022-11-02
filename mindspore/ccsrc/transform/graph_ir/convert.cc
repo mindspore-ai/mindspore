@@ -1666,6 +1666,11 @@ bool DfGraphConvertor::IsDataInput(const AnfNodePtr &node, const AnfNodePtr &inp
     return false;
   }
 
+  // Ge Operator of HcomReceive has no input.
+  if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
+    return false;
+  }
+
   return true;
 }
 

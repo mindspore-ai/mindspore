@@ -291,7 +291,7 @@ class OpAdapter : public BaseOpAdapter {
 
   OutHandler getOutput(const OperatorPtr &op, int index) override { return impl_->getOutput(op, index); }
 
-  std::vector<OutHandler> getOutputs(const OperatorPtr &op) { return impl_->getOutputs(op); }
+  std::vector<OutHandler> getOutputs(const OperatorPtr &op) override { return impl_->getOutputs(op); }
 
   OutHandler getCustomOutput(const OperatorPtr &op, int index) { return impl_->getCustomOutput(op, index); }
 
