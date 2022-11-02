@@ -66,6 +66,8 @@ struct JpegErrorManagerCustom {
 };
 
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input);
+
 /// \brief Returns Rescaled image
 /// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
 /// \param rescale: rescale parameter

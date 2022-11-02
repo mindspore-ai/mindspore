@@ -15,7 +15,7 @@
  */
 
 #include "minddata/dataset/include/dataset/vision.h"
-#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
 #include "minddata/dataset/include/dataset/vision_ascend.h"
 #endif
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
@@ -282,7 +282,7 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse() { return std::make_shared<C
 
 std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
   if (env == MapTargetDevice::kAscend310) {
-#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
     std::vector<uint32_t> usize_;
     usize_.reserve(data_->size_.size());
     std::transform(data_->size_.begin(), data_->size_.end(), std::back_inserter(usize_),
@@ -371,7 +371,7 @@ std::shared_ptr<TensorOperation> Decode::Parse() { return std::make_shared<Decod
 
 std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
   if (env == MapTargetDevice::kAscend310) {
-#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
     return std::make_shared<DvppDecodeJpegOperation>();
 #endif
   } else if (env == MapTargetDevice::kCpu) {
@@ -380,7 +380,7 @@ std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
   MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
   return nullptr;
 }
-#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
 // DvppDecodeVideo Transform Operation.
 struct DvppDecodeVideo::Data {
   Data(const std::vector<uint32_t> &size, VdecStreamFormat type, VdecOutputFormat out_format, const std::string &output)
@@ -597,7 +597,7 @@ std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
   }
 #endif
   if (env == MapTargetDevice::kAscend310) {
-#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
     return std::make_shared<DvppNormalizeOperation>(data_->mean_, data_->std_);
 #endif
   } else if (env == MapTargetDevice::kCpu) {
@@ -1187,7 +1187,7 @@ std::shared_ptr<TensorOperation> Resize::Parse() {
 
 std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
   if (env == MapTargetDevice::kAscend310) {
-#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
     std::vector<uint32_t> usize_;
     usize_.reserve(data_->size_.size());
     std::transform(data_->size_.begin(), data_->size_.end(), std::back_inserter(usize_),

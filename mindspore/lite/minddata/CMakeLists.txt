@@ -55,6 +55,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 
 set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS} -s")
 
+if(MSLITE_ENABLE_RUNTIME_GLOG AND MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    add_definitions(-DUSE_GLOG)
+    string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+    string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+
+if(MSLITE_ENABLE_ACL)
+include_directories(${TOP_DIR}/graphengine/metadef/inc/external)
+include_directories(${TOP_DIR}/graphengine/metadef/inc)
+include_directories(${TOP_DIR}/graphengine/inc)
+include_directories(${TOP_DIR}/graphengine/inc/external)
+include_directories(${TOP_DIR}/graphengine/third_party/fwkacllib/inc)
+include_directories(${CCSRC_DIR})
+endif()
+
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/api MINDDATA_API_SRC_FILES)
 
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/callback MINDDATA_CALLBACK_SRC_FILES)
@@ -304,6 +319,16 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
                 ${MINDDATA_DIR}/kernels/ir/vision/rescale_ir.cc
                 ${MINDDATA_DIR}/core/cv_tensor.cc
                 )
+
+            if(MSLITE_ENABLE_ACL)
+                add_definitions(-DENABLE_DVPP)
+                set(MINDDATA_FULL_SRC
+                    ${MINDDATA_FULL_SRC}
+                    ${MINDDATA_DIR}/core/device_tensor.cc
+                    ${MINDDATA_DIR}/kernels/ir/vision/ascend_vision_ir.cc)
+                add_subdirectory(${MINDDATA_DIR}/kernels/image/dvpp kernels-dvpp-image)
+            endif()
+
         endif()
 
     add_library(minddata-lite-obj OBJECT
@@ -313,9 +338,19 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
             ${MINDDATA_FULL_SRC}
             )
     add_dependencies(minddata-lite-obj fbs_src)
+    set(minddata_lite_submodules
+        $<TARGET_OBJECTS:minddata-lite-obj>
+    )
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE AND MSLITE_ENABLE_ACL)
+        add_dependencies(minddata-lite-obj kernels-dvpp-image)
+        set(minddata_lite_submodules
+            ${minddata_lite_submodules}
+            $<TARGET_OBJECTS:kernels-dvpp-image>
+        )
+    endif()
 
-    add_library(minddata-lite SHARED $<TARGET_OBJECTS:minddata-lite-obj>)
-    add_library(minddata-lite_static STATIC $<TARGET_OBJECTS:minddata-lite-obj>)
+    add_library(minddata-lite SHARED ${minddata_lite_submodules})
+    add_library(minddata-lite_static STATIC ${minddata_lite_submodules})
     set_target_properties(minddata-lite_static PROPERTIES OUTPUT_NAME "minddata-lite")
 
     find_package(Threads REQUIRED)

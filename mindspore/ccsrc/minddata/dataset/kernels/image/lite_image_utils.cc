@@ -37,6 +37,12 @@
 namespace mindspore {
 namespace dataset {
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input) {
+  const unsigned char kPngMagic[] = "\x89\x50\x4E\x47";
+  constexpr dsize_t kPngMagicLen = 4;
+  return input->SizeInBytes() > kPngMagicLen && memcmp(input->GetBuffer(), kPngMagic, kPngMagicLen) == 0;
+}
+
 Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rescale, float shift) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!input_cv->mat().data) {
