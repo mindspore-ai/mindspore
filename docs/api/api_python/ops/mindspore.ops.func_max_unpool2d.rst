@@ -38,7 +38,7 @@ mindspore.ops.max_unpool2d
         - **TypeError** - `kernel_size` ， `stride` 或 `padding` 既不是整数也不是tuple。
         - **ValueError** - `stride` ， `padding` 或 `kernel_size` 的值不是非负的。
         - **ValueError** - `x` 和 `indices` 的shape不一致。
-        - **TypeError** - `kernel_size` ， `stride` 或 `padding` 为tuple时长度不等于2。
+        - **ValueError** - `kernel_size` ， `stride` 或 `padding` 为tuple时长度不等于2。
         - **ValueError** - `x` 的长度不为3或4。
         - **ValueError** - `output_size` 的类型不是tuple。
         - **ValueError** - `output_size` 的长度不为0、3或4。

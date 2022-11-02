@@ -128,12 +128,7 @@ class _ConstantPadNd(Cell):
     Using a given value to pads the last n dimensions of input tensor.
 
     Args:
-        padding(tuple, list): The padding size to pad the last n dimensions of input tensor. The padding
-            sequence is starting from the last dimension and moving forward. The length of padding must be
-            a multiple of 2. len(padding)/2 dimensions of input will be padded.
-        value(union[int, float]): Padding value.
-
-         padding (union[list, tuple]): The padding size to pad the last n dimensions of input tensor.
+        padding (union[list, tuple]): The padding size to pad the last n dimensions of input tensor.
             The padding sequence is starting from the last dimension and moving forward.
             The length of padding must be a multiple of 2. If padding is :math:`(padding_0, padding_1, padding_2,
             padding_3, ..., padding_2m, padding_{2m+1}, ...)`. The input is `x`,

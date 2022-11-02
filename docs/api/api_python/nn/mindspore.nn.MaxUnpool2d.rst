@@ -1,7 +1,7 @@
 mindspore.nn.MaxUnpool2d
 ========================
 
-.. py:class:: mindspore.nn.MaxUnpool2d(kernel_size, stride=None, padding=0, output_size=())
+.. py:class:: mindspore.nn.MaxUnpool2d(kernel_size, stride=None, padding=0)
 
     `Maxpool2d` 的部分逆过程。 `Maxpool2d` 不是完全可逆的，因为非最大值丢失。
     `MaxUnpool2d` 以 `MaxPool2d` 的输出为输入，包括最大值的索引。在计算 `maxpool2d` 部分逆的过程中，非最大值设置为零。
@@ -22,15 +22,15 @@ mindspore.nn.MaxUnpool2d
           默认值：None。
         - **padding** (Union[int, tuple[int]]) - 填充值。默认值：0。若为int类型，则长宽方向的填充大小相同，均为 `padding` 。
           若为tuple类型，则tuple中的两个值分别代表长宽方向填充的大小。
-        - **output_size** (tuple[int]) - 输出shape，可选参数。默认值：()。
-          如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
-          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H, W)` 或 :math:`(C, H, W)` ，取值范围需满足：
-          :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`。
 
     输入：
         - **x** (Tensor) - 待求逆的Tensor。shape为 :math:`(N, C, H_{in}, W_{in})` 或 :math:`(C, H_{in}, W_{in})` 。
         - **indices** (Tensor) - 最大值的索引。shape必须与输入 `x` 相同。取值范围需满足 :math:`[0, H_{in} \times W_{in} - 1]` 。
           数据类型必须是int32或int64。
+        - **output_size** (tuple[int]， 可选) - 输出shape。默认值：None。
+          如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
+          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H, W)` 或 :math:`(C, H, W)` ，取值范围需满足：
+          :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`。
 
     输出：
         shape为 :math:`(N, C, H_{out}, W_{out})` 或 :math:`(C, H_{out}, W_{out})` 的Tensor，数据类型与输入 `x` 相同。
@@ -40,7 +40,7 @@ mindspore.nn.MaxUnpool2d
         - **TypeError** - `kernel_size` ， `stride` 或 `padding` 既不是整数也不是tuple。
         - **ValueError** - `stride` ， `padding` 或 `kernel_size` 的值不是非负的。
         - **ValueError** - `x` 和 `indices` 的shape不一致。
-        - **TypeError** - `kernel_size` ， `stride` 或 `padding` 为tuple时长度不等于2。
+        - **ValueError** - `kernel_size` ， `stride` 或 `padding` 为tuple时长度不等于2。
         - **ValueError** - `x` 的长度不为3或4。
         - **ValueError** - `output_size` 的类型不是tuple。
         - **ValueError** - `output_size` 的长度不为0、3或4。
