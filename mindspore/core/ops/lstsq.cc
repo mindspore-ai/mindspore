@@ -37,6 +37,12 @@ abstract::ShapePtr LstsqInferShape(const PrimitivePtr &primitive, const std::vec
   auto x_shape = x_shape_map[kShape];
   auto a_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto a_shape = a_shape_map[kShape];
+
+  if (IsDynamicRank(x_shape) || IsDynamicRank(a_shape)) {
+    return std::make_shared<abstract::Shape>(
+      std::vector<int64_t>{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny});
+  }
+
   if (x_shape.size() != x_dim_num) {
     MS_EXCEPTION(ValueError) << "For 'Lstsq', the dimension of x must be equal to 2, but got x_dim: " << x_shape.size()
                              << ".";
@@ -45,7 +51,7 @@ abstract::ShapePtr LstsqInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(ValueError) << "For 'Lstsq', the dimension of 'a' must be equal to 2 or 1, but got a_dim: "
                              << a_shape.size() << ".";
   }
-  if (x_shape[0] != a_shape[0]) {
+  if (!IsDynamicShape(x_shape) && !IsDynamicShape(a_shape) && x_shape[0] != a_shape[0]) {
     MS_EXCEPTION(ValueError)
       << "For 'Lstsq', the length of x_dim[0] must be equal to the length of a_dims[0]. But got x_dim[0]: "
       << x_shape[0] << ",  a_dims[0]: " << a_shape[0] << ".";

@@ -45,10 +45,13 @@ abstract::TupleShapePtr BroadcastGradGradInferShape(const PrimitivePtr &primitiv
   auto dx1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dx1)[kShape];
   auto dx2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dx2)[kShape];
   auto broadcast_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(broadcast)[kShape];
-  if (ObscureShapeEqual(x1_shape, dx1_shape) && ObscureShapeEqual(x2_shape, dx2_shape)) {
+  auto is_dy_rank =
+    IsDynamicRank(x1_shape) || IsDynamicRank(dx1_shape) || IsDynamicRank(x2_shape) || IsDynamicRank(dx2_shape);
+  if ((ObscureShapeEqual(x1_shape, dx1_shape) && ObscureShapeEqual(x2_shape, dx2_shape)) || is_dy_rank) {
     auto obscure_broadcast = std::make_shared<abstract::Shape>(broadcast_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x1, x2, obscure_broadcast});
   }
+
   MS_EXCEPTION(ValueError)
     << "For '" << prim_name
     << "', Its input 'grad_x1', 'grad_x2' should have same shape and equal to x1 and x2 shape, but got 'x1' shape:"

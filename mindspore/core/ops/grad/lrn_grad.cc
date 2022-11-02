@@ -39,9 +39,8 @@ abstract::ShapePtr LrnGradInferShape(const PrimitivePtr &primitive, const std::v
   auto grad_out_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_out_shape_ptr);
   auto grad_out_shape = grad_out_shape_map[kShape];
 
-  // ToSupport Dynamic rank
-  if (IsDynamicRank(input_shape) || IsDynamicRank(grad_out_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  if (IsDynamic(input_shape) || IsDynamic(grad_out_shape)) {
+    return std::make_shared<abstract::Shape>(input_shape);
   }
 
   // Check LrnGrad input shape equal to 4D.

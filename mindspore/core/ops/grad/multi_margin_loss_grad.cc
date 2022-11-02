@@ -48,7 +48,7 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  if (IsDynamicRank(x_shape) || IsDynamicRank(target_shape)) {
+  if (IsDynamic(x_shape) || IsDynamic(target_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
 
@@ -71,11 +71,15 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
     if (element->type_id() != kMetaTypeNone) {
       auto weight_shape =
         CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+      if (IsDynamic(weight_shape)) {
+        return std::make_shared<abstract::Shape>(x_shape);
+      }
       if (weight_shape.size() != kDim1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << " the rank of weight should be 1,"
                                  << " but get " << weight_shape.size();
       }
-      if (x_shape[kInputIndex1] != weight_shape[kInputIndex0]) {
+      if (x_shape[kInputIndex1] != weight_shape[kInputIndex0] && !IsDynamicShape(x_shape) &&
+          !IsDynamicShape(weight_shape)) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << " x_shape[1] and weight_shape[0] should be the same,"
                                  << " while x_shape[1] is " << x_shape[kInputIndex1] << ", weight_shape[0] is "
                                  << weight_shape[kInputIndex0];

@@ -53,25 +53,29 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
                              << " the dimension of LU_data must be greater than or equal to 2, but got: "
                              << LU_data_shape.size() << ".";
   }
-  if (LU_pivots_shape.size() < kLuPivotsRank) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',"
-                             << " the dimension of LU_pivots must be greater than or equal to 1, but got: "
-                             << LU_pivots_shape.size() << ".";
-  }
-  if (LU_pivots_shape[LU_pivots_shape.size() - 1] !=
-      std::min(LU_data_shape[LU_data_shape.size() - kFirstDim], LU_data_shape[LU_data_shape.size() - kSecondDim])) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << primitive->name() << "', "
-      << "the last dimension of LU_pivots must be the same as the minimum value of the last two dimensions of LU_data,"
-      << " but got lu_pivots': " << LU_pivots_shape[LU_pivots_shape.size() - 1]
-      << ", the minimum value of the last two dimensions of LU_data: "
-      << std::min(LU_data_shape[LU_data_shape.size() - kFirstDim], LU_data_shape[LU_data_shape.size() - kSecondDim])
-      << ".";
-  }
-  for (size_t i = 0; i < LU_pivots_shape.size() - 1; i++) {
-    if (LU_data_shape[i] != LU_pivots_shape[i]) {
+
+  if (!IsDynamicShape(LU_data_shape) && !IsDynamic(LU_pivots_shape)) {
+    if (LU_pivots_shape.size() < kLuPivotsRank) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',"
-                               << " the batch dimensions of LU_data's does not match LU_pivots's batch dimensions.";
+                               << " the dimension of LU_pivots must be greater than or equal to 1, but got: "
+                               << LU_pivots_shape.size() << ".";
+    }
+    if (LU_pivots_shape[LU_pivots_shape.size() - 1] !=
+        std::min(LU_data_shape[LU_data_shape.size() - kFirstDim], LU_data_shape[LU_data_shape.size() - kSecondDim])) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', "
+                               << "the last dimension of LU_pivots must be the same as the minimum value of the last "
+                                  "two dimensions of LU_data,"
+                               << " but got lu_pivots': " << LU_pivots_shape[LU_pivots_shape.size() - 1]
+                               << ", the minimum value of the last two dimensions of LU_data: "
+                               << std::min(LU_data_shape[LU_data_shape.size() - kFirstDim],
+                                           LU_data_shape[LU_data_shape.size() - kSecondDim])
+                               << ".";
+    }
+    for (size_t i = 0; i < LU_pivots_shape.size() - 1; i++) {
+      if (LU_data_shape[i] != LU_pivots_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',"
+                                 << " the batch dimensions of LU_data's does not match LU_pivots's batch dimensions.";
+      }
     }
   }
 

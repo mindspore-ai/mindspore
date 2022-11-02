@@ -32,9 +32,10 @@ abstract::TupleShapePtr LuUnpackGradInferShape(const PrimitivePtr &primitive,
   auto L_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto U_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto LU_data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  if (IsDynamicRank(LU_data_shape)) {
-    auto output_shpe = std::make_shared<abstract::Shape>(LU_data_shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{output_shpe, output_shpe});
+
+  auto LU_data_ouput = std::make_shared<abstract::Shape>(LU_data_shape);
+  if (IsDynamic(LU_data_shape) || IsDynamic(L_shape) || IsDynamic(U_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{LU_data_ouput, LU_data_ouput});
   }
 
   auto L_data_dim1 = L_shape[L_shape.size() - 2];
@@ -60,7 +61,7 @@ abstract::TupleShapePtr LuUnpackGradInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', U_grad's data dim[-2] and LU_data's minimum dim should be same.";
   }
-  auto LU_data_ouput = std::make_shared<abstract::Shape>(LU_data_shape);
+
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{LU_data_ouput, LU_data_ouput});
 }
 
