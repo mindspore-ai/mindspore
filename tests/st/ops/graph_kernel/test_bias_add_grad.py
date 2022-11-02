@@ -20,6 +20,7 @@ from mindspore import Tensor
 from mindspore.common.api import jit
 from mindspore.ops.operations import _grad_ops as G
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -36,6 +37,7 @@ def get_output(dout, enable_graph_kernel=False):
     output = opt(Tensor(dout))
     return output
 
+
 def test_bias_add_grad(shape, dtype):
     np.random.seed(0)
     dout = np.random.normal(0, 1, shape).astype(dtype)
@@ -49,6 +51,7 @@ def test_bias_add_grad(shape, dtype):
         rtol = 1.e-3
         atol = 1.e-3
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
