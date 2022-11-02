@@ -112,23 +112,12 @@ struct Bitfield<uint64_t> {
 };
 
 template <typename T>
-struct MedianTypeConfig {};
+struct MedianTypeConfig {
+  typedef T RadixType;
 
-template <>
-struct MedianTypeConfig<float> {
-  typedef uint32_t RadixType;
+  static inline __device__ RadixType Convert(T v) { return v; }
 
-  // Converts a float to an integer representation with the same sorting
-  static inline __device__ RadixType Convert(float v) {
-    RadixType x = __float_as_int(v);
-    RadixType mask = (x & 0x80000000) ? 0xffffffff : 0x80000000;
-    return (v == v) ? (x ^ mask) : 0xffffffff;
-  }
-
-  static inline __device__ float Deconvert(RadixType v) {
-    RadixType mask = (v & 0x80000000) ? 0x80000000 : 0xffffffff;
-    return __int_as_float(v ^ mask);
-  }
+  static inline __device__ T Deconvert(RadixType v) { return v; }
 };
 
 template <>
@@ -147,6 +136,15 @@ struct MedianTypeConfig<int8_t> {
   static inline __device__ RadixType Convert(int8_t v) { return 128u + v; }
 
   static inline __device__ int8_t Deconvert(RadixType v) { return v - 128; }
+};
+
+template <>
+struct MedianTypeConfig<uint16_t> {
+  typedef uint32_t RadixType;
+
+  static inline __device__ RadixType Convert(uint16_t v) { return v; }
+
+  static inline __device__ uint16_t Deconvert(RadixType v) { return v; }
 };
 
 template <>
@@ -174,6 +172,40 @@ struct MedianTypeConfig<int64_t> {
   static inline __device__ RadixType Convert(int64_t v) { return 9223372036854775808ull + v; }
 
   static inline __device__ int64_t Deconvert(RadixType v) { return v - 9223372036854775808ull; }
+};
+
+template <>
+struct MedianTypeConfig<half> {
+  typedef uint32_t RadixType;
+
+  // Converts a half to an unsigned int with the same sorting
+  static inline __device__ RadixType Convert(half v) {
+    RadixType x = __half_as_ushort(v);
+    RadixType mask = (x & 0x00008000) ? 0x0000ffff : 0x00008000;
+    return (v == v) ? (x ^ mask) : 0xffff;
+  }
+
+  static inline __device__ half Deconvert(RadixType v) {
+    RadixType mask = (v & 0x00008000) ? 0x00008000 : 0x0000ffff;
+    return __ushort_as_half(v ^ mask);
+  }
+};
+
+template <>
+struct MedianTypeConfig<float> {
+  typedef uint32_t RadixType;
+
+  // Converts a float to an unsigned int with the same sorting
+  static inline __device__ RadixType Convert(float v) {
+    RadixType x = __float_as_int(v);
+    RadixType mask = (x & 0x80000000) ? 0xffffffff : 0x80000000;
+    return (v == v) ? (x ^ mask) : 0xffffffff;
+  }
+
+  static inline __device__ float Deconvert(RadixType v) {
+    RadixType mask = (v & 0x80000000) ? 0x80000000 : 0xffffffff;
+    return __int_as_float(v ^ mask);
+  }
 };
 
 template <>
@@ -381,15 +413,33 @@ void Median(const T *input_value, T *output, S *indices, const std::vector<int64
   return;
 }
 
+template CUDA_LIB_EXPORT void Median<uint8_t, int64_t>(const uint8_t *input_value, uint8_t *output, int64_t *indices,
+                                                       const std::vector<int64_t> input_shape, const int64_t axis,
+                                                       bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Median<int8_t, int64_t>(const int8_t *input_value, int8_t *output, int64_t *indices,
+                                                      const std::vector<int64_t> input_shape, const int64_t axis,
+                                                      bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Median<uint16_t, int64_t>(const uint16_t *input_value, uint16_t *output, int64_t *indices,
+                                                        const std::vector<int64_t> input_shape, const int64_t axis,
+                                                        bool global_median, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Median<int16_t, int64_t>(const int16_t *input_value, int16_t *output, int64_t *indices,
                                                        const std::vector<int64_t> input_shape, const int64_t axis,
                                                        bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Median<uint32_t, int64_t>(const uint32_t *input_value, uint32_t *output, int64_t *indices,
+                                                        const std::vector<int64_t> input_shape, const int64_t axis,
+                                                        bool global_median, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Median<int32_t, int64_t>(const int32_t *input_value, int32_t *output, int64_t *indices,
                                                        const std::vector<int64_t> input_shape, const int64_t axis,
                                                        bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Median<uint64_t, int64_t>(const uint64_t *input_value, uint64_t *output, int64_t *indices,
+                                                        const std::vector<int64_t> input_shape, const int64_t axis,
+                                                        bool global_median, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Median<int64_t, int64_t>(const int64_t *input_value, int64_t *output, int64_t *indices,
                                                        const std::vector<int64_t> input_shape, const int64_t axis,
                                                        bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Median<half, int64_t>(const half *input_value, half *output, int64_t *indices,
+                                                    const std::vector<int64_t> input_shape, const int64_t axis,
+                                                    bool global_median, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Median<float, int64_t>(const float *input_value, float *output, int64_t *indices,
                                                      const std::vector<int64_t> input_shape, const int64_t axis,
                                                      bool global_median, cudaStream_t cuda_stream);
