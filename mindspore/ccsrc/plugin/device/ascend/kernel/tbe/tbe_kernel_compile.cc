@@ -362,21 +362,16 @@ std::string TbeKernelCompileManager::DispatchCompileTask(const nlohmann::json &k
   return AscendKernelBuildClient::Instance().DispatchToServer(kernel_json.dump());
 }
 
-void TbeKernelCompileManager::SavePreBuildResult(int task_id, const std::string &pre_build_result) {
-  MS_LOG(DEBUG) << "Find pre-build task_id: " << task_id << ", result:" << pre_build_result;
-  auto task_iter = task_map_.find(task_id);
-  if (task_iter == task_map_.end()) {
-    MS_EXCEPTION(ArgumentError) << "Can not find pre-build task_id:" << task_id;
-  }
+void TbeKernelCompileManager::SavePreBuildResult(const std::string &json_name, const std::string &pre_build_result) {
   nlohmann::json result;
   if (!ParseJson(pre_build_result, &result)) {
-    MS_LOG(EXCEPTION) << "Parse pre-build result error. Origin result: " << pre_build_result;
+    MS_LOG(WARNING) << "Parse pre-build result error. Origin result: " << pre_build_result;
+    return;
   }
   auto op_pattern = GetJsonValue<std::string>(result, "op_pattern");
   auto fusion_type = kernel::GetFusionTypeByName(op_pattern);
   auto output_data_desc = GetJsonValue<nlohmann::json>(result, "op_params");
   auto core_type = GetJsonValue<nlohmann::json>(result, "core_type");
-  auto json_name = task_iter->second.json_name;
   // save pre build result
   struct PreBuildResult pre_res;
   pre_res.json_name = json_name;
@@ -384,14 +379,20 @@ void TbeKernelCompileManager::SavePreBuildResult(int task_id, const std::string 
   pre_res.core_type = core_type;
   pre_res.output_data_desc = output_data_desc;
   prebuild_res_map_[json_name] = pre_res;
-  // save pre_build result to json file
-  TbeUtils::SavePrebuildInfo(json_name, pre_build_result);
 }
 
 void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const std::string &compile_info,
                                                            const std::string &job_type) {
   if (job_type == kPreCompile) {
-    SavePreBuildResult(task_id, compile_info);
+    MS_LOG(DEBUG) << "Find pre-build task_id: " << task_id << ", result:" << compile_info;
+    auto task_iter = task_map_.find(task_id);
+    if (task_iter == task_map_.end()) {
+      MS_EXCEPTION(ArgumentError) << "Can not find pre-build task_id:" << task_id;
+    }
+    auto json_name = task_iter->second.json_name;
+    SavePreBuildResult(json_name, compile_info);
+    // save pre_build result to json file
+    TbeUtils::SaveJsonInfo(json_name, compile_info, tbe::saveType::TBE_PREBUILD);
     return;
   } else {
     auto task_info = task_map_[task_id];
@@ -882,21 +883,7 @@ void TbeKernelCompileManager::LoadPreBuildResult() {
       }
       std::string pre_build_result =
         std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-      nlohmann::json result;
-      if (!ParseJson(pre_build_result, &result)) {
-        MS_LOG(WARNING) << "Parse pre-build result error. Origin result: " << pre_build_result;
-        continue;
-      }
-      auto op_pattern = GetJsonValue<std::string>(result, "op_pattern");
-      auto fusion_type = kernel::GetFusionTypeByName(op_pattern);
-      auto output_data_desc = GetJsonValue<nlohmann::json>(result, "op_params");
-      auto core_type = GetJsonValue<nlohmann::json>(result, "core_type");
-      struct PreBuildResult pre_res;
-      pre_res.json_name = kernel_name;
-      pre_res.fusion_type = fusion_type;
-      pre_res.core_type = core_type;
-      pre_res.output_data_desc = output_data_desc;
-      prebuild_res_map_[kernel_name] = pre_res;
+      SavePreBuildResult(kernel_name, pre_build_result);
     }
     (void)closedir(dir);
     has_load = true;

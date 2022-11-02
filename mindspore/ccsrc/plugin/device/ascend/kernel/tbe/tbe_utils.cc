@@ -181,9 +181,17 @@ nlohmann::json TbeUtils::GenSocInfo() {
   return soc_info_json;
 }
 
-void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &info) {
+void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &info, saveType save_type) {
   auto config_path = TbeUtils::GetOpDebugPath();
-  std::string path = config_path + kCceKernelMeta + json_name + kInfoSuffix;
+  std::string path;
+  if (save_type == saveType::CCE_KERNEL) {
+    path = config_path + kCceKernelMeta + json_name + kInfoSuffix;
+  } else if (save_type == saveType::TBE_PREBUILD) {
+    path = config_path + kTbePrebuildRes + json_name + kJsonSuffix;
+  } else {
+    MS_LOG(WARNING) << "Save type not supported.";
+    return;
+  }
   auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
     MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_CACHE_PATH
@@ -194,7 +202,7 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
   ChangeFileMode(realpath.value(), S_IWUSR);
   std::ofstream file_write(realpath.value());
   if (!file_write.is_open()) {
-    MS_LOG(WARNING) << "Create info file failed(" << realpath.value() << ").";
+    MS_LOG(WARNING) << "Create json info file failed(" << realpath.value() << ").";
     return;
   }
   file_write << info << std::endl;
@@ -432,31 +440,6 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   file.close();
   file.clear();
   MS_LOG(DEBUG) << "Get compile info from json file success.";
-}
-
-void TbeUtils::SavePrebuildInfo(const std::string &json_name, const std::string &build_res) {
-  MS_LOG(DEBUG) << "Save tbe prebuild result to json file start, op: [" << json_name << "].";
-  auto config_path = TbeUtils::GetOpDebugPath();
-  std::string path = config_path + kTbePrebuildRes + json_name + kJsonSuffix;
-  auto realpath = Common::CreatePrefixPath(path);
-  if (!realpath.has_value()) {
-    MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_CACHE_PATH
-                    << "', the path is: " << realpath.value() << ". Please check (1) whether the path exists, "
-                    << "(2) whether the path has the access permission, (3) whether the path is too long. ";
-    return;
-  }
-
-  ChangeFileMode(realpath.value(), S_IWUSR);
-  std::ofstream file_write(realpath.value());
-  if (!file_write.is_open()) {
-    MS_LOG(WARNING) << "Create json file failed(" << realpath.value() << ").";
-    return;
-  }
-  file_write << build_res << std::endl;
-  file_write.close();
-  file_write.clear();
-  ChangeFileMode(realpath.value(), S_IRUSR);
-  MS_LOG(DEBUG) << "Save tbe prebuild result to json file success";
 }
 
 void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag) {

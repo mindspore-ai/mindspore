@@ -94,7 +94,7 @@ class TbeKernelCompileManager {
   // for 'dynamic', save compile_res
   void SaveSucceedTaskCompileResult(int task_id, const std::string &compile_info, const std::string &job_type);
   // save op-pattern and output_data_desc;
-  void SavePreBuildResult(int task_id, const std::string &pre_build_result);
+  void SavePreBuildResult(const std::string &json_name, const std::string &pre_build_result);
   // load tbe prebuild result from cached json file
   void LoadPreBuildResult();
   // query all build task
