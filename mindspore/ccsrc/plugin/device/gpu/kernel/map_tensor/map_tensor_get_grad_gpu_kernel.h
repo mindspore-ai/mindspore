@@ -55,14 +55,8 @@ class MapTensorGetGradGpuKernelMod : public MapTensorGpuKernelMod {
   void SyncData() override;
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
-  void ResetResource() noexcept {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
  private:
-  template <typename KeyType, typename ValueType>
+  template <typename KeyType>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
 

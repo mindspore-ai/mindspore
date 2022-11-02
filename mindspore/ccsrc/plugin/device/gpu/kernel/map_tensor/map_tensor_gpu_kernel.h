@@ -41,6 +41,12 @@ class MapTensorGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
+  void ResetResource() noexcept {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
   std::map<size_t, UserData *> input_user_data_;
   std::map<size_t, UserData *> output_user_data_;
 };
