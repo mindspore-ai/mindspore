@@ -1678,7 +1678,7 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
   auto begin_value = GetValue<std::vector<int64_t>>(begin_value_node->value());
   auto begin_ignore_mask = GetOpAttribute<int64_t>(node, "begin_mask");
   for (size_t i = 0; i < begin_value.size(); ++i) {
-    if ((begin_ignore_mask & (1 << i)) != 0) {
+    if ((static_cast<uint64_t>(begin_ignore_mask) & (1UL << i)) != 0) {
       begin_value[i] = 0;
     }
   }
@@ -1693,7 +1693,7 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
   const auto &x_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
   auto end_ignore_mask = GetOpAttribute<int64_t>(node, "end_mask");
   for (size_t i = 0; i < end_value.size(); ++i) {
-    if ((static_cast<uint64_t>(end_ignore_mask) & (1 << i)) != 0) {
+    if ((static_cast<uint64_t>(end_ignore_mask) & (1UL << i)) != 0) {
       end_value[i] = x_shape[i];
     }
   }
@@ -1713,7 +1713,7 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
 
   auto shrink_axis_mask = GetOpAttribute<int64_t>(node, "shrink_axis_mask");
   for (size_t i = 0; i < end_value.size(); ++i) {
-    if ((shrink_axis_mask & (1 << i)) != 0) {
+    if ((static_cast<uint64_t>(shrink_axis_mask) & (1UL << i)) != 0) {
       strides_value[i] = end_value[i] > begin_value[i] ? 1 : -1;
       end_value[i] = begin_value[i] + strides_value[i];
     }
@@ -1735,7 +1735,7 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
     axes_attr->set_name("axes");
     axes_attr->set_type(onnx::AttributeProto_AttributeType_INTS);
     for (size_t i = 0; i < x_shape.size(); ++i) {
-      if ((shrink_axis_mask & (1 << i)) != 0) {
+      if ((static_cast<uint64_t>(shrink_axis_mask) & (1UL << i)) != 0) {
         axes_attr->add_ints(static_cast<int64_t>(i));
       }
     }
