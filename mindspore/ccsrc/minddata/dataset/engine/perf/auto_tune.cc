@@ -140,6 +140,12 @@ Status AutoTune::ATMainLoop(bool output_intermediate_config) {
 Status AutoTune::SaveAutotuneConfig(const std::string &file_name) {
   Path jsonpath(file_name);
 
+  std::string parent_dir = jsonpath.ParentPath();
+  if (access(parent_dir.c_str(), R_OK) == -1) {
+    std::string err_msg = "AutoTune has no access to specified path: " + parent_dir + ", check permission.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
   if (jsonpath.Exists()) {
     std::string err_msg = "File: <" + file_name +
                           "> already exists. File will be overwritten with the AutoTuned data pipeline configuration.";

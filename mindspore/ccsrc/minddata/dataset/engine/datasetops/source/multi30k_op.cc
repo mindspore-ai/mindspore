@@ -80,7 +80,9 @@ Status Multi30kOp::LoadFile(const std::string &file_en, int64_t start_offset, in
   std::string basename = path_en.Basename();
   int suffix_len = 3;
   std::string suffix_de = ".de";
-  basename = basename.replace(basename.find("."), suffix_len, suffix_de);
+  auto pos = basename.find(".");
+  CHECK_FAIL_RETURN_UNEXPECTED(pos != std::string::npos, "Invalid file, can not parse dataset file:" + file_en);
+  basename = basename.replace(pos, suffix_len, suffix_de);
   Path BaseName(basename);
   Path path_de = parent_path / BaseName;
   std::string file_de = path_de.ToString();

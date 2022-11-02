@@ -75,6 +75,7 @@ Status LJSpeechOp::PrepareData() {
 // Load 1 TensorRow (waveform, sample_rate, transcription, normalized_transcription).
 // 1 function call produces 1 TensorTow
 Status LJSpeechOp::LoadTensorRow(row_id_type index, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   int32_t num_items = meta_info_list_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(index >= 0 && index < num_items, "[Internal ERROR] The input index is out of range.");
   std::shared_ptr<Tensor> waveform;
@@ -116,6 +117,7 @@ void LJSpeechOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status LJSpeechOp::CountTotalRows(const std::string &dir, int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
   auto real_path = FileUtils::GetRealPath(dir.c_str());
   if (!real_path.has_value()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, " + dir + " does not exist.");

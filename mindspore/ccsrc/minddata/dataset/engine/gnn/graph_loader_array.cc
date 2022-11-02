@@ -270,6 +270,7 @@ Status GraphLoaderFromArray::LoadFeatureToSharedMemory(int32_t i, std::pair<int1
 
 Status GraphLoaderFromArray::LoadFeatureTensor(int32_t i, std::pair<int16_t, std::shared_ptr<Tensor>> item,
                                                std::shared_ptr<Tensor> *tensor) {
+  RETURN_UNEXPECTED_IF_NULL(tensor);
   std::shared_ptr<Tensor> feature_item;
   auto feature_num = item.second->shape()[1];
   uint8_t type_size = item.second->type().SizeInBytes();

@@ -121,6 +121,11 @@ Status STL10Op::WalkAllFiles() {
     use_train = true;
     use_test = true;
     use_unlabeled = true;
+  } else {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid parameter, usage should be \"train\", \"test\", \"unlabeled\", "
+      "\"train+unlabeled\", \"all\", got " +
+      usage_);
   }
 
   if (use_train) {
@@ -325,6 +330,11 @@ Status STL10Op::CountTotalRows(const std::string &dir, const std::string &usage,
     use_train = true;
     use_test = true;
     use_unlabeled = true;
+  } else {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid parameter, usage should be \"train\", \"test\", \"unlabeled\", "
+      "\"train+unlabeled\", \"all\", got " +
+      usage);
   }
 
   *count = 0;

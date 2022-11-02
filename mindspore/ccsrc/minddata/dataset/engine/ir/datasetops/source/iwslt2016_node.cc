@@ -85,6 +85,8 @@ Status IWSLT2016Node::ValidateParams() {
                                        {"dev2010", "tst2010", "tst2011", "tst2012", "tst2013", "tst2014"}));
   RETURN_IF_NOT_OK(ValidateStringValue("IWSLT2016Node", test_set_,
                                        {"dev2010", "tst2010", "tst2011", "tst2012", "tst2013", "tst2014"}));
+  RETURN_IF_NOT_OK(ValidateEnum("IWSLT2016Node", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
 
   if (num_samples_ < 0) {
     std::string err_msg = "IWSLT2016Node: Invalid number of samples: " + std::to_string(num_samples_);

@@ -64,9 +64,8 @@ Status WikiTextNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("WikiTextDataset", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateStringValue("WikiTextDataset", usage_, {"train", "test", "valid", "all"}));
   RETURN_IF_NOT_OK(ValidateScalar("WikiTextDataset", "num_samples", num_samples_, {0}, false));
-  RETURN_IF_NOT_OK(
-    ValidateEnum("WikiTextDataset", "ShuffleMode", shuffle_,
-                 {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal, ShuffleMode::kInfile}));
+  RETURN_IF_NOT_OK(ValidateEnum("WikiTextDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("WikiTextDataset", num_shards_, shard_id_));
   return Status::OK();
 }

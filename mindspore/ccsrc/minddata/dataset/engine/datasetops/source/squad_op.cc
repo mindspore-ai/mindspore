@@ -304,7 +304,7 @@ Status SQuADOp::CountTensorRowsPreFile(const std::string &file, int64_t *count) 
     handle >> root;
   } catch (const std::exception &err) {
     handle.close();
-    MS_LOG(ERROR) << "Invalid file, failed to parse JSON file: " << file;
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse JSON file: " + file);
   }
   handle.close();
 

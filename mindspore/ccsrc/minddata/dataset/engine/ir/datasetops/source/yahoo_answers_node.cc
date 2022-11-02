@@ -61,6 +61,8 @@ Status YahooAnswersNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("YahooAnswersNode", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateStringValue("YahooAnswersNode", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateEnum("YahooAnswersNode", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
 
   if (num_samples_ < 0) {
     std::string err_msg = "YahooAnswersNode: Invalid number of samples: " + std::to_string(num_samples_);

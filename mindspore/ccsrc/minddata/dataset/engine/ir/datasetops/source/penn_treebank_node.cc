@@ -63,6 +63,8 @@ Status PennTreebankNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("PennTreebankNode", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateStringValue("PennTreebankNode", usage_, {"train", "test", "valid", "all"}));
+  RETURN_IF_NOT_OK(ValidateEnum("PennTreebankNode", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
   if (num_samples_ < 0) {
     std::string err_msg = "PennTreebankNode: Invalid number of samples: " + std::to_string(num_samples_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

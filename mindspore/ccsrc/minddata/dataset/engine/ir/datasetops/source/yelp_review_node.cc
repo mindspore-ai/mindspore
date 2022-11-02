@@ -61,6 +61,8 @@ Status YelpReviewNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("YelpReviewNode", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateStringValue("YelpReviewNode", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateEnum("YelpReviewNode", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
   if (num_samples_ < 0) {
     std::string err_msg = "YelpReviewNode: Invalid number of samples: " + std::to_string(num_samples_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

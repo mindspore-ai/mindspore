@@ -183,6 +183,7 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
 }
 
 Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, int32_t worker_id) {
+  RETURN_UNEXPECTED_IF_NULL(fetched_row);
   *fetched_row = {};
   auto rc = shard_reader_->GetNextById(row_id, worker_id);
   auto task_type = rc.first;

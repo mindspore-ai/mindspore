@@ -159,6 +159,7 @@ Status UDPOSOp::LoadFile(const std::string &file, int64_t start_offset, int64_t 
       std::vector<std::string> column = Split(line, '\t');
       size_t right_column_size = 3;
       if (column.size() < right_column_size) {
+        handle.close();
         MS_LOG(ERROR)
           << "Invalid file content, each line should contain three columns, representing word, universal and stanford.";
         RETURN_STATUS_UNEXPECTED(
@@ -168,9 +169,13 @@ Status UDPOSOp::LoadFile(const std::string &file, int64_t start_offset, int64_t 
       word_column.push_back(column[word_line]);
       universal_column.push_back(column[universal_line]);
       stanford_column.push_back(column[stanford_line]);
+    } else {
+      handle.close();
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR], rows_total is less than start_offset.");
     }
     rows_total++;
   }
+  handle.close();
   return Status::OK();
 }
 }  // namespace dataset

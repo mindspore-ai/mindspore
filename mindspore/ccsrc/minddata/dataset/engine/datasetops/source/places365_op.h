@@ -23,8 +23,6 @@
 #include <utility>
 #include <vector>
 
-#include <opencv2/opencv.hpp>
-
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"

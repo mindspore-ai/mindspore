@@ -557,6 +557,7 @@ Status GraphDataClient::GetEdgeDefaultFeature(FeatureType feature_type, std::sha
 }
 
 Status GraphDataClient::GetStoredGraphFeature(FeatureType feature_type, std::shared_ptr<Tensor> *out_feature) {
+  RETURN_UNEXPECTED_IF_NULL(out_feature);
   auto itr = graph_feature_map_.find(feature_type);
   if (itr == graph_feature_map_.end()) {
     std::string err_msg = "Invalid feature type:" + std::to_string(feature_type);

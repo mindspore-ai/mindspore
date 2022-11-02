@@ -298,7 +298,8 @@ Status LoadXmlDocument(XMLDocument *xml_document, const std::string &file_path, 
 Status IWSLTOp::CleanXmlFile(const std::string &src_file_path, const std::string &target_file_path,
                              const std::string &new_file_path) {
   XMLDocument xml_document1, xml_document2;
-  XMLElement *src_doc, *target_doc;
+  XMLElement *src_doc = nullptr;
+  XMLElement *target_doc = nullptr;
 
   RETURN_IF_NOT_OK(LoadXmlDocument(&xml_document1, src_file_path, &src_doc));
   RETURN_IF_NOT_OK(LoadXmlDocument(&xml_document2, target_file_path, &target_doc));

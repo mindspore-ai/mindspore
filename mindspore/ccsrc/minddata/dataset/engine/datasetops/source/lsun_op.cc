@@ -133,6 +133,7 @@ Status LSUNOp::CountRowsAndClasses(const std::string &path, const std::string &u
 }
 
 Status LSUNOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   ImageLabelPair pair_ptr = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
   uint32_t label_num = static_cast<uint32_t>(pair_ptr->second);

@@ -62,6 +62,8 @@ Status DBpediaNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateStringValue("DBpediaDataset", usage_, {"train", "test", "all"}));
   RETURN_IF_NOT_OK(ValidateScalar("DBpediaDataset", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("DBpediaDataset", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateEnum("DBpediaDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
 
   return Status::OK();
 }
