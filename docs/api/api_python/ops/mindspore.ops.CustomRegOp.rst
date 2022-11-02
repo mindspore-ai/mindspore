@@ -6,7 +6,7 @@ mindspore.ops.CustomRegOp
     用于为 :class:`mindspore.ops.Custom` 的 `func` 参数生成算子注册信息的类。注册信息主要指定了 `func` 的输入和输出Tensor所支持的数据类型和数据格式、属性以及target信息。
 
     参数：
-        - **op_name** (str) - 表示kernel名称。无需设置此值，因为 `Custom` 会为该参数自动生成唯一名称。默认值："Custom"。
+        - **op_name** (str) - 表示kernel名称，算子会把这个记录在算子节点的 reg_op_name 属性中。此外，算子会自动生成唯一名称作为识别注册信息的标识。默认值："Custom"。
 
     .. py:method:: attr(name=None, param_type=None, value_type=None, default_value=None, **kwargs)
 

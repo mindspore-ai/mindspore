@@ -757,8 +757,9 @@ class CustomRegOp(RegOp):
     attributes and target of `func`.
 
     Args:
-        op_name (str): kernel name. No need to set this value because `Custom` operator will generate a unique name
-            automatically. Default: "Custom".
+        op_name (str): kernel name. The name will be record in the reg_op_name attr of the kernel node.
+            Besides, the operator will generate a unique name automatically to identify the reg info.
+            Default: "Custom".
 
     Examples:
         >>> from mindspore.ops import CustomRegOp, DataType

@@ -450,7 +450,7 @@ class Custom(ops.PrimitiveWithInfer):
         self._is_ms_kernel = False
 
         self._check_func()
-        self._update_func_info()
+        self._update_func_info(reg_info)
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
         if self.func_type == "hybrid":
@@ -608,7 +608,7 @@ class Custom(ops.PrimitiveWithInfer):
                 raise TypeError("{}, 'func' must be of type function, but got {}"
                                 .format(self.log_prefix, type(self.func)))
 
-    def _update_func_info(self):
+    def _update_func_info(self, reg_info):
         """Update information of func"""
         if callable(self.func):
             # For the func_type other then hybrid, get the original function if func is decorated
@@ -657,7 +657,17 @@ class Custom(ops.PrimitiveWithInfer):
             # func name
             self.func_name = self.func
             # uniq func name
-            self.uniq_name = self.name + "_" + self.func_name
+            prefix = self.name
+            if reg_info is None:
+                reg_info = {}
+            reg_info_list = self._get_expanded_list(reg_info)
+            for reg_info_item in reg_info_list:
+                if not isinstance(reg_info_item, (str, dict)):
+                    continue
+                if isinstance(reg_info_item, str):
+                    reg_info_item = json.loads(reg_info_item)
+                prefix = prefix + "_" + reg_info_item.get("op_name", "")
+            self.uniq_name = prefix + "_" + self.func_name
         else:
             raise TypeError("For '{}', 'func' must be of type function or str, but got {}"
                             .format(self.name, type(self.func)))
@@ -695,7 +705,7 @@ class Custom(ops.PrimitiveWithInfer):
 
             target = self._get_target(reg_info)
             # Reg info for func is only registered once for a certain target
-            if self._has_registered(target, reg_info):
+            if self._has_registered(target):
                 continue
             # Register
             reg_info = self._reformat_reg_info(reg_info, target)
@@ -707,7 +717,7 @@ class Custom(ops.PrimitiveWithInfer):
                                  "'custom_info_register' to bind it to 'func' if 'func' is a function."
                                  .format(self.log_prefix))
             self._save_attr(reg_info)
-            self._save_register_status(target, reg_info)
+            self._save_register_status(target)
 
     def _get_expanded_list(self, data):
         """Recursive function to parse elements in list or tuple."""
@@ -721,43 +731,34 @@ class Custom(ops.PrimitiveWithInfer):
             data_list.append(data)
         return data_list
 
-    def _get_registered_targets(self, reg_info=None):
+    def _get_registered_targets(self):
         """Get the registered targets of func."""
         targets = []
-        if reg_info is None:
-            reg_info = {}
         if callable(self.func):
             targets = getattr(self.func, "registered_targets", [])
         elif isinstance(self.func, str):
-            if isinstance(reg_info.get("op_name"), str):
-                reg_op_name = reg_info.get("op_name")
-            else:
-                reg_op_name = self.func
-            targets = Custom.registered_func.get(reg_op_name, [])
+            targets = Custom.registered_func.get(self.uniq_name, [])
         if not isinstance(targets, list):
             targets = [targets]
         return targets
 
-    def _has_registered(self, target, reg_info):
+    def _has_registered(self, target):
         """Check if registration information is registered in target."""
-        registered_targets = self._get_registered_targets(reg_info)
+        registered_targets = self._get_registered_targets()
         return target in registered_targets
 
-    def _save_register_status(self, target, reg_info):
+    def _save_register_status(self, target):
         """Save registration status for target."""
         if callable(self.func):
             registered_targets = getattr(self.func, "registered_targets", [])
             registered_targets.append(target)
             setattr(self.func, "registered_targets", registered_targets)
         elif isinstance(self.func, str):
-            if isinstance(reg_info.get("op_name"), str):
-                reg_op_name = reg_info.get("op_name")
+            func_name = self.uniq_name
+            if isinstance(Custom.registered_func.get(func_name), list):
+                Custom.registered_func.get(func_name).append(target)
             else:
-                reg_op_name = self.func
-            if isinstance(Custom.registered_func.get(reg_op_name), list):
-                Custom.registered_func.get(reg_op_name).append(target)
-            else:
-                Custom.registered_func[reg_op_name] = [target]
+                Custom.registered_func[func_name] = [target]
 
     def _get_op_name(self, reg_info):
         if self.func_type == "aicpu":
