@@ -104,23 +104,6 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamm
                          LogUniformCandidateSampler, TruncatedNormal)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd)
-from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAtomEnergy, BondForceWithAtomVirial,
-                         DihedralForce, DihedralEnergy, DihedralAtomEnergy, DihedralForceWithAtomEnergy, AngleForce,
-                         AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy, PMEReciprocalForce,
-                         LJForce, LJEnergy, LJForceWithPMEDirectForce, PMEExcludedForce, PMEEnergy, Dihedral14LJForce,
-                         Dihedral14LJForceWithDirectCF, Dihedral14LJEnergy, Dihedral14LJCFForceWithAtomEnergy,
-                         Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy,
-                         MDTemperature, MDIterationLeapFrogLiujian,
-                         CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D, NeighborListUpdate)
-from .sponge_update_ops import (ConstrainForceCycleWithVirial, RefreshUintCrd, LastCrdToDr, RefreshCrdVel,
-                                CalculateNowrapCrd, RefreshBoxmapTimes, Totalc6get, CrdToUintCrdQuarter,
-                                MDIterationLeapFrogLiujianWithMaxVel, GetCenterOfMass, MapCenterOfMass,
-                                NeighborListRefresh, MDIterationLeapFrog, MDIterationLeapFrogWithMaxVel,
-                                MDIterationGradientDescent, BondForceWithAtomEnergyAndVirial, ConstrainForceCycle,
-                                LJForceWithVirialEnergy, LJForceWithPMEDirectForceUpdate, PMEReciprocalForceUpdate,
-                                PMEExcludedForceUpdate, LJForceWithVirialEnergyUpdate,
-                                Dihedral14ForceWithAtomEnergyVirial, PMEEnergyUpdate,
-                                ConstrainForceVirial, ConstrainForce, Constrain)
 
 __all__ = [
     'HSVToRGB',
@@ -499,8 +482,6 @@ __all__ = [
     "TensorScatterMul",
     "TensorScatterDiv",
     "SoftShrink",
-    "FFT3D",
-    "IFFT3D",
     "HShrink",
     "PyFunc",
     "BufferAppend",
@@ -522,77 +503,11 @@ __all__ = [
     "Cummax",
 ]
 
-__sponge__ = [
-    "Cross",
-    "BondForce",
-    "BondEnergy",
-    "BondAtomEnergy",
-    "BondForceWithAtomEnergy",
-    "BondForceWithAtomVirial",
-    "DihedralForce",
-    "DihedralEnergy",
-    "DihedralAtomEnergy",
-    "DihedralForceWithAtomEnergy",
-    "AngleForce",
-    "AngleEnergy",
-    "AngleAtomEnergy",
-    "AngleForceWithAtomEnergy",
-    'PMEReciprocalForce',
-    'LJForce',
-    'LJForceWithPMEDirectForce',
-    'LJEnergy',
-    'PMEExcludedForce',
-    'PMEEnergy',
-    "Dihedral14LJForce",
-    "Dihedral14LJEnergy",
-    "Dihedral14LJForceWithDirectCF",
-    "Dihedral14LJCFForceWithAtomEnergy",
-    "Dihedral14LJAtomEnergy",
-    "Dihedral14CFEnergy",
-    "MDIterationLeapFrog",
-    "Dihedral14CFAtomEnergy",
-    "MDTemperature",
-    "NeighborListUpdate",
-    "MDIterationLeapFrogLiujian",
-    "CrdToUintCrd",
-    "MDIterationSetupRandState",
-    "TransferCrd",
-    # Update
-    "ConstrainForceCycleWithVirial",
-    "RefreshUintCrd",
-    "LastCrdToDr",
-    "RefreshCrdVel",
-    "CalculateNowrapCrd",
-    "RefreshBoxmapTimes",
-    "Totalc6get",
-    "CrdToUintCrdQuarter",
-    "MDIterationLeapFrogLiujianWithMaxVel",
-    "GetCenterOfMass",
-    "MapCenterOfMass",
-    "NeighborListRefresh",
-    "MDIterationLeapFrog",
-    "MDIterationLeapFrogWithMaxVel",
-    "MDIterationGradientDescent",
-    "BondForceWithAtomEnergyAndVirial",
-    "ConstrainForceCycle",
-    "LJForceWithVirialEnergy",
-    "LJForceWithPMEDirectForceUpdate",
-    "PMEReciprocalForceUpdate",
-    "PMEExcludedForceUpdate",
-    "LJForceWithVirialEnergyUpdate",
-    "Dihedral14ForceWithAtomEnergyVirial",
-    "PMEEnergyUpdate",
-    "ConstrainForceVirial",
-    "ConstrainForce",
-    "Constrain",
-]
-
 __custom__ = [
     "ms_kernel",
     "kernel",
 ]
 
-__all__.extend(__sponge__)
 __all__.extend(__custom__)
 
 __all__.sort()
