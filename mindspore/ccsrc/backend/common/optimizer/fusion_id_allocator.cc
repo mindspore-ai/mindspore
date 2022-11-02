@@ -39,6 +39,7 @@ bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) const {
 }
 
 int64_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
   if (HasFusionIdAttr(node)) {
     return common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFusionId);
   }
@@ -46,6 +47,7 @@ int64_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) const {
 }
 
 void FusionIdAllocator::SetFusionId(const AnfNodePtr &node, int64_t id) const {
+  MS_EXCEPTION_IF_NULL(node);
   ValuePtr fusion_id_v = MakeValue(id);
   common::AnfAlgo::SetNodeAttr(kAttrFusionId, fusion_id_v, node);
 }

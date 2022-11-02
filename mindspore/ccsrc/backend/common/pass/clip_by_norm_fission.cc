@@ -69,6 +69,7 @@ AnfNodePtr ClipByNormFission::CreateCNodeBase(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(std::make_shared<Primitive>(op_name))};
   for (const auto &inp : inps) {
+    MS_EXCEPTION_IF_NULL(inp);
     (void)new_node_inputs.emplace_back(inp);
   }
   auto new_node = NewCNode(new_node_inputs, func_graph);

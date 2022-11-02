@@ -81,12 +81,14 @@ void AdjustDependForParallelOptimizerRecomputeAllGather::IncreaseAllgatherFusion
   if (recompute_min_fusion_id <= unrecompute_max_fusion_id) {
     MS_LOG(WARNING) << "Increase the duplicated allgather fusion id";
     for (auto &adjust_node : parallel_optimizer_recompute_first_fusion_allgathers) {
+      MS_EXCEPTION_IF_NULL(adjust_node);
       int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
       int64_t destination_fusion_id =
         (kFusionGap + current_fusion_id + unrecompute_max_fusion_id) - recompute_min_fusion_id;
       common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
     }
     for (auto &adjust_node : parallel_optimizer_recompute_allgathers) {
+      MS_EXCEPTION_IF_NULL(adjust_node);
       int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
       int64_t destination_fusion_id =
         (kFusionGap + current_fusion_id + unrecompute_max_fusion_id) - recompute_min_fusion_id;
@@ -97,19 +99,26 @@ void AdjustDependForParallelOptimizerRecomputeAllGather::IncreaseAllgatherFusion
 
 bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
   const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers) const {
+  MS_EXCEPTION_IF_NULL(graph);
   FuncGraphManagerPtr manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   bool changed = false;
   for (auto &node : parallel_optimizer_recompute_allgathers) {
+    MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     auto depend_node = common::AnfAlgo::GetInputNode(cnode, 0);
+    MS_EXCEPTION_IF_NULL(depend_node);
     auto set_edge_node = node;
     if (IsPrimitiveCNode(depend_node, prim::kPrimTensorMove)) {
       auto tensormove_cnode = depend_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(tensormove_cnode);
       set_edge_node = depend_node;
       depend_node = common::AnfAlgo::GetInputNode(tensormove_cnode, 0);
     }
     if (IsPrimitiveCNode(depend_node, prim::kPrimDepend)) {
       auto depend_cnode = depend_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(depend_cnode);
       AnfNodeIndexSet allgather_node_set = manager->node_users()[cnode];
       for (auto &node_pair : allgather_node_set) {
         auto allgather_next_node = node_pair.first;
@@ -128,8 +137,10 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
     } else if (IsPrimitiveCNode(depend_node, prim::kPrimCast) &&
                IsPrimitiveCNode(common::AnfAlgo::GetInputNode(depend_node->cast<CNodePtr>(), 0), prim::kPrimDepend)) {
       auto cast_cnode = depend_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cast_cnode);
       auto cast_depend_node = common::AnfAlgo::GetInputNode(cast_cnode, 0);
       auto cast_depend_cnode = cast_depend_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cast_depend_cnode);
       AnfNodeIndexSet allgather_node_set = manager->node_users()[cnode];
       for (auto &node_pair : allgather_node_set) {
         auto allgather_next_node = node_pair.first;
