@@ -25,8 +25,7 @@
 #include "pybind_api/ir/tensor_py.h"
 
 using mindspore::tensor::TensorPy;
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 namespace {
 void GetNeedNotifyTensors(const VectorRef *outputs, std::set<TensorPtr> *result) {
   MS_EXCEPTION_IF_NULL(outputs);
@@ -487,5 +486,4 @@ void Executor::OnWorkerExit() {
     device::KernelRuntimeManager::Instance().ReleaseKernelRuntime(kAscendDevice, device_id_);
   }
 }
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session

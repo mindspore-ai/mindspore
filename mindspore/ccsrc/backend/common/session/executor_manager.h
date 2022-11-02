@@ -22,8 +22,7 @@
 #include "backend/common/session/executor.h"
 #include "include/backend/visible.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 class Executor;
 class BACKEND_EXPORT ExecutorManager {
  public:
@@ -47,6 +46,5 @@ class BACKEND_EXPORT ExecutorManager {
 
   std::map<std::string, std::shared_ptr<Executor>> executors_;
 };
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
 #endif  // MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_MANAGER_H_

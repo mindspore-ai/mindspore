@@ -27,12 +27,11 @@
 #include "kernel/kernel.h"
 #include "backend/common/session/session_factory.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 class AscendInferenceSession : public AscendSession {
  public:
   AscendInferenceSession() = default;
-  ~AscendInferenceSession() = default;
+  ~AscendInferenceSession() override = default;
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const override;
   bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -46,6 +45,5 @@ class AscendInferenceSession : public AscendSession {
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
 };
 MS_REG_SESSION(kDavinciInferenceDevice, AscendInferenceSession);
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_INFERENCE_SESSION_H_

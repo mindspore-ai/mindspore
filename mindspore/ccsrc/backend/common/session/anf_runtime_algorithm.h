@@ -77,10 +77,10 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get input shapes which will built and run in device
   static std::vector<int64_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
   // get output shapes for tbe build
-  static std::vector<int64_t> GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t output_idx,
+  static std::vector<int64_t> GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t output_idx,
                                                               const std::string &format);
   // get input shapes for tbe build
-  static std::vector<int64_t> GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t input_idx,
+  static std::vector<int64_t> GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t input_idx,
                                                              const std::string &format);
   // Get Input Padding Axis
   static std::string GetInputReshapeType(const AnfNodePtr &node, size_t input_idx);
@@ -155,9 +155,9 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // charge if the node's input is from a feature map output
   static bool IsFeatureMapInput(const AnfNodePtr &node, size_t input_index);
   // get input index in graph for some tbe ops which input order is different between graph and tbe kernel
-  static size_t GetInputGraphIdxByKernelIdx(const AnfNodePtr &anf_node, const size_t input_index_in_kernel);
+  static size_t GetInputGraphIdxByKernelIdx(const AnfNodePtr &anf_node, size_t input_index_in_kernel);
   // get input index in kernel for some tbe ops which input order is different between graph and tbe kernel
-  static size_t GetInputKernelIdxByGraphIdx(const AnfNodePtr &anf_node, const size_t input_index_in_graph);
+  static size_t GetInputKernelIdxByGraphIdx(const AnfNodePtr &anf_node, size_t input_index_in_graph);
   static std::vector<KernelGraphPtr> GetCallSwitchKernelGraph(const CNodePtr &cnode);
   static bool IsIndependentNode(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);

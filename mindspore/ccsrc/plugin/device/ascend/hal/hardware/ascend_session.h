@@ -31,14 +31,13 @@
 #include "kernel/kernel.h"
 #include "backend/common/session/session_factory.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 enum GraphType : int { COMMON_GRAPH = 0, CONDITION_GRAPH = 1, BRANCH_START = 2, BRANCH_END = 3 };
 
 class AscendSession : public SessionBasic {
  public:
   AscendSession() : final_graph_id_(kInvalidGraphId) {}
-  ~AscendSession() = default;
+  ~AscendSession() override = default;
   void Init(uint32_t device_id) override;
   // get graph id of final graph
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
@@ -112,7 +111,7 @@ class AscendSession : public SessionBasic {
 #endif
   void LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   // below functions are used for run op
-  void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
+  static void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 
   void RootGraphExecutorValidate(const NotNull<KernelGraphPtr> &graph,
                                  const std::vector<KernelGraphPtr> &all_graphs) const;
@@ -163,6 +162,5 @@ class AscendSession : public SessionBasic {
   mutable size_t reduce_precision_count_{0};
 };
 MS_REG_SESSION(kAscendDevice, AscendSession);
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_SESSION_H_

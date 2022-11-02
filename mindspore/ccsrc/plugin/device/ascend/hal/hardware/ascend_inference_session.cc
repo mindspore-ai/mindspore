@@ -27,8 +27,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/config_manager.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                            const std::vector<tensor::TensorPtr> &inputs_const) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -36,18 +35,19 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
   auto input_nodes = kernel_graph->inputs();
 
   size_t no_weight_input = 0;
-  for (size_t i = 0; i < input_nodes.size(); ++i) {
+  for (auto &input_node : input_nodes) {
     tensor::TensorPtr tensor = nullptr;
-    if (!input_nodes[i]->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
+    if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
       MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
       continue;
     }
-    auto pk_node = input_nodes[i]->cast<ParameterPtr>();
+    auto pk_node = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
     if (!common::AnfAlgo::IsParameterWeight(pk_node)) {
       tensor = inputs[no_weight_input++];
+      MS_EXCEPTION_IF_NULL(tensor);
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                             LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
                                             tensor->device_info().host_format_)) {
@@ -63,12 +63,12 @@ GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_grap
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // load weight data to device
   auto input_nodes = kernel_graph->inputs();
-  for (size_t i = 0; i < input_nodes.size(); ++i) {
-    if (!input_nodes[i]->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
+  for (auto &input_node : input_nodes) {
+    if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
       MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
       continue;
     }
-    auto pk_node = input_nodes[i]->cast<ParameterPtr>();
+    auto pk_node = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -96,12 +96,13 @@ bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id, const std::vect
   size_t no_weight_input = 0;
   vector<ParameterPtr> paras;
   // find parameters of graph inputs
-  for (size_t i = 0; i < kernel_graph_inputs.size(); ++i) {
-    if (!kernel_graph_inputs[i]->isa<Parameter>()) {
+  for (auto &kernel_graph_input : kernel_graph_inputs) {
+    MS_EXCEPTION_IF_NULL(kernel_graph_input);
+    if (!kernel_graph_input->isa<Parameter>()) {
       MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter.";
       continue;
     }
-    auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
+    auto parameter = kernel_graph_input->cast<ParameterPtr>();
     if (!common::AnfAlgo::IsParameterWeight(parameter)) {
       paras.push_back(parameter);
     }
@@ -162,6 +163,7 @@ bool AscendInferenceSession::CompareInput(const tensor::TensorPtr &input, const 
 
   // compare data type
   auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
   if (input->data_type() != kernel_build_info->GetOutputDeviceType(0)) {
     MS_LOG(ERROR) << "Input data type is inconsistent. The actual data type is " << input->data_type()
                   << ", but the parameter data type is " << kernel_build_info->GetOutputDeviceType(0)
@@ -209,10 +211,10 @@ std::string AscendInferenceSession::InputsInfo(const std::vector<ParameterPtr> &
 
   std::string actual = "given inputs:{ ";
   for (size_t i = 0; i < inputs.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
     actual += std::to_string(i) + ": dims " + std::to_string(inputs[i]->shape().size()) + ", shape " +
               PrintInputShape(inputs[i]->shape()) + ", data type " + data_type_to_string(inputs[i]->data_type()) + " }";
   }
   return graph + "   " + actual;
 }
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session

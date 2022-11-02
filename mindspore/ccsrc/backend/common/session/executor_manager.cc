@@ -15,8 +15,7 @@
  */
 #include "backend/common/session/executor_manager.h"
 #include "include/common/thread_pool.h"
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 ExecutorManager &ExecutorManager::Instance() {
   static ExecutorManager instance{};
   return instance;
@@ -47,5 +46,4 @@ void ExecutorManager::Clear() {
   executors_.clear();
   common::ThreadPool::GetInstance().ClearThreadPool();
 }
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session

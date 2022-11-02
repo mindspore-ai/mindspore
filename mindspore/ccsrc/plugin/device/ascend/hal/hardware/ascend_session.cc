@@ -16,7 +16,6 @@
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include <algorithm>
 #include <map>
-#include <tuple>
 #include <set>
 #include <string>
 #include <list>
@@ -82,8 +81,7 @@ using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 const size_t kLabelNumsThreshold = 1023;
 namespace {
 #ifndef ENABLE_SECURITY
@@ -129,10 +127,10 @@ bool EnableDeviceCopy() {
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
     return false;
   }
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) == false) {
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
     return false;
   }
-  if (ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) == true) {
+  if (ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
     return false;
   }
   return true;
@@ -159,6 +157,7 @@ TensorPtr GetCNodeOutputStubTensor(const KernelWithIndex &kernel_with_index,
   MS_EXCEPTION_IF_NULL(output_is_weight);
   const auto &iter = node_output_info.find(kernel_with_index);
   if (iter == node_output_info.end()) {
+    MS_EXCEPTION_IF_NULL(kernel_with_index.first);
     MS_LOG(EXCEPTION) << "Can not find output stub tensor of cnode " << kernel_with_index.first->DebugString();
   }
   *output_is_weight = iter->second.is_weight;
@@ -180,6 +179,7 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
     }
     const auto &output_kernel_with_index = common::AnfAlgo::VisitKernel(output, 0);
     const auto &output_node = output_kernel_with_index.first;
+    MS_EXCEPTION_IF_NULL(output_node);
     const auto &output_index = output_kernel_with_index.second;
     auto out_abstract = output_node->abstract();
     MS_EXCEPTION_IF_NULL(out_abstract);
@@ -187,11 +187,12 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
       out_abstract = out_abstract->cast<abstract::AbstractTuplePtr>()->elements()[output_index];
       MS_EXCEPTION_IF_NULL(out_abstract);
     }
-    abstract::AbstractTensorPtr tensor_abstract = out_abstract->cast<abstract::AbstractTensorPtr>();
+    auto tensor_abstract = out_abstract->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor_abstract);
     const auto &infer_type = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
     tensor::TensorPtr stub_output_tensor =
       std::make_shared<tensor::Tensor>(infer_type, tensor_abstract->shape()->shape(), nullptr);
+    MS_EXCEPTION_IF_NULL(stub_output_tensor);
     const auto &output_type = AnfAlgo::GetOutputDeviceDataType(output_node, output_index);
     const auto &output_format = AnfAlgo::GetOutputFormat(output_node, output_index);
     tensor::DeviceInfo device_info;
@@ -225,7 +226,10 @@ bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
 
 bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfNodePtr &parameter,
                     const tensor::TensorPtr &tensor, uint32_t *memcpy_nums) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(parameter);
   MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(memcpy_nums);
   if (tensor->NeedSyncHostToDevice()) {
     return true;
   }
@@ -236,6 +240,7 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
     return tensor->device_address().get() == nullptr || tensor->device_address() != device_address;
   }
   auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(tensor_address);
   if (tensor_address != device_address) {
     if (!kernel_graph->is_dynamic_shape() && EnableDeviceCopy() && NeedMemcpyInDevice(tensor_address, device_address)) {
       auto status = device_address->AsyncDeviceToDevice(trans::GetRuntimePaddingShape(parameter, 0),
@@ -276,11 +281,12 @@ void AddGraphToManager(const NotNull<KernelGraphPtr> &graph, NotNull<FuncGraphMa
   }
 }
 
-void CheckControlFlowDynamicShape(std::vector<KernelGraphPtr> all_graphs) {
+void CheckControlFlowDynamicShape(const std::vector<KernelGraphPtr> &all_graphs) {
   if (all_graphs.size() <= 1) {
     return;
   }
   for (auto &graph : all_graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
     if (graph->is_dynamic_shape()) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with control flow(loop control statements and conditions "
                            "control statements).";
@@ -292,6 +298,7 @@ void CheckControlFlowDynamicShape(std::vector<KernelGraphPtr> all_graphs) {
 void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
 
 void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start unify mindir. graph id: " << graph->graph_id();
   SessionBasic::UnifyMindIR(graph);
   opt::AscendUnifyMindIR(graph);
@@ -305,11 +312,12 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
   MS_EXCEPTION_IF_NULL(kernel_graph);
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
   auto &input_nodes = kernel_graph->input_nodes();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   if (device::KernelRuntime::UseMemScheduler()) {
     kernel_graph->SetInputTensors(inputs);
     return;
   }
-  for (auto item : tensor_device_addr_map_) {
+  for (const auto &item : tensor_device_addr_map_) {
     auto output_tensor = item.first;
     output_tensor->set_device_address(item.second);
   }
@@ -363,6 +371,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     auto compute_stream = runtime_instance->compute_stream();
     auto model_stream = runtime_instance->GetModelStream(kernel_graph->graph_id());
     auto memcpy_event = runtime_instance->CreateDeviceEvent();
+    MS_EXCEPTION_IF_NULL(memcpy_event);
     memcpy_event->set_wait_stream(model_stream);
     memcpy_event->set_record_stream(compute_stream);
     memcpy_event->RecordEvent();
@@ -374,6 +383,7 @@ GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNode
   MS_LOG(INFO) << "Status record: start compile graph.";
   // construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs, DeviceType::kAscend);
+  MS_EXCEPTION_IF_NULL(graph);
   auto graph_id = graph->graph_id();
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
@@ -383,7 +393,9 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "Status record: start compile graph.";
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs, DeviceType::kAscend);
+  MS_EXCEPTION_IF_NULL(root_graph);
   for (const auto &graph : all_graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
     graph->set_root_graph_id(root_graph->graph_id());
   }
   UnifyMindIR(root_graph);
@@ -621,7 +633,7 @@ void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_
 
 void AscendSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) { Execute(kernel_graph, true); }
 
-void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const {
+void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_LOG(INFO) << "HardwareOptimize Start";
   opt::RunOpAscendBackendOptimization(kernel_graph);
   MS_LOG(INFO) << "HardwareOptimize Finish";
@@ -694,6 +706,7 @@ void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOp
 
   // wait for allreduce
   for (auto &tensor : *input_tensors) {
+    MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->NeedWaitDevice()) {
       tensor->WaitDevice();
     }
@@ -961,8 +974,8 @@ static CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint3
   }
   auto kernel = kernel_nodes[index + 1];
   if (common::AnfAlgo::GetCNodeName(kernel) != kLabelSetOpName) {
-    MS_LOG(EXCEPTION) << "the node is not labelset follow labelgoto/labelswitch, node: "
-                      << kernel_nodes[index]->DebugString();
+    MS_LOG(EXCEPTION) << "the node is not labelset follow labelgoto/labelswitch, index" << index
+                      << ", size: " << node_sizes;
   }
   return kernel;
 }
@@ -1133,6 +1146,7 @@ void AscendSession::RunOpMemoryClear(const KernelGraph *kernel_graph) const {
 }
 
 void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Status record: start load task. graph id: " << kernel_graph->graph_id();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -1205,8 +1219,8 @@ void AscendSession::RecurseSetSummaryNodes(KernelGraph *graph,
   }
   // for every child graph, find summary nodes
   auto graph_order = GetGraphOrder(graph->graph_id());
-  for (size_t i = 0; i < graph_order.size(); i++) {
-    auto child_graph = GetGraph(graph_order[i]);
+  for (unsigned int i : graph_order) {
+    auto child_graph = GetGraph(i);
     if (child_graph == nullptr) {
       continue;
     }
@@ -1352,6 +1366,7 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> &graph, NotNull<s
 
 void AscendSession::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
   for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     auto status = device::ascend::SelectKernelInfo(node);
     common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
     common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
@@ -1552,5 +1567,4 @@ DeviceAddressPtr AscendSession::AssignExtraMemForGraphOutput(const tensor::Tenso
   MS_EXCEPTION_IF_NULL(runtime_instance);
   return runtime_instance->AssignExtraStaticMem(tensor, node, index);
 }
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
