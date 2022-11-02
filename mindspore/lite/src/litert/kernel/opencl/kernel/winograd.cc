@@ -122,6 +122,11 @@ int WinogradOpenCLKernel::BuildKernel() {
 }
 
 int WinogradOpenCLKernel::InitFilter() {
+  if (packed_filter_ != nullptr) {
+    MS_LOG(DEBUG) << "filter is already inited";
+    return RET_OK;
+  }
+
   auto allocator = ocl_runtime_->GetAllocator();
 
   // allocate opencl memory: buffer or image2d
