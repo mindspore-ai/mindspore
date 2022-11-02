@@ -89,8 +89,8 @@ void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t>
   for (size_t i = 0; i < axis->size(); i++) {
     if (dim == 0) {
       if ((axis->at(i) != -1 && axis->at(i) != 0)) {
-        MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'axis' must be 0. But got 'axis' = " << axis->at(i)
-                                 << ".";
+        MS_EXCEPTION(ValueError) << "For '" << prim->name()
+                                 << "', 'axis' must be in [-1, 0]. But got 'axis' = " << axis->at(i) << ".";
       }
       axis->at(i) = 0;
       continue;
@@ -115,6 +115,9 @@ ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const Sha
   auto last = std::unique(axis_value.begin(), axis_value.end());
   axis_value.erase(last, axis_value.end());
   if (keep_dims_value) {
+    if (x_shape.size() == 0) {
+      return {};
+    }
     for (auto i : axis_value) {
       out_shape.at(LongToSize(i)) = 1;
     }
