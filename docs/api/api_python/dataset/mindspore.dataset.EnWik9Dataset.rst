@@ -3,7 +3,7 @@ mindspore.dataset.EnWik9Dataset
 
 .. py:class:: mindspore.dataset.EnWik9Dataset(dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=True, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析EnWik9数据集的源数据集。
+    读取和解析EnWik9 Full和EnWik9 Polarity数据集。
 
     生成的数据集有一列 `[text]` ，数据类型为string。
 
@@ -13,16 +13,22 @@ mindspore.dataset.EnWik9Dataset
           对于Polarity数据集，'train'将读取360万个训练样本，'test'将读取40万个测试样本，'all'将读取所有400万个样本。
           对于Full数据集，'train'将读取300万个训练样本，'test'将读取65万个测试样本，'all'将读取所有365万个样本。默认值：None，读取所有样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
-        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：True。
+        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：True。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：
 
           - **Shuffle.GLOBAL**：混洗文件和样本。
           - **Shuffle.FILES**：仅混洗文件。
 
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
-        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
+        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
+        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
+
+    异常：
+        - **RuntimeError** - `dataset_dir` 参数所指向的文件目录不存在或缺少数据集文件。
+        - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+        - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
     **关于EnWik9数据集：**
 

@@ -456,38 +456,38 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses LJSpeech dataset.
 
-    The generated dataset has four columns :py:obj:`[waveform, sample_rate, transcription, normalized_transcript]`.
-    The tensor of column :py:obj:`waveform` is a tensor of the float32 type.
-    The tensor of column :py:obj:`sample_rate` is a scalar of the int32 type.
-    The tensor of column :py:obj:`transcription` is a scalar of the string type.
-    The tensor of column :py:obj:`normalized_transcript` is a scalar of the string type.
+    The generated dataset has four columns :py:obj:`[waveform, sample_rate, transcription, normalized_transcript]` .
+    The column :py:obj:`waveform` is a tensor of the float32 type.
+    The column :py:obj:`sample_rate` is a scalar of the int32 type.
+    The column :py:obj:`transcription` is a scalar of the string type.
+    The column :py:obj:`normalized_transcript` is a scalar of the string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_samples (int, optional): The number of audios to be included in the dataset
-            (default=None, all audios).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
+        num_samples (int, optional): The number of audios to be included in the dataset.
+            Default: None, all audios.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the mindspore.dataset.config.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
+            order behavior shown in the table below.
+        sampler (Sampler, optional): Object used to choose samples from the dataset.
+            Default: None, expected order behavior shown in the table below.
+        num_shards (int, optional): Number of shards that the dataset will be divided into.
+            Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:

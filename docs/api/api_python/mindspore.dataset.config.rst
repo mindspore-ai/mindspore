@@ -303,24 +303,6 @@ API示例所需模块的导入代码如下：
     返回：
         bool，表示是否开启watchdog Python线程。
 
-.. py:function:: mindspore.dataset.config.set_multiprocessing_timeout_interval(interval)
-
-    设置在多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的默认时间间隔（秒）。
-
-    参数：
-        - **interval** (int) - 表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（秒）。
-
-    异常：
-        - **TypeError** - `interval` 不是int类型。
-        - **ValueError** - `interval` 小于等于0或 `interval` 大于 `INT32_MAX(2147483647)` 时， `interval` 无效。
-
-.. py:function:: mindspore.dataset.config.get_multiprocessing_timeout_interval()
-
-    获取在多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔的全局配置。
-
-    返回：
-        int，表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（默认300秒）。
-
 .. py:function:: mindspore.dataset.config.set_fast_recovery(fast_recovery)
 
     在数据集管道故障恢复时，是否开启快速恢复模式（快速恢复模式下，无法保证随机性的数据增强操作得到与故障之前相同的结果）。
@@ -340,3 +322,21 @@ API示例所需模块的导入代码如下：
 
 .. automodule:: mindspore.dataset.config
     :members:
+
+.. py:function:: mindspore.dataset.config.set_multiprocessing_timeout_interval(interval)
+
+    设置在多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的默认时间间隔（秒）。
+
+    参数：
+        - **interval** (int) - 表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（秒）。
+
+    异常：
+        - **TypeError** - `interval` 不是int类型。
+        - **ValueError** - `interval` 小于等于0或 `interval` 大于 `INT32_MAX(2147483647)` 时， `interval` 无效。
+
+.. py:function:: mindspore.dataset.config.get_multiprocessing_timeout_interval()
+
+    获取在多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔的全局配置。
+
+    返回：
+        int，表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（默认300秒）。
