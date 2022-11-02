@@ -34,10 +34,10 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/glog/repository/archive/v0.4.0.tar.gz")
-    set(MD5 "9a7598a00c569a11ff1a419076de4ed7")
+    set(SHA256 "e17cd4bb7c06951a12fc9db5130ec63a9f090b84340b8556fa0d530f73c6b634")
 else()
     set(REQ_URL "https://github.com/google/glog/archive/v0.4.0.tar.gz")
-    set(MD5 "0daea8785e6df922d7887755c3d100d0")
+    set(SHA256 "f28359aeba12f30d73d9e4711ef356dc842886968112162bc73002645139c39c")
 endif()
 
 set(glog_option -DBUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON -DWITH_GFLAGS=OFF
@@ -53,7 +53,7 @@ mindspore_add_pkg(glog
         VER 0.4.0
         LIBS ${glog_lib}
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         PATCHES ${glog_patch}
         CMAKE_OPTION ${glog_option})
 include_directories(${glog_INC})

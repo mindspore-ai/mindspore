@@ -15,13 +15,13 @@ if(USE_CUDA)
         include_directories(${CUB_INCLUDE_DIRS})
     else()
         set(REQ_URL "https://github.com/NVlabs/cub/archive/1.8.0.zip")
-        set(MD5 "a821b9dffbc9d1bacf1c8db2a59094bf")
+        set(SHA256 "6bfa06ab52a650ae7ee6963143a0bbc667d6504822cbd9670369b598f18c58c3")
         set(INCLUDE "cub")
         mindspore_add_pkg(cub
                 VER 1.8.0
                 HEAD_ONLY ${INCLUDE}
                 URL ${REQ_URL}
-                MD5 ${MD5})
+                SHA256 ${SHA256})
         include_directories(${cub_INC}/../)
     endif()
 endif()

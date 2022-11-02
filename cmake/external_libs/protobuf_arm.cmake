@@ -38,10 +38,10 @@ string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/protobuf_source/repository/archive/v3.13.0.tar.gz")
-    set(MD5 "53ab10736257b3c61749de9800b8ce97")
+    set(SHA256 "ab9b39e7053a6fb06b01bf75fb6ec6a71a1ada5a5f8e2446f927336e97b9e7bb")
 else()
     set(REQ_URL "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.tar.gz")
-    set(MD5 "1a6274bc4a65b55a6fa70e264d796490")
+    set(SHA256 "9b4ee22c250fe31b16f1a24d61467e40780a3fbb9b91c3b65be2a376ed913a1a")
 endif()
 
 if(BUILD_LITE)
@@ -55,7 +55,7 @@ if(APPLE)
             VER 3.13.0
             LIBS protobuf
             URL ${REQ_URL}
-            MD5 ${MD5}
+            SHA256 ${SHA256}
             CMAKE_PATH cmake/
             CMAKE_OPTION
             -Dprotobuf_BUILD_TESTS=OFF
@@ -71,7 +71,7 @@ else()
             VER 3.13.0
             LIBS protobuf
             URL ${REQ_URL}
-            MD5 ${MD5}
+            SHA256 ${SHA256}
             CMAKE_PATH cmake/
             CMAKE_OPTION
             -Dprotobuf_BUILD_TESTS=OFF

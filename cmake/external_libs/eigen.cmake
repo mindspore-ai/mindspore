@@ -3,13 +3,13 @@ set(Eigen3_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 
 
 set(REQ_URL "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz")
-set(MD5 "4c527a9171d71a72a9d4186e65bea559")
+set(SHA256 "8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72")
 
 
 mindspore_add_pkg(Eigen3
         VER 3.4.0
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         CMAKE_OPTION -DBUILD_TESTING=OFF)
 find_package(Eigen3 3.4.0 REQUIRED ${MS_FIND_NO_DEFAULT_PATH})
 include_directories(${Eigen3_INC})

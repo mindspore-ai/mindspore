@@ -27,17 +27,17 @@ endif()
 if(ENABLE_GITEE_EULER)
     set(GIT_REPOSITORY "https://gitee.com/src-openeuler/opencv.git")
     set(GIT_TAG "openEuler-22.03-LTS")
-    set(MD5 "e2b5aa4946559d0a397148d6e1ab7284")
+    set(SHA256 "d8b00a5440c8e5d275aa5b141f89d69ee196d9dcd2d2032ddd8ef4b04010999a")
     set(OPENCV_SRC "${TOP_DIR}/build/mindspore/_deps/opencv-src")
-    __download_pkg_with_git(opencv ${GIT_REPOSITORY} ${GIT_TAG} ${MD5})
+    __download_pkg_with_git(opencv ${GIT_REPOSITORY} ${GIT_TAG} ${SHA256})
     execute_process(COMMAND tar -xf ${OPENCV_SRC}/opencv-4.5.2.tar.gz --strip-components 1 -C ${OPENCV_SRC})
 else()
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/opencv/repository/archive/4.5.2.tar.gz")
-    set(MD5 "d3141f649ab2d76595fdd8991ee15c55")
+    set(SHA256 "ae258ed50aa039279c3d36afdea5c6ecf762515836b27871a8957c610d0424f8")
 else()
     set(REQ_URL "https://github.com/opencv/opencv/archive/4.5.2.tar.gz")
-    set(MD5 "d3141f649ab2d76595fdd8991ee15c55")
+    set(SHA256 "ae258ed50aa039279c3d36afdea5c6ecf762515836b27871a8957c610d0424f8")
 endif()
 endif()
 
@@ -47,7 +47,7 @@ if(MSVC)
             LIBS opencv_core452 opencv_imgcodecs452 opencv_imgproc452
             LIB_PATH x64/*/lib
             URL ${REQ_URL}
-            MD5 ${MD5}
+            SHA256 ${SHA256}
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DWITH_PROTOBUF=OFF -DWITH_WEBP=OFF -DWITH_IPP=OFF
             -DWITH_ADE=OFF
             -DBUILD_ZLIB=ON
@@ -74,7 +74,7 @@ elseif(WIN32)
                 LIBS libopencv_core452.dll.a libopencv_imgcodecs452.dll.a libopencv_imgproc452.dll.a
                 LIB_PATH x64/mingw/lib
                 URL ${REQ_URL}
-                MD5 ${MD5}
+                SHA256 ${SHA256}
                 CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DWITH_PROTOBUF=OFF -DWITH_WEBP=OFF -DWITH_IPP=OFF
                 -DWITH_ADE=OFF
                 -DBUILD_ZLIB=ON
@@ -101,7 +101,7 @@ else()
                 VER 4.5.2
                 LIBS opencv_core opencv_imgcodecs opencv_imgproc
                 URL ${REQ_URL}
-                MD5  ${MD5}
+                SHA256  ${SHA256}
                 CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DWITH_PROTOBUF=OFF -DWITH_WEBP=OFF -DWITH_IPP=OFF
                 -DWITH_ADE=OFF
                 -DBUILD_ZLIB=ON

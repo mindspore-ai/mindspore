@@ -1,10 +1,10 @@
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libjpeg-turbo/repository/archive/2.0.4.tar.gz")
-    set(MD5 "44c43e4a9fb352f47090804529317c88")
+    set(SHA256 "7777c3c19762940cff42b3ba4d7cd5c52d1671b39a79532050c85efb99079064")
 else()
     set(REQ_URL "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/2.0.4.tar.gz")
-    set(MD5 "44c43e4a9fb352f47090804529317c88")
+    set(SHA256 "7777c3c19762940cff42b3ba4d7cd5c52d1671b39a79532050c85efb99079064")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -56,7 +56,7 @@ mindspore_add_pkg(jpeg_turbo
         VER 2.0.4
         LIBS jpeg turbojpeg
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         CMAKE_OPTION ${CMAKE_OPTION}
         PATCHES ${JPEG_TURBO_PATCHE}
         PATCHES ${CVE_2020_35538}

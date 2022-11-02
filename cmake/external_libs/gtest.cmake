@@ -31,17 +31,17 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.8.1.tar.gz")
-    set(MD5 "2e6fbeb6a91310a16efe181886c59596")
+    set(SHA256 "9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c")
 else()
     set(REQ_URL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz")
-    set(MD5 "2e6fbeb6a91310a16efe181886c59596")
+    set(SHA256 "9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c")
 endif()
 
 mindspore_add_pkg(gtest
         VER 1.8.1
         LIBS gtest gmock
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         CMAKE_OPTION ${CMAKE_OPTION})
 include_directories(${gtest_INC})
 add_library(mindspore::gtest ALIAS gtest::gtest)
