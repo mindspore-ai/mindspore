@@ -187,9 +187,9 @@ size_t CombinedNonMaxSuppressionCpuKernelMod::nms_perbath(float *boxes, float *s
                                                           int *valid_detection) {
   int box_size = num_bath_ * num_detection_ * sizeof(float) * multiplier;
   int score_size = num_bath_ * num_detection_ * sizeof(float);
-  void(memset_s(nmsed_boxes, box_size, 0.0, box_size));
-  void(memset_s(nmsed_scores, score_size, 0.0, score_size));
-  void(memset_s(nmsed_class, score_size, 0.0, score_size));
+  void(memset_s(nmsed_boxes, box_size, 0, box_size));
+  void(memset_s(nmsed_scores, score_size, 0, score_size));
+  void(memset_s(nmsed_class, score_size, 0, score_size));
   void(memset_s(valid_detection, sizeof(int) * num_bath_, 0, sizeof(int) * num_bath_));
   const float box_min = 0.0;
   const float box_max = 1.0;
