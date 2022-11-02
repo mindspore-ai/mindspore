@@ -44,6 +44,7 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
   (void)std::copy_if(
     kernel_info_list->begin(), kernel_info_list->end(), std::back_inserter(filtered_list),
     [output_tensor_num, input_tensor_num](const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info) {
+      MS_EXCEPTION_IF_NULL(kernel_build_info);
       return kernel_build_info->GetOutputNum() == output_tensor_num &&
              kernel_build_info->GetInputNum() == input_tensor_num;
     });

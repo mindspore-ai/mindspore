@@ -473,6 +473,7 @@ bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync 
     (void)host_shape.emplace_back(1);
   }
   auto host_tensor = std::make_shared<tensor::Tensor>(src_device_address->type_id(), host_shape);
+  MS_EXCEPTION_IF_NULL(host_tensor);
   auto host_tensor_size = LongToSize(host_tensor->data().nbytes());
   auto host_tensor_type = host_tensor->data_type();
   if (!src_device_address->SyncDeviceToHost(host_shape, host_tensor_size, host_tensor_type, host_tensor->data_c())) {
@@ -490,6 +491,7 @@ bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync 
 bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) const {
   MS_EXCEPTION_IF_NULL(src_device_addr);
   auto src_device_address = dynamic_cast<const AscendDeviceAddress *>(src_device_addr);
+  MS_EXCEPTION_IF_NULL(src_device_address);
   if (format_ == src_device_address->format() && type_id_ == src_device_address->type_id()) {
     if (src_device_address->mem_offloaded()) {
       auto device_context = GetDeviceContext();
