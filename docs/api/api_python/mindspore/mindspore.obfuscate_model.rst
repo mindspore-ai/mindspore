@@ -30,3 +30,4 @@ mindspore.obfuscate_model
         - **ValueError** - `obf_config` 没有提供 `obf_ratio` 。
         - **ValueError** - `customized_func` 和 `obf_password` 都不在 `obf_config` 里面。
         - **ValueError** - `obf_password` 的取值没有在(0, 9223372036854775807]内。
+        - **ValueError** - `file_path` 不存在或者不以 '.mindir' 结尾。
