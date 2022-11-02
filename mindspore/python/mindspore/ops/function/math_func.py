@@ -29,6 +29,7 @@ from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack
+from mindspore.ops.operations._inner_ops import Roll
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore._checkparam import Rel
@@ -5677,6 +5678,40 @@ def rot90(x, k, dims):
     return out
 
 
+def roll(x, shifts, dims):
+    """
+    Rolls the elements of a tensor along an axis.
+
+    Args:
+        x (Tensor): Input tensor.
+        shifts (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
+            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
+            in the opposite direction.
+        dims (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
+
+    Returns:
+        Tensor, has the same shape and type as `x`.
+
+    Raises:
+        TypeError: If `shifts` is not an int, a tuple or a list.
+        TypeError: If `dims` is not an int, a tuple or a list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
+        >>> output = ops.roll(input_x, shifts=2, dims=0)
+        >>> print(output)
+        [3. 4. 0. 1. 2.]
+    """
+    return Roll(shifts, dims)(x)
+
+
 def xdivy(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
@@ -6989,5 +7024,6 @@ __all__ = [
     'isinf',
     'logical_xor',
     'imag',
+    'roll',
 ]
 __all__.sort()

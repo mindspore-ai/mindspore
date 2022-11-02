@@ -80,7 +80,7 @@
     mindspore.Tensor.equal
     mindspore.Tensor.erf
     mindspore.Tensor.erfc
-    mindspore.Tensor.erfinv    
+    mindspore.Tensor.erfinv
     mindspore.Tensor.exp
     mindspore.Tensor.expand
     mindspore.Tensor.expand_as
@@ -156,11 +156,15 @@
     mindspore.Tensor.ravel
     mindspore.Tensor.renorm
     mindspore.Tensor.repeat
+    mindspore.Tensor.repeat_interleave
     mindspore.Tensor.reshape
+    mindspore.Tensor.reshape_as
     mindspore.Tensor.resize
     mindspore.Tensor.reverse
     mindspore.Tensor.reverse_sequence
     mindspore.Tensor.round
+    mindspore.Tensor.roll
+    mindspore.Tensor.rot90
     mindspore.Tensor.scatter_add
     mindspore.Tensor.scatter_div
     mindspore.Tensor.scatter_max
@@ -171,6 +175,7 @@
     mindspore.Tensor.select
     mindspore.Tensor.set_const_arg
     mindspore.Tensor.shape
+    mindspore.Tensor.short
     mindspore.Tensor.sigmoid
     mindspore.Tensor.size
     mindspore.Tensor.soft_shrink

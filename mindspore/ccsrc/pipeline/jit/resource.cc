@@ -206,6 +206,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"transpose", std::string("transpose")},                            // P.transpose
        {"flatten", std::string("flatten")},                                // P.reshape(,-1)
        {"reshape", std::string("reshape")},                                // P.reshape()
+       {"reshape_as", std::string("reshape_as")},                          // P.reshape()
        {"reverse", std::string("reverse")},                                // P.ReverseV2()
        {"reverse_sequence", std::string("reverse_sequence")},              // P.ReverseSequence()
        {"bitwise_and", std::string("bitwise_and")},                        // P.BitwiseAnd()
@@ -223,11 +224,13 @@ BuiltInTypeMap &GetMethodMap() {
        {"squeeze", std::string("squeeze")},                                // P.squeeze()
        {"unbind", std::string("unbind")},                                  // P.Unstack()
        {"astype", std::string("astype")},                                  // P.cast()
+       {"short", std::string("short")},                                    // P.cast()
        {"median", std::string("median")},                                  // P.median()
        {"cumsum", std::string("cumsum")},                                  // P.cumsum()
        {"cummin", std::string("cummin")},                                  // cummin()
        {"cummax", std::string("cummax")},                                  // cummax()
        {"index_fill", std::string("index_fill")},                          // index_fill()
+       {"repeat_interleave", std::string("repeat_interleave")},            // repeat_interleave()
        {"copy", std::string("copy")},                                      // copy()
        {"inplace_update", std::string("inplace_update")},                  // P.InplaceUpdate
        {"lerp", std::string("lerp")},                                      // lerp()
@@ -246,6 +249,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"cosh", std::string("cosh")},                                      // P.Cosh()
        {"tanh", std::string("tanh")},                                      // P.Tanh()
        {"round", std::string("round_")},                                   // P.Round()
+       {"roll", std::string("roll")},                                      // P.Roll()
+       {"rot90", std::string("rot90")},                                    // rot90()
        {"fill", std::string("fill")},                                      // P.fill()
        {"fills", std::string("fills")},                                    // P.fills
        {"ptp", std::string("ptp")},                                        // P.reduce_max() - P.reduce_min()

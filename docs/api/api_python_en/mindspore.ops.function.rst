@@ -193,6 +193,7 @@ Element-by-Element Operations
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
+    mindspore.ops.roll
     mindspore.ops.round
     mindspore.ops.sin
     mindspore.ops.sinh
