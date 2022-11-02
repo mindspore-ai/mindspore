@@ -28,10 +28,8 @@ namespace opt {
 namespace {
 const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool first_flag,
                                 std::vector<CNodePtr> *trans_road) {
-  if (node == nullptr) {
-    MS_LOG(ERROR) << "node is nullptr";
-    return nullptr;
-  }
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
     auto op_name = common::AnfAlgo::GetCNodeName(cnode);

@@ -293,9 +293,9 @@ const BaseRef AdamApplyOneWithDecayAssignRuleCond5::DefinePattern() const {
 
 const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                     const EquivPtr &equiv) const {
-  if (graph == nullptr || node == nullptr || equiv == nullptr) {
-    return nullptr;
-  }
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(equiv);
   auto sub0 = node;
   if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
     auto iter_sub0 = (*equiv).find(sub0_var_);

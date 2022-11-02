@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-const size_t kReluV2OutputNum = 2;
+constexpr size_t kReluV2OutputNum = 2;
 
 CNodePtr GetRelu(const CNodePtr &relu_grad) {
   MS_EXCEPTION_IF_NULL(relu_grad);

@@ -91,7 +91,7 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
   common::AnfAlgo::CopyNodeAttrs(node, new_node);
   auto input_names_value = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(new_node, kAttrInputNames);
   input_names_value[kIndex3] = "x1";
-  input_names_value.emplace_back("x2");
+  (void)input_names_value.emplace_back("x2");
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_value), new_node);
   new_node->set_abstract(node->abstract());
   new_node->set_scope(node->scope());
