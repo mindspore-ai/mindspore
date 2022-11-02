@@ -34,7 +34,6 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "pipeline/pynative/pynative_execute.h"
-#include "frontend/optimizer/py_pass_manager.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "include/common/utils/parallel_context.h"
@@ -928,7 +927,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
 #endif
-  opt::python_pass::PyPassManager::GetInstance()->ClearPipelineRes();
   abstract::AnalysisContext::ClearContext();
   // Reclaim all resource used by optimizer.
   ReclaimOptimizer();
@@ -1834,10 +1832,6 @@ void ClearResPart2() {
   MS_LOG(INFO) << "Start clear PyNativeExecutor...";
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   MS_LOG(INFO) << "End clear PyNativeExecutor.";
-
-  MS_LOG(INFO) << "Start clear PyPassManager...";
-  opt::python_pass::PyPassManager::GetInstance()->ClearRes();
-  MS_LOG(INFO) << "End clear PyPassManager.";
 
 #ifdef WITH_BACKEND
   auto ms_context = MsContext::GetInstance();
