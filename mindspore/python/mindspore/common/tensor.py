@@ -992,9 +992,8 @@ class Tensor(Tensor_):
 
     def true_divide(self, value):
         r"""
-        Alias for Tensor.div() with :math:`rounding_mode=None`.
-        Refer to `Tensor.div()
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.div.html>`_.
+        Alias for Tensor.div() with :math:`rounding\_mode=None`.
+        For details, please refer to :func:`mindspore.ops.div`.
         """
         self._init_check()
         return tensor_operator_registry.get('div')(self, value, None)

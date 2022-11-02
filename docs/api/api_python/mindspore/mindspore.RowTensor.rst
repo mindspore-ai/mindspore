@@ -30,18 +30,3 @@ mindspore.RowTensor
 
     返回：
         RowTensor，由 `indices` 、 `values` 和 `shape` 组成。
-
-    .. py:method:: dense_shape
-        :property:
-
-        返回稀疏矩阵的稠密形状。
-
-    .. py:method:: indices
-        :property:
-
-        返回RowTensor的索引值。
-    
-    .. py:method:: values
-        :property:
-
-        返回RowTensor的非零元素值。

@@ -27,7 +27,7 @@ class ChannelShuffle(Cell):
     while keeping the original tensor shape.
 
     Args:
-        groups (int): Number of groups to divide channels in. Refer to :math`g`.
+        groups (int): Number of groups to divide channels in. Refer to :math:`g`.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, C_{in}, H_{in}, W_{in})`.
