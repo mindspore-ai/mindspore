@@ -50,7 +50,9 @@ class Rprop(Optimizer):
 
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight.
+        or 'gamma' in their names.
+
+        Users can group parameters to change the strategy of decaying weight.
 
         When parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
         applied.

@@ -53,11 +53,11 @@ class Cell(Cell_):
     PYNATIVE_MODE (dynamic graph mode).
 
     Args:
-        auto_prefix (bool): Whether to automatically generate NameSpace for Cell and its subcells. It will affect the
-                      name of the parameter in the network. If set to True, the network parameter
+        auto_prefix (bool, optional): Whether to automatically generate NameSpace for Cell and its subcells. It will
+                      affect the name of the parameter in the network. If set to True, the network parameter
                       name will be prefixed, otherwise it will not. Default: True.
-        flags (dict): Network configuration information, currently it is used for the binding of network and dataset.
-                      Users can also customize network attributes by this parameter. Default: None.
+        flags (dict, optional): Network configuration information, currently it is used for the binding of network
+                      and dataset. Users can also customize network attributes by this parameter. Default: None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
