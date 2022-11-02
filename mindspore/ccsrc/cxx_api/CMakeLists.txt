@@ -112,18 +112,19 @@ endif()
 if(ENABLE_D OR ENABLE_GPU)
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${SECUREC_LIBRARY}
             mindspore_backend mindspore_core mindspore_common proto_input mindspore::protobuf)
-    add_library(api_lib SHARED ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
-            ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc
-            )
-    target_link_libraries(api_lib PRIVATE mindspore_shared_lib -Wl,--no-as-needed ${PYTHON_LIBRARIES})
-    set_target_properties(api_lib PROPERTIES OUTPUT_NAME mindspore)
+
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        add_library(api_lib SHARED ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
+                ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc
+                )
+        target_link_libraries(api_lib PRIVATE mindspore_shared_lib -Wl,--no-as-needed ${PYTHON_LIBRARIES})
+        set_target_properties(api_lib PROPERTIES OUTPUT_NAME mindspore)
         set_target_properties(api_lib PROPERTIES INSTALL_RPATH "$ORIGIN")
     endif()
 else()
