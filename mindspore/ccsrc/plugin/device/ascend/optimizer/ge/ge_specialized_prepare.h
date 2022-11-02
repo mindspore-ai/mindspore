@@ -17,10 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_GE_SPECIALIZED_PREPARE_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_GE_SPECIALIZED_PREPARE_H_
 
-#include <vector>
-#include <algorithm>
 #include <unordered_map>
-
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {

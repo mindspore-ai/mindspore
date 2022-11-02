@@ -78,16 +78,7 @@ AnfNodePtr CreateUpdateStateNode(const FuncGraphPtr &graph, const bool is_need_u
   return update_state_node;
 }
 
-ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, double value) {
-  auto value_ptr = std::make_shared<tensor::Tensor>(value);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  auto new_node = std::make_shared<ValueNode>(value_ptr);
-  MS_EXCEPTION_IF_NULL(new_node);
-  auto value_abstract = value_ptr->ToAbstract();
-  new_node->set_abstract(value_abstract);
-  return new_node;
-}
-ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
+ValueNodePtr CreateValueNode(const ValuePtr &value_ptr) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -176,7 +167,7 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
 
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
 
-  auto axis_node = CreateValueNode(MakeValue(axis), kNumberTypeInt64);
+  auto axis_node = CreateValueNode(MakeValue(axis));
   // Calc the sum of reducesum
   const std::vector<AnfNodePtr> square_sum_node_inputs = {NewValueNode(std::make_shared<Primitive>(kReduceSumOpName)),
                                                           square_node, axis_node};
@@ -279,9 +270,11 @@ const AnfNodePtr LambFissionGe::Process(const FuncGraphPtr &graph, const AnfNode
   auto new_global_step = CreateCastNode(graph, global_step_node, kNumberTypeFloat32);
 
   // cast delay flag to float32
-  auto weight_decay_flag = CreateValueNode(graph, 1.0);
+  auto flag = std::make_shared<tensor::Tensor>(1.0);
+  auto weight_decay_flag = CreateValueNode(flag);
 
-  auto num_one = CreateValueNode(graph, 1.0);
+  auto num = std::make_shared<tensor::Tensor>(1.0);
+  auto num_one = CreateValueNode(num);
   // create 1-beta1
   auto sub_beta1 = CreateNodeOfBinaryOp(graph, kSubOpName, num_one, ori_inputs[kBeta1Index], ori_inputs[kBeta1Index]);
   // create 1-beta2

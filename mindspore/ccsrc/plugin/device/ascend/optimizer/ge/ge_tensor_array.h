@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_GE_TENSOR_ARRAY_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_GE_TENSOR_ARRAY_H_
 
-#include <vector>
 #include <memory>
-#include <algorithm>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 namespace mindspore {
