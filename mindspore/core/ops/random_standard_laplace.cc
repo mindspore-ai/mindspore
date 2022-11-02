@@ -61,6 +61,10 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(out_shape);
   } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
     if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
+      if (x_shape.size() != 1) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', rank of the input Tensor shall be 1, but got: " << x_shape.size() << ".";
+      }
       ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name);
       return std::make_shared<abstract::Shape>(input_shape);
     } else {
@@ -72,7 +76,7 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
     }
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input must be a Int, a tuple, or a Tensor with all Int elements, but got: "
+                            << "', input must be a tuple, or a Tensor with all Int elements, but got: "
                             << input_args[kInputIndex0]->ToString() << ".";
   }
 }
@@ -94,7 +98,7 @@ TypePtr StandardLaplaceInferType(const PrimitivePtr &primitive, const std::vecto
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_dtype, valid_shape_types, prim_name);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input must be a Int, a tuple, or a Tensor with all Int elements, but got: "
+                            << "', input must be a tuple, or a Tensor with all Int elements, but got: "
                             << input_args[kInputIndex0]->ToString() << ".";
   }
   return std::make_shared<TensorType>(kFloat32);
