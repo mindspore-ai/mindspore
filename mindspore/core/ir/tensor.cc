@@ -564,6 +564,7 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
       return std::make_shared<ImplClass<int8_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt16:
       return std::make_shared<ImplClass<int16_t>>(std::forward<Args>(args)...);
+    case kNumberTypeInt:
     case kNumberTypeInt32:
       return std::make_shared<ImplClass<int32_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt64:
