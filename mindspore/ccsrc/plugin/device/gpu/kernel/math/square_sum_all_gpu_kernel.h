@@ -69,7 +69,7 @@ class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
     output_size_ = 1;
     if (is_null_input_ || is_null_output_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     for (size_t i = 0; i < input_shape.size(); ++i) {
       input_size_ *= static_cast<size_t>(input_shape[i]);
