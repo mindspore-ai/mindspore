@@ -59,11 +59,12 @@ class ScalarSummary(Primitive):
 
     Inputs:
         - **name** (str) - The name of the input variable, it must not be an empty string.
-        - **value** (Tensor) - The value of scalar, and the dim of value must be 0 or 1.
+        - **value** (Tensor) - The value of scalar, and the dim of `value` must be 0 or 1.
 
     Raises:
         TypeError: If `name` is not a str.
         TypeError: If `value` is not a Tensor.
+        TypeError: If dim of `value` is greater than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -84,7 +85,9 @@ class ScalarSummary(Primitive):
         ...         self.summary(name, x)
         ...         x = self.add(x, y)
         ...         return x
-        ...
+        >>> summary = SummaryDemo()(Tensor(3), Tensor(4))
+        >>> print(summary)
+        Tensor(shape=[], dtype=Int64, value=7)
     """
 
     @prim_attr_register
@@ -169,6 +172,7 @@ class TensorSummary(Primitive):
     Raises:
         TypeError: If `name` is not a str.
         TypeError: If `value` is not a Tensor.
+        ValueError: If rank of `value` is 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -189,7 +193,9 @@ class TensorSummary(Primitive):
         ...         name = "x"
         ...         self.summary(name, x)
         ...         return x
-        ...
+        >>> summary = SummaryDemo()(Tensor([[1]]), Tensor([[2]]))
+        >>> print(summary)
+        Tensor(shape=[1, 1], dtype=Int64, value=[[3]])
     """
 
     @prim_attr_register

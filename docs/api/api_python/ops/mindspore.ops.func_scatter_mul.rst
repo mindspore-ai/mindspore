@@ -3,7 +3,7 @@ mindspore.ops.scatter_mul
 
 .. py:function:: mindspore.ops.scatter_mul(input_x, indices, updates)
 
-    根据指定更新值和输入索引通过乘法运算更新输入数据的值。
+    根据指定更新值和输入索引通过乘法运算更新输入数据的值。此操作会在数据更新完成之后输出 `input_x` ，便于使用更新后值。
 
     对于 `indices.shape` 的每个 `i, ..., j` ：
 
@@ -13,8 +13,8 @@ mindspore.ops.scatter_mul
     输入的 `input_x` 和 `updates` 遵循隐式类型转换规则，以确保数据类型一致。如果数据类型不同，则低精度数据类型将转换为高精度的数据类型。当参数的数据类型需要转换时，则会抛出RuntimeError异常。
 
     参数：
-        - **input_x** (Parameter) - ScatterMul的输入，任意维度的Parameter。
-        - **indices** (Tensor) - 指定相乘操作的索引，数据类型必须为mindspore.int32。
+        - **input_x** (Parameter) - 被更新的Tensor，数据类型为Parameter，shape为 :math:`(N,*)` ，其中 :math:`*` 为任意的额外维度。
+        - **indices** (Tensor) - 指定相乘操作的索引，数据类型必须为int32或者int64。
         - **updates** (Tensor) - 指定与 `input_x` 相乘的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 
     返回：

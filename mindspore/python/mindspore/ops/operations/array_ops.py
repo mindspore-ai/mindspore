@@ -2667,9 +2667,7 @@ class ConcatOffsetV1(Primitive):
 
 class ParallelConcat(Primitive):
     r"""
-    Concats tensor in the first dimension.
-
-    Concats input tensors along with the first dimension.
+    Concats input tensors along the first dimension.
 
     The difference between Concat and ParallelConcat is that Concat requires all of the inputs be computed
     before the operation will begin but doesn't require that the input shapes be known during graph construction.
@@ -2681,7 +2679,8 @@ class ParallelConcat(Primitive):
 
     Inputs:
         - **values** (tuple, list) - A tuple or a list of input tensors. The data type and shape of these
-          tensors must be the same. The supported date type is Number on CPU, the same for Ascend except
+          tensors must be the same and their rank should not be less than 1.
+          The supported date type is Number on CPU, the same for Ascend except
           [float64, complex64, complex128].
 
     Outputs:
@@ -2691,7 +2690,7 @@ class ParallelConcat(Primitive):
         TypeError: If any type of the inputs is not a Tensor.
         TypeError: If the data type of these tensors are not the same.
         ValueError: If any tensor.shape[0] is not 1.
-        ValueError: If length of shape of `values` is less than 1.
+        ValueError: If rank of any Tensor in `values` is less than 1.
         ValueError: If the shape of these tensors are not the same.
 
     Supported Platforms:
@@ -3081,11 +3080,12 @@ class ReverseV2(Primitive):
 
 class Rint(Primitive):
     """
-    Returns an integer that is closest to x element-wise.
+    Returns an integer that is closest to `input_x` element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor, which must be one of the following types:
-          float16, float32. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          float16, float32, float64. The shape is :math:`(N,*)` where :math:`*` means
+          any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -3141,7 +3141,7 @@ class Select(Primitive):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
-        ValueError: If shape of `x` is not equal to shape of `y` or shape of `condition`.
+        ValueError: If shape of the three inputs are different.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

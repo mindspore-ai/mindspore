@@ -3,7 +3,7 @@ mindspore.ops.random_categorical
 
 .. py:function:: mindspore.ops.random_categorical(logits, num_sample, seed=0, dtype=mstype.int64)
 
-    从分类分布中抽取样本。
+    从一个分类分布中生成随机样本。
 
     参数：
         - **logits** (Tensor) - 输入Tensor。Shape为 :math:`(batch\_size, num\_classes)` 的二维Tensor。

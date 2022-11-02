@@ -9,7 +9,7 @@ mindspore.ops.Rsqrt
         out_{i} =  \frac{1}{\sqrt{x_{i}}}
 
     输入：
-        - **x** (Tensor) - Rsqrt的输入，其rank必须在[0, 7]（含）中，并且每个元素必须是非负数。
+        - **x** (Tensor) - Rsqrt的输入，其rank必须在[0, 7]内，并且每个元素必须是非负数。
 
     输出：
         Tensor，数据类型和shape与 `x` 相同。

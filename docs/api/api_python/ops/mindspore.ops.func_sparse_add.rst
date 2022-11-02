@@ -3,7 +3,7 @@ mindspore.ops.sparse_add
 
 .. py:function:: mindspore.ops.sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor)
 
-    两个COOTensor相加，根据相加的结果与thresh返回新的COOTensor。
+    两个COOTensor相加，根据相加的结果与 `thresh` 返回新的COOTensor。
 
     参数：
         - **x1** (COOTensor) - 一个操作数，与当前操作数相加。

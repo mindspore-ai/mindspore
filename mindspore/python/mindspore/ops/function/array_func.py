@@ -793,7 +793,7 @@ def size(input_x):
 
 def shape(input_x):
     """
-    Returns the shape of the input tensor. And it used to be static shape.
+    Returns the shape of the input tensor. This operation is used in static shape cases.
 
     static shape: A shape that can be obtained without running the graph. It is an inherent property of tensor and
     may be unknown. The static shape information can be completed by artificial setting.
@@ -916,7 +916,7 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
 
     Args:
         x (Tensor): The input to reverse, supporting all number types including bool.
-        seq_lengths (Tensor): Must be a 1-D vector with int32 or int64 types.
+        seq_lengths (Tensor): Specified reversing length, must be a 1-D vector with int32 or int64 types.
         seq_dim (int): The dimension where reversal is performed. Required.
         batch_dim (int): The input is sliced in this dimension. Default: 0.
 
@@ -1651,8 +1651,6 @@ def transpose(input_x, input_perm):
 
 def scatter_mul(input_x, indices, updates):
     r"""
-    Updates the value of the input tensor through the multiply operation.
-
     Using given values to update tensor value through the mul operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
@@ -1668,10 +1666,10 @@ def scatter_mul(input_x, indices, updates):
     when the data types of parameters need to be converted.
 
     Args:
-        input_x (Parameter): The target tensor, with data type of Parameter.
+        input_x (Parameter): The target tensor to be updated, with data type of Parameter.
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
-        updates (Tensor): The tensor doing the min operation with `input_x`,
+        indices (Tensor): The index to do mul operation whose data type must be int32 or int64.
+        updates (Tensor): The tensor doing the mul operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
     Returns:
@@ -2855,13 +2853,12 @@ def tensor_scatter_sub(input_x, indices, updates):
 
 def tensor_scatter_max(input_x, indices, updates):
     """
-    By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
+    By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
     The last axis of the index is the depth of each index vector. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of input_x[indices].
-    For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
@@ -4493,7 +4490,7 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Raises:
-        TypeError: If `num_segments` is not an int.
+        TypeError: If `num_segments` is not an int or 0-D Tensor.
         ValueError: If length of shape of `segment_ids` is less than 1.
 
     Supported Platforms:

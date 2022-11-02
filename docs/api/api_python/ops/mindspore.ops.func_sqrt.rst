@@ -3,16 +3,17 @@ mindspore.ops.sqrt
 
 .. py:function:: mindspore.ops.sqrt(x)
 
-    逐元素返回当前Tensor的平方。
+    逐元素返回当前Tensor的平方根。
 
     .. math::
-        y_i = \\sqrt(x_i)
+        out_{i} = \\sqrt{x_{i}}
 
     参数：
-        - **x** (Tensor) - 任意维度的输入Tensor。该值必须大于0。
+        - **x** (Tensor) - 输入Tensor，数据类型为number.Number，其rank需要在[0, 7]范围内.
 
     返回：
         Tensor，具有与 `x` 相同的shape。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - 如果 `x` 不是Tensor。
+

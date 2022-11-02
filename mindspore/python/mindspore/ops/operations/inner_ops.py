@@ -107,7 +107,7 @@ class Randperm(Primitive):
 
 class NoRepeatNGram(PrimitiveWithInfer):
     """
-    Updates log_probs with repeat n-grams.
+    Updates the probability of occurrence of words with its corresponding n-grams.
 
     During beam search, if consecutive `ngram_size` words exist in the generated word sequence,
     the consecutive `ngram_size` words will be avoided during subsequent prediction.
@@ -119,8 +119,9 @@ class NoRepeatNGram(PrimitiveWithInfer):
         ngram_size (int): Size of n-grams, must be greater than 0. Default: 1.
 
     Inputs:
-        - **state_seq** (Tensor) - A 3-D tensor with shape: (batch_size, beam_width, m).
-        - **log_probs** (Tensor) - A 3-D tensor with shape: (batch_size, beam_width, vocab_size).
+        - **state_seq** (Tensor) - n-gram word series, a 3-D tensor with shape: (batch_size, beam_width, m).
+        - **log_probs** (Tensor) - Probability of occurrence of n-gram word series, a 3-D
+          tensor with shape: (batch_size, beam_width, vocab_size).
           The value of log_probs will be replaced with -FLOAT_MAX when n-grams repeated.
 
     Outputs:

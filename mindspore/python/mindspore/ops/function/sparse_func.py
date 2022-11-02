@@ -560,7 +560,8 @@ def sparse_concat(sp_input, concat_dim=0):
 
 def sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
     """
-    Computes the sum of x1(COOTensor) and x2(COOTensor).
+    Computes the sum of x1(COOTensor) and x2(COOTensor), and return a new COOTensor
+    based on the computed result and `thresh`.
 
     Args:
         x1 (COOTensor): the first COOTensor to sum.

@@ -4245,14 +4245,17 @@ class NPUAllocFloatStatus(Primitive):
 
 class NPUGetFloatStatus(Primitive):
     """
-    Updates the flag which is the output tensor of `NPUAllocFloatStatus` with the latest overflow status.
+    :class:`mindspore.ops.NPUGetFloatStatus` updates the flag which is
+    the output tensor of :class:`mindspore.ops.NPUAllocFloatStatus` with the latest overflow status.
 
-    The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
-    If the sum of the flag equals to 0, there is no overflow happened. If the sum of the flag is bigger than 0, there
-    is overflow happened.
-    In addition, there are strict sequencing requirements for use, i.e., before using the NPUGetFloatStatus operator,
-    need to ensure that the NPUClearFlotStatus and your compute has been executed.
-    We use Depend on ensure the execution order.
+
+    Note:
+        The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
+        If the sum of the flag equals to 0, there is no overflow happened. If the sum of the
+        flag is bigger than 0, there is overflow happened.
+        In addition, there are strict sequencing requirements for use, i.e., before
+        using the NPUGetFloatStatus operator, need to ensure that the NPUClearFlotStatus
+        and your compute has been executed. We use :class:`mindspore.ops.Depend` to ensure the execution order.
 
     Inputs:
         - **x** (Tensor) - The output tensor of `NPUAllocFloatStatus`.

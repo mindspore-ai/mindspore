@@ -24,4 +24,4 @@ mindspore.ops.Select
 
     异常：
         - **TypeError** - 如果 `x` 或者 `y` 不是Tensor。
-        - **ValueError** - 如果 `x` 的shape与 `y` 或者 `condition` 的shape不一致。
+        - **ValueError** - 如果三个输入的shape不一致。

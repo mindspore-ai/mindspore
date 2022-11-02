@@ -339,7 +339,8 @@ def uniform_candidate_sampler(true_classes,
 
 def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     r"""
-    Generates random numbers according to the Poisson random number distribution.
+    Generates random number Tensor with shape `shape` according to a Poisson distribution with mean `rate`.
+
 
     .. math::
 
@@ -348,7 +349,7 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     Args:
         shape (Tensor): The shape of random tensor to be sampled from each poisson distribution, 1-D `Tensor` whose
           dtype is mindspore.dtype.int32 or mindspore.dtype.int64.
-        rate (Tensor): The μ parameter the distribution was constructed with. It represents the mean of the distribution
+        rate (Tensor): The μ parameter the distribution is constructed with. It represents the mean of the distribution
           and also the variance of the distribution. It should be a `Tensor` whose dtype is mindspore.dtype.int64,
           mindspore.dtype.int32, mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16.
         seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers

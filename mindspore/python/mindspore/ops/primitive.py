@@ -89,6 +89,13 @@ class Primitive(Primitive_):
 
         Args:
             device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
+
+        Examples:
+            >>> import mindspore.ops as ops
+            >>> a = ops.Add()
+            >>> a = a.set_device("GPU")
+            >>> print(a.primitive_target)
+            GPU
         """
         return self.add_prim_attr("primitive_target", device_target)
 
