@@ -158,6 +158,24 @@ def test_output_function_tuple():
         net()
 
 
+def test_output_getattr_function_tuple():
+    """
+    Feature: Graph syntax.
+    Description: Return function in output in graph mode.
+    Expectation: Throw Exception.
+    """
+    class Net(Cell):
+        def construct(self, x):
+            abs_x = getattr(x, 'abs')
+            abs_y = getattr(Tensor([-1, -2, -3]), 'abs')
+            return abs_x, abs_y
+
+    with pytest.raises(RuntimeError, match="Function in output is not supported."):
+        x = Tensor([-1, -2, -3])
+        net = Net()
+        net(x)
+
+
 def test_tuple_tuple_0():
     class Net(Cell):
         def __init__(self):

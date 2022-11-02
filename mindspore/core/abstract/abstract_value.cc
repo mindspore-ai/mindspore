@@ -640,6 +640,9 @@ bool AbstractSequence::PurifyElements() {
     MS_EXCEPTION_IF_NULL(elements_[i]);
     if (!elements_use_flags[i]) {
       const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
+      if (elements_[i]->isa<AbstractError>()) {
+        unuse_node_none->set_type(std::make_shared<Problem>());
+      }
       elements_[i] = unuse_node_none;
       MS_LOG(DEBUG) << "Erase elements[" << i << "] abstract as Zero for " << ToString();
     } else {
