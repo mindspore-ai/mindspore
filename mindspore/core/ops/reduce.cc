@@ -28,13 +28,23 @@ void Reduce::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims
 
 bool Reduce::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); }
 
-void Reduce::set_skip_mode(const bool skip_mode) { (void)this->AddAttr(kSkipMode, api::MakeValue(skip_mode)); }
+void Reduce::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }
 
-bool Reduce::get_skip_mode() const { return GetValue<bool>(GetAttr(kSkipMode)); }
+void Reduce::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
-void Reduce::Init(const bool keep_dims, const bool skip_mode) {
-  this->set_keep_dims(keep_dims);
-  this->set_skip_mode(skip_mode);
+std::vector<int64_t> Reduce::get_axis() {
+  PrimitivePtr prim = this->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  std::vector<int64_t> axis = {};
+  if (prim->HasAttr(kAttrAxis)) {
+    auto value_ptr = prim->GetAttr(kAttrAxis);
+    if (value_ptr->isa<tensor::Tensor>()) {
+      axis = CheckAndConvertUtils::CheckTensorIntValue(kAttrAxis, value_ptr, prim->name());
+    } else {
+      axis = CheckAndConvertUtils::CheckIntOrTupleInt(kAttrAxis, value_ptr, prim->name());
+    }
+  }
+  return axis;
 }
 
 MIND_API_OPERATOR_IMPL(Reduce, BaseOperator);

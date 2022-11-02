@@ -39,8 +39,7 @@ class MIND_API Reduce : public BaseOperator {
   /// \brief Method to init the op's attributes.
   ///
   /// \param[in] keep_dims Define whether keep the dims reduced, default false.
-  /// \param[in] skip_mode Define whether skip reduce, default false.
-  void Init(const bool keep_dims = false, const bool skip_mode = false);
+  void Init(const bool keep_dims = false);
 
   /// \brief Method to set keep_dims attribute.
   ///
@@ -52,15 +51,9 @@ class MIND_API Reduce : public BaseOperator {
   /// \return keep_dims attribute.
   bool get_keep_dims() const;
 
-  /// \brief Method to set skip_mode attribute.
-  ///
-  /// \param[in] skip_mode Define whether skip reduce, default false.
-  void set_skip_mode(const bool skip_mode);
+  void set_axis(const std::vector<int64_t> &axis);
 
-  /// \brief Method to get skip_mode attribute.
-  ///
-  /// \return skip_mode attribute.
-  bool get_skip_mode() const;
+  std::vector<int64_t> get_axis();
 };
 abstract::AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args);

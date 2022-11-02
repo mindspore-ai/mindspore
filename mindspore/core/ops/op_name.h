@@ -116,7 +116,6 @@ constexpr auto kIoFormat = "io_format";
 constexpr auto kIsScale = "is_scale";
 constexpr auto kIsTraining = "is_training";
 constexpr auto kKeepDims = "keep_dims";
-constexpr auto kSkipMode = "skip_mode";
 constexpr auto kKeepProb = "keep_prob";
 constexpr auto kPadDimSize = "pad_dim_size";
 constexpr auto kUnbiased = "unbiased";
