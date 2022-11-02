@@ -374,11 +374,12 @@ bool WeightQuantizer::CheckWeightQuantExist(const CNodePtr &cnode) {
 int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   weight_quantized_tensors_.clear();
-  const std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                          prim::kPrimMatMulFusion, prim::kPrimFullConnection,
-                                                          prim::kPrimLstm,         prim::kPrimGather,
-                                                          prim::kPrimAdam,         prim::kPrimSGD,
-                                                          prim::kPrimApplyMomentum};
+  const std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
+                                                          prim::kPrimMatMulFusion,  prim::kPrimFullConnection,
+                                                          prim::kPrimLstm,          prim::kPrimGather,
+                                                          prim::kPrimAdam,          prim::kPrimSGD,
+                                                          prim::kPrimApplyMomentum, prim::kPrimConv2D,
+                                                          prim::kPrimMatMul};
   std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
   auto ret = WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types, {});
   if (ret != RET_OK) {
