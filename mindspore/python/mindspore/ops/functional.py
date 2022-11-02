@@ -14,34 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """The names of functional part are summarized here."""
 
-import numpy as np
-
 from mindspore.common._register_for_tensor import tensor_operator_registry
-from mindspore.common import Tensor
-from mindspore.common._decorator import deprecated
-from mindspore.common import dtype as mstype
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
 from mindspore.ops import _constants
 from mindspore.ops.function import *
 from mindspore.ops.function.sparse_func import sparse_add
 from mindspore.ops.function.sparse_func import csr_mm
-from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.function.array_func import narrow
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops
-from mindspore.ops.operations import _inner_ops
-from mindspore.ops.operations import _csr_ops
-from mindspore.ops.operations import linalg_ops
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops
 from mindspore.ops.operations.math_ops import Median
-from mindspore.ops.operations.array_ops import UniqueConsecutive
-from mindspore.ops.operations.array_ops import Triu
+from mindspore.ops.operations.array_ops import UniqueConsecutive, Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations._inner_ops import Roll
-from mindspore.ops.composite import _Vmap
 from mindspore.ops.composite.array_ops import repeat_elements
+
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -49,10 +38,8 @@ cast = P.Cast()
 dtype = P.DType()
 isconstant = Primitive('is_constant')
 isconstant.set_const_prim(True)
-
 issubclass_ = P.IsSubClass()
 isinstance_ = P.IsInstance()
-
 merge = P.Merge()
 geswitch = P.GeSwitch()
 check_bprop = P.CheckBprop()
@@ -65,204 +52,10 @@ tensor_range = P.Range()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 mixed_precision_cast = _inner_ops.MixedPrecisionCast()
-
-
-def pack(x):
-    """Call stack in this pack function."""
-    print("WARNING: 'pack' is deprecated from version 1.1 and will be removed in a future version, use 'stack' instead"
-          ".")
-    return stack(x)
-
-
 partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
 identity = P.identity()
-
-
-@deprecated("1.8", "range", False)
-def arange(start=0, stop=None, step=1, rtype=None):
-    r"""
-    The ops.arange interface is deprecated, please use :func:`mindspore.ops.range`
-
-    Supported Platforms:
-        deprecated
-    """
-    if stop is None:
-        start, stop = 0, start
-
-    arg_map = {"start": start, "stop": stop, "step": step}
-    for arg in ("start", "stop", "step"):
-        arg_value = arg_map.get(arg)
-        if not isinstance(arg_value, int) and not isinstance(arg_value, float):
-            _raise_arange_type_error(arg, arg_value)
-    if start >= stop:
-        _raise_arange_value_error(start, stop)
-
-    if rtype is None:
-        if isinstance(start, float) or isinstance(stop, float) or isinstance(step, float):
-            rtype = mstype.float32
-        else:
-            rtype = mstype.int32
-    data = _arange(start, stop, step)
-    return _make_tensor(data, rtype)
-
-
-@constexpr
-def _make_tensor(data, rtype):
-    """Make Tensor"""
-    return Tensor(data, dtype=rtype)
-
-
-@constexpr
-def _arange(start, stop, step):
-    """Arange compute"""
-    return np.arange(start, stop, step)
-
-
-@constexpr
-def _raise_arange_type_error(arg, arg_value):
-    """
-    Raise TypeError in both graph/pynative mode.
-    """
-    raise TypeError("For mindspore.ops.arange, the argument '{}' must be int or float, but got {}."
-                    .format(arg, type(arg_value)))
-
-
-@constexpr
-def _raise_arange_value_error(start, stop):
-    """
-    Raise TypeError in both graph/pynative mode
-    """
-    raise ValueError("For mindspore.ops.arange, the argument 'start' must be < 'stop', but got 'start': {}, "
-                     "'stop': {}.".format(start, stop))
-
-
-def narrow(inputs, axis, start, length):
-    """
-    Returns a narrowed tensor from input tensor, and
-    the dimension axis is input from start to start + length.
-
-    Args:
-        inputs (Tensor): the tensor to narrow.
-        axis (int): the axis along which to narrow.
-        start (int): the starting dimension.
-        length (int): the distance to the ending dimension.
-
-    Returns:
-        Tensor.
-
-        - output (Tensors) - The narrowed tensor.
-
-    Raises:
-        TypeError: If the input is not a tensor or tuple or list of tensors.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> from mindspore import Tensor
-        >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
-        >>> output = ops.narrow(x, 0, 0, 2)
-        >>> print(output)
-        [[ 1 2 3]
-         [ 4 5 6]]
-        >>> output = ops.narrow(x, 1, 1, 2)
-        >>> print(output)
-        [[ 2 3]
-         [ 5 6]
-         [ 8 9]]
-    """
-    validator.check_axis_in_range(axis, inputs.ndim)
-    validator.check_int_range(start, 0, inputs.shape[axis], Rel.INC_LEFT)
-    validator.check_int_range(length, 1, inputs.shape[axis] - start, Rel.INC_BOTH)
-
-    begins = [0] * inputs.ndim
-    begins[axis] = start
-    sizes = [i for i in inputs.shape]
-    sizes[axis] = length
-    return P.Slice()(inputs, begins, sizes)
-
-
-vmap_instance = _Vmap()
-
-
-def vmap(fn, in_axes=0, out_axes=0):
-    r"""
-    Vectorizing map (vmap) is a kind of higher-order function to map `fn` along the parameter axes.
-
-    Vmap is pioneered by Jax and it removes the restriction of batch dimension on the operator, and provides a
-    more convenient and unified operator expression. Moreover, it allows users to composite with other functional
-    modules such as :func:`mindspore.ops.grad`, to improve the development efficiency. In addition, the vectorizing
-    map does not execute loops outside the function, but sinks loops into the primitive operations of the function
-    for better performance. When combined with `Graph Kernel Fusion`, operational efficiency would be further improved.
-
-    .. warning::
-        This is an experimental prototype that is subject to change and/or delete.
-
-    Note:
-        1. The power of vmap comes from the implementation of VmapRules of primitives. Although we have designed a
-        generalized rule for user custom operators, we can not guarantee that it works well for all operators,
-        please be aware the risk of use. If you want to achieve a better performance, please refer to the tutorial to
-        implement the specific VmapRule for the custom operator, which won't take too much time.
-        2. When calling the random number generation methods within the scope of vmap, the same random number is
-        generated among vector functions each time. If you expect each vector branch to use different random numbers,
-        you need to generate batch random numbers externally in advance and then transfer them to vmap.
-
-    Args:
-        fn (Union[Cell, Function, CellList]): Function to be mapped along the parameter axes, which takes at least one
-            argument and returns one or more Tensors or the type of data supported by the MindSpore Tensor. When it is
-            a CellList, the model ensembling scenario, please make sure that the structure of each cell is the same
-            and the number of cells is consistent with the sizes of the mapped axes (`axis_size`).
-        in_axes (Union[int, list, tuple]): Specifies which dimensions (axes) of the inputs should be mapped over.
-            If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis index. If `in_axes`
-            is a tuple or list, which only composed of integers or Nones and the length should equal to the number of
-            positional arguments to `fn`, indicates which axis to map for each corresponding positional argument.
-            Note that, axis integers must be in range :math:`[-ndim, ndim)` for each argument, where `ndim` is the
-            number of dimensions of the corresponding argument.  None means not mapping along any axis. Also the
-            mapping axis index of the `in_axes` must have at least one positional parameter not None. The sizes of
-            the mapped axes (`axis_size`) for all arguments must be equal. Default: 0.
-        out_axes (Union[int, list, tuple]): Specifies where the mapped dimensions (axes) should appear in the
-            outputs. If `out_axes` is an integer, all outputs of `fn` are specified according to this axis. If
-            `out_axes` is a tuple or list, which only composed of integers or Nones. And its length also should be equal
-            to the number of outputs of `fn`. Note that, axis integers must be in range :math:`[-ndim, ndim)` for each
-            output, where `ndim` is the dimension of the output of the `vmap`-mapped function. All outputs with a
-            non-None mapped axis must specify a non-None `out_axes`, and if outputs with None mapped axis specifies
-            a non-None `out_axes`, the result broadcasts across the mapped axis. Default: 0.
-
-    Returns:
-        Function, returns the Vectorized/Batched version function of `fn`. The arguments and outputs of this function
-        correspond to those of `fn`, but it adds an extra batch dimension at positions specified by `in_axes` and
-        `out_axes`.
-
-    Raises:
-        RuntimeError: If base elements in `in_axes` or `out_axes` are not a None or an integer.
-            If the all base elements in `in_axes` or `out_axes` are None.
-            If `in_axes` is not single integer, and the length of `in_axes` is not equal to the arguments sizes.
-            If `out_axes` is not single integer, and the length of `out_axes` is not equal to the outputs sizes.
-            If the `axis_size` of each arguments in the scope of `vmap` are not equal.
-            If the axis in `in_axes` or `out_axes` is out of bounds.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor
-        >>> from mindspore import vmap
-        >>> def test_vmap(x, y, z):                                              # ([a],[a],[a]) -> [a]
-        ...     return x + y + z
-        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32))    # [b, a]
-        >>> y = Tensor(np.array([[-3, -2, -1], [3, 2, 1]]).astype(np.float32))   # [a, b]
-        >>> z = Tensor(np.array([0, 3]).astype(np.float32))                      # [a]
-        >>> output = vmap(test_vmap, in_axes=(0, 1, None), out_axes=1)(x, y, z)  # ([b, a],[a, b],[a]) -> [a, b]
-        >>> print(output)
-        [[-2  1  4]
-         [ 8  9 10]]
-    """
-    return vmap_instance(fn, in_axes, out_axes)
-
 
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive(_constants.kTupleGetItem)
@@ -281,7 +74,6 @@ make_list = Primitive('make_list')
 make_slice = Primitive('make_slice')
 tuple_equal = Primitive("tuple_equal")
 list_equal = Primitive("list_equal")
-
 scalar_add = Primitive(_constants.kScalarAdd)
 scalar_mul = Primitive(_constants.kScalarMul)
 scalar_sub = Primitive(_constants.kScalarSub)
