@@ -26,7 +26,9 @@ size_t ActorThreadPool::actor_queue_size_ = kMaxHqueueSize;
 void ActorWorker::CreateThread() { thread_ = std::thread(&ActorWorker::RunWithSpin, this); }
 
 void ActorWorker::RunWithSpin() {
-  SetAffinity();
+  if (!core_list_.empty()) {
+    SetAffinity();
+  }
 #if !defined(__APPLE__) && !defined(_MSC_VER)
   static std::atomic_int index = {0};
   (void)pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
