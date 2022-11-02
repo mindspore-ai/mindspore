@@ -1034,10 +1034,10 @@ REG_BPROP_BUILDER("SegmentSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto dout = ib->GetInput(kIndex3);
   auto dout_type = ib->GetDtype(dout);
   std::set<TypePtr> type_list = {kInt8, kInt16, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
-  if (type_list.count(dout_type) != 0) {
+  if (CheckType(dout_type, type_list)) {
     dout = ib->Cast(dout, kInt32);
   }
-  if (dout_type == kFloat64) {
+  if (dout_type->type_id() == TypeId::kNumberTypeFloat64) {
     dout = ib->Cast(dout, kFloat32);
   }
   return {ib->Cast(ib->Emit("Gather", {dout, segment_ids, ib->Tensor(0)}), dout_type), ib->ZerosLike(segment_ids)};

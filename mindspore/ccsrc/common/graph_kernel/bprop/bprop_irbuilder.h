@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <map>
 #include <functional>
 
 #include "common/graph_kernel/bprop/expander/node.h"
@@ -61,6 +62,12 @@ class BpropIRBuilder : public Emitter {
 
   // Tensor getitem by a single integer number on the outermost axis.
   NodePtr TensorGetItem(const NodePtr &node, int64_t idx) const;
+
+  // get a tensor slice like python.
+  // case 1: x[...,2]   => StridedSlice(x, {{-1,{2}}})
+  // case 2: x[2, ..., 1:3]   => StridedSlice(x, {{0,{2}}, {-1,{1,3}}})
+  // case 3: x[..., 0:3:2, 0::2, :]   => StridedSlice(x, {{-3,{0,3,2}}, {-2,{0,LLONG_MAX,2}}})
+  NodePtr StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) const;
 
   void DumpResult(const std::vector<CNodePtr> &outputs, const DoutUser &dout_user) const;
 

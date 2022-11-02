@@ -18,10 +18,15 @@
 
 #include <vector>
 #include <utility>
+#include <set>
 #include "common/graph_kernel/bprop/expander/node.h"
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 
 namespace mindspore::expander::bprop {
+constexpr auto pi = acos(-1.0);
+constexpr auto log_2 = log(2.0);
+constexpr auto log_pi = log(pi);
+
 std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_t> &x_shape,
                                                         const std::vector<int64_t> &y_shape);
 
@@ -72,5 +77,7 @@ ShapeVector GetAxisValue(const NodePtr &axis);
 NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max);
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2);
+NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x);
+bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_EXPANDER_COMMON_UTILS_H_
