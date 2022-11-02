@@ -33,6 +33,12 @@ bool BiasAddGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BiasAddGrad>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "Cast BiasAddGrad ops failed!";
+    return false;
+  }
+  data_format_ = kernel_ptr->get_str_format();
   return true;
 }
 
@@ -44,10 +50,6 @@ int BiasAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
   input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
-
-  deformable_kernel_operator_ = std::make_shared<ops::BiasAddGrad>(base_operator->GetPrim());
-  data_format_ = deformable_kernel_operator_->get_str_format();
-
   if (input_shape_.size() < k2Dims) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension must be at least 2, but got "
                       << input_shape_.size();
@@ -59,8 +61,7 @@ bool BiasAddGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
                                      const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddGradOutputsNum, kernel_name_);
-  kernel_func_(this, inputs, workspace, outputs);
-  return true;
+  return kernel_func_(this, inputs, workspace, outputs);
 }
 
 template <typename T>
