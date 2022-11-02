@@ -5678,7 +5678,7 @@ def rot90(x, k, dims):
     return out
 
 
-def roll(x, shifts, dims):
+def roll(x, shifts, dims=None):
     """
     Rolls the elements of a tensor along an axis.
 
@@ -5709,6 +5709,7 @@ def roll(x, shifts, dims):
         >>> print(output)
         [3. 4. 0. 1. 2.]
     """
+    dims = dims if dims is not None else 0
     return Roll(shifts, dims)(x)
 
 

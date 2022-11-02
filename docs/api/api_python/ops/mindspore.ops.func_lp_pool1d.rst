@@ -31,5 +31,6 @@ mindspore.ops.lp_pool1d
         - **TypeError** - `kernel_size` 或 `stride` 不是int。
         - **TypeError** - `ceil_mode` 不是bool。
         - **TypeError** - `norm_type` 不是float也不是int。
+        - **ValueError** - `norm_type` 等于0。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
         - **ValueError** - `x` 的shape长度不等于2或3。
