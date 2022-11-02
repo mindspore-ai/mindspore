@@ -43,7 +43,7 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
         dst_strategy_file (str): The file merged strategy to save.
 
     Raises:
-        NotADirectoryError: src_strategy_dirs is not a directory.
+        NotADirectoryError: `src_strategy_dirs` is not a directory.
 
     Examples:
         >>> # src_strategy_dir/stra0.ckpt, src_strategy_dir/stra1.ckpt ... src_strategy_dir/stra127.ckpt
@@ -97,9 +97,9 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
         List, the rank list required for converting the distributed checkpoint of rank_id.
 
     Raises:
-        ValueError: src_strategy_file or dst_strategy_file is incorrect.
-        TypeError: src_strategy_file or dst_strategy_file is not a string.
-        TypeError: rank_id is not a int.
+        ValueError: `src_strategy_file` or dst_strategy_file is incorrect.
+        TypeError: `src_strategy_file` or dst_strategy_file is not a string.
+        TypeError: `rank_id` is not a int.
 
     Examples:
         >>> rank_id = 0
@@ -157,13 +157,13 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
                                  is without any sharing for each parameter. Default:None.
 
     Raises:
-        ValueError: src_strategy_file or dst_strategy_file is incorrect.
-        ValueError: item in checkpoint_files_map is incorrect.
-        ValueError: save_checkpoint_file_name is not end with ".ckpt".
-        TypeError: checkpoint_files_map is not a dict.
-        TypeError: src_strategy_file or dst_strategy_file is not a string.
-        TypeError: rank_id is not a int.
-        TypeError: save_checkpoint_file_name is not a string.
+        ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
+        ValueError: item in `checkpoint_files_map` is incorrect.
+        ValueError: `save_checkpoint_file_name` is not end with ".ckpt".
+        TypeError: `checkpoint_files_map` is not a dict.
+        TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
+        TypeError: `rank_id` is not a int.
+        TypeError: `save_checkpoint_file_name` is not a string.
 
     Examples:
         >>> dst_device_num = 8
@@ -185,6 +185,9 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         raise TypeError("The save_checkpoint_file_name should be a str.")
     if save_checkpoint_file_name[-5:] != ".ckpt":
         raise ValueError("The save_checkpoint_file_name {} should end with .ckpt".format(save_checkpoint_file_name))
+    if not os.path.exists(os.path.dirname(dst_strategy_file)):
+        raise ValueError("The director of dst_strategy_file: {} is not exists.".
+                         format(os.path.dirname(dst_strategy_file)))
     for rank, local_file in checkpoint_files_map.items():
         if not os.path.exists(local_file):
             raise ValueError("Checkpoint file {} in rank {} not exits: ".format(local_file, rank))
@@ -238,10 +241,10 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                  is without any sharing for each parameter. Default:None.
 
     Raises:
-        ValueError: src_strategy_file or dst_strategy_file is incorrect.
-        NotADirectoryError: src_checkpoints_dir or dst_checkpoints_dir is not a directory.
-        ValueError: The checkpoint file is missing in src_checkpoints_dir.
-        TypeError: src_strategy_file or dst_strategy_file is not a string.
+        ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
+        NotADirectoryError: `src_checkpoints_dir` or `dst_checkpoints_dir` is not a directory.
+        ValueError: The checkpoint file is missing in `src_checkpoints_dir`.
+        TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
 
     Examples:
         >>> transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, "dst_checkpoint",

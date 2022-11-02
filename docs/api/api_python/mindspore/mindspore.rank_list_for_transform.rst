@@ -3,7 +3,7 @@ mindspore.rank_list_for_transform
 
 .. py:function:: mindspore.rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=None)
 
-    在对分布式Checkpoint转换的过程中，获取为了得到目标rank的Checkpoint文件所需的源Checkpoint文件rank列表。关于更多分布式Checkpoint转换的细节，请参考：[分布式弹性训练与推理](https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/resilience_train_and_predict.html)。
+    在对分布式Checkpoint转换的过程中，获取为了得到目标rank的Checkpoint文件所需的源Checkpoint文件rank列表。关于更多分布式Checkpoint转换的细节，请参考：`分布式弹性训练与推理 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/resilience_train_and_predict.html>`_。
 
     参数：
         - **rank_id** (int) - 待转换得到的Checkpoint的rank号。
@@ -14,6 +14,6 @@ mindspore.rank_list_for_transform
         转换得到rank_id的分布式Checkpoint所需要的卡号列表。
 
     异常：
-        - **ValueError** - src_strategy_file或者dst_strategy_file不是正确的切分策略proto文件。
-        - **TypeError** - src_strategy_file或者dst_strategy_file不是字符串。
-        - **TypeError** - rank_id不是一个整数。
+        - **ValueError** - `src_strategy_file` 或者 `dst_strategy_file` 不是正确的切分策略proto文件。
+        - **TypeError** - `src_strategy_file` 或者 `dst_strategy_file` 不是字符串。
+        - **TypeError** - `rank_id` 不是一个整数。

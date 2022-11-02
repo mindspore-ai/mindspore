@@ -3,7 +3,7 @@ mindspore.transform_checkpoint_by_rank
 
 .. py:function:: mindspore.transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name, src_strategy_file=None, dst_strategy_file=None)
 
-    将一个分布式网络的Checkpoint由源切分策略转换到目标切分策略，对特定一个rank进行转换。关于更多分布式Checkpoint转换的细节，请参考：[分布式弹性训练与推理](https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/resilience_train_and_predict.html)。
+    将一个分布式网络的Checkpoint由源切分策略转换到目标切分策略，对特定一个rank进行转换。关于更多分布式Checkpoint转换的细节，请参考：`分布式弹性训练与推理 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/resilience_train_and_predict.html>`_。
 
     参数：
         - **rank_id** (int) - 待转换得到的Checkpoint的rank号。
@@ -13,10 +13,10 @@ mindspore.transform_checkpoint_by_rank
         - **dst_strategy_file** (str) - 目标切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为None时，表示切分策略为不切分。默认值：None。
 
     异常：
-        - **ValueError** - src_strategy_file或者dst_strategy_file不是正确的切分策略proto文件。
-        - **ValueError** - checkpoint_files_map内的元素不是正确的Checkpoint文件。
-        - **ValueError** - save_checkpoint_file_name不以“.ckpt”结尾。
-        - **TypeError** - checkpoint_files_map不是一个字典。
-        - **TypeError** - src_strategy_file或者dst_strategy_file不是字符串。
-        - **TypeError** - rank_id不是一个整数。
-        - **TypeError** - save_checkpoint_file_name不是字符串。
+        - **ValueError** - `src_strategy_file` 或者 `dst_strategy_file` 不是正确的切分策略proto文件。
+        - **ValueError** - `checkpoint_files_map` 内的元素不是正确的Checkpoint文件。
+        - **ValueError** - `save_checkpoint_file_name` 不以“.ckpt”结尾。
+        - **TypeError** - `checkpoint_files_map` 不是一个字典。
+        - **TypeError** - `src_strategy_file` 或者 `dst_strategy_file` 不是字符串。
+        - **TypeError** - `rank_id` 不是一个整数。
+        - **TypeError** - `save_checkpoint_file_name` 不是字符串。
