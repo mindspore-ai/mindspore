@@ -611,14 +611,14 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernelFloat16(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
     LaunchKernel<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeComplex64) {
     LaunchKernelComplex<std::complex<float>>(inputs, outputs);
   } else if (dtype_ == kNumberTypeComplex128) {
     LaunchKernelComplex<std::complex<double>>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernelFloat16(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt8) {
     LaunchKernel<int8_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt16) {
@@ -751,7 +751,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<AddressP
                           {prim::kPrimAsin->name(), Asin<float16>},   {prim::kPrimACos->name(), ACos<float16>},
                           {prim::kPrimSinh->name(), Sinh<float16>},   {prim::kPrimCosh->name(), Cosh<float16>},
                           {prim::kPrimAsinh->name(), Asinh<float16>}, {prim::kPrimErfc->name(), Erfc<float16>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<float16>}};
+                          {prim::kPrimRsqrt->name(), Rsqrt<float16>}, {prim::kPrimErf->name(), Erf<float16>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -1020,7 +1020,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      []() { return std::make_shared<LogMKLKernelFunc>(); }}}},
   {kErf,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kErfc,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},

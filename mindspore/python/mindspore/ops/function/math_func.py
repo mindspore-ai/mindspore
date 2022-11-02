@@ -1864,14 +1864,14 @@ def erf(x):
 
     Args:
         x (Tensor): The input tensor of Gaussian error function. Its rank must be in [0, 7] inclusive
-            and data type must be float16 or float32.
+            and data type must be float16 float32 or float64.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
