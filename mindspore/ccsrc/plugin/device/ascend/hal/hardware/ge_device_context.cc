@@ -43,6 +43,15 @@ namespace {
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 
+std::string GetOriginFuncGraphName(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  MS_EXCEPTION_IF_NULL(kg);
+  FuncGraphPtr origin_graph = kg->GetFuncGraph();
+  MS_EXCEPTION_IF_NULL(origin_graph);
+  return origin_graph->ToString();
+}
+
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
 
@@ -138,7 +147,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
 
   std::string graph_name = anf_graph->ToString();
   std::string init_graph = "init_subgraph." + graph_name;
-  std::string checkpoint_name = "save." + graph_name;
+  std::string checkpoint_name = "save." + GetOriginFuncGraphName(anf_graph);
   if (common::GetEnv("GE_TRAIN") == "1") {
     (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), {{"ge.exec.variable_acc", "1"}});
   } else {
