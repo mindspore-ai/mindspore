@@ -101,6 +101,8 @@ def test_infer_310_yolov4():
     exec_infer_shell = "cd {0}; bash run_infer_310.sh ../yolov4.mindir {1} {2} {3}".format(infer_ret_path, \
         os.path.join(dataset_path, "coco", "coco2017_500", "val2017_500"), device_id, \
         os.path.join(dataset_path, "coco", "coco2017_500", "annotations", "instances_val2017_500.json"))
+    os.environ['LD_LIBRARY_PATH'] = '/usr/local/lib:' + os.environ['LD_LIBRARY_PATH']
+    print(f"LD_LIBRARY_PATH={os.environ.get('LD_LIBRARY_PATH')}")
     os.system(exec_infer_shell)
 
     accuracy_data, fps_data = check_log_file(infer_ret_path)
