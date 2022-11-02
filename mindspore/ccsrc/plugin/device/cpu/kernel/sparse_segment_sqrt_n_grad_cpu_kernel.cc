@@ -103,7 +103,7 @@ void SparseSegmentSqrtNGradCpuKernelMod::LaunchKernel(const std::vector<kernel::
     if (segment_ids_addr[i] != beginindex) {
       for (size_t j = 1; j <= countnum; j++) {
         for (size_t l = 0; l < n; l++) {
-          y_addr[indices_addr[i - j] * n + l] +=
+          y_addr[static_cast<size_t>(indices_addr[i - j]) * n + l] +=
             x_addr[static_cast<size_t>(beginindex) * n + l] / static_cast<T>(sqrt(countnum));
         }
       }
@@ -117,7 +117,7 @@ void SparseSegmentSqrtNGradCpuKernelMod::LaunchKernel(const std::vector<kernel::
   int i = static_cast<int>(m);
   for (size_t j = 1; j <= countnum; j++) {
     for (size_t l = 0; l < n; l++) {
-      y_addr[indices_addr[static_cast<size_t>(i) - j] * n + l] +=
+      y_addr[static_cast<size_t>(indices_addr[static_cast<size_t>(i) - j]) * n + l] +=
         x_addr[static_cast<size_t>(beginindex) * n + l] / static_cast<T>(sqrt(countnum));
     }
   }

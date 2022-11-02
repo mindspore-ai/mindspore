@@ -119,7 +119,7 @@ bool MaxUnpool3DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
                                   << odepth * owidth * oheight << " and value of argmax is " << maxp << "."
                                   << std::endl;
               } else {
-                output_p_k[maxp * num_channels + k] = input_p_k[ind_p_k_id];
+                output_p_k[static_cast<size_t>(maxp) * num_channels + k] = input_p_k[ind_p_k_id];
               }
             }
           }
@@ -152,7 +152,7 @@ bool MaxUnpool3DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
           for (size_t i = 0; i < input_height; i++) {
             for (size_t j = 0; j < input_width; j++) {
               ind_p_k_id = t * input_height * input_width + i * input_width + j;
-              maxp = static_cast<size_t>(ind_p_k[ind_p_k_id]);
+              maxp = static_cast<INDICES_T>(ind_p_k[ind_p_k_id]);
               if (ind_p_k[ind_p_k_id] < 0 || maxp >= static_cast<INDICES_T>(odepth * owidth * oheight)) {
                 MS_LOG(EXCEPTION) << "MaxUnpool3D: internal error, output_size D * H * W should "
                                      "be bigger than some indicis, now D * H * W is "

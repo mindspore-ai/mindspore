@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -42,7 +43,6 @@ constexpr size_t kInputIndex2 = 2;
 template <typename SCALAR_T, typename INDICES_T>
 struct AdaptiveCalcArgs {
   SCALAR_T *input_grad_data = nullptr;
-  SCALAR_T *input_data = nullptr;
   SCALAR_T *output_grad_data = nullptr;
   INDICES_T *indices_data = nullptr;
   int64_t in_size_b = 0;
@@ -138,14 +138,14 @@ bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   args.out_size_h = input_y_grad_shape[dim_h];
   args.out_size_w = input_y_grad_shape[dim_w];
 
-  auto input_grad_data_ptr_ret = reinterpret_cast<SCALAR_T *>(outputs[0]->addr);
+  auto input_grad_data_ptr_ret = static_cast<SCALAR_T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_grad_data_ptr_ret);
   int64_t output_num = std::accumulate(input_x_shape.cbegin(), input_x_shape.cend(), 1, std::multiplies<int64_t>{});
   std::unique_ptr<SCALAR_T[]> input_grad_data_ptr = std::make_unique<SCALAR_T[]>(output_num);
   std::fill_n(input_grad_data_ptr.get(), output_num, static_cast<SCALAR_T>(0));
-  auto output_grad_data_ptr = reinterpret_cast<SCALAR_T *>(inputs[0]->addr);
+  auto output_grad_data_ptr = static_cast<SCALAR_T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_grad_data_ptr);
-  auto indices_data_ptr = reinterpret_cast<INDICES_T *>(inputs[2]->addr);
+  auto indices_data_ptr = static_cast<INDICES_T *>(inputs[2]->addr);
   MS_EXCEPTION_IF_NULL(indices_data_ptr);
   // resize output
   if (input_x_dims == k3D) {

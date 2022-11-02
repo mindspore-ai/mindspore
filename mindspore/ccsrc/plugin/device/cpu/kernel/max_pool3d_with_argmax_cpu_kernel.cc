@@ -73,12 +73,10 @@ int MaxPool3DWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename DATA_T, typename INDICES_T>
-void MaxPool3DWithArgmaxCpuKernelMod::MaxPool3DWithArgmaxSingleCompute(DATA_T *input, DATA_T *output_y,
-                                                                       INDICES_T *output_argmax, int64_t iD, int64_t iH,
-                                                                       int64_t iW, int64_t oD, int64_t oH, int64_t oW,
-                                                                       int64_t kD, int64_t kH, int64_t kW, int64_t sD,
-                                                                       int64_t sH, int64_t sW, int64_t pD, int64_t pH,
-                                                                       int64_t pW, int64_t dD, int64_t dH, int64_t dW) {
+void MaxPool3DWithArgmaxCpuKernelMod::MaxPool3DWithArgmaxSingleCompute(
+  DATA_T *input, DATA_T *output_y, INDICES_T *output_argmax, int64_t iD, int64_t iH, int64_t iW, int64_t oD, int64_t oH,
+  int64_t oW, int64_t kD, int64_t kH, int64_t kW, int64_t sD, int64_t sH, int64_t sW, int64_t pD, int64_t pH,
+  int64_t pW, int64_t dD, int64_t dH, int64_t dW) const {
   int64_t i, j, ti;
   DATA_T *ip = input;
   for (ti = 0; ti < oD; ti++) {
@@ -132,7 +130,7 @@ void MaxPool3DWithArgmaxCpuKernelMod::MaxPool3DWithArgmaxSingleCompute(DATA_T *i
 }
 
 template <typename DATA_T>
-bool MaxPool3DWithArgmaxCpuKernelMod::CheckIfLessOne(const std::vector<DATA_T> &inputs) {
+bool MaxPool3DWithArgmaxCpuKernelMod::CheckIfLessOne(const std::vector<DATA_T> &inputs) const {
   const int64_t ksize = static_cast<int64_t>(inputs[kZero]);
   const int64_t strides = static_cast<int64_t>(inputs[kOne]);
   const int64_t dilation = static_cast<int64_t>(inputs[kTwo]);
@@ -146,7 +144,7 @@ bool MaxPool3DWithArgmaxCpuKernelMod::CheckIfLessOne(const std::vector<DATA_T> &
 }
 
 template <typename DATA_T>
-bool MaxPool3DWithArgmaxCpuKernelMod::CheckIfLessZero(const std::vector<DATA_T> &inputs) {
+bool MaxPool3DWithArgmaxCpuKernelMod::CheckIfLessZero(const std::vector<DATA_T> &inputs) const {
   const int64_t width = static_cast<int64_t>(inputs[kZero]);
   const int64_t height = static_cast<int64_t>(inputs[kOne]);
   const int64_t depth = static_cast<int64_t>(inputs[kTwo]);
@@ -159,7 +157,7 @@ bool MaxPool3DWithArgmaxCpuKernelMod::CheckIfLessZero(const std::vector<DATA_T> 
 }
 
 void MaxPool3DWithArgmaxCpuKernelMod::CheckPadsValue(size_t k_width, size_t p_width, size_t k_height, size_t p_height,
-                                                     size_t k_depth, size_t p_depth) {
+                                                     size_t k_depth, size_t p_depth) const {
   if (k_width / kTwo < p_width && k_height / kTwo < p_height && k_depth / kTwo < p_depth) {
     MS_EXCEPTION(ValueError) << "for " << kernel_name_
                              << ", pads should be smaller than or equal to half of kernel size, but the pads is ["
@@ -169,7 +167,7 @@ void MaxPool3DWithArgmaxCpuKernelMod::CheckPadsValue(size_t k_width, size_t p_wi
 }
 
 void MaxPool3DWithArgmaxCpuKernelMod::CheckDilationValue(size_t d_width, size_t in_width, size_t d_height,
-                                                         size_t in_height, size_t d_depth, size_t in_depth) {
+                                                         size_t in_height, size_t d_depth, size_t in_depth) const {
   if (d_width >= in_width && d_height >= in_height && d_depth >= in_depth) {
     MS_EXCEPTION(ValueError) << "for " << kernel_name_
                              << ", dilation should be smaller than or equal to input, but the dilation is [" << d_depth
@@ -184,9 +182,9 @@ bool MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
                                                    const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPool3DWithArgmaxInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPool3DWithArgmaxOutputsNum, kernel_name_);
-  auto input_x = reinterpret_cast<DATA_T *>(inputs[kZero]->addr);
-  auto output_y = reinterpret_cast<DATA_T *>(outputs[kZero]->addr);
-  auto output_argmax = reinterpret_cast<INDICES_T *>(outputs[kOne]->addr);
+  auto input_x = static_cast<DATA_T *>(inputs[kZero]->addr);
+  auto output_y = static_cast<DATA_T *>(outputs[kZero]->addr);
+  auto output_argmax = static_cast<INDICES_T *>(outputs[kOne]->addr);
   auto input_shape_vec = x_shape_;
   auto output_shape_vec = y_shape_;
   const int64_t in_width = input_shape_vec[kFour];

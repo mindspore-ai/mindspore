@@ -86,9 +86,9 @@ bool MaxUnpool3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     MS_LOG(WARNING) << "MaxUnpool3DGrad output memory size should be greater than 0, but got 0.";
     return false;
   }
-  auto *raw_grads = reinterpret_cast<DATA_T *>(inputs[kInputIndex1]->addr);
-  auto *raw_indices = reinterpret_cast<INDICES_T *>(inputs[kInputIndex2]->addr);
-  auto *raw_output = reinterpret_cast<DATA_T *>(outputs[kInputIndex0]->addr);
+  auto *raw_grads = static_cast<DATA_T *>(inputs[kInputIndex1]->addr);
+  auto *raw_indices = static_cast<INDICES_T *>(inputs[kInputIndex2]->addr);
+  auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->addr);
   auto num_batch = LongToSize(grads_shape_[kInputIndex0]);
   if (data_format_ == "NDHWC") {
     size_t odepth = LongToSize(grads_shape_[kInputIndex1]);

@@ -87,7 +87,7 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
   int64_t reduction = 0;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   auto out_shape = target_shape;
-  if (reduction == REDUCTION_SUM || reduction == MEAN) {
+  if (reduction == static_cast<int64_t>(REDUCTION_SUM) || reduction == static_cast<int64_t>(MEAN)) {
     out_shape.resize(kInputIndex0);
   }
   return std::make_shared<abstract::Shape>(out_shape);

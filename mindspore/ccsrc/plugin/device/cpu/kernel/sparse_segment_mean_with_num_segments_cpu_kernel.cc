@@ -100,11 +100,11 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
   auto x_shape_0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto x_addr = reinterpret_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = reinterpret_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = reinterpret_cast<T2 *>(inputs[kIndex2]->addr);
-  auto num_segments_addr = reinterpret_cast<T2 *>(inputs[kIndex3]->addr);
-  auto y_addr = reinterpret_cast<T1 *>(outputs[kIndex0]->addr);
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
+  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->addr);
+  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->addr);
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input segment_ids should be sorted.";
@@ -130,19 +130,19 @@ void SparseSegmentMeanWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vecto
     } else {
       if (countnum != 0) {
         for (size_t j = 0; j < n; j++) {
-          y_addr[j + oldindex * n] /= static_cast<T1>(countnum);
+          y_addr[j + static_cast<size_t>(oldindex) * n] /= static_cast<T1>(countnum);
         }
       }
       countnum = 1;
       oldindex = segment_ids_addr[i];
     }
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] += x_addr[j + indices_addr[i] * n];
+      y_addr[j + static_cast<size_t>(oldindex) * n] += x_addr[j + static_cast<size_t>(indices_addr[i]) * n];
     }
   }
   if (countnum != 0) {
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] /= static_cast<T1>(countnum);
+      y_addr[j + static_cast<size_t>(oldindex) * n] /= static_cast<T1>(countnum);
     }
   }
 }

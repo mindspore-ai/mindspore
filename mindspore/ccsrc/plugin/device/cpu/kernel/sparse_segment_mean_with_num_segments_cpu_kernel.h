@@ -18,11 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_MEAN_WITH_NUM_SGEMENTS_CPU_KERNEL_H_
 
 #include <functional>
-#include <numeric>
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <vector>
 #include <map>
 
@@ -52,7 +47,6 @@ class SparseSegmentMeanWithNumSegmentsCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
   ShapeVector x_shape_;
   ShapeVector segment_ids_shape_;
   ShapeVector y_shape_;

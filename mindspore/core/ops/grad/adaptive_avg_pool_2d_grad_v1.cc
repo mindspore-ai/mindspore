@@ -30,12 +30,12 @@ abstract::ShapePtr AdaptiveAvgPool2DGradV1InferShape(const PrimitivePtr &primiti
                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   const int64_t input_grad_dims = SizeToLong(input_grad_shape.size());
-  CheckAndConvertUtils::CheckInRange("dim of input_grad", input_grad_dims, kIncludeBoth, {3, 4},
-                                     kNameAdaptiveAvgPool2DGradV1);
+  (void)CheckAndConvertUtils::CheckInRange("dim of input_grad", input_grad_dims, kIncludeBoth, {3, 4},
+                                           kNameAdaptiveAvgPool2DGradV1);
   auto orig_input_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("orig_input_shape"));
   const int64_t orig_input_shape_shape = SizeToLong(orig_input_shape.size());
-  CheckAndConvertUtils::CheckInRange("length of orig_input_shape", orig_input_shape_shape, kIncludeBoth, {3, 4},
-                                     kNameAdaptiveAvgPool2DGradV1);
+  (void)CheckAndConvertUtils::CheckInRange("length of orig_input_shape", orig_input_shape_shape, kIncludeBoth, {3, 4},
+                                           kNameAdaptiveAvgPool2DGradV1);
   std::vector<int64_t> orig_input_shapeList(input_grad_dims);
   for (int64_t i = 1; i <= input_grad_dims; i++) {
     orig_input_shapeList.end()[-i] = orig_input_shape.end()[-i];
@@ -46,8 +46,8 @@ abstract::ShapePtr AdaptiveAvgPool2DGradV1InferShape(const PrimitivePtr &primiti
 TypePtr AdaptiveAvgPool2DGradV1InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_grad_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> input_grad_valid = {kFloat16, kFloat32, kFloat64};
-  CheckAndConvertUtils::CheckTensorTypeValid("input_grad", input_grad_dtype, input_grad_valid,
-                                             kNameAdaptiveAvgPool2DGradV1);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_grad", input_grad_dtype, input_grad_valid,
+                                                   kNameAdaptiveAvgPool2DGradV1);
   return input_grad_dtype;
 }
 }  // namespace
@@ -57,7 +57,7 @@ AbstractBasePtr AdaptiveAvgPool2DGradV1Infer(const abstract::AnalysisEnginePtr &
                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = AdaptiveAvgPool2DGradV1InferType(primitive, input_args);
   auto shapes = AdaptiveAvgPool2DGradV1InferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

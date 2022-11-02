@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const size_t input_num = 2;
+const int64_t input_num = 2;
 
 TypePtr TanhGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

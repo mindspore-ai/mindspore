@@ -49,21 +49,22 @@ class MaxPool3DWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   }
 
   template <typename DATA_T>
-  bool CheckIfLessOne(const std::vector<DATA_T> &inputs);
+  bool CheckIfLessOne(const std::vector<DATA_T> &inputs) const;
 
   template <typename DATA_T>
-  bool CheckIfLessZero(const std::vector<DATA_T> &inputs);
+  bool CheckIfLessZero(const std::vector<DATA_T> &inputs) const;
 
-  void CheckPadsValue(size_t k_width, size_t p_width, size_t k_height, size_t p_height, size_t k_depth, size_t p_depth);
+  void CheckPadsValue(size_t k_width, size_t p_width, size_t k_height, size_t p_height, size_t k_depth,
+                      size_t p_depth) const;
 
   void CheckDilationValue(size_t d_width, size_t in_width, size_t d_height, size_t in_height, size_t d_depth,
-                          size_t in_depth);
+                          size_t in_depth) const;
 
   template <typename DATA_T, typename INDICES_T>
   void MaxPool3DWithArgmaxSingleCompute(DATA_T *input, DATA_T *output_y, INDICES_T *output_argmax, int64_t iD,
                                         int64_t iH, int64_t iW, int64_t oD, int64_t oH, int64_t oW, int64_t kD,
                                         int64_t kH, int64_t kW, int64_t sD, int64_t sH, int64_t sW, int64_t pD,
-                                        int64_t pH, int64_t pW, int64_t dD, int64_t dH, int64_t dW);
+                                        int64_t pH, int64_t pW, int64_t dD, int64_t dH, int64_t dW) const;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

@@ -95,7 +95,7 @@ void MatrixPowerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
       }
       eigen_input = lu.inverse();
     }
-    eigen_output.setIdentity();
+    (void)eigen_output.setIdentity();
     while (n > 0) {
       if (n % kNumber2 == 1) {
         eigen_output = eigen_output * eigen_input;
