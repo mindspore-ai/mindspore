@@ -41,6 +41,14 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
+int Conv2DOpenCLKernel::CheckSpecsWithoutShape() {
+  if (!IsFilterConst()) {
+    MS_LOG(WARNING) << "Conv2D doesn't support non-constant filter yet";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int Conv2DOpenCLKernel::CheckSpecs() {
   auto ret = InputOutputCheckSpecs();
   if (ret != RET_OK) {
@@ -94,6 +102,24 @@ int Conv2DOpenCLKernel::InputOutputCheckSpecs() {
   return RET_OK;
 }
 
+bool Conv2DOpenCLKernel::IsFilterConst() const {
+  MS_CHECK_GE(in_tensors_.size(), kWeightIndex + 1, false);
+  auto *filter_tensor = in_tensors_.at(kWeightIndex);
+  MS_CHECK_TRUE_RET(filter_tensor != nullptr, false);
+  bool is_const = (filter_tensor->category() == lite::Category::CONST_TENSOR) ||
+                  (filter_tensor->category() == lite::Category::CONST_SCALAR);
+  if (!is_const) {
+    MS_LOG(WARNING) << "Conv2D filter is not of const category";
+    return false;
+  }
+  if ((filter_tensor->data() == nullptr) && (stored_filter_ == nullptr) && (packed_filter_ == nullptr)) {
+    // Lite framework would free original weight of packed op after Prepare(), so here stored/packed is also checked.
+    MS_LOG(WARNING) << "Conv2D filter is all null in original/stored/packed ptr.";
+    return false;
+  }
+  return true;
+}
+
 int Conv2DOpenCLKernel::FilterBiasCheckSpecs() {
   auto *filter_tensor = in_tensors_.at(kWeightIndex);
   CHECK_NULL_RETURN(filter_tensor);
@@ -101,14 +127,6 @@ int Conv2DOpenCLKernel::FilterBiasCheckSpecs() {
   if (filter_ndim != DIMENSION_4D) {
     MS_LOG(WARNING) << "Conv2D only supports 4D filter Tensor but get " << filter_ndim << "D.";
     return RET_ERROR;
-  }
-  if (!filter_tensor->IsConst()) {
-    bool is_const = filter_tensor->category() == lite::Category::CONST_TENSOR ||
-                    filter_tensor->category() == lite::Category::CONST_SCALAR;
-    if (!(is_const && stored_filter_)) {
-      MS_LOG(WARNING) << "Conv2D don't support non-constant filter yet.";
-      return RET_ERROR;
-    }
   }
 
   auto *bias_tensor = in_tensors_.size() >= INPUT_TENSOR_SIZE_3 ? in_tensors_.at(kBiasIndex) : nullptr;
@@ -390,6 +408,11 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
 #endif
 
 int Conv2DOpenCLKernel::InitFilter() {
+  if (packed_filter_ != nullptr) {
+    MS_LOG(DEBUG) << "filter is already inited";
+    return RET_OK;
+  }
+
   auto allocator = ocl_runtime_->GetAllocator();
 
   // allocate opencl memory: buffer or image2d
@@ -759,6 +782,12 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create Convolution kernel failed.";
     free(conv_param);
+    return nullptr;
+  }
+  auto retCheck = kernel->CheckSpecsWithoutShape();
+  if (retCheck != mindspore::lite::RET_OK) {
+    MS_LOG(WARNING) << "Check " << opParameter->name_ << " spec without shape failed!";
+    delete kernel;
     return nullptr;
   }
   if (!infer_shape_done) {
