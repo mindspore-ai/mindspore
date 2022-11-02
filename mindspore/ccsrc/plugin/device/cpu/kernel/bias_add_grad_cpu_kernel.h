@@ -52,7 +52,6 @@ class BiasAddGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
                     const std::vector<AddressPtr> &outputs);
 
   std::vector<size_t> input_shape_;
-  OpsBiasAddGradPtr deformable_kernel_operator_;
   std::string data_format_ = "NCHW";
 };
 }  // namespace kernel
