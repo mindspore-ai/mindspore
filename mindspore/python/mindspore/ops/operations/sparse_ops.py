@@ -667,7 +667,7 @@ class SparseTensorDenseMatmul(Primitive):
         for i in a_shape:
             if isinstance(i, bool) or not isinstance(i, int) or i <= 0:
                 raise ValueError(f"For '{self.name}', all elements in 'sparse_shape' must be "
-                                 f"positive int number, but got 'sparse_shape': {a_shape}.")
+                                 f"positive int number, but got 'sparse_shape': {sparse_shape['value']}.")
         if len(a_shape) != 2 or len(b_shape) != 2:
             raise ValueError(f"For '{self.name}', both the length of 'sparse_shape' and the tensor "
                              f"rank of 'dense' must be equal to 2, but got the length of "
