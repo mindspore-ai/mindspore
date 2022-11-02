@@ -55,6 +55,7 @@ TbeTask::~TbeTask() {
 
 void TbeTask::Distribute() {
   MS_LOG(INFO) << "InitTbeTask start.";
+  MS_EXCEPTION_IF_NULL(task_info_);
   MS_EXCEPTION_IF_NULL(stream_);
   // Get stub_func
   if (task_info_->stub_func().empty()) {

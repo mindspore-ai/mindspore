@@ -44,6 +44,7 @@ EventRecordTask::~EventRecordTask() {
 }
 
 void EventRecordTask::Distribute() {
+  MS_EXCEPTION_IF_NULL(task_info_);
   MS_LOG(INFO) << "EventRecordTask Distribute start, stream: " << stream_ << ", event: " << event_
                << ", stream_id: " << task_info_->stream_id() << ", event_id: " << task_info_->event_id();
   rtError_t rt_ret = rtEventRecord(event_, stream_);

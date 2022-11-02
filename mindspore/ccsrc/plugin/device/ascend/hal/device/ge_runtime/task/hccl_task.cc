@@ -53,6 +53,7 @@ void HcclTask::Distribute() {
   // Ops kernel info store
   // Get privateDef and opsKernelStorePtr
   MS_LOG(INFO) << "Distribute hccl task start.";
+  MS_EXCEPTION_IF_NULL(task_info_);
   void *ops_kernel_store = task_info_->ops_kernel_store();
   ::ge::OpsKernelInfoStore *ops_kernel_info_store = static_cast<::ge::OpsKernelInfoStore *>(ops_kernel_store);
   MS_EXCEPTION_IF_NULL(ops_kernel_info_store);

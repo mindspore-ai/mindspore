@@ -443,6 +443,7 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     MS_LOG(INFO) << "Skip dump output";
     return;
   }
+  MS_EXCEPTION_IF_NULL(kernel);
   if (HasAbstractMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node output:" << kernel->fullname_with_scope();
     return;

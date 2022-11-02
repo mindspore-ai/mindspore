@@ -121,6 +121,7 @@ bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
 
 void AscendMemoryPool::ResetIdleMemBuf() const {
   auto fn = [this](const MemStatusManagerPtr &mem_mng) {
+    MS_EXCEPTION_IF_NULL(mem_mng);
     if (mem_mng->mem_block_list_.empty()) {
       return;
     }

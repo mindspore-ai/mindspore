@@ -116,6 +116,7 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
     akg_ret = akg_ascend_kernel_builder.AkgKernelParallelBuild(akg_nodes);
   }
   for (const auto &anf_node : other_nodes) {
+    MS_EXCEPTION_IF_NULL(anf_node);
     kernel::KernelModPtr kernel_mod_ptr = SerialCompileImpl(anf_node);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
@@ -389,7 +390,7 @@ std::map<AnfNodePtr, std::vector<size_t>> GetCommunicationOpInputInfo(const std:
     auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       for (size_t i = 0; i < input_num; i++) {
-        auto input_node = kernel->input(i + 1);
+        auto input_node = kernel->inputs().at(i + kIndex1);
         auto kernel_input = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
         MS_EXCEPTION_IF_NULL(kernel_input.first);
         if (!kernel_input.first->isa<CNode>()) {

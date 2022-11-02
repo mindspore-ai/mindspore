@@ -37,6 +37,7 @@ MemcpyAsyncTask::MemcpyAsyncTask(const ModelContext &model_context,
 MemcpyAsyncTask::~MemcpyAsyncTask() {}
 
 void MemcpyAsyncTask::Distribute() {
+  MS_EXCEPTION_IF_NULL(task_info_);
   MS_LOG(INFO) << "MemcpyAsyncTask Distribute start.";
   MS_LOG(INFO) << "dst_max: " << task_info_->dst_max() << ", count: " << task_info_->count()
                << ", kind: " << task_info_->kind();

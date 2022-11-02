@@ -28,6 +28,7 @@ AscendStreamMng &AscendStreamMng::GetInstance() {
 
 rtEvent_t AscendStreamMng::ApplyRtEvent() const {
   auto rt_resource = std::make_shared<rtEvent_t>();
+  MS_EXCEPTION_IF_NULL(rt_resource);
   auto ret = rtEventCreate(rt_resource.get());
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "rtEventCreate failed, ret:" << ret;
