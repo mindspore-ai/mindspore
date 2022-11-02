@@ -441,11 +441,10 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
   size_t offset = 0;
   *encrypt_len = 0;
   while (offset < plain_len) {
-    size_t block_enc_len = block_enc_buf.size();
     size_t cur_block_size = std::min(MAX_BLOCK_SIZE, plain_len - offset);
     block_buf.assign(plain_data + offset, plain_data + offset + cur_block_size);
     unsigned char tag[Byte16];
-    if (!BlockEncrypt(block_enc_buf.data(), &block_enc_len, block_buf, key, static_cast<int32_t>(key_len), enc_mode,
+    if (!BlockEncrypt(block_enc_buf.data(), &block_enc_buf_len, block_buf, key, static_cast<int32_t>(key_len), enc_mode,
                       tag)) {
       MS_LOG(ERROR)
         << "Failed to encrypt data, please check if enc_key or enc_mode is valid or the file has been tempered with.";
@@ -475,11 +474,11 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
     }
 
     capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);
-    ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, block_enc_buf.data(), block_enc_len);
+    ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, block_enc_buf.data(), block_enc_buf_len);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
     }
-    *encrypt_len += block_enc_len;
+    *encrypt_len += block_enc_buf_len;
     offset += cur_block_size;
   }
   return encrypt_data;
