@@ -329,3 +329,31 @@ int ReduceSumDim2Axis1(size_t col_len, const float *src_data, float *dst_data) {
   dst_data[0] = tmp;
   return NNACL_OK;
 }
+
+int ReduceMeanWithAxis(const float *src_data, float *mean, int64_t size) {
+  if (size == 0 || src_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  float sum = 0.0;
+  int64_t i = 0;
+  SIMD_RUN_NO_SCALAR(ReduceSumByLastAxis, i, src_data, &sum, 0);
+  for (; i < size; ++i) {
+    sum += src_data[i];
+  }
+  *mean = sum / size;
+  return NNACL_OK;
+}
+
+int ReduceDeviation(const float *src_data, int64_t size, float mean, float *deviation) {
+  if (size == 0 || src_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  int64_t i = 0;
+  SIMD_RUN_NO_SCALAR(FloatReduceDeviation, i, src_data, mean, size, deviation);
+  for (; i < size; ++i) {
+    float tmp = src_data[i] - mean;
+    tmp = tmp * tmp;
+    *deviation += tmp;
+  }
+  return NNACL_OK;
+}
