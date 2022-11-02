@@ -269,6 +269,7 @@ int BenchmarkUnifiedApi::GenerateInputData() {
         return RET_ERROR;
       }
       tensor = *input;
+      delete input;
     } else {
       auto input_data = tensor.MutableData();
       if (input_data == nullptr) {
