@@ -315,7 +315,9 @@ int ConvGradFilterBkwGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     filter_shape_ = value_res.value();
   }
   auto filter_shape = filter_shape_;
-  CheckTensorSize({in_shape, dy_shape, filter_shape});
+  if (!CheckTensorSize({in_shape, dy_shape, filter_shape})) {
+    return KRET_RESIZE_FAILED;
+  }
   int h_index = k2DHeightIndexNCHW;
   int w_index = k2DHeightIndexNCHW + 1;
   if (data_format_ == kOpFormat_NHWC) {

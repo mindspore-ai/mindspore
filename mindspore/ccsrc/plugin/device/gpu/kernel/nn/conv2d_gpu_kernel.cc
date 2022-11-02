@@ -124,7 +124,9 @@ int Conv2dFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (is_null_input_) {
     return KRET_OK;
   }
-  CheckTensorSize({in_shape, filter_shape, output_shape});
+  if (!CheckTensorSize({in_shape, filter_shape, output_shape})) {
+    return KRET_RESIZE_FAILED;
+  }
   std::vector<int> pad_list;
   // The pad_list is computed in infer shape
   auto pad_list_me = GetValue<std::vector<int64_t>>(base_operator->GetAttr("pad_list"));

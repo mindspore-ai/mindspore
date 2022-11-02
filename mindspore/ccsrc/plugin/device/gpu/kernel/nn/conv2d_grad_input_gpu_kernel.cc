@@ -314,7 +314,9 @@ int ConvGradInputBkwGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       ShapeNCHW2NHWC(&input_shape);
     }
   }
-  CheckTensorSize({input_shape, dy_shape, filter_shape});
+  if (!CheckTensorSize({input_shape, dy_shape, filter_shape})) {
+    return KRET_RESIZE_FAILED;
+  }
   SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
   Set4DDesc(dy_shape, input_shape, filter_shape);
   auto pad_list = pad_list_;
