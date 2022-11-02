@@ -1,7 +1,7 @@
 mindspore.nn.MaxUnpool3d
 ========================
 
-.. py:class:: mindspore.nn.MaxUnpool3d(kernel_size, stride=None, padding=0, output_size=())
+.. py:class:: mindspore.nn.MaxUnpool3d(kernel_size, stride=None, padding=0)
 
     `Maxpool3d` 的部分逆过程。 `Maxpool3d` 不是完全可逆的，因为非最大值丢失。
     `MaxUnpool3d` 以 `MaxPool3d` 的输出为输入，包括最大值的索引。在计算 `maxpool3d` 部分逆的过程中，非最大值设置为零。
@@ -23,17 +23,17 @@ mindspore.nn.MaxUnpool3d
           默认值：None。
         - **padding** (Union[int, tuple[int]]) - 填充值。默认值：0。若为int类型，则深度、长和宽方向的填充大小相同，均为 `padding` 。
           若为tuple类型，则tuple中的三个值分别代表深度、长和宽方向填充的大小。
-        - **output_size** (tuple[int]) - 输出shape，可选参数。默认值：()。
-          如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
-          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` 或 :math:`(C, D, H, W)` ，
-          取值范围需满足：
-          :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]), (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]` 。
 
     输入：
         - **x** (Tensor) - 待求逆的Tensor。shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或
           :math:`(C, D_{in}, H_{in}, W_{in})` 。
         - **indices** (Tensor) - 最大值的索引。shape必须与输入 `x` 相同。取值范围需满足
           :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]` 。数据类型必须是int32或int64。
+        - **output_size** (tuple[int], 可选) - 输出shape。默认值：None。
+          如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
+          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` 或 :math:`(C, D, H, W)` ，
+          取值范围需满足：
+          :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]), (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]` 。
 
     输出：
         shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 的Tensor，
