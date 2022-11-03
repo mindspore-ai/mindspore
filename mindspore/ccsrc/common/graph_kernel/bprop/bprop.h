@@ -16,11 +16,19 @@
 #ifndef MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_BPROP_H_
 #define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_BPROP_H_
 
+#include <map>
+#include <vector>
+#include <utility>
 #include "ir/anf.h"
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 #include "include/common/visible.h"
 
 namespace mindspore {
-COMMON_EXPORT void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, expander::bprop::DoutUser *dout_user);
+using DoutUserType = std::vector<std::pair<CNodePtr, int>>;
+// deprecated
+COMMON_EXPORT void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, DoutUserType *dout_user);
+
+using UserType = std::map<AnfNodePtr, std::vector<std::pair<CNodePtr, int>>>;
+COMMON_EXPORT void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_BPROP_H_

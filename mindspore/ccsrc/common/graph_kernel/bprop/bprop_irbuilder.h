@@ -19,7 +19,6 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <utility>
 #include <map>
 #include <functional>
 
@@ -30,14 +29,13 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
-using DoutUser = std::vector<std::pair<CNodePtr, int>>;
 class BpropIRBuilder : public Emitter {
  public:
   BpropIRBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
       : Emitter(func_graph, infer), name_(name) {}
 
   /// \brief Run irbuilder to generate a graph
-  bool Run(const NodePtrList &inputs, const DAttr &attrs, std::vector<CNodePtr> *outputs, DoutUser *dout_user);
+  bool Run(const NodePtrList &inputs, const DAttr &attrs, CNodePtrList *outputs);
 
   ValuePtr GetAttr(const std::string &attr) const;
   template <typename S>
@@ -69,11 +67,7 @@ class BpropIRBuilder : public Emitter {
   // case 3: x[..., 0:3:2, 0::2, :]   => StridedSlice(x, {{-3,{0,3,2}}, {-2,{0,LLONG_MAX,2}}})
   NodePtr StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) const;
 
-  void DumpResult(const std::vector<CNodePtr> &outputs, const DoutUser &dout_user) const;
-
  protected:
-  void FindDoutUsers(const std::vector<CNodePtr> &outputs, DoutUser *dout_user) const;
-
   std::string name_;
   const NodePtrList *inputs_ptr_{nullptr};
   const DAttr *attrs_ptr_{nullptr};
