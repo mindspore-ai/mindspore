@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ops_info/scatter_update_info.h"
+#include "frontend/parallel/ops_info/scatter_ops_info.h"
 
 #include <algorithm>
 #include <functional>
@@ -38,7 +38,7 @@ namespace parallel {
 // The shape of updates: [N, O, ..., Z, B, ..., M], the strategy of updates: (1, 1, ..., 1, b, ..., m)
 // The shape of output:  [A, B, ..., M], the strategy of output: (1, b, ..., m)
 // The dev matrix: (1, b, ..., m)
-Status ScatterUpdateInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status ScatterOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
@@ -92,7 +92,7 @@ Status ScatterUpdateInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status ScatterUpdateInfo::InferDevMatrixShape() {
+Status ScatterOpsInfo::InferDevMatrixShape() {
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();
   if (stra.empty()) {
@@ -104,7 +104,7 @@ Status ScatterUpdateInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status ScatterUpdateInfo::InferTensorMap() {
+Status ScatterOpsInfo::InferTensorMap() {
   if (inputs_shape_.size() != 3) {
     MS_LOG(ERROR) << name_ << "The size of inputs shape must be 3";
     return FAILED;
@@ -132,17 +132,15 @@ Status ScatterUpdateInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-void ScatterUpdateInfo::ReComputeBatchSplitFlagList() {
+void ScatterOpsInfo::ReComputeBatchSplitFlagList() {
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     split_flag_list_[i] = false;  // the first dimension can not be split
   }
 }
 
-Status ScatterUpdateInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  return SetCostUnderStrategyBase(strategy);
-}
+Status ScatterOpsInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-std::vector<StrategyPtr> ScatterUpdateInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> ScatterOpsInfo::GenerateOpStrategies(int64_t stage_id) {
   // to generate the first input's strategy
   Shape input_split(inputs_shape_[0].size(), 1);
   input_split[0] = 0;
@@ -184,7 +182,7 @@ std::vector<StrategyPtr> ScatterUpdateInfo::GenerateOpStrategies(int64_t stage_i
 // return: ((A, B, C, D), (1, 1), (E, F, B, C, D))
 // in_strategy: ((), (), (E, F, B, C, D)), Shapes: ((a, b, c, d), (e, f), (e, f, b, c, d))
 // return: throw exception
-Shapes ScatterUpdateInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
+Shapes ScatterOpsInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
   if (in_strategy.size() != 3) {
     MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();
   }
@@ -219,5 +217,7 @@ Shapes ScatterUpdateInfo::InferStrategyIndividualMode(const Shapes &in_strategy)
 }
 
 REGISTER(ScatterUpdateInfo);
+REGISTER(ScatterMaxInfo);
+REGISTER(ScatterMinInfo);
 }  // namespace parallel
 }  // namespace mindspore
