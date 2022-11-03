@@ -2,6 +2,7 @@
 from collections import OrderedDict
 
 from mindspore import nn
+from mindspore.ops import operations as P
 from mindspore.rewrite import SymbolTree, PatternEngine, Replacement, PatternNode, Node, ScopedValue
 from mindspore.rewrite.api.tree_node_helper import TreeNodeHelper
 from mindspore.rewrite.api.node_type import NodeType
@@ -108,6 +109,28 @@ class CellBlock(nn.Cell):
         return out
 
 
+class SimpleNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.mul = P.Mul()
+        self.dense = nn.Dense(in_channels=32, out_channels=32, weight_init="ones")
+        self.mean = P.ReduceMean(keep_dims=False)
+        self.split = P.Split(axis=1, output_num=3)
+        self.conv1 = nn.Conv2d(3, 64, 3, stride=2)
+        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.block = CellBlock(3, 6)
+
+    def construct(self, x):
+        y, _, _ = self.split(x)
+        y = self.mean(y, (2, 3))
+        x = self.mul(x, 1)
+        x = self.block(x)
+        x = self.conv1(x)
+        x = self.max_pool2d(x)
+        x = self.dense(x)
+        return x, y
+
+
 class ForNetWithSubTree(nn.Cell):
     def __init__(self):
         super(ForNetWithSubTree, self).__init__()
@@ -125,12 +148,14 @@ class ForNetWithSubTree(nn.Cell):
         resnet_block3 = CellBlock(16, 32)
         layers = [resnet_block1, resnet_block2, resnet_block3]
         self.layer2 = nn.SequentialCell(layers)
+        self.simple_net = SimpleNet()
 
     def construct(self, x):
         x = self.conv1(x)
         x = self.layer1(x)
         x = self.relu(x)
         x = self.layer2(x)
+        x = self.simple_net(x)
         return x
 
 
@@ -144,7 +169,7 @@ def test_erase_subtree_node():
     stree = SymbolTree.create(net)
 
     for node in stree.nodes():
-        if node.get_name() == "layer1":
+        if node.get_name() == "simple_net":
             subtree = TreeNodeHelper.get_sub_tree(node)
             orig_node_num = len(subtree.get_handler()._nodes)
             for n in subtree.nodes():
@@ -169,11 +194,11 @@ def test_erase_subtree_node_01():
     stree = SymbolTree.create(net)
 
     for node in stree.nodes():
-        if node.get_name() == "layer2":
+        if node.get_name() == "simple_net":
             subtree = TreeNodeHelper.get_sub_tree(node)
             orig_node_num = len(subtree.get_handler()._nodes)
             for n in subtree.nodes():
-                if n.get_name() == "cell_list_1":
+                if n.get_name() == "block":
                     input_node = n.get_inputs()[0]
                     output_nodes = n.get_users()
                     for _nn in output_nodes:
@@ -203,10 +228,10 @@ def test_erase_subtree_node_02():
     net = ForNetWithSubTree()
     stree = SymbolTree.create(net)
     for node in stree.nodes():
-        if node.get_name() == "layer2":
+        if node.get_name() == "simple_net":
             subtree = TreeNodeHelper.get_sub_tree(node)
             for n in subtree.nodes():
-                if n.get_name() == "cell_list_1":
+                if n.get_name() == "block":
                     subtree1 = TreeNodeHelper.get_sub_tree(n)
                     _remove_bn(subtree1)
                     assert subtree1.get_node("bn1") is None
@@ -231,10 +256,10 @@ def test_insert_subtree_node():
     net = ForNetWithSubTree()
     stree = SymbolTree.create(net)
     for node in stree.nodes():
-        if node.get_name() == "layer2" and  node.get_node_type() == NodeType.Tree:
+        if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
             subtree = TreeNodeHelper.get_sub_tree(node)
             for n in subtree.nodes():
-                if n.get_name() == "cell_list_1":
+                if n.get_name() == "block":
                     subtree1 = TreeNodeHelper.get_sub_tree(n)
                     orig_node_num = len(subtree1.get_handler()._nodes)
                     _insert_node(subtree1)
@@ -251,7 +276,7 @@ def test_resnet_replace_121():
     stree: SymbolTree = SymbolTree.create(net)
     original_nodes_size = len(stree.get_handler()._nodes)
     for node in stree.nodes():
-        if node.get_name() == "layer1" and  node.get_node_type() == NodeType.Tree:
+        if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
             subtree = TreeNodeHelper.get_sub_tree(node)
             for n in subtree.nodes():
                 if n.get_instance_type() == nn.Conv2d:
@@ -274,7 +299,7 @@ def test_resnet_replace_12m():
     stree: SymbolTree = SymbolTree.create(net)
 
     for node in stree.nodes():
-        if node.get_name() == "layer1" and  node.get_node_type() == NodeType.Tree:
+        if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
             subtree = TreeNodeHelper.get_sub_tree(node)
             original_nodes_size = len(subtree.get_handler()._nodes)
             for n in subtree.nodes():
@@ -301,7 +326,7 @@ def test_node_fusion_in_subtree():
     stree: SymbolTree = SymbolTree.create(net)
     original_nodes_size = len(stree.get_handler()._nodes)
     for node in stree.nodes():
-        if node.get_name() == "layer1" and  node.get_node_type() == NodeType.Tree:
+        if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
             subtree = TreeNodeHelper.get_sub_tree(node)
             original_nodes_size = len(subtree.get_handler()._nodes)
             for n in subtree.nodes():
