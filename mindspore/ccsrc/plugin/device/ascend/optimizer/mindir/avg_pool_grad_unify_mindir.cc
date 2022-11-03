@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,14 @@ constexpr float kKernelMatrixInitNum = 1.0;
 constexpr size_t kFloat32Len = 4;  // size of float32
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  return common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  return common::AnfAlgo::GetPrevNodeOutputInferShape(node, IntToSize(0));
 }
 
 int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t ksize, int64_t stride,
                              PadMode pad_mode, int64_t *pad_before, int64_t *pad_after) {
   MS_EXCEPTION_IF_NULL(pad_before);
   MS_EXCEPTION_IF_NULL(pad_after);
+  MS_EXCEPTION_IF_NULL(node);
   int64_t output = 0;
   *pad_before = 0;
   *pad_after = 0;
@@ -121,13 +122,13 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const Anf
   std::vector<float> hw_output(h_output * w_output, 0.0);
   for (int64_t h = 0; h < h_output; ++h) {
     for (int64_t w = 0; w < w_output; ++w) {
-      float curr_sum = 0;
+      float curr_sum = 0.0;
       for (int64_t i = h * stride[kDim2]; i < h * stride[kDim2] + k_size[kDim2]; ++i) {
         for (int64_t j = w * stride[kDim3]; j < w * stride[kDim3] + k_size[kDim3]; ++j) {
           curr_sum += assist_input_matrix[LongToSize(i)][LongToSize(j)];
         }
       }
-      if (curr_sum > 0) {
+      if (curr_sum > IntToFloat(0)) {
         hw_output[LongToSize(h * w_output + w)] = 1.0 / curr_sum;
       }
     }
@@ -194,7 +195,7 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   auto avgpool_grad = CheckAnfNodeIfCNodeAndInputSize(node, kAvgPoolGradInputNum);
 
   auto x_shape = GetInputXShape(avgpool_grad);
-  auto x_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(avgpool_grad, 0);
+  auto x_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(avgpool_grad, IntToSize(0));
   auto k_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrKernelSize);
   auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrStrides);
   auto prim = GetCNodePrimitive(avgpool_grad);
@@ -208,7 +209,7 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   auto kernel_matrix_vnode = CreateKernelMatrixValueNode(graph, node, x_shape, k_size, x_dtype);
 
   std::vector<AnfNodePtr> avgpool_grad_vm_inputs = {NewValueNode(std::make_shared<Primitive>(kAvgPoolGradVmOpName)),
-                                                    x_shape_vnode, avgpool_grad->input(3), mean_matrix_vnode,
+                                                    x_shape_vnode, avgpool_grad->input(IntToSize(3)), mean_matrix_vnode,
                                                     kernel_matrix_vnode};
   auto avgpool_grad_vm = NewCNode(avgpool_grad_vm_inputs, graph);
   MS_EXCEPTION_IF_NULL(avgpool_grad_vm);

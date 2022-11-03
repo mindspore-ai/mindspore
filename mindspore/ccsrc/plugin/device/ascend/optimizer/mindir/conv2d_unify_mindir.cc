@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,16 +117,16 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
   transpose->set_scope(conv2d->scope());
 
   if (need_trans_output) {
-    auto types = {common::AnfAlgo::GetOutputInferDataType(input_node, 0)};
-    auto out_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
+    auto types = {common::AnfAlgo::GetOutputInferDataType(input_node, IntToSize(0))};
+    auto out_shape = common::AnfAlgo::GetOutputInferShape(input_node, IntToSize(0));
     if (out_shape.size() != kConv2DAxisNum) {
       MS_LOG(EXCEPTION) << "Conv2D's output axis number should be " << kConv2DAxisNum << ", but got "
                         << out_shape.size() << trace::DumpSourceLines(conv2d);
     }
     std::swap(out_shape[kDim0], out_shape[kDim1]);
     if (IsDynamic(out_shape)) {
-      auto min_shape = common::AnfAlgo::GetOutputMinShape(input_node, 0);
-      auto max_shape = common::AnfAlgo::GetOutputMaxShape(input_node, 0);
+      auto min_shape = common::AnfAlgo::GetOutputMinShape(input_node, IntToSize(0));
+      auto max_shape = common::AnfAlgo::GetOutputMaxShape(input_node, IntToSize(0));
       if (!min_shape.empty() && !max_shape.empty()) {
         std::swap(min_shape[kDim0], min_shape[kDim1]);
         std::swap(max_shape[kDim0], max_shape[kDim1]);
@@ -226,8 +226,8 @@ const AnfNodePtr Conv2DUnifyMindIR::Process(const FuncGraphPtr &graph, const Anf
 
   auto conv2d = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv2d);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d, 0);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(conv2d, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d, IntToSize(0));
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(conv2d, IntToSize(0));
   if (!NeedUpdate(conv2d, input_shape, output_shape)) {
     return nullptr;
   }
@@ -278,8 +278,8 @@ const AnfNodePtr Conv2DBackpropInputUnifyMindIR::Process(const FuncGraphPtr &gra
 
   auto conv2d_backin = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv2d_backin);
-  auto input_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backin, 0);
-  auto output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backin, 0);
+  auto input_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backin, IntToSize(0));
+  auto output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backin, IntToSize(0));
   if (!NeedUpdate(conv2d_backin, input_shape, output_shape)) {
     return nullptr;
   }
@@ -323,16 +323,16 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
   MS_EXCEPTION_IF_NULL(depth_conv_backfil);
   depth_conv_backfil->set_scope(conv2d_backfil->scope());
 
-  auto types = {common::AnfAlgo::GetOutputInferDataType(conv2d_backfil, 0)};
-  auto out_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backfil, 0);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(conv2d_backfil, IntToSize(0))};
+  auto out_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backfil, IntToSize(0));
   if (out_shape.size() != kConv2DAxisNum) {
     MS_LOG(EXCEPTION) << "Conv2DBackpropFilter's output axis number should be " << kConv2DAxisNum << ", but got "
                       << out_shape.size() << trace::DumpSourceLines(conv2d_backfil);
   }
   std::swap(out_shape[0], out_shape[1]);
   if (IsDynamic(out_shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(conv2d_backfil, 0);
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(conv2d_backfil, 0);
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(conv2d_backfil, IntToSize(0));
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(conv2d_backfil, IntToSize(0));
     if (!min_shape.empty() && !max_shape.empty()) {
       std::swap(min_shape[0], min_shape[1]);
       std::swap(max_shape[0], max_shape[1]);
@@ -362,8 +362,8 @@ const AnfNodePtr Conv2DBackpropFilterUnifyMindIR::Process(const FuncGraphPtr &gr
 
   auto conv2d_backfil = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv2d_backfil);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, 1);
-  auto output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, IntToSize(1));
+  auto output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, IntToSize(0));
   if (!NeedUpdate(conv2d_backfil, input_shape, output_shape)) {
     return nullptr;
   }

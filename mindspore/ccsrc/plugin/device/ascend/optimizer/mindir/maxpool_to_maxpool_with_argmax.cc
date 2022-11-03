@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolWithArgmax(const FuncGraphPtr &
 
   // MaxPoolWithArgmax's second output is argmax, whose datatype is uint16 and with same shape as first output
   TypeId argmax_dtype = kNumberTypeUInt16;
-  auto types = {common::AnfAlgo::GetOutputInferDataType(maxpool, 0), argmax_dtype};
-  auto out_shape = common::AnfAlgo::GetOutputDetailShape(maxpool, 0);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(maxpool, IntToSize(0)), argmax_dtype};
+  auto out_shape = common::AnfAlgo::GetOutputDetailShape(maxpool, IntToSize(0));
   std::vector<BaseShapePtr> shapes = {out_shape, out_shape};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, maxpool_argmax.get());
   return maxpool_argmax;

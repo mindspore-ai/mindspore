@@ -353,8 +353,8 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   }
 
   // output shapes and dtypes
-  auto base_dtype = common::AnfAlgo::GetOutputInferDataType(base_node, 0);
-  auto base_shape = common::AnfAlgo::GetOutputInferShape(base_node, 0);
+  auto base_dtype = common::AnfAlgo::GetOutputInferDataType(base_node, IntToSize(0));
+  auto base_shape = common::AnfAlgo::GetOutputInferShape(base_node, IntToSize(0));
   if (SizeToLong(base_shape.size()) != kShapeSize) {
     MS_LOG(EXCEPTION) << "Invalid shape size " << base_shape.size() << ", only support NCHW input now!";
   }
@@ -440,11 +440,11 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
 
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
 
-  auto dtype = common::AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_input, 0);
-  auto shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  auto dtype = common::AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_input, IntToSize(0));
+  auto shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, IntToSize(0));
   auto is_dynamic = IsDynamic(shape);
-  auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, 0);
-  auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, 0);
+  auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, IntToSize(0));
+  auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, IntToSize(0));
   auto shape_pair = std::make_pair(min_shape, max_shape);
   if (SizeToLong(shape.size()) != kShapeSize) {  // only support NCHW now
     MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size() << ", only support NCHW input now!"
@@ -546,13 +546,11 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
   size_t first_ids = is_left ? kIndex7 : kIndex1;
   size_t middle_ids = is_left ? kIndex6 : kIndex2;
   size_t last_ids = is_left ? kIndex5 : kIndex3;
+  auto output_idx = LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids));
 
-  auto single_shape = common::AnfAlgo::GetOutputInferShape(
-    all_to_all_v_outputs[LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids))], 0);
-  auto max_shape =
-    common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids))], 0);
-  auto min_shape =
-    common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids))], 0);
+  auto single_shape = common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[output_idx], IntToSize(0));
+  auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[output_idx], IntToSize(0));
+  auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[output_idx], IntToSize(0));
 
   auto is_dynamic = IsDynamic(single_shape);
   if (recv_rank_ids[first_ids] != kInvalidId) {
@@ -597,9 +595,9 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
   std::vector<AnfNodePtr> concat_input_all = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   int64_t input_num_all = 0;
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
-  auto single_shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
-  auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, 0);
-  auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, 0);
+  auto single_shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, IntToSize(0));
+  auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, IntToSize(0));
+  auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, IntToSize(0));
   auto is_dynamic = IsDynamic(single_shape);
   size_t first_idx = kIndex0;
   size_t last_idx = kIndex4;
@@ -651,7 +649,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
     }
   }
 
-  std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)};
+  std::vector<TypeId> concat_output_dtype = {
+    common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], IntToSize(0))};
   auto concat_all = CreateConcatNode(graph, concat_input_all, SizeToLong(concat_dim), input_num_all);
   if (is_dynamic) {
     BaseShapePtr base_shape = std::make_shared<abstract::Shape>(single_shape, min_shape, max_shape);
@@ -722,7 +721,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
 
   std::vector<AnfNodePtr> concat_input_all = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
-  auto shape_all = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  auto shape_all = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, IntToSize(0));
   shape_all[kDim2] = recv_rank_ids[kRankIdZero] != kInvalidId ? shape_all[kDim2] + recv_lens[0] : shape_all[kDim2];
   shape_all[kDim2] = recv_rank_ids[kRankIdFour] != kInvalidId ? shape_all[kDim2] + recv_lens[1] : shape_all[kDim2];
   int64_t input_nums_all = 0;
@@ -732,7 +731,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
 
     // connect to concat_all
     std::vector<AnfNodePtr> concat_left_outputs;
-    CreateMultipleOutputsOfAnfNode(graph, concat_left, 1, &concat_left_outputs);
+    CreateMultipleOutputsOfAnfNode(graph, concat_left, IntToSize(1), &concat_left_outputs);
     if (concat_left_outputs.empty()) {
       MS_LOG(EXCEPTION) << "The node " << concat_left->DebugString() << " should have at least one output, but got 0."
                         << trace::DumpSourceLines(concat_left);
@@ -744,7 +743,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
 
   // middle concat connect to concat_all
   std::vector<AnfNodePtr> concat_middle_outputs;
-  CreateMultipleOutputsOfAnfNode(graph, concat_middle, 1, &concat_middle_outputs);
+  CreateMultipleOutputsOfAnfNode(graph, concat_middle, IntToSize(1), &concat_middle_outputs);
   if (concat_middle_outputs.empty()) {
     MS_LOG(EXCEPTION) << "The node " << concat_middle->DebugString() << " should have at least one output, but got 0."
                       << trace::DumpSourceLines(concat_middle);
@@ -757,7 +756,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
 
     // connect to concat_all
     std::vector<AnfNodePtr> concat_right_outputs;
-    CreateMultipleOutputsOfAnfNode(graph, concat_right, 1, &concat_right_outputs);
+    CreateMultipleOutputsOfAnfNode(graph, concat_right, IntToSize(1), &concat_right_outputs);
     if (concat_right_outputs.empty()) {
       MS_LOG(EXCEPTION) << "The node " << concat_right->DebugString() << " should have at least one output, but got 0."
                         << trace::DumpSourceLines(concat_right);
@@ -916,9 +915,9 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
     common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrRecvLens);
 
   auto centerx = GetCenter(graph, neighbor_exchange_v2_grad, split_nodes, split_num, send_rank_ids);
-  auto centerx_dtype = common::AnfAlgo::GetOutputInferDataType(centerx, 0);
-  auto centerx_shape = common::AnfAlgo::GetOutputInferShape(centerx, 0);
-  auto base_shape = common::AnfAlgo::GetOutputDetailShape(centerx, 0);
+  auto centerx_dtype = common::AnfAlgo::GetOutputInferDataType(centerx, IntToSize(0));
+  auto centerx_shape = common::AnfAlgo::GetOutputInferShape(centerx, IntToSize(0));
+  auto base_shape = common::AnfAlgo::GetOutputDetailShape(centerx, IntToSize(0));
   // empty
   int64_t all_to_all_output_num =
     std::count_if(recv_rank_ids.begin(), recv_rank_ids.end(), [](int64_t ids) { return ids != kInvalidId; });

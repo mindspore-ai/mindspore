@@ -41,16 +41,16 @@ AnfNodePtr BatchNormGradUnifyMindIR::CreateNewBatchNormGrad(const FuncGraphPtr &
   auto new_bn_grad = NewCNode(bn_grad_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_bn_grad);
   new_bn_grad->set_scope(bn_grad_node->scope());
-  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 0),
-                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 1),
-                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2),
-                common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 3),
-                common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 4)};
-  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 0),
-                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 1),
-                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 2),
-                 common::AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 3),
-                 common::AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 4)};
+  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, IntToSize(0)),
+                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, IntToSize(1)),
+                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, IntToSize(2)),
+                common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, IntToSize(3)),
+                common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, IntToSize(4))};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_grad_node, IntToSize(0)),
+                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, IntToSize(1)),
+                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, IntToSize(2)),
+                 common::AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, IntToSize(3)),
+                 common::AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, IntToSize(4))};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_bn_grad.get());
   common::AnfAlgo::CopyNodeAttrs(bn_grad_node, new_bn_grad);
   common::AnfAlgo::SetNodeAttr(kAttrUnifyIRPassed, MakeValue(true), new_bn_grad);
