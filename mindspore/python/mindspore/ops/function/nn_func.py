@@ -4054,7 +4054,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
-        norm_type (Union[int, float]): Type of normalization, represents p in the formula,
+        norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0,
 
             - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
             - if p = :math:`\infty`, one gets Max Pooling.
@@ -4133,7 +4133,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
-        norm_type (Union[int, float]): Type of normalization, represents p in the formula,
+        norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0,
 
             - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
             - if p = :math:`\infty`, one gets Max Pooling.
