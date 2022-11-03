@@ -19,11 +19,11 @@ mindspore.obfuscate_model
         - **kwargs** (dict) - 配置选项字典。
 
           - **enc_key** (bytes) - 用于加密的字节类型密钥，有效长度为16、24或者32。
-          - **enc_mode** (str) - 指定加密模式，当设置 `enc_key` 时启用。支持的加密选项有：'AES-GCM'，'AES-CBC'。默认值："AES-GCM"。
+          - **enc_mode** (str) - 指定加密模式，当设置 `enc_key` 时启用。支持的加密选项有：'AES-GCM'，'AES-CBC', 'SM4-CBC'。默认值："AES-GCM"。
 
     异常：
         - **TypeError** - `obf_config` 不是字典类型。
-        - **ValueError** - 传入了 `enc_key` 但是 `enc_mode`　不在["AES-GCM", "AES-CBC"]内。
+        - **ValueError** - 传入了 `enc_key` 但是 `enc_mode`　不在["AES-GCM", "AES-CBC", "SM4-CBC"]内。
         - **ValueError** - `obf_config` 没有提供 `original_model_path` 。
         - **ValueError** - `original_model_path` 中的模型是已经混淆过的。
         - **ValueError** - `obf_config` 没有提供 `save_model_path` 。
