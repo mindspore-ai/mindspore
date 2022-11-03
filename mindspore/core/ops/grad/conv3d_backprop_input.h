@@ -31,7 +31,7 @@ class MIND_API Conv3DBackpropInput : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv3DBackpropInput);
   Conv3DBackpropInput() : BaseOperator(kNameConv3DBackpropInput) {
-    InitIOName({"filter", "out_backprop", "input_sizes"}, {"output"});
+    InitIOName({"filter", "out_backprop", "input_size"}, {"output"});
   }
   void Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0, 0, 0},
