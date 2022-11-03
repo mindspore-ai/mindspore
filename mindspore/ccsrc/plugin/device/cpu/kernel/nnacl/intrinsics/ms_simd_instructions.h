@@ -304,7 +304,7 @@ static inline float simd_exp32_f32(float data) {
 #else
   data = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, data));  // clamp(-88, 88)
 #endif
-  int integer = data / param[0];
+  int integer = floor(data * 1.44269504088896341f + 0.5f);
   float decimal = data - integer * param[0];
   fi int_exp;
   int_exp.i = (integer + 127) << 23;  // Approximate calculation : (integer + 127) << 23
@@ -321,7 +321,7 @@ static inline void simd_exp32(float src, float *dst) {
   } fi;
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};  // log(2.0f)
   src = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, src));                                 // clamp(-88.0f, 88.0f)
-  int integer = src / param[0];
+  int integer = floor(src * 1.44269504088896341f + 0.5f);
   float decimal = src - integer * param[0];
   fi int_exp;
   int_exp.i = (integer + 127) << 23;  // integer num approximate calculation : (x + 127) << 23
