@@ -429,6 +429,22 @@ void ProfilingUtils::SetReportProfilingData(const std::vector<uint32_t> &task_id
   GraphProfilingData report_data = {task_ids, stream_ids, graph_id, rt_model_id};
   (void)report_data_.emplace_back(report_data);
 }
+
+// Report MindSpore Framework data to Ascend Profiler
+void ProfilingUtils::ReportMindSporeFrameworkData() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  uint32_t graph_id = 0;
+  uint32_t rt_model_id = 0;
+  std::vector<CNodePtr> cnode_list;
+  std::vector<uint32_t> stream_ids;
+  std::vector<uint32_t> task_ids;
+  ProfilingReporter repoter(device_id, graph_id, rt_model_id, cnode_list, stream_ids, task_ids);
+  MS_LOG(INFO) << "Start to report MindSpore Framework data to Ascend Profiler.";
+  repoter.ReportParallelStrategy();
+  MS_LOG(INFO) << "Stop to report MindSpore Framework data to Ascend Profiler.";
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

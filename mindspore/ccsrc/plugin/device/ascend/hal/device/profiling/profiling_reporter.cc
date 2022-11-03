@@ -22,6 +22,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
 namespace mindspore {
@@ -174,6 +175,17 @@ uint32_t ProfilingReporter::GetTaskId(const string &node_name) {
   return task_ids_[(uint32_t)index];
 }
 
+void ProfilingReporter::ReportParallelStrategy() const {
+  std::string parallel_data = profiler::ascend::ParallelStrategy::GetInstance()->GetParallelStrategyForReport();
+  if (parallel_data.empty()) {
+    return;
+  }
+  MS_LOG(INFO) << "Start to report parallel strategy data to Ascend Profiler.";
+  std::string tag_name = "parallel_strategy";
+  ReportData(device_id_, reinterpret_cast<unsigned char *>(parallel_data.data()), parallel_data.size(), tag_name);
+  MS_LOG(INFO) << "Stop to report " << parallel_data.size() << "(Bytes) parallel strategy data to Ascend Profiler.";
+}
+
 void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size_t data_size,
                                    const string &tag_name) const {
   ReporterData report_data{};
@@ -182,12 +194,12 @@ void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size
   report_data.dataLen = data_size;
   auto ret = memcpy_s(report_data.tag, MSPROF_ENGINE_MAX_TAG_LEN + 1, tag_name.c_str(), tag_name.length());
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name.c_str() << ", ret: " << ret;
+    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name << ", ret: " << ret;
   }
 
   auto report_ret = ProfilingManager::GetInstance().CallMsprofReport(NOT_NULL(&report_data));
   if (report_ret != 0) {
-    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name.c_str() << ", ret: " << ret << "."
+    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name << ", ret: " << report_ret << "."
                       << GetErrorMessage(true);
   }
 }

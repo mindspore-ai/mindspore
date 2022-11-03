@@ -24,6 +24,7 @@
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 
 #include "google/protobuf/util/json_util.h"
+#include "nlohmann/json.hpp"
 
 #ifdef WITH_BACKEND
 #include "ps/ps_context.h"
@@ -185,6 +186,34 @@ void ParallelStrategy::SaveParallelStrategyToFile() {
   has_save_parallel_strategy = true;
 
   MS_LOG(INFO) << "Save profile parallel strategy success.";
+}
+
+std::string ParallelStrategy::GetParallelStrategyForReport() {
+  bool parallel_data_save_status = has_got_parallel_strategy_data;
+  std::string report_data;
+  irpb::ProfilingParallel profiling_parallel;
+  if (has_got_parallel_strategy_data) {
+    profiling_parallel = cache_profiling_parallel_pb;
+  } else {
+    FuncGraphPtr func_graph = nullptr;
+    profiling_parallel = GetProfilingParallel(func_graph);
+  }
+
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  (void)google::protobuf::util::MessageToJsonString(profiling_parallel, &report_data);
+  try {
+    nlohmann::json report_content = nlohmann::json::parse(report_data);
+    report_content["config"]["ai_framework_type"] = "MindSpore";
+    report_content["config"]["stage_num"] = parallel_context->pipeline_stage_split_num();
+    report_data = report_content.dump();
+  } catch (nlohmann::json::exception &e) {
+    MS_LOG(ERROR) << e.what();
+    report_data = "";
+  }
+
+  has_got_parallel_strategy_data = parallel_data_save_status;
+  return report_data;
 }
 }  // namespace ascend
 }  // namespace profiler

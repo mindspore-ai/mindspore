@@ -77,6 +77,8 @@ class ProfilingUtils {
   // Save graph information to Framework file
   static void ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
                                   uint32_t graph_id, uint32_t rt_model_id);
+  // Report MindSpore Framework data to Ascend Profiler
+  static void ReportMindSporeFrameworkData();
   // Generate profiling trace
   static ProfilingTraceInfo GenerateProfilingTrace(const session::KernelGraph &kernel_graph);
 
