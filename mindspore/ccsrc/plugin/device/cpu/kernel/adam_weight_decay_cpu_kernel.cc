@@ -88,17 +88,19 @@ void AdamWeightDecayCpuKernelMod::LaunchAdamWeightDecayNnacl(const std::vector<A
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
-void AdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool AdamWeightDecayCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
 }
 
 bool AdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
   if (inputs[kIndex0]->size != inputs[kIndex1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'm' and 'var' must be the same, but got the memory size of 'm': "
