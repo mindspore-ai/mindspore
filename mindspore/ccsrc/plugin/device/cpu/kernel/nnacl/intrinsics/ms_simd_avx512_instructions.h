@@ -101,6 +101,14 @@
 #define MS_OR512_EPI32(src1, src2) _mm512_or_epi32(src1, src2)
 #define MS_AND512_EPI32(src1, src2) _mm512_and_epi32(src1, src2)
 
+static inline MS_FLOAT512_F32 SIMD_SIGN512_F32(MS_FLOAT512_F32 src) {
+  MS_FLOAT512_F32 abs_src = MS_ABS512_F32(src);
+  MS_FLOAT512_F32 sign = MS_DIV512_F32(abs_src, src);
+  return sign;
+}
+
+#define SIMD_SIGNABS512_F32(src, abs_src) MS_DIV512_F32(abs_src, src)
+
 static inline MS_FLOAT512_F32 MS_OR512_F32(MS_FLOAT512_F32 src1, MS_FLOAT512_F32 src2) {
   MS_FLOAT512_F32 result = MS_CAST512_F32_S32(MS_OR512_EPI32(MS512_CASTPS_EPI32(src1), MS512_CASTPS_EPI32(src2)));
   return result;

@@ -54,6 +54,7 @@ int ShapeFusionPass::ConvertToShapeFusion(LiteGraph::Node *node) {
   auto shape_fusion_prim = flatbuffers::GetRoot<schema::Primitive>(prim);
   MS_CHECK_TRUE_RET(shape_fusion_prim != nullptr, RET_ERROR);
   ShapeFusionMatrix shape_fusion_matrix(shape.size());
+  MS_CHECK_TRUE_RET(!node->output_indices_.empty(), RET_ERROR);
   shape_fusion_matrices_[node->output_indices_.front()] = shape_fusion_matrix;
   auto shape_fusion_matrix_tensor = BuildTensorFromShapeFusionMatrix(shape_fusion_matrix);
   MS_CHECK_TRUE_RET(shape_fusion_matrix_tensor != nullptr, RET_ERROR);

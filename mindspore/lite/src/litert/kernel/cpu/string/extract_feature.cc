@@ -30,6 +30,11 @@ int ExtractFeatureCPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[1]);
+  if (in_tensors_[0]->data_type() != mindspore::kObjectTypeString) {
+    MS_LOG(ERROR) << "Extract_feature op in_tensors must be kObjectTypeString, but it is "
+                  << in_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }

@@ -283,6 +283,18 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
   return res;
 }
 
+static inline MS_FLOAT128_F32 SIMD_SIGN128_F32(MS_FLOAT128_F32 src) {
+  MS_FLOAT128_F32 abs_src = MS_ABS128_F32(src);
+  MS_FLOAT128_F32 src_tmp = MS_OR128_F32(src, MS_MOV128_F32(1.0f));
+  MS_FLOAT128_F32 sign = MS_DIV128_F32(abs_src, src_tmp);
+  return sign;
+}
+
+static inline MS_FLOAT128_F32 SIMD_SIGNABS128_F32(MS_FLOAT128_F32 src, MS_FLOAT128_F32 abs_src) {
+  MS_FLOAT128_F32 src_tmp = MS_OR128_F32(src, MS_MOV128_F32(1.0f));
+  return MS_DIV128_F32(abs_src, src_tmp);
+}
+
 #define MS_TANH128_F32 MS_TANHX4_F32
 
 static inline MS_FLOAT32X4 MS128_ERF_F32(MS_FLOAT32X4 src) {

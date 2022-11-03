@@ -114,6 +114,14 @@ static inline MS_FLOAT32X8 MS_ABS256_F32(MS_FLOAT32X8 src) {
   return dst;
 }
 
+static inline MS_FLOAT256_F32 SIMD_SIGN256_F32(MS_FLOAT256_F32 src) {
+  MS_FLOAT256_F32 abs_src = MS_ABS256_F32(src);
+  MS_FLOAT256_F32 sign = MS_DIV256_F32(abs_src, src);
+  return sign;
+}
+
+#define SIMD_SIGNABS256_F32(src, abs_src) MS_DIV256_F32(abs_src, src)
+
 static inline MS_FLOAT32X8 MS_COS256_F32(MS_FLOAT32X8 src) {
   static const MS_FLOAT32X8 pi = {PI, PI, PI, PI, PI, PI, PI, PI};
   static const MS_FLOAT32X8 pi2_neg = {
