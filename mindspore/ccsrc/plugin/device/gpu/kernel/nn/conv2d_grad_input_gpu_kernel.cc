@@ -37,8 +37,7 @@ constexpr size_t kWidth2DStrideIndex = 1;
 constexpr size_t k2DDilationSize = 4;
 constexpr size_t kHeight2DDilationIndex = 2;
 constexpr size_t kWidth2DDilationIndex = 3;
-constexpr auto StaticInput = 2;
-constexpr auto DynamicInput = 3;
+constexpr auto kInputDim = 3;
 
 constexpr auto k2DHeightIndexNCHW = 2;
 constexpr auto k2DHeightIndexNHWC = 1;
@@ -46,10 +45,6 @@ constexpr auto k2DHeightIndexNHWC = 1;
 using KernelRunFunc = ConvGradInputBkwGpuKernelMod::KernelRunFunc;
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ConvGradInputBkwGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &ConvGradInputBkwGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &ConvGradInputBkwGpuKernelMod::LaunchKernel<half>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
@@ -163,11 +158,8 @@ void ConvGradInputBkwGpuKernelMod::CalPadList(const ShapeVector input_shape, con
 
 void ConvGradInputBkwGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs) {
   size_t input_num = inputs.size();
-  if (input_num != StaticInput && input_num != DynamicInput) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
-  }
-  if (input_num == DynamicInput) {
-    is_dynamic_attr_ = true;
+  if (input_num != kInputDim) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
   }
 }
 
@@ -254,9 +246,7 @@ bool ConvGradInputBkwGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   data_format_ = mindspore::FormatEnumToString(inputs[0]->GetFormat());
   auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
-  if (!is_dynamic_attr_) {
-    input_shape_ = GetValue<std::vector<int64_t>>(prim->GetAttr("input_sizes"));
-  }
+
   format_attr_ = GetValue<std::string>(prim->GetAttr("format"));
   if (format_attr_ == kOpFormat_NHWC) {
     data_format_ = kOpFormat_NHWC;
@@ -295,14 +285,12 @@ int ConvGradInputBkwGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (is_null_input_) {
     return KRET_OK;
   }
-  if (is_dynamic_attr_) {
-    constexpr size_t kShapeIndex = 2;
-    auto value_res = TryGetIntValueFromInputs(inputs, kShapeIndex, kernel_name_, true);
-    if (!value_res.has_value()) {
-      MS_LOG(EXCEPTION) << "Fail to get filter_sizes from inputs";
-    }
-    input_shape_ = value_res.value();
+
+  constexpr size_t kShapeIndex = 2;
+  if (!TryGetIntValue(inputs, kShapeIndex, kernel_name_, &input_shape_, true)) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get input_sizes input!";
   }
+
   auto input_shape = input_shape_;
   int h_index = k2DHeightIndexNCHW;
   int w_index = k2DHeightIndexNCHW + 1;
