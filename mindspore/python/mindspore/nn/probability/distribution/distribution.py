@@ -113,13 +113,17 @@ class Distribution(Cell):
         # ops needed for the base class
         self.cast_base = P.Cast()
         self.dtype_base = P.DType()
-        self.exp_base = exp_generic
         self.fill_base = P.Fill()
-        self.log_base = log_generic
         self.sametypeshape_base = inner.SameTypeShape()
         self.sq_base = P.Square()
         self.sqrt_base = P.Sqrt()
         self.shape_base = P.Shape()
+        if self.device_target != "Ascend":
+            self.log_base = P.Log()
+            self.exp_base = P.Exp()
+        else:
+            self.exp_base = exp_generic
+            self.log_base = log_generic
 
     @property
     def name(self):

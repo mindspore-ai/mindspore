@@ -31,6 +31,9 @@ from .log_normal import LogNormal
 from .normal import Normal
 from .poisson import Poisson
 from .uniform import Uniform
+from .half_normal import HalfNormal
+from .laplace import Laplace
+from .student_t import StudentT
 
 __all__ = ['Distribution',
            'TransformedDistribution',
@@ -47,4 +50,7 @@ __all__ = ['Distribution',
            'Normal',
            'Poisson',
            'Uniform',
+           'HalfNormal',
+           'Laplace',
+           'StudentT',
            ]
