@@ -24,16 +24,16 @@ from mindspore.dataset.core.validator_helpers import check_non_negative_float32,
 
 class BorderType(str, Enum):
     """
-    Padding Mode, BorderType Type.
+    Padding mode.
 
     Possible enumeration values are: BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BorderType.SYMMETRIC.
 
-    - BorderType.CONSTANT: means it fills the border with constant values.
-    - BorderType.EDGE: means it pads with the last value on the edge.
-    - BorderType.REFLECT: means it reflects the values on the edge omitting the last value of edge.
-      For example, padding [1,2,3,4] with 2 elements on both sides will result in [3,2,1,2,3,4,3,2].
-    - BorderType.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
-      For example, padding [1,2,3,4] with 2 elements on both sides will result in [2,1,1,2,3,4,4,3].
+    - BorderType.CONSTANT: Pad with a constant value.
+    - BorderType.EDGE: Pad with the last value on the edge.
+    - BorderType.REFLECT: Reflect the value on the edge while omitting the last one.
+      For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [3, 2, 1, 2, 3, 4, 3, 2].
+    - BorderType.SYMMETRIC: Reflect the value on the edge while repeating the last one.
+      For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [2, 1, 1, 2, 3, 4, 4, 3].
 
     Note:
         This class derived from class str to support json serializable.
@@ -46,14 +46,14 @@ class BorderType(str, Enum):
 
 class DensityFunction(str, Enum):
     """
-    Density Functions.
+    Density function type.
 
     Possible enumeration values are: DensityFunction.TPDF, DensityFunction.RPDF,
     DensityFunction.GPDF.
 
-    - DensityFunction.TPDF: means triangular probability density function.
-    - DensityFunction.RPDF: means rectangular probability density function.
-    - DensityFunction.GPDF: means gaussian probability density function.
+    - DensityFunction.TPDF: Triangular Probability Density Function.
+    - DensityFunction.RPDF: Rectangular Probability Density Function.
+    - DensityFunction.GPDF: Gaussian Probability Density Function.
     """
     TPDF: str = "TPDF"
     RPDF: str = "RPDF"
@@ -110,16 +110,13 @@ class Interpolation(str, Enum):
 
 class MelType(str, Enum):
     """
-    Mel Types.
+    Mel scale implementation type.
 
     Possible enumeration values are: MelType.HTK, MelType.SLANEY.
 
-    - MelType.HTK: scale the input data with htk implementation, refer to "Slaney, M. Auditory Toolbox:
-      A MATLAB Toolbox for Auditory Modeling Work. Technical Report, version 2,
-      Interval Research Corporation, 1998".
-    - MelType.SLANEY: scale the input data with slaney implementation, refer to "Young, S., Evermann, G.,
-      Gales, M., Hain, T., Kershaw, D., Liu, X., Moore, G., Odell, J., Ollason, D.,
-      Povey, D., Valtchev, V., & Woodland, P. The HTK book, version 3.4. Cambridge University, March 2009".
+    - MelType.HTK: The Hidden Markov Toolkit (HTK) implementation, refer to `HTK <https://htk.eng.cam.ac.uk/>`_ .
+    - MelType.SLANEY: The MATLAB Auditory Toolbox of Slaney implementation,
+      refer to `Auditory Toolbox <https://engineering.purdue.edu/~malcolm/interval/1998-010/>`_ .
     """
     HTK: str = "htk"
     SLANEY: str = "slaney"
@@ -140,12 +137,12 @@ class Modulation(str, Enum):
 
 class NormMode(str, Enum):
     """
-    Norm Types.
+    Normalization mode.
 
     Possible enumeration values are: NormMode.ORTHO, NormMode.NONE.
 
-    - NormMode.ORTHO: means the mode of input audio is ortho.
-    - NormMode.NONE: means the mode of input audio is none.
+    - NormMode.ORTHO: Use an ortho-normal DCT basis.
+    - NormMode.NONE: No normalization.
     """
     ORTHO: str = "ortho"
     NONE: str = "none"
@@ -153,12 +150,12 @@ class NormMode(str, Enum):
 
 class NormType(str, Enum):
     """
-    Norm Types.
+    Normalization type.
 
     Possible enumeration values are: NormType.SLANEY, NormType.NONE.
 
-    - NormType.SLANEY: norm the input data with slaney.
-    - NormType.NONE: norm the input data with none.
+    - NormType.SLANEY: Use an area normalization.
+    - NormType.NONE: No narmalization.
     """
     SLANEY: str = "slaney"
     NONE: str = "none"
@@ -170,8 +167,8 @@ class ResampleMethod(str, Enum):
 
     Possible enumeration values are: ResampleMethod.SINC_INTERPOLATION, ResampleMethod.KAISER_WINDOW.
 
-    - ResampleMethod.SINC_INTERPOLATION: means it resample the tensor with sinc interpolation.
-    - ResampleMethod.KAISER_WINDOW: means it resample the tensor with kaiser window.
+    - ResampleMethod.SINC_INTERPOLATION: The Whittaker-Shannon interpolation or sinc interpolation formula.
+    - ResampleMethod.KAISER_WINDOW: The Kaiser window interpolation.
     """
     SINC_INTERPOLATION: str = "sinc_interpolation"
     KAISER_WINDOW: str = "kaiser_window"
@@ -192,16 +189,16 @@ class ScaleType(str, Enum):
 
 class WindowType(str, Enum):
     """
-    Window Function types.
+    Window function type.
 
     Possible enumeration values are: WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN,
     WindowType.KAISER.
 
-    - WindowType.BARTLETT: means the type of window function is Bartlett.
-    - WindowType.BLACKMAN: means the type of window function is Blackman.
-    - WindowType.HAMMING: means the type of window function is Hamming.
-    - WindowType.HANN: means the type of window function is Hann.
-    - WindowType.KAISER: means the type of window function is Kaiser, currently not supported on macOS.
+    - WindowType.BARTLETT: Bartlett window function.
+    - WindowType.BLACKMAN: Blackman window function.
+    - WindowType.HAMMING: Hamming window function.
+    - WindowType.HANN: Hann window function.
+    - WindowType.KAISER: Kaiser window function. Currently, it is not supported on macOS.
     """
     BARTLETT: str = "bartlett"
     BLACKMAN: str = "blackman"
@@ -298,19 +295,20 @@ def linear_fbanks(n_freqs, f_min, f_max, n_filter, sample_rate):
 
 def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NONE, mel_type=MelType.HTK):
     """
-    Create a frequency transformation matrix with shape (n_freqs, n_mels).
+    Create a frequency transformation matrix.
 
     Args:
-        n_freqs (int): Number of frequency.
+        n_freqs (int): Number of frequencies to highlight/apply.
         f_min (float): Minimum of frequency in Hz.
         f_max (float): Maximum of frequency in Hz.
         n_mels (int): Number of mel filterbanks.
-        sample_rate (int): Sample rate.
-        norm (NormType, optional): Norm to use, can be NormType.NONE or NormType.SLANEY. Default: NormType.NONE.
-        mel_type (MelType, optional): Scale to use, can be MelType.HTK or MelType.SLANEY. Default: NormType.SLANEY.
+        sample_rate (int): Sample rate of the audio waveform.
+        norm (NormType, optional): Normalization method, can be NormType.NONE or NormType.SLANEY.
+            Default: NormType.NONE.
+        mel_type (MelType, optional): Scale to use, can be MelType.HTK or MelType.SLANEY. Default: MelType.HTK.
 
     Returns:
-        numpy.ndarray, the frequency transformation matrix.
+        numpy.ndarray, the frequency transformation matrix with shape ( `n_freqs` , `n_mels` ).
 
     Examples:
         >>> from mindspore.dataset.audio import melscale_fbanks

@@ -11,4 +11,3 @@ mindspore.dataset.audio.SlidingWindowCmn
           仅在中心为False时适用，在中心为True时忽略。默认值：100。
         - **center** (bool, 可选) - 如果为True，则使用以当前帧为中心的窗口。如果为False，则窗口在左侧。默认值：False。
         - **norm_vars** (bool, 可选) - 如果为True，则将方差规范化为1。默认值：False。
-  
