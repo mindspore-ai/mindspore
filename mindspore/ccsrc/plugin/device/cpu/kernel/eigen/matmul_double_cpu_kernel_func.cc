@@ -35,7 +35,7 @@ using Eigen::RowMajor;
 }  // namespace
 
 template <typename T>
-void MatmulDoubleCpuKernelFunc::ComputeMatMulOutput(T *a_addr, T *b_addr, T *output_addr) {
+void MatmulDoubleCpuKernelFunc::ComputeMatMulOutput(T *a_addr, T *b_addr, T *output_addr) const {
   using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
   MatrixMap input0(a_addr, a_row_, a_col_);
   MatrixMap input1(b_addr, b_row_, b_col_);

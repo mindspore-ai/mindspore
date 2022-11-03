@@ -107,7 +107,7 @@ MapTensor::ExportData MapTensor::ExportDataFromDevice(DeviceSyncPtr device_sync)
     std::vector<size_t> value_shape_tmp{data_size};
     (void)std::transform(value_shape().cbegin(), value_shape().cend(), std::back_inserter(value_shape_tmp), IntToSize);
     auto value_length = abstract::ShapeSize(value_shape_tmp) * abstract::TypeIdSize(value_dtype());
-    // status length：status shape is same as the shape of key
+    // status length: status shape is same as the shape of key
     auto status_length = data_size * abstract::TypeIdSize(kNumberTypeInt);
 
     ShapeVector new_shape{SizeToInt(data_size)};

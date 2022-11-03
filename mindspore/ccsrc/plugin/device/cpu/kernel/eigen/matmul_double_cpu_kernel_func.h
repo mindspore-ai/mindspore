@@ -59,7 +59,7 @@ class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelM
   void MatMul(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   template <typename T>
-  void ComputeMatMulOutput(T *a_addr, T *b_addr, T *output_addr);
+  void ComputeMatMulOutput(T *a_addr, T *b_addr, T *output_addr) const;
 
   size_t batch_{0};
   size_t rank_{0};

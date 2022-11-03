@@ -2174,6 +2174,30 @@ def exist_tensor(data):
     return False
 
 
+def ms_max_one_element(x):
+    """Implementation of `max` which inputs has only one element."""
+    if isinstance(x, Tensor):
+        tensor_shape = F.shape(x)
+        tensor_shape_len = len(tensor_shape)
+        if tensor_shape_len == 0:
+            const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
+        if tensor_shape_len >= 2:
+            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+        return x.max()
+    # Deal with Tensor in tuple or list
+    if isinstance(x, (list, tuple)):
+        if len(x) == 0:
+            const_utils.raise_value_error("max() arg is an empty sequence.")
+        tensor_num = get_tensor_num(x)
+        if tensor_num == len(x):
+            return max_tensor(x)
+        if tensor_num != 0:
+            const_utils.raise_type_error("max() cannot contain both tensor and non-tensor type.")
+        if exist_tensor(x):
+            const_utils.raise_type_error("max() cannot support tensor in list or tuple nested now.")
+    return max_(x)
+
+
 def ms_max(*data):
     """Implementation of `max`."""
     len_data = get_max_min_data_len(data)
@@ -2181,26 +2205,7 @@ def ms_max(*data):
         const_utils.raise_type_error("max() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
-        if isinstance(x, Tensor):
-            tensor_shape = F.shape(x)
-            tensor_shape_len = len(tensor_shape)
-            if tensor_shape_len == 0:
-                const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
-            if tensor_shape_len >= 2:
-                const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
-            return x.max()
-        # Deal with Tensor in tuple or list
-        if isinstance(x, (list, tuple)):
-            if len(x) == 0:
-                const_utils.raise_value_error("max() arg is an empty sequence.")
-            tensor_num = get_tensor_num(x)
-            if tensor_num == len(x):
-                return max_tensor(x)
-            if tensor_num != 0:
-                const_utils.raise_type_error("max() cannot contain both tensor and non-tensor type.")
-            if exist_tensor(x):
-                const_utils.raise_type_error("max() cannot support tensor in list or tuple nested now.")
-        return max_(x)
+        return ms_max_one_element(x)
     elif len_data >= 2:
         tensor_num = get_tensor_num(data)
         # All inputs is Tensor
@@ -2241,6 +2246,30 @@ def min_list_tuple(seq1, seq2):
     return seq1
 
 
+def ms_min_one_element(x):
+    """Implementation of `min` which inputs has only one element."""
+    if isinstance(x, Tensor):
+        tensor_shape = F.shape(x)
+        tensor_shape_len = len(tensor_shape)
+        if tensor_shape_len == 0:
+            const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
+        if tensor_shape_len >= 2:
+            const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+        return x.min()
+    # Deal with Tensor in tuple or list
+    if isinstance(x, (list, tuple)):
+        if len(x) == 0:
+            const_utils.raise_value_error("min() arg is an empty sequence.")
+        tensor_num = get_tensor_num(x)
+        if tensor_num == len(x):
+            return min_tensor(x)
+        if tensor_num != 0:
+            const_utils.raise_type_error("min() cannot contain both tensor and non-tensor type.")
+        if exist_tensor(x):
+            const_utils.raise_type_error("min() cannot support tensor in list or tuple nested now.")
+    return min_(x)
+
+
 def ms_min(*data):
     """Implementation of `min`."""
     len_data = get_max_min_data_len(data)
@@ -2248,26 +2277,7 @@ def ms_min(*data):
         const_utils.raise_type_error("min() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
-        if isinstance(x, Tensor):
-            tensor_shape = F.shape(x)
-            tensor_shape_len = len(tensor_shape)
-            if tensor_shape_len == 0:
-                const_utils.raise_type_error("Cannot iterate over a scalar tensor.")
-            if tensor_shape_len >= 2:
-                const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
-            return x.min()
-        # Deal with Tensor in tuple or list
-        if isinstance(x, (list, tuple)):
-            if len(x) == 0:
-                const_utils.raise_value_error("min() arg is an empty sequence.")
-            tensor_num = get_tensor_num(x)
-            if tensor_num == len(x):
-                return min_tensor(x)
-            if tensor_num != 0:
-                const_utils.raise_type_error("min() cannot contain both tensor and non-tensor type.")
-            if exist_tensor(x):
-                const_utils.raise_type_error("min() cannot support tensor in list or tuple nested now.")
-        return min_(x)
+        return ms_min_one_element(x)
     elif len_data >= 2:
         tensor_num = get_tensor_num(data)
         # All inputs is Tensor
