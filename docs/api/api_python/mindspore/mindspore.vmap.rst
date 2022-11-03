@@ -1,7 +1,7 @@
-mindspore.ops.vmap
+mindspore.vmap
 ==================
 
-.. py:function:: mindspore.ops.vmap(fn, in_axes=0, out_axes=0)
+.. py:function:: mindspore.vmap(fn, in_axes=0, out_axes=0)
 
     自动向量化（Vectorizing Map，vmap），是一种用于沿参数轴映射函数 `fn` 的高阶函数。
 

@@ -57,6 +57,14 @@ mindspore
     mindspore.jvp
     mindspore.vjp
 
+自动向量化
+----------------
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.vmap
+
 运行环境
 ---------
 
