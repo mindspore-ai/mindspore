@@ -54,6 +54,14 @@ int ResizeBaseCoder::CheckParameters() {
       const_shape_ = false;
     } else {
       const_shape_ = true;
+      constexpr int kOutputShapeHeight = 1;
+      constexpr int kOutputShapeWidth = 2;
+      if (output_tensors_.at(0)->shape().size() <= kOutputShapeWidth) {
+        MS_LOG(ERROR) << "Resize op infer failed.";
+        return RET_ERROR;
+      }
+      new_height_ = output_tensors_.at(0)->shape().at(kOutputShapeHeight);
+      new_width_ = output_tensors_.at(0)->shape().at(kOutputShapeWidth);
     }
   }
   coordinate_transform_mode_ = parameter->coordinate_transform_mode_;

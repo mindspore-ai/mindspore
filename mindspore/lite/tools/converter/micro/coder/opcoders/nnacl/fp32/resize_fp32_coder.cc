@@ -168,12 +168,12 @@ int ResizeFP32Coder::DoCode(CoderContext *const context) {
 
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
-      code.CodeArray("y_bottoms", coordinate_.y_bottoms_, sizeof(int) * y_len_, true);
-      code.CodeArray("y_tops", coordinate_.y_tops_, sizeof(int) * y_len_, true);
-      code.CodeArray("x_lefts", coordinate_.x_lefts_, sizeof(int) * x_len_, true);
-      code.CodeArray("x_rights", coordinate_.x_rights_, sizeof(int) * x_len_, true);
-      code.CodeArray("y_weights", y_weights_, sizeof(float) * y_weight_len_, true);
-      code.CodeArray("x_weights", x_weights_, sizeof(float) * x_weight_len_, true);
+      code.CodeArray("y_bottoms", coordinate_.y_bottoms_, y_len_, true);
+      code.CodeArray("y_tops", coordinate_.y_tops_, y_len_, true);
+      code.CodeArray("x_lefts", coordinate_.x_lefts_, x_len_, true);
+      code.CodeArray("x_rights", coordinate_.x_rights_, x_len_, true);
+      code.CodeArray("y_weights", y_weights_, y_weight_len_, true);
+      code.CodeArray("x_weights", x_weights_, x_weight_len_, true);
 
       int c = input_tensor_->shape().at(kNHWC_C);
       code << "float *line0 = " << MemoryAllocator::GetInstance()->GetRuntimeAddr(line_buffer_) << ";\n";
@@ -188,10 +188,10 @@ int ResizeFP32Coder::DoCode(CoderContext *const context) {
       break;
     }
     case static_cast<int>(schema::ResizeMethod_CUBIC): {
-      code.CodeArray("y_tops", coordinate_.y_tops_, sizeof(int) * y_len_, true);
-      code.CodeArray("x_lefts", coordinate_.x_lefts_, sizeof(int) * x_len_, true);
-      code.CodeArray("y_weights", y_weights_, sizeof(float) * y_weight_len_, true);
-      code.CodeArray("x_weights", x_weights_, sizeof(float) * x_weight_len_, true);
+      code.CodeArray("y_tops", coordinate_.y_tops_, y_len_, true);
+      code.CodeArray("x_lefts", coordinate_.x_lefts_, x_len_, true);
+      code.CodeArray("y_weights", y_weights_, y_weight_len_, true);
+      code.CodeArray("x_weights", x_weights_, x_weight_len_, true);
       code.CodeFunction("ResizeBicubic", input_tensor_, output_tensor_, "input_shape", "output_shape", "y_tops",
                         "x_lefts", "y_weights", "x_weights", line_buffer_, 0, new_height_);
       break;

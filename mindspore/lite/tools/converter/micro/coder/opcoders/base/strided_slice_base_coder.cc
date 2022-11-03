@@ -71,6 +71,9 @@ int StridedSliceBaseCoder::InitFastRunParam() {
     inner_ *= in_shape[i];
   }
   int thread_num = strided_slice_parameter_->op_parameter_.thread_num_;
+  if (support_parallel_) {
+    thread_num = 1;
+  }
   // decide multi-thread launch strategy
   if (outer_ == 1) {
     parallel_on_split_axis_ = true;
