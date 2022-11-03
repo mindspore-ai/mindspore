@@ -91,7 +91,7 @@ int KernelExec::DoExecute() {
   return ret;
 }
 
-void KernelExec::RepalceKernel(std::shared_ptr<Kernel> kernel) {
+void KernelExec::RepalceKernel(const std::shared_ptr<Kernel> kernel) {
   if (desc_.provider == kBuiltin) {
     std::static_pointer_cast<LiteKernel>(kernel_)->set_parameter(nullptr);  // set nullptr, don't release op_parameter
     kernel_.reset();

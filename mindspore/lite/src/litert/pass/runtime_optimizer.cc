@@ -21,7 +21,7 @@ RuntimeOptimizer::~RuntimeOptimizer() { passes_.clear(); }
 
 int RuntimeOptimizer::AddPass(RuntimePassPtr pass) {
   CHECK_NULL_RETURN(pass);
-  this->passes_.emplace_back(pass);
+  (void)this->passes_.emplace_back(pass);
   return RET_OK;
 }
 

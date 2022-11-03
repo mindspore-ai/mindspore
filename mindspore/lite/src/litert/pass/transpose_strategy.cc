@@ -56,7 +56,7 @@ size_t TransposeStrategy::GetTransCount(const std::vector<kernel::KernelExec *> 
   return count;
 }
 
-bool CheckInTensorsShape(kernel::KernelExec *kernel, const Format &runtime_format) {
+bool CheckInTensorsShape(const kernel::KernelExec *kernel, const Format &runtime_format) {
   // If teh fusion is valid, kernel will be executed in runtime_format.
   // Only check arithmetic (two input) kernel input tensors.
   // If broadcast for various formats is supported, this function can be deleted.
@@ -87,7 +87,8 @@ bool CheckInTensorsShape(kernel::KernelExec *kernel, const Format &runtime_forma
   return true;
 }
 
-bool TransposeStrategy::CheckFusion(kernel::KernelExec *kernel, TransInfoPair *pre_trans, TransInfoPair *post_trans) {
+bool TransposeStrategy::CheckFusion(const kernel::KernelExec *kernel, TransInfoPair *pre_trans,
+                                    TransInfoPair *post_trans) {
   if (dynamic_format_kernel_lists.find(kernel->type()) == dynamic_format_kernel_lists.end()) {
     return false;
   }
@@ -155,24 +156,24 @@ int TransFormAxis(int axis, const TransInfoPair &trans) {
   return axis;
 }
 
-int HandleArgMinMaxKernel(kernel::KernelExec *kernel, const TransInfoPair &trans) {
+int HandleArgMinMaxKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
   auto arg_min_max_param = reinterpret_cast<ArgMinMaxParameter *>(kernel->op_parameter());
   CHECK_NULL_RETURN(arg_min_max_param);
   arg_min_max_param->axis_ = TransFormAxis(arg_min_max_param->axis_, trans);
   return RET_OK;
 }
 
-int HandleConcatKernel(kernel::KernelExec *kernel, const TransInfoPair &trans) {
+int HandleConcatKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
   auto concat_param = reinterpret_cast<ConcatParameter *>(kernel->op_parameter());
   CHECK_NULL_RETURN(concat_param);
   concat_param->axis_ = TransFormAxis(concat_param->axis_, trans);
   return RET_OK;
 }
 
-int HandleCropKernel(kernel::KernelExec *kernel, const TransInfoPair &trans) {
+int HandleCropKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
   auto crop_param = reinterpret_cast<CropParameter *>(kernel->op_parameter());
   CHECK_NULL_RETURN(crop_param);
-  crop_param->axis_ = TransFormAxis(crop_param->axis_, trans);
+  crop_param->axis_ = TransFormAxis(static_cast<int>(crop_param->axis_), trans);
   return RET_OK;
 }
 

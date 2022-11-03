@@ -21,10 +21,13 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int GroupConvolutionInt8CPUKernel::Separate(int task_id) {
+int GroupConvolutionInt8CPUKernel::Separate(const int &task_id) const {
   auto plane_step = UP_DIV(in_plane_, in_thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, RET_ERROR);
   auto begin_plane = plane_step * task_id;
   auto end_plane = MSMIN(in_plane_, plane_step * (task_id + 1));
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, ori_in_channel_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, sub_in_channel_, RET_ERROR);
   auto src_ptr = sub_in_src_ + begin_plane * ori_in_channel_;
   auto dst_ptr = sub_in_dst_ + begin_plane * sub_in_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {
@@ -59,10 +62,13 @@ int GroupConvolutionInt8CPUKernel::SeparateInput(int group_id) {
   return RET_OK;
 }
 
-int GroupConvolutionInt8CPUKernel::Concat(int task_id) {
+int GroupConvolutionInt8CPUKernel::Concat(const int &task_id) const {
   auto plane_step = UP_DIV(out_plane_, out_thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, RET_ERROR);
   auto begin_plane = plane_step * task_id;
   auto end_plane = MSMIN(out_plane_, plane_step * (task_id + 1));
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, sub_out_channel_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, ori_out_channel_, RET_ERROR);
   auto src_ptr = sub_out_src_ + begin_plane * sub_out_channel_;
   auto dst_ptr = sub_out_dst_ + begin_plane * ori_out_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {

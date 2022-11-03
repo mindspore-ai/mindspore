@@ -37,8 +37,8 @@ class GroupConvolutionInt8CPUKernel : public GroupConvolutionBaseCPUKernel {
   int SeparateInput(int group_id) override;
   int PostConcat(int group_id) override;
 
-  int Separate(int task_id);
-  int Concat(int task_id);
+  int Separate(const int &task_id) const;
+  int Concat(const int &task_id) const;
 
  private:
   int8_t *sub_in_src_ = nullptr;

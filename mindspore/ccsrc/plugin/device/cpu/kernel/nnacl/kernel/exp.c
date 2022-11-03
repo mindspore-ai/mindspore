@@ -69,7 +69,6 @@ int exp_do_compute(void *param, int task_id, float lhs_scale, float rhs_scale) {
   void *output_data = exp_stru->base.out[0].data_;
   NNACL_CHECK_NULL_RETURN_ERR(output_data);
   int ret = exp_stru->base.funcs->ExpFusion(input_data, output_data, exp_param, task_id);
-
   return ret;
 }
 

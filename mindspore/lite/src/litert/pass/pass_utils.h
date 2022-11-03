@@ -41,13 +41,13 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
                                           const std::string &name, const lite::InnerContext *ctx,
                                           const kernel::KernelKey &desc);
 
-void SetShape(Tensor *src_tensor, Tensor *dst_tensor);
+void SetShape(const Tensor *src_tensor, Tensor *dst_tensor);
 
 int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
-                       const TransInfoPair &trans_info, const int &index);
+                       const TransInfoPair &trans_info, const size_t &index);
 
 int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel,
-                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const int &index);
+                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const size_t &index);
 
 int GetTransposeInfo(const kernel::KernelExec *kernel, TransInfoPair *trans_info);
 }  // namespace mindspore::lite::pass

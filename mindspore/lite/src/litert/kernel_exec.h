@@ -234,7 +234,7 @@ class KernelExec {
       MS_ASSERT(index < kernel_->inputs().size());
       auto impl = std::make_shared<mindspore::LiteTensorImpl>(in_tensor);
       auto tensor_in = mindspore::MSTensor(impl);
-      kernel_->set_input(tensor_in, index);
+      kernel_->set_input(tensor_in, static_cast<int>(index));
     }
   }
 
@@ -261,7 +261,7 @@ class KernelExec {
       MS_ASSERT(index < kernel_->outputs().size());
       auto impl = std::make_shared<mindspore::LiteTensorImpl>(out_tensor);
       auto tensor_out = mindspore::MSTensor(impl);
-      kernel_->set_output(tensor_out, index);
+      kernel_->set_output(tensor_out, static_cast<int>(index));
     }
   }
 
@@ -317,8 +317,8 @@ class KernelExec {
     }
   }
 
-  size_t FindInTensorIndex(lite::Tensor *tensor) {
-    int index = 0;
+  size_t FindInTensorIndex(const lite::Tensor *tensor) {
+    size_t index = 0;
     for (size_t i = 0; i < in_tensors().size(); i++) {
       if (tensor == in_tensors().at(i)) {
         index = i;
@@ -328,8 +328,8 @@ class KernelExec {
     return index;
   }
 
-  size_t FindOutTensorIndex(lite::Tensor *tensor) {
-    int index = 0;
+  size_t FindOutTensorIndex(const lite::Tensor *tensor) {
+    size_t index = 0;
     for (size_t i = 0; i < out_tensors().size(); i++) {
       if (tensor == out_tensors().at(i)) {
         index = i;
@@ -339,9 +339,9 @@ class KernelExec {
     return index;
   }
 
-  void RemoveInKernel(KernelExec *kernel) { lite::VectorErase(&(this->in_kernels_), kernel); }
+  void RemoveInKernel(KernelExec *kernel) { (void)lite::VectorErase(&(this->in_kernels_), kernel); }
 
-  void RemoveOutKernel(KernelExec *kernel) { lite::VectorErase(&(this->out_kernels_), kernel); }
+  void RemoveOutKernel(KernelExec *kernel) { (void)lite::VectorErase(&(this->out_kernels_), kernel); }
 
   void set_in_kernels(const std::vector<KernelExec *> &kernel) { this->in_kernels_ = kernel; }
 

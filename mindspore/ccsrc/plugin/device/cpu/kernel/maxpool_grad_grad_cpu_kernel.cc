@@ -146,7 +146,7 @@ int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   param_->output_channel_ = LongToInt(out_shapes_[kDim1]);
   param_->output_h_ = LongToInt(out_shapes_[height_index_]);
   param_->output_w_ = LongToInt(out_shapes_[width_index_]);
-  output_elements_ = std::accumulate(out_shapes_.begin(), out_shapes_.end(), 1, std::multiplies<size_t>());
+  output_elements_ = LongToSize(std::accumulate(out_shapes_.begin(), out_shapes_.end(), 1, std::multiplies<int64_t>()));
 
   if (dim_ == kMaxPool3DGradGradDim) {
     reinterpret_cast<Pooling3DParameter *>(param_)->input_d_ = LongToInt(in_shapes_[depth_index_]);

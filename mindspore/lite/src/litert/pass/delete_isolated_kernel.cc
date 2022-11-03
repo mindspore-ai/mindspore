@@ -20,7 +20,7 @@
 #include "src/litert/kernel_exec_util.h"
 
 namespace mindspore::lite::pass {
-int DeleteIsolatedKernel::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors) {
+int DeleteIsolatedKernel::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *) {
   subgraph->SetInNodes(kernel::KernelExecUtil::SubgraphInputNodes(subgraph->nodes()));
 
   std::set<kernel::KernelExec *> visited;  // record the kernel that will be executed
@@ -28,7 +28,7 @@ int DeleteIsolatedKernel::Run(kernel::SubGraphKernel *subgraph, std::vector<Tens
 
   for (auto in_kernel : subgraph->in_nodes()) {
     kernel_queue.push(in_kernel);
-    visited.insert(in_kernel);
+    (void)visited.insert(in_kernel);
   }
   while (!kernel_queue.empty()) {
     auto kernel = kernel_queue.front();
@@ -39,7 +39,7 @@ int DeleteIsolatedKernel::Run(kernel::SubGraphKernel *subgraph, std::vector<Tens
         continue;
       }
       kernel_queue.push(out_kernel);
-      visited.insert(out_kernel);
+      (void)visited.insert(out_kernel);
     }
   }
 

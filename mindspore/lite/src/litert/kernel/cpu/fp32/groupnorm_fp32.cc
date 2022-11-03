@@ -36,9 +36,9 @@ GroupnormCPUKernel::GroupnormCPUKernel(OpParameter *parameter, const std::vector
   }
 
   for (size_t i = 0; i < in_tensors_.size(); i++) {
-    Tensor2TensorC(in_tensors_.at(i), &(in_[i]));
+    (void)Tensor2TensorC(in_tensors_.at(i), &(in_[i]));
   }
-  Tensor2TensorC(out_tensors_.at(0), &(out_[0]));
+  (void)Tensor2TensorC(out_tensors_.at(0), &(out_[0]));
 }
 
 GroupnormCPUKernel::~GroupnormCPUKernel() {

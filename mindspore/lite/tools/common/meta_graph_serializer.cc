@@ -38,7 +38,7 @@ constexpr size_t kFlatbuffersBuilderInitSize = 1024;
 void ChangeMod(const std::string &file_path) {
 #ifndef _MSC_VER
   if (access(file_path.c_str(), F_OK) == 0) {
-    chmod(file_path.c_str(), S_IWUSR | S_IRUSR);
+    (void)chmod(file_path.c_str(), S_IWUSR | S_IRUSR);
   }
 #endif
 }

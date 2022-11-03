@@ -155,7 +155,7 @@ void WinogradInputTransformOptStep(const float *input_data, float *trans_input, 
       // input transform
       const int block_tile = C12NUM;
       int dst_ic8_offset = dst_plane_offset + ic * block_tile * input_unit * input_unit * channel_tile;
-      size_t dst_step = input_unit * block_tile * channel_tile;
+      size_t dst_step = (size_t)(input_unit * block_tile * channel_tile);
       float *trans_input_ptr = trans_input + dst_ic8_offset;
       func(tmp_data, trans_input_ptr, channel_tile, dst_step, block_tile * channel_tile);
     }

@@ -72,8 +72,9 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   }
   return parameter;
 }
+
 kernel::KernelExec *GetKernelExec(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
-                                  lite::InnerContext *context, mindspore::Context *ms_context) {
+                                  const lite::InnerContext *context, const mindspore::Context *ms_context) {
   MS_ASSERT(outputs != nullptr && cnode != nullptr && context != nullptr && ms_context != nullptr);
   OpParameter *parameter = nullptr;
   auto ret = lite::FetchOpParameterFromNode(cnode->input(0), &parameter);
@@ -92,8 +93,7 @@ kernel::KernelExec *GetKernelExec(std::vector<Tensor *> inputs, std::vector<Tens
     return nullptr;
   }
   auto data_type = inputs.front()->data_type();
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, NHWC,
-                         static_cast<schema::PrimitiveType>(parameter->type_)};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, NHWC, parameter->type_};
   kernel::KernelExec *kernel_exec = nullptr;
   ret = lite::KernelRegistry::GetInstance()->GetKernelExec(inputs, *outputs, context, ms_context, desc, parameter,
                                                            &kernel_exec);

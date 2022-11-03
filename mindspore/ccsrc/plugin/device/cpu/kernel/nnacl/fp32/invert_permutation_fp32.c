@@ -18,11 +18,11 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int InvertPermutation(const int *input, int *output, int num) {
+int InvertPermutation(const int *input, int *output, size_t num) {
   NNACL_CHECK_NULL_RETURN_ERR(input);
   NNACL_CHECK_NULL_RETURN_ERR(output);
-  for (int i = 0; i < num; i++) {
-    int index = input[i];
+  for (size_t i = 0; i < num; i++) {
+    size_t index = (size_t)input[i];
     if (index >= num) {
       return NNACL_ERR;
     }

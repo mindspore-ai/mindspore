@@ -44,7 +44,6 @@ class InstanceNormCPUKernel : public LiteKernel {
     }
   }
 
- private:
   InstanceNormParameter *param_ = nullptr;
   float *src_data_ = nullptr;
   float *tmp_src_data_ = nullptr;

@@ -87,7 +87,7 @@ lite::Tensor *CreateConstTensor(const lite::Tensor *tensor, const std::vector<in
     delete new_tensor;
     return nullptr;
   }
-  memcpy(new_tensor->data(), reinterpret_cast<void *>(new_tensor_data), new_tensor->Size());
+  (void)memcpy(new_tensor->data(), reinterpret_cast<void *>(new_tensor_data), new_tensor->Size());
   return new_tensor;
 }
 

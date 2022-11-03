@@ -163,7 +163,7 @@ class LiteTensorImpl : public MutableTensorImpl {
     return lite_tensor_->format();
   }
 
-  void SetFormat(mindspore::Format format) override {
+  void SetFormat(const mindspore::Format format) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;

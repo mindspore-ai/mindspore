@@ -25,7 +25,7 @@ class Infershape : public RuntimePass {
  public:
   Infershape() {}
   ~Infershape() override = default;
-  int Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors = nullptr) override;
+  int Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *) override;
 };
 }  // namespace mindspore::lite::pass
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_INFERSHAPE_PASS_H_

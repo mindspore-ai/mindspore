@@ -246,7 +246,7 @@ int FetchFromSequenceValue(const ValueNodePtr &value_node, DataInfo *data_info) 
 }
 }  // namespace
 
-int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info,
+int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &, DataInfo *data_info,
                           bool copy_data) {
   MS_ASSERT(param_node != nullptr && data_info != nullptr);
   ShapeVector shape_vector;

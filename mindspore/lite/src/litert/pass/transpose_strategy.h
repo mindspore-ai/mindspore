@@ -91,7 +91,7 @@ class TransposeStrategy {
   ~TransposeStrategy() = default;
 
   size_t GetTransCount(const std::vector<kernel::KernelExec *> &kernels, TransInfoPair *trans_info);
-  bool CheckFusion(kernel::KernelExec *kernel, TransInfoPair *pre_trans, TransInfoPair *post_trans);
+  bool CheckFusion(const kernel::KernelExec *kernel, TransInfoPair *pre_trans, TransInfoPair *post_trans);
   int ChangeKernelAxis(kernel::KernelExec *kernel, const TransInfoPair &post_trans);
 };
 }  // namespace mindspore::lite::pass

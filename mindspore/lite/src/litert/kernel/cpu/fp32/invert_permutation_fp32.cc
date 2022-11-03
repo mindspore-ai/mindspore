@@ -59,7 +59,7 @@ int InvertPermutationCPUKernel::Run() {
   auto output_ptr = reinterpret_cast<int32_t *>(out_tensor->data());
   CHECK_NULL_RETURN(input_ptr);
   CHECK_NULL_RETURN(output_ptr);
-  auto ret = InvertPermutation(input_ptr, output_ptr, in_tensors_[0]->ElementsNum());
+  auto ret = InvertPermutation(input_ptr, output_ptr, static_cast<int>(in_tensors_[0]->ElementsNum()));
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_ERROR;
