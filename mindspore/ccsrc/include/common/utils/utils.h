@@ -368,6 +368,7 @@ constexpr auto kSparseApplyFtrlV2OpName = "SparseApplyFtrlV2";
 constexpr auto kSparseApplyProximalAdagradOpName = "SparseApplyProximalAdagrad";
 constexpr auto kSparseApplyRMSPropOpName = "SparseApplyRMSProp";
 constexpr auto kSparseGatherV2OpName = "SparseGatherV2";
+constexpr auto kSparseSliceOpName = "SparseSlice";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsOpName = "SparseSoftmaxCrossEntropyWithLogits";
 constexpr auto kSparseSparseMinimumOpName = "SparseSparseMinimum";
 constexpr auto kSparseSparseMaximumOpName = "SparseSparseMaximum";

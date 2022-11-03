@@ -186,46 +186,52 @@ class SparseSlice(Primitive):
     Slices a SparseTensor based on the "start" and "size".
 
     Inputs:
-        - **indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
-          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+        - **indices** (Tensor) - A 2D Tensor (N x R matrix) of type int64. The indices of the SparseTensor.
+          Support int64, each element value should be a non-negative int number.
+          The shape is :math:`(N, R)`.
         - **values** (Tensor) - A 1D Tensor, represents the value corresponding to the position in the `indices`.
-          The shape should be :math:`(n,)`.
+          The shape should be :math:`(N,)`.
         - **shape** (Tensor) - A 1D Tensor of type int64 which specifies the shape of sparsetensor,
-          should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+          represent sparse tensor shape. The shape should be :math:`(R,)`.
         - **start** (Tensor) - A 1D Tensor of type int64, represents the start of the slice.
+          The shape should be :math:`(R,)`.
         - **size** (Tensor) - A 1D Tensor of type int64, represents the size of the slice.
+          The shape should be :math:`(R,)`.
 
     Outputs:
         A `SparseTensor` objects resulting from splicing.
         - *y_indices: A Tensor of type int64.
         - *y_values: A Tensor. Has the same type as "values".
-        - *y_shape: A Tensor of type int64.
+        - *y_shape: A Tensor of type int64. Has the same size as `size`.
 
     Raises:
         TypeError: If the dtype of `indices`, `shape`, `start`, `size` are not int64.
         ValueError: If `indices` is not 2-D tensor.
         ValueError: If `values`, `start`, `shape` , `size` is not a 1-D tensor.
         ValueError: If the number of `indices` is not corresponding to the number of `values`.
-        ValueError: If the index of `indices` is out of the bounds of `shape`.
+        ValueError: If the shape of `indices[1]` is not corresponding to `shape`.
+        ValueError: If the shape of `shape` is not corresponding to `start`.
+        ValueError: If the shape of `shape` is not corresponding to `size`.
 
     Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
-        >>> indices = Tensor([[0, 1], [1, 2], [1, 3], [2, 2]], dtype=ms.int64)
-        >>> values = Tensor([1, 2, 3, 4])
-        >>> shape = Tensor([3, 4], dtype=ms.int64)
-        >>> start = Tensor([0, 1], dtype=ms.int64)
-        >>> size = Tensor([2, 3], dtype=ms.int64)
+        >>> indices = Tensor(np.array([[0, 1], [1, 2], [1, 3], [2, 2]]).astype(np.int64))
+        >>> values = Tensor(np.array([1, 2, 3, 4]).astype(np.int64))
+        >>> shape = Tensor(np.array([3, 4]).astype(np.int64))
+        >>> start = Tensor(np.array([0, 1]).astype(np.int64))
+        >>> size = Tensor(np.array([2, 3]).astype(np.int64))
         >>> sparseslice = ops.SparseSlice()
         >>> output = sparseslice(indices, values, shape, start, size)
         >>> print(output[0])
-        [[0, 0]
-         [1, 1]
-         [1, 2]]
+        [[0 0]
+         [1 1]
+         [1 2]]
         >>> print(output[1])
-        [1, 2, 3]
+        [1 2 3]
         >>> print(output[2])
-        [2, 3]
+        [2 3]
     """
 
     @prim_attr_register

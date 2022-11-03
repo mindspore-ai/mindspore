@@ -25,6 +25,7 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
+from mindspore.ops.operations.sparse_ops import SparseSlice
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseDiv
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
@@ -305,6 +306,19 @@ def get_bprop_sparse_segment_mean_with_num_segments(self):
         dx = input_grad(dout, indices, segment_ids, output_dim0)
         all_d = (dx, zeros_like(indices), zeros_like(segment_ids), zeros_like(num_segments))
         return all_d
+
+    return bprop
+
+
+@bprop_getters.register(SparseSlice)
+def get_bprop_sparse_slice(self):
+    """Grad definition for `SparseSlice` operation."""
+    sparse_slice_grad = G.SparseSliceGrad()
+
+    def bprop(indices, values, shape, start, size, out, dout):
+        grad_op = sparse_slice_grad(dout[1], indices, start, out[0])
+        result_all = (zeros_like(indices), grad_op, zeros_like(shape), zeros_like(start), zeros_like(size))
+        return result_all
 
     return bprop
 
