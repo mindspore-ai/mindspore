@@ -256,8 +256,8 @@ class Tensor {
   void *data_ = nullptr;
   TypeId data_type_;
   std::vector<int> shape_;
-  mindspore::Format format_;
-  Category category_;
+  mindspore::Format format_ = mindspore::NHWC;
+  Category category_ = VAR;
   std::atomic_int ref_count_ = {0};
   int init_ref_count_ = 0;
   std::vector<LiteQuantParam> quant_params_;
