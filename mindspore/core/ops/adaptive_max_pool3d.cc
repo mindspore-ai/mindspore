@@ -42,8 +42,6 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   CheckAndConvertUtils::CheckInRange("x_dim", input_num_dims, kIncludeBoth, {kInputDims4, kInputDims5},
                                      kNameAdaptiveMaxPool3D);
   (void)CheckAndConvertUtils::CheckInteger("output_size_dim", output_size_dim, kEqual, 1, kNameAdaptiveMaxPool3D);
-  (void)CheckAndConvertUtils::CheckInteger("output_size_num_elem", output_size_shape[0], kEqual, kOutputSizeNumElem,
-                                           kNameAdaptiveMaxPool3D);
 
   auto output_size = input_args[1];
   auto output_size_value = output_size->BuildValue();
@@ -56,14 +54,14 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
     auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(output_size_tensor);
     const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
-    if (const_output_size_shape.size() == 1 && const_output_size_shape[0] == kOutputSizeNumElem) {
-      auto value = reinterpret_cast<int32_t *>(output_size_tensor->data_c());
-      std::vector<int64_t> out_shape = x_shape;
-      for (int64_t i = 1; i <= kOutputSizeNumElem; ++i) {
-        out_shape[input_num_dims - i] = value[kOutputSizeNumElem - i];
-      }
-      out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
+    (void)CheckAndConvertUtils::CheckInteger("output_size_num_elem", const_output_size_shape[0], kEqual,
+                                             kOutputSizeNumElem, kNameAdaptiveMaxPool3D);
+    auto value = reinterpret_cast<int32_t *>(output_size_tensor->data_c());
+    std::vector<int64_t> out_shape = x_shape;
+    for (int64_t i = 1; i <= kOutputSizeNumElem; ++i) {
+      out_shape[input_num_dims - i] = value[kOutputSizeNumElem - i];
     }
+    out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   } else {
     const size_t kDHWDims = 3;
     std::vector<int64_t> out_shape = x_shape;
