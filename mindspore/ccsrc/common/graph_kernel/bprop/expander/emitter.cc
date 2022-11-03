@@ -65,6 +65,19 @@ NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_
               {{"transpose_a", MakeValue(transpose_a)}, {"transpose_b", MakeValue(transpose_b)}});
 }
 
+NodePtr Emitter::Transpose(const NodePtr &node, const ShapeVector &perm) const {
+  // perm like [0, 1, 2, 3] does not need transpose.
+  auto n = SizeToLong(perm.size());
+  for (size_t i = 0; i < perm.size(); ++i) {
+    // perm value may be negative, e.g. [0, -3, 2, 3] is equal to [0, 1, 2, 3]
+    auto perm_i = perm[i] < 0 ? (perm[i] + n) : perm[i];
+    if (perm_i != static_cast<int64_t>(i)) {
+      return Emit(kTransposeOpName, {node, Value(perm)});
+    }
+  }
+  return node;
+}
+
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   if (node->isa<ValueNode>()) {
     auto value_node = node->get<ValueNodePtr>();

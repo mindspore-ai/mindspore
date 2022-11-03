@@ -180,10 +180,10 @@ REG_BPROP_BUILDER("SparseGatherV2").SetBody([](const BpropIRBuilder *ib) -> Node
   out_shp = ib->GetShape(dout);
   ind_shp = ib->GetShape(indices);
   auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_int);
-  auto values_transpose = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>(perm_1)});
+  auto values_transpose = ib->Transpose(dout, perm_1);
   auto params_grad = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_int])});
   auto perm_2 = GenerateInverseIndex(x_shp, axis_int);
-  params_grad = ib->Emit("Transpose", {params_grad, ib->Value<ShapeVector>(perm_2)});
+  params_grad = ib->Transpose(params_grad, perm_2);
   return {params_grad, ib->ZerosLike(indices), ib->ZerosLike(axis)};
 });
 
@@ -207,7 +207,7 @@ REG_BPROP_BUILDER("Sort").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto top_k_input = input_x;
   if ((static_cast<size_t>(axis + 1) != rank)) {
     transposition = GetTransposition(axis, rank);
-    top_k_input = ib->Emit("Transpose", {input_x, ib->Value<ShapeVector>(transposition)});
+    top_k_input = ib->Transpose(input_x, transposition);
   }
   auto tmp = ib->Emit("TopK", {top_k_input, ib->Value<int64_t>(k)});
   auto indices = ib->TupleGetItem(tmp, 1);
@@ -228,12 +228,12 @@ REG_BPROP_BUILDER("Sort").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x_shape_1d = ib->Value<ShapeVector>({x_size});
   NodePtr dx = nullptr;
   if (!transposition.empty()) {
-    auto invert_perm = ib->Value<ShapeVector>(InvertPermutation(transposition));
-    dvalue = ib->Emit("Transpose", {dvalue, invert_perm});
+    auto invert_perm = InvertPermutation(transposition);
+    dvalue = ib->Transpose(dvalue, invert_perm);
     auto ind_expand = ib->Emit("ExpandDims", {ind, ib->Value<int64_t>(-1)});
     auto scatter = ib->Emit("ScatterNd", {ind_expand, ib->Reshape(dvalue, {-1}), x_shape_1d});
     auto out_grad = ib->Reshape(scatter, top_k_input_shape);
-    dx = ib->Emit("Transpose", {out_grad, invert_perm});
+    dx = ib->Transpose(out_grad, invert_perm);
   } else {
     auto ind_expand = ib->Emit("ExpandDims", {ind, ib->Value<int64_t>(-1)});
     auto scatter = ib->Emit("ScatterNd", {ind_expand, ib->Reshape(dvalue, {-1}), x_shape_1d});
@@ -814,7 +814,7 @@ REG_BPROP_BUILDER("Transpose").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   (void)std::transform(tmp_perm.begin(), tmp_perm.end(), std::back_inserter(new_perm),
                        [&tmp_perm](const int64_t v) { return v >= 0 ? v : v + tmp_perm.size(); });
   auto res_perm = InvertPermutation(new_perm);
-  return {ib->Emit("Transpose", {dout, ib->Value<ShapeVector>(res_perm)}), ib->ZerosLike(perm)};
+  return {ib->Transpose(dout, res_perm), ib->ZerosLike(perm)};
 });
 
 REG_BPROP_BUILDER("Slice").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {

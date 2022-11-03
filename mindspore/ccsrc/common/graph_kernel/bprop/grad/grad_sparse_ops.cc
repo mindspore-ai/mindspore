@@ -137,8 +137,7 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetBody([](const BpropIRBuilder *ib
   auto dout = ib->GetInput(kIndex5);
   auto dense_grad = ib->Emit("SparseTensorDenseMatmul", {indices, values, dense_shape, dout},
                              {{"adjoint_st", MakeValue(!adj_s)}, {"adjoint_dt", MakeValue(adj_d)}});
-  std::vector<int64_t> perm_value{1, 0};
-  auto perm = ib->Tensor(perm_value);
+  auto perm = ib->Value<ShapeVector>({1, 0});
   if (adj_d) {
     dense_grad = ib->Emit("Transpose", {dense_grad, perm});
   }

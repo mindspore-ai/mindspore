@@ -566,8 +566,8 @@ REG_BPROP_BUILDER("Cdist").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   }
   perm.push_back(dout_dim - 1);
   perm.push_back(dout_dim - 2);
-  auto dout_transpose = ib->Emit("Transpose", {dout, ib->Tensor(perm)});
-  auto out_transpose = ib->Emit("Transpose", {out, ib->Tensor(perm)});
+  auto dout_transpose = ib->Transpose(dout, perm);
+  auto out_transpose = ib->Transpose(out, perm);
   auto dx = ib->Emit("CdistGrad", {dout, input_x, input_y, out}, {{"p", ib->GetAttr("p")}});
   auto dy = ib->Emit("CdistGrad", {dout_transpose, input_y, input_x, out_transpose}, {{"p", ib->GetAttr("p")}});
   return {dx, dy};
@@ -926,7 +926,7 @@ REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
   auto grad = ib->Emit("Tile", {dout, ib->Value<ShapeVector>(tile_scaling)});
   auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetAxisValue(axis));
-  auto permuted = ib->Emit("Transpose", {x, ib->Value<ShapeVector>(perm)});
+  auto permuted = ib->Transpose(x, perm);
   auto permuted_shape = ib->GetShape(permuted);
   auto reshaped = ib->Reshape(permuted, pack_shape);
   auto left = ib->Emit("CumProd", {reshaped, ib->Tensor(0, ib->GetDtype(axis))},
@@ -934,7 +934,7 @@ REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto right = ib->Emit("CumProd", {reshaped, ib->Tensor(0, ib->GetDtype(axis))},
                         {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
-  out = ib->Mul((ib->Emit("Transpose", {y, ib->Value<ShapeVector>(InvertPermutation(perm))})), grad);
+  out = ib->Mul(ib->Transpose(y, InvertPermutation(perm)), grad);
   auto dx = ib->Reshape(out, input_shape);
   return {dx, ib->ZerosLike(axis)};
 });
@@ -1143,7 +1143,7 @@ REG_BPROP_BUILDER("MatrixExp").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   auto input_perm = Range(x_len);
   input_perm[x_len - 2] = x_len - 1;
   input_perm[x_len - 1] = x_len - 2;
-  auto x_transpose = ib->Emit("Transpose", {x, ib->EmitValue(MakeValue(input_perm))});
+  auto x_transpose = ib->Transpose(x, input_perm);
   auto zero_matrix = ib->ZerosLike(x);
   zero_matrix = ib->Cast(zero_matrix, ib->GetDtype(dout));
   auto meta_grad_up = ib->Emit("Concat", {ib->MakeTuple({x_transpose, dout})}, {{"axis", MakeValue<int64_t>(-1)}});
@@ -1186,14 +1186,14 @@ REG_BPROP_BUILDER("CholeskyInverse").SetBody([](const BpropIRBuilder *ib) -> Nod
     input_x = ib->Cast(input_x, kFloat32);
     out = ib->Cast(out, kFloat32);
     dout = ib->Cast(dout, kFloat32);
-    auto common_term = ib->Add(dout, ib->Emit("Transpose", {dout, ib->EmitValue(MakeValue(input_perm))}));
+    auto common_term = ib->Add(dout, ib->Transpose(dout, input_perm));
     common_term = ib->Cast(common_term, kFloat32);
     common_term = ib->MatMul(out, ib->MatMul(common_term, out, false, false), false, false);
     DealWithUpper(common_term);
     dx = ib->Cast(dx, kFloat64);
     return {dx};
   }
-  auto common_term = ib->Add(dout, ib->Emit("Transpose", {dout, ib->EmitValue(MakeValue(input_perm))}));
+  auto common_term = ib->Add(dout, ib->Transpose(dout, input_perm));
   common_term = ib->MatMul(out, ib->MatMul(common_term, out, false, false), false, false);
   DealWithUpper(common_term);
   return {dx};
@@ -1386,7 +1386,7 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> N
     }
     perm.emplace_back(rank - 1);
     perm.emplace_back(rank - 2);
-    return ib->Emit("Transpose", {x, ib->Value<ShapeVector>(perm)});
+    return ib->Transpose(x, perm);
   };
   auto superdiag = ib->GetInput(kIndex0);
   auto maindiag = ib->GetInput(kIndex1);
