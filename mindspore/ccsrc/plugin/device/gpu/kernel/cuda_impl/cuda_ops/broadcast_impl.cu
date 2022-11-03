@@ -169,6 +169,33 @@ struct PowerFunc<half2> {
   }
 };
 
+#define POW_INTEGER_IMPL(T)                                                         \
+  template <>                                                                       \
+  struct PowerFunc<T> {                                                             \
+    __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {  \
+      T ret = 1;                                                                    \
+      T base = lhs;                                                                 \
+      T exp = rhs;                                                                  \
+      while (exp) {                                                                 \
+        if (exp & 1) {                                                              \
+          ret *= base;                                                              \
+        }                                                                           \
+        base *= base;                                                               \
+        exp /= 2;                                                                   \
+      }                                                                             \
+      return ret;                                                                   \
+    }                                                                               \
+  };
+
+POW_INTEGER_IMPL(int8_t)
+POW_INTEGER_IMPL(int16_t)
+POW_INTEGER_IMPL(int32_t)
+POW_INTEGER_IMPL(int64_t)
+POW_INTEGER_IMPL(uint8_t)
+POW_INTEGER_IMPL(uint16_t)
+POW_INTEGER_IMPL(uint32_t)
+POW_INTEGER_IMPL(uint64_t)
+
 template <typename T>
 struct RealDivFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return (lhs / rhs); }
