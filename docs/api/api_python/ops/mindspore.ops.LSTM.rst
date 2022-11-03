@@ -13,7 +13,7 @@ mindspore.ops.LSTM
         - **num_layers** (int) - LSTM的网络层数。
         - **has_bias** (bool) - Cell是否有偏置 `b_ih` 和 `b_hh` 。
         - **bidirectional** (bool) - 是否为双向LSTM。
-        - **dropout** (float，可选) - 指的是除第一层外每层输入时的dropout概率。默认值：0.0。dropout的范围为[0.0, 1.0]。
+        - **dropout** (float，可选) - 指的是除第一层外每层输入时的dropout概率。dropout的范围为[0.0, 1.0]。默认值：0。
 
     输入：
         - **input** (Tensor) - shape为 :math:`(seq\_len, batch\_size, input\_size)` 或 :math:`(batch\_size, seq\_len, input\_size)` 的Tensor。

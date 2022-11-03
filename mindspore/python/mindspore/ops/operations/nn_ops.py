@@ -4170,7 +4170,7 @@ class LSTM(PrimitiveWithInfer):
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`.
         bidirectional (bool): Specifies whether it is a bidirectional LSTM.
         dropout (float, optional): If not 0, append `Dropout` layer on the outputs of each
-            LSTM layer except the last layer. The range of dropout is [0.0, 1.0].
+            LSTM layer except the last layer. The range of dropout is [0.0, 1.0]. Default: 0.0.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or

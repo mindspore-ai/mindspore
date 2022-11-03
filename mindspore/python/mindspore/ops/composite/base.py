@@ -70,8 +70,8 @@ def core(fn=None, **flags):
     set flag to a graph.
 
     Args:
-        fn (Function): Function to add flag. Default: None.
-        flags (dict): The following flags can be set core, which indicates that this is a core function or
+        fn (Function, optional): Function to add flag. Default: None.
+        flags (dict, optional): The following flags can be set core, which indicates that this is a core function or
                       other flag. Default: None.
 
     Supported Platforms:
