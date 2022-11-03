@@ -94,7 +94,7 @@ class LPPool1d(Cell):
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     Args:
-        norm_type (Union[int, float]): Type of normalization, represents p in the formula,
+        norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0.
 
             - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
             - if p = :math:`\infty`, one gets Max Pooling.
@@ -165,7 +165,7 @@ class LPPool2d(Cell):
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     Args:
-        norm_type(Union[int, float]) - Type of normalization, represents p in the formula,
+        norm_type(Union[int, float]) - Type of normalization, represents p in the formula, can not be 0.
 
             - if p = 1, one gets Sum Pooling (which is proportional to Average Pooling),
             - if p = :math:`\infty`, one gets Max Pooling.

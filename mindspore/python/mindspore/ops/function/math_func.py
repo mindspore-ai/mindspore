@@ -5687,7 +5687,8 @@ def roll(x, shifts, dims=None):
         shifts (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
             positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
             in the opposite direction.
-        dims (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
+        dims (Union[list(int), tuple(int), int], optional): Specifies the dimension indexes of shape to be rolled.
+            Default: None.
 
     Returns:
         Tensor, has the same shape and type as `x`.
