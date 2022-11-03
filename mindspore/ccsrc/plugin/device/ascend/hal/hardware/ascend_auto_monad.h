@@ -18,14 +18,13 @@
 
 #include "backend/common/session/kernel_graph.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 //
 // AscendAutoMonad handle control flow with auto-monad for Ascend backend.
 //
 class AscendAutoMonad {
  public:
-  explicit AscendAutoMonad(NotNull<KernelGraphPtr> kg) : kernel_graph_(kg) {}
+  explicit AscendAutoMonad(const NotNull<KernelGraphPtr> &kg) : kernel_graph_(kg) {}
   ~AscendAutoMonad() = default;
 
   // Handle control flow calls by auto-monad.
@@ -37,7 +36,6 @@ class AscendAutoMonad {
  private:
   NotNull<KernelGraphPtr> kernel_graph_;
 };
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_AUTO_MONAD_H_

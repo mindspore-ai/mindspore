@@ -26,6 +26,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <utility>
 #include "backend/common/session/session_basic.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
@@ -34,8 +35,7 @@
 #include "include/common/utils/contract.h"
 #include "include/backend/visible.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 enum TaskType {
   kUnKnown,
   kExit,
@@ -154,7 +154,7 @@ enum class ExecutorEvent { kClear, kRunGraphFinished, kException };
 
 class BACKEND_EXPORT Executor {
  public:
-  Executor(const std::string &device_name, uint32_t device_id) : device_name_(device_name), device_id_(device_id) {
+  Executor(std::string device_name, uint32_t device_id) : device_name_(std::move(device_name)), device_id_(device_id) {
     worker_ = std::make_shared<std::thread>(&Executor::WorkerLoop, this);
   }
   ~Executor();
@@ -200,6 +200,5 @@ class BACKEND_EXPORT Executor {
   std::shared_ptr<std::thread> worker_;
   bool sync_run_task_finished_{false};
 };
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
 #endif  // MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_H

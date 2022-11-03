@@ -20,7 +20,6 @@
 #include <map>
 #include <set>
 #include <functional>
-#include <numeric>
 #include "ir/anf.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "utils/shape_utils.h"
@@ -40,8 +39,7 @@
 #include "utils/ms_context.h"
 #include "kernel/oplib/oplib.h"
 
-namespace mindspore {
-namespace session {
+namespace mindspore::session {
 using abstract::AbstractTensor;
 using abstract::AbstractTuple;
 using device::KernelInfo;
@@ -54,13 +52,13 @@ constexpr size_t kSwitchTrueBranchIndex = 2;
 
 // ops pair that dynamic input order is differ from the fixed shape ops
 // pair: <input_index_in_kernel->input_index_in_graph, input_index_in_graph->input_index_in_kernel>
-static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {
+std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {
   {kStridedSliceGradOpName, {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}},
   {kConv2DBackpropInputOpName, {{{0, 2}, {1, 1}, {2, 0}}, {{0, 2}, {1, 1}, {2, 0}}}},
   {kConv2DBackpropFilterOpName, {{{0, 1}, {1, 2}, {2, 0}}, {{1, 0}, {2, 1}, {0, 2}}}}};
 
 // pair: <input_index_in_kernel->input_index_in_graph, input_index_in_graph->input_index_in_kernel>
-static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_node_list = {
+std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_node_list = {
   {kConv2DBackpropInputOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
   {kFusionOpConv2DBackpropInputReluGradV2Name, {{{0, 1}, {1, 0}, {2, 2}}, {{0, 1}, {1, 0}, {2, 2}}}},
   {kFusionOpConv2DBackpropInputAddNReluGradV2Name,
@@ -133,6 +131,7 @@ tensor::TensorPtr GetForwardOutputTensor(const AnfNodePtr &node) {
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
+  MS_EXCEPTION_IF_NULL(kg);
   return kg->NewValueNode(kUMonad->ToAbstract(), kUMonad);
 }
 
@@ -145,6 +144,7 @@ AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
 //          out = Depend(out, latter)
 void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter) {
   MS_EXCEPTION_IF_NULL(kg);
+  MS_EXCEPTION_IF_NULL(former);
   MS_EXCEPTION_IF_NULL(latter);
   if (latter->isa<CNode>()) {
     auto latter_cnode = latter->cast<CNodePtr>();
@@ -347,8 +347,7 @@ std::string AnfRuntimeAlgorithm::GetPrevNodeOutputReshapeType(const AnfNodePtr &
   return GetOutputReshapeType(kernel_with_index.first, kernel_with_index.second);
 }
 
-std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node,
-                                                                          const size_t output_idx,
+std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t output_idx,
                                                                           const std::string &format) {
   auto output_shape = common::AnfAlgo::GetOutputDetailShape(node, output_idx);
   std::vector<int64_t> infer_shape;
@@ -370,13 +369,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const 
 }
 
 bool AnfRuntimeAlgorithm::IsShapesDynamic(const std::vector<ShapeVector> &shapes) {
-  for (const auto &shape : shapes) {
-    if (IsDynamic(shape)) {
-      return true;
-    }
-  }
-
-  return false;
+  return std::any_of(shapes.cbegin(), shapes.cend(), [](const auto &shape) { return IsDynamic(shape); });
 }
 
 ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx) {
@@ -394,7 +387,7 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, si
   return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
 }
 
-std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t input_idx,
+std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t input_idx,
                                                                          const std::string &format) {
   auto output_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(node, input_idx);
   std::vector<int64_t> infer_shape;
@@ -861,7 +854,7 @@ bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input
 }
 
 size_t AnfRuntimeAlgorithm::GetInputGraphIdxByKernelIdx(const mindspore::AnfNodePtr &anf_node,
-                                                        const size_t input_index_in_kernel) {
+                                                        size_t input_index_in_kernel) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t ret = input_index_in_kernel;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
@@ -903,7 +896,7 @@ size_t AnfRuntimeAlgorithm::GetInputGraphIdxByKernelIdx(const mindspore::AnfNode
 }
 
 size_t AnfRuntimeAlgorithm::GetInputKernelIdxByGraphIdx(const mindspore::AnfNodePtr &anf_node,
-                                                        const size_t input_index_in_graph) {
+                                                        size_t input_index_in_graph) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t ret = input_index_in_graph;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
@@ -930,6 +923,7 @@ size_t AnfRuntimeAlgorithm::GetInputKernelIdxByGraphIdx(const mindspore::AnfNode
       auto index_converter = find->second;
       ret = index_converter.second[input_index_in_graph];
       MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
+      return ret;
     }
     auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE);
     if (op_info != nullptr) {
@@ -1024,8 +1018,8 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
 }
 
 static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, ShapeVector *device_shape) {
-  constexpr int64_t kDefaultValueForDynamicDim = 16;
-  auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](int64_t size) {
+  auto ConvertNegOneToDefault = [](int64_t size) {
+    constexpr int64_t kDefaultValueForDynamicDim = 16;
     return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
   };
   if (!max_shape.empty()) {
@@ -1062,8 +1056,8 @@ ShapeVector AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr 
     KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
     auto shape = common::AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
     ShapeVector ret_shape;
-    constexpr int64_t kDefaultValueForDynamicDim = 1;
-    auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](int64_t size) {
+    auto ConvertNegOneToDefault = [](int64_t size) {
+      constexpr int64_t kDefaultValueForDynamicDim = 1;
       return size < 0 ? kDefaultValueForDynamicDim : size;
     };
     std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
@@ -1078,6 +1072,7 @@ ShapeVector AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr 
 
 // The same to GetInputDeviceShapeAdaptively
 ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
   auto device_shape = GetOutputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
   if (IsDynamic(device_shape) || device_shape.empty()) {
@@ -1091,8 +1086,8 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr
   if (device_shape.empty()) {
     auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, index);
     ShapeVector ret_shape;
-    constexpr int64_t kDefaultValueForDynamicDim = 1;
-    auto ConvertNegOneToOne = [&kDefaultValueForDynamicDim](int64_t size) {
+    auto ConvertNegOneToOne = [](int64_t size) {
+      constexpr int64_t kDefaultValueForDynamicDim = 1;
       return size < 0 ? kDefaultValueForDynamicDim : size;
     };
     (void)std::transform(shape.cbegin(), shape.cend(), std::back_inserter(ret_shape), ConvertNegOneToOne);
@@ -1208,6 +1203,7 @@ void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(const NotNull<KernelGraphPtr>
   auto make_tuple = root_graph->NewCNode(
     {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), root_graph->output()});
   MS_EXCEPTION_IF_NULL(root_graph->output());
+  MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract({root_graph->output()->abstract()});
   root_graph->set_output(make_tuple);
 }
@@ -1217,7 +1213,7 @@ void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) == true) {
+      ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
     return;
   }
   auto nodes = kernel_graph->execution_order();
@@ -1385,7 +1381,9 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
   auto input_axes = cnode->input(axes_index + 1);
   // cppcheck-suppress unreadVariable
   auto lock = AnfUtils::GetAbstractLock(input_axes.get());
-  auto axes_abs = input_axes->abstract()->Clone();
+  auto abs = input_axes->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  auto axes_abs = abs->Clone();
   MS_EXCEPTION_IF_NULL(axes_abs);
   auto axes_shape = AnfAlgo::GetInputDeviceShape(cnode, axes_index);
   if (axes_abs->isa<abstract::AbstractTensor>()) {
@@ -1464,5 +1462,4 @@ std::string AnfRuntimeAlgorithm::GetOriginFormat(const AnfNodePtr &anf_node) {
   }
   return {};
 }
-}  // namespace session
-}  // namespace mindspore
+}  // namespace mindspore::session
