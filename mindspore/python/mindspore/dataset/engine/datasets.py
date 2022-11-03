@@ -45,7 +45,6 @@ import copy
 import weakref
 import platform
 import psutil
-import numpy as np
 
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
@@ -68,8 +67,7 @@ from .queue import _SharedQueue, _Queue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_device_send, check_take, check_output_shape, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
-    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch, \
-    deprecated
+    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_enable_watchdog, get_seed, set_seed
 from ..core.datatypes import mstype_to_detype
@@ -1584,11 +1582,6 @@ class Dataset:
         if estimate and self.estimated_output_shapes is not None:
             return self.estimated_output_shapes
 
-        # if use set_dynamic_column, the `estimate` does not work, but they get the same result
-        if self.dynamic_setting[0]:
-            self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
-            return self.saved_output_shapes
-
         # We have a hang problem when two-level pipeline with multiprocessing, we need to extend the life cycle
         # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
         runtime_getter = self._init_tree_getters()
@@ -1651,52 +1644,6 @@ class Dataset:
 
         return self.dataset_size
 
-    @deprecated("1.5")
-    def set_dynamic_columns(self, columns=None):
-        """
-        Set dynamic shape information of source data, it should be set after the pipeline is defined.
-
-        Args:
-            columns (dict): A dict contains shape information of each column in dataset.
-                The value of shape[i] is :py:obj:`None` indicates that the data length of shape[i] is dynamic.
-
-        Examples:
-            >>> import numpy as np
-            >>>
-            >>> def generator1():
-            ...     for i in range(1, 100):
-            ...         yield np.ones((16, i, 83)), np.array(i)
-            >>>
-            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
-            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
-        """
-        if not isinstance(columns, dict):
-            raise TypeError("Pass a dict to set dynamic shape, example: {\"data1\": [16, None, 256]}")
-        self.dynamic_setting[0] = True
-        self.dynamic_setting[1] = columns
-
-    def dynamic_min_max_shapes(self):
-        """
-        Get minimum and maximum data length of dynamic source data, for dynamic graph compilation.
-
-        Returns:
-            lists, min_shapes, max_shapes of source data.
-
-        Examples:
-            >>> import numpy as np
-            >>>
-            >>> def generator1():
-            ...     for i in range(1, 100):
-            ...         yield np.ones((16, i, 83)), np.array(i)
-            >>>
-            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
-            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
-            >>> min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
-        """
-        if self.saved_min_shapes is None or self.saved_max_shapes is None:
-            self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
-        return self.saved_min_shapes, self.saved_max_shapes
-
     @staticmethod
     def __check_dynamic_column_name(dynamic_columns, dataset_columns):
         for column in dynamic_columns:
@@ -1713,73 +1660,6 @@ class Dataset:
         for dim in range(len(dynamic_columns[col])):
             if dynamic_columns[col][dim] is not None and dynamic_columns[col][dim] != data[col].shape[dim]:
                 raise RuntimeError(shape_mismatch)
-
-    def _dynamic_output_shapes(self):
-        """
-        Get dynamic information of source data.
-
-        Returns:
-            lists, dynamic_shapes, min_shapes, max_shapes of source data.
-        """
-        if not self.dynamic_setting[1]:
-            raise RuntimeError("dynamic_columns is not set, call set_dynamic_columns() by final Dataset Op.")
-
-        if self.saved_output_shapes is not None and self.saved_min_shapes is not None and \
-                self.saved_max_shapes is not None:
-            return self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes
-
-        logger.warning("Calculating dynamic shape of input data, this will take a few minutes...")
-        # Assume data1 shape is dynamic, data2 shape is fix
-        dynamic_columns = self.dynamic_setting[1]
-        # ["data1", "data2"]
-        dataset_columns = self.get_col_names()
-        Dataset.__check_dynamic_column_name(dynamic_columns, dataset_columns)
-
-        # Shape[1] of data1 is variable
-        # {"data1": {(batch_size, 100, feat_len), (16, 200, 83)}, "data2": {(batch_size, feat_len)}}
-        column_shape_set = {col: set() for col in dataset_columns}
-        dataset_size_counter = 0
-        for data in self.create_dict_iterator(num_epochs=1, output_numpy=True):
-            dataset_size_counter += 1
-            for col in data.keys():
-                if col in dynamic_columns:
-                    Dataset.__check_dynamic_column_shape(data, col, dynamic_columns)
-                column_shape_set[col].add(tuple(data[col].shape))
-
-        # we get dataset_size after dryrun
-        self.dataset_size = dataset_size_counter
-
-        min_shapes, max_shapes, dynamic_shapes = list(), list(), list()
-        for col, shape_set in column_shape_set.items():
-            if len(shape_set) > 1:
-                if col not in dynamic_columns:
-                    raise RuntimeError("column [" + col + "] has dynamic shape but not set by set_dynamic_columns()" +
-                                       ", shapes of [" + col + "]: " + str(list(shape_set)))
-                shape_npy = np.array(list(shape_set))
-                max_shape = shape_npy.max(axis=0)
-                min_shape = shape_npy.min(axis=0)
-
-                # Set min shape to 1 due to unknown shuffle
-                min_shape = np.where(np.equal(dynamic_columns[col], None), 1, min_shape)
-                # Set dynamic dim to -1 for ME
-                dynamic_shape = np.where(np.equal(dynamic_columns[col], None), -1, dynamic_columns[col])
-
-                max_shapes.append(max_shape.tolist())
-                min_shapes.append(min_shape.tolist())
-                dynamic_shapes.append(dynamic_shape.tolist())
-            else:
-                # Also append fix shape to keep order of column shape
-                fix_shape = list(list(shape_set)[0])
-                max_shapes.append(fix_shape)
-                min_shapes.append(fix_shape)
-                dynamic_shapes.append(fix_shape)
-                if col in dynamic_columns:
-                    logger.warning("column [" + col + "] has no dynamic shape but set by set_dynamic_columns()")
-                    # Set min shape to 1 due to unknown shuffle
-                    min_shapes[-1] = np.where(np.equal(dynamic_columns[col], None), 1, fix_shape).tolist()
-                    # Set dynamic dim to -1 for ME
-                    dynamic_shapes[-1] = np.where(np.equal(dynamic_columns[col], None), -1, fix_shape).tolist()
-        return dynamic_shapes, min_shapes, max_shapes
 
     def num_classes(self):
         """

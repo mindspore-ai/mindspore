@@ -27,7 +27,6 @@ Pre-processing Operation
     mindspore.dataset.Dataset.rename
     mindspore.dataset.Dataset.repeat
     mindspore.dataset.Dataset.reset
-    mindspore.dataset.Dataset.set_dynamic_columns
     mindspore.dataset.Dataset.shuffle
     mindspore.dataset.Dataset.skip
     mindspore.dataset.Dataset.split
@@ -65,7 +64,6 @@ Attribute
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.dynamic_min_max_shapes
     mindspore.dataset.Dataset.get_batch_size
     mindspore.dataset.Dataset.get_class_indexing
     mindspore.dataset.Dataset.get_col_names
@@ -124,7 +122,6 @@ Pre-processing Operation
     mindspore.dataset.Dataset.repeat
     mindspore.dataset.Dataset.reset
     mindspore.dataset.Dataset.save
-    mindspore.dataset.Dataset.set_dynamic_columns
     mindspore.dataset.Dataset.shuffle
     mindspore.dataset.Dataset.skip
     mindspore.dataset.Dataset.split
@@ -162,7 +159,6 @@ Attribute
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.dynamic_min_max_shapes
     mindspore.dataset.Dataset.get_batch_size
     mindspore.dataset.Dataset.get_class_indexing
     mindspore.dataset.Dataset.get_col_names
@@ -222,7 +218,6 @@ Pre-processing Operation
     mindspore.dataset.Dataset.repeat
     mindspore.dataset.Dataset.reset
     mindspore.dataset.Dataset.save
-    mindspore.dataset.Dataset.set_dynamic_columns
     mindspore.dataset.Dataset.shuffle
     mindspore.dataset.Dataset.skip
     mindspore.dataset.Dataset.split
@@ -260,7 +255,6 @@ Attribute
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.dynamic_min_max_shapes
     mindspore.dataset.Dataset.get_batch_size
     mindspore.dataset.Dataset.get_class_indexing
     mindspore.dataset.Dataset.get_col_names
@@ -320,7 +314,6 @@ Pre-processing Operation
     mindspore.dataset.Dataset.repeat
     mindspore.dataset.Dataset.reset
     mindspore.dataset.Dataset.save
-    mindspore.dataset.Dataset.set_dynamic_columns
     mindspore.dataset.Dataset.shuffle
     mindspore.dataset.Dataset.skip
     mindspore.dataset.Dataset.split
@@ -359,7 +352,6 @@ Attribute
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.dynamic_min_max_shapes
     mindspore.dataset.Dataset.get_batch_size
     mindspore.dataset.Dataset.get_class_indexing
     mindspore.dataset.Dataset.get_col_names

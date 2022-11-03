@@ -74,9 +74,6 @@ class MindData:
     def get_data_info(self):
         pass
 
-    def dynamic_min_max_shapes(self):
-        pass
-
     def __len__(self):
         return self._size
 

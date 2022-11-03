@@ -20,10 +20,6 @@ mindspore.DatasetHelper
         
         在epoch开始时继续向设备发送数据。
 
-    .. py:method:: dynamic_min_max_shapes()
-        
-        返回动态数据的形状(shape)范围（最小形状(shape)，最大形状(shape)）。
-
     .. py:method:: get_data_info()
         
         下沉模式下，获取当前批次数据的类型和形状(shape)。通常在数据形状(shape)动态变化的场景使用。
