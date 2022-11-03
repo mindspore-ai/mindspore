@@ -171,6 +171,8 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
+from mindspore.ops.operations.sparse_ops import SparseSlice
+from mindspore.ops.operations._grad_ops import SparseSliceGrad
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
@@ -4681,6 +4683,23 @@ test_case_sparse_ops = [
                         Tensor(np.array([0, 1]).astype(np.int32)),
                         Tensor(np.array([2]).astype(np.int32))],
         'desc_bprop': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32))]}),
+    ('SparseSlice', {
+        'block': SparseSlice(),
+        'desc_inputs': [Tensor(np.array([[0, 1], [1, 2], [1, 3], [2, 2]]).astype(np.int64)),
+                        Tensor(np.array([1, 2, 3, 4]).astype(np.int64)),
+                        Tensor(np.array([3, 4]).astype(np.int64)),
+                        Tensor(np.array([0, 1]).astype(np.int64)),
+                        Tensor(np.array([2, 3]).astype(np.int64))],
+        'desc_bprop': [Tensor(np.array([[0, 1], [1, 2], [1, 3]]).astype(np.int64)),
+                       Tensor(np.array([1, 2, 3]).astype(np.int64)),
+                       Tensor(np.array([2, 3]).astype(np.int64))]}),
+    ('SparseSliceGrad', {
+        'block': SparseSliceGrad(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.int64)),
+                        Tensor(np.array([[0, 1], [1, 2], [1, 3], [2, 2]]).astype(np.int64)),
+                        Tensor(np.array([0, 0]).astype(np.int64)),
+                        Tensor(np.array([[0, 1], [1, 2], [2, 2]]).astype(np.int64))],
+        'skip': ['backward']}),
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,

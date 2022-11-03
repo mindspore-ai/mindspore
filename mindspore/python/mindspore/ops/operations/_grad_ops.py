@@ -3714,38 +3714,41 @@ class SparseSliceGrad(Primitive):
 
     Inputs:
         - **backprop_val_grad** (Tensor) - A 1D Tensor.
-          The shape should be :math:`(n,)`.
-        - **indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
+          The shape should be :math:`(N,)`.
+        - **indices** (Tensor) - A 2D Tensor (N x R matrix) of type int64. The indices of the SparseTensor.
           Support int64, each element value should be a non-negative int number. This tensor should be sorted.
-          The shape is :math:`(n, 2)`.
+          The shape is :math:`(N, R)`.
         - **start** (Tensor) - A 1D Tensor of type int64, represents the start of the indices.
-        - **new_indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
+          The shape should be :math:`(R,)`.
+        - **new_indices** (Tensor) - A 2D Tensor (N x C matrix) of type int64. The indices of the SparseTensor.
           Support int64, each element value should be a non-negative int number. This tensor should be sorted.
-          The shape is :math:`(n, 2)`.
+          The shape is :math:`(N, C)`.
 
     Outputs:
-        - *y_grad_val: A Tensor. Has the same type as "backprop_val_grad".
+        - *y_grad_val: A Tensor. Has the same type as `backprop_val_grad`.
+          Has the same number as `indices`.
 
     Raises:
         TypeError: If the dtype of `indices`, `start`, `new_indices` are not int64.
         ValueError: If `indices`, `new_indices` are not 2-D tensor.
         ValueError: If `backprop_val_grad`, `start` is not a 1-D tensor.
         ValueError: If the number of `backprop_val_grad` is not corresponding to the number of `new_indices`.
+        ValueError: If the shape of `indices[1]` is not corresponding to `start[1]`.
+        ValueError: If the shape of `indices[1]` is not corresponding to `new_indices[1]`.
         RunTimeError: If the `backprop_val_grad` is not all backpropagated, because `indices` or `new_indices`
         is not sorted.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     Examples:
-        >>> backprop_val_grad = Tensor([4, 2, 3])
-        >>> indices = Tensor([[0, 0], [0, 2], [1, 2], [1, 3], [2, 3], [2, 4]], dtype=ms.int64)
-        >>> values = Tensor([1, 2, 3, 4])
-        >>> start = Tensor([0, 0], dtype=ms.int64)
-        >>> new_indices = Tensor([0, 2], [1, 2], [1, 3], dtype=ms.int64)
+        >>> backprop_val_grad = Tensor(np.array([1, 2, 3, 4]).astype(np.int64))
+        >>> indices = Tensor(np.array([[0, 0], [0, 2], [1, 2], [1, 3], [2, 3], [2, 4]]).astype(np.int64))
+        >>> start = Tensor(np.array([0, 0]).astype(np.int64))
+        >>> new_indices = Tensor(np.array([[0, 2], [1, 2], [1, 3], [2, 4]]).astype(np.int64))
         >>> grad = SparseSliceGrad()
         >>> output = grad(backprop_val_grad, indices, start, new_indices)
         >>> print(output)
-        [0, 4, 2, 3, 0, 0]
+        [0 1 2 3 0 4]
     """
 
     @prim_attr_register
