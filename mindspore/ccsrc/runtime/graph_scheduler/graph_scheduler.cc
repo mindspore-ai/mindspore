@@ -1282,6 +1282,61 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   return nullptr;
 }
 
+namespace {
+void GetAllUInputByCNode(const CNodePtr &cnode,
+                         mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> *cnode_to_u_inputs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(cnode_to_u_inputs);
+  if (cnode_to_u_inputs->find(cnode) != cnode_to_u_inputs->end()) {
+    return;
+  }
+  (*cnode_to_u_inputs)[cnode] = {};
+  for (const auto &input : cnode->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (!input->isa<CNode>()) {
+      continue;
+    }
+    const auto &cinput = input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cinput);
+    if (common::AnfAlgo::GetCNodeName(cinput) == kUpdateStateOpName) {
+      (*cnode_to_u_inputs)[cnode].emplace(cinput);
+    }
+    GetAllUInputByCNode(cinput, cnode_to_u_inputs);
+    (*cnode_to_u_inputs)[cnode].insert((*cnode_to_u_inputs)[cinput].begin(), (*cnode_to_u_inputs)[cinput].end());
+  }
+}
+
+void GetAllCNodeUInputByGraph(const KernelGraphPtr &graph,
+                              mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> *cnode_to_u_inputs) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(cnode_to_u_inputs);
+  for (const auto &kernel : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    GetAllUInputByCNode(kernel, cnode_to_u_inputs);
+  }
+}
+
+// Check if the first input of update state should be linked, if the other inputs of update state has depend the first
+// input, it would not be linked.
+bool IsNeedLinkForFirstInput(const CNodePtr &cnode,
+                             const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_u_inputs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().size() <= kUpdateStateStateInput) {
+    MS_LOG(EXCEPTION) << "Invalid update state node:" << cnode->DebugString();
+  }
+  const auto &u_input = cnode->input(kUpdateStateStateInput);
+  MS_EXCEPTION_IF_NULL(u_input);
+  for (size_t i = kUpdateStateRealInput; i < cnode->inputs().size(); ++i) {
+    MS_EXCEPTION_IF_NULL(cnode->input(i));
+    const auto &iter = cnode_to_u_inputs.find(cnode->input(i));
+    if (iter != cnode_to_u_inputs.end() && iter->second.find(u_input) != iter->second.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
                                              std::vector<AbstractActor *> *const auto_monad_actors) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -1350,6 +1405,12 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(auto_monad_actors);
   MS_EXCEPTION_IF_NULL(communication_nodes);
 
+  // Collect all the depend updatestate nodes of the kernels for linking control arrow.
+  mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> cnode_to_u_inputs;
+  MS_LOG(INFO) << "Get all u input of cnode in graph:" << graph->ToString() << " start.";
+  GetAllCNodeUInputByGraph(graph, &cnode_to_u_inputs);
+  MS_LOG(INFO) << "Get all u input of cnode in graph:" << graph->ToString() << " end.";
+
   auto &execution_order = graph->execution_order();
   // Foreach the execution order to link the actors.
   for (const auto &kernel : execution_order) {
@@ -1370,7 +1431,8 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
       auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
       if (SchedulerHelper::HasMonadControl(input_node, graph)) {
-        LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_);
+        LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_,
+                                    cnode_to_u_inputs);
       }
       if (HasAbstractMonad(input_node)) {
         (void)auto_monad_actors->emplace_back(kernel_actor);
@@ -1629,90 +1691,9 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   }
 }
 
-namespace {
-void FetchRealInputByNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *inputs) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(inputs);
-  if (!node->isa<CNode>()) {
-    return;
-  }
-
-  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
-    const auto &cnode = node->cast<CNodePtr>();
-    for (const auto &input : cnode->inputs()) {
-      MS_EXCEPTION_IF_NULL(input);
-      FetchRealInputByNode(input, inputs);
-    }
-  } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
-    const auto &cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->inputs().size() <= kInputNodeOutputIndexInTupleGetItem) {
-      MS_LOG(EXCEPTION) << "Invalid tuple get item node:" << cnode->DebugString();
-    }
-    (void)inputs->emplace_back(cnode->inputs()[kRealInputNodeIndexInTupleGetItem]);
-  } else {
-    (void)inputs->emplace_back(node);
-  }
-}
-
-void GetRealDependInputByUpdateState(const AnfNodePtr &update_state, std::vector<AnfNodePtr> *real_depend_inputs) {
-  MS_EXCEPTION_IF_NULL(update_state);
-  MS_EXCEPTION_IF_NULL(real_depend_inputs);
-  const auto &cnode = update_state->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &inputs = cnode->inputs();
-  if (inputs.size() <= kUpdateStateStateInput) {
-    MS_LOG(WARNING) << " Invalid update state:" << update_state->DebugString();
-    return;
-  }
-  const auto &u_input = inputs[kUpdateStateStateInput];
-  MS_EXCEPTION_IF_NULL(u_input);
-
-  bool is_u_input_valid = true;
-  std::vector<AnfNodePtr> real_inputs;
-  for (size_t i = kUpdateStateRealInput; i < inputs.size(); ++i) {
-    FetchRealInputByNode(inputs[i], &real_inputs);
-  }
-  for (size_t i = 0; i < real_inputs.size(); ++i) {
-    const auto &input = real_inputs[i];
-    MS_EXCEPTION_IF_NULL(input);
-    (void)real_depend_inputs->emplace_back(input);
-
-    // Check the u input of update state.
-    if (input->isa<CNode>()) {
-      const auto &input_cnode = input->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(input_cnode);
-      for (size_t j = 0; j < input_cnode->inputs().size(); ++j) {
-        auto cnode_input = input_cnode->inputs()[j];
-        MS_EXCEPTION_IF_NULL(cnode_input);
-        // If the input node is depend, the state input of depend should be checked.
-        if (common::AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimDepend)) {
-          const auto &depend_cnode = cnode_input->cast<CNodePtr>();
-          MS_EXCEPTION_IF_NULL(depend_cnode);
-          if (depend_cnode->inputs().size() >= kDependInputSize) {
-            cnode_input = depend_cnode->inputs()[kDependAttachNodeIndex];
-          }
-        }
-        if (u_input == cnode_input) {
-          MS_LOG(DEBUG) << "U input node:" << u_input->DebugString()
-                        << " of update state:" << update_state->DebugString()
-                        << " is input of update state input node:" << input->DebugString();
-          is_u_input_valid = false;
-          break;
-        }
-      }
-    }
-  }
-  if (is_u_input_valid) {
-    MS_LOG(DEBUG) << "The first input:" << u_input->fullname_with_scope()
-                  << " of updatestate node:" << update_state->fullname_with_scope() << " link control arrow.";
-    (void)real_depend_inputs->emplace_back(u_input);
-  }
-}
-}  // namespace
-
-void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const AnfNodePtr &from_node,
-                                                 const KernelGraphPtr &graph, const ControlNodeParserPtr &parser) {
+void GraphScheduler::LinkControlArrowByAutoMonad(
+  AbstractActor *to_actor, const AnfNodePtr &from_node, const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
+  const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_u_inputs) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_node);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1731,7 +1712,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
   if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
     for (size_t i = 1; i < input_cnode->inputs().size(); ++i) {
-      LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser);
+      LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser, cnode_to_u_inputs);
     }
     return;
   }
@@ -1751,7 +1732,15 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
     real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
   } else if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimUpdateState)) {
-    GetRealDependInputByUpdateState(input_anfnode, &real_depend_inputs);
+    if (IsNeedLinkForFirstInput(input_cnode, cnode_to_u_inputs) &&
+        input_cnode->inputs().size() > kUpdateStateStateInput) {
+      // If all other inputs of the update state do not depend on the first input, we need to link control arrow
+      // for the first input.
+      real_depend_inputs.push_back(input_cnode->input(kUpdateStateStateInput));
+    }
+    for (size_t i = kUpdateStateRealInput; i < input_cnode->inputs().size(); ++i) {
+      real_depend_inputs.push_back(input_cnode->input(i));
+    }
   } else {
     real_depend_inputs.push_back(input_anfnode);
   }
@@ -1791,7 +1780,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
 
     // The monad node and make tuple node need recursion.
     if (IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
-      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph, parser);
+      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph, parser, cnode_to_u_inputs);
       continue;
     }
 
