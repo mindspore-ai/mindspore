@@ -1663,7 +1663,9 @@ void Somas::UpdateUnionTensorsOffset() {
 
 // Disjoint-set
 size_t find_father(std::vector<size_t> *father, size_t x) {
-  if (x == (*father)[x]) return x;
+  if (x == (*father)[x]) {
+    return x;
+  }
   (*father)[x] = find_father(father, (*father)[x]);
   return (*father)[x];
 }

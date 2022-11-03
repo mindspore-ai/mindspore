@@ -245,7 +245,7 @@ class BuildAssistConst {
 class BuildNewValue {
  public:
   explicit BuildNewValue(StatePtr s_) : s(std::move(s_)) {}
-  AnfNodePtr operator()(const PatternMap &m) { return std::make_shared<ValueNode>(MakeValue(s->k_num)); }
+  AnfNodePtr operator()(const PatternMap &) { return std::make_shared<ValueNode>(MakeValue(s->k_num)); }
 
  private:
   StatePtr s;
@@ -285,12 +285,12 @@ AnfNodePtr BuildTopk(const PatternMap &m, const AnfNodePtr &default_node) {
 }
 
 void TopKSplit::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(x1).AddVar(x2).AddCNode(m_topk, {std::make_shared<Primitive>(kTopKOpName), x1, x2});
+  (void)(*src_pattern).AddVar(x1).AddVar(x2).AddCNode(m_topk, {std::make_shared<Primitive>(kTopKOpName), x1, x2});
 }
 
 void TopKSplit::DefineDstPattern(DstPattern *dst_pattern) {
   StatePtr s = std::make_shared<State>();
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddValueNode(r_assist_const, BuildAssistConst(s))
     .AddValueNode(r_new_value, BuildNewValue(s))
     .AddCNode(r_topk, {std::make_shared<Primitive>(kTopKOpName), x1, r_assist_const}, BuildTopk);
