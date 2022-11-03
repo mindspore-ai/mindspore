@@ -43,7 +43,7 @@ class CharNGram(cde.CharNGram):
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set. Default: None, no limit.
 
         Returns:
             CharNGram, CharNGram vector build from a file.
@@ -54,7 +54,7 @@ class CharNGram(cde.CharNGram):
             TypeError: If `max_vectors` is not type of integer.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> char_n_gram = text.CharNGram.from_file("/path/to/char_n_gram/file", max_vectors=None)
         """
 
@@ -79,7 +79,7 @@ class FastText(cde.FastText):
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set. Default: None, no limit.
 
         Returns:
             FastText, FastText vector build from a file.
@@ -90,7 +90,7 @@ class FastText(cde.FastText):
             TypeError: If `max_vectors` is not type of integer.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> fast_text = text.FastText.from_file("/path/to/fast_text/file", max_vectors=None)
         """
 
@@ -115,7 +115,7 @@ class GloVe(cde.GloVe):
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set. Default: None, no limit.
 
         Returns:
             GloVe, GloVe vector build from a file.
@@ -126,7 +126,7 @@ class GloVe(cde.GloVe):
             TypeError: If `max_vectors` is not type of integer.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> glove = text.GloVe.from_file("/path/to/glove/file", max_vectors=None)
         """
 
@@ -356,7 +356,7 @@ class Vectors(cde.Vectors):
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set (default=None, no limit).
+                passing `max_vectors` can limit the size of the loaded set. Default: None, no limit.
 
         Returns:
             Vectors, Vectors build from a file.
@@ -367,7 +367,7 @@ class Vectors(cde.Vectors):
             TypeError: If `max_vectors` is not type of integer.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> vector = text.Vectors.from_file("/path/to/vectors/file", max_vectors=None)
         """
 
@@ -399,27 +399,27 @@ class Vocab:
         Args:
             dataset (Dataset): dataset to build vocab from.
             columns (list[str], optional): column names to get words from. It can be a list of column names.
-                (default=None).
+                Default: None.
             freq_range (tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency=0 is the same as
                 min_frequency=1. max_frequency > total_words is the same as max_frequency = total_words.
-                min_frequency/max_frequency can be None, which corresponds to 0/total_words separately
-                (default=None, all words are included).
+                min_frequency/max_frequency can be None, which corresponds to 0/total_words separately.
+                Default: None, all words are included.
             top_k (int, optional): top_k is greater than 0. Number of words to be built into vocab. top_k means most
-                frequent words are taken. top_k is taken after freq_range. If not enough top_k, all words will be taken
-                (default=None, all words are included).
+                frequent words are taken. top_k is taken after freq_range. If not enough top_k, all words will be taken.
+                Default: None, all words are included.
             special_tokens (list, optional):  A list of strings, each one is a special token. For example
-                special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
+                special_tokens=["<pad>","<unk>"]. Default: None, no special tokens will be added.
             special_first (bool, optional): Whether special_tokens will be prepended/appended to vocab. If
-                special_tokens is specified and special_first is set to True, special_tokens will be prepended
-                (default=True).
+                special_tokens is specified and special_first is set to True, special_tokens will be prepended.
+                Default: True.
 
         Returns:
             Vocab, Vocab object built from the dataset.
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> vocab = text.Vocab.from_dataset(dataset, "text", freq_range=None, top_k=None,
             ...                                 special_tokens=["<pad>", "<unk>"],
@@ -440,15 +440,15 @@ class Vocab:
         Args:
             word_list (list): A list of string where each element is a word of type string.
             special_tokens (list, optional):  A list of strings, each one is a special token. For example
-                special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
+                special_tokens=["<pad>","<unk>"]. Default: None, no special tokens will be added.
             special_first (bool, optional): Whether special_tokens is prepended or appended to vocab. If special_tokens
-                is specified and special_first is set to True, special_tokens will be prepended (default=True).
+                is specified and special_first is set to True, special_tokens will be prepended. Default: True.
 
         Returns:
             Vocab, Vocab object built from the list.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
         """
 
@@ -467,19 +467,19 @@ class Vocab:
         Args:
             file_path (str): Path to the file which contains the vocab list.
             delimiter (str, optional): A delimiter to break up each line in file, the first element is taken to be
-                the word (default="", the whole line will be treated as a word).
-            vocab_size (int, optional): Number of words to read from file_path (default=None, all words are taken).
+                the word. Default: '', the whole line will be treated as a word.
+            vocab_size (int, optional): Number of words to read from file_path. Default: None, all words are taken.
             special_tokens (list, optional):  A list of strings, each one is a special token. For example
-                special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
+                special_tokens=["<pad>","<unk>"]. Default: None, no special tokens will be added.
             special_first (bool, optional): Whether special_tokens will be prepended/appended to vocab,
                 If special_tokens is specified and special_first is set to True,
-                special_tokens will be prepended (default=True).
+                special_tokens will be prepended. Default: True.
 
         Returns:
             Vocab, Vocab object built from the file.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> # Assume vocab file contains the following content:
             >>> # --- begin of file ---
             >>> # apple,apple2
@@ -517,7 +517,7 @@ class Vocab:
             Vocab, Vocab object built from the dict.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
         """
 
@@ -533,7 +533,7 @@ class Vocab:
             A vocabulary consisting of word and id pairs.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["word_1", "word_2", "word_3", "word_4"])
             >>> vocabory_dict = vocab.vocab()
         """
@@ -553,7 +553,7 @@ class Vocab:
             The token id or list of token ids.
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
             >>> ids = vocab.tokens_to_ids(["w1", "w3"])
         """
@@ -577,7 +577,7 @@ class Vocab:
             The decoded token(s).
 
         Examples:
-            >>> from mindspore.dataset import text
+            >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
             >>> token = vocab.ids_to_tokens(0)
         """
@@ -595,7 +595,7 @@ def to_bytes(array, encoding='utf8'):
 
     Args:
         array (numpy.ndarray): Array of `str` type representing strings.
-        encoding (str): Indicating the charset for encoding (default='utf8').
+        encoding (str): Indicating the charset for encoding. Default: 'utf8'.
 
     Returns:
         numpy.ndarray, NumPy array of `bytes`.
@@ -622,7 +622,7 @@ def to_str(array, encoding='utf8'):
 
     Args:
         array (numpy.ndarray): Array of `bytes` type representing strings.
-        encoding (str): Indicating the charset for decoding (default='utf8').
+        encoding (str): Indicating the charset for decoding. Default: 'utf8'.
 
     Returns:
         numpy.ndarray, NumPy array of `str`.

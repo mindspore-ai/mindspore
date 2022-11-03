@@ -38,7 +38,7 @@ def serialize(dataset, json_filepath=""):
 
     Args:
         dataset (Dataset): The starting node.
-        json_filepath (str): The filepath where a serialized JSON file will be generated (default="").
+        json_filepath (str): The filepath where a serialized JSON file will be generated. Default: ''.
 
     Returns:
        Dict, the dictionary contains the serialized dataset graph.
@@ -62,9 +62,9 @@ def deserialize(input_dict=None, json_filepath=None):
     Construct dataset pipeline from a JSON file produced by dataset serialize function.
 
     Args:
-        input_dict (dict): A Python dictionary containing a serialized dataset graph (default=None).
+        input_dict (dict): A Python dictionary containing a serialized dataset graph. Default: None.
         json_filepath (str): A path to the JSON file containing dataset graph.
-            User can obtain this file by calling API `mindspore.dataset.serialize()` (default=None).
+            User can obtain this file by calling API `mindspore.dataset.serialize()`. Default: None.
 
     Returns:
         de.Dataset or None if error occurs.
@@ -109,7 +109,7 @@ def show(dataset, indentation=2):
     Args:
         dataset (Dataset): The starting node.
         indentation (int, optional): The indentation used by the JSON print.
-            Do not indent if indentation is None (default=2).
+            Do not indent if indentation is None. Default: 2.
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)

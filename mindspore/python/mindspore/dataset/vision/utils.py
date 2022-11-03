@@ -368,7 +368,7 @@ def encode_jpeg(image, quality=75):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.dataset import vision
+        >>> import mindspore.dataset.vision as vision
         >>> # Generate a random image with height=120, width=340, channels=3
         >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
         >>> jpeg_data = vision.encode_jpeg(image)
@@ -471,7 +471,7 @@ def write_file(filename, data):
         RuntimeError: If the shape of `data` is not a one-dimensional array.
 
     Examples:
-        >>> from mindspore.dataset import vision
+        >>> import mindspore.dataset.vision as vision
         >>> vision.write_file("/path/to/file", data)
     """
     if not isinstance(filename, str):

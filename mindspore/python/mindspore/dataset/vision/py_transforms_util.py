@@ -51,7 +51,7 @@ def normalize(img, mean, std, pad_channel=False, dtype="float32"):
         mean (list): List of mean values for each channel, w.r.t channel order.
         std (list): List of standard deviations for each channel, w.r.t. channel order.
         pad_channel (bool): Whether to pad a extra channel with value zero.
-        dtype (str): Output datatype of normalize, only worked when pad_channel is True. (default is "float32")
+        dtype (str): Output datatype of normalize, only worked when pad_channel is True. Default: "float32".
 
     Returns:
         img (numpy.ndarray), Normalized image.
@@ -359,7 +359,7 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
         scale (tuple): Range (min, max) of respective size of the original size to be cropped.
         ratio (tuple): Range (min, max) of aspect ratio to be cropped.
         interpolation (interpolation mode): Image interpolation mode. Default is Inter.BILINEAR = 2.
-        max_attempts (int): The maximum number of attempts to propose a valid crop_area. Default 10.
+        max_attempts (int): The maximum number of attempts to propose a valid crop_area. Default: 10.
             If exceeded, fall back to use center_crop instead.
 
     Returns:
@@ -432,9 +432,9 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
-            Default is None.
+            Default: None.
         pad_if_needed (bool): Pad the image if either side is smaller than
-            the given output size. Default is False.
+            the given output size. Default: False.
         fill_value (Union[int, tuple]): The pixel intensity of the borders if
             the padding_mode is 'constant'. If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
@@ -912,7 +912,7 @@ def pad(img, padding, fill_value, padding_mode):
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
-            Default is None.
+            Default: None.
         fill_value (Union[int, tuple]): The pixel intensity of the borders if
             the padding_mode is "constant". If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
@@ -1100,7 +1100,7 @@ def erase(np_img, i, j, height, width, erase_value, inplace=False):
         height (int): Height of the erased region.
         width (int): Width of the erased region.
         erase_value: Erase value return from helper function get_erase_params().
-        inplace (bool, optional): Apply this transform inplace. Default is False.
+        inplace (bool, optional): Apply this transform inplace. Default: False.
 
     Returns:
         np_img (numpy.ndarray), Erased NumPy image array.
@@ -1514,7 +1514,7 @@ def random_color(img, degrees):
     Args:
         img (PIL.Image.Image): Image to be color adjusted.
         degrees (sequence): Range of random color adjustment degrees.
-            It should be in (min, max) format (default=(0.1,1.9)).
+            It should be in (min, max) format. Default: (0.1,1.9).
 
     Returns:
         PIL.Image.Image, color adjusted image.
@@ -1534,7 +1534,7 @@ def random_sharpness(img, degrees):
     Args:
         img (PIL.Image.Image): Image to be sharpness adjusted.
         degrees (sequence): Range of random sharpness adjustment degrees.
-            It should be in (min, max) format (default=(0.1,1.9)).
+            It should be in (min, max) format. Default: (0.1,1.9).
 
     Returns:
         PIL.Image.Image, sharpness adjusted image.
@@ -1579,8 +1579,8 @@ def auto_contrast(img, cutoff, ignore):
 
     Args:
         img (PIL.Image): Image to be augmented with AutoContrast.
-        cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
-        ignore (Union[int, Sequence[int]], optional): Pixel values to ignore (default=None).
+        cutoff (float, optional): Percent of pixels to cut off from the histogram. Default: 0.0.
+        ignore (Union[int, Sequence[int]], optional): Pixel values to ignore. Default: None.
 
     Returns:
         PIL.Image, augmented image.

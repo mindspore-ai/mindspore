@@ -14,7 +14,7 @@ mindspore.dataset.Dataset.split
           - 如果子数据集大小的总和小于K，K - sigma(round(fi * k))的值将添加到第一个子数据集，sigma为求和操作。
           - 如果子数据集大小的总和大于K，sigma(round(fi * K)) - K的值将从第一个足够大的子数据集中删除，且删除后的子数据集大小至少大于1。
 
-        - **randomize** (bool, 可选) - 确定是否随机拆分数据，默认值：True，数据集将被随机拆分。否则将按顺序拆分为多个不重叠的子数据集。
+        - **randomize** (bool, 可选) - 确定是否随机拆分数据。默认值：True，数据集将被随机拆分。否则将按顺序拆分为多个不重叠的子数据集。
 
     .. note::
         1. 如果进行拆分操作的数据集对象为MappableDataset类型，则将自动调用一个优化后的split操作。

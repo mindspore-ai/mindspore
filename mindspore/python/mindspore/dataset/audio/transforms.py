@@ -508,8 +508,8 @@ class ComputeDeltas(AudioTensorOperation):
     at time :math:`t` , :math:`N` is :math:`(\text{win_length}-1)//2` .
 
     Args:
-        win_length (int, optional): The window length used for computing delta, must be no less than 3 (default=5).
-        pad_mode (BorderType, optional): Mode parameter passed to padding (default=BorderType.EDGE).It can be any of
+        win_length (int, optional): The window length used for computing delta, must be no less than 3. Default: 5.
+        pad_mode (BorderType, optional): Mode parameter passed to padding. Default: BorderType.EDGE. It can be any of
             [BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BordBorderTypeer.SYMMETRIC].
 
             - BorderType.CONSTANT, means it fills the border with constant values.
@@ -677,13 +677,13 @@ class DetectPitchFrequency(AudioTensorOperation):
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-        frame_time (float, optional): Duration of a frame, the value must be greater than zero (default=0.01).
+        frame_time (float, optional): Duration of a frame, the value must be greater than zero. Default: 0.01.
         win_length (int, optional): The window length for median smoothing (in number of frames), the value must be
-            greater than zero (default=30).
-        freq_low (int, optional): Lowest frequency that can be detected (Hz), the value must be greater than zero
-            (default=85).
-        freq_high (int, optional): Highest frequency that can be detected (Hz), the value must be greater than zero
-            (default=3400).
+            greater than zero. Default: 30.
+        freq_low (int, optional): Lowest frequency that can be detected (Hz), the value must be greater than zero.
+            Default: 85.
+        freq_high (int, optional): Highest frequency that can be detected (Hz), the value must be greater than zero.
+            Default: 3400.
 
     Examples:
         >>> import numpy as np
@@ -723,10 +723,10 @@ class Dither(AudioTensorOperation):
         density_function (DensityFunction, optional): The density function of a continuous
             random variable. Can be one of DensityFunction.TPDF (Triangular Probability Density Function),
             DensityFunction.RPDF (Rectangular Probability Density Function) or
-            DensityFunction.GPDF (Gaussian Probability Density Function)
-            (default=DensityFunction.TPDF).
+            DensityFunction.GPDF (Gaussian Probability Density Function).
+            Default: DensityFunction.TPDF.
         noise_shaping (bool, optional): A filtering process that shapes the spectral
-            energy of quantisation error (default=False).
+            energy of quantisation error. Default: False.
 
     Examples:
         >>> import numpy as np
@@ -755,7 +755,7 @@ class EqualizerBiquad(AudioTensorOperation):
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
         center_freq (float): Central frequency (in Hz).
         gain (float): Desired gain at the boost (or attenuation) in dB.
-        Q (float, optional): https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        Q (float, optional): https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
 
     Examples:
         >>> import numpy as np
@@ -790,9 +790,9 @@ class Fade(AudioTensorOperation):
     Add a fade in and/or fade out to an waveform.
 
     Args:
-        fade_in_len (int, optional): Length of fade-in (time frames), which must be non-negative (default=0).
-        fade_out_len (int, optional): Length of fade-out (time frames), which must be non-negative (default=0).
-        fade_shape (FadeShape, optional): Shape of fade (default=FadeShape.LINEAR). Can be one of
+        fade_in_len (int, optional): Length of fade-in (time frames), which must be non-negative. Default: 0.
+        fade_out_len (int, optional): Length of fade-out (time frames), which must be non-negative. Default: 0.
+        fade_shape (FadeShape, optional): Shape of fade. Default: FadeShape.LINEAR. Can be one of
             FadeShape.QUARTER_SINE, FadeShape.HALF_SINE, FadeShape.LINEAR, FadeShape.LOGARITHMIC or
             FadeShape.EXPONENTIAL.
 
@@ -842,7 +842,7 @@ class Filtfilt(AudioTensorOperation):
         b_coeffs (Sequence): numerator coefficients of difference equation of dimension of (n_order + 1).
             Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
             Must be same size as a_coeffs (pad with 0's as necessary).
-        clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1]. Default=True.
+        clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1]. Default: True.
 
     Raises:
         RuntimeError: If the shape of input audio waveform does not match <..., time>.
@@ -882,15 +882,15 @@ class Flanger(AudioTensorOperation):
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
-        delay (float, optional): Desired delay in milliseconds (ms), range: [0, 30] (default=0.0).
-        depth (float, optional): Desired delay depth in milliseconds (ms), range: [0, 10] (default=2.0).
-        regen (float, optional): Desired regen (feedback gain) in dB, range: [-95, 95] (default=0.0).
-        width (float, optional): Desired width (delay gain) in dB, range: [0, 100] (default=71.0).
-        speed (float, optional): Modulation speed in Hz, range: [0.1, 10] (default=0.5).
-        phase (float, optional): Percentage phase-shift for multi-channel, range: [0, 100] (default=25.0).
-        modulation (Modulation, optional): Modulation of the input tensor (default=Modulation.SINUSOIDAL).
+        delay (float, optional): Desired delay in milliseconds (ms), range: [0, 30]. Default: 0.0.
+        depth (float, optional): Desired delay depth in milliseconds (ms), range: [0, 10]. Default: 2.0.
+        regen (float, optional): Desired regen (feedback gain) in dB, range: [-95, 95]. Default: 0.0.
+        width (float, optional): Desired width (delay gain) in dB, range: [0, 100]. Default: 71.0.
+        speed (float, optional): Modulation speed in Hz, range: [0.1, 10]. Default: 0.5.
+        phase (float, optional): Percentage phase-shift for multi-channel, range: [0, 100]. Default: 25.0.
+        modulation (Modulation, optional): Modulation of the input tensor. Default: Modulation.SINUSOIDAL.
             It can be one of Modulation.SINUSOIDAL or Modulation.TRIANGULAR.
-        interpolation (Interpolation, optional): Interpolation of the input tensor (default=Interpolation.LINEAR).
+        interpolation (Interpolation, optional): Interpolation of the input tensor. Default: Interpolation.LINEAR.
             It can be one of Interpolation.LINEAR or Interpolation.QUADRATIC.
 
     Examples:
@@ -984,7 +984,7 @@ class Gain(AudioTensorOperation):
     Apply amplification or attenuation to the whole waveform.
 
     Args:
-        gain_db (float): Gain adjustment in decibels (dB) (default=1.0).
+        gain_db (float): Gain adjustment in decibels (dB). Default: 1.0.
 
     Examples:
         >>> import numpy as np
@@ -1015,19 +1015,19 @@ class GriffinLim(AudioTensorOperation):
     whole signal.
 
     Args:
-        n_fft (int, optional): Size of FFT (default=400).
-        n_iter (int, optional): Number of iteration for phase recovery (default=32).
-        win_length (int, optional): Window size for GriffinLim (default=None, will be set to n_fft).
-        hop_length (int, optional): Length of hop between STFT windows (default=None, will be set to win_length // 2).
+        n_fft (int, optional): Size of FFT. Default: 400.
+        n_iter (int, optional): Number of iteration for phase recovery. Default: 32.
+        win_length (int, optional): Window size for GriffinLim. Default: None, will be set to n_fft.
+        hop_length (int, optional): Length of hop between STFT windows. Default: None, will be set to win_length // 2.
         window_type (WindowType, optional): Window type for GriffinLim, which can be WindowType.BARTLETT,
-            WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN or WindowType.KAISER (default=WindowType.HANN).
+            WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN or WindowType.KAISER. Default: WindowType.HANN.
             Currently kaiser window is not supported on macOS.
-        power (float, optional): Exponent for the magnitude spectrogram (default=2.0).
-        momentum (float, optional): The momentum for fast Griffin-Lim (default=0.99).
-        length (int, optional): Length of the expected output waveform (default=None, will be set to the value of last
-            dimension of the stft matrix).
-        rand_init (bool, optional): Flag for random phase initialization or all-zero phase initialization
-            (default=True).
+        power (float, optional): Exponent for the magnitude spectrogram. Default: 2.0.
+        momentum (float, optional): The momentum for fast Griffin-Lim. Default: 0.99.
+        length (int, optional): Length of the expected output waveform. Default: None, will be set to the value of last
+            dimension of the stft matrix.
+        rand_init (bool, optional): Flag for random phase initialization or all-zero phase initialization.
+            Default: True.
 
     Examples:
         >>> import numpy as np
@@ -1065,7 +1065,7 @@ class HighpassBiquad(AudioTensorOperation):
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
         cutoff_freq (float): Filter cutoff frequency (in Hz).
-        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
 
     Examples:
         >>> import numpy as np
@@ -1093,18 +1093,18 @@ class InverseMelScale(AudioTensorOperation):
 
     Args:
         n_stft (int): Number of bins in STFT.
-        n_mels (int, optional): Number of mel filterbanks (default=128).
-        sample_rate (int, optional): Sample rate of audio signal (default=16000).
-        f_min (float, optional): Minimum frequency (default=0.0).
-        f_max (float, optional): Maximum frequency (default=None, will be set to sample_rate // 2).
-        max_iter (int, optional): Maximum number of optimization iterations (default=100000).
-        tolerance_loss (float, optional): Value of loss to stop optimization at (default=1e-5).
-        tolerance_change (float, optional): Difference in losses to stop optimization at (default=1e-8).
-        sgdargs (dict, optional): Arguments for the SGD optimizer (default=None, will be set to
-            {'sgd_lr': 0.1, 'sgd_momentum': 0.9}).
-        norm (NormType, optional): Normalization method, can be NormType.SLANEY or NormType.NONE
-            (default=NormType.NONE).
-        mel_type (MelType, optional): Mel scale to use, can be MelType.SLANEY or MelType.HTK (default=MelType.HTK).
+        n_mels (int, optional): Number of mel filterbanks. Default: 128.
+        sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
+        f_min (float, optional): Minimum frequency. Default: 0.0.
+        f_max (float, optional): Maximum frequency. Default: None, will be set to sample_rate // 2.
+        max_iter (int, optional): Maximum number of optimization iterations. Default: 100000.
+        tolerance_loss (float, optional): Value of loss to stop optimization at. Default: 1e-5.
+        tolerance_change (float, optional): Difference in losses to stop optimization at. Default: 1e-8.
+        sgdargs (dict, optional): Arguments for the SGD optimizer. Default: None, will be set to
+            {'sgd_lr': 0.1, 'sgd_momentum': 0.9}.
+        norm (NormType, optional): Normalization method, can be NormType.SLANEY or NormType.NONE.
+            Default: NormType.NONE.
+        mel_type (MelType, optional): Mel scale to use, can be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
 
     Examples:
         >>> import numpy as np
@@ -1151,7 +1151,7 @@ class LFilter(AudioTensorOperation):
         b_coeffs (sequence): numerator coefficients of difference equation of dimension of (n_order + 1).
             Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
             Must be same size as a_coeffs (pad with 0's as necessary).
-        clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1] (default=True).
+        clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1]. Default: True.
 
     Raises:
         RuntimeError: If the shape of input audio waveform does not match <..., time>.
@@ -1236,7 +1236,7 @@ class Magphase(AudioTensorOperation):
     Separate a complex-valued spectrogram with shape (..., 2) into its magnitude and phase.
 
     Args:
-        power (float): Power of the norm, which must be non-negative (default=1.0).
+        power (float): Power of the norm, which must be non-negative. Default: 1.0.
 
     Raises:
         RuntimeError: If the shape of input audio waveform does not match <..., 2>.
@@ -1343,15 +1343,15 @@ class MelScale(AudioTensorOperation):
     Convert normal STFT to STFT at the Mel scale.
 
     Args:
-        n_mels (int, optional): Number of mel filterbanks (default=128).
-        sample_rate (int, optional): Sample rate of audio signal (default=16000).
-        f_min (float, optional): Minimum frequency (default=0).
-        f_max (float, optional): Maximum frequency (default=None, will be set to sample_rate // 2).
-        n_stft (int, optional): Number of bins in STFT (default=201).
+        n_mels (int, optional): Number of mel filterbanks. Default: 128.
+        sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
+        f_min (float, optional): Minimum frequency. Default: 0.
+        f_max (float, optional): Maximum frequency. Default: None, will be set to sample_rate // 2.
+        n_stft (int, optional): Number of bins in STFT. Default: 201.
         norm (NormType, optional): Type of norm, value should be NormType.SLANEY or NormType::NONE.
             If norm is NormType.SLANEY, divide the triangular mel weight by the width of the mel band.
-            (default=NormType.NONE).
-        mel_type (MelType, optional): Type to use, value should be MelType.SLANEY or MelType.HTK (default=MelType.HTK).
+            Default: NormType.NONE.
+        mel_type (MelType, optional): Type to use, value should be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
 
     Examples:
         >>> import numpy as np
@@ -1385,7 +1385,7 @@ class MuLawDecoding(AudioTensorOperation):
     Decode mu-law encoded signal.
 
     Args:
-        quantization_channels (int, optional): Number of channels, which must be positive (Default: 256).
+        quantization_channels (int, optional): Number of channels, which must be positive. Default: 256.
 
     Examples:
         >>> import numpy as np
@@ -1410,7 +1410,7 @@ class MuLawEncoding(AudioTensorOperation):
     Encode signal based on mu-law companding.
 
     Args:
-        quantization_channels (int, optional): Number of channels, which must be positive (Default: 256).
+        quantization_channels (int, optional): Number of channels, which must be positive. Default: 256.
 
     Examples:
         >>> import numpy as np
@@ -1435,9 +1435,9 @@ class Overdrive(AudioTensorOperation):
     Apply overdrive on input audio.
 
     Args:
-        gain (float, optional): Desired gain at the boost (or attenuation) in dB, in range of [0, 100] (default=20.0).
+        gain (float, optional): Desired gain at the boost (or attenuation) in dB, in range of [0, 100]. Default: 20.0.
         color (float, optional): Controls the amount of even harmonic content in the over-driven output,
-            in range of [0, 100] (default=20.0).
+            in range of [0, 100]. Default: 20.0.
 
     Examples:
         >>> import numpy as np
@@ -1465,15 +1465,15 @@ class Phaser(AudioTensorOperation):
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
         gain_in (float, optional): Desired input gain at the boost (or attenuation) in dB.
-            Allowed range of values is [0, 1] (default=0.4).
+            Allowed range of values is [0, 1]. Default: 0.4.
         gain_out (float, optional): Desired output gain at the boost (or attenuation) in dB.
-            Allowed range of values is [0, 1e9] (default=0.74).
-        delay_ms (float, optional): Desired delay in milli seconds. Allowed range of values is [0, 5] (default=3.0).
-        decay (float, optional): Desired decay relative to gain-in. Allowed range of values is [0, 0.99] (default=0.4).
-        mod_speed (float, optional): Modulation speed in Hz. Allowed range of values is [0.1, 2] (default=0.5).
+            Allowed range of values is [0, 1e9]. Default: 0.74.
+        delay_ms (float, optional): Desired delay in milli seconds. Allowed range of values is [0, 5]. Default: 3.0.
+        decay (float, optional): Desired decay relative to gain-in. Allowed range of values is [0, 0.99]. Default: 0.4.
+        mod_speed (float, optional): Modulation speed in Hz. Allowed range of values is [0.1, 2]. Default: 0.5.
         sinusoidal (bool, optional): If True, use sinusoidal modulation (preferable for multiple instruments).
             If False, use triangular modulation (gives single instruments a sharper
-            phasing effect) (default=True).
+            phasing effect. Default: True.
 
     Examples:
         >>> import numpy as np
@@ -1538,16 +1538,16 @@ class Resample(AudioTensorOperation):
     Resample a signal from one frequency to another. A resample method can be given.
 
     Args:
-        orig_freq (float, optional): The original frequency of the signal, which must be positive (default=16000).
-        new_freq (float, optional): The desired frequency, which must be positive (default=16000).
+        orig_freq (float, optional): The original frequency of the signal, which must be positive. Default: 16000.
+        new_freq (float, optional): The desired frequency, which must be positive. Default: 16000.
         resample_method (ResampleMethod, optional): The resample method, which can be
-            ResampleMethod.SINC_INTERPOLATION and ResampleMethod.KAISER_WINDOW
-            (default=ResampleMethod.SINC_INTERPOLATION).
+            ResampleMethod.SINC_INTERPOLATION and ResampleMethod.KAISER_WINDOW.
+            Default: ResampleMethod.SINC_INTERPOLATION.
         lowpass_filter_width (int, optional): Controls the shaperness of the filter, more means sharper but less
-            efficient, which must be positive (default=6).
+            efficient, which must be positive. Default: 6.
         rolloff (float, optional): The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values
-            reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1] (default=0.99).
-        beta (float, optional): The shape parameter used for kaiser window (default=None, will use 14.769656459379492).
+            reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1]. Default: 0.99.
+        beta (float, optional): The shape parameter used for kaiser window. Default: None, will use 14.769656459379492.
 
     Examples:
         >>> import numpy as np
@@ -1609,12 +1609,12 @@ class SlidingWindowCmn(AudioTensorOperation):
     Apply sliding-window cepstral mean (and optionally variance) normalization per utterance.
 
     Args:
-        cmn_window (int, optional): Window in frames for running average CMN computation (default=600).
+        cmn_window (int, optional): Window in frames for running average CMN computation. Default: 600.
         min_cmn_window (int, optional): Minimum CMN window used at start of decoding (adds latency only at start).
-            Only applicable if center is False, ignored if center is True (default=100).
+            Only applicable if center is False, ignored if center is True. Default: 100.
         center (bool, optional): If True, use a window centered on the current frame. If False, window is
-            to the left. (default=False).
-        norm_vars (bool, optional): If True, normalize variance to one. (default=False).
+            to the left. Default: False.
+        norm_vars (bool, optional): If True, normalize variance to one. Default: False.
 
     Examples:
         >>> import numpy as np
@@ -1650,13 +1650,13 @@ class SpectralCentroid(TensorOperation):
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
-        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins (default=400).
-        win_length (int, optional): Window size (default=None, will use n_fft).
-        hop_length (int, optional): Length of hop between STFT windows (default=None, will use win_length // 2).
-        pad (int, optional): Two sided padding of signal (default=0).
+        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
+        win_length (int, optional): Window size. Default: None, will use n_fft.
+        hop_length (int, optional): Length of hop between STFT windows. Default: None, will use win_length // 2.
+        pad (int, optional): Two sided padding of signal. Default: 0.
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
             which can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
-            or WindowType.KAISER (default=WindowType.HANN).
+            or WindowType.KAISER. Default: WindowType.HANN.
 
     Examples:
         >>> import numpy as np
@@ -1687,21 +1687,21 @@ class Spectrogram(TensorOperation):
     Create a spectrogram from an audio signal.
 
     Args:
-        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins (default=400).
-        win_length (int, optional): Window size (default=None, will use n_fft).
-        hop_length (int, optional): Length of hop between STFT windows (default=None, will use win_length // 2).
-        pad (int, optional): Two sided padding of signal (default=0).
+        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
+        win_length (int, optional): Window size. Default: None, will use n_fft.
+        hop_length (int, optional): Length of hop between STFT windows. Default: None, will use win_length // 2.
+        pad (int, optional): Two sided padding of signal. Default: 0.
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
             which can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
-            or WindowType.KAISER (default=WindowType.HANN). Currently kaiser window is not supported on macOS.
+            or WindowType.KAISER. Default: WindowType.HANN. Currently kaiser window is not supported on macOS.
         power (float, optional): Exponent for the magnitude spectrogram, which must be greater
-            than or equal to 0, e.g., 1 for energy, 2 for power, etc. (default=2.0).
-        normalized (bool, optional): Whether to normalize by magnitude after stft (default=False).
-        center (bool, optional): Whether to pad waveform on both sides (default=True).
+            than or equal to 0, e.g., 1 for energy, 2 for power, etc. Default: 2.0.
+        normalized (bool, optional): Whether to normalize by magnitude after stft. Default: False.
+        center (bool, optional): Whether to pad waveform on both sides. Default: True.
         pad_mode (BorderType, optional): Controls the padding method used when center is True,
-            which can be BorderType.REFLECT, BorderType.CONSTANT, BorderType.EDGE, BorderType.SYMMETRIC
-            (default=BorderType.REFLECT).
-        onesided (bool, optional): Controls whether to return half of results to avoid redundancy (default=True).
+            which can be BorderType.REFLECT, BorderType.CONSTANT, BorderType.EDGE, BorderType.SYMMETRIC.
+            Default: BorderType.REFLECT.
+        onesided (bool, optional): Controls whether to return half of results to avoid redundancy. Default: True.
 
     Examples:
         >>> import numpy as np
@@ -1852,8 +1852,8 @@ class TrebleBiquad(AudioTensorOperation):
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
         gain (float): Desired gain at the boost (or attenuation) in dB.
-        central_freq (float, optional): Central frequency (in Hz) (default=3000).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        central_freq (float, optional): Central frequency (in Hz). Default: 3000.
+        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
 
     Examples:
         >>> import numpy as np
@@ -1882,33 +1882,33 @@ class Vad(AudioTensorOperation):
 
     Args:
         sample_rate (int): Sample rate of audio signal.
-        trigger_level (float, optional): The measurement level used to trigger activity detection (default=7.0).
-        trigger_time (float, optional): The time constant (in seconds) used to help ignore short sounds (default=0.25).
+        trigger_level (float, optional): The measurement level used to trigger activity detection. Default: 7.0.
+        trigger_time (float, optional): The time constant (in seconds) used to help ignore short sounds. Default: 0.25.
         search_time (float, optional): The amount of audio (in seconds) to search for quieter/shorter sounds to include
-            prior to the detected trigger point (default=1.0).
+            prior to the detected trigger point. Default: 1.0.
         allowed_gap (float, optional): The allowed gap (in seconds) between quiteter/shorter sounds to include prior to
-            the detected trigger point (default=0.25).
+            the detected trigger point. Default: 0.25.
         pre_trigger_time (float, optional): The amount of audio (in seconds) to preserve before the trigger point and
-            any found quieter/shorter bursts (default=0.0).
-        boot_time (float, optional): The time for the initial noise estimate (default=0.35).
+            any found quieter/shorter bursts. Default: 0.0.
+        boot_time (float, optional): The time for the initial noise estimate. Default: 0.35.
         noise_up_time (float, optional): Time constant used by the adaptive noise estimator, when the noise level is
-            increasing (default=0.1).
+            increasing. Default: 0.1.
         noise_down_time (float, optional): Time constant used by the adaptive noise estimator, when the noise level is
-            decreasing (default=0.01).
-        noise_reduction_amount (float, optional): The amount of noise reduction used in the detection algorithm
-            (default=1.35).
-        measure_freq (float, optional): The frequency of the algorithm’s processing (default=20.0).
-        measure_duration (float, optional): The duration of measurement (default=None, use twice the measurement
-            period).
-        measure_smooth_time (float, optional): The time constant used to smooth spectral measurements (default=0.4).
+            decreasing. Default: 0.01.
+        noise_reduction_amount (float, optional): The amount of noise reduction used in the detection algorithm.
+            Default: 1.35.
+        measure_freq (float, optional): The frequency of the algorithm’s processing. Default: 20.0.
+        measure_duration (float, optional): The duration of measurement. Default: None, use twice the measurement
+            period.
+        measure_smooth_time (float, optional): The time constant used to smooth spectral measurements. Default: 0.4.
         hp_filter_freq (float, optional): The "Brick-wall" frequency of high-pass filter applied at the input to the
-            detector algorithm (default=50.0).
+            detector algorithm. Default: 50.0.
         lp_filter_freq (float, optional): The "Brick-wall" frequency of low-pass filter applied at the input to the
-            detector algorithm (default=6000.0).
+            detector algorithm. Default: 6000.0.
         hp_lifter_freq (float, optional): The "Brick-wall" frequency of high-pass lifter applied at the input to the
-            detector algorithm (default=150.0).
+            detector algorithm. Default: 150.0.
         lp_lifter_freq (float, optional): The "Brick-wall" frequency of low-pass lifter applied at the input to the
-            detector algorithm (default=2000.0).
+            detector algorithm. Default: 2000.0.
 
     Examples:
         >>> import numpy as np
@@ -1966,7 +1966,7 @@ class Vol(AudioTensorOperation):
             If gain_type = power, gain stands for power.
             If gain_type = db, gain stands for decibels.
         gain_type (GainType, optional): Type of gain, contains the following three enumeration values
-            GainType.AMPLITUDE, GainType.POWER and GainType.DB (default=GainType.AMPLITUDE).
+            GainType.AMPLITUDE, GainType.POWER and GainType.DB. Default: GainType.AMPLITUDE.
 
     Examples:
         >>> import numpy as np

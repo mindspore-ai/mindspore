@@ -94,7 +94,7 @@ class OneHotOp(PyTensorOperation):
         num_classes (int): Number of classes of objects in dataset.
             It should be larger than the largest label number in the dataset.
         smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
-            (Default=0.0 means no smoothing is applied.)
+            Default: 0.0, means no smoothing is applied.
 
     Raises:
         TypeError: `num_classes` is not of type int.
@@ -260,7 +260,7 @@ class RandomApply(PyTensorOperation):
 
     Args:
         transforms (list): List of transformations to apply.
-        prob (float, optional): The probability to apply the transformation list (default=0.5).
+        prob (float, optional): The probability to apply the transformation list. Default: 0.5.
 
     Raises:
         TypeError: If `transforms` is not of type list.

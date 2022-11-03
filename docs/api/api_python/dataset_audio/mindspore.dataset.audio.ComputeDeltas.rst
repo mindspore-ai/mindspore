@@ -11,7 +11,7 @@ mindspore.dataset.audio.ComputeDeltas
     其中， :math:`d_{t}` 是时间 :math:`t` 的增量， :math:`c_{t}` 是时间 :math:`t` 的频谱图系数， :math:`N` 是 :math:`(\text{win_length}-1)//2` 。
 
     参数：
-        - **win_length** (int, 可选) - 计算窗口长度，长度必须不小于3，默认值：5。
+        - **win_length** (int, 可选) - 计算窗口长度，长度必须不小于3。默认值：5。
         - **pad_mode** (:class:`mindspore.dataset.audio.BorderType`, 可选) - 边界填充模式，可以是
           [BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BordBorderTypeer.SYMMETRIC]中任何一个。
           默认值：BorderType.EDGE。

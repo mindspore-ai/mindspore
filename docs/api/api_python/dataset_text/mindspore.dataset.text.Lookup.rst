@@ -10,7 +10,7 @@ mindspore.dataset.text.Lookup
         - **unknown_token** (str, 可选) - 备用词汇，用于要查找的单词不在词汇表时进行替换。
           如果单词不在词汇表中，则查找结果将替换为 `unknown_token` 的值。
           如果单词不在词汇表中，且未指定 `unknown_token` ，将抛出运行时错误。默认值：None，不指定该参数。
-        - **data_type** (mindspore.dtype, 可选) - Lookup输出的数据类型，默认值：mindspore.int32。
+        - **data_type** (mindspore.dtype, 可选) - Lookup输出的数据类型。默认值：mindspore.int32。
 
     异常：      
         - **TypeError** - 参数 `vocab` 类型不为 :class:`mindspore.dataset.text.Vocab` 。

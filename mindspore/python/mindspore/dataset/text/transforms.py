@@ -104,12 +104,15 @@ class JiebaTokenizer(TextTensorOperation):
         mp_path (str): Dictionary file is used by MPSegment algorithm.
             The dictionary can be obtained on the official website of cppjieba.
         mode (JiebaMode, optional): Valid values can be any of [JiebaMode.MP, JiebaMode.HMM,
-            JiebaMode.MIX](default=JiebaMode.MIX).
+            JiebaMode.MIX]. Default: JiebaMode.MIX.
 
             - JiebaMode.MP, tokenize with MPSegment algorithm.
+
             - JiebaMode.HMM, tokenize with Hidden Markov Model Segment algorithm.
+
             - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
-        with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+
+        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
 
     Raises:
         ValueError: If path of HMMSegment dict is not provided.
@@ -173,7 +176,7 @@ class JiebaTokenizer(TextTensorOperation):
             word (str): The word to be added to the JiebaTokenizer instance.
                 The added word will not be written into the built-in dictionary on disk.
             freq (int, optional): The frequency of the word to be added. The higher the frequency,
-                the better chance the word will be tokenized (default=None, use default frequency).
+                the better chance the word will be tokenized. Default: None, use default frequency.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -281,9 +284,9 @@ class Lookup(TextTensorOperation):
         vocab (Vocab): A vocabulary object.
         unknown_token (str, optional): Word is used for lookup. In case of the word is out of vocabulary (OOV),
             the result of lookup will be replaced with unknown_token. If the unknown_token is not specified or
-            it is OOV, runtime error will be thrown (default=None, means no unknown_token is specified).
+            it is OOV, runtime error will be thrown. Default: None, means no unknown_token is specified.
         data_type (mindspore.dtype, optional): The data type that lookup operation maps
-            string to(default=mindspore.int32).
+            string to. Default: mindspore.int32.
 
     Raises:
         TypeError: If `vocab` is not of type text.Vocab.
@@ -327,13 +330,13 @@ class Ngram(TextTensorOperation):
             an empty string produced.
         left_pad (tuple, optional): Padding performed on left side of the sequence shaped like ("pad_token", pad_width).
             `pad_width` will be capped at n-1. For example, specifying left_pad=("_", 2) would pad left side of the
-            sequence with "__" (default=("", 0)).
+            sequence with "__". Default: ('', 0).
         right_pad (tuple, optional): Padding performed on right side of the sequence shaped like
             ("pad_token", pad_width). `pad_width` will be capped at n-1. For example, specifying right_pad=("_", 2)
-            would pad right side of the sequence with "__" (default=("", 0)).
+            would pad right side of the sequence with "__". Default: ('', 0).
         separator (str, optional): Symbol used to join strings together. For example, if 2-gram is
-            ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
-            (default=" ", which will use whitespace as separator).
+            ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"].
+            Default: ' ', which will use whitespace as separator.
 
     Raises:
         TypeError: If values of `n` not positive is not of type int.
@@ -459,7 +462,7 @@ class SlidingWindow(TextTensorOperation):
 
     Args:
         width (int): The width of the window. It must be an integer and greater than zero.
-        axis (int, optional): The axis along which the sliding window is computed (default=0).
+        axis (int, optional): The axis along which the sliding window is computed. Default: 0.
 
     Raises:
         TypeError: If `width` is not of type int.
@@ -542,11 +545,11 @@ class ToVectors(TextTensorOperation):
 
     Args:
         vectors (Vectors): A vectors object.
-        unk_init (sequence, optional): Sequence used to initialize out-of-vectors (OOV) token
-            (default=None, initialize with zero vectors).
+        unk_init (sequence, optional): Sequence used to initialize out-of-vectors (OOV) token.
+            Default: None, initialize with zero vectors.
         lower_case_backup (bool, optional): Whether to look up the token in the lower case. If False, each token in the
             original case will be looked up; if True, each token in the original case will be looked up first, if not
-            found in the keys of the property stoi, the token in the lower case will be looked up (default=False).
+            found in the keys of the property stoi, the token in the lower case will be looked up. Default: False.
 
     Raises:
         TypeError: If `unk_init` is not of type sequence.
@@ -622,7 +625,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
     Tokenize a scalar tensor of UTF-8 string to Unicode characters.
 
     Args:
-        with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
 
     Raises:
         TypeError: If `with_offsets` is not of type bool.
@@ -952,7 +955,7 @@ if platform.system().lower() != 'windows':
         Args:
             normalize_form (NormalizeForm, optional): Valid values can be [NormalizeForm.NONE, NormalizeForm.NFC,
                 NormalizeForm.NFKC, NormalizeForm.NFD, NormalizeForm.NFKD] any of the four unicode
-                normalized forms(default=NormalizeForm.NFKC).
+                normalized forms. Default: NormalizeForm.NFKC.
                 See http://unicode.org/reports/tr15/ for details.
 
                 - NormalizeForm.NONE, do nothing for input string tensor.
@@ -999,7 +1002,7 @@ if platform.system().lower() != 'windows':
             pattern (str): the regex expression patterns.
             replace (str): the string to replace matched element.
             replace_all (bool, optional): If False, only replace first matched element;
-                if True, replace all matched elements (default=True).
+                if True, replace all matched elements. Default: True.
 
         Raises:
             TypeError: If `pattern` is not of type string.
@@ -1042,8 +1045,8 @@ if platform.system().lower() != 'windows':
                 The original string will be split by matched elements.
             keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
                 if it can be matched by 'keep_delim_pattern'. The default value is an empty str
-                which means that delimiters will not be kept as an output token (default='').
-            with_offsets (bool, optional): Whether or not output offsets of tokens(default=False).
+                which means that delimiters will not be kept as an output token. Default: ''.
+            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
 
         Raises:
             TypeError: If `delim_pattern` is not of type string.
@@ -1087,8 +1090,8 @@ if platform.system().lower() != 'windows':
             UnicodeScriptTokenizer is not supported on Windows platform yet.
 
         Args:
-            keep_whitespace (bool, optional): Whether or not emit whitespace tokens (default=False).
-            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+            keep_whitespace (bool, optional): Whether or not emit whitespace tokens. Default: False.
+            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
 
         Raises:
             TypeError: If `keep_whitespace` is not of type bool.
@@ -1131,7 +1134,7 @@ if platform.system().lower() != 'windows':
             WhitespaceTokenizer is not supported on Windows platform yet.
 
         Args:
-            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
 
         Raises:
             TypeError: If `with_offsets` is not of type bool.
