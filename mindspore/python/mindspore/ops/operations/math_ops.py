@@ -6973,7 +6973,7 @@ class TrilIndices(Primitive):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> net = ops.TrilIndices(4, 3, -1, mindspore.int64)
@@ -7216,7 +7216,7 @@ class TriuIndices(Primitive):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        `GPU`
+        ``GPU`` ``CPU``
 
     Examples:
         >>> net = ops.TriuIndices(5, 4, 2, mindspore.int64)
