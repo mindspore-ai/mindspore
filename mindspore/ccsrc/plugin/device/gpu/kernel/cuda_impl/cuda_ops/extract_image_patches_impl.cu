@@ -16,6 +16,9 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/extract_image_patches_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void ExtractImagePatches(size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row,
@@ -70,41 +73,97 @@ void CalExtractImagePatchesNHWC(size_t output_size, int64_t stride_row, int64_t 
     patch_input_stride, output_depth, input, output);
 }
 
-template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<int>(size_t output_size, int64_t stride_row,
-                                                              int64_t stride_col, int64_t rate_row, int64_t rate_col,
-                                                              int64_t output_cols, bool need_batch, int64_t row_stride,
-                                                              int64_t patch_stride, int64_t other_stride,
-                                                              int64_t input_row_size, int64_t input_col_size,
-                                                              int64_t row_padding_top, int64_t col_padding_left,
-                                                              int64_t col_input_stride, int64_t row_input_stride,
-                                                              int64_t patch_input_stride, int64_t output_depth,
-                                                              const int *input, int *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<float>(size_t output_size, int64_t stride_row,
-                                                                int64_t stride_col, int64_t rate_row, int64_t rate_col,
-                                                                int64_t output_cols, bool need_batch,
-                                                                int64_t row_stride, int64_t patch_stride,
-                                                                int64_t other_stride, int64_t input_row_size,
-                                                                int64_t input_col_size, int64_t row_padding_top,
-                                                                int64_t col_padding_left, int64_t col_input_stride,
-                                                                int64_t row_input_stride, int64_t patch_input_stride,
-                                                                int64_t output_depth, const float *input, float *output,
-                                                                cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<half>(size_t output_size, int64_t stride_row,
-                                                               int64_t stride_col, int64_t rate_row, int64_t rate_col,
-                                                               int64_t output_cols, bool need_batch, int64_t row_stride,
-                                                               int64_t patch_stride, int64_t other_stride,
-                                                               int64_t input_row_size, int64_t input_col_size,
-                                                               int64_t row_padding_top, int64_t col_padding_left,
-                                                               int64_t col_input_stride, int64_t row_input_stride,
-                                                               int64_t patch_input_stride, int64_t output_depth,
-                                                               const half *input, half *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<double>(size_t output_size, int64_t stride_row,
-                                                                 int64_t stride_col, int64_t rate_row, int64_t rate_col,
-                                                                 int64_t output_cols, bool need_batch,
-                                                                 int64_t row_stride, int64_t patch_stride,
-                                                                 int64_t other_stride, int64_t input_row_size,
-                                                                 int64_t input_col_size, int64_t row_padding_top,
-                                                                 int64_t col_padding_left, int64_t col_input_stride,
-                                                                 int64_t row_input_stride, int64_t patch_input_stride,
-                                                                 int64_t output_depth, const double *input,
-                                                                 double *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<half>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const half *input, half *output,
+  cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<float>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const float *input, float *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<double>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const double *input, double *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<int8_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const int8_t *input, int8_t *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<int16_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const int16_t *input, int16_t *output,
+  cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<int32_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const int32_t *input, int32_t *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<int64_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const int64_t *input, int64_t *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<uint8_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const uint8_t *input, uint8_t *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<uint16_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const uint16_t *input, uint16_t *output,
+  cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<uint32_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const uint32_t *input, uint32_t *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<uint64_t>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const uint64_t *input, uint64_t *output,
+  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<Complex<float>>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const Complex<float> *input,
+  Complex<float> *output, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<Complex<double>>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const Complex<double> *input,
+  Complex<double> *output, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC<bool>(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const bool *input, bool *output,
+  cudaStream_t stream);
