@@ -1017,8 +1017,6 @@ class Model:
 
         # Parameter server and embedding cache mode check.
         if _is_ps_mode():
-            if dataset_sink_mode and not _cache_enable():
-                raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
             if not dataset_sink_mode and _cache_enable():
                 raise ValueError("Embedding cache mode should run with 'data_sink_mode=True'.")
 
@@ -1153,9 +1151,6 @@ class Model:
             raise ValueError("when use Model.build to initialize model, the value of parameter `epoch` in Model.build "
                              "should be equal to value in Model.fit, but got {} and {} separately."
                              .format(train_dataset._warmup_epoch, epoch))
-
-        if dataset_sink_mode and _is_ps_mode() and not _cache_enable():
-            raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
 
         Validator.check_is_int(sink_size)
         Validator.check_non_negative_int(epoch)

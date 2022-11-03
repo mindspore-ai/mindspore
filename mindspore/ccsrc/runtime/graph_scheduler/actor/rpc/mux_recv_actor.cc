@@ -31,20 +31,10 @@ MessageBase *MuxRecvActor::HandleMessage(MessageBase *const msg) {
   std::unique_lock<std::mutex> lock(context_mtx_);
   context_cv_.wait(lock, [this] { return is_context_valid_; });
   lock.unlock();
+  // Once recv actor is launched, lock the context so that the next step's recv will not be launched in advance.
+  ResetOpcontext();
 
-  if (finalized_) {
-    return distributed::rpc::NULL_MSG;
-  }
-
-  // If use void* data, the cv has already been notified in AllocateMessage.
-  if (common::GetEnv("use_void").empty()) {
-    // The mux recv actor receives requests for the service process. Currently, the requests are processed serially.
-    std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
-    is_ready_cv_.wait(is_ready_lock, [this] { return is_ready_.load(); });
-    is_ready_ = false;
-  }
-
-  if (msg == nullptr || op_context_ == nullptr) {
+  if (finalized_ || msg == nullptr || op_context_ == nullptr) {
     return distributed::rpc::NULL_MSG;
   }
 
@@ -100,37 +90,13 @@ void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *cons
   }
 }
 
-void *MuxRecvActor::AllocateMessage(size_t size) {
-  // Block the message handler if the context is invalid.
-  std::unique_lock<std::mutex> lock(context_mtx_);
-  context_cv_.wait(lock, [this] { return is_context_valid_; });
-  lock.unlock();
-
-  // The mux recv actor receives requests for the service process. Currently, the requests are processed serially.
-  if (!common::GetEnv("use_void").empty()) {
-    std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
-    is_ready_cv_.wait(is_ready_lock, [this] { return is_ready_.load(); });
-    is_ready_ = false;
-  }
-
-  return AllocateMemByDeviceRes(size);
-}
-
-void MuxRecvActor::UpdateStatus() {
-  std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
-  is_ready_ = true;
-  is_ready_cv_.notify_one();
-}
-
 void MuxRecvActor::Finalize() {
   std::unique_lock<std::mutex> lock(context_mtx_);
   finalized_ = true;
-  is_ready_ = true;
   is_context_valid_ = true;
 
   op_context_ = nullptr;
   context_cv_.notify_all();
-  is_ready_cv_.notify_all();
 }
 }  // namespace runtime
 }  // namespace mindspore
