@@ -37,8 +37,14 @@ static inline float16x8_t VexpFp16(float16x8_t input) {
 
 static inline void single_exp_fp16(float16_t src, float16_t *dst) {
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};
-  src = MSMAX(-88.0f, MSMIN(88.0f, src));
-  int integer = (float)src / param[0];
+  int integer;
+  if (src > 0) {
+    src = MSMIN(88.0f, src);
+    integer = (float)src * 1.44269504088896341f + 0.5f;
+  } else {
+    src = MSMAX(-88.0f, src);
+    integer = (float)src * 1.44269504088896341f - 0.5f;
+  }
   float decimal = (float)src - integer * param[0];
   int int_exp = (integer + 127) << 23;
   const float decimal_exp =
