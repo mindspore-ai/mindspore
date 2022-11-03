@@ -122,10 +122,13 @@ class CachedInterpolationCalculator {
     switch (new_indices_hand) {
       case 0:
         indexes_[0] = x_0;
+        break;
       case 1:
         indexes_[1] = x_1;
+        break;
       case caseid2:
         indexes_[kIndex2] = x_2;
+        break;
       case caseid3:
         indexes_[kIndex3] = x_3;
         break;
@@ -198,10 +201,10 @@ inline void GetWeightsAndIndices(const float scale, const int64_t out_loc, const
   }
 }
 
-static void ComputeXWeightsAndIndices(const ResizerState &resizer_state, const bool half_pixel_centers,
+static void ComputeXWeightsAndIndices(const ResizerState &resizer_state, const bool half_pixel_centers_,
                                       std::vector<WeightsAndIndices> *x_wais) {
   CachedInterpolationCalculator calc;
-  if (half_pixel_centers) {
+  if (half_pixel_centers_) {
     for (int64_t x = 0; x < resizer_state.out_width; ++x) {
       GetWeightsAndIndices<HalfPixelScaler, true>(resizer_state.width_scale, x, resizer_state.in_width,
                                                   &(*x_wais)[static_cast<size_t>(x)]);
@@ -314,10 +317,10 @@ std::vector<float> CalSwitch(const WeightsAndIndices &x_wai, std::vector<float> 
 }
 
 template <typename T1, typename T2>
-inline void interpolate_with_caching(const T1 *input_data, const ResizerState &RS, const bool half_pixel_centers,
+inline void interpolate_with_caching(const T1 *input_data, const ResizerState &RS, const bool half_pixel_centers_,
                                      T2 output_data) {
   std::vector<WeightsAndIndices> x_wais(RS.out_width);
-  ComputeXWeightsAndIndices(RS, half_pixel_centers, &x_wais);
+  ComputeXWeightsAndIndices(RS, half_pixel_centers_, &x_wais);
   const int64_t in_row_width = RS.in_width * RS.channels;
   const int64_t in_batch_width = RS.in_height * in_row_width;
   const T1 *input_b_ptr = input_data;
@@ -327,7 +330,7 @@ inline void interpolate_with_caching(const T1 *input_data, const ResizerState &R
   for (int64_t b = 0; b < RS.batch_size; ++b, input_b_ptr += in_batch_width) {
     for (int64_t y = 0; y < RS.out_height; ++y, output_y_ptr += RS.out_width * RS.channels) {
       WeightsAndIndices y_wai;
-      if (half_pixel_centers) {
+      if (half_pixel_centers_) {
         GetWeightsAndIndices<HalfPixelScaler, true>(RS.height_scale, y, RS.in_height, &y_wai);
       } else {
         GetWeightsAndIndices<LegacyScaler, false>(RS.height_scale, y, RS.in_height, &y_wai);

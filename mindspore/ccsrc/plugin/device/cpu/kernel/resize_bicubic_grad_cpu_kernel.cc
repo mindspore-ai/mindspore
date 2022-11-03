@@ -109,10 +109,13 @@ class CachedInterpolationCalculator {
     switch (new_indices_hand) {
       case 0:
         indexes_[0] = x_0;
+        break;
       case 1:
         indexes_[1] = x_1;
+        break;
       case caseid2:
         indexes_[kIndex2] = x_2;
+        break;
       case caseid3:
         indexes_[kIndex3] = x_3;
         break;
@@ -186,10 +189,10 @@ inline void GetWeightsAndIndicesGrad(const float scale, const int64_t out_loc, c
   }
 }
 
-static void ComputeGradientXWeightsAndIndices(const ResizerGradState &RGS, const bool half_pixel_centers,
+static void ComputeGradientXWeightsAndIndices(const ResizerGradState &RGS, const bool half_pixel_centers_,
                                               std::vector<WeightsAndIndices> *x_wais) {
   CachedInterpolationCalculator calc;
-  if (half_pixel_centers) {
+  if (half_pixel_centers_) {
     for (int64_t x = 0; x < RGS.resized_width; ++x) {
       GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(RGS.width_scale, x, RGS.original_width,
                                                           &(*x_wais)[static_cast<size_t>(x)]);
@@ -284,10 +287,10 @@ void CalNonUtil(const ResizerGradState &RGS, const bool half_pixel_centers,
 }
 
 template <typename T>
-inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &RGS, const bool half_pixel_centers,
+inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &RGS, const bool half_pixel_centers_,
                               T *output_grad) {
   std::vector<WeightsAndIndices> x_wais(RGS.resized_width);
-  ComputeGradientXWeightsAndIndices(RGS, half_pixel_centers, &x_wais);
+  ComputeGradientXWeightsAndIndices(RGS, half_pixel_centers_, &x_wais);
   const bool flag = true;
   bool utils_flag = false;
   if (RGS.original_width * RGS.original_height * RGS.channels * RGS.batch_size >= kParallelDataNum) {
@@ -297,13 +300,13 @@ inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &R
     for (int64_t b = 0; b < RGS.batch_size; ++b) {
       auto task = [&](int64_t start, int64_t end) {
         for (int64_t y = start; y < end; ++y) {
-          ResizeCommomCalc(RGS, half_pixel_centers, x_wais, flag, input_grad, output_grad, b, y);
+          ResizeCommomCalc(RGS, half_pixel_centers_, x_wais, flag, input_grad, output_grad, b, y);
         }
       };
       CPUKernelUtils::ParallelFor(task, static_cast<size_t>(RGS.resized_height));
     }
   } else {
-    CalNonUtil(RGS, half_pixel_centers, x_wais, flag, input_grad, output_grad);
+    CalNonUtil(RGS, half_pixel_centers_, x_wais, flag, input_grad, output_grad);
   }
 }
 

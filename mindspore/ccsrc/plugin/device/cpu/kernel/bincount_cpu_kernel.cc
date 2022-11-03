@@ -36,9 +36,9 @@ void BincountCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T_in, typename T_out>
-void BincountTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
+void BincountTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                   const std::vector<AddressPtr> &outputs, const std::vector<int64_t> &input_arr_sizes, int32_t num_bins,
-                  const std::vector<int64_t> &input_weights_sizes, const std::vector<int64_t> &output_sizes) {
+                  const std::vector<int64_t> &input_weights_sizes, const std::vector<int64_t> &) {
   auto bin_array = static_cast<T_in *>(inputs[0]->addr);
   auto output_data = static_cast<T_out *>(outputs[0]->addr);
   const size_t data_num = SizeOf(input_arr_sizes);

@@ -100,19 +100,19 @@ std::unique_ptr<T[]> GeqrfCpuKernelMod::Larf(size_t m, size_t n, T *x, T *tau, s
 }
 
 template <typename T>
-void GeqrfCpuKernelMod::Geqrf(size_t num_m, size_t num_n, T *x, T *tau) {
-  if (num_m < 0 || num_n < 0) {
+void GeqrfCpuKernelMod::Geqrf(size_t num_m_, size_t num_n_, T *x, T *tau) {
+  if (num_m_ < 0 || num_n_ < 0) {
     return;
   }
-  size_t k = std::min(num_m, num_n);
+  size_t k = std::min(num_m_, num_n_);
   T one = static_cast<T>(1);
-  std::unique_ptr<T[]> workspace = std::make_unique<T[]>(num_n);
+  std::unique_ptr<T[]> workspace = std::make_unique<T[]>(num_n_);
   for (size_t i = 0; i < k; i++) {
-    Larfg<T>(num_m - i, i, i, x, tau + i);
-    T aii = *(x + i * num_n + i);
-    *(x + i * num_n + i) = one;
-    workspace = Larf<T>(num_m - i, num_n - i - 1, x, tau + i, std::move(workspace), i, i + 1);
-    *(x + i * num_n + i) = aii;
+    Larfg<T>(num_m_ - i, i, i, x, tau + i);
+    T aii = *(x + i * num_n_ + i);
+    *(x + i * num_n_ + i) = one;
+    workspace = Larf<T>(num_m_ - i, num_n_ - i - 1, x, tau + i, std::move(workspace), i, i + 1);
+    *(x + i * num_n_ + i) = aii;
   }
 }
 
