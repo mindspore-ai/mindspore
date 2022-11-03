@@ -32,7 +32,7 @@ from mindspore.ops.operations.random_ops import RandomPoisson
 from mindspore.ops.primitive import Primitive
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
     _raise_value_error, _vmap_clone_prim, _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, \
-    get_unop_vmap_rule, _get_reduce_out_dim, _get_reduce_batch_axis, _vmap_update_prim_attr, \
+    get_unop_vmap_rule, _get_reduce_out_dim, _get_reduce_batch_axis, \
     _bdim_at_any
 from mindspore.ops.composite import _VmapGeneralRule
 
@@ -1292,12 +1292,7 @@ def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = Primitive(prim)
 
-    dim = 0
-    if hasattr(prim, 'dim'):
-        dim = prim.dim
-
-    @constexpr
-    def _update_attr(x_rank, batch_dim):
+    def _update_dim(dim, x_rank, batch_dim):
         pdim = dim
         if pdim < 0:
             pdim += x_rank
@@ -1305,19 +1300,22 @@ def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
             _raise_value_error(
                 "The `dim` in `GatherDGradV2` must be in range [{}, {}], but got {}.".format(-x_rank, x_rank - 1, dim))
         if pdim >= batch_dim:
-            _vmap_update_prim_attr(prim, 'dim', pdim + 1)
-        elif dim < 0:
-            _vmap_update_prim_attr(prim, 'dim', pdim)
+            return pdim + 1
+        if dim < 0:
+            return pdim
+        return dim
 
-    def vmap_rule(x_bdim, index_bdim, grad_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, index_bdim, grad_bdim)
+    def vmap_rule(x_bdim, dim_bdim, index_bdim, grad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dim_bdim, index_bdim, grad_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
+        dim, dim_dim = dim_bdim
+        if dim_dim is not None:
+            _raise_value_error("The dim of 'dim' in `GatherDGradV2` must be None, but got {}.".format(dim_dim))
         index, index_dim = index_bdim
         grad, grad_dim = grad_bdim
-
         batch_dim = 0
         if x_dim is not None:
             batch_dim = x_dim
@@ -1329,12 +1327,10 @@ def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
         x = _bdim_at_any(x, x_dim, batch_dim, axis_size)
         index = _bdim_at_any(index, index_dim, batch_dim, axis_size)
         grad = _bdim_at_any(grad, grad_dim, batch_dim, axis_size)
-
-        # Adjust dim-attr if needed
         x_rank = F.rank(x) - 1
-        _update_attr(x_rank, batch_dim)
-
-        out = prim(x, index, grad)
+        # Adjust dim if needed
+        dim = _update_dim(dim, x_rank, batch_dim)
+        out = prim(x, dim, index, grad)
         return (out, batch_dim)
 
     return vmap_rule
