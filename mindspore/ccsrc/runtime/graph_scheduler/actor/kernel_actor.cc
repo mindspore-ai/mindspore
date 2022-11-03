@@ -655,9 +655,10 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
     MS_EXCEPTION_IF_NULL(launch_info_.inputs_[input_index]);
     MS_EXCEPTION_IF_NULL(launch_info_.outputs_[output_index]);
     if (launch_info_.inputs_[input_index]->addr != launch_info_.outputs_[output_index]->addr) {
-      MS_LOG(ERROR) << "Input address and output address are not equal of ref kernel actor: " << GetAID().Name()
-                    << ", input index: " << input_index << ", output index: " << output_index;
-      return false;
+      // Ref node may not use the output addr, so only print the warning info.
+      MS_LOG(WARNING) << "Input address and output address are not equal of ref kernel actor: " << GetAID().Name()
+                      << ", ref input index: " << input_index << ", ref output index: " << output_index
+                      << ". Please check whether the output address is used, which may cause problems.";
     }
   }
 

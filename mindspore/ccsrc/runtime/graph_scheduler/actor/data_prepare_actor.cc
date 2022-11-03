@@ -234,9 +234,14 @@ void UpdateDeviceAddressByRefInputNode(const std::vector<KernelGraphPtr> &graphs
                    << " by the modified ref input parameter: " << input_pair.first->fullname_with_scope();
       auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(output_pair.first, output_pair.second, false);
       MS_EXCEPTION_IF_NULL(ref_node_output_addr);
-      const auto &front_input_node = graph->GetFrontAnfByBackendAnf(input_pair.first);
-      const auto &input_addr =
+      const auto &front_input_node = AnfAlgo::FetchFrontNodeByBackendNode(input_pair.first, *graph);
+      auto input_addr =
         DeviceTensorStore::GetInstance().Fetch(front_input_node.get(), ref_node_output_addr->GetDeviceType());
+      // Maybe subgraphs share the same backend input parameter, so fetch device tensor store by front node of this
+      // subgraph maybe nullptr and use the output addr of input parameter directly.
+      if (input_addr == nullptr) {
+        input_addr = AnfAlgo::GetMutableOutputAddr(input_pair.first, input_pair.second, false);
+      }
       MS_EXCEPTION_IF_NULL(input_addr);
       ref_node_output_addr->set_ptr(input_addr->GetMutablePtr());
       ref_node_output_addr->set_original_ref_count(SIZE_MAX);
