@@ -21,34 +21,31 @@
 #include <memory>
 #include <functional>
 #include <random>
+#include "mindspore/core/ops/cauchy.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-const size_t kCauchyOutputNum = 1;
+namespace {
+constexpr size_t kCauchyOutputNum = 1;
+constexpr auto kAttrSigma = "sigma";
+constexpr auto kAttrMedian = "median";
+}  // namespace
 
-// namespace
-
-void CauchyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kCauchyOutputNum, common::AnfAlgo::GetCNodeName(kernel_node));
-
-  std::vector<int64_t> size_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "size");
-  sigma_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "sigma");
-  median_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "median");
-  auto y_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  for (size_t i = 0; i < size_.size(); i++) {
-    if (size_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "For Cauchy, each dimension of size must be greater than zero.";
-    }
-    if (size_[i] != y_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For Cauchy, output shape not equal with size in dimension " << i << " .";
-    }
-  }
+bool CauchyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCauchyOutputNum, kernel_name_);
+  auto prim = std::dynamic_pointer_cast<ops::Cauchy>(base_operator);
+  MS_ERROR_IF_NULL(prim);
+  sigma_ = prim->get_sigma();
+  median_ = prim->get_median();
+  return true;
 }
+
 bool CauchyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   LaunchKernel<float>(outputs);

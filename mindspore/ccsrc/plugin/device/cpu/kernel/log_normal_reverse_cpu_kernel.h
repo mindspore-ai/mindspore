@@ -17,17 +17,22 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LOGNORMALREVERSE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LOGNORMALREVERSE_CPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class LogNormalReverseCpuKernel : public DeprecatedNativeCpuKernelMod {
+class LogNormalReverseCpuKernel : public NativeCpuKernelMod {
  public:
   LogNormalReverseCpuKernel() = default;
   ~LogNormalReverseCpuKernel() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -43,9 +48,6 @@ class LogNormalReverseCpuKernel : public DeprecatedNativeCpuKernelMod {
     return support_list;
   }
   TypeId input_dtype_{kTypeUnknown};
-  TypeId output_dtype_{kTypeUnknown};
-  std::vector<int64_t> output_shape_;
-  std::vector<int64_t> input_shape_;
   float input_mean_;
   float input_std_;
 };

@@ -30,6 +30,13 @@ class MIND_API Cauchy : public BaseOperator {
   Cauchy() : BaseOperator(kNameCauchy) {}
   MIND_API_BASE_MEMBER(Cauchy);
   void Init() const {}
+
+  void set_sigma(float);
+  float get_sigma();
+  void set_median(float);
+  float get_median();
+  void set_size(std::vector<int64_t>);
+  std::vector<int64_t> get_size();
 };
 abstract::AbstractBasePtr CauchyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args);

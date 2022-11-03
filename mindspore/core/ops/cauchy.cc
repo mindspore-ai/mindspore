@@ -25,14 +25,46 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+constexpr auto kSigma = "sigma";
+constexpr auto kMedian = "median";
+constexpr auto kAttrSize = "size";
+}  // namespace
+
 abstract::ShapePtr CauchyInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 0, prim_name);
-  MS_EXCEPTION_IF_NULL(primitive->GetAttr("size"));
-  auto size = GetValue<std::vector<int64_t>>(primitive->GetAttr("size"));
+  MS_EXCEPTION_IF_NULL(primitive->GetAttr(kAttrSize));
+  auto size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrSize));
   (void)CheckAndConvertUtils::CheckInteger("the length of 'size'", size.size(), kGreaterThan, 0, prim_name);
+  for (size_t i = 0; i < size.size(); ++i) {
+    if (size[i] <= 0) {
+      MS_EXCEPTION(ValueError) << "For Cauchy, each dimension of size must be greater than zero.";
+    }
+  }
   return std::make_shared<abstract::Shape>(size);
+}
+
+void Cauchy::set_sigma(float sigma) { (void)this->AddAttr(kSigma, api::MakeValue(sigma)); }
+
+float Cauchy::get_sigma() {
+  auto value_ptr = this->GetAttr(kSigma);
+  return GetValue<float>(value_ptr);
+}
+
+void Cauchy::set_median(float median) { (void)this->AddAttr(kMedian, api::MakeValue(median)); }
+
+float Cauchy::get_median() {
+  auto value_ptr = this->GetAttr(kMedian);
+  return GetValue<float>(value_ptr);
+}
+
+void Cauchy::set_size(std::vector<int64_t> size) { (void)this->AddAttr(kAttrSize, api::MakeValue(size)); }
+
+std::vector<int64_t> Cauchy::get_size() {
+  auto value_ptr = this->GetAttr(kAttrSize);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 MIND_API_OPERATOR_IMPL(Cauchy, BaseOperator);
