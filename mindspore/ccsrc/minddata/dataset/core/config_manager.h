@@ -38,6 +38,7 @@ namespace mindspore {
 namespace dataset {
 const char kEmptyString[] = "";
 const char kJsonExtension[] = ".json";
+
 // The ConfigManager is a class for managing default values.  When a user is constructing any objects
 // in the framework, often they may choose to omit some settings instead of overriding them.
 // This class manages some of the default values, for cases when the user does not manually specify
@@ -285,7 +286,8 @@ class ConfigManager {
 
   // setter function
   // @notes User must also set the seed to be able to get same augmentations
-  // @notes Fast recovery can cause slightly different random augmentations than original run (default=true)
+  // @notes Fast recovery can cause slightly different random augmentations than original run
+  //     (System default = true)
   // @param fast_recovery - Set whether MD pipeline recovers fast in failover reset
   void set_fast_recovery(const bool fast_recovery) { fast_recovery_ = fast_recovery; }
 
@@ -300,6 +302,22 @@ class ConfigManager {
   // getter function
   // @return - Flag to indicate whether the debug mode is on
   bool get_debug_mode() const { return debug_mode_flag_; }
+
+  // setter function
+  // @param error_samples_mode - Set the method in which erroneous samples should be processed
+  //     (System default = ErrorSamplesMode::kReturn)
+  // @notes For replacement of erroneous samples, MD will select a deterministic but "random" sample.
+  void set_error_samples_mode(const ErrorSamplesMode error_samples_mode) { error_samples_mode_ = error_samples_mode; }
+
+  // getter function
+  // @return - The method in which erroneous samples should be processed in a dataset pipeline
+  // @notes This method is used for external configuration API which returns integer type
+  int32_t get_error_samples_mode() const { return static_cast<int>(error_samples_mode_); }
+
+  // getter function
+  // @return - The method in which erroneous samples should be processed in a dataset pipeline
+  // @notes This method is used for internal processing, using enum type
+  ErrorSamplesMode error_samples_mode() const { return error_samples_mode_; }
 
  private:
   // Private helper function that takes a nlohmann json format and populates the settings
@@ -337,6 +355,7 @@ class ConfigManager {
   bool dynamic_shape_{false};
   bool fast_recovery_{true};     // Used for failover scenario to recover quickly or produce same augmentations
   bool debug_mode_flag_{false};  // Indicator for debug mode
+  ErrorSamplesMode error_samples_mode_{ErrorSamplesMode::kReturn};  // The method to process erroneous samples
 };
 }  // namespace dataset
 }  // namespace mindspore

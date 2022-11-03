@@ -2764,7 +2764,7 @@ def _worker_loop(operations, pipe, seed=get_seed()):
             pipe.worker_send(output_tensors)
         except Exception:
             pipe.worker_send(ExceptionHandler(where="in map(or batch) worker and execute Python function"))
-            return
+            # Do not return
 
 
 def worker_target(operations, seed=get_seed()):

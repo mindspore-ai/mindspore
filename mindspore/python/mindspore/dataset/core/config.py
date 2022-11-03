@@ -23,14 +23,14 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset as ds
 """
 from __future__ import absolute_import
-
+from enum import IntEnum
 import os
 import platform
 import random
 import numpy
 import mindspore._c_dataengine as cde
 from mindspore import log as logger
-from mindspore.dataset.core.validator_helpers import replace_none
+from mindspore.dataset.core.validator_helpers import replace_none, type_check
 
 __all__ = ['set_sending_batches', 'load', '_init_device_info',
            'set_seed', 'get_seed',
@@ -46,8 +46,9 @@ __all__ = ['set_sending_batches', 'load', '_init_device_info',
            'set_auto_offload', 'get_auto_offload',
            'set_enable_watchdog', 'get_enable_watchdog',
            'set_fast_recovery', 'get_fast_recovery',
-           'set_multiprocessing_timeout_interval', 'get_multiprocessing_timeout_interval',
-           'set_debug_mode', 'get_debug_mode']
+           'set_debug_mode', 'get_debug_mode',
+           'set_error_samples_mode', 'get_error_samples_mode', 'ErrorSamplesMode',
+           'set_multiprocessing_timeout_interval', 'get_multiprocessing_timeout_interval']
 
 INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
@@ -809,7 +810,7 @@ def set_fast_recovery(fast_recovery):
     (yet with slightly different random augmentations).
 
     Args:
-        fast_recovery (bool): Whether the dataset pipeline recovers in fast mode.
+        fast_recovery (bool): Whether the dataset pipeline recovers in fast mode. System default: True.
 
     Raises:
         TypeError: If `fast_recovery` is not a boolean data type.
@@ -873,3 +874,82 @@ def get_debug_mode():
         >>> debug_mode = ds.config.get_debug_mode()
     """
     return _config.get_debug_mode()
+
+
+class ErrorSamplesMode(IntEnum):
+    """
+    An enumeration for `error_samples_mode` .
+
+    Possible enumeration values are: ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP.
+
+    - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
+    - rrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
+    - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+    """
+
+    RETURN = 0
+    REPLACE = 1
+    SKIP = 2
+
+
+# Convert ErrorSamplesMode from Python enum format to CDE enum format
+_PYTHON_TO_CDE_ERROR_SAMPLES_MODE = {
+    ErrorSamplesMode.RETURN: cde.ErrorSamplesMode.DE_ERROR_SAMPLES_MODE_RETURN,
+    ErrorSamplesMode.REPLACE: cde.ErrorSamplesMode.DE_ERROR_SAMPLES_MODE_REPLACE,
+    ErrorSamplesMode.SKIP: cde.ErrorSamplesMode.DE_ERROR_SAMPLES_MODE_SKIP
+}
+
+# Convert ErrorSamplesMode from CDE int format to Python enum format
+_CDE_TO_PYTHON_ERROR_SAMPLES_MODE = {
+    0: ErrorSamplesMode.RETURN,
+    1: ErrorSamplesMode.REPLACE,
+    2: ErrorSamplesMode.SKIP
+}
+
+
+def set_error_samples_mode(error_samples_mode):
+    """
+    Set the method in which erroneous samples should be processed in a dataset pipeline.
+
+    Note:
+        1. This error samples feature is only applicable to the Map operation in a dataset pipeline.
+        2. For replacement mode, a cache of internally determined samples will be used.
+        3. If skip mode is used in a distributed setting, beware to manually ensure the
+           number of valid samples are the same for each shard (otherwise one may encounter hangs).
+           One technique is to manually concat a dataset of all valid samples plus a
+           take operation for the number of skipped erroneous samples.
+
+    Args:
+        error_samples_mode (ErrorSamplesMode): The method in which erroneous samples should be processed in a dataset
+            pipeline. It can be any of [ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP].
+            System default: ErrorSamplesMode.RETURN.
+
+            - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
+
+            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
+
+            - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+
+    Raises:
+        TypeError: If `error_samples_mode` is not of type ErrorSamplesMode.
+
+    Examples:
+        >>> ds.config.set_error_samples_mode(ds.config.ErrorSamplesMode.SKIP)
+    """
+    type_check(error_samples_mode, (ErrorSamplesMode,), "error_samples_mode")
+    _config.set_error_samples_mode(_PYTHON_TO_CDE_ERROR_SAMPLES_MODE.get(error_samples_mode))
+
+
+def get_error_samples_mode():
+    """
+    Get the current configuration for method for processing erroneous samples in a dataset pipeline.
+
+    Returns:
+        ErrorSamplesMode, The method in which erroneous samples should be processed in a dataset pipeline.
+            - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
+            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
+            - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+    Examples:
+        >>> error_samples_mode = ds.config.get_error_samples_mode()
+    """
+    return _CDE_TO_PYTHON_ERROR_SAMPLES_MODE.get(_config.get_error_samples_mode())

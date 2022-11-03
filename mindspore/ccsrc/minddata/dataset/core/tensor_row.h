@@ -41,7 +41,9 @@ class TensorRow {
     kFlagEOE = 1u << 1,   // The row is an eoe end-of-epoch msg
     kFlagWait = 1u << 2,  // The row is an control signal for workers to suspend operations
     kFlagQuit = 1u << 3,  // The row is a control signal for workers to quit
-    kFlagSkip = 1u << 4   // The row is a control signal for workers to skip this row
+    kFlagSkip = 1u << 4,  // The row is a control signal for workers to skip this row
+    kFlagError = 1u << 5  // The row is an error row (needs to be replaced with another row or skipped, as per
+                          //   ErrorSamplesMode config)
   };
 
   // Type definitions
@@ -233,6 +235,10 @@ class TensorRow {
 
   bool skip() const {
     return static_cast<bool>(static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagSkip));
+  }
+
+  bool error() const {
+    return static_cast<bool>(static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagError));
   }
 
   const TensorRowFlags Flags() { return tensor_row_flag_; }

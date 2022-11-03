@@ -25,6 +25,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
+import mindspore.dataset.core.config as config
 from mindspore import log as logger
 from util import dataset_equal
 
@@ -42,6 +43,7 @@ def config_error_func(config_interface, input_args, err_type, except_err_msg):
     assert except_err_msg in err_msg
 
 
+@pytest.mark.forked
 def test_basic():
     """
     Feature: Config
@@ -55,6 +57,7 @@ def test_basic():
     monitor_sampling_interval_original = ds.config.get_monitor_sampling_interval()
     fast_recovery_original = ds.config.get_fast_recovery()
     debug_mode = ds.config.get_debug_mode()
+    error_samples_mode_original = ds.config.get_error_samples_mode()
 
     ds.config.load('../data/dataset/declient.cfg')
 
@@ -65,6 +68,7 @@ def test_basic():
     assert ds.config.get_monitor_sampling_interval() == 15
     assert ds.config.get_fast_recovery()
     assert ds.config.get_debug_mode()
+    assert ds.config.get_error_samples_mode() == config.ErrorSamplesMode.REPLACE
 
     ds.config.set_num_parallel_workers(2)
     # ds.config.set_worker_connector_size(3)
@@ -73,6 +77,7 @@ def test_basic():
     ds.config.set_monitor_sampling_interval(45)
     ds.config.set_fast_recovery(False)
     ds.config.set_debug_mode(False)
+    ds.config.set_error_samples_mode(config.ErrorSamplesMode.RETURN)
 
     assert ds.config.get_num_parallel_workers() == 2
     # assert ds.config.get_worker_connector_size() == 3
@@ -81,6 +86,13 @@ def test_basic():
     assert ds.config.get_monitor_sampling_interval() == 45
     assert not ds.config.get_fast_recovery()
     assert not ds.config.get_debug_mode()
+    assert ds.config.get_error_samples_mode() == config.ErrorSamplesMode.RETURN
+
+    ds.config.set_fast_recovery(True)
+    ds.config.set_error_samples_mode(config.ErrorSamplesMode.SKIP)
+
+    assert ds.config.get_fast_recovery()
+    assert ds.config.get_error_samples_mode() == config.ErrorSamplesMode.SKIP
 
     # Restore original configuration values
     ds.config.set_num_parallel_workers(num_parallel_workers_original)
@@ -89,6 +101,7 @@ def test_basic():
     ds.config.set_monitor_sampling_interval(monitor_sampling_interval_original)
     ds.config.set_fast_recovery(fast_recovery_original)
     ds.config.set_debug_mode(debug_mode)
+    ds.config.set_error_samples_mode(error_samples_mode_original)
 
 
 def test_get_seed():
@@ -521,6 +534,7 @@ def test_fast_recovery():
     assert "set_fast_recovery() missing 1 required positional argument: 'fast_recovery'" in str(error_info.value)
 
 
+@pytest.mark.forked
 def test_debug_mode():
     """
     Feature: Test the debug mode setter/getter function
@@ -548,6 +562,40 @@ def test_debug_mode():
     ds.config.set_debug_mode(origin_debug_mode_flag)
 
 
+def test_error_samples_mode():
+    """
+    Feature: Test the get_error_samples_mode function
+    Description: This function only accepts ErrorSamplesMode enum values as input and outputs error otherwise
+    Expectation: For error input, error is raised as expected
+    """
+    # set_error_samples_mode will raise TypeError if input is boolean
+    config_error_func(config.set_error_samples_mode, False, TypeError,
+                      "is not of type [<enum 'ErrorSamplesMode'>]")
+    # set_error_samples_mode will raise TypeError if input is int
+    config_error_func(config.set_error_samples_mode, 1, TypeError,
+                      "is not of type [<enum 'ErrorSamplesMode'>]")
+    # set_error_samples_mode will raise TypeError if input is a string
+    config_error_func(config.set_error_samples_mode, "Zero", TypeError,
+                      "is not of type [<enum 'ErrorSamplesMode'>]")
+    # set_error_samples_mode will raise TypeError if input is a tuple
+    config_error_func(config.set_error_samples_mode, (1,), TypeError,
+                      "is not of type [<enum 'ErrorSamplesMode'>]")
+    # set_error_samples_mode will raise TypeError if input is None
+    config_error_func(config.set_error_samples_mode, None, TypeError,
+                      "is not of type [<enum 'ErrorSamplesMode'>]")
+
+    # set_error_samples_mode will raise TypeError if no input is provided
+    with pytest.raises(TypeError) as error_info:
+        config.set_error_samples_mode()
+    assert "set_error_samples_mode() missing 1 required positional argument: 'error_samples_mode'" in \
+           str(error_info.value)
+
+    # set_error_samples_mode will raise TypeError if too many parameters are provided
+    with pytest.raises(TypeError) as error_info:
+        config.set_error_samples_mode(config.ErrorSamplesMode.REPLACE, 10)
+    assert "set_error_samples_mode() takes 1 positional argument but 2 were given" in str(error_info.value)
+
+
 if __name__ == '__main__':
     test_basic()
     test_get_seed()
@@ -565,3 +613,4 @@ if __name__ == '__main__':
     test_config_bool_type_error()
     test_fast_recovery()
     test_debug_mode()
+    test_error_samples_mode()
