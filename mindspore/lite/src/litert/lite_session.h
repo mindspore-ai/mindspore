@@ -116,6 +116,10 @@ class LiteSession {
   }
   virtual int SetOptimizerParams(const std::vector<lite::Tensor *> &params) { return mindspore::lite::RET_ERROR; }
 
+  bool GetKeepModelBuf() { return keep_model_buf_; }
+
+  void SetKeepModelBuf(bool keep_model_buf) { keep_model_buf_ = keep_model_buf; }
+
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
   int CheckTensorValid(lite::Tensor *dst_tensor);
@@ -202,6 +206,7 @@ class LiteSession {
 #endif
   int is_infershape_{RET_ERROR};
   bool is_control_flow_ = false;
+  bool keep_model_buf_ = false;
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
   int delegate_device_type_ = -1;  // -1: not specified; 0: CPU; 1: GPU; 2: NPU

@@ -47,6 +47,18 @@ bool SplitOnePass::Run(const FuncGraphPtr &func_graph) {
     if (cnode == nullptr) {
       return false;
     }
+    bool can_delete = true;
+    auto node_users = manager->node_users()[cnode];
+    for (auto &node_user : node_users) {
+      auto post_node = node_user.first;
+      if (opt::CheckPrimitiveType(post_node, prim::kPrimTupleGetItem)) {
+        can_delete = false;
+        break;
+      }
+    }
+    if (!can_delete) {
+      continue;
+    }
     auto primitive_c = ops::GetOperator<mindspore::ops::Split>(cnode->input(0));
     if (primitive_c == nullptr) {
       return false;

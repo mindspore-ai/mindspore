@@ -35,7 +35,12 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
  public:
   LiteRTGraphExecutor() = default;
   LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos);
-  ~LiteRTGraphExecutor() = default;
+  ~LiteRTGraphExecutor() {
+    if (lite_model_buf_ != nullptr) {
+      free(lite_model_buf_);
+      lite_model_buf_ = nullptr;
+    }
+  }
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
@@ -60,6 +65,7 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
   ConfigInfos config_infos_;
   lite::LiteGraph lite_graph_;
   std::shared_ptr<lite::LiteSession> lite_session_;
+  void *lite_model_buf_ = nullptr;
   std::shared_ptr<mindspore::infer::helper::InferHelpers> helpers_ = nullptr;
 };
 }  // namespace mindspore
