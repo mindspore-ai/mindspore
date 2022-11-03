@@ -146,8 +146,10 @@ void Conv2DInfo::AdjustPadList() {
     return;
   }
 
-  int64_t useless_len_2th_dim = (inputs_shape_[0][2] + pad_list_[0] + pad_list_[1] - kernel_size_[1]) % stride_[2];
-  int64_t useless_len_3th_dim = (inputs_shape_[0][3] + pad_list_[2] + pad_list_[3] - kernel_size_[2]) % stride_[3];
+  int64_t useless_len_2th_dim =
+    (inputs_shape_[0][2] + pad_list_[0] + pad_list_[1] - kernel_size_use_dilation_[0]) % stride_[2];
+  int64_t useless_len_3th_dim =
+    (inputs_shape_[0][3] + pad_list_[2] + pad_list_[3] - kernel_size_use_dilation_[1]) % stride_[3];
   if (useless_len_2th_dim == 0 && useless_len_3th_dim == 0) {
     return;
   }
