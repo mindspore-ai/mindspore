@@ -2113,7 +2113,7 @@ class Cell(Cell_):
         This label tells MindSpore compiler on which process this cell should be launched.
         And each process's identical label consists of input 'role' and 'rank_id'.
         So by setting different cells with different labels, which will be launched on different processes,
-        users can launch a distributed training job.
+        users can launch a distributed training or predicting job.
 
         Note:
             - This method is effective only after
