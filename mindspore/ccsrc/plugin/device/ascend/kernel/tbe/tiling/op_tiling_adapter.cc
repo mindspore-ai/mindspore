@@ -233,7 +233,25 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
     } else if (value->isa<BoolImm>()) {
       (void)::ge::AttrUtils::SetBool(*(*op_desc), attr_name, GetValue<bool>(value));
     } else if (value->isa<ValueSequence>()) {
-      (void)::ge::AttrUtils::SetListInt(*(*op_desc), attr_name, GetValue<std::vector<int64_t>>(value));
+      auto value_seq = value->cast<ValueSequencePtr>();
+      if (value_seq->size() == 0) {
+        MS_LOG(DEBUG) << "Current attr " << attr_name << " has no value, so cannot determine the dtype."
+                      << "Now default to call SetListInt.";
+        (void)::ge::AttrUtils::SetListInt(*(*op_desc), attr_name, GetValue<std::vector<int64_t>>(value));
+        return;
+      }
+      auto value0 = value_seq->value().front();
+      MS_EXCEPTION_IF_NULL(value0);
+      MS_EXCEPTION_IF_NULL(value0->type());
+      auto data_type = value0->type()->number_type();
+      if (data_type == kNumberTypeInt64) {
+        (void)::ge::AttrUtils::SetListInt(*(*op_desc), attr_name, GetValue<std::vector<int64_t>>(value));
+      } else if (data_type == kNumberTypeFloat32) {
+        (void)::ge::AttrUtils::SetListFloat(*(*op_desc), attr_name, GetValue<std::vector<float>>(value));
+      } else {
+        MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << attr_name
+                          << "' with value: " << value->ToString() << ", perhaps you should add more supported type.";
+      }
     } else {
       MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << attr_name
                         << "' with value: " << value->ToString() << ", perhaps you should add more supported type.";

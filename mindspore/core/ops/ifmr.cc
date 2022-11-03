@@ -30,29 +30,48 @@ abstract::TupleShapePtr IFMRInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  (void)CheckAndConvertUtils::CheckInteger("[input number]", static_cast<int64_t>(input_args.size()), kEqual,
+  (void)CheckAndConvertUtils::CheckInteger("[input] number", static_cast<int64_t>(input_args.size()), kEqual,
                                            kIFMRInputSize, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(), "data_min's shape wrong.");
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(),
+                             "For primitive[" + prim_name + "], the [x] has no abstract:Shape.");
+  auto data_element = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  auto data_shape = data_element->shape();
+
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(),
+                             "For primitive[" + prim_name + "], the [data_min] has no abstract:Shape.");
   auto data_min_shape_element = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
   auto data_min_shape = data_min_shape_element->shape();
-  (void)CheckAndConvertUtils::CheckInteger("data_min's rank", SizeToLong(data_min_shape.size()), kEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("data_min's first-dim", data_min_shape.front(), kEqual, 1, prim_name);
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(), "data_max's shape wrong.");
+
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(),
+                             "For primitive[" + prim_name + "], the [data_max] has no abstract:Shape.");
   auto data_max_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
   auto data_max_shape = data_max_shape_element->shape();
-  (void)CheckAndConvertUtils::CheckInteger("data_max's rank", SizeToLong(data_max_shape.size()), kEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("data_max's first-dim", data_max_shape.front(), kEqual, 1, prim_name);
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex3]->BuildShape()->isa<abstract::Shape>(), "cumsum's shape wrong.");
+
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex3]->BuildShape()->isa<abstract::Shape>(),
+                             "For primitive[" + prim_name + "], the [cumsum] has no abstract:Shape.");
   auto cumsum_shape_element = input_args[kInputIndex3]->BuildShape()->cast<abstract::ShapePtr>();
   auto cumsum_shape = cumsum_shape_element->shape();
-  (void)CheckAndConvertUtils::CheckInteger("cumsum's rank", SizeToLong(cumsum_shape.size()), kEqual, 1, prim_name);
-
-  ShapeVector out_shape{1};
-  auto out_shape_ptr = std::make_shared<abstract::Shape>(out_shape, out_shape, out_shape);
+  if (IsDynamicRank(data_shape) || IsDynamicRank(data_min_shape) || IsDynamicRank(data_max_shape) ||
+      IsDynamicRank(cumsum_shape)) {
+    auto out_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    abstract::BaseShapePtrList out_shape_list = {out_shape_ptr, out_shape_ptr};
+    return std::make_shared<abstract::TupleShape>(out_shape_list);
+  }
+  if (IsDynamic(data_shape) || IsDynamic(data_min_shape) || IsDynamic(data_max_shape) || IsDynamic(cumsum_shape)) {
+    auto out_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny});
+    abstract::BaseShapePtrList out_shape_list = {out_shape_ptr, out_shape_ptr};
+    return std::make_shared<abstract::TupleShape>(out_shape_list);
+  }
+  (void)CheckAndConvertUtils::CheckInteger("[data_min] rank", SizeToLong(data_min_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("[data_min] dim_0", data_min_shape.front(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("[data_max] rank", SizeToLong(data_max_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("[data_max] dim_0", data_max_shape.front(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("[cumsum] rank", SizeToLong(cumsum_shape.size()), kEqual, 1, prim_name);
+  auto out_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{1});
   abstract::BaseShapePtrList out_shape_list = {out_shape_ptr, out_shape_ptr};
   return std::make_shared<abstract::TupleShape>(out_shape_list);
 }
@@ -61,7 +80,7 @@ TuplePtr IFMRInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  (void)CheckAndConvertUtils::CheckInteger("[input number]", static_cast<int64_t>(input_args.size()), kEqual,
+  (void)CheckAndConvertUtils::CheckInteger("[input] number", static_cast<int64_t>(input_args.size()), kEqual,
                                            kIFMRInputSize, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
