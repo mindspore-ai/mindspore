@@ -25,8 +25,6 @@
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include "acl/acl_tdt.h"
 #include "acl/acl_base.h"
-#include "runtime/dev.h"
-#include "runtime/config.h"
 #include "toolchain/plog.h"
 #include "framework/common/helper/model_helper.h"
 #include "common/util/error_manager/error_manager.h"
@@ -226,11 +224,6 @@ void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &
 
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
-  // set MS_CTX_ENABLE_GE_HETEROGENOUS true if ge heterogeneous mode
-  int32_t is_heterogeneous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogeneous);
-  ms_context_ptr->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
-
   if (ms_context_ptr->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return true;
   }

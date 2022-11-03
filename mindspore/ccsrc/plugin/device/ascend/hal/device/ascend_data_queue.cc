@@ -546,6 +546,7 @@ bool AscendHostQueue::SerializeDataItemInfos(std::vector<DataItemInfo> *items, v
       sizeof(DataItemInfo::ItemInfo) + (*items)[i].item_info.dim_num * sizeof(int64_t) + (*items)[i].item_info.data_len;
   }
 
+  total_size += sizeof(RuntimeTensorDesc);
   auto errno_ret = rtMbufAlloc(buff, total_size);
   if (errno_ret != ACL_RT_SUCCESS) {
     MS_LOG(ERROR) << "Call rtMbufAlloc with size[" << total_size << "] failed, ret = " << errno_ret;
@@ -571,7 +572,7 @@ bool AscendHostQueue::SerializeDataItemInfos(std::vector<DataItemInfo> *items, v
   if ((head_buf != nullptr) && (head_size > kMbufHeadEndOfSequencePos)) {
     MS_LOG(DEBUG) << "Host queue set end_of_sequence mbuf head.";
   }
-
+  data = ::ge::ValueToPtr(::ge::PtrToValue(data) + sizeof(RuntimeTensorDesc));
   size_t offset = 0UL;
   for (size_t i = 0UL; i < count; ++i) {
     errno_ret = memcpy_s(::ge::ValueToPtr(::ge::PtrToValue(data) + offset), sizeof(DataItemInfo::ItemInfo),
