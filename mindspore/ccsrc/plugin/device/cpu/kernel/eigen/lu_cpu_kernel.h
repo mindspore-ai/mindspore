@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_LU_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_LU_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_LU_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_LU_CPU_KERNEL_H_
 
+#include <map>
+#include <utility>
 #include <tuple>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -24,11 +26,16 @@
 
 namespace mindspore {
 namespace kernel {
-class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class LUCpuKernelMod : public NativeCpuKernelMod {
  public:
   LUCpuKernelMod() = default;
   ~LUCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -51,12 +58,8 @@ class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                     const std::vector<kernel::AddressPtr> &outputs);
   using LUFunc = std::function<bool(LUCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  using InitFunc = std::function<void(LUCpuKernelMod *, const CNodePtr &)>;
-  static std::vector<std::tuple<KernelAttr, LUFunc, InitFunc>> func_list_;
+  static std::vector<std::pair<KernelAttr, LUFunc>> func_list_;
   LUFunc kernel_func_;
-  InitFunc init_io_func_;
-
-  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
 
   void InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
   void InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) const;
@@ -75,4 +78,4 @@ class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_LU_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_LU_CPU_KERNEL_H_

@@ -63,39 +63,53 @@ void LUCpuKernelMod::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *
   }
 }
 
-void LUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+bool LUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  dtype_ = inputs[0]->GetDtype();
+  size_t input_num = inputs.size();
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = outputs.size();
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kLUOutputsNum, kernel_name_);
-  auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex));
-  InitMatrixInfo(a_shape, &a_row_, &a_col_);
-  auto lu_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex));
-  InitMatrixInfo(lu_shape, &lu_row_, &lu_col_);
-  auto permutation_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kPermutationIndex));
-  InitMatrixInfo(permutation_shape, &permutation_row_, &permutation_col_);
-  auto pivots_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex));
-  InitPivotVecInfo(pivots_shape, &pivots_row_, &pivots_col_);
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "LU does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  kernel_func_ = std::get<1>(func_list_[index]);
-  const size_t kTwoIdx = 2;
-  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
+  kernel_func_ = func_list_[index].second;
+  return true;
 }
 
-template <typename T>
-void LUCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  size_t lu_size = lu_col_ * sizeof(T);
+int LUCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                           const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  a_row_ = 1;
+  a_col_ = 1;
+  lu_row_ = 1;
+  lu_col_ = 1;
+  permutation_row_ = 1;
+  permutation_col_ = 1;
+  pivots_row_ = 1;
+  pivots_col_ = 1;
+  auto a_shape = Convert2SizeTClipNeg(inputs[kLUaIndex]->GetShapeVector());
+  InitMatrixInfo(a_shape, &a_row_, &a_col_);
+  auto lu_shape = Convert2SizeTClipNeg(outputs[kLuIndex]->GetShapeVector());
+  InitMatrixInfo(lu_shape, &lu_row_, &lu_col_);
+  auto permutation_shape = Convert2SizeTClipNeg(outputs[kPermutationIndex]->GetShapeVector());
+  InitMatrixInfo(permutation_shape, &permutation_row_, &permutation_col_);
+  auto pivots_shape = Convert2SizeTClipNeg(outputs[kPivotsIndex]->GetShapeVector());
+  InitPivotVecInfo(pivots_shape, &pivots_row_, &pivots_col_);
+
+  size_t lu_size = lu_col_ * dtype_;
   (void)workspace_size_list_.emplace_back(lu_size);
   (void)workspace_size_list_.emplace_back(lu_size);
+  return KRET_OK;
 }
 
 template <typename T>
@@ -247,25 +261,24 @@ bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-std::vector<std::tuple<KernelAttr, LUCpuKernelMod::LUFunc, LUCpuKernelMod::InitFunc>> LUCpuKernelMod::func_list_ = {
+std::vector<std::pair<KernelAttr, LUCpuKernelMod::LUFunc>> LUCpuKernelMod::func_list_ = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeInt32),
-   &LUCpuKernelMod::LaunchKernel<float>, &LUCpuKernelMod::InitIOSize<float>},
+   &LUCpuKernelMod::LaunchKernel<float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeInt32),
-   &LUCpuKernelMod::LaunchKernel<double>, &LUCpuKernelMod::InitIOSize<double>}};
+   &LUCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> LUCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  (void)std::transform(
-    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-    [](const std::tuple<KernelAttr, LUFunc, InitFunc> &tuple_item) { return std::get<0>(tuple_item); });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, LUFunc> &pair) { return pair.first; });
   return support_list;
 }
 

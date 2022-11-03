@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LU_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LU_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_LU_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_LU_GPU_KERNEL_H_
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <map>
 #include <string>
 #include <algorithm>
 #include <type_traits>
@@ -32,7 +33,7 @@ namespace mindspore {
 namespace kernel {
 
 template <typename T>
-class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class LUGpuKernelMod : public NativeGpuKernelMod {
  public:
   LUGpuKernelMod() : is_null_input_(false) {}
   ~LUGpuKernelMod() = default;
@@ -59,26 +60,26 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t host_transpose_shape[shape_2d] = {m_, n_};
     size_t host_transpose_axis[shape_2d] = {1, 0};
     T *dev_transpose_work = GetDeviceAddress<T>(workspace, kDim3);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(dev_transpose_axis, host_transpose_axis, shape_2d * sizeof(size_t),
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "malloc input shape workspace failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(dev_transpose_axis, host_transpose_axis, shape_2d * sizeof(size_t), cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "malloc input shape workspace failed");
 
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_size_ * m_ * n_ * unit_size_,
-                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync failed in LUGpuKernelMod::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_size_ * m_ * n_ * unit_size_, cudaMemcpyDeviceToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemcpyAsync failed in LUGpuKernelMod::Launch.");
 
     // 4. query working space of getrf
     if constexpr (std::is_same_v<T, float>) {
-      CHECK_CUSOLVER_RET_WITH_EXCEPT(kernel_node_,
-                                     cusolverDnSgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, &lwork_),
-                                     "cusolver query lu work size fail");
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnSgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, &lwork_),
+        "cusolver query lu work size fail");
 
     } else if constexpr (std::is_same_v<T, double>) {
-      CHECK_CUSOLVER_RET_WITH_EXCEPT(kernel_node_,
-                                     cusolverDnDgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, &lwork_),
-                                     "cusolver query lu work size fail");
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnDgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, &lwork_),
+        "cusolver query lu work size fail");
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
@@ -88,24 +89,23 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       T *output_addr = batch_output_addr + batch * m_ * n_;
       int *permutation_addr = batch_permutation_addr + batch * k_ * k_;
       int *piv_output_addr = batch_piv_output_addr + batch * k_;
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(dev_transpose_shape, host_transpose_shape, shape_2d * sizeof(size_t),
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "malloc input shape workspace failed");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(dev_transpose_shape, host_transpose_shape, shape_2d * sizeof(size_t), cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "malloc input shape workspace failed");
 
       CalTranspose(m_ * n_, output_addr, dev_transpose_shape, dev_transpose_axis, shape_2d, dev_transpose_work,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
 
       // 6.lu factorization according to cuSolver api, outputs have been written to input's matrix.
       if constexpr (std::is_same_v<T, float>) {
-        CHECK_CUSOLVER_RET_WITH_EXCEPT(
-          kernel_node_,
+        CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+
           cusolverDnSgetrf(handle_, m_, n_, dev_transpose_work, lda_, d_work_, piv_output_addr, info_output_addr),
           "cusolver lu fail");
       } else if constexpr (std::is_same_v<T, double>) {
         // 6.lu factorization according to cuSolver api, outputs have been written to input's matrix.
-        CHECK_CUSOLVER_RET_WITH_EXCEPT(
-          kernel_node_,
+        CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
           cusolverDnDgetrf(handle_, m_, n_, dev_transpose_work, lda_, d_work_, piv_output_addr, info_output_addr),
           "cusolver lu fail");
       } else {
@@ -120,10 +120,10 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       std::vector<int> host_permuted(k_, 0);
       std::vector<int> host_pivots(k_, 0);
       std::vector<int> host_permutation(k_ * k_, 0);
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(host_pivots.data(), piv_output_addr, sizeof(int) * k_,
-                                                 cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots to host.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(host_pivots.data(), piv_output_addr, sizeof(int) * k_, cudaMemcpyDeviceToHost,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots to host.");
 
       // cal pivots && permutation major by row.
       for (size_t i = 0; i < k_; ++i) {
@@ -139,40 +139,64 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       for (size_t i = 0; i < k_; ++i) {
         host_permutation[host_permuted[i] * k_ + i] = 1;
       }
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(permutation_addr, host_permutation.data(), sizeof(int) * k_ * k_,
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy permutation matrix.");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(piv_output_addr, host_pivots.data(), sizeof(int) * k_,
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots array.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(permutation_addr, host_permutation.data(), sizeof(int) * k_ * k_, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy permutation matrix.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(piv_output_addr, host_pivots.data(), sizeof(int) * k_, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots array.");
     }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work_);
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    // 1. get CuSolver Dense matrix handler
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (IsDynamic(shape_signed)) {
-      return true;
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+      return ret;
     }
+    batch_size_ = 1;
+    auto shape_signed = inputs[kIndex0]->GetShapeVector();
     auto in_shape = Convert2SizeT(shape_signed);
     // 2. check input shape not null
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     // 3. calculate input size
     if (!InitInputSize(in_shape)) {
-      MS_LOG(EXCEPTION) << "For 'PureCholeskyGpuKernel', input shape init failed.";
+      MS_LOG(ERROR) << "For 'PureCholeskyGpuKernel', input shape init failed.";
+      return KRET_RESIZE_FAILED;
     }
-    return true;
+    return KRET_OK;
+  }
+
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddOutputAttr(kNumberTypeFloat32)
+        .AddOutputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddOutputAttr(kNumberTypeFloat64)
+        .AddOutputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32),
+    };
+    return support_list;
   }
 
  private:
@@ -198,7 +222,7 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  void InitSizeLists() override {
+  void InitSizeLists() {
     size_t input_size = batch_size_ * lu_row_ * lu_col_ * unit_size_;
     input_size_list_.push_back(input_size);
 
@@ -244,4 +268,4 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LU_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_LU_GPU_KERNEL_H_
