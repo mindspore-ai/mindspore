@@ -40,7 +40,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/hal/device/gpu_hash_table.h"
+#include "plugin/device/gpu/hal/device/gpu_hash_table_util.h"
 #include "plugin/device/gpu/optimizer/reg_gpu_const_input_to_attr.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
@@ -262,38 +262,22 @@ void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {
   const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
   MS_EXCEPTION_IF_NULL(user_data_type);
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
-    auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
+#if CUDA_VERSION > 11000 && defined(__linux__)
     auto key_type = user_data->get<TypeId>(kHashTableKeyType);
     auto value_type = user_data->get<TypeId>(kHashTableValueType);
-    auto default_value = user_data->get<Value>(kHashTableDefaultValue);
-    MS_EXCEPTION_IF_NULL(shape_vector);
     MS_EXCEPTION_IF_NULL(key_type);
     MS_EXCEPTION_IF_NULL(value_type);
-    MS_EXCEPTION_IF_NULL(default_value);
-    if (*key_type == TypeId::kNumberTypeInt32 && *value_type == TypeId::kNumberTypeFloat32) {
-      int32_t value_size = 1;
-      for (size_t i = 0; i < (*shape_vector).size(); ++i) {
-        value_size *= (*shape_vector)[i];
-      }
-      if (value_size <= 0) {
-        MS_LOG(WARNING) << "Invalid value size:" << value_size;
-      }
-#if CUDA_VERSION > 11000
-      if (default_value->isa<StringImm>()) {
-        user_data->set<GPUHashTable<int, float>>(
-          kUserDataData, std::make_shared<GPUHashTable<int, float>>(value_size, GetValue<std::string>(default_value)));
-      } else if (default_value->isa<FloatImm>()) {
-        user_data->set<GPUHashTable<int, float>>(
-          kUserDataData, std::make_shared<GPUHashTable<int, float>>(value_size, GetValue<float>(default_value)));
-      } else {
-        MS_LOG(EXCEPTION) << "Invalid default value:" << default_value;
-      }
-#else
-      MS_LOG(EXCEPTION) << "Invalid cuda version for gpu hash table.";
-#endif
+    const auto &iter = hashtable_func_list.find({*key_type, *value_type});
+    if (iter != hashtable_func_list.end()) {
+      return std::get<kSetFuncIndex>(iter->second)(user_data);
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported key type:" << key_type << " value type:" << value_type;
+      MS_LOG(EXCEPTION) << "Unsupported hash table type:" << *key_type << " and:" << *value_type;
     }
+#else
+    MS_LOG(EXCEPTION) << "Invalid platform or cuda version for gpu hash table.";
+#endif
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid user data type:" << *user_data_type;
   }
 }
 }  // namespace

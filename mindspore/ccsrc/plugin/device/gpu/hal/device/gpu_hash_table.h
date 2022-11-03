@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_H_
 
+#if defined(__linux__)
 #include <cuda.h>
 #if CUDA_VERSION > 11000
 #include <curand_kernel.h>
@@ -189,5 +190,6 @@ class GPUHashTable : public HashTable<Key, Value> {
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
+#endif
 #endif
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_H_

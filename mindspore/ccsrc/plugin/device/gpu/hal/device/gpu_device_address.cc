@@ -23,7 +23,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/hardware/gpu_device_context.h"
-#include "plugin/device/gpu/hal/device/gpu_hash_table.h"
+#include "plugin/device/gpu/hal/device/gpu_hash_table_util.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
@@ -128,23 +128,20 @@ bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, si
   MS_EXCEPTION_IF_NULL(user_data_type);
 
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
+#if CUDA_VERSION > 11000 && defined(__linux__)
     auto key_type = user_data->get<TypeId>(kHashTableKeyType);
     auto value_type = user_data->get<TypeId>(kHashTableValueType);
     MS_EXCEPTION_IF_NULL(key_type);
     MS_EXCEPTION_IF_NULL(value_type);
-    if (*key_type == TypeId::kNumberTypeInt32 && *value_type == TypeId::kNumberTypeFloat32) {
-#if CUDA_VERSION > 11000
-      const auto &gpu_hash_table = user_data->get<GPUHashTable<int, float>>(kUserDataData);
-      MS_EXCEPTION_IF_NULL(gpu_hash_table);
-      if (!gpu_hash_table->Import({const_cast<void *>(host_ptr), size})) {
-        MS_LOG(EXCEPTION) << "Import for hash table failed.";
-      }
-#else
-      MS_LOG(EXCEPTION) << "Unsupported cuda version.";
-#endif
+    const auto &iter = hashtable_func_list.find({*key_type, *value_type});
+    if (iter != hashtable_func_list.end()) {
+      return std::get<kSyncFuncIndex>(iter->second)(user_data, host_ptr, size);
     } else {
       MS_LOG(EXCEPTION) << "Unsupported hash table type:" << *key_type << " and:" << *value_type;
     }
+#else
+    MS_LOG(EXCEPTION) << "Invalid platform or cuda version for gpu hash table.";
+#endif
   }
   return true;
 }
@@ -244,6 +241,31 @@ void GPUDeviceAddress::ClearDeviceMemory() {
   if (ptr_ != nullptr && from_mem_pool_) {
     GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;
+  }
+}
+
+void GPUDeviceAddress::ClearUserData() {
+  if (user_data_ == nullptr) {
+    return;
+  }
+
+  auto user_data_type = user_data_->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+#if CUDA_VERSION > 11000 && defined(__linux__)
+    auto key_type = user_data_->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data_->get<TypeId>(kHashTableValueType);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    const auto &iter = hashtable_func_list.find({*key_type, *value_type});
+    if (iter != hashtable_func_list.end()) {
+      return std::get<kClearFuncIndex>(iter->second)(user_data_);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported hash table type:" << *key_type << " and:" << *value_type;
+    }
+#else
+    MS_LOG(EXCEPTION) << "Invalid platform or cuda version for gpu hash table.";
+#endif
   }
 }
 
