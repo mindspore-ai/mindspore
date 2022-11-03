@@ -95,7 +95,7 @@ mindspore.set_context
           配置Running Data Recorder：
 
           - **enable**：表示在发生故障时是否启用Running Data Recorder去收集和保存训练中的关键数据。设置为True时，将打开Running Data Recorder。设置为False时，将关闭Running Data Recorder。
-          - **mode**：指定在GRAPH_MODE(0)还是PYNATIVE_MODE(1)下运行，两种模式均支持所有后端。默认值：GRAPH_MODE(0)。
+          - **mode**：指定在GRAPH_MODE(0)还是PYNATIVE_MODE(1)下运行，两种模式均支持所有后端。默认值：PYNATIVE_MODE(1)。
           - **path**：设置Running Data Recorder保存数据的路径。当前路径必须是一个绝对路径。
 
           内存重用：
