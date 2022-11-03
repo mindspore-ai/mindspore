@@ -26,111 +26,53 @@ std::unique_ptr<cukernel::GpuKernelHelperBase> CreatePadV3KernelPtr(const std::s
 using PadV3PtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
+#define REG_PAD_V3_TWO_INTPUT_INT32_KERNEL(INPUT_T, T, S)                                     \
+  {                                                                                           \
+    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt32).AddOutputAttr(INPUT_T), \
+      CreatePadV3KernelPtr<T, S>                                                              \
+  }
+
+#define REG_PAD_V3_TWO_INTPUT_INT64_KERNEL(INPUT_T, T, S)                                     \
+  {                                                                                           \
+    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(INPUT_T), \
+      CreatePadV3KernelPtr<T, S>                                                              \
+  }
+
+#define REG_PAD_V3_TWO_INTPUT_KERNEL(INPUT_T, T, S) \
+  REG_PAD_V3_TWO_INTPUT_INT32_KERNEL(INPUT_T, T, S), REG_PAD_V3_TWO_INTPUT_INT64_KERNEL(INPUT_T, T, S)
+
+#define REG_PAD_V3_THREE_INTPUT_INT32_KERNEL(INPUT_T, T, S)                                                         \
+  {                                                                                                                 \
+    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt32).AddInputAttr(INPUT_T).AddOutputAttr(INPUT_T), \
+      CreatePadV3KernelPtr<T, S>                                                                                    \
+  }
+
+#define REG_PAD_V3_THREE_INTPUT_INT64_KERNEL(INPUT_T, T, S)                                                         \
+  {                                                                                                                 \
+    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt64).AddInputAttr(INPUT_T).AddOutputAttr(INPUT_T), \
+      CreatePadV3KernelPtr<T, S>                                                                                    \
+  }
+
+#define REG_PAD_V3_THREE_INTPUT_KERNEL(INPUT_T, T, S) \
+  REG_PAD_V3_THREE_INTPUT_INT32_KERNEL(INPUT_T, T, S), REG_PAD_V3_THREE_INTPUT_INT64_KERNEL(INPUT_T, T, S)
+
+#define REG_PAD_V3_KERNEL(INPUT_T, T, S) \
+  REG_PAD_V3_TWO_INTPUT_KERNEL(INPUT_T, T, S), REG_PAD_V3_THREE_INTPUT_KERNEL(INPUT_T, T, S)
+
 const std::vector<std::pair<KernelAttr, PadV3PtrCreatorFunc>> kernel_attr = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   CreatePadV3KernelPtr<double, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreatePadV3KernelPtr<float, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
-   CreatePadV3KernelPtr<half, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt64),
-   CreatePadV3KernelPtr<int64_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   CreatePadV3KernelPtr<int32_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt16)
-     .AddOutputAttr(kNumberTypeInt16),
-   CreatePadV3KernelPtr<int16_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt8)
-     .AddOutputAttr(kNumberTypeInt8),
-   CreatePadV3KernelPtr<int8_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddOutputAttr(kNumberTypeUInt64),
-   CreatePadV3KernelPtr<uint64_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddOutputAttr(kNumberTypeUInt32),
-   CreatePadV3KernelPtr<uint32_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddOutputAttr(kNumberTypeUInt16),
-   CreatePadV3KernelPtr<uint16_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddOutputAttr(kNumberTypeUInt8),
-   CreatePadV3KernelPtr<uint8_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   CreatePadV3KernelPtr<Complex<float>, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128),
-   CreatePadV3KernelPtr<Complex<double>, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-   CreatePadV3KernelPtr<double, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-   CreatePadV3KernelPtr<float, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-   CreatePadV3KernelPtr<half, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   CreatePadV3KernelPtr<int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-   CreatePadV3KernelPtr<int32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-   CreatePadV3KernelPtr<int16_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
-   CreatePadV3KernelPtr<int8_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
-   CreatePadV3KernelPtr<uint64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
-   CreatePadV3KernelPtr<uint32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
-   CreatePadV3KernelPtr<uint16_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-   CreatePadV3KernelPtr<uint8_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
-   CreatePadV3KernelPtr<Complex<float>, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
-   CreatePadV3KernelPtr<Complex<double>, int64_t>},
+  REG_PAD_V3_KERNEL(kNumberTypeFloat64, double, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeFloat32, float, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeFloat16, half, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeInt64, int64_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeInt32, int32_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeInt16, int16_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeInt8, int8_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt64, uint64_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt32, uint32_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt16, uint16_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt8, uint8_t, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeComplex64, Complex<float>, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeComplex128, Complex<double>, int64_t),
 };
 }  // namespace
 
@@ -148,6 +90,7 @@ bool PadV3GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 bool PadV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
+  MS_ERROR_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
@@ -156,7 +99,6 @@ bool PadV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   attr_ptr_->mode = kernel_ptr->get_mode();
   attr_ptr_->paddings_contiguous = kernel_ptr->get_paddings_contiguous();
-  attr_ptr_->paddings = kernel_ptr->get_paddings();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
@@ -165,6 +107,14 @@ bool PadV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 int PadV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs,
                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, KRET_RESIZE_FAILED);
+  attr_ptr_->paddings = kernel_ptr->get_paddings();
+
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> x_shape = inputs[0]->GetShapeVector();

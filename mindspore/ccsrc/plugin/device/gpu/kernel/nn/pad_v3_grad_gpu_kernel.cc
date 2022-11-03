@@ -73,7 +73,9 @@ bool PadV3GradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 
 bool PadV3GradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3Grad>(base_operator);
+  MS_ERROR_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
@@ -87,7 +89,6 @@ bool PadV3GradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                       << attr_ptr_->mode;
   }
   attr_ptr_->paddings_contiguous = kernel_ptr->get_paddings_contiguous();
-  attr_ptr_->paddings = kernel_ptr->get_paddings();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
@@ -96,6 +97,15 @@ bool PadV3GradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int PadV3GradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  MS_ERROR_IF_NULL(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3Grad>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, KRET_RESIZE_FAILED);
+  attr_ptr_->paddings = kernel_ptr->get_paddings();
+
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> x_shape = inputs[0]->GetShapeVector();
