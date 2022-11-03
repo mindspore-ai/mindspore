@@ -566,7 +566,9 @@ def sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         x1 (COOTensor): the first COOTensor to sum.
         x2 (COOTensor): the second COOTensor to sum.
         thresh (Tensor): A 0-D Tensor, represents the magnitude threshold that determines
-            if an output value/index pair pair take space.
+            if an output value/index pair take space. Its dtype
+            should match that of the values if they are real. If output's
+            value is less than the `thresh`, it will vanish.
 
     Returns:
         A COOTensor, the result of sum.

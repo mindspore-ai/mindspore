@@ -1452,8 +1452,9 @@ class SparseAdd(Primitive):
         - **x2_indices** (Tensor) - represents the second COOTensor's indices.
         - **x2_values** (Tensor) - represents the second COOTensor's values.
         - **x2_shape** (Tensor) - represents the second COOTensor's dense shape.
-        - **thresh** (Tensor) - represents the magnitude threshold that determines if an output
-          value/index pair take space.
+        - **thresh** (Tensor) - A 0-D Tensor, represents the magnitude threshold that determines if an output
+          value/index pair take space. Its dtype should match that of the values if they are real.
+          If output's value is less than the `thresh`, it will vanish.
 
     Outputs:
         - **sum_indices** (Tensor) - this is the indices of the sum.

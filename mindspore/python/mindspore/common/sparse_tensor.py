@@ -467,8 +467,10 @@ class COOTensor(COOTensor_):
 
         Args:
             other(COOTensor): the second SparseTensor to sum.
-            thresh(Tensor): the magnitude threshold that determines
-                if an output value/index pair pair take space.
+            thresh(Tensor): A 0-D Tensor, represents the magnitude threshold that determines
+                if an output value/index pair take space, Its dtype
+                should match that of the values if they are real. If output's
+                value is less than the `thresh`, it will vanish.
 
         Returns:
             COOTensor, representing the sum.
@@ -885,4 +887,3 @@ class CSRTensor(CSRTensor_):
                           values=Tensor(shape=[2], dtype=Float32, value = [3.0, 3.0]))
         """
         return tensor_operator_registry.get('csr_add')(self, b, alpha, beta)
-    
