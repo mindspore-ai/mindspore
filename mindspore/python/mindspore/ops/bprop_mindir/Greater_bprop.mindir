@@ -1,19 +1,19 @@
 
-0.1.1	MindSpore*2.0.0:Â
-p"get_bprop_greater.211:[CNode]217:1"get_bprop_greater.211:[CNode]217:1"REF::bprop.218:Default/bprop.218-op82get_bprop_greater.211*
-get_bprop_greater.211:self*&
-$get_bprop_greater.211:[Parameter]213*&
-$get_bprop_greater.211:[Parameter]215*&
-$get_bprop_greater.211:[Parameter]219*&
-$get_bprop_greater.211:[Parameter]2202$
-"get_bprop_greater.211:[CNode]217:1:@d8665c241ca26956099ba8748f00469b2065deaeeb4ac973afd8cdef41c3000dJ/grad_math_ops.pyB¦
-°
-$get_bprop_greater.211:[Parameter]213bprop.218:[CNode]212:2bprop.218:[CNode]212:2"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:.Default/S-Prim-hyper_map[zeros_like_leaf]-op83
-°
-$get_bprop_greater.211:[Parameter]215bprop.218:[CNode]214:4bprop.218:[CNode]214:4"(REF::S-Prim-hyper_map[zeros_like_leaf]:3:.Default/S-Prim-hyper_map[zeros_like_leaf]-op84
-˜
-bprop.218:[CNode]212:2
-bprop.218:[CNode]214:4bprop.218:[CNode]216:5bprop.218:[CNode]216:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op85	bprop.2182
-bprop.218:[CNode]216:5Pb&
-S-Prim-MakeTuple:6S-Prim-MakeTuplebH
-#S-Prim-hyper_map[zeros_like_leaf]:3!S-Prim-hyper_map[zeros_like_leaf]h
+0.1.1	MindSpore*2.0.0:¢
+w$get_bprop_greater.1190:[CNode]1191:1$get_bprop_greater.1190:[CNode]1191:1"REF::bprop.1192:Default/bprop.1192-op931get_bprop_greater.1190*
+get_bprop_greater.1190:self*
+get_bprop_greater.1190:x*
+get_bprop_greater.1190:y*
+get_bprop_greater.1190:out*
+get_bprop_greater.1190:dout2&
+$get_bprop_greater.1190:[CNode]1191:1:@d8665c241ca26956099ba8748f00469b2065deaeeb4ac973afd8cdef41c3000dJ/grad_math_ops.pyB°
+¯
+get_bprop_greater.1190:xbprop.1192:[CNode]1193:2bprop.1192:[CNode]1193:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op932
+¯
+get_bprop_greater.1190:ybprop.1192:[CNode]1194:3bprop.1192:[CNode]1194:3".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op933
+¡
+bprop.1192:[CNode]1193:2
+bprop.1192:[CNode]1194:3bprop.1192:[CNode]1195:4bprop.1192:[CNode]1195:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op934
+bprop.11922
+bprop.1192:[CNode]1195:4Pb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

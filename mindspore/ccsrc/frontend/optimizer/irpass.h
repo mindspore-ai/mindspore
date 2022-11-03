@@ -181,11 +181,14 @@ class BpropMindIRPassLib {
  public:
   BpropMindIRPassLib();
   ~BpropMindIRPassLib() = default;
-  SubstitutionPtr get_multitype_ops_;
+  SubstitutionPtr get_constexpr_ops_;
   SubstitutionPtr get_class_type_;
   SubstitutionPtr get_meta_fg_;
   SubstitutionPtr get_primal_attr_;
-  SubstitutionPtr remote_class_type_;
+  SubstitutionPtr get_sub_func_graph_;
+  SubstitutionPtr class_type_resolve_;
+  SubstitutionPtr do_signature_resolve_;
+  SubstitutionPtr resolve_node_resolve_;
 };
 
 // predicate functions
@@ -247,6 +250,15 @@ inline bool IsCNodeSwitch(const AnfNodePtr &node) {
     }
   }
   return false;
+}
+
+// check if the cnode is a do_signature cnode
+inline bool IsCNodeDoSignature(const AnfNodePtr &node) {
+  auto cnode = dyn_cast_ptr<CNode>(node);
+  if (cnode == nullptr) {
+    return false;
+  }
+  return IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
 }
 }  // namespace irpass
 }  // namespace opt

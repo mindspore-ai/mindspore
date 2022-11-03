@@ -1,12 +1,13 @@
 
-0.1.1	MindSpore*2.0.0:¢
-p#get_bprop_broad_cast.59:[CNode]62:1#get_bprop_broad_cast.59:[CNode]62:1"REF::bprop.63:Default/bprop.63-op23get_bprop_broad_cast.59*
-get_bprop_broad_cast.59:self*'
-%get_bprop_broad_cast.59:[Parameter]64*'
-%get_bprop_broad_cast.59:[Parameter]65*'
-%get_bprop_broad_cast.59:[Parameter]612%
-#get_bprop_broad_cast.59:[CNode]62:1:@403d64b65284847b0b5f01f2121501208c9d8fb5c1da4b332a158de570991518J/grad_comm_ops.pyB∞
-ã
-%get_bprop_broad_cast.59:[Parameter]61bprop.63:[CNode]60:2bprop.63:[CNode]60:2"REF::S-Prim-MakeTuple:3:Default/S-Prim-MakeTuple-op24bprop.632
-bprop.63:[CNode]60:2Pb&
+0.1.1	MindSpore*2.0.0:û
+}'get_bprop_broad_cast.1037:[CNode]1038:1'get_bprop_broad_cast.1037:[CNode]1038:1"REF::bprop.1039:Default/bprop.1039-op826get_bprop_broad_cast.1037* 
+get_bprop_broad_cast.1037:self*
+get_bprop_broad_cast.1037:x*
+get_bprop_broad_cast.1037:out* 
+get_bprop_broad_cast.1037:dout2)
+'get_bprop_broad_cast.1037:[CNode]1038:1:@403d64b65284847b0b5f01f2121501208c9d8fb5c1da4b332a158de570991518J/grad_comm_ops.pyB∏
+ç
+get_bprop_broad_cast.1037:doutbprop.1039:[CNode]1040:2bprop.1039:[CNode]1040:2"REF::S-Prim-MakeTuple:3:Default/S-Prim-MakeTuple-op827
+bprop.10392
+bprop.1039:[CNode]1040:2Pb&
 S-Prim-MakeTuple:3S-Prim-MakeTupleh

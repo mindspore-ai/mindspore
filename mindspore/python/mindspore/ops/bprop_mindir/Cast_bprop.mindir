@@ -1,0 +1,19 @@
+
+0.1.1	MindSpore*2.0.0:Ü
+]get_bprop_cast.6:[CNode]7:1get_bprop_cast.6:[CNode]7:1"REF::bprop.8:Default/bprop.8-op3get_bprop_cast.6*
+get_bprop_cast.6:self*
+get_bprop_cast.6:x*
+get_bprop_cast.6:t*
+get_bprop_cast.6:out*
+get_bprop_cast.6:dout2
+get_bprop_cast.6:[CNode]7:1:@2a049f3579950913c6ea42bb677f44470016652aa549a6dee2350ea48d50f039J/grad_array_ops.pyBË
+„
+get_bprop_cast.6:dout
+get_bprop_cast.6:xbprop.8:dx:2bprop.8:dx:2"REF::MetaFuncGraph::dout_cast:Default/S-Prim-dout_cast-op4
+›
+get_bprop_cast.6:tbprop.8:[CNode]9:3bprop.8:[CNode]9:3".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op5
+ƒ
+bprop.8:dx:2
+bprop.8:[CNode]9:3bprop.8:[CNode]10:4bprop.8:[CNode]10:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op6bprop.82
+bprop.8:[CNode]10:4Pb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

@@ -120,6 +120,7 @@ class MSANFModelParser {
   bool GetAttrValueForValueNodeWithType(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name);
+  bool ObtainValueNodeInTypeNullForm(const std::string &value_node_name);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   ValuePtr ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto);
   ValuePtr ObtainValueInDictionaryForm(const mind_ir::AttributeProto &attr_proto);

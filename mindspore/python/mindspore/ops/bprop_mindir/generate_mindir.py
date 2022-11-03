@@ -24,18 +24,19 @@ from mindspore._c_expression import _export_bprop_mindir
 from mindspore.ops._grad.grad_base import bprop_getters, bprops
 
 logging.getLogger().setLevel(logging.INFO)
+os.environ['MS_DEV_EXPORT_BPROP_MINDIR'] = '1'
 
 
-def run_generate(bprop_mindir_install_dir, bprop_map):
+def run_generate(bprop_mindir_install_dir, bprop_map, force_update):
     for op_name in bprop_map.keys():
         if not isinstance(op_name, str):
             continue
         if os.path.isfile(os.path.join(bprop_mindir_install_dir, op_name + "_bprop.mindir")):
-            _export_bprop_mindir(op_name)
+            _export_bprop_mindir(op_name, force_update)
 
 
-def run_generate_with_op_name(op_name):
-    _export_bprop_mindir(op_name)
+def run_generate_with_op_name(op_name, force_update):
+    _export_bprop_mindir(op_name, force_update)
 
 
 if __name__ == "__main__":
@@ -48,6 +49,9 @@ if __name__ == "__main__":
                         help="The name of the operator whose bprop is to be transformed to mindir file. If not \
                         specified, it will generate all the mindir files of bprop which has already been transform \
                         to mindir. Default: None.")
+    parser.add_argument('--force', type=bool, default=False,
+                        help="Whether to force to generate mindir file of a bprop function regardless of nothing \
+                        changed. Default: False.")
 
     args_opt = parser.parse_args()
     # mindspore/ops/_grad/__init__.py
@@ -79,12 +83,13 @@ if __name__ == "__main__":
                 shutil.copy(file_path, bprop_installed_dir)
                 logging.info("copied: %s", file_path)
 
+    force = args_opt.force
     op = args_opt.op
     if op is None:
-        run_generate(bprop_mindir_export_dir, bprop_getters)
-        run_generate(bprop_mindir_export_dir, bprops)
+        run_generate(bprop_mindir_export_dir, bprop_getters, force)
+        run_generate(bprop_mindir_export_dir, bprops, force)
     else:
-        run_generate_with_op_name(op)
+        run_generate_with_op_name(op, force)
 
     # If the specified bprop source directory is not on the mindspore installed path,
     # copy the generated mindir files to the mindir directory relative to the specified path.
@@ -103,3 +108,5 @@ if __name__ == "__main__":
     else:
         logging.info("The new bprop mindir files has been generated in the path \"%s\", "
                      "copy the *.mindir to your mindspore path or PYTHONPATH if necessary.", bprop_mindir_export_dir)
+
+    del os.environ['MS_DEV_EXPORT_BPROP_MINDIR']

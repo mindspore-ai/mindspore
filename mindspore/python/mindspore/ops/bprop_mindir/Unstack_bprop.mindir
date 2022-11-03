@@ -1,0 +1,22 @@
+
+0.1.1	MindSpore*2.0.0:Ê
+q"get_bprop_unstack.924:[CNode]925:1"get_bprop_unstack.924:[CNode]925:1"REF::bprop.926:Default/bprop.926-op749
+<[ValueNode]927[ValueNode]927"Constant*
+value*axis€
+
+get_bprop_unstack.924:self
+[ValueNode]927get_bprop_unstack.924:axis:2get_bprop_unstack.924:axis:2"REF::getattr:3:Default/getattr-op750get_bprop_unstack.924*
+get_bprop_unstack.924:self*
+get_bprop_unstack.924:x*
+get_bprop_unstack.924:out*
+get_bprop_unstack.924:dout2$
+"get_bprop_unstack.924:[CNode]925:1:@c4c274247cc015c77285a377298c8228ea58370ed44389f89a8ac0e06f9aec24J/grad_array_ops.pyBÔ
+Ì
+get_bprop_unstack.924:axis:2bprop.926:unstack_grad:4bprop.926:unstack_grad:4"8REF::ClassType::mindspore.ops.operations.array_ops.Stack:>Default/class 'mindspore.ops.operations.array_ops.Stack'-op751
+b
+get_bprop_unstack.924:doutbprop.926:out:5bprop.926:out:5"REF::bprop.926:unstack_grad:4:752
+z
+bprop.926:out:5bprop.926:[CNode]928:6bprop.926:[CNode]928:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op753	bprop.9262
+bprop.926:[CNode]928:6Pb
+	getattr:3getattrb&
+S-Prim-MakeTuple:7S-Prim-MakeTupleh

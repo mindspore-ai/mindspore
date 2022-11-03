@@ -23,8 +23,28 @@ from __future__ import absolute_import
 from __future__ import division
 
 from mindspore.ops._register_for_op import Registry
+from mindspore.ops.primitive import Primitive
 
-vm_impl_registry = Registry()
+
+class VmImplRegistry(Registry):
+    """Registry class for registry functions for vm_impl on Primitive or string."""
+
+    def register(self, prim):
+        """register the function."""
+
+        def deco(fn):
+            """Decorate the function."""
+            if isinstance(prim, str):
+                self[prim] = fn
+            elif issubclass(prim, Primitive):
+                self[id(prim)] = fn
+                self[prim.__name__] = fn
+            return fn
+
+        return deco
+
+
+vm_impl_registry = VmImplRegistry()
 """
 Register the python primitive debug implementation function of a primitive operator.
 

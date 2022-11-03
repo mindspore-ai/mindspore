@@ -91,6 +91,7 @@ std::pair<std::string, std::string> GetBpropHashAndFilePath(const py::function &
   }
   // Get the hash of the function.
   auto bprop_str = GetBpropString(realpath.value(), prim_name);
+  MS_LOG(DEBUG) << "bprop string: " << bprop_str;
   // Get the relative path of the function.
   auto filepath = realpath.value();
   static std::string bprop_dir = GetBpropDir();
@@ -190,11 +191,8 @@ void OptimizeBpropFromMindIR(const FuncGraphPtr &fg, const pipeline::ResourceBas
   EliminateParameterSelf(fg, res, prim);
 
   opt::irpass::BpropMindIRPassLib irpass;
-  std::vector<opt::SubstitutionPtr> opt_list{irpass.get_multitype_ops_};
-  (void)opt_list.emplace_back(irpass.get_class_type_);
-  (void)opt_list.emplace_back(irpass.get_meta_fg_);
-  (void)opt_list.emplace_back(irpass.get_primal_attr_);
-
+  std::vector<opt::SubstitutionPtr> opt_list{irpass.get_constexpr_ops_, irpass.get_class_type_, irpass.get_meta_fg_,
+                                             irpass.get_primal_attr_, irpass.get_sub_func_graph_};
   opt::OptPassGroupMap map({
     {"bprop_mindir_opt", opt::OptPassConfig(opt_list)},
   });
@@ -211,6 +209,7 @@ FuncGraphPtr LiftParameter(const FuncGraphPtr &func_graph) {
   auto bprop_fg = GetValueNode<FuncGraphPtr>(func_graph->output());
   MS_EXCEPTION_IF_NULL(bprop_fg);
   for (auto &p : bprop_fg->parameters()) {
+    TraceGuard trace_guard(std::make_shared<TraceCopy>(p->debug_info()));
     auto new_p = func_graph->add_parameter();
     mng->Replace(p, new_p);
   }
@@ -223,7 +222,9 @@ FuncGraphPtr LiftParameter(const FuncGraphPtr &func_graph) {
 FuncGraphPtr RemovePyObj(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res) {
   opt::irpass::BpropMindIRPassLib irpass;
   opt::OptPassGroupMap map({
-    {"remove_class_type", opt::OptPassConfig({irpass.remote_class_type_})},
+    {"remove_class_type", opt::OptPassConfig({irpass.class_type_resolve_})},
+    {"resolve_do_signature_prim", opt::OptPassConfig({irpass.do_signature_resolve_})},
+    {"remove_resolve", opt::OptPassConfig({irpass.resolve_node_resolve_})},
   });
   opt::OptimizerPtr export_mindir_opt =
     opt::Optimizer::MakeOptimizer("export_mindir_opt", res, map, false, false, false);
@@ -234,7 +235,7 @@ FuncGraphPtr RemovePyObj(const FuncGraphPtr &func_graph, const pipeline::Resourc
 }  // namespace
 
 #ifndef _WIN32
-void ExportBpropToMindir(const py::object &obj) {
+void ExportBpropToMindir(const py::object &obj, bool force_update = false) {
   if (!py::isinstance<py::str>(obj)) {
     MS_LOG(EXCEPTION) << "The python obj " << py::str(obj) << " to be exported to mindir should be a string";
   }
@@ -252,7 +253,7 @@ void ExportBpropToMindir(const py::object &obj) {
     MS_LOG(EXCEPTION) << "Fail to get the file path of bprop for " << prim_name;
   }
   // If the bprop file hash has not changed, we don't need to export a new mindir.
-  if (CheckBpropUpToDate(prim_name, bprop_hash_and_filepath.first)) {
+  if (!force_update && CheckBpropUpToDate(prim_name, bprop_hash_and_filepath.first)) {
     MS_LOG(WARNING) << "The hash of bprop function of primitive " << prim_name
                     << " is not changed, we will not export a new mindir.";
     return;

@@ -45,7 +45,6 @@ std::map<std::string, tensor::TensorPtr> MSANFModelParser::load_tensor_map_;
 namespace {
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
-static constexpr char kHyperMapPrefix[] = "hyper_map";
 
 enum ParseForm : int {
   FORM_PARSE_TYPE = 0,
@@ -1042,6 +1041,14 @@ bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_n
   return true;
 }
 
+bool MSANFModelParser::ObtainValueNodeInTypeNullForm(const std::string &value_node_name) {
+  auto new_value_node = NewValueNode(kTypeNull);
+  MS_EXCEPTION_IF_NULL(new_value_node);
+  new_value_node->set_abstract(kTypeNull->ToAbstract());
+  anfnode_build_map_[value_node_name] = new_value_node;
+  return true;
+}
+
 bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_name,
                                                   const mind_ir::AttributeProto &attr_proto) {
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
@@ -1244,6 +1251,24 @@ bool MSANFModelParser::GetAttrValueForValueNodeWithType(const std::string &value
       anfnode_build_map_[value_node_name] = new_value_node;
       break;
     }
+    case mind_ir::AttributeProto_AttributeType_TYPE_NULL: {
+      (void)ObtainValueNodeInTypeNullForm(value_node_name);
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_NAME_SPACE: {
+      auto name_space = static_cast<std::string>(attr_proto.s());
+      auto mindir_name_space = std::make_shared<MindIRNameSpace>(name_space);
+      new_value_node = NewValueNode(mindir_name_space);
+      anfnode_build_map_[value_node_name] = new_value_node;
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_SYMBOL: {
+      auto symbol = static_cast<std::string>(attr_proto.s());
+      auto mindir_symbol = std::make_shared<MindIRSymbol>(symbol);
+      new_value_node = NewValueNode(mindir_symbol);
+      anfnode_build_map_[value_node_name] = new_value_node;
+      break;
+    }
     default: {
       ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
       if (value == nullptr) {
@@ -1348,19 +1373,6 @@ mindspore::HashMap<std::string, abstract::AbstractBasePtr> MSANFModelParser::Get
   return kv;
 }
 
-// S-Prim-xxx or S-Prim-hyper_map[xxx] -> xxx
-static std::string GetDoSignaturePrimitiveName(const std::string &node_type) {
-  // Remove `S-Prim-` prefix.
-  auto prim_name = node_type.substr(strlen(kDoSignaturePrimitivePrefix));
-  if (prim_name.compare(0, strlen(kHyperMapPrefix), kHyperMapPrefix) != 0) {
-    return prim_name;
-  }
-  // hyper_map[xxx] -> xxx
-  constexpr auto offset = 2;
-  auto op_name = prim_name.substr(strlen(kHyperMapPrefix) + 1, (prim_name.length() - strlen(kHyperMapPrefix)) - offset);
-  return op_name;
-}
-
 AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_proto) {
   const std::string kOperatorTypeFlag = std::string("REF::");
   const size_t kOpTypeFlagSize = kOperatorTypeFlag.length();
@@ -1384,7 +1396,7 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
     prim = op_primc_fns[node_type]();
   } else {
     if (node_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
-      auto op_name = GetDoSignaturePrimitiveName(node_type);
+      auto op_name = node_type.substr(strlen(kDoSignaturePrimitivePrefix));
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
       MS_EXCEPTION_IF_NULL(prim);
       prim->set_instance_name(op_name);
@@ -1851,7 +1863,7 @@ bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primiti
     prim = it->second();
   } else {
     if (prim_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
-      auto op_name = GetDoSignaturePrimitiveName(prim_type);
+      auto op_name = prim_type.substr(strlen(kDoSignaturePrimitivePrefix));
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
       MS_EXCEPTION_IF_NULL(prim);
       prim->set_instance_name(op_name);

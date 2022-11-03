@@ -50,11 +50,14 @@
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
-#include "frontend/optimizer/irpass/bprop_get_multitype_ops.h"
-#include "frontend/optimizer/irpass/bprop_get_class_type.h"
-#include "frontend/optimizer/irpass/bprop_get_meta_fg.h"
-#include "frontend/optimizer/irpass/bprop_get_primal_attr.h"
-#include "frontend/optimizer/irpass/bprop_remove_class_type.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_constexpr_ops.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_class_type.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_meta_fg.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_primal_attr.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_sub_func_graph.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/class_type_resolve.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/do_signature_resolve.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/resolve_node_resolve.h"
 
 namespace mindspore {
 namespace opt {
@@ -273,24 +276,26 @@ MetaUnpackPrepareLib::MetaUnpackPrepareLib() {
 }
 
 BpropMindIRPassLib::BpropMindIRPassLib() {
-  get_multitype_ops_ = MakeSubstitution(
-    std::make_shared<BpropGetMultitypeOps>(), "bprop_get_multitype_ops",
-    {std::make_shared<Primitive>("S-Prim-negative"), std::make_shared<Primitive>("S-Prim-zeros_like_leaf"),
-     std::make_shared<Primitive>("S-Prim-getitem"), std::make_shared<Primitive>("S-Prim-mul"),
-     std::make_shared<Primitive>("S-Prim-logical_not"), std::make_shared<Primitive>("S-Prim-in"),
-     std::make_shared<Primitive>("S-Prim-less"), std::make_shared<Primitive>("S-Prim-add")});
+  get_constexpr_ops_ =
+    MakeSubstitution(std::make_shared<GetConstexprOps>(), "get_constexpr_ops", IsValueNode<prim::DoSignaturePrimitive>);
 
-  get_class_type_ =
-    MakeSubstitution(std::make_shared<BpropGetClassType>(), "bprop_get_class_type", IsValueNode<MindIRClassType>);
+  get_class_type_ = MakeSubstitution(std::make_shared<GetClassType>(), "get_class_type", IsValueNode<MindIRClassType>);
 
-  get_meta_fg_ =
-    MakeSubstitution(std::make_shared<BpropGetMetaFg>(), "bprop_get_class_type", IsValueNode<MindIRMetaFuncGraph>);
+  get_meta_fg_ = MakeSubstitution(std::make_shared<GetMetaFg>(), "get_meta_fg", IsValueNode<MindIRMetaFuncGraph>);
 
-  get_primal_attr_ =
-    MakeSubstitution(std::make_shared<BpropGetPrimalAttr>(), "bprop_get_primal_attr", {prim::kPrimGetAttr});
+  get_primal_attr_ = MakeSubstitution(std::make_shared<GetPrimalAttr>(), "get_primal_attr", {prim::kPrimGetAttr});
 
-  remote_class_type_ = MakeSubstitution(std::make_shared<BpropRemoveClassType>(), "bprop_remove_primal_attr",
-                                        IsValueNode<parse::ClassType>);
+  get_sub_func_graph_ =
+    MakeSubstitution(std::make_shared<GetSubFuncGraph>(), "get_sub_func_graph", {prim::kPrimResolve});
+
+  class_type_resolve_ =
+    MakeSubstitution(std::make_shared<ClassTypeResolve>(), "class_type_resolve", IsValueNode<parse::ClassType>);
+
+  do_signature_resolve_ =
+    MakeSubstitution(std::make_shared<DoSignatureResolve>(), "do_signature_resolve", IsCNodeDoSignature);
+
+  resolve_node_resolve_ =
+    MakeSubstitution(std::make_shared<ResolveNodeResolve>(), "resolve_node_resolve", {prim::kPrimResolve});
 }
 }  // namespace irpass
 }  // namespace opt

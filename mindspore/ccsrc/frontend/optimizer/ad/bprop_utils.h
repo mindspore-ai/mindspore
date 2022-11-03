@@ -25,7 +25,7 @@ namespace ad {
 #ifndef _WIN32
 // For the bprop mindir generator.
 // Given an operator name, export a mindir file from its bprop defined in python.
-void ExportBpropToMindir(const py::object &obj);
+void ExportBpropToMindir(const py::object &obj, bool force_update);
 // For the bprop mindir check.
 // Given an operator name, check whether its mindir file can be loaded and up to date.
 bool CheckMindir(const py::object &obj);

@@ -42,6 +42,9 @@ message AttributeProto {
     COO_TENSOR = 31;
     ROW_TENSOR = 32;
     CLASS_TYPE = 33;
+    NAME_SPACE = 34;
+    SYMBOL = 35;
+    TYPE_NULL = 36;
   }
   optional string name = 1;
   optional float f = 2;

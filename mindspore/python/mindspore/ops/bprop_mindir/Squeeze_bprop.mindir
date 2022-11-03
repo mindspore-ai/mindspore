@@ -1,0 +1,56 @@
+
+0.1.1	MindSpore*2.0.0:î
+j get_bprop_squeeze.72:[CNode]73:1 get_bprop_squeeze.72:[CNode]73:1"REF::bprop.74:Default/bprop.74-op52get_bprop_squeeze.72*
+get_bprop_squeeze.72:self*
+get_bprop_squeeze.72:x*
+get_bprop_squeeze.72:out*
+get_bprop_squeeze.72:Ñ„dout2"
+ get_bprop_squeeze.72:[CNode]73:1:@3140bf3d4cdd0e284b14c8e0404c78c8616ea5400ff577b8fb1e9276737406efJ/grad_array_ops.pyBÇ
+n
+get_bprop_squeeze.72:xbprop.74:shapex:2bprop.74:shapex:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op53
+…
+bprop.74:shapex:2bprop.74:[CNode]75:4bprop.74:[CNode]75:4"REF::S-Prim-is_shape_unknown:5:$Default/S-Prim-is_shape_unknown-op54
+h
+bprop.74:[CNode]75:4bprop.74:[CNode]76:6bprop.74:[CNode]76:6"REF::bool_.77:Default/bool_.77-op55
+€
+bprop.74:[CNode]76:6
+âœ“bprop.78
+âœ—bprop.79bprop.74:[CNode]80:7bprop.74:[CNode]80:7"REF::Switch:8:Default/Switch-op56
+Kbprop.74:[CNode]81:9bprop.74:[CNode]81:9"REF::bprop.74:[CNode]80:7:57
+p
+bprop.74:[CNode]81:9bprop.74:[CNode]82:10bprop.74:[CNode]82:10"REF::â†“bprop.83:Default/â†“bprop.83-op58bprop.742
+bprop.74:[CNode]82:10Bõ
+£â†“bprop.83:84:11â†“bprop.83:84:11":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:?Default/class 'mindspore.ops.operations.array_ops.Reshape'-op59
+u
+get_bprop_squeeze.72:Ñ„dout
+â†“bprop.83:Ñ„shapexâ†“bprop.83:84:12â†“bprop.83:84:12"REF::â†“bprop.83:84:11:60
+€
+â†“bprop.83:84:12â†“bprop.83:[CNode]85:13â†“bprop.83:[CNode]85:13"REF::S-Prim-MakeTuple:14:Default/S-Prim-MakeTuple-op61â†“bprop.83*
+â†“bprop.83:Ñ„shapex2
+â†“bprop.83:[CNode]85:13B
+after_block€	B"âœ—bprop.792
+bprop.74:shapex:2B¬
+ƒ
+get_bprop_squeeze.72:xâœ“bprop.78:shapex:15âœ“bprop.78:shapex:15"REF::S-Prim-TensorShape:16:Default/S-Prim-TensorShape-op62âœ“bprop.782
+âœ“bprop.78:shapex:15B³
+>[ValueNode]86[ValueNode]86"Constant*
+value*__bool__€
+p
+
+bool_.77:x
+[ValueNode]86bool_.77:[CNode]87:17bool_.77:[CNode]87:17"REF::getattr:18:Default/getattr-op63
+Nbool_.77:[CNode]88:19bool_.77:[CNode]88:19"REF::bool_.77:[CNode]87:17:64bool_.77*
+
+bool_.77:x2
+bool_.77:[CNode]88:19Pb
+Switch:8Switchb
+
+getattr:18getattrb
+S-Prim-Shape:3S-Prim-ShapebŽ
+S-Prim-is_shape_unknown:5S-Prim-is_shape_unknown1
+constexpr_module*mindspore.ops._utils.utils€%
+constexpr_name*is_shape_unknown€b'
+S-Prim-MakeTuple:14S-Prim-MakeTuplebm
+S-Prim-TensorShape:16S-Prim-TensorShape
+output_names€ŠZoutput€
+input_names€ŠZinput_x€h
