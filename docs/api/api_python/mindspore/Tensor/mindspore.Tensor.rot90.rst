@@ -3,7 +3,7 @@ mindspore.Tensor.rot90
 
 .. py:method:: mindspore.Tensor.rot90(k, dims)
 
-    沿轴指定的平面内将n-D张量旋转90度。
+    沿轴指定的平面内将n-D Tensor旋转90度。
     如果 `k>0`，旋转方向是从第一轴朝向第二轴，如果 `k<0`，旋转方向从第二轴朝向第一轴。
 
     参数：

@@ -4073,6 +4073,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         TypeError: If `kernel_size` or `stride` is not an int.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
+        ValueError: If `norm_type` is equal to 0.
         ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If length of shape of `x` is not equal to 2 or 3.
 
@@ -4099,6 +4100,8 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         norm_type = float(norm_type)
     else:
         raise TypeError(f"For lp_pool1d, the type of 'norm_type' must be float or int, but got {type(norm_type)}")
+    if norm_type == 0:
+        raise ValueError(f"For lp_pool1d, the value of 'norm_type' can not be 0.")
     sign = _get_cache_prim(ops.Sign)()
     squeeze = _get_cache_prim(ops.Squeeze)(0)
     expand_dims = _get_cache_prim(ops.ExpandDims)()
@@ -4153,6 +4156,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
+        ValueError: If `norm_type` is equal to 0.
         ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2`.
         ValueError: If length of shape of `x` is not equal to 4.
@@ -4187,6 +4191,8 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         norm_type = float(norm_type)
     else:
         raise TypeError(f"For lp_pool2d, the type of 'norm_type' must be float or int, but got {type(norm_type)}")
+    if norm_type == 0:
+        raise ValueError(f"For lp_pool2d, the value of 'norm_type' can not be 0.")
     sign = _get_cache_prim(ops.Sign)()
     if not isinstance(x, tuple):
         kernel_size = tuple((kernel_size, kernel_size))
