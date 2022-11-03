@@ -137,6 +137,7 @@ bool IsOneOfComputeDepend(const std::string &name) {
                                                 kNonDeterministicInts,
                                                 kFractionalAvgPoolGradOpName,
                                                 kDenseToDenseSetOperation,
+                                                kDenseToSparseSetOperation,
                                                 kSegmentMaxOpName,
                                                 kCSRSparseMatrixToSparseTensorOpName,
                                                 kSegmentMinOpName,

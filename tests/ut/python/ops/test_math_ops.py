@@ -30,6 +30,7 @@ from mindspore.ops.operations._grad_ops import IgammaGradA
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
 from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
+from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
 
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
@@ -782,6 +783,14 @@ test_case_math_ops = [
         'block': DenseToDenseSetOperation(set_operation="a-b", validate_indices=True),
         'desc_inputs': [Tensor(np.array([[1, 2, 4], [3, 4, 5]], np.int32)),
                         Tensor(np.array([[3, 2, 5], [1, 4, 7]], np.int32))],
+        'skip': ['backward']
+    }),
+    ('DenseToSparseSetOperation', {
+        'block': DenseToSparseSetOperation(set_operation="a-b", validate_indices=True),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [3, 4, 5]], np.int32)),
+                        Tensor(np.array([[0, 1], [1, 0]], np.int64)),
+                        Tensor(np.array([1, 6], np.int32)),
+                        Tensor(np.array([2, 3], np.int64))],
         'skip': ['backward']
     }),
     ('Deg2rad', {
