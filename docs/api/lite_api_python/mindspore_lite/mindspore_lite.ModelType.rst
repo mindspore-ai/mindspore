@@ -3,24 +3,17 @@ mindspore_lite.ModelType
 
 .. py:class:: mindspore_lite.ModelType
 
-    从文件加载或构建模型时，ModelType定义输入模型文件的类型。
+    适用于以下场景：
 
-    有关详细信息，请参见 `ModelType <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/model.py>`_ 。
-    运行以下命令导入包：
+    1. Converter时，设置 `export_mindir` 参数， `ModelType` 用于定义转换生成的模型类型。
 
-    .. code-block::
+    2. Converter之后，当从文件加载或构建模型以进行推理时， `ModelType` 用于定义输入模型框架类型。
 
-        from mindspore_lite import ModelType
+    目前，支持以下 `ModelType` ：
 
-    * **类型**
-
-      目前，支持以下第三方模型框架类型：
-      ``ModelType.MINDIR`` 类型和 ``ModelType.MINDIR_LITE`` 类型。
-      下表列出了详细信息。
-
-      ===========================  ================================================
-      定义                          说明
-      ===========================  ================================================
-      ``ModelType.MINDIR``         MindSpore模型的框架类型，该模型使用.mindir作为后缀
-      ``ModelType.MINDIR_LITE``    MindSpore Lite模型的框架类型，该模型使用.ms作为后缀
-      ===========================  ================================================
+    ===========================  ================================================
+    定义                          说明
+    ===========================  ================================================
+    `ModelType.MINDIR`           MindSpore模型的框架类型，该模型使用.mindir作为后缀。
+    `ModelType.MINDIR_LITE`      MindSpore Lite模型的框架类型，该模型使用.ms作为后缀。
+    ===========================  ================================================

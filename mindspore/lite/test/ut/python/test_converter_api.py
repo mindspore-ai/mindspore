@@ -23,269 +23,276 @@ import pytest
 
 
 # ============================ Converter ============================
-def test_converter_01():
+def test_converter_fmk_type_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type="", model_file="test.tflite", output_file="test.tflite")
     assert "fmk_type must be FmkType" in str(raise_info.value)
 
 
-def test_converter_02():
+def test_converter_model_file_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file=1, output_file="mobilenetv2.tflite")
     assert "model_file must be str" in str(raise_info.value)
 
 
-def test_converter_03():
+def test_converter_model_file_not_exist_error():
     with pytest.raises(RuntimeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="test.tflite",
                                      output_file="mobilenetv2.tflite")
     assert "model_file does not exist" in str(raise_info.value)
 
 
-def test_converter_04():
+def test_converter_output_file_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite", output_file=1)
     assert "output_file must be str" in str(raise_info.value)
 
 
-def test_converter_06():
+def test_converter_weight_file_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", weight_file=1)
     assert "weight_file must be str" in str(raise_info.value)
 
 
-def test_converter_08():
+def test_converter_weight_file_not_exist_error():
     with pytest.raises(RuntimeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", weight_file="test.caffemodel")
     assert "weight_file does not exist" in str(raise_info.value)
 
 
-def test_converter_07():
+def test_converter_common_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", weight_file="")
     assert "config_file:" in str(converter)
 
 
-def test_converter_09():
+def test_converter_config_file_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", config_file=1)
     assert "config_file must be str" in str(raise_info.value)
 
 
-def test_converter_10():
+def test_converter_config_file_not_exist_error():
     with pytest.raises(RuntimeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", config_file="mobilenetv2_full_quant.cfg")
     assert "config_file does not exist" in str(raise_info.value)
 
 
-def test_converter_11():
+def test_converter_weight_fp16_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", weight_fp16=1)
     assert "weight_fp16 must be bool" in str(raise_info.value)
 
 
-def test_converter_12():
+def test_converter_common_weight_fp16_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", weight_fp16=True)
     assert "weight_fp16: True" in str(converter)
 
 
-def test_converter_13():
+def test_converter_input_shape_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", input_shape="{'input': [1, 112, 112, 3]}")
     assert "input_shape must be dict" in str(raise_info.value)
 
 
-def test_converter_14():
-    converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                 output_file="mobilenetv2.tflite", input_shape={})
-    assert "input_shape: {}" in str(converter)
+def test_converter_input_shape_key_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                     output_file="mobilenetv2.tflite", input_shape={1: '[1, 112, 112, 3]'})
+    assert "input_shape key must be str" in str(raise_info.value)
 
 
-def test_converter_15():
+def test_converter_input_shape_value_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", input_shape={'input': '[1, 112, 112, 3]'})
     assert "input_shape value must be list" in str(raise_info.value)
 
 
-def test_converter_17():
-    converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                 output_file="mobilenetv2.tflite", input_shape={'input': []})
-    assert "input_shape: {'input': []}" in str(converter)
-
-
-def test_converter_18():
+def test_converter_input_shape_value_element_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", input_shape={'input': [1, '112', 112, 3]})
     assert "input_shape value's element must be int" in str(raise_info.value)
 
 
-def test_converter_19():
+def test_converter_input_shape_01():
+    converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                 output_file="mobilenetv2.tflite", input_shape={})
+    assert "input_shape: {}" in str(converter)
+
+
+def test_converter_input_shape_02():
+    converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                 output_file="mobilenetv2.tflite", input_shape={'input': []})
+    assert "input_shape: {'input': []}" in str(converter)
+
+
+def test_converter_input_shape_03():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite",
                                  input_shape={'input1': [1, 2, 3, 4], 'input2': [4, 3, 2, 1]})
     assert "input_shape: {'input1': [1, 2, 3, 4], 'input2': [4, 3, 2, 1]}" in str(converter)
 
 
-def test_converter_20():
+def test_converter_input_format_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", input_format=1)
     assert "input_format must be Format" in str(raise_info.value)
 
 
-def test_converter_21():
+def test_converter_input_format_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", input_format=mslite.Format.NCHW)
     assert "input_format: Format.NCHW" in str(converter)
 
 
-def test_converter_22():
+def test_converter_input_data_type_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", input_data_type=1)
     assert "input_data_type must be DataType" in str(raise_info.value)
 
 
-def test_converter_23():
+def test_converter_input_data_type_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", input_data_type=mslite.DataType.FLOAT16)
     assert "input_data_type: DataType.FLOAT16" in str(converter)
 
 
-def test_converter_24():
+def test_converter_output_data_type_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", output_data_type=1)
     assert "output_data_type must be DataType" in str(raise_info.value)
 
 
-def test_converter_25():
+def test_converter_output_data_type_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", output_data_type=mslite.DataType.FLOAT16)
     assert "output_data_type: DataType.FLOAT16" in str(converter)
 
 
-def test_converter_26():
+def test_converter_export_mindir_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", export_mindir=1)
     assert "export_mindir must be ModelType" in str(raise_info.value)
 
 
-def test_converter_27():
+def test_converter_export_mindir_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", export_mindir=mslite.ModelType.MINDIR_LITE)
     assert "export_mindir: ModelType.MINDIR_LITE" in str(converter)
 
 
-def test_converter_28():
+def test_converter_decrypt_key_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", decrypt_key=1)
     assert "decrypt_key must be str" in str(raise_info.value)
 
 
-def test_converter_29():
+def test_converter_decrypt_key_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", decrypt_key="111")
     assert "decrypt_key: 111" in str(converter)
 
 
-def test_converter_30():
+def test_converter_decrypt_mode_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", decrypt_mode=1)
     assert "decrypt_mode must be str" in str(raise_info.value)
 
 
-def test_converter_31():
+def test_converter_decrypt_mode_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", decrypt_mode="AES-CBC")
     assert "decrypt_mode: AES-CBC" in str(converter)
 
 
-def test_converter_32():
+def test_converter_enable_encryption_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", enable_encryption="")
     assert "enable_encryption must be bool" in str(raise_info.value)
 
 
-def test_converter_33():
+def test_converter_enable_encryption_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", enable_encryption=True)
     assert "enable_encryption: True" in str(converter)
 
 
-def test_converter_34():
+def test_converter_encrypt_key_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", encrypt_key=1)
     assert "encrypt_key must be str" in str(raise_info.value)
 
 
-def test_converter_35():
+def test_converter_encrypt_key_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", encrypt_key="111")
     assert "encrypt_key: 111" in str(converter)
 
 
-def test_converter_36():
+def test_converter_infer_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", infer=1)
     assert "infer must be bool" in str(raise_info.value)
 
 
-def test_converter_37():
+def test_converter_infer_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", infer=True)
     assert "infer: True" in str(converter)
 
 
-def test_converter_38():
+def test_converter_train_model_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", train_model=1)
     assert "train_model must be bool" in str(raise_info.value)
 
 
-def test_converter_39():
+def test_converter_train_model_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", train_model=True)
     assert "train_model: True" in str(converter)
 
 
-def test_converter_40():
+def test_converter_no_fusion_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", no_fusion=1)
     assert "no_fusion must be bool" in str(raise_info.value)
 
 
-def test_converter_41():
+def test_converter_no_fusion_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", no_fusion=True)
     assert "no_fusion: True" in str(converter)
 
 
-def test_converter_42():
+def test_converter_converter_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite")
     converter.converter()
     assert "config_file:" in str(converter)
 
 
-def test_converter_43():
+def test_converter_set_config_info_section_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite")
@@ -295,27 +302,7 @@ def test_converter_43():
     assert "section must be str" in str(raise_info.value)
 
 
-def test_converter_44():
-    with pytest.raises(TypeError) as raise_info:
-        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                     output_file="mobilenetv2.tflite")
-        section = "acl_param"
-        config_info = {2: "3"}
-        converter.set_config_info(section, config_info)
-    assert "config_info key must be str" in str(raise_info.value)
-
-
-def test_converter_45():
-    with pytest.raises(TypeError) as raise_info:
-        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                     output_file="mobilenetv2.tflite")
-        section = "acl_param"
-        config_info = {"device_id": 3}
-        converter.set_config_info(section, config_info)
-    assert "config_info val must be str" in str(raise_info.value)
-
-
-def test_converter_46():
+def test_converter_set_config_info_config_info_type_error():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite")
@@ -325,7 +312,27 @@ def test_converter_46():
     assert "config_info must be dict" in str(raise_info.value)
 
 
-def test_converter_47():
+def test_converter_set_config_info_config_info_key_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                     output_file="mobilenetv2.tflite")
+        section = "acl_param"
+        config_info = {2: "3"}
+        converter.set_config_info(section, config_info)
+    assert "config_info key must be str" in str(raise_info.value)
+
+
+def test_converter_set_config_info_config_info_value_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                     output_file="mobilenetv2.tflite")
+        section = "acl_param"
+        config_info = {"device_id": 3}
+        converter.set_config_info(section, config_info)
+    assert "config_info val must be str" in str(raise_info.value)
+
+
+def test_converter_set_config_info_01():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite")
     section = "acl_param"

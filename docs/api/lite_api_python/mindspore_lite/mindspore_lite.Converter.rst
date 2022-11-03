@@ -3,30 +3,54 @@ mindspore_lite.Converter
 
 .. py:class:: mindspore_lite.Converter(fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False, input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32, output_data_type=DataType.FLOAT32, export_mindir=ModelType.MINDIR_LITE, decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False, no_fusion=False)
 
-    转换用于转换第三方模型。
+    构造 `Converter` 的类。使用场景是：1. 将第三方模型转换生成MindSpore模型或MindSpore Lite模型；2. 将MindSpore模型转换生成MindSpore Lite模型。
+
 
     .. note::
-        参数默认值是None时表示不设置。
+        请先构造Converter类，再通过执行Converter.converter()方法生成模型。
+
+        加解密功能仅在编译时设置为 `MSLITE_ENABLE_MODEL_ENCRYPTION=on` 时生效，并且仅支持Linux x86平台。其中密钥为十六进制表示的字符串，如密钥定义为 `(b)0123456789ABCDEF` 对应的十六进制表示为 `30313233343536373839414243444546` ，Linux平台用户可以使用 `xxd` 工具对字节表示的密钥进行十六进制表达转换。需要注意的是，加解密算法在1.7版本进行了更新，导致新版的python接口不支持对1.6及其之前版本的MindSpore Lite加密导出的模型进行转换。
 
     参数：
         - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。
-        - **model_file** (str) - 输入模型文件路径。e.g. "/home/user/model.prototxt"。选项：TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite" | PYTORCH: "\*.pt or \*.pth"。
-        - **output_file** (str) - 输出模型文件路径。可自动生成.ms后缀。e.g. "/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
-        - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选。e.g. "/home/user/model.caffemodel"。默认值：""。
-        - **config_file** (str，可选) - 作为训练后量化或离线拆分算子并行的配置文件路径，禁用算子融合功能并将插件设置为so路径。默认值：""。
-        - **weight_fp16** (bool，可选) - 在Float16数据类型中序列化常量张量，仅对Float32数据类型中的常量张量有效。默认值：""。
-        - **input_shape** (dict{str: list[int]}，可选) - 设置模型输入的维度，输入维度的顺序与原始模型一致。对于某些模型，模型结构可以进一步优化，但转换后的模型可能会失去动态形状的特征。e.g. {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}。默认值：""。
-        - **input_format** (Format，可选) - 指定导出模型的输入格式。仅对四维输入有效。选项：Format.NHWC | Format.NCHW。默认值：Format.NHWC。
-        - **input_data_type** (DataType，可选) - 输入张量的数据类型，默认与模型中定义的类型相同。默认值：DataType.FLOAT32。
-        - **output_data_type** (DataType，可选) - 输出张量的数据类型，默认与模型中定义的类型相同。默认值：DataType.FLOAT32。
-        - **export_mindir** (ModelType，可选) - 导出模型文件的类型。默认值：ModelType.MINDIR_LITE。
-        - **decrypt_key** (str，可选) - 用于解密文件的密钥，以十六进制字符表示。仅当fmk_type为FmkType.MINDIR时有效。默认值：""。
-        - **decrypt_mode** (str，可选) - MindIR文件的解密方法。仅在设置decrypt_key时有效。选项："AES-GCM" | "AES-CBC"。默认值："AES-GCM"。
-        - **enable_encryption** (bool，可选) - 是否导出加密模型。默认值：False。
-        - **encrypt_key** (str，可选) - 用于加密文件的密钥，以十六进制字符表示。仅支持decrypt_mode是"AES-GCM"，密钥长度为16。默认值：""。
-        - **infer** (bool，可选) - 转换后是否进行预推理。默认值：False。
+        - **model_file** (str) - 转换时的输入模型文件路径。例如："/home/user/model.prototxt"。选项：TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" | TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth"。
+        - **output_file** (str) - 转换时的输出模型文件路径。可自动生成.ms后缀。如果将 `export_mindir` 设置为ModelType.MINDIR，那么将生成MindSpore模型，该模型使用.mindir作为后缀。如果将 `export_mindir` 设置为ModelType.MINDIR_LITE，那么将生成MindSpore Lite模型，该模型使用.ms作为后缀。例如：输入模型为"/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
+        - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选，Caffe模型一般分为两个文件： `model.prototxt` 是模型结构，对应 `model_file` 参数； `model.caffemodel` 是模型权值文件，对应 `weight_file` 参数。例如："/home/user/model.caffemodel"。默认值：""。
+        - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值：""。
+        - **weight_fp16** (bool，可选) - 若True，则在转换时，会将模型中Float32的常量Tensor保存成Float16数据类型，压缩生成的模型尺寸。之后根据 `DeviceInfo` 的 `enable_fp16` 参数决定输入的数据类型执行推理。 `weight_fp16` 的优先级很低，比如如果开启了量化，那么对于已经量化的权重， `weight_fp16` 不会再次生效。 `weight_fp16` 仅对Float32数据类型中的常量Tensor有效。默认值：False。
+        - **input_shape** (dict{str: list[int]}，可选) - 设置模型输入的维度，输入维度的顺序与原始模型一致。在以下场景下，用户可能需要设置该参数。例如：{"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}。默认值：None，等同于设置为{}。
+
+          - **用法1** - 待转换模型的输入是动态shape，准备采用固定shape推理，则设置该参数为固定shape。设置之后，在对Converter后的模型进行推理时，默认输入的shape与该参数设置一样，无需再进行resize操作。
+          - **用法2** - 无论待转换模型的原始输入是否为动态shape，准备采用固定shape推理，并希望模型的性能尽可能优化，则设置该参数为固定shape。设置之后，将对模型结构进一步优化，但转换后的模型可能会失去动态shape的特征（部分跟shape强相关的算子会被融合）。
+          - **用法3** - 使用Converter功能来生成用于Micro推理执行代码时，推荐配置该参数，以减少部署过程中出错的概率。当模型含有Shape算子或者待转换模型输入为动态shape时，则必须配置该参数，设置固定shape，以支持相关shape优化和代码生成。
+
+        - **input_format** (Format，可选) - 设置导出模型的输入format。仅对四维输入有效。支持以下2种输入格式：Format.NCHW | Format.NHWC。默认值：Format.NHWC。
+
+          - **Format.NCHW** - 按批次N、通道C、高度H和宽度W的顺序存储Tensor数据。
+          - **Format.NHWC** - 按批次N、高度H、宽度W和通道C的顺序存储Tensor数据。
+
+        - **input_data_type** (DataType，可选) - 设置量化模型输入Tensor的数据类型。仅当模型输入tensor的量化参数（ `scale` 和 `zero point` ）都具备时有效。默认与原始模型输入tensor的data type保持一致。支持以下4种数据类型：DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN。默认值：DataType.FLOAT32。
+
+          - **DataType.FLOAT32** - 32位浮点数。
+          - **DataType.INT8**    - 8位整型数。
+          - **DataType.UINT8**   - 无符号8位整型数。
+          - **DataType.UNKNOWN** - 设置与模型输入Tensor相同的DataType。
+
+        - **output_data_type** (DataType，可选) - 设置量化模型输出tensor的data type。仅当模型输出tensor的量化参数（scale和zero point）都具备时有效。默认与原始模型输出tensor的data type保持一致。支持以下4种数据类型：DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN。默认值：DataType.FLOAT32。
+
+          - **DataType.FLOAT32** - 32位浮点数。
+          - **DataType.INT8**    - 8位整型数。
+          - **DataType.UINT8**   - 无符号8位整型数。
+          - **DataType.UNKNOWN** - 设置与模型输出Tensor相同的DataType。
+
+        - **export_mindir** (ModelType，可选) - 设置导出模型文件的类型。选项：ModelType.MINDIR | ModelType.MINDIR_LITE。默认值：ModelType.MINDIR_LITE。
+        - **decrypt_key** (str，可选) - 设置用于加载密文MindIR时的密钥，以十六进制字符表示。仅当fmk_type为FmkType.MINDIR时有效。默认值：""。
+        - **decrypt_mode** (str，可选) - 设置加载密文MindIR的模式，只在设置了 `decryptKey` 时有效。选项："AES-GCM" | "AES-CBC"。默认值："AES-GCM"。
+        - **enable_encryption** (bool，可选) - 导出模型时是否加密，导出加密可保护模型完整性，但会增加运行时初始化时间。默认值：False。
+        - **encrypt_key** (str，可选) - 设置用于加密文件的密钥，以十六进制字符表示。仅支持当 `decrypt_mode` 是"AES-GCM"，密钥长度为16。默认值：""。
+        - **infer** (bool，可选) - Converter后是否进行预推理。默认值：False。
         - **train_model** (bool，可选) - 模型是否将在设备上进行训练。默认值：False。
-        - **no_fusion** (bool，可选) - 避免融合优化，默认允许融合优化。默认值：False。
+        - **no_fusion** (bool，可选) - 是否避免融合优化，默认允许融合优化。默认值：False。
 
     异常：
         - **TypeError** - `fmk_type` 不是FmkType类型。
@@ -65,29 +89,33 @@ mindspore_lite.Converter
 
     .. py:method:: get_config_info()
 
-        获取转换的配置信息。配套set_config_info方法使用，用于在线推理场景。在get_config_info前，请先用set_config_info方法赋值。
+        获取Converter时的配置信息。配套 `set_config_info` 方法使用，用于在线推理场景。在 `get_config_info` 前，请先用 `set_config_info` 方法赋值。
 
         返回：
-            dict{str: dict{str: str}}，在转换中设置的配置信息。
+            dict{str: dict{str: str}}，在Converter中设置的配置信息。
 
-    .. py:method:: set_config_info(section, config_info)
+    .. py:method:: set_config_info(section="", config_info=None)
 
-        设置转换时的配置信息。配套get_config_info方法使用，用于在线推理场景。
+        设置Converter时的配置信息。配套 `get_config_info` 方法使用，用于在线推理场景。
 
         参数：
-            - **section** (str) - 配置参数的类别。配合config_info一起，设置confile的个别参数。e.g. 对于section是"common_quant_param"，config_info是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
-              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_。
-              有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
+            - **section** (str，可选) - 配置参数的类别。配合 `config_info` 一起，设置confile的个别参数。例如：对于 `section` 是"common_quant_param"， `config_info` 是{"quant_type":"WEIGHT_QUANT"}。默认值：""。
 
-              - "common_quant_param"：公共量化参数部分。量化的配置参数之一。
-              - "mixed_bit_weight_quant_param"：混合位权重量化参数部分。量化的配置参数之一。
-              - "full_quant_param"：全量化参数部分。量化的配置参数之一。
-              - "data_preprocess_param"：数据预处理参数部分。量化的配置参数之一。
-              - "registry"：扩展配置参数部分。扩展的配置参数之一。
+              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。
 
-            - **config_info** (dict{str: str}，可选) - 配置参数列表。配合section一起，设置confile的个别参数。e.g. 对于section是"common_quant_param"，config_info是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
-              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_。
-              有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
+              有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。
+
+              - "common_quant_param"：公共量化参数部分。
+              - "mixed_bit_weight_quant_param"：混合位权重量化参数部分。
+              - "full_quant_param"：全量化参数部分。
+              - "data_preprocess_param"：数据预处理量化参数部分。
+              - "registry"：扩展配置参数部分。
+
+            - **config_info** (dict{str: str}，可选) - 配置参数列表。配合 `section` 一起，设置confile的个别参数。例如：对于 `section` 是"common_quant_param"， `config_info` 是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
+
+              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。
+
+              有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。
 
         异常：
             - **TypeError** - `section` 不是str类型。

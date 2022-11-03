@@ -3,24 +3,24 @@ mindspore_lite.Context
 
 .. py:class:: mindspore_lite.Context(thread_num=None, inter_op_parallel_num=None, thread_affinity_mode=None, thread_affinity_core_list=None, enable_parallel=False)
 
-    Context用于在执行期间存储环境变量。
+    Context用于在执行期间传递环境变量。
 
     在运行程序之前，应配置context。如果没有配置，默认情况下将根据设备目标进行自动设置。
 
     .. note::
-        如果同时设置thread_affinity_mode和thread_affinity_core_list，则thread_affinity_core_list有效，但thread_affinity_mode无效。
-        参数默认值是None时表示不设置。
+        如果同时设置 `thread_affinity_core_list` 和 `thread_affinity_mode` 在同一个context中，则 `thread_affinity_core_list` 生效，
+        但 `thread_affinity_mode` 无效。
 
     参数：
-        - **thread_num** (int，可选) - 设置运行时的线程数。默认值：None。
-        - **inter_op_parallel_num** (int，可选) - 设置运行时算子的并行数。默认值：None。
-        - **thread_affinity_mode** (int，可选) - 与CPU核心的线程亲和模式。默认值：None。
+        - **thread_num** (int，可选) - 设置运行时的线程数。 `thread_num` 不能小于 `inter_op_parallel_num` 。将 `thread_num` 设置为0表示 `thread_num` 将基于计算机性能和核心数自动调整。默认值：None，等同于设置为0。
+        - **inter_op_parallel_num** (int，可选) - 设置运行时算子的并行数。 `inter_op_parallel_num` 不能大于 `thread_num` 。将 `inter_op_parallel_num` 设置为0表示 `inter_op_parallel_num` 将基于计算机性能和核心数自动调整。默认值：None，等同于设置为0。
+        - **thread_affinity_mode** (int，可选) - 设置运行时的CPU/GPU/NPU绑核策略模式。支持以下 `thread_affinity_mode` 。默认值：None，等同于设置为0。
 
-          - **0** - 无亲和性。
-          - **1** - 大核优先。
-          - **2** - 小核优先。
+          - **0** - 不绑核。
+          - **1** - 绑大核优先。
+          - **2** - 绑中核优先。
 
-        - **thread_affinity_core_list** (list[int]，可选) - 与CPU核心的线程亲和列表。默认值：None。
+        - **thread_affinity_core_list** (list[int]，可选) - 设置运行时的CPU/GPU/NPU绑核策略列表。例如：[0,1]在CPU设备上代表指定绑定0号CPU和1号CPU。默认值：None，等同于设置为[]。
         - **enable_parallel** (bool，可选) - 设置状态是否启用并行执行模型推理或并行训练。默认值：False。
 
     异常：

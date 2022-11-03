@@ -3,7 +3,7 @@ mindspore_lite.AscendDeviceInfo
 
 .. py:class:: mindspore_lite.AscendDeviceInfo(device_id=0)
 
-    用于设置Ascend设备信息的Helper类，继承自DeviceInfo基类。
+    用于描述Ascend设备硬件信息的辅助类，继承 :class:`mindspore_lite.DeviceInfo` 基类。
 
     参数：
         - **device_id** (int，可选) - 设备id。默认值：0。
