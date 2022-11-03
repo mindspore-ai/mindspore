@@ -56,6 +56,11 @@ namespace gpu {
     }                                   \
   }
 
+// The empty key, empty value(index) and erased key of CucoDynamicMap.
+constexpr static int kEmptyKey = -1;
+constexpr static int kEmptyValue = -1;
+constexpr static int kErasedKey = -2;
+
 template <typename Key, typename Value, typename Allocator>
 using CucoDynamicMap = cuco::dynamic_map<Key, Value, cuda::thread_scope_device, Allocator>;
 
@@ -96,8 +101,8 @@ GPUHashTable<Key, Value, Allocator>::~GPUHashTable() {
 template <typename Key, typename Value, typename Allocator>
 void GPUHashTable<Key, Value, Allocator>::Initialize(const Allocator &alloc) {
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
-  cuda_dynamic_map_ = std::make_unique<CudaDynamicMap<Key, int32_t, Allocator>>(static_cast<Key>(-1), -1,
-                                                                                static_cast<Key>(-2), alloc, stream);
+  cuda_dynamic_map_ = std::make_unique<CudaDynamicMap<Key, int32_t, Allocator>>(
+    static_cast<Key>(kEmptyKey), kEmptyValue, static_cast<Key>(kErasedKey), alloc, stream);
 
   CudaAtomicSize host_init_atomic_size_t(0);
   CudaAtomicInt host_init_atomic_int(0);
@@ -164,9 +169,9 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
 }
 
 template <typename Key, typename Value, typename Allocator>
-bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, const std::string &initializer,
+bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, const std::string &initializer,
                                                Value *outputs, void *stream) {
-  MS_ERROR_IF_NULL(key);
+  MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(outputs);
   MS_ERROR_IF_NULL(stream);
   int *indices = nullptr;
@@ -174,9 +179,9 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   MS_ERROR_IF_NULL(indices);
   Reserve(size_ + key_num, stream);
 
-  // 1. Get all indices in blocks according to the key.
+  // 1. Get all indices in blocks according to the keys.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
+  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
   // 2. Insert default value according to initializer, initializer can be 'normal', 'zeros' or 'ones'.
   RETURN_IF_FALSE_WITH_LOG(InsertDefaultValueByInitializer(key_num, initializer, indices, cuda_stream),
@@ -191,9 +196,9 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
 }
 
 template <typename Key, typename Value, typename Allocator>
-bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, const Value &default_value,
+bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, const Value &default_value,
                                                Value *outputs, void *stream) {
-  MS_ERROR_IF_NULL(key);
+  MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(outputs);
   MS_ERROR_IF_NULL(stream);
   int *indices = nullptr;
@@ -201,9 +206,9 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
   MS_ERROR_IF_NULL(indices);
   Reserve(size_ + key_num, stream);
 
-  // 1. Get all indices in blocks according to the key.
+  // 1. Get all indices in blocks according to the keys.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
+  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
   // 2. Insert default value into map by specific value.
   InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(
@@ -218,8 +223,8 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *key, size_t key_num, c
 }
 
 template <typename Key, typename Value, typename Allocator>
-bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *key, size_t key_num, const Value *value, void *stream) {
-  MS_ERROR_IF_NULL(key);
+bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *keys, size_t key_num, const Value *value, void *stream) {
+  MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(value);
   MS_ERROR_IF_NULL(stream);
   int *indices = nullptr;
@@ -227,9 +232,9 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *key, size_t key_num,
   MS_ERROR_IF_NULL(indices);
   Reserve(size_ + key_num, stream);
 
-  // 1. Get all indices in blocks according to the key.
+  // 1. Get all indices in blocks according to the keys.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(key, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
+  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
 
   // 2. Insert values into map by indices in blocks.
   size_t total_insert_size = value_dim_ * key_num;
@@ -244,9 +249,28 @@ template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::Erase(const Key *keys, size_t key_num, void *stream) {
   MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(stream);
+
+  int *indices = nullptr;
+  AllocateMemory(key_num * sizeof(int), &indices);
+  MS_ERROR_IF_NULL(indices);
+
+  // 1. Get all indices in blocks according to the key.
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
+  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, false, indices, cuda_stream), "Get indices by keys failed.");
+
+  // 2. Update idle status for erased slot.
+  EraseElements<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(key_num, elements_per_block_, kEmptyValue,
+                                                                      indices, idle_flags_ptr_);
+
+  // 3. Erase all keys in dynamic map.
   MS_ERROR_IF_NULL(cuda_dynamic_map_);
   auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
   dynamic_map.erase(keys, keys + key_num, reinterpret_cast<cudaStream_t>(stream));
+
+  // 4. Update size.
+  size_ = dynamic_map.get_size();
+
+  FreeMemory(indices);
   return true;
 }
 
@@ -497,7 +521,10 @@ bool GPUHashTable<Key, Value, Allocator>::GetIndicesByKeys(const Key *key, size_
   MS_ERROR_IF_NULL(stream);
   MS_ERROR_IF_NULL(cuda_dynamic_map_);
   auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
-  dynamic_map.reserve(key_num + dynamic_map.get_size());
+  if (insert_miss_key) {
+    dynamic_map.reserve(key_num + dynamic_map.get_size());
+  }
+
   size_t submap_idx = 0;
   uint32_t device_id = GET_CTX_DEVICE_ID;
   size_t remaining_key_num = key_num;

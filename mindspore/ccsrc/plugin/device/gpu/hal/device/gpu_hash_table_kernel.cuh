@@ -225,6 +225,21 @@ __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const i
     }
   }
 }
+
+// Erase elements in hash map, update idle status for erased slots.
+__global__ void EraseElements(size_t erase_num, size_t elements_per_block, int empty_index, const int *erase_indices,
+                              bool **idle_flags_ptr) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < erase_num; pos += blockDim.x * gridDim.x) {
+    // Elements which do not exist in hash map.
+    if (erase_indices[pos] == empty_index) {
+      continue;
+    }
+
+    const size_t block_idx = erase_indices[pos] / elements_per_block;
+    const size_t offset_in_block = erase_indices[pos] % elements_per_block;
+    idle_flags_ptr[block_idx][offset_in_block] = true;
+  }
+}
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
