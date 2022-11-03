@@ -51,6 +51,27 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   }
   return op_run_info;
 }
+
+size_t GetOutputTensorNumForTuple(const CNodePtr &make_tuple) {
+  size_t output_num = 0;
+  MS_EXCEPTION_IF_NULL(make_tuple);
+  if (IsPrimitiveCNode(make_tuple, prim::kPrimMakeTuple)) {
+    for (size_t i = 1; i < make_tuple->size(); ++i) {
+      const auto &input_i = make_tuple->input(i);
+      MS_EXCEPTION_IF_NULL(input_i);
+      if (input_i->isa<CNode>()) {
+        auto cnode = input_i->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
+        output_num += GetOutputTensorNumForTuple(cnode);
+      } else if (input_i->isa<Parameter>()) {
+        output_num += 1;
+      }
+    }
+  } else {
+    output_num += common::AnfAlgo::GetOutputTensorNum(make_tuple);
+  }
+  return output_num;
+}
 }  // namespace
 
 void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
@@ -70,7 +91,7 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
     // To clean up all value nodes in PyNative after run grad graph
     grad_graph->AddValueNode(output_vnode);
     MS_LOG(DEBUG) << "Original output value node: " << output_vnode->ToString();
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = GetOutputTensorNumForTuple(cnode);
     if (index + output_num > total_output_tensors.size()) {
       MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
                         << ", but the current index: " << index << ", output num: " << output_num;
