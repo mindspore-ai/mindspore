@@ -200,27 +200,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   UserDataPtr user_data() const { return user_data_; }
   void set_user_data(const UserDataPtr &user_data) { user_data_ = user_data; }
   // Free the ptr in user data when the ref count is 0.
-  virtual void ClearUserData() {
-    if (user_data_ == nullptr) {
-      return;
-    }
-
-    auto user_data_type = user_data_->get<UserDataType>(kUserDataType);
-    MS_EXCEPTION_IF_NULL(user_data_type);
-    if (*user_data_type == UserDataType::kUserTypeHashTable) {
-      const auto &key_type = user_data_->get<TypeId>(kHashTableKeyType);
-      const auto &value_type = user_data_->get<TypeId>(kHashTableValueType);
-      MS_EXCEPTION_IF_NULL(key_type);
-      MS_EXCEPTION_IF_NULL(value_type);
-      if (*key_type == TypeId::kNumberTypeInt32 && *value_type == TypeId::kNumberTypeFloat32) {
-        const auto &user_data_data = user_data_->get<HashTable<int, float>>(kUserDataData);
-        MS_EXCEPTION_IF_NULL(user_data_data);
-        if (!user_data_data->Clear()) {
-          MS_LOG(EXCEPTION) << "Clear user data failed.";
-        }
-      }
-    }
-  }
+  virtual void ClearUserData() {}
 
  protected:
   const void *ptr() const { return ptr_; }
