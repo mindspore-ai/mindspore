@@ -491,7 +491,7 @@ class Parameter(Tensor_):
         else:
             info.cloned_obj = [x]
         self.param_info = info
-        param_info_clone.cloned_obj = x
+        param_info_clone.obj = x
         x.param_info = param_info_clone
         x.is_init = False
         x.init = self.init
