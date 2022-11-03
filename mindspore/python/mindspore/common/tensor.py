@@ -1871,17 +1871,20 @@ class Tensor(Tensor_):
             return self
         return tensor_operator_registry.get('cast')(self, dtype)
 
-    def argmax(self, axis=None):
+    def argmax(self, axis=None, keepdims=False):
         """
         For details, please refer to :func:`mindspore.ops.argmax`.
         """
         a = self
+        is_axis_none = False
         if axis is None:
             a = a.ravel()
             axis = 0
-        else:
-            axis = validator.check_axis_in_range(axis, a.ndim)
-        return tensor_operator_registry.get('argmax')(axis)(a)
+            is_axis_none = True
+        out = tensor_operator_registry.get('argmax')(axis, mstype.int64)(a)
+        if keepdims and not is_axis_none:
+            out = out.expand_dims(axis)
+        return out
 
     def argmin(self, axis=None):
         """

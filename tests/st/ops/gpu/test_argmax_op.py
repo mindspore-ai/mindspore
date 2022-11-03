@@ -20,10 +20,8 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.common import dtype as mstype
-import mindspore.ops as ops
-from mindspore.ops import functional as F
 
 
 class NetArgmax(nn.Cell):
@@ -104,7 +102,7 @@ def test_argmax_high_dims():
 
 def adaptive_argmax_functional(nptype):
     x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(nptype))
-    output = F.argmax(x, axis=-1, output_type=mstype.int32)
+    output = ops.argmax(x, axis=-1)
     expected = np.array([1, 0, 0]).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -161,8 +159,8 @@ def test_argmax_dynamic_shape():
 @pytest.mark.env_onecard
 def test_argmax_support_types():
     """
-    Feature: test ops.argmax.
-    Description: test ops.argmax with different types.
+    Feature: test ops.Argmax.
+    Description: test ops.Argmax with different types.
     Expectation: the result match with expected result.
     """
     x_fp16 = Tensor([1., 3., 2.], mstype.float16)
@@ -177,29 +175,29 @@ def test_argmax_support_types():
     x_uint32 = Tensor([1, 3, 2], mstype.uint32)
     x_uint64 = Tensor([1, 3, 2], mstype.uint64)
 
-    out1_fp16 = ops.argmax(x_fp16, axis=0, output_type=mstype.int32)
-    out1_fp32 = ops.argmax(x_fp32, axis=0, output_type=mstype.int32)
-    out1_fp64 = ops.argmax(x_fp64, axis=0, output_type=mstype.int32)
-    out1_int8 = ops.argmax(x_int8, axis=0, output_type=mstype.int32)
-    out1_int16 = ops.argmax(x_int16, axis=0, output_type=mstype.int32)
-    out1_int32 = ops.argmax(x_int32, axis=0, output_type=mstype.int32)
-    out1_int64 = ops.argmax(x_int64, axis=0, output_type=mstype.int32)
-    out1_uint8 = ops.argmax(x_uint8, axis=0, output_type=mstype.int32)
-    out1_uint16 = ops.argmax(x_uint16, axis=0, output_type=mstype.int32)
-    out1_uint32 = ops.argmax(x_uint32, axis=0, output_type=mstype.int32)
-    out1_uint64 = ops.argmax(x_uint64, axis=0, output_type=mstype.int32)
+    out1_fp16 = ops.Argmax(axis=0, output_type=mstype.int32)(x_fp16)
+    out1_fp32 = ops.Argmax(axis=0, output_type=mstype.int32)(x_fp32)
+    out1_fp64 = ops.Argmax(axis=0, output_type=mstype.int32)(x_fp64)
+    out1_int8 = ops.Argmax(axis=0, output_type=mstype.int32)(x_int8)
+    out1_int16 = ops.Argmax(axis=0, output_type=mstype.int32)(x_int16)
+    out1_int32 = ops.Argmax(axis=0, output_type=mstype.int32)(x_int32)
+    out1_int64 = ops.Argmax(axis=0, output_type=mstype.int32)(x_int64)
+    out1_uint8 = ops.Argmax(axis=0, output_type=mstype.int32)(x_uint8)
+    out1_uint16 = ops.Argmax(axis=0, output_type=mstype.int32)(x_uint16)
+    out1_uint32 = ops.Argmax(axis=0, output_type=mstype.int32)(x_uint32)
+    out1_uint64 = ops.Argmax(axis=0, output_type=mstype.int32)(x_uint64)
 
-    out2_fp16 = ops.argmax(x_fp16, axis=0, output_type=mstype.int64)
-    out2_fp32 = ops.argmax(x_fp32, axis=0, output_type=mstype.int64)
-    out2_fp64 = ops.argmax(x_fp64, axis=0, output_type=mstype.int64)
-    out2_int8 = ops.argmax(x_int8, axis=0, output_type=mstype.int64)
-    out2_int16 = ops.argmax(x_int16, axis=0, output_type=mstype.int64)
-    out2_int32 = ops.argmax(x_int32, axis=0, output_type=mstype.int64)
-    out2_int64 = ops.argmax(x_int64, axis=0, output_type=mstype.int64)
-    out2_uint8 = ops.argmax(x_uint8, axis=0, output_type=mstype.int64)
-    out2_uint16 = ops.argmax(x_uint16, axis=0, output_type=mstype.int64)
-    out2_uint32 = ops.argmax(x_uint32, axis=0, output_type=mstype.int64)
-    out2_uint64 = ops.argmax(x_uint64, axis=0, output_type=mstype.int64)
+    out2_fp16 = ops.Argmax(axis=0, output_type=mstype.int64)(x_fp16)
+    out2_fp32 = ops.Argmax(axis=0, output_type=mstype.int64)(x_fp32)
+    out2_fp64 = ops.Argmax(axis=0, output_type=mstype.int64)(x_fp64)
+    out2_int8 = ops.Argmax(axis=0, output_type=mstype.int64)(x_int8)
+    out2_int16 = ops.Argmax(axis=0, output_type=mstype.int64)(x_int16)
+    out2_int32 = ops.Argmax(axis=0, output_type=mstype.int64)(x_int32)
+    out2_int64 = ops.Argmax(axis=0, output_type=mstype.int64)(x_int64)
+    out2_uint8 = ops.Argmax(axis=0, output_type=mstype.int64)(x_uint8)
+    out2_uint16 = ops.Argmax(axis=0, output_type=mstype.int64)(x_uint16)
+    out2_uint32 = ops.Argmax(axis=0, output_type=mstype.int64)(x_uint32)
+    out2_uint64 = ops.Argmax(axis=0, output_type=mstype.int64)(x_uint64)
 
     assert out1_fp16 == 1 and out1_fp16.dtype == mstype.int32
     assert out1_fp32 == 1 and out1_fp32.dtype == mstype.int32
@@ -224,3 +222,28 @@ def test_argmax_support_types():
     assert out2_uint16 == 1 and out2_uint16.dtype == mstype.int64
     assert out2_uint32 == 1 and out2_uint32.dtype == mstype.int64
     assert out2_uint64 == 1 and out2_uint64.dtype == mstype.int64
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argmax_functional():
+    """
+    Feature: test ops.argmax.
+    Description: test ops.argmax functional api.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor([[1, 3, 2], [4, 6, 5], [7, 9, 8]], mstype.int32)
+    out_dim_none = ops.argmax(x, axis=None, keepdims=False)
+    out_dim_0 = ops.argmax(x, axis=0, keepdims=False)
+    out_dim_1 = ops.argmax(x, axis=1, keepdims=False)
+    out_dim_none_keepdim = ops.argmax(x, axis=None, keepdims=True)
+    out_dim_0_keepdim = ops.argmax(x, axis=0, keepdims=True)
+    out_dim_1_keepdim = ops.argmax(x, axis=1, keepdims=True)
+
+    assert out_dim_none.asnumpy() == 7
+    assert np.all(out_dim_0.asnumpy() == np.array([2, 2, 2]))
+    assert np.all(out_dim_1.asnumpy() == np.array([1, 1, 1]))
+    assert out_dim_none_keepdim.asnumpy() == 7
+    assert np.all(out_dim_0_keepdim.asnumpy() == np.array([[2, 2, 2]]))
+    assert np.all(out_dim_1_keepdim.asnumpy() == np.array([[1], [1], [1]]))

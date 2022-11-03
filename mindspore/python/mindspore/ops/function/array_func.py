@@ -4380,36 +4380,42 @@ def max(x, axis=0, keep_dims=False):
     return argmax_with_value_op(x)
 
 
-def argmax(x, axis=-1, output_type=mstype.int32):
+def argmax(x, axis=None, keepdims=False):
     """
-    Calculates the indices of the maximum value of a tensor across the `axis`.
-
-    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
-    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+    Return the indices of the maximum values of a tensor across a dimension.
 
     Args:
-        x (Tensor): Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        axis (int, optional): Axis where the `argmax` operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`, optional): Specified output data type. Default: `mindspore.dtype.int32`.
+        x (Tensor): Input tensor.
+        axis (Union[int, None], optional): The dimension to reduce. If `axis` is None,
+          the indices of the maximum value within the flattened input will be returned.
+          Default: None.
+        keepdims (boolean, optional): Whether the output tensor retains the specified
+          dimension. Ignored if `axis` is None. Default: False.
 
     Returns:
-        Tensor, indices of the max value of input tensor across the `axis`.
+        Tensor, indices of the maximum values across a dimension.
 
     Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If `output_type` is neither int32 nor int64.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
-        >>> output = ops.argmax(x, axis=-1, output_type=mindspore.int32)
+        >>> output = ops.argmax(x, axis=-1)
         >>> print(output)
         [1 0 0]
     """
-    argmax_op = P.Argmax(axis, output_type)
-    return argmax_op(x)
+    is_axis_none = False
+    if axis is None:
+        x = reshape_(x, (-1,))
+        axis = 0
+        is_axis_none = True
+    out = P.Argmax(axis, mstype.int64)(x)
+    if keepdims and not is_axis_none:
+        out = expand_dims_(out, axis)
+    return out
 
 
 def min(x, axis=0, keep_dims=False):

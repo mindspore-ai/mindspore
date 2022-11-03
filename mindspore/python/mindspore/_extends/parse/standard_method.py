@@ -751,21 +751,22 @@ def unbind(x, dim=0):
     return P.Unstack(axis=dim)(x)
 
 
-def argmax(x, axis=None):
+def argmax(x, axis=None, keepdims=False):
     """
-    Returns the indices of the maximum values along an axis.
+    Returns the indices of the maximum values of a tensor across a dimension.
 
     Args:
-        axis (int, optional): By default, the index is into
-            the flattened array, otherwise along the specified axis.
-            Defaults to None.
+        axis (Union[int, None], optional): The dimension to reduce.
+          If `axis` is None, the indices of the maximum value within the
+          flattened input will be returned. Default: None.
+        keepdims (boolean, optional): Whether the output tensor retains the
+          specified dimension. Ignored if `axis` is None. Default: False.
 
     Returns:
-        Tensor, array of indices into the array. It has the same
-        shape as a.shape with the dimension along axis removed.
+        Tensor, indices of the maximum values across a dimension.
 
     Raises:
-        ValueError: if axis is out of range.
+        ValueError: if `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -777,12 +778,15 @@ def argmax(x, axis=None):
         >>> print(a.argmax())
         5
     """
+    is_axis_none = False
     if axis is None:
         x = ravel(x)
         axis = 0
-    else:
-        axis = check_axis_in_range_const(axis, F.rank(x))
-    return P.Argmax(axis)(x)
+        is_axis_none = True
+    out = P.Argmax(axis, mstype.int64)(x)
+    if keepdims and not is_axis_none:
+        out = expand_dims(out, axis)
+    return out
 
 
 def argmin(x, axis=None):

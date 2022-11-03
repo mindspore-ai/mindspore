@@ -17,11 +17,9 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
-import mindspore.common.dtype as mstype
-from mindspore.ops import functional as F
 
 context.set_context(device_target="Ascend")
 
@@ -46,7 +44,7 @@ def test_net():
 
 def adaptive_argmax_functional(nptype):
     x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(nptype))
-    output = F.argmax(x, axis=-1, output_type=mstype.int32)
+    output = ops.argmax(x, axis=-1)
     expected = np.array([1, 0, 0]).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
