@@ -26,12 +26,12 @@
 #include "mindspore/core/ops/grad/adaptive_max_pool2d_grad.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_class/adaptive_max_pool2d_grad_helper.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_class/adaptive_max_pool_grad_helper.h"
 namespace mindspore {
 namespace kernel {
 class AdaptiveMaxPool2DGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  AdaptiveMaxPool2DGradGpuKernelMod() { attr_ptr_ = std::make_shared<cukernel::AdaptiveMaxPool2DGradAttr>(); }
+  AdaptiveMaxPool2DGradGpuKernelMod() { attr_ptr_ = std::make_shared<cukernel::AdaptiveMaxPoolGradAttr>(); }
   ~AdaptiveMaxPool2DGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -49,7 +49,7 @@ class AdaptiveMaxPool2DGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
-  std::shared_ptr<cukernel::AdaptiveMaxPool2DGradAttr> attr_ptr_{nullptr};
+  std::shared_ptr<cukernel::AdaptiveMaxPoolGradAttr> attr_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

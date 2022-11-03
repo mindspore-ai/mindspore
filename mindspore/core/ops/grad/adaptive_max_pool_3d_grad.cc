@@ -69,7 +69,7 @@ TypePtr AdaptiveMaxPool3DGradInferType(const PrimitivePtr &, const std::vector<A
   auto argmax_dtype = input_args[2]->BuildType();
   const std::set<TypePtr> real_number_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                                kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  const std::set<TypePtr> argmax_valid_types = {kInt32};
+  const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_grad_dtype", input_grad_dtype, real_number_types,
                                                    kNameAdaptiveMaxPool3DGrad);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, real_number_types, kNameAdaptiveMaxPool3DGrad);

@@ -3305,6 +3305,7 @@ class AdaptiveMaxPool3DGrad(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize AdaptiveMaxPool3DGrad"""
+        self.init_prim_io_names(inputs=['input_grad', 'x', 'argmax'], outputs=['output_grad'])
 
 
 class TraceGrad(Primitive):

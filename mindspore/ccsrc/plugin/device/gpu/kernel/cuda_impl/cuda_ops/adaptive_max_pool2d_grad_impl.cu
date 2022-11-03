@@ -43,6 +43,21 @@ void CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_index, const int
     input_data, max_index, input_nchw, input_hw, output_hw, output_data);
 }
 
+template CUDA_LIB_EXPORT void CalAdaptiveMaxPool2DGrad<half, int>(
+  const half *input_data, const int *max_index, const int n, const int c, const uint input_height,
+  const uint input_width, const uint output_height, const uint output_width, half *output_data,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalAdaptiveMaxPool2DGrad<float, int>(
+  const float *input_data, const int *max_index, const int n, const int c, const uint input_height,
+  const uint input_width, const uint output_height, const uint output_width, float *output_data,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalAdaptiveMaxPool2DGrad<double, int>(
+  const double *input_data, const int *max_index, const int n, const int c, const uint input_height,
+  const uint input_width, const uint output_height, const uint output_width, double *output_data,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
+
 template CUDA_LIB_EXPORT void CalAdaptiveMaxPool2DGrad<half, int64_t>(
   const half *input_data, const int64_t *max_index, const int n, const int c, const uint input_height,
   const uint input_width, const uint output_height, const uint output_width, half *output_data,
