@@ -155,36 +155,6 @@ def test_two_net(mode):
     assert net1.param.name == net1.param.name == "name_a"
 
 
-class OutNet1(nn.Cell):
-    def __init__(self, net1, net2):
-        super(OutNet1, self).__init__()
-        self.param1 = ParameterTuple(net1.get_parameters())
-        self.param2 = ParameterTuple(net2.get_parameters())
-
-    def construct(self, x):
-        return x + self.param1[0] + self.param2[0]
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_inner_out_net_1(mode):
-    """
-    Feature: Check the name of parameter .
-    Description: Check the name of parameter in two network.
-    Expectation: No exception.
-    """
-    with pytest.raises(RuntimeError, match="its name 'name_a' already exists."):
-        context.set_context(mode=mode)
-        net1 = InnerNet()
-        net2 = InnerNet()
-        out_net = OutNet1(net1, net2)
-        res = out_net(Tensor([1], ms.float32))
-        print("res:", res)
-
-
 class OutNet2(nn.Cell):
     def __init__(self, net1, net2):
         super(OutNet2, self).__init__()
