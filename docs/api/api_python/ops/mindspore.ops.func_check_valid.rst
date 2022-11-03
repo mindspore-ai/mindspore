@@ -8,7 +8,7 @@ mindspore.ops.check_valid
     检查边界框的交叉数据和数据边界是否有效。
 
     .. warning::
-        指定有效边界 `(长度 * 比率, 宽度 * 比率)` 。
+        由 `bboxes` 指定的边界 `(长度 * 比率, 宽度 * 比率)` 需要时有效的。
 
     参数：
         - **bboxes** (Tensor) - shape大小为 :math:`(N, 4)` 。:math:`N` 表示边界框的数量， `4` 表示 `x0` 、`x1` 、`y0` 、`y` 。数据类型必须是float16或float32。

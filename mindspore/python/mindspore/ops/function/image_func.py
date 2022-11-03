@@ -108,7 +108,7 @@ def check_valid(bboxes, img_metas):
     Checks whether the bounding box cross data and data border are valid.
 
     .. warning::
-        specifying the valid boundary (heights x ratio, weights x ratio).
+        Boundary(heights * ratio, widths * ratio) specified by `bboxes` is required to be valid.
 
     Args:
         bboxes (Tensor): Bounding boxes tensor with shape :math:`(N, 4)`. :math:`N` indicates the number of
