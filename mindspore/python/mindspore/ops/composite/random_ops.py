@@ -104,7 +104,7 @@ def laplace(shape, mean, lambda_param, seed=None):
           With float32 data type.
         lambda_param (Tensor): The parameter used for controlling the variance of this random distribution. The
           variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
           Default: None, which will be treated as 0.
 
     Returns:
@@ -345,7 +345,7 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         inputs (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
           float32 data type.
         num_sample (int): Number of samples to draw.
-        replacement (bool, optional): Whether to draw with replacement or not, default True.
+        replacement (bool, optional): Whether to draw with replacement or not, default: True.
         seed (int, optional): Seed is used as entropy source for the random number engines to generate
           pseudo-random numbers, must be non-negative. Default: None.
 

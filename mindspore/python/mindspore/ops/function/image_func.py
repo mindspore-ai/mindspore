@@ -140,14 +140,14 @@ def check_valid(bboxes, img_metas):
 
 def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", extrapolation_value=0.0):
     """
-    Extracts crops from the input image tensor and resizes them.
+    Extracts crops from the input image Tensor and resizes them.
 
     Note:
         In case that the output shape depends on crop_size, the crop_size must be constant.
         For now, the backward of the operator only support bilinear method, for other methods, will return 0.
 
     Args:
-        image (Tensor): The input image must be a 4-D tensor of shape [batch, image_height, image_width, depth].
+        image (Tensor): The input image must be a 4-D tensor of shape (batch, image_height, image_width, depth).
            Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         boxes (Tensor): A 2-D tensor of shape [num_boxes, 4].
            The i-th row of the tensor specifies the coordinates of a box in the box_ind[i] image
@@ -162,10 +162,10 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
         crop_size (Tuple[int]): A tuple of two int32 elements: (crop_height, crop_width).
            Only constant value is allowed. All cropped image patches are resized to this size.
            The aspect ratio of the image content is not preserved. Both crop_height and crop_width need to be positive.
-        method (str): An optional string that specifies the sampling method for resizing.
+        method (str, optional): An optional string that specifies the sampling method for resizing.
            It can be "bilinear", "nearest" or "bilinear_v2". The option "bilinear" stands for standard bilinear
            interpolation algorithm, while "bilinear_v2" may result in better result in some cases. Default: "bilinear"
-        extrapolation_value (float): An optional float value used extrapolation, if applicable. Default: 0.0.
+        extrapolation_value (float, optional): An optional float value used extrapolation, if applicable. Default: 0.0.
 
     Returns:
         A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth] with type(float32).

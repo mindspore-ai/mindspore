@@ -3,7 +3,7 @@ mindspore.ops.HistogramSummary
 
 .. py:class:: mindspore.ops.HistogramSummary
 
-    将Tensor数据转换为直方图数据记录。
+    通过HistogramSummary将Tensor数据输出到协议缓冲区。
 
     输入：
         - **name** (str) - 输入变量的名称。

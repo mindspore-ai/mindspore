@@ -7,7 +7,7 @@ mindspore.ops.DivNoNan
 
     `x1` 和 `x2` 的输入遵循隐式类型转换规则，使数据类型一致。
     输入必须是两个Tensor或一个Tensor和一个Scalar。
-    当输入是两个Tensor时，它们的dtype不能同时是布尔型的，它们的shape可以广播。
+    当输入是两个Tensor时，它们的dtype不能同时是bool类型的，它们的shape可以广播。
     当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
 
     .. math::
@@ -17,7 +17,7 @@ mindspore.ops.DivNoNan
         \end{cases}
 
     输入：
-        - **x1** (Union[Tensor, number.Number, bool]) - 第一个输入是number.Number、bool或者Tensor，数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
+        - **x1** (Union[Tensor, number.Number, bool]) - 第一个输入是number.Number、bool或者Tensor，数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
         - **x2** (Union[Tensor, number.Number, bool]) - 当第一个输入是bool或数据类型为number或bool\_的Tensor时，第二个输入是number.Number或bool。当第一个输入是Scalar时，第二个输入必须是数据类型为number或bool\_的Tensor。
 
     输出：

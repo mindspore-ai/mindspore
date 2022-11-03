@@ -14,7 +14,7 @@ mindspore.ops.lerp
 
     参数：
         - **start** (Tensor) - 进行线性插值的Tensor开始点，其数据类型必须为float16或者float32。
-        - **end** (Tensor) - 进行线性插值的Tensor结束点，其数据类型必须为float16或者float32。
+        - **end** (Tensor) - 进行线性插值的Tensor结束点，其数据类型必须与 `start` 一致。
         - **weight** (Union[float, Tensor]) - 线性插值公式的权重参数。为Scalar时，其数据类型为float。为Tensor时，其数据类型为float16或者float32。
 
     返回：

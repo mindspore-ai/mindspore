@@ -61,6 +61,10 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     Returns:
           Tensor, number of nonzero element. The data type is `dtype`.
 
+    Raises:
+        TypeError: If axis is not int or tuple.
+        ValueError: If axis is not in range [-x.ndim, x.ndim).
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

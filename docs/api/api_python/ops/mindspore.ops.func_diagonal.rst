@@ -3,7 +3,7 @@
 
 .. py:function:: mindspore.ops.diagonal(input, offset=0, dim1=0, dim2=1)
 
-    返回 `input` 的部分视图，其相对于 `dim1` 和 `dim2` 的对角线元素作为维度附加在形状的末尾。
+    返回 `input` 特定的对角线视图。如果 `input` 为2-D，返回偏移量为 `offset` 的对角线元素。如果 `input` 维度大于2，则返回由 `dim1` 和 `dim2` 确定的2-D子数组的对角线视图。其相对于 `dim1` 和 `dim2` 的对角线元素作为维度附加在形状的末尾。
 
     参数：
         - **input** (Tensor) - 输入Tensor，其维度至少为2。
@@ -12,7 +12,7 @@
         - **dim2** (int, 可选) - 二维子数组的第二轴，对角线应该从这里开始。默认值：1。
 
     返回：
-        Tensor，如果Tensor是二维，则返回值是一维数组。
+        Tensor，如果Tensor是二维，则返回值是一维数组，如果输入维度大于2，则先移除维度 `dim1` 和 `dim2`， 然后在末尾插入新的一维来对应对角元素。
 
     异常：
         - **ValueError** - 输入Tensor的维度少于2。
