@@ -386,10 +386,10 @@ def test_check_mutable_value():
     try:
         x = Tensor([0], dtype=mstype.int32, const_arg=1)
     except TypeError as e:
-        assert str(e) == "For 'Tensor', the type of 'const_arg' should be 'bool', but got '1' with type 'int'."
+        assert str(e) == "For 'Tensor', the type of 'const_arg' should be 'bool', but got type 'int'."
 
     try:
         x = Tensor([0], dtype=mstype.int32)
         x.set_const_arg(1)
     except TypeError as e:
-        assert str(e) == "For 'set_const_arg', the type of 'const_arg' should be 'bool', but got '1' with type 'int'."
+        assert str(e) == "For 'set_const_arg', the type of 'const_arg' should be 'bool', but got type 'int'."

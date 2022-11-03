@@ -642,7 +642,7 @@ class Validator:
             msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
             raise TypeError(f'{msg_prefix} type of \'{arg_name}\' should be {"one of " if num_types > 1 else ""}'
                             f'\'{type_names if num_types > 1 else type_names[0]}\', '
-                            f'but got \'{arg_value}\' with type \'{type(arg_value).__name__}\'.')
+                            f'but got type \'{type(arg_value).__name__}\'.')
 
         # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
         #         `check_value_type('x', True, [bool, int])` will check pass
