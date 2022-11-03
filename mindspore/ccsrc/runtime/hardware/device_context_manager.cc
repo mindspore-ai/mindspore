@@ -159,7 +159,9 @@ void DeviceContextManager::LoadPlugin() {
   }
 #ifdef _WIN32
   auto plugin_file = plugin_path_ + "\\mindspore_gpu.dll";
-  plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
+  if (access(plugin_file.c_str(), F_OK) != -1) {
+    plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
+  }
 #else
   DIR *dir = opendir(plugin_path_.c_str());
   if (dir == nullptr) {
