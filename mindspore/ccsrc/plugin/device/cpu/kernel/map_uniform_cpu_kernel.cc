@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -27,37 +28,40 @@ constexpr size_t kMapUniformInputsNum = 3;
 constexpr size_t kMapUniformOutputsNum = 1;
 }  // namespace
 
-void MapUniformCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-}
-
-bool MapUniformCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool MapUniformCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapUniformInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapUniformOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int32 or int64, but got " << dtype_;
+  dtype_ = inputs[kIndex0]->GetDtype();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  kernel_func_ = func_list_[index].second;
   return true;
 }
 
-template <typename T>
-void MapUniformCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto node = node_wpt_.lock();
-  if (!node) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
+int MapUniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+
+  auto input_x_shape = inputs[kIndex0]->GetShapeVector();
   batch_size_ = SizeOf(input_x_shape);
+  return KRET_OK;
+}
+
+template <typename T>
+bool MapUniformCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &workspace,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   MS_LOG(INFO) << "Input size: " << batch_size_;
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
   auto per_group_size = *reinterpret_cast<T *>(inputs[1]->addr);
@@ -74,6 +78,28 @@ void MapUniformCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                         << ", but got " << output_x[i];
     }
   }
+  return true;
+}
+
+std::vector<std::pair<KernelAttr, MapUniformCpuKernelMod::MapUniformFunc>> MapUniformCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &MapUniformCpuKernelMod::LaunchKernel<int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   &MapUniformCpuKernelMod::LaunchKernel<int64_t>}};
+
+std::vector<KernelAttr> MapUniformCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MapUniformFunc> &item) { return item.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapUniform, MapUniformCpuKernelMod);
