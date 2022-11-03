@@ -292,8 +292,8 @@
 
     .. py:method:: place(role, rank_id)
         
-        设置Cell中所有算子标签。让此Cell中的算子在对应进程上执行。
-        每个进程的标签都由进程角色 `role` 和 `rank_id` 组成，因此对Cell设置标签，代表着Cell中的算子在哪个进程执行，从而执行分布式训练等任务。
+        为该Cell中所有算子设置标签。此标签告诉MindSpore编译器此Cell在哪个进程上启动。
+        每个进程的标签都由进程角色 `role` 和 `rank_id` 组成，因此，通过对不同Cell设置不同标签，这些Cell将在不同进程启动，使用户可以进行分布式训练/推理等任务。
 
         .. note::
             - 此接口只在成功调用 `mindspore.communication.init()` 完成动态组网后才能生效。
