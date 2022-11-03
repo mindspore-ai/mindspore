@@ -7463,7 +7463,7 @@ class DynamicRNN(PrimitiveWithInfer):
         return b_dtype, x_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype
 
 
-class DynamicGRUV2(PrimitiveWithInfer):
+class DynamicGRUV2(Primitive):
     r"""
     Applies a single-layer gated recurrent unit (GRU) to an input sequence.
 
@@ -7594,64 +7594,12 @@ class DynamicGRUV2(PrimitiveWithInfer):
         self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
         self.gate_order = validator.check_string(gate_order, ['zrh', 'rzh'], "gate_order", self.name)
         self.reset_after = validator.check_value_type("reset_after", reset_after, [bool], self.name)
-
-    def infer_shape(self, x_shape, winput_shape, whidden_shape, binput_shape, bhidden_shape, seq_shape, h_shape):
-        validator.check_int(len(x_shape), 3, Rel.EQ, "x shape", self.name)
-        validator.check_int(len(winput_shape), 2, Rel.EQ, "weight input shape rank", self.name)
-        validator.check_int(len(whidden_shape), 2, Rel.EQ, "weight hidden shape rank", self.name)
-
-        num_step, batch_size, input_size = x_shape
-        hidden_size = winput_shape[-1] // 3
-        if winput_shape[-1] % 3 != 0:
-            raise ValueError(f"For '{self.name}', the last dimension of 'w' must be a multiple of 3, "
-                             f"but got {winput_shape[-1]}.")
-
-        self.placeholder_index = [3, 4, 5]
-        if binput_shape is not None:
-            validator.check_int(len(binput_shape), 1, Rel.EQ, "bias input shape rank", self.name)
-            validator.check("bias_input_shape", binput_shape, "3 * hidden_shape", [3 * hidden_size], Rel.EQ, self.name)
-            self.placeholder_index.remove(3)
-        if bhidden_shape is not None:
-            validator.check_int(len(bhidden_shape), 1, Rel.EQ, "bias hidden shape rank", self.name)
-            validator.check("bias_hidden_shape", bhidden_shape,
-                            "3 * hidden_shape", [3 * hidden_size], Rel.EQ, self.name)
-            self.placeholder_index.remove(4)
-        if seq_shape is not None:
-            raise ValueError(f"For '{self.name}', the dimension of 'seq_length' must be None, "
-                             f"but got {seq_shape}.")
-
-        validator.check_int(len(h_shape), 2, Rel.EQ, "init_h shape rank", self.name)
-        validator.check("init_h_shape[0]", h_shape[0], "batch_size", batch_size, Rel.EQ, self.name)
-        validator.check("init_h_shape[1]", h_shape[1], "hidden_size", hidden_size, Rel.EQ, self.name)
-        validator.check("weight_input_shape[-1]", winput_shape[-1], "weight_hidden_shape[-1]",
-                        whidden_shape[-1], Rel.EQ, self.name)
-        validator.check("weight_input_shape[0]", winput_shape[0], "input_size", input_size, Rel.EQ, self.name)
-        validator.check("weight_hidden_shape[0]", whidden_shape[0], "hidden_size", hidden_size, Rel.EQ, self.name)
-        if self.num_proj > 0:
-            y_shape = (num_step, batch_size, min(hidden_size, self.num_proj))
-        else:
-            y_shape = (num_step, batch_size, hidden_size)
-        out_shape = (num_step, batch_size, hidden_size)
-        self.add_prim_attr("placeholder_index", self.placeholder_index)
-        return y_shape, out_shape, out_shape, out_shape, out_shape, out_shape
-
-    def infer_dtype(self, x_dtype, winput_dtype, whidden_dtype, binput_dtype, bhidden_dtype, seq_dtype, h_dtype):
-        validator.check_tensor_dtype_valid("x dtype", x_dtype, [mstype.float16], self.name)
-        validator.check_tensor_dtype_valid("weight input dtype", winput_dtype, [mstype.float16], self.name)
-        validator.check_tensor_dtype_valid("weight hidden dtype", whidden_dtype, [mstype.float16], self.name)
-        valid_dtypes = [mstype.float16, mstype.float32]
-        validator.check_tensor_dtype_valid("init_h dtype", h_dtype, valid_dtypes, self.name)
-        b_dtype = h_dtype
-        if binput_dtype is not None:
-            args = {'init_h': h_dtype, 'bias_input': binput_dtype}
-            validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-            b_dtype = binput_dtype
-        if bhidden_dtype is not None:
-            args = {'init_h': h_dtype, 'bias_hidden': bhidden_dtype}
-            validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-            b_dtype = bhidden_dtype
-
-        return b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype
+        self.init_prim_io_names(
+            inputs=[
+                "x", "weight_input", "weight_hidden", "bias_input",
+                "bias_hidden", "seq_length", "init_h"
+            ],
+            outputs=["y", "output_h", "update", "reset", "new", "hidden_new"])
 
 
 class InTopK(Primitive):

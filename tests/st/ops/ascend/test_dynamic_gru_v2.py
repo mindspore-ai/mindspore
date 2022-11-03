@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class DynamicGRUV2(nn.Cell):
+
     def __init__(self):
         super(DynamicGRUV2, self).__init__()
         self.dynamic_gru = P.DynamicGRUV2()
 
     def construct(self, x, weight_i, weight_h, bias_i, bias_h, init_h):
-        return self.dynamic_gru(x, weight_i, weight_h, bias_i, bias_h, None, init_h)
+        return self.dynamic_gru(x, weight_i, weight_h, bias_i, bias_h, None,
+                                init_h)
 
 
 @pytest.mark.level1
