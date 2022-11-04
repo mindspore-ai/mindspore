@@ -36,7 +36,7 @@ namespace mindspore::lite::pass {
 
 class ToNCHWFormat : public RuntimePass {
  public:
-  ToNCHWFormat(Format src_format, Format dst_format, std::set<schema::PrimitiveType> to_trans_kernels)
+  ToNCHWFormat(const Format &src_format, const Format &dst_format, std::set<schema::PrimitiveType> to_trans_kernels)
       : src_format_(src_format), dst_format_(dst_format), to_trans_kernels_(to_trans_kernels) {}
   ~ToNCHWFormat() override = default;
   int Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors) override;

@@ -25,7 +25,7 @@ class DeleteIsolatedKernel : public RuntimePass {
  public:
   DeleteIsolatedKernel() {}
   ~DeleteIsolatedKernel() override = default;
-  int Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors = nullptr) override;
+  int Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *) override;
 };
 }  // namespace mindspore::lite::pass
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_DELETE_ISOLATED_KERNEL_H_

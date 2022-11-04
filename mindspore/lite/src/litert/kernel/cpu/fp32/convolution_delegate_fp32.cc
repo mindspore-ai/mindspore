@@ -312,9 +312,8 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
       op_parameter_ = nullptr;
       return nullptr;
     }
+    kernel->set_name("act_" + name_);
   }
-
-  kernel->set_name("act_" + name_);
   return kernel;
 }
 

@@ -28,10 +28,10 @@ extern "C" {
   GatherD_Input_##type0##_Index_##type1(output, input, index, input_shape, input_shape_size, output_shape,           \
                                         output_shape_size, dim)
 
-#define GATHER_D_IMPL_DECLARATION(type0, type1)                                                       \
-  int GatherD_Input_##type0##_Index_##type1(type0 *output, const type0 *input, type1 *index,          \
-                                            const size_t *input_shape, const size_t input_shape_size, \
-                                            const size_t *output_shape, const size_t output_shape_size, const int dim)
+#define GATHER_D_IMPL_DECLARATION(type0, type1)                                                                \
+  int GatherD_Input_##type0##_Index_##type1(                                                                   \
+    type0 *output, const type0 *input, type1 *index, const size_t *input_shape, const size_t input_shape_size, \
+    const size_t *output_shape, const size_t output_shape_size, const size_t dim)
 
 GATHER_D_IMPL_DECLARATION(bool, int32_t);
 GATHER_D_IMPL_DECLARATION(bool, int64_t);

@@ -588,7 +588,7 @@ int DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGra
     auto last_underline = node_name.find_last_of("_");
     node_name = node_name.substr(0, last_underline);
     last_underline = node_name.find_last_of("_");
-    auto index = 0;
+    size_t index = 0;
     try {
       index = std::stoi(node_name.substr(last_underline + 1)) + static_cast<int>(kInputSizeThree);
     } catch (const std::exception &e) {

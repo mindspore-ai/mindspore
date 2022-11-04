@@ -19,7 +19,7 @@
 #include "src/litert/kernel_exec_util.h"
 
 namespace mindspore::lite::pass {
-int Infershape::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors) {
+int Infershape::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *) {
   auto kernels = &(subgraph->nodes());
   for (const auto &kernel : *kernels) {
     CHECK_NULL_RETURN(kernel);

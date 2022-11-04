@@ -61,8 +61,8 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
     MS_LOG(ERROR) << "Malloc FormatTransposeParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(FormatTransposeParameter));
-  param->op_parameter_.type_ = schema::PrimitiveType_FormatTranspose;
+  (void)memset(param, 0, sizeof(FormatTransposeParameter));
+  param->op_parameter_.type_ = static_cast<int>(schema::PrimitiveType_FormatTranspose);
   param->src_format_ = trans_info.src_format_;
   param->dst_format_ = trans_info.dst_format_;
   kernel::KernelKey format_transpose_key = desc;
@@ -80,7 +80,7 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
   return kernel;
 }
 
-void SetShape(Tensor *src_tensor, Tensor *dst_tensor) {
+void SetShape(const Tensor *src_tensor, Tensor *dst_tensor) {
   auto shape = src_tensor->shape();
   auto invalid_shape = {-1};
   if (shape.size() != DIMENSION_4D) {
@@ -105,7 +105,7 @@ void SetShape(Tensor *src_tensor, Tensor *dst_tensor) {
 }
 
 int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
-                       const TransInfoPair &trans_info, const int &index) {
+                       const TransInfoPair &trans_info, const size_t &index) {
   auto trans_name = kernel->name() + "_pre_" + std::to_string(index);
   auto in_tensor = kernel->in_tensors().at(index);
   auto out_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), {}, (Format)trans_info.dst_format_);
@@ -126,7 +126,7 @@ int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *ker
 }
 
 int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel,
-                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const int &index) {
+                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const size_t &index) {
   auto trans_name = kernel->name() + "_post_" + std::to_string(index);
 
   auto out_tensor = kernel->out_tensors().at(index);

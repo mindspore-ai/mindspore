@@ -25,16 +25,12 @@ int TransFullyFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *trans
   CHECK_NULL_RETURN(trans_kernel0);
   CHECK_NULL_RETURN(trans_kernel1);
   auto in_tensor = trans_kernel0->in_tensors().at(0);
+
   auto out_tensor = trans_kernel1->out_tensors().at(0);
   auto in_kernel = kernel::KernelExecUtil::FindInKernelForInTensor(trans_kernel0, in_tensor);
   auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(trans_kernel1, out_tensor);
-  auto ret = subgraph->UpdateInOutKernels(in_kernel, out_kernels, trans_kernel0, trans_kernel1);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Update kernel link failed when fusing kernel " << trans_kernel0->name() << " and "
-                  << trans_kernel1->name();
-    return RET_ERROR;
-  }
-  ret = subgraph->UpdateInOutTensors(in_kernel, out_kernels, in_tensor, out_tensor, true);
+  subgraph->UpdateInOutKernels(in_kernel, out_kernels, trans_kernel0, trans_kernel1);
+  auto ret = subgraph->UpdateInOutTensors(in_kernel, out_kernels, in_tensor, out_tensor, true);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Update tensor failed when fusing kernel " << trans_kernel0->name() << " and "
                   << trans_kernel1->name();
@@ -59,12 +55,7 @@ int TransHeadTailFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *tr
   auto out_tensor = trans_kernel1->out_tensors().at(0);
   auto in_kernel = kernel::KernelExecUtil::FindInKernelForInTensor(trans_kernel0, in_tensor);
   auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(trans_kernel1, out_tensor);
-  auto ret = subgraph->UpdateInOutKernels(in_kernel, out_kernels, trans_kernel0, trans_kernel1);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Update kernel link failed when fusing kernel " << trans_kernel0->name() << " and "
-                  << trans_kernel1->name();
-    return RET_ERROR;
-  }
+  subgraph->UpdateInOutKernels(in_kernel, out_kernels, trans_kernel0, trans_kernel1);
   // new trans kernel: src_format -> dst_format
   auto trans_name = trans_kernel0->name() + "_and_" + trans_kernel1->name() + "_fusion";
   auto kernel = CreateFormatTranspose(in_tensor, out_tensor, trans_info, trans_name, ctx, desc);
@@ -98,7 +89,7 @@ int DecreaseTransposeAlgo::TransTransFusion(kernel::SubGraphKernel *subgraph) {
   while (kernel_iter != kernels->end()) {
     auto &kernel = *kernel_iter;
     CHECK_NULL_RETURN(kernel);
-    kernel_iter++;
+    (void)kernel_iter++;
 
     if (kernel->in_kernels().size() == 0 || !IsContain(subgraph->nodes(), kernel->in_kernels().at(0))) {
       continue;
@@ -227,11 +218,7 @@ int DoPreFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, st
         }
       } else {
         auto pre_in_kernel = kernel::KernelExecUtil::FindInKernelForInTensor(in_kernel, in_kernel->in_tensors().at(0));
-        ret = subgraph->UpdateInOutKernels(pre_in_kernel, {kernel}, in_kernel, in_kernel);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Update kernel link failed when removing kernel " << in_kernel->name();
-          return RET_ERROR;
-        }
+        subgraph->UpdateInOutKernels(pre_in_kernel, {kernel}, in_kernel, in_kernel);
         ret = subgraph->UpdateInOutTensors(pre_in_kernel, {kernel}, in_kernel->in_tensors().at(0), in_tensor, true);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "Update tensor failed when removing kernel " << in_kernel->name();
@@ -248,7 +235,7 @@ int DoPreFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, st
   return RET_OK;
 }
 
-int DoPostFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
+int DoPostFusion(kernel::SubGraphKernel *subgraph, const kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
                  const TransInfoPair &post_trans) {
   for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
     auto tensor = kernel->out_tensors().at(i);
@@ -259,13 +246,13 @@ int DoPostFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, s
       TransInfoPair out_kernel_trans;
       auto ret = GetTransposeInfo(out_kernel, &out_kernel_trans);
       if (ret == RET_OK && IsSameTranspose(post_trans, out_kernel_trans)) {
-        to_deletes.emplace_back(out_kernel);
+        (void)to_deletes.emplace_back(out_kernel);
         continue;
       }
       auto in_tensor_of_out_kernel_idx = out_kernel->FindInTensorIndex(tensor);
-      ret = InsertPreTranspose(subgraph, out_kernel, all_tensors,
-                               TransInfoPair(post_trans.dst_format_, post_trans.src_format_),
-                               static_cast<int>(in_tensor_of_out_kernel_idx));
+      ret =
+        InsertPreTranspose(subgraph, out_kernel, all_tensors,
+                           TransInfoPair(post_trans.dst_format_, post_trans.src_format_), in_tensor_of_out_kernel_idx);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Insert pre transpose kernel for op: " << out_kernel->name() << " input tensor "
                       << in_tensor_of_out_kernel_idx << " failed.";
@@ -293,7 +280,7 @@ int DecreaseTransposeAlgo::DecreaseTransposeForSingleKernel(kernel::SubGraphKern
     TransInfoPair pre_trans;
     TransInfoPair post_trans;
     if (!transpose_strategy_.CheckFusion(kernel, &pre_trans, &post_trans)) {
-      kernel_iter++;
+      (void)kernel_iter++;
       continue;
     }
     auto ret = transpose_strategy_.ChangeKernelAxis(kernel, post_trans);
@@ -314,7 +301,7 @@ int DecreaseTransposeAlgo::DecreaseTransposeForSingleKernel(kernel::SubGraphKern
       return RET_ERROR;
     }
     kernel_iter = find(kernels->begin(), kernels->end(), kernel);
-    kernel_iter++;
+    (void)kernel_iter++;
   }
   return RET_OK;
 }

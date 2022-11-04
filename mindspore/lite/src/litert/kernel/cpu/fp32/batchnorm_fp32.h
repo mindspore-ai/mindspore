@@ -38,10 +38,7 @@ class BatchnormCPUKernel : public LiteKernel {
   int SetupVirtualBatch(int virtual_batch_multiplier, int param) override;
   virtual int InitConstTensor();
   virtual int DoExecute(int task_id);
-  virtual int Batchnorm2Scale(const void *scale_data, const void *bias_data, const void *mean_data,
-                              const void *var_data, float eps, int kernel_num) {
-    return RET_OK;
-  }
+  virtual int Batchnorm2Scale(const void *, const void *, const void *, const void *, float, int) { return RET_OK; }
   virtual int set_momentum(float momentum);
   virtual float get_momentum();
   virtual int RestoreDefaultMomentum();

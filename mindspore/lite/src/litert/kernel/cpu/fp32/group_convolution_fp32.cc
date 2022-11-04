@@ -21,7 +21,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int GroupConvolutionFp32CPUKernel::Separate(int task_id) {
+int GroupConvolutionFp32CPUKernel::Separate(const int &task_id) const {
   auto plane_step = UP_DIV(in_plane_, in_thread_num_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, RET_ERROR);
   auto begin_plane = plane_step * task_id;
@@ -31,7 +31,7 @@ int GroupConvolutionFp32CPUKernel::Separate(int task_id) {
   auto src_ptr = sub_in_src_ + begin_plane * ori_in_channel_;
   auto dst_ptr = sub_in_dst_ + begin_plane * sub_in_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_in_channel_ * sizeof(float));
+    (void)memcpy(dst_ptr, src_ptr, sub_in_channel_ * sizeof(float));
     src_ptr += ori_in_channel_;
     dst_ptr += sub_in_channel_;
   }
@@ -63,7 +63,7 @@ int GroupConvolutionFp32CPUKernel::SeparateInput(int group_id) {
   return RET_OK;
 }
 
-int GroupConvolutionFp32CPUKernel::Concat(int task_id) {
+int GroupConvolutionFp32CPUKernel::Concat(const int &task_id) const {
   auto plane_step = UP_DIV(out_plane_, out_thread_num_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, RET_ERROR);
   auto begin_plane = plane_step * task_id;
@@ -73,7 +73,7 @@ int GroupConvolutionFp32CPUKernel::Concat(int task_id) {
   auto src_ptr = sub_out_src_ + begin_plane * sub_out_channel_;
   auto dst_ptr = sub_out_dst_ + begin_plane * ori_out_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_out_channel_ * sizeof(float));
+    (void)memcpy(dst_ptr, src_ptr, sub_out_channel_ * sizeof(float));
     src_ptr += sub_out_channel_;
     dst_ptr += ori_out_channel_;
   }

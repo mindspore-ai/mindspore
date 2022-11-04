@@ -164,11 +164,11 @@ class LiteKernel : public Abstractkernel {
     return mindspore::lite::RET_OK;
   }
 
-  virtual int SetupVirtualBatch(int virtual_batch_multiplier, int param) { return mindspore::lite::RET_OK; }
+  virtual int SetupVirtualBatch(int, int) { return mindspore::lite::RET_OK; }
 
   bool IsEval() const override { return !this->train_mode_; }
 
-  void SetTrainable(bool trainable = true) override { this->trainable_ = trainable; }
+  void SetTrainable(bool trainable) override { this->trainable_ = trainable; }
 
   bool IsTrainable() const override { return this->trainable_; }
 
@@ -186,7 +186,6 @@ class LiteKernel : public Abstractkernel {
       workspace_ = ws;
     }
   }
-  const lite::InnerContext *context() const { return this->ms_context_; }
   bool ws_allocated_ = false;
 
  protected:

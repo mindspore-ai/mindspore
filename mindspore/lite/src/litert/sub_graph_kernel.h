@@ -112,20 +112,20 @@ class SubGraphKernel : public KernelExec {
 
   std::vector<KernelExec *> out_nodes() { return this->out_nodes_; }
 
-  void SetInNodes(std::vector<KernelExec *> in_nodes) { in_nodes_ = in_nodes; }
+  void SetInNodes(const std::vector<KernelExec *> &in_nodes) { in_nodes_ = in_nodes; }
 
-  void SetOutNodes(std::vector<KernelExec *> out_nodes) { out_nodes_ = out_nodes; }
+  void SetOutNodes(const std::vector<KernelExec *> &out_nodes) { out_nodes_ = out_nodes; }
 
   void SetSchemaVersion(int schema_version) { schema_version_ = schema_version; }
 
   int TopologicalSortNodes();
 
-  void InsertInEdge(KernelExec *kernel, KernelExec *replace_kernel, const int &tensor_index);
+  void InsertInEdge(KernelExec *kernel, KernelExec *replace_kernel, const size_t &tensor_index);
 
-  void InsertOutEdge(KernelExec *kernel, KernelExec *replace_kernel, const int &tensor_index);
+  void InsertOutEdge(KernelExec *kernel, KernelExec *replace_kernel, const size_t &tensor_index);
 
-  int UpdateInOutKernels(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels, KernelExec *in_post_kernel,
-                         KernelExec *out_pre_kernel);
+  void UpdateInOutKernels(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels, KernelExec *in_post_kernel,
+                          KernelExec *out_pre_kernel);
 
   int UpdateInOutTensors(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels, lite::Tensor *in_tensor,
                          lite::Tensor *out_tensor, bool keep_input);

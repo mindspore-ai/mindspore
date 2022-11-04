@@ -348,7 +348,7 @@ OpParameter *AffineFp32CPUKernel::MatmulParameterCreate() {
   matmul_param->a_transpose_ = origin_matmul->a_transpose_;
   matmul_param->has_bias_ = origin_matmul->has_bias_;
   matmul_param->act_type_ = origin_matmul->act_type_;
-  matmul_param->op_parameter_.thread_num_ = this->context()->thread_num_;
+  matmul_param->op_parameter_.thread_num_ = op_parameter_->thread_num_;
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
 

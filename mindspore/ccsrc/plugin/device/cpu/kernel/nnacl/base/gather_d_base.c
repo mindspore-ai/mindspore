@@ -82,14 +82,14 @@ int InitCalVec(size_t *in_strides, size_t *out_strides, size_t *pos, const size_
 
 #define COPY_TASK_IMPL(type0, type1)                                                                                   \
   int CopyTask_Input_##type0##_Index_##type1(                                                                          \
-    type0 *output, const type0 *input, const type1 *index, size_t cur_dim, size_t *pos, const int dim,                 \
+    type0 *output, const type0 *input, const type1 *index, size_t cur_dim, size_t *pos, const size_t dim,              \
     const size_t *output_shape, const size_t output_shape_size, const size_t *in_strides, const size_t *out_strides) { \
     if (pos == NULL || out_strides == NULL || in_strides == NULL) {                                                    \
       return NNACL_NULL_PTR;                                                                                           \
     }                                                                                                                  \
     for (size_t i = 0; i < output_shape[cur_dim]; ++i) {                                                               \
       pos[cur_dim] = i;                                                                                                \
-      if (cur_dim == (int)output_shape_size - 1) {                                                                     \
+      if (cur_dim == output_shape_size - 1) {                                                                          \
         size_t input_offset = 0;                                                                                       \
         size_t out_offset = 0;                                                                                         \
         for (size_t j = 0; j < output_shape_size; ++j) {                                                               \

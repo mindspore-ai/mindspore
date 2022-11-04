@@ -266,7 +266,7 @@ void KernelExecUtil::FindAllInoutKernelsInSubgraphKernel(const std::vector<Kerne
   KernelExecUtil::FindAllInoutKernels(all_kernels);
 }
 
-KernelExec *KernelExecUtil::FindInKernelForInTensor(KernelExec *kernel, lite::Tensor *tensor) {
+KernelExec *KernelExecUtil::FindInKernelForInTensor(const KernelExec *kernel, lite::Tensor *tensor) {
   for (auto in_kernel : kernel->in_kernels()) {
     if (lite::IsContain(in_kernel->out_tensors(), tensor)) {
       return in_kernel;
@@ -275,7 +275,7 @@ KernelExec *KernelExecUtil::FindInKernelForInTensor(KernelExec *kernel, lite::Te
   return nullptr;
 }
 
-std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForOutTensor(KernelExec *kernel, lite::Tensor *tensor) {
+std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForOutTensor(const KernelExec *kernel, lite::Tensor *tensor) {
   std::vector<KernelExec *> out_kernels;
   for (auto out_kernel : kernel->out_kernels()) {
     if (lite::IsContain(out_kernel->in_tensors(), tensor)) {
@@ -285,7 +285,7 @@ std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForOutTensor(KernelExec 
   return out_kernels;
 }
 
-int KernelExecUtil::SetKernelTensorDataType(kernel::KernelExec *kernel) {
+int KernelExecUtil::SetKernelTensorDataType(const kernel::KernelExec *kernel) {
   CHECK_NULL_RETURN(kernel);
   if (kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
     return RET_OK;
