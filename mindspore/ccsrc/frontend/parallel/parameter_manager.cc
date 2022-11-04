@@ -432,7 +432,7 @@ void InitOptimizerState(const FuncGraphPtr &root) {
     auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
     MS_EXCEPTION_IF_NULL(graph_executor);
     auto phase = graph_executor->phase();
-    auto py_obj = GetPyParameterObj(param_info, CLONED_OBJ);
+    auto py_obj = GetPyParameterObj(param_info, OBJ);
     if (py::isinstance<py::none>(py_obj)) {
       MS_LOG(WARNING) << "Parameter: " << parameter->DebugString() << " can't find python obj.";
       continue;
