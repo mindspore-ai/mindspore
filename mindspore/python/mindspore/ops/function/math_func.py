@@ -743,6 +743,13 @@ def mul(x, y):
     return tensor_mul(x, y)
 
 
+def multiply(input, other):
+    r"""
+    Refer to :func:`mindspore.ops.mul` for more details.
+    """
+    return tensor_mul(input, other)
+
+
 def div(input, other, rounding_mode=None):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
@@ -7220,6 +7227,7 @@ __all__ = [
     'subtract',
     'tensor_mul',
     'mul',
+    'multiply',
     'tensor_div',
     'div',
     'true_divide',

@@ -928,7 +928,6 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         ValueError: If `x` whose length is not 4 or 5.
         ValueError: If `output_size` whose length is not 0, 4 or 5.
         ValueError: If `output_size` whose type is not tuple.
-        ValueError: If `output_size` whose length is not 0, 3 or 4.
         ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:

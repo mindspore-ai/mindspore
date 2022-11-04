@@ -1062,6 +1062,20 @@ def log(x):
     return F.log(x)
 
 
+def log10(x):
+    """
+    Calculate the base-10 logarithm of Tensor.
+    """
+    return F.log10(x)
+
+
+def log2(x):
+    """
+    Calculate the base-2 logarithm of Tensor.
+    """
+    return F.log2(x)
+
+
 def round_(x):
     """
     Returns half to even of a tensor element-wise.
@@ -3652,6 +3666,28 @@ def cumprod(input, dim, dtype=None):
     Computes the cumulative product of the `input` tensor along dimension `dim`.
     """
     return F.cumprod(input, dim, dtype)
+
+
+def multiply(input, other):
+    r"""
+    Multiplies two tensors element-wise.
+
+    .. math::
+
+        out_{i} = x_{i} * y_{i}
+
+    Refer to :func:`mindspore.ops.mul` for more details.
+
+    Supported platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Example:
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
+        >>> output = x.multiply(y)
+        [4.0 10.0 18.0]
+    """
+    return F.multiply(input, other)
 
 
 def div(input, other, rounding_mode=None):
